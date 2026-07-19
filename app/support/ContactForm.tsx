@@ -22,8 +22,6 @@ export default function ContactForm() {
     setState('loading')
     setErrorMsg(null)
     try {
-      console.log('[diag] key ending in:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(-8))
-      console.log('[diag] url:', process.env.NEXT_PUBLIC_SUPABASE_URL)
       const { error } = await supabase.from('support_messages').insert({
         kind: 'support',
         source: 'website',
@@ -32,7 +30,6 @@ export default function ContactForm() {
         body: message,
         status: 'new',
       })
-      console.log('[support] insert error:', JSON.stringify({ message: error?.message, details: error?.details, hint: error?.hint, code: error?.code }))
       if (error) throw error
       setState('success')
     } catch (err: unknown) {
