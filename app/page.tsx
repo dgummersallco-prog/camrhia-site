@@ -277,31 +277,51 @@ function Footer() {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
+const steps = [
+  {
+    n: "1",
+    title: "Book the wedding",
+    body: "Message, send your packages, confirm the booking. Their details carry over automatically — nothing typed twice.",
+  },
+  {
+    n: "2",
+    title: "Build the day, together",
+    body: "One shared timeline. Either of you can edit it; both of you approve it before it's final.",
+  },
+  {
+    n: "3",
+    title: "Get paid. Get reviewed. Get referred.",
+    body: "Payment reminders send themselves. A finished wedding becomes a five-star review — and your next booking.",
+  },
+]
+
+const painPoints = [
+  "The couple doesn't know if their retainer actually went through.",
+  "The timeline lives in three different text threads — and none of them agree.",
+  "The contract's signed... somewhere. Nobody's totally sure where.",
+]
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-paper">
       <Nav />
 
       <main>
-        {/* Hero */}
+
+        {/* ── 1. Hero ───────────────────────────────────────────────────── */}
         <section className="mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">
           <p className="font-mono text-xs tracking-widest uppercase text-brass mb-5">
             Now in early access
           </p>
-
           <h1 className="font-fraunces text-5xl md:text-6xl lg:text-7xl font-semibold text-ink leading-tight tracking-tight mb-6">
             The wedding day,{" "}
-            <em className="not-italic italic text-twilight">
-              planned together.
-            </em>
+            <em className="not-italic italic text-twilight">planned together.</em>
           </h1>
-
           <p className="text-base md:text-lg text-ink-soft max-w-2xl mx-auto leading-relaxed mb-10">
-            One shared app for the photographer and the couple — a real-time
-            timeline you build together, a contract that signs itself into
-            place, and a gallery waiting at the end of it all.
+            Wedding photographers juggle five apps to run one wedding. Couples
+            are stuck guessing what&apos;s actually been done. Camrhia is the one
+            place you both actually open.
           </p>
-
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="mailto:hello@camrhia.com?subject=Early access"
@@ -318,16 +338,72 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Timeline card — centerpiece */}
+        {/* ── 2. The problem ────────────────────────────────────────────── */}
+        <section className="mx-auto max-w-6xl px-6 pb-20">
+          <div className="text-center mb-10">
+            <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
+              Sound familiar?
+            </p>
+            <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink max-w-2xl mx-auto leading-snug">
+              Somewhere between the inquiry and the wedding day, everyone loses
+              the thread.
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4">
+            {painPoints.map((pain) => (
+              <div key={pain} className="rounded-2xl bg-card border border-line p-6">
+                <p className="text-ink leading-relaxed">{pain}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── 3. Shared timeline ────────────────────────────────────────── */}
         <section className="mx-auto max-w-6xl px-6 pb-20">
           <TimelineCard />
         </section>
 
-        {/* For photographers / For couples */}
-        <section
-          id="photographers"
-          className="mx-auto max-w-6xl px-6 pb-20"
-        >
+        {/* ── 4. The reframe ────────────────────────────────────────────── */}
+        <section className="mx-auto max-w-6xl px-6 pb-20 text-center">
+          <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
+            Why Camrhia is different
+          </p>
+          <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink max-w-3xl mx-auto leading-snug mb-6">
+            Every other tool is built for the photographer. Camrhia is built for
+            the relationship.
+          </h2>
+          <p className="text-base md:text-lg text-ink-soft max-w-2xl mx-auto leading-relaxed">
+            That&apos;s the part nobody else gets right — a wedding isn&apos;t one
+            person&apos;s to-do list. It&apos;s two people planning one day, together,
+            and the tools should reflect that.
+          </p>
+        </section>
+
+        {/* ── 5. The plan ───────────────────────────────────────────────── */}
+        <section className="mx-auto max-w-6xl px-6 pb-20">
+          <div className="text-center mb-10">
+            <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
+              How it works
+            </p>
+            <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink">
+              Three steps. That&apos;s it.
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4">
+            {steps.map(({ n, title, body }) => (
+              <div key={n} className="rounded-2xl bg-card border border-line p-6">
+                <div className="w-8 h-8 rounded-full bg-twilight/10 flex items-center justify-center mb-4">
+                  <span className="font-mono text-xs font-semibold text-twilight">{n}</span>
+                </div>
+                <h3 className="font-fraunces text-lg font-semibold text-ink mb-2">{title}</h3>
+                <p className="text-sm text-ink-soft leading-relaxed">{body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── 6. For photographers / For couples ────────────────────────── */}
+        <section className="mx-auto max-w-6xl px-6 pb-20">
           <div className="grid md:grid-cols-2 gap-6">
             {/* Photographers */}
             <div
@@ -348,23 +424,10 @@ export default function Home() {
                 </p>
                 <ul className="space-y-3">
                   {photographerFeatures.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-start gap-3 text-sm text-ink"
-                    >
+                    <li key={f} className="flex items-start gap-3 text-sm text-ink">
                       <span className="mt-0.5 w-4 h-4 rounded-full bg-twilight/10 flex items-center justify-center shrink-0">
-                        <svg
-                          viewBox="0 0 12 12"
-                          className="w-2.5 h-2.5 text-twilight"
-                          fill="none"
-                        >
-                          <path
-                            d="M2 6l3 3 5-5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
+                        <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-twilight" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </span>
                       {f}
@@ -393,23 +456,10 @@ export default function Home() {
                 </p>
                 <ul className="space-y-3">
                   {coupleFeatures.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-start gap-3 text-sm text-ink"
-                    >
+                    <li key={f} className="flex items-start gap-3 text-sm text-ink">
                       <span className="mt-0.5 w-4 h-4 rounded-full bg-brass/10 flex items-center justify-center shrink-0">
-                        <svg
-                          viewBox="0 0 12 12"
-                          className="w-2.5 h-2.5 text-brass"
-                          fill="none"
-                        >
-                          <path
-                            d="M2 6l3 3 5-5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
+                        <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-brass" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </span>
                       {f}
@@ -421,58 +471,40 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Affiliate promo */}
+        {/* ── 7. Real stories (honest placeholder) ──────────────────────── */}
         <section className="mx-auto max-w-6xl px-6 pb-20">
-          <div className="rounded-2xl bg-paper-deep border border-line px-8 py-12 md:px-14 md:py-14 flex flex-col md:flex-row md:items-center gap-8">
-            <div className="flex-1">
-              <p className="font-mono text-xs tracking-widest uppercase text-brass mb-3">
-                Earn with Camrhia
-              </p>
-              <h2 className="font-fraunces text-2xl md:text-3xl font-semibold text-ink leading-snug mb-4">
-                Know a photographer who&apos;d love this?{" "}
-                <em className="not-italic italic text-twilight">
-                  Earn 20% for as long as they stay.
-                </em>
-              </h2>
-              <p className="text-sm md:text-base text-ink-soft leading-relaxed max-w-lg">
-                Anyone can become a Camrhia affiliate — no photography business
-                required. Share your link, and earn a recurring 20% of every
-                referral&apos;s subscription.
-              </p>
-            </div>
-            <div className="shrink-0">
-              <Link
-                href="/affiliate/signup"
-                className="inline-flex items-center rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
-              >
-                Become an affiliate →
-              </Link>
-            </div>
+          <div className="rounded-2xl border border-line bg-card px-8 py-14 md:px-14 text-center">
+            <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
+              From real weddings
+            </p>
+            <h2 className="font-fraunces text-3xl font-semibold text-ink mb-4">
+              The stories are still being written.
+            </h2>
+            <p className="text-ink-soft leading-relaxed max-w-lg mx-auto mb-8">
+              Camrhia is in early access — the first reviews from real couples
+              and photographers will show up here soon. Want to be one of the
+              first?
+            </p>
+            <a
+              href="mailto:hello@camrhia.com?subject=Early access"
+              className="inline-flex items-center rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
+            >
+              Get early access →
+            </a>
           </div>
         </section>
 
-        {/* Stats strip */}
+        {/* ── 8. Stats strip ────────────────────────────────────────────── */}
         <section className="bg-ink">
           <div className="mx-auto max-w-6xl px-6 py-16">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
               {[
-                {
-                  stat: "1 shared timeline",
-                  sub: "both sides always in sync",
-                },
-                {
-                  stat: "0 spreadsheets",
-                  sub: "required",
-                },
-                {
-                  stat: "2 people",
-                  sub: "planning one day, together",
-                },
+                { stat: "1 shared timeline", sub: "both sides always in sync" },
+                { stat: "0 spreadsheets",    sub: "required" },
+                { stat: "2 people",          sub: "planning one day, together" },
               ].map(({ stat, sub }) => (
                 <div key={stat}>
-                  <p className="font-fraunces text-3xl font-semibold text-white mb-1">
-                    {stat}
-                  </p>
+                  <p className="font-fraunces text-3xl font-semibold text-white mb-1">{stat}</p>
                   <p className="text-sm text-white/50">{sub}</p>
                 </div>
               ))}
@@ -480,13 +512,12 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Closing CTA */}
+        {/* ── 9. Closing CTA ────────────────────────────────────────────── */}
         <section className="mx-auto max-w-6xl px-6 py-24 text-center">
           <blockquote className="font-fraunces text-3xl md:text-4xl italic font-medium text-ink max-w-2xl mx-auto mb-10 leading-snug">
-            "For the day you&apos;ll never forget — and everything it takes to
-            get there."
+            &ldquo;For the day you&apos;ll never forget — and everything it takes to
+            get there.&rdquo;
           </blockquote>
-
           <a
             href="mailto:hello@camrhia.com?subject=Early access"
             className="inline-flex items-center rounded-full bg-twilight px-8 py-3.5 text-base font-semibold text-white hover:bg-twilight/90 transition-colors"
@@ -494,6 +525,7 @@ export default function Home() {
             Get early access →
           </a>
         </section>
+
       </main>
 
       <Footer />
