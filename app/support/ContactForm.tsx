@@ -30,6 +30,7 @@ export default function ContactForm() {
         body: message,
         status: 'new',
       })
+      console.log('[support] insert error:', JSON.stringify({ message: error?.message, details: error?.details, hint: error?.hint, code: error?.code }))
       if (error) throw error
       setState('success')
     } catch (err: unknown) {
