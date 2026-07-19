@@ -21,6 +21,9 @@ function Nav() {
           <Link href="/support" className="hover:text-ink transition-colors">
             Support
           </Link>
+          <Link href="/login" className="hover:text-ink transition-colors">
+            Log in
+          </Link>
         </div>
 
         <a
@@ -214,41 +217,59 @@ const coupleFeatures = [
 function Footer() {
   return (
     <footer className="bg-paper-deep border-t border-line">
-      <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
-        <span className="font-fraunces text-lg font-semibold text-ink">
+      {/* Main footer row */}
+      <div className="mx-auto max-w-6xl px-6 pt-10 pb-6 flex flex-col md:flex-row md:items-start justify-between gap-10">
+        <span className="font-fraunces text-lg font-semibold text-ink shrink-0">
           {BRAND_NAME}
         </span>
 
-        <nav className="flex flex-wrap justify-center gap-5 text-sm text-ink-soft">
-          <Link href="/privacy" className="hover:text-ink transition-colors">
-            Privacy
-          </Link>
-          <Link href="/terms" className="hover:text-ink transition-colors">
-            Terms
-          </Link>
-          <Link href="/support" className="hover:text-ink transition-colors">
-            Support
-          </Link>
-          <a
-            href="mailto:hello@camrhia.com"
-            className="hover:text-ink transition-colors"
-          >
-            Contact
-          </a>
-          <Link href="/affiliate/signup" className="hover:text-ink transition-colors">
-            Become an affiliate
-          </Link>
-          <Link href="/affiliate/login" className="hover:text-ink transition-colors">
-            Affiliate login
-          </Link>
-          <Link href="/admin/login" className="hover:text-ink transition-colors">
-            Admin
-          </Link>
-        </nav>
+        <nav className="flex flex-wrap gap-x-12 gap-y-6 text-sm">
+          {/* Legal */}
+          <div>
+            <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/50 mb-2.5">
+              Legal
+            </p>
+            <ul className="space-y-2">
+              <li><Link href="/privacy" className="text-ink-soft hover:text-ink transition-colors">Privacy</Link></li>
+              <li><Link href="/terms" className="text-ink-soft hover:text-ink transition-colors">Terms</Link></li>
+            </ul>
+          </div>
 
+          {/* Help */}
+          <div>
+            <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/50 mb-2.5">
+              Help
+            </p>
+            <ul className="space-y-2">
+              <li><Link href="/support" className="text-ink-soft hover:text-ink transition-colors">Support</Link></li>
+              <li><a href="mailto:hello@camrhia.com" className="text-ink-soft hover:text-ink transition-colors">Contact</a></li>
+            </ul>
+          </div>
+
+          {/* Partners */}
+          <div>
+            <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/50 mb-2.5">
+              Partners
+            </p>
+            <ul className="space-y-2">
+              <li><Link href="/affiliate/signup" className="text-ink-soft hover:text-ink transition-colors">Become an affiliate</Link></li>
+              <li><Link href="/affiliate/login" className="text-ink-soft hover:text-ink transition-colors">Affiliate login</Link></li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="mx-auto max-w-6xl px-6 pb-8 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-line pt-4">
         <p className="text-xs text-ink-soft">
           © {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.
         </p>
+        <Link
+          href="/admin/login"
+          className="text-xs text-ink-soft/30 hover:text-ink-soft transition-colors"
+        >
+          Admin
+        </Link>
       </div>
     </footer>
   )
@@ -288,12 +309,12 @@ export default function Home() {
             >
               Get early access →
             </a>
-            <a
-              href="mailto:hello@camrhia.com?subject=Photographer early access"
+            <Link
+              href="/login"
               className="inline-flex items-center rounded-full border border-twilight px-6 py-3 text-sm font-semibold text-twilight hover:bg-twilight/5 transition-colors"
             >
               I&apos;m a photographer
-            </a>
+            </Link>
           </div>
         </section>
 
