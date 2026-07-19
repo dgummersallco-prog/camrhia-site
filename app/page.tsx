@@ -235,6 +235,12 @@ function Footer() {
           >
             Contact
           </a>
+          <Link href="/affiliate/signup" className="hover:text-ink transition-colors">
+            Become an affiliate
+          </Link>
+          <Link href="/affiliate/login" className="hover:text-ink transition-colors">
+            Affiliate login
+          </Link>
         </nav>
 
         <p className="text-xs text-ink-soft">
@@ -387,6 +393,36 @@ export default function Home() {
                   ))}
                 </ul>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Affiliate promo */}
+        <section className="mx-auto max-w-6xl px-6 pb-20">
+          <div className="rounded-2xl bg-paper-deep border border-line px-8 py-12 md:px-14 md:py-14 flex flex-col md:flex-row md:items-center gap-8">
+            <div className="flex-1">
+              <p className="font-mono text-xs tracking-widest uppercase text-brass mb-3">
+                Earn with Camrhia
+              </p>
+              <h2 className="font-fraunces text-2xl md:text-3xl font-semibold text-ink leading-snug mb-4">
+                Know a photographer who&apos;d love this?{" "}
+                <em className="not-italic italic text-twilight">
+                  Earn 20% for as long as they stay.
+                </em>
+              </h2>
+              <p className="text-sm md:text-base text-ink-soft leading-relaxed max-w-lg">
+                Anyone can become a Camrhia affiliate — no photography business
+                required. Share your link, and earn a recurring 20% of every
+                referral&apos;s subscription.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <Link
+                href="/affiliate/signup"
+                className="inline-flex items-center rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
+              >
+                Become an affiliate →
+              </Link>
             </div>
           </div>
         </section>
