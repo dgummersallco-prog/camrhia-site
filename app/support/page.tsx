@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { BRAND_NAME } from "@/lib/brand"
+import ContactForm from "./ContactForm"
 
 export const metadata = {
   title: `Support — ${BRAND_NAME}`,
@@ -26,19 +27,14 @@ export default function SupportPage() {
         <h1 className="font-fraunces text-4xl font-semibold text-ink mb-4">
           Support
         </h1>
-        <p className="text-ink-soft leading-relaxed mb-8">
+        <p className="text-ink-soft leading-relaxed mb-10">
           Have a question or running into an issue? We&apos;re here to help.
         </p>
 
-        <a
-          href="mailto:hello@camrhia.com"
-          className="inline-flex items-center rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors mb-16"
-        >
-          Email us at hello@camrhia.com
-        </a>
+        <ContactForm />
 
         {/* FAQ section */}
-        <div>
+        <div className="mt-20">
           <h2 className="font-fraunces text-2xl font-semibold text-ink mb-6">
             Frequently asked questions
           </h2>
