@@ -35,7 +35,8 @@ export default function AffiliateSignupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    console.log('URL present:', !!process.env.NEXT_PUBLIC_SUPABASE_URL, 'KEY present:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    console.log('[diag] URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('[diag] KEY present:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     if (!supabase) {
       setError('Service not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
       return
