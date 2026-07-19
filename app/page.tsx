@@ -241,7 +241,7 @@ function Footer() {
           <Link href="/affiliate/login" className="hover:text-ink transition-colors">
             Affiliate login
           </Link>
-          <Link href="/admin/login" className="hover:text-ink transition-colors text-ink-soft/40 hover:text-ink-soft text-xs">
+          <Link href="/admin/login" className="hover:text-ink transition-colors">
             Admin
           </Link>
         </nav>
