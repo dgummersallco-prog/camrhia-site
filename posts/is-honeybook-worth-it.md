@@ -4,6 +4,13 @@ slug: "is-honeybook-worth-it"
 description: "An honest, balanced evaluation of HoneyBook for wedding photographers — what it does well, and where it falls short for wedding-specific work."
 date: "2026-11-29"
 excerpt: "A fair look at where HoneyBook genuinely earns its reputation, and where it doesn't quite fit wedding-specific work."
+faq:
+  - question: "What does HoneyBook do well for wedding photographers?"
+    answer: "HoneyBook offers solid, mature features for contracts, invoicing, and scheduling, with an established user base and strong documentation. It works especially well for photographers who take on a mix of wedding and non-wedding client work."
+  - question: "Where does HoneyBook fall short for wedding photographers?"
+    answer: "HoneyBook's client portal lets couples view information but lacks native shared, jointly-editable day-of timeline planning — the most collaborative document in the wedding process. The couple's experience is that of a client checking a portal, not a co-planner building something alongside their photographer."
+  - question: "Is HoneyBook worth it for wedding photographers?"
+    answer: "HoneyBook is a strong choice if your main priority is photographer-facing workflow management such as contracts, invoicing, and scheduling, especially across different types of client work. It is a weaker fit if your primary goal is keeping a couple actively in sync with you throughout the planning process."
 ---
 
 HoneyBook is one of the most widely used client-management platforms across creative industries, and it's earned that position honestly — it's a genuinely capable, well-built tool. Here's a fair, balanced look at where it fits well for wedding photographers, and where it doesn't.

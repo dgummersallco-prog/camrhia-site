@@ -4,6 +4,13 @@ slug: "how-does-a-wedding-photography-payment-schedule-work"
 description: "A clear explanation of how wedding photography retainers and balance payments typically work, for both photographers and couples."
 date: "2026-07-13"
 excerpt: "A direct answer to a question both photographers and couples ask constantly."
+faq:
+  - question: "How does a wedding photography payment schedule work?"
+    answer: "Most wedding photographers use a two-payment structure: a retainer paid at booking (typically 25–50% of the total package price) to secure the date, and a balance payment due before or shortly after the wedding."
+  - question: "What is a wedding photography retainer?"
+    answer: "A retainer is typically 25–50% of the total package price, paid at booking. It compensates the photographer for holding that date exclusively and is usually non-refundable, since turning away other clients for that date is the opportunity cost."
+  - question: "When is the balance payment due for wedding photography?"
+    answer: "The balance is typically due somewhere between 30 days before the wedding and the day of, depending on the photographer's policy. Some photographers split this into additional installments rather than a single lump-sum payment."
 ---
 
 ## The short answer

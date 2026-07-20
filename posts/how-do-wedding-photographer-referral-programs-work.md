@@ -4,6 +4,13 @@ slug: "how-do-wedding-photographer-referral-programs-work"
 description: "A clear explanation of how referral programs work in the wedding photography industry, including affiliate-style software referral programs."
 date: "2026-08-30"
 excerpt: "A short, direct answer covering how these programs actually work in practice."
+faq:
+  - question: "How do wedding photographer referral programs work?"
+    answer: "Referral programs in wedding photography take two forms: informal referrals based on goodwill (a planner recommending a photographer, a past couple telling a friend), or formal affiliate programs that track referrals via a unique link and pay a defined commission when someone signs up."
+  - question: "What is the difference between a one-time and recurring referral commission?"
+    answer: "A one-time commission pays a flat bounty when a referral converts. A recurring commission pays an ongoing percentage of what the referred person pays for as long as they remain a subscriber — which can be significantly more valuable for active affiliates over time."
+  - question: "What should I look for before joining a wedding photography referral program?"
+    answer: "Look for whether the commission is recurring or one-time, whether there is a cap on how long you earn, and whether the product is something you would genuinely recommend to photographers regardless of the commission."
 ---
 
 ## The short answer

@@ -4,6 +4,13 @@ slug: "what-should-be-included-in-a-wedding-photography-contract"
 description: "A direct breakdown of the essential elements every wedding photography contract should include."
 date: "2026-11-22"
 excerpt: "A short, direct answer to a question both photographers and couples search for."
+faq:
+  - question: "What should be included in a wedding photography contract?"
+    answer: "A wedding photography contract should include both parties' names, the wedding date and venue, total price and payment schedule, exact hours and scope of coverage, delivery timeline, cancellation and rescheduling terms, a photographer emergency clause, and image usage and copyright terms."
+  - question: "What delivery terms should a wedding photography contract include?"
+    answer: "The contract should specify the gallery delivery timeframe, the expected number of final edited images, whether raw or unedited files are included, and how long the gallery will be accessible or backed up after delivery."
+  - question: "Who owns the copyright to wedding photos?"
+    answer: "Most wedding photography contracts specify that the photographer retains copyright of the images but grants the couple a personal-use license for printing, sharing, and social media. The photographer typically retains the right to use images in their portfolio and marketing unless otherwise agreed."
 ---
 
 ## The short answer

@@ -4,12 +4,18 @@ import matter from 'gray-matter'
 
 const POSTS_DIR = path.join(process.cwd(), 'posts')
 
+export type FaqItem = {
+  question: string
+  answer: string
+}
+
 export type PostMeta = {
   title: string
   slug: string
   description: string
   date: string
   excerpt: string
+  faq?: FaqItem[]
 }
 
 export type Post = PostMeta & { content: string }

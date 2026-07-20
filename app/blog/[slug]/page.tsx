@@ -36,8 +36,26 @@ export default async function BlogPostPage({
   const result = await remark().use(remarkHtml).process(post.content)
   const contentHtml = result.toString()
 
+  const faqJsonLd = post.faq && post.faq.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: post.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+        })),
+      }
+    : null
+
   return (
     <div className="min-h-screen bg-paper">
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
       <main className="mx-auto max-w-2xl px-6 pt-12 pb-24">
         <Link
           href="/blog"
