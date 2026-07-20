@@ -483,6 +483,80 @@ export default function AffiliateDashboardPage() {
           ))}
         </div>
 
+        {/* Commission tier */}
+        {(() => {
+          // Count referrals that have been or are paying — determines next position
+          const completedCount = referrals.filter(
+            (r) => r.status === 'active' || r.status === 'churned'
+          ).length
+          const nextPosition = completedCount + 1
+          const nextRate =
+            nextPosition <= 10 ? 0.20 :
+            nextPosition <= 25 ? 0.30 :
+            0.40
+
+          // Progress toward the next tier threshold
+          type TierInfo =
+            | { atMax: false; currentPct: number; nextPct: number; label: string; toNext: number; barFill: number }
+            | { atMax: true }
+
+          const tierInfo: TierInfo =
+            completedCount < 10
+              ? { atMax: false, currentPct: 20, nextPct: 30, label: 'Tier 1', toNext: 10 - completedCount, barFill: completedCount / 10 }
+              : completedCount < 25
+              ? { atMax: false, currentPct: 30, nextPct: 40, label: 'Tier 2', toNext: 25 - completedCount, barFill: (completedCount - 10) / 15 }
+              : { atMax: true }
+
+          return (
+            <section className="rounded-2xl border border-line bg-card p-6">
+              <div className="flex items-start justify-between gap-4 flex-wrap mb-5">
+                <div>
+                  <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/60 mb-1">
+                    Commission tier
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-fraunces text-4xl font-semibold text-twilight leading-none" style={{ color: '#3A4A6B' }}>
+                      {Math.round(nextRate * 100)}%
+                    </span>
+                    <span className="text-sm text-ink-soft">per referral</span>
+                  </div>
+                </div>
+                {!tierInfo.atMax && (
+                  <span className="inline-flex items-center rounded-full bg-paper-deep border border-line px-3 py-1 text-xs font-medium text-ink-soft">
+                    {tierInfo.label}
+                  </span>
+                )}
+              </div>
+
+              {tierInfo.atMax ? (
+                <div>
+                  <div className="h-1.5 w-full rounded-full bg-twilight/20 mb-2">
+                    <div className="h-1.5 rounded-full bg-twilight w-full" style={{ backgroundColor: '#3A4A6B' }} />
+                  </div>
+                  <p className="text-xs text-ink-soft">
+                    Maximum tier — 40% on every referral, for life.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <div className="h-1.5 w-full rounded-full bg-line mb-2 overflow-hidden">
+                    <div
+                      className="h-1.5 rounded-full bg-twilight transition-all duration-300"
+                      style={{ width: `${Math.min(tierInfo.barFill * 100, 100)}%`, backgroundColor: '#3A4A6B' }}
+                    />
+                  </div>
+                  <p className="text-xs text-ink-soft">
+                    {completedCount} paid referral{completedCount !== 1 ? 's' : ''} so far —{' '}
+                    <span className="font-medium text-ink">
+                      {tierInfo.toNext} more to unlock {tierInfo.nextPct}%
+                    </span>
+                  </p>
+                </div>
+              )}
+            </section>
+          )
+        })()}
+
         {/* Referrals table */}
         <section>
           <h2 className="font-fraunces text-xl font-semibold text-ink mb-4">
