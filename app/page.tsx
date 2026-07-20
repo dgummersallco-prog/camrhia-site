@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { BRAND_NAME } from "@/lib/brand"
+import WaitlistForm from "@/app/components/WaitlistForm"
 
 // ── Nav ──────────────────────────────────────────────────────────────────────
 
@@ -322,13 +323,8 @@ export default function Home() {
             are stuck guessing what&apos;s actually been done. Camrhia is the one
             place you both actually open.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="mailto:hello@camrhia.com?subject=Early access"
-              className="inline-flex items-center rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
-            >
-              Get early access →
-            </a>
+          <div className="flex flex-col items-center gap-4">
+            <WaitlistForm />
             <Link
               href="/login"
               className="inline-flex items-center rounded-full border border-twilight px-6 py-3 text-sm font-semibold text-twilight hover:bg-twilight/5 transition-colors"
@@ -485,12 +481,7 @@ export default function Home() {
               and photographers will show up here soon. Want to be one of the
               first?
             </p>
-            <a
-              href="mailto:hello@camrhia.com?subject=Early access"
-              className="inline-flex items-center rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
-            >
-              Get early access →
-            </a>
+            <WaitlistForm />
           </div>
         </section>
 
@@ -518,12 +509,7 @@ export default function Home() {
             &ldquo;For the day you&apos;ll never forget — and everything it takes to
             get there.&rdquo;
           </blockquote>
-          <a
-            href="mailto:hello@camrhia.com?subject=Early access"
-            className="inline-flex items-center rounded-full bg-twilight px-8 py-3.5 text-base font-semibold text-white hover:bg-twilight/90 transition-colors"
-          >
-            Get early access →
-          </a>
+          <WaitlistForm />
         </section>
 
       </main>
