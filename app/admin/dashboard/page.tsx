@@ -260,7 +260,7 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-5">
             <Link
               href="/"
               className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors"
@@ -268,11 +268,19 @@ export default function AdminDashboardPage() {
               {BRAND_NAME}{' '}
               <span className="text-ink-soft font-normal">/ admin</span>
             </Link>
-            {newCount > 0 && (
-              <span className="inline-flex items-center rounded-full bg-brass/15 px-2 py-0.5 text-xs font-medium text-brass">
-                {newCount} new
-              </span>
-            )}
+            <nav className="hidden sm:flex items-center gap-4 text-sm font-medium">
+              <Link href="/admin/dashboard" className="text-ink">
+                Messages
+              </Link>
+              {newCount > 0 && (
+                <span className="inline-flex items-center rounded-full bg-brass/15 px-2 py-0.5 text-xs font-medium text-brass">
+                  {newCount} new
+                </span>
+              )}
+              <Link href="/admin/metrics" className="text-ink-soft hover:text-ink transition-colors">
+                Metrics
+              </Link>
+            </nav>
           </div>
           <button
             onClick={handleSignOut}
