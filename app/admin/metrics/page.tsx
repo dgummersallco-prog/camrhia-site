@@ -9,7 +9,8 @@ import { BRAND_NAME } from '@/lib/brand'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Metrics = {
-  activeSubscribers: number   // subscription_status = 'active' (paid only, excludes comped)
+  monthlySubscribers: number  // active + billing_interval = 'monthly'
+  annualSubscribers: number   // active + billing_interval = 'annual'
   compedAccounts: number      // subscription_status = 'comped'
   trialUsers: number          // photographer, not active, not comped, trial active
   trialsWithEndDate: number   // photographer with trial_ends_at set, not comped (conversion denominator)
@@ -78,7 +79,8 @@ export default function AdminMetricsPage() {
         startOfMonth.setHours(0, 0, 0, 0)
 
         const [
-          activeResult,
+          monthlyResult,
+          annualResult,
           compedResult,
           trialResult,
           trialsWithEndResult,
@@ -87,11 +89,19 @@ export default function AdminMetricsPage() {
           affiliatesResult,
           activeReferralsResult,
         ] = await Promise.all([
-          // Paid active subscribers only — excludes comped
+          // Active monthly subscribers
           supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
-            .eq('subscription_status', 'active'),
+            .eq('subscription_status', 'active')
+            .eq('billing_interval', 'monthly'),
+
+          // Active annual subscribers
+          supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('subscription_status', 'active')
+            .eq('billing_interval', 'annual'),
 
           // Comped accounts — counted separately, never in MRR
           supabase
@@ -141,7 +151,8 @@ export default function AdminMetricsPage() {
         ])
 
         setMetrics({
-          activeSubscribers:    activeResult.count ?? 0,
+          monthlySubscribers:   monthlyResult.count ?? 0,
+          annualSubscribers:    annualResult.count ?? 0,
           compedAccounts:       compedResult.count ?? 0,
           trialUsers:           trialResult.count ?? 0,
           trialsWithEndDate:    trialsWithEndResult.count ?? 0,
@@ -196,13 +207,15 @@ export default function AdminMetricsPage() {
 
   // ── Computed values ───────────────────────────────────────────────────────
 
-  // MRR = paid subscribers only; comped accounts contribute $0
-  const mrr = metrics.activeSubscribers * 59
+  // MRR = paid subscribers only; comped accounts contribute $0.
+  // Annual subscribers contribute 590/12 per month (their true monthly-equivalent value).
+  const activeSubscribers = metrics.monthlySubscribers + metrics.annualSubscribers
+  const mrr = Math.round(metrics.monthlySubscribers * 59 + metrics.annualSubscribers * (590 / 12))
 
   // Conversion rate excludes comped from both numerator and denominator
   const conversionRate =
     metrics.trialsWithEndDate > 0
-      ? ((metrics.activeSubscribers / metrics.trialsWithEndDate) * 100).toFixed(1)
+      ? ((activeSubscribers / metrics.trialsWithEndDate) * 100).toFixed(1)
       : null
 
   const commissionsOwed = (metrics.activeReferrals * 11.8).toFixed(2)
@@ -243,13 +256,13 @@ export default function AdminMetricsPage() {
           <StatCard
             label="MRR"
             value={`$${mrr.toLocaleString()}`}
-            sub={`${metrics.activeSubscribers} paid × $59 — comped excluded`}
+            sub={`${metrics.monthlySubscribers} monthly × $59 + ${metrics.annualSubscribers} annual × $49.17`}
             accent="text-twilight"
           />
           <StatCard
             label="Active subscribers"
-            value={metrics.activeSubscribers.toString()}
-            sub="paid only (status = 'active')"
+            value={activeSubscribers.toString()}
+            sub={`${metrics.monthlySubscribers} monthly · ${metrics.annualSubscribers} annual`}
           />
           <StatCard
             label="Comped accounts"
@@ -272,7 +285,7 @@ export default function AdminMetricsPage() {
             value={conversionRate !== null ? `${conversionRate}%` : '—'}
             sub={
               conversionRate !== null
-                ? `${metrics.activeSubscribers} paid of ${metrics.trialsWithEndDate} trials (comped excluded)`
+                ? `${activeSubscribers} paid of ${metrics.trialsWithEndDate} trials (comped excluded)`
                 : 'No trial data yet'
             }
           />

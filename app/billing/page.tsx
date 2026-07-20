@@ -16,10 +16,12 @@ const FEATURES = [
 ]
 
 type PageState = 'loading' | 'active' | 'inactive' | 'unauthenticated'
+type BillingInterval = 'monthly' | 'annual'
 
 export default function BillingPage() {
   const [pageState, setPageState] = useState<PageState>('loading')
   const [userId, setUserId] = useState<string | null>(null)
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -65,7 +67,7 @@ export default function BillingPage() {
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email, userId: user.id }),
+        body: JSON.stringify({ email: user.email, userId: user.id, interval: billingInterval }),
       })
       const data = await res.json()
       if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not create checkout session.')
@@ -200,16 +202,51 @@ export default function BillingPage() {
               <h1 className="font-fraunces text-4xl font-semibold text-ink mb-2 leading-tight">
                 Subscribe to {BRAND_NAME}
               </h1>
-              <p className="text-ink-soft text-sm mb-8">
+              <p className="text-ink-soft text-sm mb-6">
                 Everything you need to run your photography business.
               </p>
 
+              {/* Billing interval toggle */}
+              <div className="flex items-center gap-1 bg-paper-deep rounded-full px-1 py-1 mb-6">
+                {(['monthly', 'annual'] as BillingInterval[]).map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setBillingInterval(opt)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      billingInterval === opt
+                        ? 'bg-ink text-white shadow-sm'
+                        : 'text-ink-soft hover:text-ink'
+                    }`}
+                  >
+                    {opt === 'monthly' ? 'Monthly' : 'Annual'}
+                    {opt === 'annual' && billingInterval !== 'annual' && (
+                      <span className="text-brass font-semibold">Save $118</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
               <div className="rounded-2xl bg-card border border-line p-6 mb-6">
-                <div className="flex items-end gap-1 mb-1">
-                  <span className="font-fraunces text-4xl font-semibold text-ink">$59</span>
-                  <span className="text-ink-soft text-sm mb-1.5">/month</span>
-                </div>
-                <p className="text-xs text-ink-soft mb-5">Billed monthly. Cancel any time.</p>
+                {billingInterval === 'monthly' ? (
+                  <>
+                    <div className="flex items-end gap-1 mb-1">
+                      <span className="font-fraunces text-4xl font-semibold text-ink">$59</span>
+                      <span className="text-ink-soft text-sm mb-1.5">/month</span>
+                    </div>
+                    <p className="text-xs text-ink-soft mb-5">Billed monthly. Cancel any time.</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-end gap-2 mb-1">
+                      <span className="font-fraunces text-4xl font-semibold text-ink">$590</span>
+                      <span className="text-ink-soft text-sm mb-1.5">/year</span>
+                      <span className="mb-1.5 inline-flex items-center rounded-full bg-brass/15 px-2 py-0.5 text-xs font-semibold text-brass">
+                        2 months free
+                      </span>
+                    </div>
+                    <p className="text-xs text-ink-soft mb-5">Billed annually — save $118/year. Cancel any time.</p>
+                  </>
+                )}
                 <ul className="space-y-2.5">
                   {FEATURES.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-ink">
@@ -236,7 +273,11 @@ export default function BillingPage() {
                 className="w-full rounded-full bg-twilight py-3 text-sm font-semibold text-white hover:bg-twilight/90 disabled:opacity-50 transition-colors"
                 style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}
               >
-                {actionLoading ? 'Redirecting to checkout…' : 'Subscribe — $59/month →'}
+                {actionLoading
+                  ? 'Redirecting to checkout…'
+                  : billingInterval === 'annual'
+                    ? 'Subscribe — $590/year →'
+                    : 'Subscribe — $59/month →'}
               </button>
               <p className="mt-4 text-center text-xs text-ink-soft">
                 Secure checkout powered by Stripe.

@@ -48,12 +48,25 @@ export async function POST(request: Request) {
           break
         }
 
+        // Determine billing interval from the subscription's price
+        let billingInterval: 'monthly' | 'annual' = 'monthly'
+        if (subscriptionId) {
+          try {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+            const stripeInterval = subscription.items.data[0]?.price?.recurring?.interval
+            billingInterval = stripeInterval === 'year' ? 'annual' : 'monthly'
+          } catch (err: unknown) {
+            console.error('[stripe webhook] subscription retrieve error:', err instanceof Error ? err.message : err)
+          }
+        }
+
         const { error } = await supabase
           .from('profiles')
           .update({
             subscription_status: 'active',
             stripe_customer_id: customerId,
             stripe_subscription_id: subscriptionId,
+            billing_interval: billingInterval,
           })
           .eq('id', userId)
 
