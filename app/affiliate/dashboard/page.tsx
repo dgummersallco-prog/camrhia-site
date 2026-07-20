@@ -57,6 +57,14 @@ const STATUS_LABELS: Record<string, string> = {
   churned: 'Churned',
 }
 
+// ── Profanity blocklist (first-pass; substring match) ─────────────────────────
+
+const PROFANITY = [
+  'fuck', 'shit', 'cunt', 'cock', 'dick', 'ass', 'bitch', 'bastard',
+  'piss', 'slut', 'whore', 'nigger', 'nigga', 'faggot', 'fag',
+  'retard', 'porn', 'rape', 'nazi',
+]
+
 // ── Pitch templates ───────────────────────────────────────────────────────────
 
 const PITCHES: { label: string; body: (link: string) => string }[] = [
@@ -114,6 +122,14 @@ export default function AffiliateDashboardPage() {
   const [copied, setCopied] = useState(false)
   const [copiedPitch, setCopiedPitch] = useState<number | null>(null)
 
+  // Referral code editor
+  const [codeInput, setCodeInput] = useState('')
+  type CodeStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
+  const [codeStatus, setCodeStatus] = useState<CodeStatus>('idle')
+  const [codeError, setCodeError] = useState<string | null>(null)
+  const [codeSaving, setCodeSaving] = useState(false)
+  const [codeSaved, setCodeSaved] = useState(false)
+
   // Payout settings
   const [showPayout, setShowPayout] = useState(false)
   const [payoutEmail, setPayoutEmail] = useState('')
@@ -146,6 +162,7 @@ export default function AffiliateDashboardPage() {
 
       if (affiliateError) throw affiliateError
       setAffiliate(affiliateData)
+      setCodeInput(affiliateData.referral_code)
       setPayoutEmail(affiliateData.payout_email ?? '')
       setPayoutMethod(affiliateData.payout_method ?? '')
 
@@ -224,6 +241,66 @@ export default function AffiliateDashboardPage() {
       setTimeout(() => setPayoutSaved(false), 2500)
     } finally {
       setPayoutSaving(false)
+    }
+  }
+
+  // Validate and check availability whenever codeInput changes
+  useEffect(() => {
+    if (!affiliate) return
+
+    // No change from current code — nothing to do
+    if (codeInput === affiliate.referral_code) {
+      setCodeStatus('idle')
+      setCodeError(null)
+      return
+    }
+
+    // Synchronous validation (length, profanity)
+    if (codeInput.length < 3 || codeInput.length > 30) {
+      setCodeStatus('invalid')
+      setCodeError(codeInput.length < 3 ? 'At least 3 characters required.' : 'Maximum 30 characters.')
+      return
+    }
+    if (PROFANITY.some((w) => codeInput.includes(w))) {
+      setCodeStatus('invalid')
+      setCodeError('That code isn\'t available.')
+      return
+    }
+
+    // Debounced availability check
+    setCodeStatus('checking')
+    setCodeError(null)
+    const t = setTimeout(async () => {
+      if (!supabase) return
+      const { data } = await supabase
+        .from('affiliates')
+        .select('id')
+        .eq('referral_code', codeInput)
+        .neq('id', affiliate.id)
+        .maybeSingle()
+      setCodeStatus(data ? 'taken' : 'available')
+    }, 400)
+    return () => clearTimeout(t)
+  }, [codeInput, affiliate])
+
+  async function saveCode() {
+    if (!supabase || !affiliate || codeStatus !== 'available') return
+    setCodeSaving(true)
+    try {
+      const { error } = await supabase
+        .from('affiliates')
+        .update({ referral_code: codeInput })
+        .eq('id', affiliate.id)
+      if (error) throw error
+      // Update affiliate state everywhere — referral card + pitch kit re-render instantly
+      setAffiliate({ ...affiliate, referral_code: codeInput })
+      setCodeStatus('idle')
+      setCodeSaved(true)
+      setTimeout(() => setCodeSaved(false), 2500)
+    } catch (err: unknown) {
+      setCodeError(err instanceof Error ? err.message : 'Save failed.')
+    } finally {
+      setCodeSaving(false)
     }
   }
 
@@ -323,6 +400,71 @@ export default function AffiliateDashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Customize referral link */}
+        <section className="rounded-2xl border border-line bg-card p-6">
+          <h2 className="font-fraunces text-xl font-semibold text-ink mb-1">Customize your link</h2>
+          <p className="font-mono text-sm text-ink-soft mb-5">
+            camrhia.com/r/
+            <span className={`font-medium ${codeInput ? 'text-ink' : 'text-ink-soft/40'}`}>
+              {codeInput || '…'}
+            </span>
+          </p>
+
+          {/* Break-old-links warning — always visible */}
+          <div className="flex gap-2.5 rounded-xl bg-brass/8 border border-brass/20 px-4 py-3 mb-5">
+            <svg viewBox="0 0 16 16" className="w-4 h-4 text-brass shrink-0 mt-0.5" fill="none">
+              <path d="M8 2L14.5 13H1.5L8 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+              <path d="M8 6v3.5M8 11v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+            <p className="text-xs text-ink-soft leading-relaxed">
+              Changing your link will break any links you&apos;ve already shared using your current code:{' '}
+              <span className="font-mono font-medium text-ink">camrhia.com/r/{affiliate.referral_code}</span>
+            </p>
+          </div>
+
+          {/* Input row */}
+          <div className="flex items-stretch gap-2 mb-3">
+            <input
+              type="text"
+              value={codeInput}
+              onChange={(e) =>
+                setCodeInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+              }
+              maxLength={30}
+              spellCheck={false}
+              placeholder={affiliate.referral_code}
+              className="flex-1 rounded-xl border border-line bg-paper px-4 py-2.5 text-sm font-mono text-ink placeholder:text-ink-soft/40 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition"
+            />
+            <button
+              onClick={saveCode}
+              disabled={codeStatus !== 'available' || codeSaving || codeInput === affiliate.referral_code}
+              className="rounded-xl bg-twilight px-5 py-2.5 text-sm font-semibold text-white hover:bg-twilight/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+              style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}
+            >
+              {codeSaving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+
+          {/* Inline feedback */}
+          <div className="min-h-[1.25rem]">
+            {codeStatus === 'checking' && (
+              <p className="text-xs text-ink-soft/60 animate-pulse">Checking availability…</p>
+            )}
+            {codeStatus === 'available' && (
+              <p className="text-xs text-sage font-medium">✓ Available</p>
+            )}
+            {codeStatus === 'taken' && (
+              <p className="text-xs text-red-500 font-medium">✗ Already taken</p>
+            )}
+            {codeStatus === 'invalid' && codeError && (
+              <p className="text-xs text-red-500">{codeError}</p>
+            )}
+            {codeSaved && (
+              <p className="text-xs text-sage font-medium">Link updated.</p>
+            )}
+          </div>
+        </section>
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
