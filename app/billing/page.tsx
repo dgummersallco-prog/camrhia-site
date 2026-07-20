@@ -39,11 +39,14 @@ export default function BillingPage() {
 
       setUserId(user.id)
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('subscription_status')
         .eq('id', user.id)
         .single()
+
+      console.log('[diag] logged in as user id:', user.id, 'email:', user.email)
+      console.log('[diag] profile fetch result:', JSON.stringify(profile), 'error:', JSON.stringify({ message: profileError?.message, code: profileError?.code }))
 
       setPageState(profile?.subscription_status === 'active' ? 'active' : 'inactive')
     }
