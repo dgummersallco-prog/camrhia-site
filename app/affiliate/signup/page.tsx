@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { BRAND_NAME } from '@/lib/brand'
@@ -26,12 +25,12 @@ async function uniqueReferralCode(name: string): Promise<string> {
 }
 
 export default function AffiliateSignupPage() {
-  const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -42,26 +41,68 @@ export default function AffiliateSignupPage() {
     setLoading(true)
     setError(null)
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password })
-      if (authError) throw authError
-      if (!authData.user) throw new Error('Signup failed — please try again.')
-
+      // Generate referral code before signUp so it can be stored in user metadata.
+      // The DB trigger reads it from raw_user_meta_data and inserts the affiliates row —
+      // no client-side insert needed, so no session is required at this point.
       const referral_code = await uniqueReferralCode(name)
 
-      const { error: insertError } = await supabase.from('affiliates').insert({
-        id: authData.user.id,
-        name,
+      const { error: authError } = await supabase.auth.signUp({
         email,
-        referral_code,
+        password,
+        options: {
+          data: { account_kind: 'affiliate', name, referral_code },
+        },
       })
-      if (insertError) throw insertError
+      if (authError) throw authError
 
-      router.push('/affiliate/dashboard')
+      // Email confirmation is enabled — there's no session yet.
+      // Show the confirmation screen; the trigger will have already created the affiliates row.
+      setConfirmed(true)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (confirmed) {
+    return (
+      <div className="min-h-screen bg-paper flex flex-col">
+        <header className="border-b border-line bg-paper px-6 py-4">
+          <Link
+            href="/"
+            className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors"
+          >
+            {BRAND_NAME}{' '}
+            <span className="text-ink-soft font-normal text-lg">/ affiliate</span>
+          </Link>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-6 py-16 text-center">
+          <div className="w-full max-w-sm">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-sage/15 mb-6">
+              <svg viewBox="0 0 20 20" className="w-5 h-5 text-sage" fill="none">
+                <path d="M2.5 10.5l5 5 10-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <h1 className="font-fraunces text-3xl font-semibold text-ink mb-3">
+              Check your email
+            </h1>
+            <p className="text-sm text-ink-soft mb-2">
+              We sent a confirmation link to <span className="font-medium text-ink">{email}</span>.
+            </p>
+            <p className="text-sm text-ink-soft mb-8">
+              Click it to confirm your account, then come back and log in.
+            </p>
+            <Link
+              href="/affiliate/login"
+              className="inline-flex items-center rounded-full border border-twilight px-6 py-2.5 text-sm font-semibold text-twilight hover:bg-twilight/5 transition-colors"
+            >
+              Go to login →
+            </Link>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (
