@@ -280,6 +280,9 @@ export default function AdminDashboardPage() {
               <Link href="/admin/metrics" className="text-ink-soft hover:text-ink transition-colors">
                 Metrics
               </Link>
+              <Link href="/admin/users" className="text-ink-soft hover:text-ink transition-colors">
+                Users
+              </Link>
             </nav>
           </div>
           <button

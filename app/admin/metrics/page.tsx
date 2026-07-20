@@ -9,9 +9,10 @@ import { BRAND_NAME } from '@/lib/brand'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Metrics = {
-  activeSubscribers: number
-  trialUsers: number
-  trialsWithEndDate: number
+  activeSubscribers: number   // subscription_status = 'active' (paid only, excludes comped)
+  compedAccounts: number      // subscription_status = 'comped'
+  trialUsers: number          // photographer, not active, not comped, trial active
+  trialsWithEndDate: number   // photographer with trial_ends_at set, not comped (conversion denominator)
   newSignupsThisMonth: number
   waitlistCount: number
   totalAffiliates: number
@@ -78,6 +79,7 @@ export default function AdminMetricsPage() {
 
         const [
           activeResult,
+          compedResult,
           trialResult,
           trialsWithEndResult,
           newSignupsResult,
@@ -85,25 +87,33 @@ export default function AdminMetricsPage() {
           affiliatesResult,
           activeReferralsResult,
         ] = await Promise.all([
-          // Active subscribers
+          // Paid active subscribers only — excludes comped
           supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
             .eq('subscription_status', 'active'),
 
-          // Trial users: photographer, not active, trial hasn't expired
+          // Comped accounts — counted separately, never in MRR
+          supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('subscription_status', 'comped'),
+
+          // Trial users: photographer, not paid, not comped, trial hasn't expired
           supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
             .eq('account_type', 'photographer')
             .neq('subscription_status', 'active')
+            .neq('subscription_status', 'comped')
             .gt('trial_ends_at', now),
 
-          // All photographers with a trial_ends_at (denominator for conversion)
+          // Conversion denominator: photographers with a trial_ends_at, excluding comped
           supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
             .eq('account_type', 'photographer')
+            .neq('subscription_status', 'comped')
             .not('trial_ends_at', 'is', null),
 
           // New photographer signups this month
@@ -113,7 +123,7 @@ export default function AdminMetricsPage() {
             .eq('account_type', 'photographer')
             .gte('created_at', startOfMonth.toISOString()),
 
-          // Waitlist signups (table may not exist yet — count is null on error)
+          // Waitlist (table may not exist yet — fails silently)
           supabase
             .from('waitlist_signups')
             .select('*', { count: 'exact', head: true }),
@@ -131,13 +141,14 @@ export default function AdminMetricsPage() {
         ])
 
         setMetrics({
-          activeSubscribers: activeResult.count ?? 0,
-          trialUsers: trialResult.count ?? 0,
-          trialsWithEndDate: trialsWithEndResult.count ?? 0,
-          newSignupsThisMonth: newSignupsResult.count ?? 0,
-          waitlistCount: waitlistResult.count ?? 0,
-          totalAffiliates: affiliatesResult.count ?? 0,
-          activeReferrals: activeReferralsResult.count ?? 0,
+          activeSubscribers:    activeResult.count ?? 0,
+          compedAccounts:       compedResult.count ?? 0,
+          trialUsers:           trialResult.count ?? 0,
+          trialsWithEndDate:    trialsWithEndResult.count ?? 0,
+          newSignupsThisMonth:  newSignupsResult.count ?? 0,
+          waitlistCount:        waitlistResult.count ?? 0,
+          totalAffiliates:      affiliatesResult.count ?? 0,
+          activeReferrals:      activeReferralsResult.count ?? 0,
         })
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Failed to load metrics.')
@@ -178,20 +189,22 @@ export default function AdminMetricsPage() {
       <div className="min-h-screen bg-paper flex flex-col items-center justify-center gap-4 px-6">
         <p className="font-fraunces text-xl text-ink">Could not load metrics</p>
         <p className="text-sm text-ink-soft">{error}</p>
-        <Link href="/admin/login" className="text-sm text-twilight hover:underline">
-          Back to login
-        </Link>
+        <Link href="/admin/login" className="text-sm text-twilight hover:underline">Back to login</Link>
       </div>
     )
   }
 
   // ── Computed values ───────────────────────────────────────────────────────
 
+  // MRR = paid subscribers only; comped accounts contribute $0
   const mrr = metrics.activeSubscribers * 59
+
+  // Conversion rate excludes comped from both numerator and denominator
   const conversionRate =
     metrics.trialsWithEndDate > 0
       ? ((metrics.activeSubscribers / metrics.trialsWithEndDate) * 100).toFixed(1)
       : null
+
   const commissionsOwed = (metrics.activeReferrals * 11.8).toFixed(2)
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -202,26 +215,17 @@ export default function AdminMetricsPage() {
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-5">
-            <Link
-              href="/"
-              className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors"
-            >
+            <Link href="/" className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors">
               {BRAND_NAME}{' '}
               <span className="text-ink-soft font-normal">/ admin</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-4 text-sm font-medium">
-              <Link href="/admin/dashboard" className="text-ink-soft hover:text-ink transition-colors">
-                Messages
-              </Link>
-              <Link href="/admin/metrics" className="text-ink">
-                Metrics
-              </Link>
+              <Link href="/admin/dashboard" className="text-ink-soft hover:text-ink transition-colors">Messages</Link>
+              <Link href="/admin/metrics"   className="text-ink">Metrics</Link>
+              <Link href="/admin/users"     className="text-ink-soft hover:text-ink transition-colors">Users</Link>
             </nav>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="text-sm text-ink-soft hover:text-ink transition-colors"
-          >
+          <button onClick={handleSignOut} className="text-sm text-ink-soft hover:text-ink transition-colors">
             Sign out
           </button>
         </div>
@@ -235,22 +239,28 @@ export default function AdminMetricsPage() {
 
         {/* Revenue */}
         <SectionHeading>Revenue</SectionHeading>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2">
           <StatCard
             label="MRR"
             value={`$${mrr.toLocaleString()}`}
-            sub={`${metrics.activeSubscribers} active subscriber${metrics.activeSubscribers !== 1 ? 's' : ''} × $59`}
+            sub={`${metrics.activeSubscribers} paid × $59 — comped excluded`}
             accent="text-twilight"
           />
           <StatCard
             label="Active subscribers"
             value={metrics.activeSubscribers.toString()}
-            sub="subscription_status = 'active'"
+            sub="paid only (status = 'active')"
+          />
+          <StatCard
+            label="Comped accounts"
+            value={metrics.compedAccounts.toString()}
+            sub="free access granted — $0 MRR"
+            accent={metrics.compedAccounts > 0 ? 'text-brass' : 'text-ink'}
           />
           <StatCard
             label="Trial users"
             value={metrics.trialUsers.toString()}
-            sub="photographer, not yet converted, trial active"
+            sub="active trial, not yet paid, not comped"
           />
         </div>
 
@@ -262,7 +272,7 @@ export default function AdminMetricsPage() {
             value={conversionRate !== null ? `${conversionRate}%` : '—'}
             sub={
               conversionRate !== null
-                ? `${metrics.activeSubscribers} of ${metrics.trialsWithEndDate} trials convert`
+                ? `${metrics.activeSubscribers} paid of ${metrics.trialsWithEndDate} trials (comped excluded)`
                 : 'No trial data yet'
             }
           />
