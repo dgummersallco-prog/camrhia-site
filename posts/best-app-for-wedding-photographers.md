@@ -2,7 +2,7 @@
 title: "What Is the Best App for Wedding Photographers?"
 slug: "best-app-for-wedding-photographers"
 description: "A direct comparison of the leading apps and platforms wedding photographers use to manage bookings, contracts, payments, and client communication."
-date: "2026-07-20"
+date: "2026-06-23"
 excerpt: "A short, direct answer to a question a lot of photographers are asking right now."
 ---
 

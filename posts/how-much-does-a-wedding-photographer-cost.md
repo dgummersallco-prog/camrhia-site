@@ -2,7 +2,7 @@
 title: "How Much Does a Wedding Photographer Cost in 2026?"
 slug: "how-much-does-a-wedding-photographer-cost"
 description: "A realistic breakdown of wedding photography costs in 2026 — what drives the price up or down, and what questions to ask before you book."
-date: "2026-07-20"
+date: "2026-06-16"
 excerpt: "Wedding photography pricing varies more than almost any other vendor category. Here's what actually drives the number."
 ---
 

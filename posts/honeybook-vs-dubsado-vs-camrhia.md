@@ -2,7 +2,7 @@
 title: "HoneyBook vs. Dubsado vs. Camrhia: Which Wedding Photography Tool Is Right for You?"
 slug: "honeybook-vs-dubsado-vs-camrhia"
 description: "An honest comparison of the three biggest client-management tools for wedding photographers — what each one actually does well, and where they fall short."
-date: "2026-07-20"
+date: "2026-06-02"
 excerpt: "If you've searched for wedding photography business software, you've hit the same three names over and over. Here's what actually separates them."
 ---
 

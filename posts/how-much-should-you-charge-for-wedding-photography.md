@@ -2,7 +2,7 @@
 title: "How Much Should You Charge for Wedding Photography in 2026?"
 slug: "how-much-should-you-charge-for-wedding-photography"
 description: "A practical breakdown of how wedding photographers actually price their packages in 2026, and the real costs most new photographers forget to factor in."
-date: "2026-07-20"
+date: "2026-06-09"
 excerpt: "Pricing is the hardest number to pick as a new wedding photographer. Here's how to actually think about it."
 ---
 
