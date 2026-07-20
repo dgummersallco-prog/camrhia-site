@@ -24,6 +24,66 @@ async function uniqueReferralCode(name: string): Promise<string> {
   return `${baseCode(name)}${Date.now().toString().slice(-4)}`
 }
 
+function EarningsCalculator() {
+  const [count, setCount] = useState(5)
+  const monthly = count * 11.8
+  const yearly = monthly * 12
+
+  function fmt(n: number) {
+    return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+  }
+
+  return (
+    <div className="rounded-2xl bg-card border border-line p-6 mb-8">
+      <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/60 mb-5">
+        Earnings calculator
+      </p>
+
+      {/* Slider */}
+      <div className="mb-6">
+        <div className="flex items-baseline justify-between mb-2">
+          <label className="text-sm font-medium text-ink">
+            Photographers you could refer
+          </label>
+          <span className="font-fraunces text-2xl font-semibold text-ink leading-none">{count}</span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={50}
+          value={count}
+          onChange={(e) => setCount(Number(e.target.value))}
+          className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-line accent-twilight"
+        />
+        <div className="flex justify-between mt-1.5">
+          <span className="font-mono text-xs text-ink-soft/50">1</span>
+          <span className="font-mono text-xs text-ink-soft/50">50</span>
+        </div>
+      </div>
+
+      {/* Earnings — the visual centrepiece */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <div className="rounded-xl bg-paper border border-line px-4 py-4">
+          <p className="text-xs text-ink-soft mb-1.5">Monthly</p>
+          <p className="font-fraunces text-3xl font-semibold text-twilight leading-none" style={{ color: '#3A4A6B' }}>
+            {fmt(monthly)}
+          </p>
+        </div>
+        <div className="rounded-xl bg-paper border border-line px-4 py-4">
+          <p className="text-xs text-ink-soft mb-1.5">Yearly</p>
+          <p className="font-fraunces text-3xl font-semibold text-twilight leading-none" style={{ color: '#3A4A6B' }}>
+            {fmt(yearly)}
+          </p>
+        </div>
+      </div>
+
+      <p className="text-xs text-ink-soft/70 leading-relaxed">
+        20% of $59/month per referral — {count} × $11.80 = {fmt(monthly)}/mo — for as long as they stay subscribed.
+      </p>
+    </div>
+  )
+}
+
 export default function AffiliateSignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -117,20 +177,24 @@ export default function AffiliateSignupPage() {
         </Link>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-6 py-16">
+      <main className="flex-1 flex items-start justify-center px-6 py-16">
         <div className="w-full max-w-sm">
           <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
             Affiliate program
           </p>
           <h1 className="font-fraunces text-3xl font-semibold text-ink mb-2">
-            Create your account
+            Earn by referring photographers
           </h1>
           <p className="text-sm text-ink-soft mb-8">
-            Already have one?{' '}
+            Already have an account?{' '}
             <Link href="/affiliate/login" className="text-twilight hover:underline">
               Sign in
             </Link>
           </p>
+
+          <EarningsCalculator />
+
+          <p className="font-fraunces text-xl font-semibold text-ink mb-5">Create your account</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
