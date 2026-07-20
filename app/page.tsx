@@ -19,6 +19,9 @@ function Nav() {
           <Link href="#couples" className="hover:text-ink transition-colors">
             For couples
           </Link>
+          <Link href="/blog" className="hover:text-ink transition-colors">
+            Blog
+          </Link>
           <Link href="/support" className="hover:text-ink transition-colors">
             Support
           </Link>
@@ -236,12 +239,13 @@ function Footer() {
             </ul>
           </div>
 
-          {/* Help */}
+          {/* Company */}
           <div>
             <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/50 mb-2.5">
-              Help
+              Company
             </p>
             <ul className="space-y-2">
+              <li><Link href="/blog" className="text-ink-soft hover:text-ink transition-colors">Blog</Link></li>
               <li><Link href="/support" className="text-ink-soft hover:text-ink transition-colors">Support</Link></li>
               <li><a href="mailto:hello@camrhia.com" className="text-ink-soft hover:text-ink transition-colors">Contact</a></li>
             </ul>
@@ -302,10 +306,36 @@ const painPoints = [
   "The contract's signed... somewhere. Nobody's totally sure where.",
 ]
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Camrhia',
+  url: 'https://camrhia.com',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  description:
+    'One shared app for the wedding photographer and the couple — a real-time timeline, contracts, payments, and gallery delivery, all in one place.',
+  offers: {
+    '@type': 'Offer',
+    price: '59',
+    priceCurrency: 'USD',
+    priceSpecification: {
+      '@type': 'UnitPriceSpecification',
+      price: '59',
+      priceCurrency: 'USD',
+      unitCode: 'MON',
+    },
+  },
+}
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-paper">
       <Nav />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <main>
 

@@ -3,6 +3,7 @@ import { BRAND_NAME } from "@/lib/brand"
 
 export const metadata = {
   title: `Terms of Service — ${BRAND_NAME}`,
+  description: "Review the terms and conditions that govern your use of Camrhia.",
 }
 
 function Bullets({ items }: { items: React.ReactNode[] }) {

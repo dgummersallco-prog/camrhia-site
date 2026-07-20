@@ -4,6 +4,7 @@ import ContactForm from "./ContactForm"
 
 export const metadata = {
   title: `Support — ${BRAND_NAME}`,
+  description: "Get help with Camrhia — browse frequently asked questions or reach out to our team directly.",
 }
 
 const faqs: { q: string; a: string }[] = []

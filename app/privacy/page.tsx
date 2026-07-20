@@ -3,6 +3,7 @@ import { BRAND_NAME } from "@/lib/brand"
 
 export const metadata = {
   title: `Privacy Policy — ${BRAND_NAME}`,
+  description: "Read Camrhia's privacy policy to understand how we collect, use, and protect your personal information.",
 }
 
 export default function PrivacyPage() {
