@@ -25,7 +25,16 @@ type WaitlistSignup = {
   created_at: string
 }
 
-type AdminView = 'support' | 'waitlist'
+type ChurnEntry = {
+  id: string
+  user_id: string | null
+  email: string | null
+  reason: string | null
+  feedback: string | null
+  canceled_at: string
+}
+
+type AdminView = 'support' | 'waitlist' | 'churn'
 type SourceFilter = 'all' | 'website' | 'app'
 type StatusFilter = 'all' | 'new' | 'read' | 'resolved'
 
@@ -143,6 +152,7 @@ export default function AdminDashboardPage() {
   const [view, setView] = useState<AdminView>('support')
   const [messages, setMessages] = useState<Message[]>([])
   const [waitlist, setWaitlist] = useState<WaitlistSignup[]>([])
+  const [churnLog, setChurnLog] = useState<ChurnEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -163,7 +173,7 @@ export default function AdminDashboardPage() {
     }
 
     try {
-      const [messagesResult, waitlistResult] = await Promise.all([
+      const [messagesResult, waitlistResult, churnResult] = await Promise.all([
         supabase
           .from('support_messages')
           .select('id, name, email, body, kind, source, status, created_at')
@@ -172,12 +182,17 @@ export default function AdminDashboardPage() {
           .from('waitlist_signups')
           .select('id, email, created_at')
           .order('created_at', { ascending: false }),
+        supabase
+          .from('churn_log')
+          .select('id, user_id, email, reason, feedback, canceled_at')
+          .order('canceled_at', { ascending: false }),
       ])
 
       if (messagesResult.error) throw messagesResult.error
       setMessages(messagesResult.data ?? [])
-      // waitlist table may not exist yet — fail silently
+      // waitlist and churn_log tables may not exist yet — fail silently
       if (!waitlistResult.error) setWaitlist(waitlistResult.data ?? [])
+      if (!churnResult.error) setChurnLog(churnResult.data ?? [])
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load data.')
     } finally {
@@ -304,6 +319,7 @@ export default function AdminDashboardPage() {
             options={[
               { label: `Support messages${newCount > 0 ? ` (${newCount} new)` : ''}`, value: 'support' },
               { label: `Waitlist${waitlist.length > 0 ? ` (${waitlist.length})` : ''}`, value: 'waitlist' },
+              { label: `Churn log${churnLog.length > 0 ? ` (${churnLog.length})` : ''}`, value: 'churn' },
             ]}
           />
         </div>
@@ -465,6 +481,79 @@ export default function AdminDashboardPage() {
                         <td className="px-5 py-3.5">
                           <span className="font-mono text-xs text-ink-soft whitespace-nowrap">
                             {fmtDate(signup.created_at)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Churn log view ── */}
+        {view === 'churn' && (
+          <>
+            <div className="mb-6">
+              <h1 className="font-fraunces text-2xl font-semibold text-ink">Churn log</h1>
+              <p className="text-sm text-ink-soft mt-0.5">
+                {churnLog.length} cancellation{churnLog.length !== 1 ? 's' : ''} recorded
+              </p>
+            </div>
+
+            {churnLog.length === 0 ? (
+              <div className="rounded-2xl border border-line bg-card p-12 text-center">
+                <p className="font-fraunces text-xl italic text-ink-soft mb-1">No cancellations recorded yet.</p>
+                <p className="text-sm text-ink-soft">Entries appear here when a Stripe subscription is deleted.</p>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-line overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-line bg-paper-deep">
+                      <th className="text-left px-5 py-3 font-medium text-ink-soft">Email</th>
+                      <th className="text-left px-5 py-3 font-medium text-ink-soft hidden md:table-cell">Reason</th>
+                      <th className="text-left px-5 py-3 font-medium text-ink-soft">Feedback</th>
+                      <th className="text-left px-5 py-3 font-medium text-ink-soft hidden lg:table-cell">Canceled</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line bg-card">
+                    {churnLog.map((entry) => (
+                      <tr key={entry.id} className="hover:bg-paper-deep/40 transition-colors">
+                        <td className="px-5 py-3.5 align-top">
+                          {entry.email ? (
+                            <a
+                              href={`mailto:${entry.email}`}
+                              className="text-ink hover:text-twilight transition-colors break-all"
+                            >
+                              {entry.email}
+                            </a>
+                          ) : (
+                            <span className="text-ink-soft/40 italic text-xs">unknown</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 align-top hidden md:table-cell">
+                          {entry.reason ? (
+                            <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600 capitalize">
+                              {entry.reason.replace(/_/g, ' ')}
+                            </span>
+                          ) : (
+                            <span className="text-ink-soft/40 text-xs">—</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 align-top max-w-xs lg:max-w-sm">
+                          {entry.feedback ? (
+                            <p className="text-ink text-sm leading-snug line-clamp-2">
+                              {entry.feedback.replace(/_/g, ' ')}
+                            </p>
+                          ) : (
+                            <span className="text-ink-soft/40 text-xs">—</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 align-top hidden lg:table-cell">
+                          <span className="font-mono text-xs text-ink-soft whitespace-nowrap">
+                            {fmtDate(entry.canceled_at)}
                           </span>
                         </td>
                       </tr>

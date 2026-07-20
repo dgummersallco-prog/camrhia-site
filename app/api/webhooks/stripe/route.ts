@@ -80,6 +80,29 @@ export async function POST(request: Request) {
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
+
+        // Fetch profile first so we have user_id and email for the churn log
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .eq('stripe_subscription_id', subscription.id)
+          .single()
+
+        // Insert churn log row before marking inactive — failure is non-blocking
+        if (profile) {
+          const { error: churnError } = await supabase
+            .from('churn_log')
+            .insert({
+              user_id:     profile.id,
+              email:       profile.email ?? null,
+              reason:      subscription.cancellation_details?.reason ?? null,
+              feedback:    subscription.cancellation_details?.feedback ?? null,
+            })
+          if (churnError) {
+            console.error('[stripe webhook] churn_log insert error:', churnError.message)
+          }
+        }
+
         const { error } = await supabase
           .from('profiles')
           .update({ subscription_status: 'inactive' })
