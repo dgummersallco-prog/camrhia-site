@@ -22,6 +22,9 @@ function Nav() {
           <Link href="/blog" className="hover:text-ink transition-colors">
             Blog
           </Link>
+          <Link href="/faq" className="hover:text-ink transition-colors">
+            FAQ
+          </Link>
           <Link href="/support" className="hover:text-ink transition-colors">
             Support
           </Link>
@@ -246,6 +249,7 @@ function Footer() {
             </p>
             <ul className="space-y-2">
               <li><Link href="/blog" className="text-ink-soft hover:text-ink transition-colors">Blog</Link></li>
+              <li><Link href="/faq" className="text-ink-soft hover:text-ink transition-colors">FAQ</Link></li>
               <li><Link href="/support" className="text-ink-soft hover:text-ink transition-colors">Support</Link></li>
               <li><a href="mailto:hello@camrhia.com" className="text-ink-soft hover:text-ink transition-colors">Contact</a></li>
             </ul>

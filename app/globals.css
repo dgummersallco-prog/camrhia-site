@@ -24,6 +24,22 @@ body {
   font-family: var(--font-sans);
 }
 
+/* ── FAQ accordion ────────────────────────────────────────────────────────── */
+
+.faq-summary { list-style: none; }
+.faq-summary::-webkit-details-marker { display: none; }
+.faq-summary::marker { display: none; }
+
+.faq-chevron {
+  transition: transform 0.2s ease;
+}
+details[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+details[open] .faq-question-text {
+  color: #3A4A6B;
+}
+
 /* ── Blog post prose ──────────────────────────────────────────────────────── */
 
 .blog-content {
