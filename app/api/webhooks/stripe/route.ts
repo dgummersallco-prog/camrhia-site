@@ -51,11 +51,16 @@ export async function POST(request: Request) {
 
         // Determine billing interval from the subscription's price
         let billingInterval: 'monthly' | 'annual' = 'monthly'
+        let planTier: 'solo' | 'studio' = 'solo'
         if (subscriptionId) {
           try {
             const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+            const priceId = subscription.items.data[0]?.price?.id
             const stripeInterval = subscription.items.data[0]?.price?.recurring?.interval
             billingInterval = stripeInterval === 'year' ? 'annual' : 'monthly'
+            if (priceId === process.env.STRIPE_PRICE_ID_STUDIO || priceId === process.env.STRIPE_PRICE_ID_STUDIO_ANNUAL) {
+              planTier = 'studio'
+            }
           } catch (err: unknown) {
             console.error('[stripe webhook] subscription retrieve error:', err instanceof Error ? err.message : err)
           }
@@ -68,6 +73,7 @@ export async function POST(request: Request) {
             stripe_customer_id: customerId,
             stripe_subscription_id: subscriptionId,
             billing_interval: billingInterval,
+            plan_tier: planTier,
           })
           .eq('id', userId)
 

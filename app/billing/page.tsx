@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { BRAND_NAME } from '@/lib/brand'
@@ -15,10 +16,22 @@ const FEATURES = [
   'In-app gallery delivery',
 ]
 
+const STUDIO_FEATURES = [
+  ...FEATURES,
+  'Add photographers and assistants to your team',
+  'Assign specific weddings to specific team members',
+  'Hourly or per-shoot pay, tracked automatically',
+  'Payroll schedule and payout summaries',
+  'Time-off requests with approval workflow',
+  'Per-wedding profitability and labor cost tracking',
+]
+
 type PageState = 'loading' | 'active' | 'inactive' | 'unauthenticated'
 type BillingInterval = 'monthly' | 'annual'
 
 export default function BillingPage() {
+  const searchParams = useSearchParams()
+  const isStudioPlan = searchParams.get('plan') === 'studio'
   const [pageState, setPageState] = useState<PageState>('loading')
   const [userId, setUserId] = useState<string | null>(null)
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
@@ -67,7 +80,7 @@ export default function BillingPage() {
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email, userId: user.id, interval: billingInterval }),
+        body: JSON.stringify({ email: user.email, userId: user.id, interval: billingInterval, plan: isStudioPlan ? 'studio' : 'solo' }),
       })
       const data = await res.json()
       if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not create checkout session.')
@@ -144,7 +157,7 @@ export default function BillingPage() {
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
           <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
-            Photographer plan
+            {isStudioPlan ? 'Studio plan' : 'Photographer plan'}
           </p>
 
           {/* ── Active subscription ── */}
@@ -166,7 +179,7 @@ export default function BillingPage() {
 
               <div className="rounded-2xl bg-card border border-line p-6 mb-6">
                 <ul className="space-y-2.5">
-                  {FEATURES.map((f) => (
+                  {(isStudioPlan ? STUDIO_FEATURES : FEATURES).map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-ink">
                       <span className="mt-1 w-4 h-4 rounded-full bg-sage/10 flex items-center justify-center shrink-0">
                         <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-sage" fill="none">
@@ -200,10 +213,12 @@ export default function BillingPage() {
             /* ── Inactive / not subscribed ── */
             <>
               <h1 className="font-fraunces text-4xl font-semibold text-ink mb-2 leading-tight">
-                Subscribe to {BRAND_NAME}
+                {isStudioPlan ? `Upgrade to ${BRAND_NAME} Studio` : `Subscribe to ${BRAND_NAME}`}
               </h1>
               <p className="text-ink-soft text-sm mb-6">
-                Everything you need to run your photography business.
+                {isStudioPlan
+                  ? 'Team management, payroll, and business tools for your studio.'
+                  : 'Everything you need to run your photography business.'}
               </p>
 
               {/* Billing interval toggle */}
@@ -230,7 +245,7 @@ export default function BillingPage() {
                 {billingInterval === 'monthly' ? (
                   <>
                     <div className="flex items-end gap-1 mb-1">
-                      <span className="font-fraunces text-4xl font-semibold text-ink">$59</span>
+                      <span className="font-fraunces text-4xl font-semibold text-ink">{isStudioPlan ? '$149' : '$59'}</span>
                       <span className="text-ink-soft text-sm mb-1.5">/month</span>
                     </div>
                     <p className="text-xs text-ink-soft mb-5">Billed monthly. Cancel any time.</p>
@@ -238,17 +253,19 @@ export default function BillingPage() {
                 ) : (
                   <>
                     <div className="flex items-end gap-2 mb-1">
-                      <span className="font-fraunces text-4xl font-semibold text-ink">$590</span>
+                      <span className="font-fraunces text-4xl font-semibold text-ink">{isStudioPlan ? '$1,490' : '$590'}</span>
                       <span className="text-ink-soft text-sm mb-1.5">/year</span>
                       <span className="mb-1.5 inline-flex items-center rounded-full bg-brass/15 px-2 py-0.5 text-xs font-semibold text-brass">
-                        2 months free
+                        {isStudioPlan ? '2 months free' : '2 months free'}
                       </span>
                     </div>
-                    <p className="text-xs text-ink-soft mb-5">Billed annually — save $118/year. Cancel any time.</p>
+                    <p className="text-xs text-ink-soft mb-5">
+                      {isStudioPlan ? 'Billed annually — save $298/year. Cancel any time.' : 'Billed annually — save $118/year. Cancel any time.'}
+                    </p>
                   </>
                 )}
                 <ul className="space-y-2.5">
-                  {FEATURES.map((f) => (
+                  {(isStudioPlan ? STUDIO_FEATURES : FEATURES).map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm text-ink">
                       <span className="mt-1 w-4 h-4 rounded-full bg-twilight/10 flex items-center justify-center shrink-0">
                         <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-twilight" fill="none">
@@ -276,8 +293,8 @@ export default function BillingPage() {
                 {actionLoading
                   ? 'Redirecting to checkout…'
                   : billingInterval === 'annual'
-                    ? 'Subscribe — $590/year →'
-                    : 'Subscribe — $59/month →'}
+                    ? `Subscribe — ${isStudioPlan ? '$1,490' : '$590'}/year →`
+                    : `Subscribe — ${isStudioPlan ? '$149' : '$59'}/month →`}
               </button>
               <p className="mt-4 text-center text-xs text-ink-soft">
                 Secure checkout powered by Stripe.

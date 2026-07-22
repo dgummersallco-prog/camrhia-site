@@ -2,7 +2,7 @@ import Stripe from 'stripe'
 
 export async function POST(request: Request) {
   try {
-    const { email, userId, interval } = await request.json()
+    const { email, userId, interval, plan } = await request.json()
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -10,10 +10,12 @@ export async function POST(request: Request) {
       return Response.json({ error: 'email and userId are required' }, { status: 400 })
     }
 
+    const isStudio = plan === 'studio'
+
     const priceId =
       interval === 'annual'
-        ? process.env.STRIPE_PRICE_ID_ANNUAL!
-        : process.env.STRIPE_PRICE_ID!
+        ? (isStudio ? process.env.STRIPE_PRICE_ID_STUDIO_ANNUAL! : process.env.STRIPE_PRICE_ID_ANNUAL!)
+        : (isStudio ? process.env.STRIPE_PRICE_ID_STUDIO! : process.env.STRIPE_PRICE_ID!)
 
     const origin = new URL(request.url).origin
 
