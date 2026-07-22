@@ -172,6 +172,7 @@ export async function POST(request: Request) {
       // ── Payment went past-due or canceled ──────────────────────────────────
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
+
         if (subscription.status === 'past_due' || subscription.status === 'canceled') {
           const { error } = await supabase
             .from('profiles')
@@ -180,6 +181,28 @@ export async function POST(request: Request) {
 
           if (error) {
             console.error('[stripe webhook] profiles update error (subscription.updated):', error.message)
+          }
+        }
+
+        // Detect plan switches (upgrade/downgrade via Customer Portal) by checking
+        // the current price on the subscription and syncing plan_tier accordingly.
+        const currentPriceId = subscription.items.data[0]?.price?.id
+        const newInterval = subscription.items.data[0]?.price?.recurring?.interval === 'year' ? 'annual' : 'monthly'
+        let newPlanTier: 'solo' | 'studio' | null = null
+        if (currentPriceId === process.env.STRIPE_PRICE_ID_STUDIO || currentPriceId === process.env.STRIPE_PRICE_ID_STUDIO_ANNUAL) {
+          newPlanTier = 'studio'
+        } else if (currentPriceId === process.env.STRIPE_PRICE_ID || currentPriceId === process.env.STRIPE_PRICE_ID_ANNUAL) {
+          newPlanTier = 'solo'
+        }
+
+        if (newPlanTier) {
+          const { error: planError } = await supabase
+            .from('profiles')
+            .update({ plan_tier: newPlanTier, billing_interval: newInterval })
+            .eq('stripe_subscription_id', subscription.id)
+
+          if (planError) {
+            console.error('[stripe webhook] plan_tier sync error (subscription.updated):', planError.message)
           }
         }
         break
