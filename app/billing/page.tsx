@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -29,7 +29,7 @@ const STUDIO_FEATURES = [
 type PageState = 'loading' | 'active' | 'inactive' | 'unauthenticated'
 type BillingInterval = 'monthly' | 'annual'
 
-export default function BillingPage() {
+function BillingPageInner() {
   const searchParams = useSearchParams()
   const isStudioPlan = searchParams.get('plan') === 'studio'
   const [pageState, setPageState] = useState<PageState>('loading')
@@ -304,5 +304,17 @@ export default function BillingPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <p className="text-ink-soft text-sm animate-pulse">Loading…</p>
+      </div>
+    }>
+      <BillingPageInner />
+    </Suspense>
   )
 }
