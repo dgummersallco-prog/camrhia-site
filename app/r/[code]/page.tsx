@@ -81,7 +81,7 @@ export default async function ReferralPage(props: PageProps<"/r/[code]">) {
             </h1>
             <p className="text-ink-soft leading-relaxed mb-8">
               But you can still explore {BRAND_NAME} — the app built for
-              photographers and couples to plan the wedding day, together.
+              photographers and clients to plan the big day, together.
             </p>
             <Link
               href="/"

@@ -58,11 +58,11 @@ function EarningsCalculator() {
   }
   if (count > 10) {
     const t2 = Math.min(count, 25) - 10
-    breakdownParts.push(`${t2} at 30%`)
+    breakdownParts.push(`${t2} at 25%`)
   }
   if (count > 25) {
     const t3 = count - 25
-    breakdownParts.push(`${t3} at 40%`)
+    breakdownParts.push(`${t3} at 30%`)
   }
   const showBreakdown = count > 10
 
@@ -236,8 +236,8 @@ export default function AffiliateSignupPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             {[
               { n: '1', range: 'Referrals 1–10',  rate: '20%', desc: 'of their subscription, every month they stay.' },
-              { n: '2', range: 'Referrals 11–25', rate: '30%', desc: '— automatically, once you cross 10.' },
-              { n: '3', range: 'Referrals 26+',   rate: '40%', desc: '— your permanent rate from here on.' },
+              { n: '2', range: 'Referrals 11–25', rate: '25%', desc: '— automatically, once you cross 10.' },
+              { n: '3', range: 'Referrals 26+',   rate: '30%', desc: '— your permanent rate from here on.' },
             ].map((tier) => (
               <div key={tier.n} className="rounded-2xl border border-line bg-card p-5">
                 <div className="flex items-center gap-2 mb-3">

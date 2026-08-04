@@ -82,10 +82,10 @@ export async function GET(
     'PRODID:-//Camrhia//Calendar Feed//EN',
     'CALSCALE:GREGORIAN',
     'X-WR-CALNAME:Camrhia',
-    'X-WR-CALDESC:Your Camrhia weddings and holds',
+    'X-WR-CALDESC:Your Camrhia sessions and holds',
   ]
 
-  // ── Weddings ──────────────────────────────────────────────────────────────
+  // ── Sessions ──────────────────────────────────────────────────────────────
   const { data: weddings } = await supabase
     .from('weddings')
     .select('id, names, wedding_date')
@@ -95,7 +95,7 @@ export async function GET(
   for (const w of weddings ?? []) {
     const dtstart = icsDate(w.wedding_date)
     const dtend = icsDayAfter(w.wedding_date)
-    const summary = escapeText(`Wedding: ${w.names ?? 'Couple'}`)
+    const summary = escapeText(`Session: ${w.names ?? 'Client'}`)
     lines.push(
       'BEGIN:VEVENT',
       `UID:wedding-${w.id}@camrhia.com`,

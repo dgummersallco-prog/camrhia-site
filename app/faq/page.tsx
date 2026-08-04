@@ -4,7 +4,7 @@ import { BRAND_NAME } from '@/lib/brand'
 
 export const metadata: Metadata = {
   title: `FAQ — ${BRAND_NAME}`,
-  description: 'Answers to common questions about Camrhia for photographers, couples, and affiliates.',
+  description: 'Answers to common questions about Camrhia for photographers, clients, and affiliates.',
 }
 
 // ── Content ───────────────────────────────────────────────────────────────────
@@ -29,22 +29,22 @@ const FAQ_SECTIONS = [
         a: 'Yes. Manage or cancel your subscription anytime from your account — no phone calls, no emails required.',
       },
       {
-        q: 'Do couples pay anything?',
-        a: 'No. Camrhia is completely free for couples. Only photographers have a subscription.',
+        q: 'Do my clients pay anything?',
+        a: 'No. Camrhia is completely free for your clients. Only photographers have a subscription.',
       },
       {
-        q: 'How does the timeline actually work between me and my couple?',
+        q: 'How does the timeline actually work between me and my client?',
         a: "You build it together. Either side can edit it, and both approve changes before they're locked in — so you're always looking at the same plan.",
       },
       {
-        q: 'Does Camrhia process payments between me and my couple?',
+        q: 'Does Camrhia process payments between me and my client?',
         a: 'Not yet — Camrhia tracks your payment schedule and sends reminders, but you collect payment however you already do (Venmo, Zelle, bank transfer, etc.).',
       },
     ],
   },
   {
-    id: 'couples',
-    title: 'For Couples',
+    id: 'clients',
+    title: 'For Clients',
     items: [
       {
         q: 'Is Camrhia free for us?',
@@ -52,7 +52,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Do we need to download anything separate from our photographer?',
-        a: "No, you use the same Camrhia app your photographer uses — you're just connected to their account for your specific wedding.",
+        a: "No, you use the same Camrhia app your photographer uses — you're just connected to their account for your specific session.",
       },
       {
         q: 'Can we edit the timeline ourselves?',
@@ -60,7 +60,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: "What if we haven't booked a photographer yet?",
-        a: "You can start planning your wedding in Camrhia before you've booked anyone, and browse/message photographers directly in the app.",
+        a: "You can start planning your session in Camrhia before you've booked anyone, and browse/message photographers directly in the app.",
       },
     ],
   },
@@ -70,7 +70,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How much can I earn?',
-        a: '20% recurring commission to start, climbing to 30% after 10 referrals and 40% after 25 — for as long as your referrals stay subscribed, with no cap.',
+        a: '20% recurring commission to start, climbing to 25% after 10 referrals and 30% after 25 — for as long as your referrals stay subscribed, with no cap.',
       },
       {
         q: 'Do I need to be a photographer to join?',
@@ -135,7 +135,7 @@ export default function FaqPage() {
             Common questions
           </h1>
           <p className="text-base text-ink-soft leading-relaxed">
-            Questions about Camrhia for photographers, couples, and affiliates.
+            Questions about Camrhia for photographers, clients, and affiliates.
             Something missing?{' '}
             <Link href="/support" className="text-twilight hover:underline" style={{ color: '#3A4A6B' }}>
               Ask us directly.

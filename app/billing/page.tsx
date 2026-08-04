@@ -6,11 +6,11 @@ import { supabase } from '@/lib/supabase'
 import { BRAND_NAME } from '@/lib/brand'
 
 const SOLO_FEATURES = [
-  'Shared wedding timeline — built with your couple',
+  'Shared session timeline — built with your client',
   'Inquiry-to-booking messaging in one place',
   'Contracts that send and sign themselves',
   'Auto-built payment schedules',
-  'One shared calendar per wedding',
+  'One shared calendar per session',
   'Public photographer profile with verified reviews',
   'In-app gallery delivery',
 ]
@@ -18,11 +18,11 @@ const SOLO_FEATURES = [
 const STUDIO_FEATURES = [
   'Everything in the photographer plan',
   'Add photographers and assistants to your team',
-  'Assign specific weddings to specific team members',
+  'Assign specific sessions to specific team members',
   'Hourly or per-shoot pay, tracked automatically',
   'Payroll schedule and payout summaries',
   'Time-off requests with approval workflow',
-  'Per-wedding profitability and labor cost tracking',
+  'Per-session profitability and labor cost tracking',
 ]
 
 type PageState = 'loading' | 'ready' | 'unauthenticated'

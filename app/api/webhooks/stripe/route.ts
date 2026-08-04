@@ -103,8 +103,8 @@ export async function POST(request: Request) {
           const position = (priorCount ?? 0) + 1
           const commissionRate =
             position <= 10 ? 0.20 :
-            position <= 25 ? 0.30 :
-            0.40  // positions 26-50 and beyond all cap at 40%
+            position <= 25 ? 0.25 :
+            0.30  // position 26 and beyond all cap at 30%
 
           const { error: referralActivateError } = await supabase
             .from('referrals')

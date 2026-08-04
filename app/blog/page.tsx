@@ -5,7 +5,7 @@ import { getAllPostMeta, formatPostDate } from '@/lib/posts'
 
 export const metadata: Metadata = {
   title: `Blog — ${BRAND_NAME}`,
-  description: 'Advice and insights for wedding photographers and couples from the Camrhia team.',
+  description: 'Advice and insights for photographers and their clients from the Camrhia team.',
 }
 
 export default function BlogIndexPage() {
@@ -22,7 +22,7 @@ export default function BlogIndexPage() {
             From the team
           </h1>
           <p className="text-base text-ink-soft leading-relaxed">
-            Advice, insights, and updates for wedding photographers and couples.
+            Advice, insights, and updates for photographers and their clients.
           </p>
         </section>
 

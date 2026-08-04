@@ -71,39 +71,39 @@ const PITCHES: { label: string; body: (link: string) => string }[] = [
   {
     label: 'The Pain Point',
     body: (link) =>
-      `Not gonna lie — the thing that finally got me off email and group texts for weddings was almost losing a booking because a couple's retainer got "sent" three weeks ago and just... never showed up in my inbox. Found out four days before the wedding.
+      `Not gonna lie — the thing that finally got me off email and group texts for bookings was almost losing a session because a client's retainer got "sent" three weeks ago and just... never showed up in my inbox. Found out four days before the shoot.
 
-Camrhia tracks all of that automatically now — who's paid, what's due, the whole timeline, built together with the couple instead of chased over text. $59/mo and it already paid for itself in stress alone.
+Camrhia tracks all of that automatically now — who's paid, what's due, the whole timeline, built together with the client instead of chased over text. $59/mo and it already paid for itself in stress alone.
 
 ${link}`,
   },
   {
     label: 'The Peer Recommendation',
     body: (link) =>
-      `A few of us have started using this app called Camrhia for our wedding bookings — it's basically the "shared" version of HoneyBook, where the couple can actually see and help build the timeline with you instead of it living in your head.
+      `A few of us have started using this app called Camrhia for our bookings — it's basically the "shared" version of HoneyBook, where the client can actually see and help build the timeline with you instead of it living in your head.
 
 Figured I'd pass it along since you're always juggling ten things at once too. Free to try for two weeks: ${link}`,
   },
   {
     label: 'The ROI / Math',
     body: (link) =>
-      `Quick math: Camrhia is $59/month. That's less than what most of us lose on ONE couple who ghosts a payment reminder sent over text, or one Saturday morning spent re-explaining a timeline that got lost in a group chat.
+      `Quick math: Camrhia is $59/month. That's less than what most of us lose on ONE client who ghosts a payment reminder sent over text, or one Saturday morning spent re-explaining a timeline that got lost in a group chat.
 
-It auto-builds your payment schedule, sends the reminders, and keeps the whole day's timeline in one shared place with the couple. Worth a look: ${link}`,
+It auto-builds your payment schedule, sends the reminders, and keeps the whole day's timeline in one shared place with the client. Worth a look: ${link}`,
   },
   {
     label: 'The Time Back',
     body: (link) =>
-      `How many hours a week do you spend re-typing the same wedding details into three different places — email, a contract template, a spreadsheet? Camrhia auto-fills all of it the second you book someone.
+      `How many hours a week do you spend re-typing the same session details into three different places — email, a contract template, a spreadsheet? Camrhia auto-fills all of it the second you book someone.
 
 I got probably 2-3 hours back a week just from not re-entering the same info five times. Free 14-day trial, no card needed to start: ${link}`,
   },
   {
     label: 'The Craft / Identity',
     body: (link) =>
-      `You put so much care into how you shoot a wedding — the way you read the light, the way you catch the moment nobody else sees. Feels weird that the business side of it is stuck in group texts and half-updated spreadsheets, right?
+      `You put so much care into how you shoot a session — the way you read the light, the way you catch the moment nobody else sees. Feels weird that the business side of it is stuck in group texts and half-updated spreadsheets, right?
 
-Camrhia is built the same way you shoot — considered, not chaotic. One shared place for the timeline, the contract, the payments, the whole thing, built together with the couple. Feels like it matches the actual work: ${link}`,
+Camrhia is built the same way you shoot — considered, not chaotic. One shared place for the timeline, the contract, the payments, the whole thing, built together with the client. Feels like it matches the actual work: ${link}`,
   },
 ]
 
@@ -492,8 +492,8 @@ export default function AffiliateDashboardPage() {
           const nextPosition = completedCount + 1
           const nextRate =
             nextPosition <= 10 ? 0.20 :
-            nextPosition <= 25 ? 0.30 :
-            0.40
+            nextPosition <= 25 ? 0.25 :
+            0.30
 
           // Progress toward the next tier threshold
           type TierInfo =
@@ -502,9 +502,9 @@ export default function AffiliateDashboardPage() {
 
           const tierInfo: TierInfo =
             completedCount < 10
-              ? { atMax: false, currentPct: 20, nextPct: 30, label: 'Tier 1', toNext: 10 - completedCount, barFill: completedCount / 10 }
+              ? { atMax: false, currentPct: 20, nextPct: 25, label: 'Tier 1', toNext: 10 - completedCount, barFill: completedCount / 10 }
               : completedCount < 25
-              ? { atMax: false, currentPct: 30, nextPct: 40, label: 'Tier 2', toNext: 25 - completedCount, barFill: (completedCount - 10) / 15 }
+              ? { atMax: false, currentPct: 25, nextPct: 30, label: 'Tier 2', toNext: 25 - completedCount, barFill: (completedCount - 10) / 15 }
               : { atMax: true }
 
           return (
@@ -534,7 +534,7 @@ export default function AffiliateDashboardPage() {
                     <div className="h-1.5 rounded-full bg-twilight w-full" style={{ backgroundColor: '#3A4A6B' }} />
                   </div>
                   <p className="text-xs text-ink-soft">
-                    Maximum tier — 40% on every referral, for life.
+                    Maximum tier — 30% on every referral, for life.
                   </p>
                 </div>
               ) : (

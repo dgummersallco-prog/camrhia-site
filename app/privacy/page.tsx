@@ -47,8 +47,8 @@ export default function PrivacyPage() {
               1. Who This Applies To
             </h2>
             <p>
-              Camrhia is a two-sided platform connecting wedding photographers
-              (&ldquo;Photographers&rdquo;) and the couples who hire them (&ldquo;Couples&rdquo;). This
+              Camrhia is a two-sided platform connecting session photographers
+              (&ldquo;Photographers&rdquo;) and the clients who hire them (&ldquo;Clients&rdquo;). This
               policy applies to both, as well as to visitors of our website and
               anyone who signs up for our affiliate program (&ldquo;Affiliates&rdquo;).
             </p>
@@ -64,14 +64,14 @@ export default function PrivacyPage() {
             </h3>
             <ul className="space-y-2 mb-6 list-none">
               {[
-                <><strong>Account information</strong>: name, email address, password, account type (photographer or couple)</>,
+                <><strong>Account information</strong>: name, email address, password, account type (photographer or client)</>,
                 <><strong>Photographer profile information</strong>: studio name, bio, service location, travel radius, style tags, pricing packages, portfolio photos, social media links, website, FAQ content</>,
-                <><strong>Couple information</strong>: names, wedding date, venue, guest count, partner details</>,
-                <><strong>Wedding planning content</strong>: timeline/run-of-show entries, questionnaire answers, shot lists, key contacts, private notes (photographer-only)</>,
-                <><strong>Messages</strong>: content of messages exchanged between photographers and couples within the app</>,
-                <><strong>Photos</strong>: portfolio images, cover photos, profile photos, and wedding gallery photos uploaded to the Service</>,
+                <><strong>Client information</strong>: names, session date, venue, guest count, partner details</>,
+                <><strong>Session planning content</strong>: timeline/run-of-show entries, questionnaire answers, shot lists, key contacts, private notes (photographer-only)</>,
+                <><strong>Messages</strong>: content of messages exchanged between photographers and clients within the app</>,
+                <><strong>Photos</strong>: portfolio images, cover photos, profile photos, and session gallery photos uploaded to the Service</>,
                 <><strong>Contracts and signatures</strong>: contract content and electronic signatures created within the app</>,
-                <><strong>Reviews</strong>: ratings and written testimonials submitted by couples about photographers</>,
+                <><strong>Reviews</strong>: ratings and written testimonials submitted by clients about photographers</>,
                 <><strong>Payment-related information</strong>: once in-app payment processing is available, payment method details will be collected and processed by our third-party payment processor (see Section 5); we do not store full payment card numbers on our own servers</>,
                 <><strong>Affiliate information</strong>: name, email, and payout details for anyone who joins our affiliate program</>,
               ].map((item, i) => (
@@ -107,9 +107,9 @@ export default function PrivacyPage() {
             <ul className="space-y-2 mb-6 list-none">
               {[
                 "Provide, operate, and maintain the Service",
-                "Connect couples with photographers and facilitate bookings",
-                "Enable the shared timeline, questionnaire, contract, payment tracking, messaging, and gallery features between a photographer and their couple",
-                "Send notifications relevant to your account and active weddings (e.g., new messages, timeline updates, payment reminders)",
+                "Connect clients with photographers and facilitate bookings",
+                "Enable the shared timeline, questionnaire, contract, payment tracking, messaging, and gallery features between a photographer and their client",
+                "Send notifications relevant to your account and active sessions (e.g., new messages, timeline updates, payment reminders)",
                 "Process and track referrals through our affiliate program",
                 "Improve, troubleshoot, and develop new features for the Service",
                 "Communicate with you about your account, respond to support requests, and send service-related announcements",
@@ -133,11 +133,11 @@ export default function PrivacyPage() {
             </h2>
 
             <h3 className="font-semibold text-ink mb-2">
-              Between Photographers and Couples
+              Between Photographers and Clients
             </h3>
             <p className="text-sm mb-4">
               Camrhia is built around shared, collaborative data. When a
-              photographer and couple are connected through a wedding, certain
+              photographer and client are connected through a session, certain
               information is visible to both parties by design, including: the
               shared timeline, questionnaire answers, shot list, key contacts,
               contract, payment status, and messages. This sharing is a core
@@ -145,8 +145,8 @@ export default function PrivacyPage() {
               intended.
             </p>
             <p className="text-sm mb-6">
-              A photographer&apos;s <strong>private notes</strong> on a wedding are never
-              shared with the couple.
+              A photographer&apos;s <strong>private notes</strong> on a session are never
+              shared with the client.
             </p>
 
             <h3 className="font-semibold text-ink mb-2">

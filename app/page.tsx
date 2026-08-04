@@ -16,8 +16,8 @@ function Nav() {
           <Link href="#photographers" className="hover:text-ink transition-colors">
             For photographers
           </Link>
-          <Link href="#couples" className="hover:text-ink transition-colors">
-            For couples
+          <Link href="#clients" className="hover:text-ink transition-colors">
+            For clients
           </Link>
           <Link href="/blog" className="hover:text-ink transition-colors">
             Blog
@@ -64,7 +64,7 @@ function TimelineCard() {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="w-full"
-          aria-label="Wedding day timeline arc with four key moments"
+          aria-label="Session day timeline arc with four key moments"
         >
           {/* Arc path */}
           <path
@@ -194,7 +194,7 @@ function TimelineCard() {
         </div>
         <div className="flex items-center gap-2 text-xs text-ink-soft">
           <span className="inline-block w-2.5 h-2.5 rounded-full bg-brass shrink-0" />
-          Edited by the couple
+          Edited by the client
         </div>
       </div>
     </div>
@@ -208,7 +208,7 @@ const photographerFeatures = [
   "Contracts that send and sign themselves",
   "Auto-built payment schedules — no chasing",
   "One shared calendar for every event",
-  "A public profile with reviews from past couples",
+  "A public profile with reviews from past clients",
 ]
 
 const coupleFeatures = [
@@ -289,7 +289,7 @@ function Footer() {
 const steps = [
   {
     n: "1",
-    title: "Book the wedding",
+    title: "Book the session",
     body: "Message, send your packages, confirm the booking. Their details carry over automatically — nothing typed twice.",
   },
   {
@@ -300,12 +300,12 @@ const steps = [
   {
     n: "3",
     title: "Get paid. Get reviewed. Get referred.",
-    body: "Payment reminders send themselves. A finished wedding becomes a five-star review — and your next booking.",
+    body: "Payment reminders send themselves. A finished session becomes a five-star review — and your next booking.",
   },
 ]
 
 const painPoints = [
-  "The couple doesn't know if their retainer actually went through.",
+  "The client doesn't know if their retainer actually went through.",
   "The timeline lives in three different text threads — and none of them agree.",
   "The contract's signed... somewhere. Nobody's totally sure where.",
 ]
@@ -318,7 +318,7 @@ const jsonLd = {
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
   description:
-    'One shared app for the wedding photographer and the couple — a real-time timeline, contracts, payments, and gallery delivery, all in one place.',
+    'One shared app for the photographer and their client — a real-time timeline, contracts, payments, and gallery delivery, all in one place.',
   offers: {
     '@type': 'Offer',
     price: '59',
@@ -349,11 +349,11 @@ export default function Home() {
             Now in early access
           </p>
           <h1 className="font-fraunces text-5xl md:text-6xl lg:text-7xl font-semibold text-ink leading-tight tracking-tight mb-6">
-            The wedding day,{" "}
+            The big day,{" "}
             <em className="not-italic italic text-twilight">planned together.</em>
           </h1>
           <p className="text-base md:text-lg text-ink-soft max-w-2xl mx-auto leading-relaxed mb-10">
-            Wedding photographers juggle five apps to run one wedding. Couples
+            Photographers juggle five apps to run one session. Clients
             are stuck guessing what&apos;s actually been done. Camrhia is the one
             place you both actually open.
           </p>
@@ -375,7 +375,7 @@ export default function Home() {
               Sound familiar?
             </p>
             <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink max-w-2xl mx-auto leading-snug">
-              Somewhere between the inquiry and the wedding day, everyone loses
+              Somewhere between the inquiry and the big day, everyone loses
               the thread.
             </h2>
           </div>
@@ -403,7 +403,7 @@ export default function Home() {
             the relationship.
           </h2>
           <p className="text-base md:text-lg text-ink-soft max-w-2xl mx-auto leading-relaxed">
-            That&apos;s the part nobody else gets right — a wedding isn&apos;t one
+            That&apos;s the part nobody else gets right — a session isn&apos;t one
             person&apos;s to-do list. It&apos;s two people planning one day, together,
             and the tools should reflect that.
           </p>
@@ -432,7 +432,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── 6. For photographers / For couples ────────────────────────── */}
+        {/* ── 6. For photographers / For clients ────────────────────────── */}
         <section className="mx-auto max-w-6xl px-6 pb-20">
           <div className="grid md:grid-cols-2 gap-6">
             {/* Photographers */}
@@ -467,15 +467,15 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Couples */}
+            {/* Clients */}
             <div
-              id="couples"
+              id="clients"
               className="rounded-2xl bg-card border border-line overflow-hidden"
             >
               <div className="h-1 bg-brass" />
               <div className="p-8">
                 <p className="font-mono text-xs tracking-widest uppercase text-brass mb-3">
-                  For couples
+                  For clients
                 </p>
                 <h2 className="font-fraunces text-2xl font-semibold text-ink mb-1">
                   Your day, in your hands.
@@ -505,13 +505,13 @@ export default function Home() {
         <section className="mx-auto max-w-6xl px-6 pb-20">
           <div className="rounded-2xl border border-line bg-card px-8 py-14 md:px-14 text-center">
             <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
-              From real weddings
+              From real sessions
             </p>
             <h2 className="font-fraunces text-3xl font-semibold text-ink mb-4">
               The stories are still being written.
             </h2>
             <p className="text-ink-soft leading-relaxed max-w-lg mx-auto mb-8">
-              Camrhia is in early access — the first reviews from real couples
+              Camrhia is in early access — the first reviews from real clients
               and photographers will show up here soon. Want to be one of the
               first?
             </p>

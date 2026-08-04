@@ -56,9 +56,9 @@ export default function TermsPage() {
               1. Overview
             </h2>
             <p className="text-sm mb-4">
-              Camrhia is a platform connecting wedding photographers
-              (&ldquo;Photographers&rdquo;) and the couples who hire them (&ldquo;Couples&rdquo;) to
-              plan, manage, and document a wedding together. Camrhia provides
+              Camrhia is a platform connecting session photographers
+              (&ldquo;Photographers&rdquo;) and the clients who hire them (&ldquo;Clients&rdquo;) to
+              plan, manage, and document a session together. Camrhia provides
               tools including messaging, booking, contracts, shared timelines,
               questionnaires, payment tracking, and photo galleries. Camrhia also
               offers an affiliate referral program to third parties
@@ -68,13 +68,13 @@ export default function TermsPage() {
               Camrhia is a software platform.{" "}
               <strong>
                 We are not a party to the photography services agreement between
-                a Photographer and a Couple.
+                a Photographer and a Client.
               </strong>{" "}
               Any contract, payment arrangement, or service commitment made
-              between a Photographer and Couple is solely between them; Camrhia
+              between a Photographer and Client is solely between them; Camrhia
               provides tools to facilitate that relationship but does not
               guarantee the quality, availability, or performance of any
-              Photographer&apos;s services, nor the accuracy of any Couple&apos;s
+              Photographer&apos;s services, nor the accuracy of any Client&apos;s
               information.
             </p>
           </section>
@@ -117,7 +117,7 @@ export default function TermsPage() {
               your current billing period, and no partial refunds are provided
               for unused time, except as required by law.
             </p>
-            <p className="text-sm">Couple accounts are free to use.</p>
+            <p className="text-sm">Client accounts are free to use.</p>
           </section>
 
           <section>
@@ -135,7 +135,7 @@ export default function TermsPage() {
               Content, you grant Camrhia a non-exclusive, worldwide, royalty-free
               license to host, store, display, and transmit that content as
               necessary to operate and provide the Service (for example,
-              displaying a photographer&apos;s portfolio to a couple, or a couple&apos;s
+              displaying a photographer&apos;s portfolio to a client, or a client&apos;s
               timeline to their photographer).
             </p>
             <p className="text-sm mb-4">
@@ -143,7 +143,7 @@ export default function TermsPage() {
               including having the rights to upload it. You agree not to upload
               content that infringes on someone else&apos;s intellectual property,
               violates any law, or that you do not have permission to share (for
-              example, wedding photos owned by a client without their consent,
+              example, session photos owned by a client without their consent,
               where applicable).
             </p>
             <p className="text-sm">
@@ -158,10 +158,10 @@ export default function TermsPage() {
               6. Reviews
             </h2>
             <p className="text-sm">
-              Couples may submit reviews of Photographers they have worked with
+              Clients may submit reviews of Photographers they have worked with
               through the Service. Reviews must be honest, based on genuine
-              experience, and submitted by the actual couple associated with that
-              wedding. Photographers may choose whether to publish an individual
+              experience, and submitted by the actual client associated with that
+              session. Photographers may choose whether to publish an individual
               review to their public profile, but Photographers may not edit,
               rewrite, or fabricate the content of a review. We reserve the
               right to remove reviews that are fraudulent, abusive, or otherwise
@@ -190,13 +190,13 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-fraunces text-2xl font-semibold text-ink mb-4">
-              8. Payments (Photographer-Couple Transactions)
+              8. Payments (Photographer-Client Transactions)
             </h2>
             <p className="text-sm">
               Camrhia may provide tools to track payment schedules between a
-              Photographer and Couple. Until in-app payment processing is
+              Photographer and Client. Until in-app payment processing is
               available, any actual exchange of payment for photography services
-              occurs directly between the Photographer and Couple, outside of the
+              occurs directly between the Photographer and Client, outside of the
               Service, and Camrhia is not responsible for that transaction. Once
               in-app payments are available, they will be processed by a
               third-party payment processor, and additional terms specific to
@@ -251,9 +251,9 @@ export default function TermsPage() {
             </p>
             <p className="text-sm uppercase tracking-wide text-ink-soft">
               Camrhia does not guarantee the quality, reliability, or conduct of
-              any Photographer or Couple using the Service. Any dispute regarding
-              photography services, payment, or the underlying wedding agreement
-              is between the Photographer and Couple.
+              any Photographer or Client using the Service. Any dispute regarding
+              photography services, payment, or the underlying session agreement
+              is between the Photographer and Client.
             </p>
           </section>
 
