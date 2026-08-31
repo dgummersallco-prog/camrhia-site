@@ -3,6 +3,7 @@ import { BRAND_NAME } from "@/lib/brand"
 import Link from "next/link"
 import React from "react"
 import { FaqAccordion } from "./FaqAccordion"
+import { DateCheckWidget } from "./DateCheckWidget"
 
 // Same shape geometry as the app's lib/customShapes.ts — kept in sync
 // manually since this is a separate codebase from the mobile app.
@@ -204,6 +205,20 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
     shadowOffsetX: r.paragraph_shadow_offset_x, shadowOffsetY: r.paragraph_shadow_offset_y, shadowBlur: r.paragraph_shadow_blur,
     fallbackFont: "system-ui, sans-serif", fallbackColor: '#4A4A4A', fallbackSize: 15,
   })
+  // Same precedence as the app's getSectionParagraphStyle: a per-key override
+  // in section_styles wins if the photographer set one for this specific
+  // element, otherwise fall back to the general paragraph style above.
+  function sectionParagraphStyle(key: string): React.CSSProperties {
+    const custom = r.section_styles?.[key]
+    const hasCustom = custom && (custom.font || custom.size || custom.color || custom.bold || custom.italic || custom.shadow)
+    if (!hasCustom) return paragraphStyle
+    return textStyle({
+      font: custom.font, size: custom.size, color: custom.color, bold: custom.bold, italic: custom.italic,
+      align: custom.align, shadow: custom.shadow, shadowColor: custom.shadowColor,
+      shadowOffsetX: custom.shadowOffsetX, shadowOffsetY: custom.shadowOffsetY, shadowBlur: custom.shadowBlur,
+      fallbackFont: "system-ui, sans-serif", fallbackColor: '#4A4A4A', fallbackSize: 15,
+    })
+  }
 
   const fontLinks = [...usedFontKeys].map(k => FONT_MAP[k]?.family).filter(Boolean)
 
@@ -243,7 +258,47 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                   <h2 style={{ ...sectionTitleStyle('about'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.about || 'About'}
                   </h2>
-                  <p style={paragraphStyle}>{r.bio || ''}</p>
+                  <p style={sectionParagraphStyle('about_paragraph')}>{r.bio || ''}</p>
+                </div>
+              )
+            }
+
+            if (key === 'openings' && r.show_availability_public !== false) {
+              return (
+                <div key="openings" style={spacingStyle}>
+                  <h2 style={{ ...sectionTitleStyle('openings'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
+                    {sectionTitles.openings || 'Openings'}
+                  </h2>
+                  {r.openings_display_mode === 'badge' ? (
+                    <div style={{ display: 'flex', justifyContent: r.openings_badge_align === 'left' ? 'flex-start' : r.openings_badge_align === 'right' ? 'flex-end' : 'center' }}>
+                      <span style={{
+                        display: 'inline-block', padding: '10px 20px', borderRadius: r.openings_badge_corner_radius ?? 999,
+                        backgroundColor: r.openings_badge_bg_gradient_enabled ? undefined : (r.openings_badge_bg_color ?? '#5B6B8C'),
+                        backgroundImage: r.openings_badge_bg_gradient_enabled
+                          ? `linear-gradient(${r.openings_badge_bg_gradient_direction === 'horizontal' ? '90deg' : '180deg'}, ${r.openings_badge_bg_gradient_start ?? '#fff'}, ${r.openings_badge_bg_gradient_end ?? '#191E29'})`
+                          : undefined,
+                        fontFamily: fontFamilyFor(r.openings_badge_font, "'Fraunces', serif"),
+                        fontSize: r.openings_badge_font_size ?? 16,
+                        color: r.openings_badge_color ?? '#fff',
+                      }}>
+                        {r.openings_badge_text || 'Booking Now'}
+                      </span>
+                    </div>
+                  ) : (
+                    <DateCheckWidget
+                      photographerId={r.photographer_id}
+                      accent="#5B6B8C"
+                      dayColor={r.openings_cal_day_color}
+                      selectedColor={r.openings_cal_selected_color}
+                      monthColor={r.openings_cal_month_color}
+                      availableColor={r.openings_cal_available_color}
+                      unavailableColor={r.openings_cal_unavailable_color}
+                      resultTextColor={r.openings_cal_result_text_color}
+                      fontFamily={fontFamilyFor(r.openings_cal_font, "'Playfair Display', serif")}
+                      fontSize={r.openings_cal_font_size}
+                      bgColor={r.openings_cal_bg_color}
+                    />
+                  )}
                 </div>
               )
             }
@@ -373,7 +428,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                   <h2 style={{ ...sectionTitleStyle('pricing'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.pricing || 'Packages'}
                   </h2>
-                  <Link href={`/p/${r.public_token}/packages`} style={{
+                  <Link href={`/p/${token}/packages`} style={{
                     position: 'relative', display: 'flex', width: '100%', aspectRatio: '16/9', borderRadius: 12, overflow: 'hidden',
                     backgroundColor: r.portfolio_bg_color ?? '#fff', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center', border: hasCoverPhoto ? undefined : '1px solid #eee',
@@ -443,8 +498,8 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                   </h2>
                   <FaqAccordion
                     items={faqItems}
-                    questionStyle={{ fontFamily: "system-ui, sans-serif", fontWeight: 600, fontSize: 14.5, color: '#2B2B2B' }}
-                    answerStyle={{ fontFamily: "system-ui, sans-serif", fontSize: 14, color: '#6B6B6B', lineHeight: 1.5 }}
+                    questionStyle={sectionParagraphStyle('faq_paragraph')}
+                    answerStyle={sectionParagraphStyle('faq_answer')}
                   />
                 </div>
               )

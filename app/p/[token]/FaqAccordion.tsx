@@ -8,7 +8,7 @@ export function FaqAccordion({ items, questionStyle, answerStyle }: {
 }) {
   const [expanded, setExpanded] = useState<number | null>(null)
   return (
-    <div style={{ backgroundColor: '#fff', borderRadius: 12, padding: '4px 20px' }}>
+    <div>
       {items.map((item, i) => (
         <div key={i} style={{ borderBottom: i < items.length - 1 ? '1px solid #eee' : undefined, padding: '14px 0' }}>
           <button
