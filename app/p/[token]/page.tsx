@@ -243,9 +243,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                   <h2 style={{ ...sectionTitleStyle('about'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.about || 'About'}
                   </h2>
-                  <div style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20 }}>
-                    <p style={paragraphStyle}>{r.bio || ''}</p>
-                  </div>
+                  <p style={paragraphStyle}>{r.bio || ''}</p>
                 </div>
               )
             }
@@ -267,22 +265,30 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                       // Custom layout — photographer-positioned shapes, each with its own
                       // size/position/shape-type, scaled to fit this page's content width.
                       if (layoutKey === 'custom') {
-                        const CONTENT_W = 592 // 640 maxWidth minus 24px padding each side
-                        const savedW = w.custom_card_width ?? CONTENT_W
-                        const savedH = w.custom_card_height ?? CONTENT_W
-                        const scale = CONTENT_W / savedW
+                        const savedW = w.custom_card_width ?? 592
+                        const savedH = w.custom_card_height ?? savedW
+                        // Percentages of the saved canvas, not fixed pixels — this is what
+                        // lets the whole layout scale correctly to any actual screen width
+                        // (phone, tablet, desktop) via the responsive container below,
+                        // instead of overflowing on screens narrower than the original design.
                         const deepestBottom = photos.reduce((max: number, p: any) => Math.max(max, (p.pos_y ?? 0) + (p.shape_height ?? 100)), 0)
-                        const canvasH = Math.floor(Math.max(savedH, deepestBottom) * scale)
+                        const canvasAspect = savedW / Math.max(savedH, deepestBottom)
                         return (
                           <div key={w.id}>
                             {w.title && <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 20, marginBottom: 10 }}>{w.title}</h3>}
-                            <div style={{ position: 'relative', width: CONTENT_W, height: canvasH, margin: '0 auto' }}>
+                            <div style={{ position: 'relative', width: '100%', aspectRatio: String(canvasAspect) }}>
                               {photos.map((photo: any) => {
                                 const shapeType = photo.shape_type ?? 'square'
-                                const shapeW = Math.floor((photo.shape_width ?? 100) * scale)
-                                const shapeH = Math.floor((photo.shape_height ?? 100) * scale)
-                                const shapeX = Math.floor((photo.pos_x ?? 0) * scale)
-                                const shapeY = Math.floor((photo.pos_y ?? 0) * scale)
+                                const shapeWPct = ((photo.shape_width ?? 100) / savedW) * 100
+                                const shapeHPct = ((photo.shape_height ?? 100) / Math.max(savedH, deepestBottom)) * 100
+                                const shapeXPct = ((photo.pos_x ?? 0) / savedW) * 100
+                                const shapeYPct = ((photo.pos_y ?? 0) / Math.max(savedH, deepestBottom)) * 100
+                                // SVG shapes still need real pixel dimensions for their
+                                // viewBox/clip math — approximate using the saved design
+                                // size directly (shape proportions are preserved either
+                                // way; only the on-screen container is percentage-based).
+                                const shapeW = Math.floor(photo.shape_width ?? 100)
+                                const shapeH = Math.floor(photo.shape_height ?? 100)
                                 const uri = photoUrl(photo.storage_path)
                                 const isPolygon = ['triangle','diamond','hexagon','octagon','pentagon','star','cross','parallelogram'].includes(shapeType)
                                 const isOval = shapeType === 'oval'
@@ -295,7 +301,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                                 if (isRect || isCircle) {
                                   return (
                                     <div key={photo.id} style={{
-                                      position: 'absolute', left: shapeX, top: shapeY, width: shapeW, height: shapeH,
+                                      position: 'absolute', left: `${shapeXPct}%`, top: `${shapeYPct}%`, width: `${shapeWPct}%`, height: `${shapeHPct}%`,
                                       borderRadius: isCircle ? '50%' : radius, overflow: 'hidden',
                                       border: photo.border_width ? `${photo.border_width}px solid ${photo.border_color || 'transparent'}` : undefined,
                                     }}>
@@ -316,8 +322,8 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                                   clipShape = <path d={HEART_PATH_D} transform={getHeartTransform(shapeW, shapeH)} />
                                 }
                                 return (
-                                  <div key={photo.id} style={{ position: 'absolute', left: shapeX, top: shapeY, width: shapeW, height: shapeH }}>
-                                    <svg width={shapeW} height={shapeH}>
+                                  <div key={photo.id} style={{ position: 'absolute', left: `${shapeXPct}%`, top: `${shapeYPct}%`, width: `${shapeWPct}%`, height: `${shapeHPct}%` }}>
+                                    <svg width="100%" height="100%" viewBox={`0 0 ${shapeW} ${shapeH}`} preserveAspectRatio="none">
                                       <defs><clipPath id={clipId}>{clipShape}</clipPath></defs>
                                       {uri && (
                                         <image href={uri} width={shapeW} height={shapeH} preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clipId})`} />
@@ -362,17 +368,16 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
               const hasPackages = (r.packages ?? []).some((p: any) => p.show_public !== false && !!p.page_id)
               if (!(hasCustomImages || hasPackages) || r.show_pricing_public === false) return null
               const hasCoverPhoto = !!r.pricing_cover_image_path
-              const publicPackages = (r.packages ?? []).filter((p: any) => p.show_public !== false)
               return (
-                <div key="pricing" id="pricing-section" style={spacingStyle}>
+                <div key="pricing" style={spacingStyle}>
                   <h2 style={{ ...sectionTitleStyle('pricing'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.pricing || 'Packages'}
                   </h2>
-                  <div style={{
-                    position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: 12, overflow: 'hidden',
-                    backgroundColor: r.portfolio_bg_color ?? '#fff', display: 'flex', flexDirection: 'column',
+                  <Link href={`/p/${r.public_token}/packages`} style={{
+                    position: 'relative', display: 'flex', width: '100%', aspectRatio: '16/9', borderRadius: 12, overflow: 'hidden',
+                    backgroundColor: r.portfolio_bg_color ?? '#fff', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center', border: hasCoverPhoto ? undefined : '1px solid #eee',
-                    marginBottom: 24,
+                    textDecoration: 'none',
                   }}>
                     {hasCoverPhoto && photoUrl(r.pricing_cover_image_path) && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -393,19 +398,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                       color: r.pricing_cover_subtitle_color ?? (hasCoverPhoto ? 'rgba(255,255,255,0.85)' : '#8A8A8A'),
                       textAlign: 'center', padding: '0 20px', marginTop: 4,
                     }}>{r.pricing_cover_subtitle || ''}</p>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {publicPackages.map((pkg: any) => (
-                      <div key={pkg.id} style={{ backgroundColor: '#fff', borderRadius: 12, padding: 18 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-                          <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 17, margin: 0 }}>{pkg.name}</h3>
-                          {pkg.price && <span style={{ fontFamily: "system-ui, sans-serif", fontWeight: 600, fontSize: 15 }}>{pkg.price}</span>}
-                        </div>
-                        {pkg.covers && <p style={{ fontFamily: "system-ui, sans-serif", fontSize: 13, color: '#8A8A8A', marginTop: 4 }}>{pkg.covers}</p>}
-                        {pkg.detail && <p style={{ fontFamily: "system-ui, sans-serif", fontSize: 14, color: '#4A4A4A', marginTop: 8, lineHeight: 1.5 }}>{pkg.detail}</p>}
-                      </div>
-                    ))}
-                  </div>
+                  </Link>
                 </div>
               )
             }
