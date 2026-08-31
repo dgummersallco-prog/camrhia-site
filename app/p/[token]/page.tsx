@@ -402,21 +402,149 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                         )
                       }
 
-                      // Preset layouts — clean responsive grid (exact preset arrangement
-                      // is app-only for now; this shows every photo attractively).
-                      return (
-                        <div key={w.id}>
-                          {w.title && <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 20, marginBottom: 10 }}>{w.title}</h3>}
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-                            {photos.map((photo: any) => {
-                              const uri = photoUrl(photo.storage_path)
-                              return (
-                                <div key={photo.id} style={{ aspectRatio: '1', borderRadius: 10, overflow: 'hidden', backgroundColor: '#E5E1DB' }}>
-                                  {uri && <img src={uri} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                                </div>
-                              )
-                            })}
+                      // Preset layouts — same proportions as the app (which computes
+                      // fixed pixel sizes from its own screen width), converted to
+                      // percentage widths + CSS aspect-ratio so they scale responsively
+                      // here instead, without distorting the intended proportions.
+                      const titleEl = w.title && <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 20, marginBottom: 10 }}>{w.title}</h3>
+                      const GAP = 10
+                      const img = (photo: any, style: React.CSSProperties, idx?: number) => {
+                        const uri = photoUrl(photo?.storage_path)
+                        if (!photo) return null
+                        return (
+                          <div key={photo.id} style={{ overflow: 'hidden', backgroundColor: '#E5E1DB', borderRadius: 10, ...style }}>
+                            {uri && <img src={uri} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                           </div>
+                        )
+                      }
+
+                      if (layoutKey === 'diptych_solo_portrait' || layoutKey === 'triptych_solo_portrait' || layoutKey === 'triptych_solo_landscape') {
+                        const panelCount = layoutKey === 'diptych_solo_portrait' ? 2 : 3
+                        const aspect = layoutKey === 'triptych_solo_landscape' ? panelCount / 0.67 : panelCount / 1.5
+                        return (
+                          <div key={w.id}>{titleEl}
+                            <div style={{ display: 'flex', gap: GAP, width: '100%', aspectRatio: String(aspect) }}>
+                              {Array.from({ length: panelCount }).map((_, i) => img(photos[0], { flex: 1, height: '100%' }, i))}
+                            </div>
+                          </div>
+                        )
+                      }
+                      if (layoutKey === 'full_portrait' || layoutKey === 'full_landscape') {
+                        return <div key={w.id}>{titleEl}{img(photos[0], { width: '100%', aspectRatio: layoutKey === 'full_portrait' ? '2/3' : '16/9' })}</div>
+                      }
+                      if (layoutKey === 'solo_square') {
+                        return <div key={w.id}>{titleEl}{img(photos[0], { width: '100%', aspectRatio: '1' })}</div>
+                      }
+                      if (layoutKey === 'offset_quad_squares') {
+                        const four = photos.slice(0, 4)
+                        const t = 42 // % of container width
+                        return (
+                          <div key={w.id}>{titleEl}
+                            <div style={{ position: 'relative', width: '100%', aspectRatio: String(100 / (t * 2.35)) }}>
+                              {four.map((photo: any, idx: number) => img(photo, {
+                                position: 'absolute', width: `${t}%`, aspectRatio: '1',
+                                top: `${idx * ((235 - t) / 3)}%`, left: `${idx * ((100 - t) / 3)}%`,
+                              }, idx))}
+                            </div>
+                          </div>
+                        )
+                      }
+                      if (layoutKey === 'diptych') {
+                        const two = photos.slice(0, 2)
+                        const ratio = w.height_ratio ?? 1.5
+                        return <div key={w.id}>{titleEl}<div style={{ display: 'flex', gap: GAP }}>{two.map((p: any) => img(p, { flex: 1, aspectRatio: String(1 / ratio) }))}</div></div>
+                      }
+                      if (layoutKey === 'triptych') {
+                        const three = photos.slice(0, 3)
+                        const ratio = w.height_ratio ?? 1.5
+                        return <div key={w.id}>{titleEl}<div style={{ display: 'flex', gap: GAP }}>{three.map((p: any) => img(p, { flex: 1, aspectRatio: String(1 / ratio) }))}</div></div>
+                      }
+                      if (layoutKey === 'grid_6' || layoutKey === 'two_pair') {
+                        const six = photos.slice(0, layoutKey === 'grid_6' ? 6 : 4)
+                        return <div key={w.id}>{titleEl}<div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: GAP }}>{six.map((p: any) => img(p, { aspectRatio: '1' }))}</div></div>
+                      }
+                      if (layoutKey === 'circle') {
+                        return <div key={w.id}>{titleEl}{img(photos[0], { width: '100%', aspectRatio: '1', borderRadius: '50%' })}</div>
+                      }
+                      if (layoutKey === 'arch') {
+                        return <div key={w.id}>{titleEl}{img(photos[0], { width: '100%', aspectRatio: '1/1.3', borderRadius: '50% 50% 4px 4px / 50% 50% 4px 4px' })}</div>
+                      }
+                      if (layoutKey === 'layered_frame') {
+                        const two = photos.slice(0, 2)
+                        return (
+                          <div key={w.id}>{titleEl}
+                            <div style={{ position: 'relative', width: '92%', aspectRatio: '0.6' }}>
+                              {two[0] && img(two[0], { position: 'absolute', top: 0, right: 0, width: '78%', height: '100%' }, 0)}
+                              {two[1] && img(two[1], { position: 'absolute', top: '35%', left: 0, width: '40%', aspectRatio: '1', border: '4px solid #fff' }, 1)}
+                            </div>
+                          </div>
+                        )
+                      }
+                      if (layoutKey === 'polaroid_scatter') {
+                        const four = photos.slice(0, 4)
+                        const pw = 34, ph = pw * 1.15
+                        const positions = [{ top: 3.8, left: 3.8, rotate: -8 }, { top: 0, left: 35, rotate: 6 }, { top: 40, left: 10, rotate: 4 }, { top: 35, left: 50, rotate: -5 }]
+                        return (
+                          <div key={w.id}>{titleEl}
+                            <div style={{ position: 'relative', width: '100%', aspectRatio: '1' }}>
+                              {four.map((photo: any, idx: number) => img(photo, {
+                                position: 'absolute', width: `${pw}%`, aspectRatio: `${pw}/${ph}`,
+                                top: `${positions[idx].top}%`, left: `${positions[idx].left}%`,
+                                transform: `rotate(${positions[idx].rotate}deg)`,
+                              }, idx))}
+                            </div>
+                          </div>
+                        )
+                      }
+                      if (layoutKey === 'two_pair_mix') {
+                        const four = photos.slice(0, 4)
+                        return (
+                          <div key={w.id}>{titleEl}
+                            <div style={{ display: 'flex', gap: GAP }}>
+                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: GAP }}>
+                                {four[0] && img(four[0], { aspectRatio: '1' }, 0)}
+                                {four[2] && img(four[2], { aspectRatio: '1/1.5' }, 2)}
+                              </div>
+                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: GAP }}>
+                                {four[1] && img(four[1], { aspectRatio: '1/1.5' }, 1)}
+                                {four[3] && img(four[3], { aspectRatio: '1' }, 3)}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+                      if (layoutKey === 'offset_duo' || layoutKey === 'offset_duo_portraits') {
+                        const isPortrait = layoutKey === 'offset_duo_portraits'
+                        const tileW = isPortrait ? 66 : 62
+                        const tileAspect = isPortrait ? tileW / (tileW * 1.4) : 1
+                        const two = photos.slice(0, 2)
+                        return (
+                          <div key={w.id}>{titleEl}
+                            <div style={{ position: 'relative', width: '100%', aspectRatio: String(100 / (tileW * (isPortrait ? 1.4 : 1) * 1.5)) }}>
+                              {two[0] && img(two[0], { position: 'absolute', top: 0, left: 0, width: `${tileW}%`, aspectRatio: String(tileAspect) }, 0)}
+                              {two[1] && img(two[1], { position: 'absolute', bottom: 0, right: 0, width: `${tileW}%`, aspectRatio: String(tileAspect) }, 1)}
+                            </div>
+                          </div>
+                        )
+                      }
+                      if (layoutKey === 'hero_5' || layoutKey === 'hero_7') {
+                        const count = layoutKey === 'hero_5' ? 5 : 7
+                        const hero = photos[0]
+                        const grid = photos.slice(1, count)
+                        return (
+                          <div key={w.id}>{titleEl}
+                            {img(hero, { width: '100%', aspectRatio: '3/2', marginBottom: GAP }, 0)}
+                            {grid.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: GAP }}>{grid.map((p: any, i: number) => img(p, { aspectRatio: '1' }, i + 1))}</div>}
+                          </div>
+                        )
+                      }
+                      // Hero 3 (default)
+                      const hero = photos[0]
+                      const grid = photos.slice(1, 7)
+                      return (
+                        <div key={w.id}>{titleEl}
+                          {img(hero, { width: '100%', aspectRatio: '3/2', marginBottom: GAP }, 0)}
+                          {grid.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: GAP }}>{grid.map((p: any, i: number) => img(p, { aspectRatio: '1' }, i + 1))}</div>}
                         </div>
                       )
                     })}
