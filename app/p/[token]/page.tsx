@@ -161,7 +161,14 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
     : ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 
   const sectionTitles: Record<string, string> = r.section_titles ?? {}
-  const usedFontKeys = new Set<string>([r.title_font, r.location_font, r.paragraph_font, r.master_section_font].filter(Boolean))
+  // Every per-section style can carry its own independent font choice — not
+  // just the general title/location/paragraph fields — so we need to scan
+  // section_styles for any additional fonts a photographer set on a specific
+  // element (like the FAQ or Links text), or that font never loads on web.
+  const usedFontKeys = new Set<string>([r.title_font, r.location_font, r.paragraph_font, r.master_section_font, r.openings_badge_font, r.openings_cal_font, r.pricing_cover_title_font, r.pricing_cover_subtitle_font, r.pricing_pamphlet_font, r.pricing_list_font].filter(Boolean))
+  for (const style of Object.values(r.section_styles ?? {})) {
+    if ((style as any)?.font) usedFontKeys.add((style as any).font)
+  }
 
   const titleStyle = textStyle({
     font: r.title_font, size: r.title_font_size, color: r.title_color,
@@ -538,7 +545,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                       </div>
                     )}
                     {websiteUrl && (
-                      <a href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "system-ui, sans-serif", fontSize: 14, color: '#4A4A4A' }}>
+                      <a href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`} target="_blank" rel="noopener noreferrer" style={sectionParagraphStyle('links_paragraph')}>
                         {websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                       </a>
                     )}
