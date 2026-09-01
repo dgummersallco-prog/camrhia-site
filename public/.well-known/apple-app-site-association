@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "LHMN5KMCSW.com.dgummersallco.camrhia",
+        "paths": ["/confirm-email", "/confirm-email?*"]
+      }
+    ]
+  }
+}
