@@ -420,7 +420,11 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
 
                       if (layoutKey === 'diptych_solo_portrait' || layoutKey === 'triptych_solo_portrait' || layoutKey === 'triptych_solo_landscape') {
                         const panelCount = layoutKey === 'diptych_solo_portrait' ? 2 : 3
-                        const aspect = layoutKey === 'triptych_solo_landscape' ? panelCount / 0.67 : panelCount / 1.5
+                        // The container's own width:height ratio doesn't depend on panel
+                        // count — that only affects how the same total width gets split
+                        // into columns. Fixed bug: this previously multiplied by panelCount,
+                        // which stretched the whole row taller than it should be.
+                        const aspect = 1 / (layoutKey === 'triptych_solo_landscape' ? 0.67 : 1.5)
                         return (
                           <div key={w.id}>{titleEl}
                             <div style={{ display: 'flex', gap: GAP, width: '100%', aspectRatio: String(aspect) }}>
