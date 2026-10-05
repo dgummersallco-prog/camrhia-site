@@ -5,7 +5,7 @@ import { BRAND_NAME } from "@/lib/brand"
 export const dynamic = "force-dynamic"
 
 // Set NEXT_PUBLIC_APP_STORE_URL in Netlify once the App Store listing is live.
-const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? ""
+const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL || "https://apps.apple.com/app/id6800011162"
 
 type InviteStatus = "open" | "claimed" | "invalid" | "unknown"
 
