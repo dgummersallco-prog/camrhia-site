@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { BRAND_NAME } from "@/lib/brand"
+import CopyCode from "./CopyCode"
 
 export const dynamic = "force-dynamic"
 
@@ -67,14 +68,13 @@ export default async function SessionInvitePage(props: { params: Promise<{ code:
             <h1 className="font-fraunces text-3xl font-semibold text-ink mb-3">
               Your photographer invited you to {BRAND_NAME}!
             </h1>
-            <p className="text-ink-soft leading-relaxed mb-6">
-              Download the app, create your account, and enter this code when asked. It connects you straight to your session.
-            </p>
+            <ol className="text-left text-ink-soft leading-relaxed mb-6 space-y-2 list-decimal pl-6">
+              <li>Copy your session code below.</li>
+              <li>Download {BRAND_NAME} and tap <strong className="text-ink">Create account</strong>.</li>
+              <li>Choose <strong className="text-ink">&ldquo;My photographer invited me&rdquo;</strong> and paste the code.</li>
+            </ol>
 
-            <div className="rounded-2xl border border-line bg-paper-deep px-6 py-5 mb-8">
-              <p className="text-xs uppercase tracking-widest text-ink-soft font-mono mb-2">Your session code</p>
-              <p className="font-mono text-4xl font-semibold tracking-[0.25em] text-ink">{display}</p>
-            </div>
+            <CopyCode code={display} />
 
             {downloadButton}
             <p className="text-xs text-ink-soft mb-6">Available on iOS. Android coming.</p>
