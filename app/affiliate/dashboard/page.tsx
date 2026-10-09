@@ -117,6 +117,8 @@ export default function AffiliateDashboardPage() {
   const [ledger, setLedger] = useState<LedgerEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [needsActivation, setNeedsActivation] = useState(false)
+  const [activating, setActivating] = useState(false)
 
   // Copy link state
   const [copied, setCopied] = useState(false)
@@ -160,7 +162,10 @@ export default function AffiliateDashboardPage() {
         .eq('id', userId)
         .single()
 
-      if (affiliateError) throw new Error('No affiliate account is linked to this login. If you use Camrhia as a photographer, create your affiliate account with a different email.')
+      if (affiliateError) {
+        setNeedsActivation(true)
+        return
+      }
       setAffiliate(affiliateData)
       setCodeInput(affiliateData.referral_code)
       setPayoutEmail(affiliateData.payout_email ?? '')
@@ -198,6 +203,21 @@ export default function AffiliateDashboardPage() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  async function activateAffiliate() {
+    if (!supabase) return
+    setActivating(true)
+    setError(null)
+    const { error: rpcError } = await supabase.rpc('become_affiliate')
+    setActivating(false)
+    if (rpcError) {
+      setError(rpcError.message)
+      return
+    }
+    setNeedsActivation(false)
+    setLoading(true)
+    loadData()
+  }
 
   // Redirect out on sign-out
   useEffect(() => {
@@ -323,6 +343,29 @@ export default function AffiliateDashboardPage() {
     return (
       <div className="min-h-screen bg-paper flex items-center justify-center">
         <p className="text-ink-soft text-sm animate-pulse">Loading…</p>
+      </div>
+    )
+  }
+
+  if (needsActivation && !affiliate) {
+    return (
+      <div className="min-h-screen bg-paper flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-ink font-fraunces text-2xl">Become a Camrhia affiliate</p>
+        <p className="text-ink-soft text-sm max-w-sm">
+          You&apos;re signed in, but this account isn&apos;t an affiliate yet. Activate it to get your referral link and earn commission on every photographer you refer.
+        </p>
+        {error ? <p className="text-sm text-red-700">{error}</p> : null}
+        <button
+          onClick={activateAffiliate}
+          disabled={activating}
+          className="rounded-full px-6 py-3 text-sm font-medium text-white disabled:opacity-60"
+          style={{ backgroundColor: '#3A4A6B' }}
+        >
+          {activating ? 'Activating…' : 'Activate affiliate account'}
+        </button>
+        <Link href="/affiliate/login" className="text-sm text-twilight hover:underline">
+          Back to login
+        </Link>
       </div>
     )
   }

@@ -159,7 +159,7 @@ export default function AffiliateSignupPage() {
 
       // Supabase returns a fake success (no identities) when the email already has an account.
       if (signUpData?.user && (signUpData.user.identities?.length ?? 0) === 0) {
-        throw new Error('That email already has a Camrhia account. Please use a different email for your affiliate account.')
+        throw new Error('That email already has a Camrhia account. Sign in on the affiliate login page with it, and you can activate your affiliate account there.')
       }
 
       // Email confirmation is enabled — there's no session yet.
