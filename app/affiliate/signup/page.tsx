@@ -148,7 +148,7 @@ export default function AffiliateSignupPage() {
       // no client-side insert needed, so no session is required at this point.
       const referral_code = await uniqueReferralCode(name)
 
-      const { error: authError } = await supabase.auth.signUp({
+      const { data: signUpData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -156,6 +156,11 @@ export default function AffiliateSignupPage() {
         },
       })
       if (authError) throw authError
+
+      // Supabase returns a fake success (no identities) when the email already has an account.
+      if (signUpData?.user && (signUpData.user.identities?.length ?? 0) === 0) {
+        throw new Error('That email already has a Camrhia account. Please use a different email for your affiliate account.')
+      }
 
       // Email confirmation is enabled — there's no session yet.
       // Show the confirmation screen; the trigger will have already created the affiliates row.

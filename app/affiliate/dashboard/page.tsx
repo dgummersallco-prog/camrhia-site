@@ -160,7 +160,7 @@ export default function AffiliateDashboardPage() {
         .eq('id', userId)
         .single()
 
-      if (affiliateError) throw affiliateError
+      if (affiliateError) throw new Error('No affiliate account is linked to this login. If you use Camrhia as a photographer, create your affiliate account with a different email.')
       setAffiliate(affiliateData)
       setCodeInput(affiliateData.referral_code)
       setPayoutEmail(affiliateData.payout_email ?? '')
