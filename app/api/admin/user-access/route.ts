@@ -7,15 +7,20 @@ function adminClient() {
   )
 }
 
-// Verify the caller holds a valid Supabase session.
-// Admin accounts are manually created, so any authenticated user reaching
-// this route is an admin. Add an `admins` table check here for stricter
-// verification if multiple non-admin accounts ever exist in this project.
+// Verify the caller holds a valid Supabase session AND is listed in the
+// `admins` table. Photographers, clients and affiliates share this project's
+// auth, so a valid session alone is NOT enough.
 async function verifyAdmin(request: Request) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   if (!token) return null
   const { data: { user }, error } = await adminClient().auth.getUser(token)
   if (error || !user) return null
+  const { data: adminRow } = await adminClient()
+    .from('admins')
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (!adminRow) return null
   return user
 }
 
