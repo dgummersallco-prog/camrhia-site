@@ -48,29 +48,17 @@ const FAQ = [
   ["Is it only for weddings?", "No. Weddings, portraits, newborns, families, events. Set up the session types you shoot."],
 ]
 
-function PhoneMock() {
+function Shot({ src, alt, width = 270 }: { src: string; alt: string; width?: number }) {
   return (
-    <div className="mx-auto w-[270px] rounded-[2.5rem] border-[10px] border-ink bg-card shadow-2xl overflow-hidden">
-      <div className="bg-paper-deep px-4 py-3 border-b border-line">
-        <div className="rounded-full bg-card border border-line px-3 py-1.5 text-[11px] text-ink-soft text-center">
-          camrhia.com/<span className="text-ink font-semibold">yourstudio</span>
-        </div>
-      </div>
-      <div className="p-4">
-        <p className="font-fraunces text-xl text-ink leading-tight">Your Name Photography</p>
-        <p className="text-[11px] text-ink-soft mt-1">Weddings, portraits and families</p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="h-24 rounded-xl bg-gradient-to-br from-brass/40 to-paper-deep" />
-          <div className="h-24 rounded-xl bg-gradient-to-br from-sage/40 to-paper-deep" />
-          <div className="h-24 rounded-xl bg-gradient-to-br from-twilight/30 to-paper-deep" />
-          <div className="h-24 rounded-xl bg-gradient-to-br from-brass/30 to-sage/20" />
-        </div>
-        <div className="mt-3 rounded-full bg-twilight text-white text-xs font-semibold py-2.5 text-center">
-          Check my availability
-        </div>
-      </div>
+    <div className="mx-auto rounded-[2.5rem] border-[10px] border-ink bg-card shadow-2xl overflow-hidden" style={{ width }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="block w-full h-auto" />
     </div>
   )
+}
+
+function PhoneMock() {
+  return <Shot src="/app/portfolio.jpg" alt="A photographer's live portfolio website on Camrhia" />
 }
 
 export default function Home() {
@@ -157,6 +145,29 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* SEE IT IN ACTION */}
+        <section className="mx-auto max-w-6xl px-6 py-24">
+          <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink text-center leading-tight">
+            See it in action
+          </h2>
+          <p className="mt-4 text-center text-ink-soft max-w-2xl mx-auto">
+            This is the real app, not a mockup. Every session, date and setting, right where you need it.
+          </p>
+          <div className="mt-14 grid md:grid-cols-3 gap-12">
+            {[
+              ["/app/sessions.jpg", "Every session, one list", "Weddings, portraits, families and more. See who is booked and where each one stands."],
+              ["/app/calendar.jpg", "Your calendar, sorted", "Shoots, deadlines and deliveries on one calendar, so nothing slips."],
+              ["/app/settings.jpg", "Make it yours", "Your studio name, your packages, your look. Set it once and it runs."],
+            ].map(([src, title, desc]) => (
+              <div key={title} className="text-center">
+                <Shot src={src} alt={title} width={240} />
+                <p className="mt-6 font-fraunces text-xl font-semibold text-ink">{title}</p>
+                <p className="mt-2 text-sm text-ink-soft leading-relaxed max-w-xs mx-auto">{desc}</p>
+              </div>
+            ))}
           </div>
         </section>
 
