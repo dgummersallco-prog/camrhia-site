@@ -24,11 +24,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: `${BRAND_NAME} | Your photography website, bookings and client app in one`,
   description:
-    "A live portfolio website, bookings, contracts, payments and photo delivery for photographers. Free for clients. Try it free for 14 days.",
+    "A live portfolio website, bookings, contracts, payments and gallery delivery for photographers. Free for clients. Try it free for 14 days.",
   openGraph: {
     title: `${BRAND_NAME} | Your photography website, bookings and client app in one`,
     description:
-      "A live portfolio website, bookings, contracts, payments and photo delivery for photographers. Free for clients. Try it free for 14 days.",
+      "A live portfolio website, bookings, contracts, payments and gallery delivery for photographers. Free for clients. Try it free for 14 days.",
     url: "https://camrhia.com",
     siteName: "Camrhia",
     type: "website",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${BRAND_NAME} | Your photography website, bookings and client app in one`,
     description:
-      "A live portfolio website, bookings, contracts, payments and photo delivery for photographers. Free for clients. Try it free for 14 days.",
+      "A live portfolio website, bookings, contracts, payments and gallery delivery for photographers. Free for clients. Try it free for 14 days.",
   },
 }
 

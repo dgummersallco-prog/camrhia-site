@@ -5,11 +5,11 @@ import Wordmark from "@/app/components/Wordmark"
 export const metadata: Metadata = {
   title: "Camrhia | Become the photographer everyone is looking for.",
   description:
-    "Stop juggling six tools. Camrhia gives photographers a live portfolio website, a place to get found, booking, contracts, payments and photo delivery. Free for 14 days.",
+    "Stop juggling six tools. Camrhia gives photographers a live portfolio website, a place to get found, booking, contracts, payments and gallery delivery. Free for 14 days.",
   openGraph: {
     title: "Camrhia | Become the photographer everyone is looking for.",
     description:
-      "A live portfolio website, bookings, contracts, payments and photo delivery. Everything your clients need, in one app.",
+      "A live portfolio website, bookings, contracts, payments and gallery delivery. Everything your clients need, in one app.",
     type: "website",
   },
 }
@@ -22,15 +22,26 @@ const PAINS = [
   "Every year you say this is the year you go all in, and every year it stays a maybe",
 ]
 
-const STACK = [
-  ["Your own website", "A live portfolio at camrhia.com/yourstudio. Link it in your Instagram bio and you are done."],
-  ["Get found", "Clients browse photographers on Camrhia and reach out to you, no ads required."],
-  ["Bookings and sessions", "Packages, dates, questionnaires and every session detail in one place."],
-  ["Contracts that fill themselves", "Names, dates and locations drop in automatically. Send, sign, done."],
-  ["Payments you can see", "Track every payment. Clients tell you when they have paid, you confirm with one tap."],
-  ["Photo delivery", "Clients get their photos right in the app. No more links that expire."],
-  ["Client messaging", "Every conversation lives with the session it belongs to."],
-  ["Fully yours", "Your colors, your packages, your questions, your session types."],
+const OLD_TOOLS = [
+  "A website builder",
+  "A booking form",
+  "Contract software",
+  "An invoice app",
+  "Email threads with clients",
+  "A separate calendar",
+  "Scattered notes and texts",
+  "Gallery links lost in inboxes",
+]
+
+const NEW_STACK = [
+  "A live portfolio website, at your own web address",
+  "A marketplace where new clients find you",
+  "Bookings and sessions, organized",
+  "Contracts that fill themselves in",
+  "Payments tracked and confirmed",
+  "Client messaging, tied to each session",
+  "Gallery links delivered right in the app",
+  "Your calendar, always current",
 ]
 
 const STEPS = [
@@ -134,18 +145,34 @@ export default function Home() {
         </section>
 
         {/* STACK */}
-        <section id="how" className="bg-paper-deep border-y border-line">
+        <section id="how" className="bg-ink text-white">
           <div className="mx-auto max-w-6xl px-6 py-24">
-            <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink max-w-3xl leading-tight">
-              Everything you are paying for separately, now in one app.
+            <p className="text-center text-sm font-semibold tracking-wide text-brass uppercase">The math is simple</p>
+            <h2 className="mt-4 mx-auto max-w-3xl text-center font-fraunces text-3xl md:text-5xl font-semibold leading-tight">
+              Stop paying for a pile of tools. Run your whole business from one app.
             </h2>
-            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {STACK.map(([t, d]) => (
-                <div key={t} className="rounded-2xl bg-card border border-line p-6">
-                  <p className="font-fraunces text-xl font-semibold text-ink">{t}</p>
-                  <p className="mt-2 text-sm text-ink-soft leading-relaxed">{d}</p>
-                </div>
-              ))}
+            <div className="mt-14 grid md:grid-cols-2 gap-6">
+              <div className="rounded-3xl border border-white/15 p-8">
+                <p className="text-xs uppercase tracking-widest text-white/50">What most photographers juggle</p>
+                <ul className="mt-6 space-y-3">
+                  {OLD_TOOLS.map((t) => (
+                    <li key={t} className="text-lg text-white/50 line-through decoration-brass/70">{t}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-3xl bg-card text-ink p-8 border-2 border-brass">
+                <p className="text-xs uppercase tracking-widest text-brass">With Camrhia</p>
+                <ul className="mt-6 space-y-3">
+                  {NEW_STACK.map((t) => (
+                    <li key={t} className="flex gap-3 text-lg">
+                      <span className="text-sage font-bold">&#10003;</span>
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login. One price.</p>
+                <p className="mt-1 text-sm text-ink-soft">Plans start at $59.99 a month. Your first 14 days are free.</p>
+              </div>
             </div>
           </div>
         </section>
@@ -189,12 +216,13 @@ export default function Home() {
         <section className="bg-twilight text-white">
           <div className="mx-auto max-w-4xl px-6 py-24 text-center">
             <h2 className="font-fraunces text-3xl md:text-5xl font-semibold leading-tight">
-              Delivery day, done beautifully.
+              Delivery day, without the scramble.
             </h2>
             <p className="mt-6 text-lg text-white/80 leading-relaxed">
-              Your clients get their photos in the app they have been using the whole time.
-              No expired links, no zip files, no &ldquo;can you resend that?&rdquo; They open the
-              app and their memories are there.
+              Keep hosting your gallery wherever you love, Pixieset, ShootProof, Google Drive,
+              anywhere. Camrhia puts that link in your client&rsquo;s hands, inside the app with
+              the rest of their session. No digging through email. No &ldquo;did you get my
+              link?&rdquo; Just a clean, professional handoff every time.
             </p>
           </div>
         </section>

@@ -11,7 +11,7 @@ const GET = [
   ["Browse real portfolios", "See each photographer's actual work and style before you ever send a message."],
   ["Reach out in seconds", "Send an inquiry or message right from their page. No hunting for an email address."],
   ["One place for everything", "Your session details, schedule, contract, payments and messages, all together."],
-  ["Photos delivered to you", "When your photos are ready, they are waiting in the app. Nothing to download from a stale link."],
+  ["Your gallery, easy to find", "When your photographer finishes, your gallery link is waiting in the app with the rest of your session. No digging through email."],
 ]
 
 export default function Find() {
