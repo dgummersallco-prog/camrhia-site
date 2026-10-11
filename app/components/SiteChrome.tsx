@@ -7,7 +7,7 @@ function BrandLockup() {
   return (
     <span className="inline-flex items-center gap-2.5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/camrhia-logo.png" alt="" className="h-9 w-auto" />
+      <img src="/camrhia-logo.png" alt="" className="h-9 w-9 rounded-xl object-cover" />
       <Wordmark className="text-3xl" />
     </span>
   )
