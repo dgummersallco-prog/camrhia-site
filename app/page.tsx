@@ -3,11 +3,11 @@ import { Nav, Footer, AppStoreButton } from "@/app/components/SiteChrome"
 import Wordmark from "@/app/components/Wordmark"
 
 export const metadata: Metadata = {
-  title: "Camrhia | Your photography website, bookings and client app in one",
+  title: "Camrhia | Get found. Get booked. Get your weekends back.",
   description:
     "Stop juggling six tools. Camrhia gives photographers a live portfolio website, a place to get found, booking, contracts, payments and photo delivery. Free for 14 days.",
   openGraph: {
-    title: "Camrhia | Your photography business, finally in one place",
+    title: "Camrhia | Get found. Get booked. Get your weekends back.",
     description:
       "A live portfolio website, bookings, contracts, payments and photo delivery. Everything your clients need, in one app.",
     type: "website",
@@ -69,14 +69,15 @@ export default function Home() {
         {/* HERO */}
         <section className="mx-auto max-w-6xl px-6 pt-16 pb-20 grid md:grid-cols-2 gap-14 items-center">
           <div>
-            <p className="text-sm font-semibold tracking-wide text-brass uppercase">For photographers who would rather be shooting</p>
+            <p className="text-sm font-semibold tracking-wide text-brass uppercase">For photographers who are ready for more</p>
             <h1 className="mt-4 font-fraunces text-4xl md:text-6xl font-semibold text-ink leading-[1.08]">
-              Your website, bookings and client app. One place.
+              Get found. Get booked. Get your weekends back.
             </h1>
             <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-xl">
-              Camrhia turns your portfolio into a live website, helps new clients find you, and
-              runs the whole client experience from first hello to final photos. You stop
-              chasing admin. You start getting booked.
+              You did not pick up a camera to spend your nights buried in admin. Camrhia puts
+              your work in front of the clients who are looking for you, then handles the
+              website, the booking, the contracts, the payments and the photo delivery. You
+              keep the part you love. We carry the rest.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-4">
               <AppStoreButton />
