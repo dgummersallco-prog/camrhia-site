@@ -187,9 +187,16 @@ export default function AffiliateDashboardPage() {
       try {
         const { data: ledgerData } = await supabase
           .from('commission_ledger')
-          .select('id, amount, period, paid')
+          .select('id, amount, period, paid_out')
           .eq('affiliate_id', userId)
-        setLedger(ledgerData ?? [])
+        setLedger(
+          (ledgerData ?? []).map((l: any) => ({
+            id: l.id,
+            amount: Number(l.amount),
+            period: String(l.period).slice(0, 7),
+            paid: !!l.paid_out,
+          })),
+        )
       } catch {
         setLedger([])
       }
