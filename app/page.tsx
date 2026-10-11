@@ -15,11 +15,11 @@ export const metadata: Metadata = {
 }
 
 const PAINS = [
-  "A website you pay for and never update",
-  "Inquiries buried across DMs, texts and email",
-  "Contracts in one app, invoices in another, galleries in a third",
-  "Clients asking 'when do I get my photos?' for the fourth time",
-  "Sunday nights spent on admin instead of living your life",
+  "Your work is incredible, but Instagram is the only place anyone can find it",
+  "A client reaches out and by the time you reply, they have booked someone else",
+  "You spend more hours on emails, contracts and invoices than behind your camera",
+  "Your best shoots sit on a hard drive while strangers hire someone else",
+  "Every year you say this is the year you go all in, and every year it stays a maybe",
 ]
 
 const STACK = [
@@ -91,7 +91,7 @@ export default function Home() {
         {/* SOUND FAMILIAR */}
         <section className="bg-paper-deep border-y border-line">
           <div className="mx-auto max-w-3xl px-6 py-20">
-            <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink">Sound familiar?</h2>
+            <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink">Talent is not what is holding you back</h2>
             <ul className="mt-8 space-y-4">
               {PAINS.map((p) => (
                 <li key={p} className="flex gap-3 text-lg text-ink">
@@ -101,7 +101,7 @@ export default function Home() {
               ))}
             </ul>
             <p className="mt-10 font-fraunces text-2xl text-twilight">
-              You became a photographer to make beautiful things, not to run six apps.
+              Being easy to find and easy to book is. That is exactly what Camrhia fixes.
             </p>
           </div>
         </section>
