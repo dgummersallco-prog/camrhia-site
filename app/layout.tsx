@@ -22,22 +22,22 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: `${BRAND_NAME} — The big day, planned together.`,
+  title: `${BRAND_NAME} | Your photography website, bookings and client app in one`,
   description:
-    "One shared app for the photographer and their client — a real-time timeline you build together, a contract that signs itself into place, and a gallery waiting at the end of it all.",
+    "A live portfolio website, bookings, contracts, payments and photo delivery for photographers. Free for clients. Try it free for 14 days.",
   openGraph: {
-    title: `${BRAND_NAME} — The big day, planned together.`,
+    title: `${BRAND_NAME} | Your photography website, bookings and client app in one`,
     description:
-      "One shared app for the photographer and their client — a real-time timeline you build together, a contract that signs itself into place, and a gallery waiting at the end of it all.",
+      "A live portfolio website, bookings, contracts, payments and photo delivery for photographers. Free for clients. Try it free for 14 days.",
     url: "https://camrhia.com",
     siteName: "Camrhia",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${BRAND_NAME} — The big day, planned together.`,
+    title: `${BRAND_NAME} | Your photography website, bookings and client app in one`,
     description:
-      "One shared app for the photographer and their client — a real-time timeline you build together, a contract that signs itself into place, and a gallery waiting at the end of it all.",
+      "A live portfolio website, bookings, contracts, payments and photo delivery for photographers. Free for clients. Try it free for 14 days.",
   },
 }
 
