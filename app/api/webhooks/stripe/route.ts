@@ -101,10 +101,18 @@ export async function POST(request: Request) {
             .in('status', ['active', 'churned'])
 
           const position = (priorCount ?? 0) + 1
-          const commissionRate =
+          const tierRate =
             position <= 10 ? 0.20 :
             position <= 25 ? 0.25 :
             0.30  // position 26 and beyond all cap at 30%
+
+          // A custom rate on the affiliate's row (e.g. master partners at 50%) wins over the tiers.
+          const { data: affRow } = await supabase
+            .from('affiliates')
+            .select('commission_rate')
+            .eq('id', pendingReferral.affiliate_id)
+            .maybeSingle()
+          const commissionRate = affRow?.commission_rate != null ? Number(affRow.commission_rate) : tierRate
 
           const { error: referralActivateError } = await supabase
             .from('referrals')
@@ -151,7 +159,7 @@ export async function POST(request: Request) {
 
         // Period: YYYY-MM from the invoice billing period start (Unix timestamp)
         const periodDate = new Date((invoice.period_start ?? 0) * 1000)
-        const period = `${periodDate.getFullYear()}-${String(periodDate.getMonth() + 1).padStart(2, '0')}`
+        const period = `${periodDate.getFullYear()}-${String(periodDate.getMonth() + 1).padStart(2, '0')}-01`
 
         const { error: ledgerError } = await supabase
           .from('commission_ledger')
@@ -160,11 +168,45 @@ export async function POST(request: Request) {
             referral_id:  referral.id,
             amount:       commission,
             period,
-            paid:         false,
+            paid_out:     false,
           })
 
         if (ledgerError) {
           console.error('[stripe webhook] commission_ledger insert error:', ledgerError.message)
+        }
+
+        // Master override: if this affiliate was recruited by a master, pay the master their cut too.
+        const { data: recruiter } = await supabase
+          .from('affiliates')
+          .select('parent_affiliate_id')
+          .eq('id', referral.affiliate_id)
+          .maybeSingle()
+
+        if (recruiter?.parent_affiliate_id) {
+          const { data: master } = await supabase
+            .from('affiliates')
+            .select('id, is_master, override_rate')
+            .eq('id', recruiter.parent_affiliate_id)
+            .maybeSingle()
+
+          const overrideRate = Number(master?.override_rate ?? 0)
+          if (master?.is_master && overrideRate > 0) {
+            const overrideAmount = Math.round((invoice.amount_paid / 100) * overrideRate * 100) / 100
+            const { error: overrideError } = await supabase
+              .from('commission_ledger')
+              .insert({
+                affiliate_id:        master.id,
+                referral_id:         referral.id,
+                amount:              overrideAmount,
+                period,
+                paid_out:            false,
+                kind:                'override',
+                source_affiliate_id: referral.affiliate_id,
+              })
+            if (overrideError) {
+              console.error('[stripe webhook] override insert error:', overrideError.message)
+            }
+          }
         }
         break
       }
