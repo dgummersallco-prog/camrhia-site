@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { BRAND_NAME } from '@/lib/brand'
+import RecruitCapture from './RecruitCapture'
 
 export const metadata: Metadata = {
   title: `Become an Affiliate — ${BRAND_NAME}`,
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 }
 
 export default function AffiliateSignupLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+  return (
+    <>
+      <RecruitCapture />
+      {children}
+    </>
+  )
 }
