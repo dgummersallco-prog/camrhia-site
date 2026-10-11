@@ -191,7 +191,7 @@ export async function POST(request: Request) {
 
           const overrideRate = Number(master?.override_rate ?? 0)
           if (master?.is_master && overrideRate > 0) {
-            const overrideAmount = Math.round((invoice.amount_paid / 100) * overrideRate * 100) / 100
+            const overrideAmount = Math.round((invoice.amount_paid / 100) * (1 - rate) * overrideRate * 100) / 100 // master's share of what's left after the recruit's commission
             const { error: overrideError } = await supabase
               .from('commission_ledger')
               .insert({
