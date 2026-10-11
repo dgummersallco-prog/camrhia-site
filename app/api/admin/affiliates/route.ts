@@ -71,6 +71,58 @@ export async function POST(request: Request) {
     return Response.json({ rows })
   }
 
+  if (action === 'masters') {
+    const { data: affData, error: affErr } = await supabase
+      .from('affiliates')
+      .select('id, name, email, referral_code, is_master, commission_rate, override_rate, parent_affiliate_id, created_at')
+    if (affErr) return Response.json({ error: affErr.message }, { status: 500 })
+    const affs = (affData ?? []) as Aff[]
+
+    const { data: refData } = await supabase.from('referrals').select('affiliate_id, status')
+    const refs = (refData ?? []) as { affiliate_id: string; status: string }[]
+
+    const { data: ledData } = await supabase
+      .from('commission_ledger')
+      .select('affiliate_id, amount, kind, paid_out, source_affiliate_id')
+    const led = (ledData ?? []) as {
+      affiliate_id: string
+      amount: number | string
+      kind: string | null
+      paid_out: boolean | null
+      source_affiliate_id: string | null
+    }[]
+
+    const active = (id: string) => refs.filter((r) => r.affiliate_id === id && r.status === 'active').length
+    const sum = (rows: typeof led) => rows.reduce((s, l) => s + Number(l.amount ?? 0), 0)
+
+    const masters = affs
+      .filter((a) => a.is_master)
+      .map((m) => {
+        const mine = led.filter((l) => l.affiliate_id === m.id)
+        const recruits = affs
+          .filter((a) => a.parent_affiliate_id === m.id)
+          .map((r) => ({
+            id: r.id,
+            name: r.name,
+            email: r.email,
+            active_referrals: active(r.id),
+            override_earned: sum(mine.filter((l) => l.kind === 'override' && l.source_affiliate_id === r.id)),
+          }))
+        return {
+          id: m.id,
+          name: m.name,
+          email: m.email,
+          referral_code: m.referral_code,
+          own_active: active(m.id),
+          recruits,
+          direct_earned: sum(mine.filter((l) => l.kind !== 'override')),
+          override_earned: sum(mine.filter((l) => l.kind === 'override')),
+          unpaid: sum(mine.filter((l) => !l.paid_out)),
+        }
+      })
+    return Response.json({ masters })
+  }
+
   if (action === 'set_master') {
     if (typeof affiliateId !== 'string' || typeof isMaster !== 'boolean') {
       return Response.json({ error: 'affiliateId and isMaster are required' }, { status: 400 })

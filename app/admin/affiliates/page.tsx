@@ -110,13 +110,7 @@ export default function AdminAffiliatesPage() {
           <Link href="/" className="font-fraunces text-lg font-semibold text-ink">
             {BRAND_NAME} <span className="text-ink-soft font-normal">/ admin</span>
           </Link>
-          <nav className="flex items-center gap-5 text-sm">
-            <Link href="/admin/dashboard" className="text-ink-soft hover:text-ink">Dashboard</Link>
-            <Link href="/admin/metrics" className="text-ink-soft hover:text-ink">Metrics</Link>
-            <Link href="/admin/users" className="text-ink-soft hover:text-ink">Users</Link>
-            <Link href="/admin/affiliates" className="text-ink">Affiliates</Link>
-            <button onClick={handleSignOut} className="text-ink-soft hover:text-ink">Sign out</button>
-          </nav>
+          <button onClick={handleSignOut} className="text-sm text-ink-soft hover:text-ink">Sign out</button>
         </div>
       </header>
 
