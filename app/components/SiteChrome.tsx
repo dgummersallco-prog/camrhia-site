@@ -3,12 +3,22 @@ import Wordmark from "@/app/components/Wordmark"
 
 export const APP_STORE_URL = "https://apps.apple.com/app/id6800011162"
 
+function BrandLockup() {
+  return (
+    <span className="inline-flex items-center gap-2.5">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/camrhia-logo.png" alt="" className="h-9 w-auto" />
+      <Wordmark className="text-3xl" />
+    </span>
+  )
+}
+
 export function Nav() {
   return (
     <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur border-b border-line">
       <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-6">
         <Link href="/" aria-label="Camrhia home">
-          <Wordmark className="text-3xl" />
+          <BrandLockup />
         </Link>
         <div className="hidden md:flex items-center gap-7 text-sm font-medium text-ink-soft">
           <Link href="/#how" className="hover:text-ink transition-colors">How it works</Link>
@@ -34,7 +44,7 @@ export function Footer() {
     <footer className="border-t border-line bg-paper-deep">
       <div className="mx-auto max-w-6xl px-6 py-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div>
-          <Wordmark className="text-3xl" />
+          <BrandLockup />
           <p className="mt-2 text-sm text-ink-soft">Your portfolio, bookings, clients and photo delivery. One app.</p>
         </div>
         <div className="flex flex-wrap gap-x-7 gap-y-2 text-sm text-ink-soft">
