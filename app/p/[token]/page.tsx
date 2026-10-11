@@ -4,6 +4,7 @@ import Link from "next/link"
 import React from "react"
 import { FaqAccordion } from "./FaqAccordion"
 import { DateCheckWidget } from "./DateCheckWidget"
+import { ContactButton } from "./ContactButton"
 
 // Same shape geometry as the app's lib/customShapes.ts — kept in sync
 // manually since this is a separate codebase from the mobile app.
@@ -706,6 +707,8 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
           )}
         </div>
       </div>
+      <div style={{ height: 90 }} />
+      <ContactButton photographerId={r.photographer_id} studioName={studioName} />
     </>
   )
 }
