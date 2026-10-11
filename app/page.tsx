@@ -1,554 +1,266 @@
-import Link from "next/link"
-import { BRAND_NAME } from "@/lib/brand"
-import WaitlistForm from "@/app/components/WaitlistForm"
+import type { Metadata } from "next"
+import { Nav, Footer, AppStoreButton } from "@/app/components/SiteChrome"
+import Wordmark from "@/app/components/Wordmark"
 
-// ── Nav ──────────────────────────────────────────────────────────────────────
-
-function Nav() {
-  return (
-    <nav className="sticky top-0 z-50 bg-paper border-b border-line">
-      <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-6">
-        <span className="font-fraunces text-xl font-semibold text-ink tracking-tight">
-          {BRAND_NAME}
-        </span>
-
-        <div className="hidden md:flex items-center gap-7 text-sm font-medium text-ink-soft">
-          <Link href="#photographers" className="hover:text-ink transition-colors">
-            For photographers
-          </Link>
-          <Link href="#clients" className="hover:text-ink transition-colors">
-            For clients
-          </Link>
-          <Link href="/blog" className="hover:text-ink transition-colors">
-            Blog
-          </Link>
-          <Link href="/faq" className="hover:text-ink transition-colors">
-            FAQ
-          </Link>
-          <Link href="/support" className="hover:text-ink transition-colors">
-            Support
-          </Link>
-          <Link href="/login" className="hover:text-ink transition-colors">
-            Log in
-          </Link>
-        </div>
-
-        <a
-          href="mailto:hello@camrhia.com?subject=Early access"
-          className="inline-flex items-center rounded-full bg-twilight px-4 py-2 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
-        >
-          Get early access
-        </a>
-      </div>
-    </nav>
-  )
+export const metadata: Metadata = {
+  title: "Camrhia | Your photography website, bookings and client app in one",
+  description:
+    "Stop juggling six tools. Camrhia gives photographers a live portfolio website, a place to get found, booking, contracts, payments and photo delivery. Free for 14 days.",
+  openGraph: {
+    title: "Camrhia | Your photography business, finally in one place",
+    description:
+      "A live portfolio website, bookings, contracts, payments and photo delivery. Everything your clients need, in one app.",
+    type: "website",
+  },
 }
 
-// ── Timeline SVG ──────────────────────────────────────────────────────────────
+const PAINS = [
+  "A website you pay for and never update",
+  "Inquiries buried across DMs, texts and email",
+  "Contracts in one app, invoices in another, galleries in a third",
+  "Clients asking 'when do I get my photos?' for the fourth time",
+  "Sunday nights spent on admin instead of living your life",
+]
 
-function TimelineCard() {
+const STACK = [
+  ["Your own website", "A live portfolio at camrhia.com/yourstudio. Link it in your Instagram bio and you are done."],
+  ["Get found", "Clients browse photographers on Camrhia and reach out to you, no ads required."],
+  ["Bookings and sessions", "Packages, dates, questionnaires and every session detail in one place."],
+  ["Contracts that fill themselves", "Names, dates and locations drop in automatically. Send, sign, done."],
+  ["Payments you can see", "Track every payment. Clients tell you when they have paid, you confirm with one tap."],
+  ["Photo delivery", "Clients get their photos right in the app. No more links that expire."],
+  ["Client messaging", "Every conversation lives with the session it belongs to."],
+  ["Fully yours", "Your colors, your packages, your questions, your session types."],
+]
+
+const STEPS = [
+  ["Download and make it yours", "Add your photos, packages and details. Your website is live the moment you save."],
+  ["Share one link", "Put it in your bio, your emails, your business card. Clients inquire, book and pay."],
+  ["Run everything from your phone", "Sessions, contracts, payments and delivery, handled where you already are."],
+]
+
+const FAQ = [
+  ["Do I need a credit card to try it?", "Start free for 14 days. If it is not for you, you walk away. No awkward conversation."],
+  ["I already have a website. Why Camrhia?", "Keep it if you love it. Camrhia replaces the pile of tools behind it: booking, contracts, payments, messaging and delivery, and gives you a portfolio that updates itself."],
+  ["Is it hard to set up?", "If you can post to Instagram, you can set this up. Most photographers are live in an afternoon."],
+  ["Will my clients have to figure out something new?", "They get one simple app with their session, payments, messages and photos. Fewer emails for you, less confusion for them."],
+  ["Can I cancel anytime?", "Yes. Monthly plans cancel anytime through your Apple ID subscriptions."],
+  ["Is it only for weddings?", "No. Weddings, portraits, newborns, families, events. Set up the session types you shoot."],
+]
+
+function PhoneMock() {
   return (
-    <div className="w-full max-w-3xl mx-auto rounded-2xl bg-card border border-line shadow-sm overflow-hidden">
-      <div className="px-8 pt-8 pb-2">
-        <p className="font-mono text-xs tracking-widest uppercase text-ink-soft mb-1">
-          Your shared timeline
-        </p>
-        <p className="font-fraunces text-lg text-ink">
-          Built together, visible to both.
-        </p>
-      </div>
-
-      <div className="px-4 pb-2">
-        <svg
-          viewBox="0 0 700 240"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full"
-          aria-label="Session day timeline arc with four key moments"
-        >
-          {/* Arc path */}
-          <path
-            d="M 70 155 C 200 80 450 80 630 155"
-            stroke="#DAD2C2"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-
-          {/* Dot 1 – Prep / Getting ready – 9:30am – twilight */}
-          <circle cx="70" cy="155" r="6" fill="#3A4A6B" />
-          <text
-            x="70"
-            y="178"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-fraunces), serif", fontSize: 13, fontStyle: "italic", fill: "#3A4A6B" }}
-          >
-            Prep
-          </text>
-          <text
-            x="70"
-            y="194"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-instrument-sans), sans-serif", fontSize: 10.5, fill: "#6B7280" }}
-          >
-            Getting ready
-          </text>
-          <text
-            x="70"
-            y="208"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-jetbrains-mono), monospace", fontSize: 10, fill: "#A9853F" }}
-          >
-            9:30am
-          </text>
-
-          {/* Dot 2 – Ceremony / First look – 1:00pm – twilight */}
-          <circle cx="198" cy="111" r="6" fill="#3A4A6B" />
-          <text
-            x="198"
-            y="97"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-fraunces), serif", fontSize: 13, fontStyle: "italic", fill: "#3A4A6B" }}
-          >
-            Ceremony
-          </text>
-          <text
-            x="198"
-            y="81"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-instrument-sans), sans-serif", fontSize: 10.5, fill: "#6B7280" }}
-          >
-            First look
-          </text>
-          <text
-            x="198"
-            y="67"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-jetbrains-mono), monospace", fontSize: 10, fill: "#A9853F" }}
-          >
-            1:00pm
-          </text>
-
-          {/* Dot 3 – Peak / Golden hour – 6:45pm – brass (highlighted) */}
-          <circle cx="460" cy="109" r="18" fill="#A9853F" fillOpacity="0.1" />
-          <circle cx="460" cy="109" r="10" fill="#A9853F" />
-          <circle cx="460" cy="109" r="5" fill="#C9A55F" />
-          <text
-            x="460"
-            y="90"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-fraunces), serif", fontSize: 14, fontStyle: "italic", fontWeight: 500, fill: "#A9853F" }}
-          >
-            Peak
-          </text>
-          <text
-            x="460"
-            y="74"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-instrument-sans), sans-serif", fontSize: 10.5, fill: "#A9853F" }}
-          >
-            Golden hour
-          </text>
-          <text
-            x="460"
-            y="60"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-jetbrains-mono), monospace", fontSize: 10, fill: "#A9853F" }}
-          >
-            6:45pm
-          </text>
-
-          {/* Dot 4 – Send-off / Last dance – 10:30pm – twilight */}
-          <circle cx="630" cy="155" r="6" fill="#3A4A6B" />
-          <text
-            x="630"
-            y="178"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-fraunces), serif", fontSize: 13, fontStyle: "italic", fill: "#3A4A6B" }}
-          >
-            Send-off
-          </text>
-          <text
-            x="630"
-            y="194"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-instrument-sans), sans-serif", fontSize: 10.5, fill: "#6B7280" }}
-          >
-            Last dance
-          </text>
-          <text
-            x="630"
-            y="208"
-            textAnchor="middle"
-            style={{ fontFamily: "var(--ff-jetbrains-mono), monospace", fontSize: 10, fill: "#A9853F" }}
-          >
-            10:30pm
-          </text>
-        </svg>
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center gap-6 px-8 pb-7">
-        <div className="flex items-center gap-2 text-xs text-ink-soft">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-twilight shrink-0" />
-          Edited by the photographer
+    <div className="mx-auto w-[270px] rounded-[2.5rem] border-[10px] border-ink bg-card shadow-2xl overflow-hidden">
+      <div className="bg-paper-deep px-4 py-3 border-b border-line">
+        <div className="rounded-full bg-card border border-line px-3 py-1.5 text-[11px] text-ink-soft text-center">
+          camrhia.com/<span className="text-ink font-semibold">yourstudio</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-ink-soft">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-brass shrink-0" />
-          Edited by the client
+      </div>
+      <div className="p-4">
+        <p className="font-fraunces text-xl text-ink leading-tight">Your Name Photography</p>
+        <p className="text-[11px] text-ink-soft mt-1">Weddings, portraits and families</p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="h-24 rounded-xl bg-gradient-to-br from-brass/40 to-paper-deep" />
+          <div className="h-24 rounded-xl bg-gradient-to-br from-sage/40 to-paper-deep" />
+          <div className="h-24 rounded-xl bg-gradient-to-br from-twilight/30 to-paper-deep" />
+          <div className="h-24 rounded-xl bg-gradient-to-br from-brass/30 to-sage/20" />
+        </div>
+        <div className="mt-3 rounded-full bg-twilight text-white text-xs font-semibold py-2.5 text-center">
+          Check my availability
         </div>
       </div>
     </div>
   )
 }
 
-// ── Feature lists ─────────────────────────────────────────────────────────────
-
-const photographerFeatures = [
-  "Inquiry-to-booking messaging in one place",
-  "Contracts that send and sign themselves",
-  "Auto-built payment schedules — no chasing",
-  "One shared calendar for every event",
-  "A public profile with reviews from past clients",
-]
-
-const coupleFeatures = [
-  "A shared timeline you build with your photographer",
-  "Clear payment status — always know what's due",
-  "Sign contracts and fill questionnaires from your phone",
-  "Direct messaging with your photographer",
-  "Your gallery delivered in-app when it's ready",
-]
-
-// ── Footer ───────────────────────────────────────────────────────────────────
-
-function Footer() {
-  return (
-    <footer className="bg-paper-deep border-t border-line">
-      {/* Main footer row */}
-      <div className="mx-auto max-w-6xl px-6 pt-10 pb-6 flex flex-col md:flex-row md:items-start justify-between gap-10">
-        <span className="font-fraunces text-lg font-semibold text-ink shrink-0">
-          {BRAND_NAME}
-        </span>
-
-        <nav className="flex flex-wrap gap-x-12 gap-y-6 text-sm">
-          {/* Legal */}
-          <div>
-            <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/50 mb-2.5">
-              Legal
-            </p>
-            <ul className="space-y-2">
-              <li><Link href="/privacy" className="text-ink-soft hover:text-ink transition-colors">Privacy</Link></li>
-              <li><Link href="/terms" className="text-ink-soft hover:text-ink transition-colors">Terms</Link></li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/50 mb-2.5">
-              Company
-            </p>
-            <ul className="space-y-2">
-              <li><Link href="/blog" className="text-ink-soft hover:text-ink transition-colors">Blog</Link></li>
-              <li><Link href="/faq" className="text-ink-soft hover:text-ink transition-colors">FAQ</Link></li>
-              <li><Link href="/support" className="text-ink-soft hover:text-ink transition-colors">Support</Link></li>
-              <li><a href="mailto:hello@camrhia.com" className="text-ink-soft hover:text-ink transition-colors">Contact</a></li>
-            </ul>
-          </div>
-
-          {/* Partners */}
-          <div>
-            <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/50 mb-2.5">
-              Partners
-            </p>
-            <ul className="space-y-2">
-              <li><Link href="/affiliate/signup" className="text-ink-soft hover:text-ink transition-colors">Become an affiliate</Link></li>
-              <li><Link href="/affiliate/login" className="text-ink-soft hover:text-ink transition-colors">Affiliate login</Link></li>
-            </ul>
-          </div>
-        </nav>
-      </div>
-
-      {/* Bottom bar */}
-      <div className="mx-auto max-w-6xl px-6 pb-8 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-line pt-4">
-        <p className="text-xs text-ink-soft">
-          © {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.
-        </p>
-        <Link
-          href="/admin/login"
-          className="text-xs text-ink-soft/30 hover:text-ink-soft transition-colors"
-        >
-          Admin
-        </Link>
-      </div>
-    </footer>
-  )
-}
-
-// ── Page ─────────────────────────────────────────────────────────────────────
-
-const steps = [
-  {
-    n: "1",
-    title: "Book the session",
-    body: "Message, send your packages, confirm the booking. Their details carry over automatically — nothing typed twice.",
-  },
-  {
-    n: "2",
-    title: "Build the day, together",
-    body: "One shared timeline. Either of you can edit it; both of you approve it before it's final.",
-  },
-  {
-    n: "3",
-    title: "Get paid. Get reviewed. Get referred.",
-    body: "Payment reminders send themselves. A finished session becomes a five-star review — and your next booking.",
-  },
-]
-
-const painPoints = [
-  "The client doesn't know if their retainer actually went through.",
-  "The timeline lives in three different text threads — and none of them agree.",
-  "The contract's signed... somewhere. Nobody's totally sure where.",
-]
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'Camrhia',
-  url: 'https://camrhia.com',
-  applicationCategory: 'BusinessApplication',
-  operatingSystem: 'Web',
-  description:
-    'One shared app for the photographer and their client — a real-time timeline, contracts, payments, and gallery delivery, all in one place.',
-  offers: {
-    '@type': 'Offer',
-    price: '59',
-    priceCurrency: 'USD',
-    priceSpecification: {
-      '@type': 'UnitPriceSpecification',
-      price: '59',
-      priceCurrency: 'USD',
-      unitCode: 'MON',
-    },
-  },
-}
-
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-paper">
+    <>
       <Nav />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
       <main>
-
-        {/* ── 1. Hero ───────────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">
-          <p className="font-mono text-xs tracking-widest uppercase text-brass mb-5">
-            Now in early access
-          </p>
-          <h1 className="font-fraunces text-5xl md:text-6xl lg:text-7xl font-semibold text-ink leading-tight tracking-tight mb-6">
-            The big day,{" "}
-            <em className="not-italic italic text-twilight">planned together.</em>
-          </h1>
-          <p className="text-base md:text-lg text-ink-soft max-w-2xl mx-auto leading-relaxed mb-10">
-            Photographers juggle five apps to run one session. Clients
-            are stuck guessing what&apos;s actually been done. Camrhia is the one
-            place you both actually open.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <WaitlistForm />
-            <Link
-              href="/login"
-              className="inline-flex items-center rounded-full border border-twilight px-6 py-3 text-sm font-semibold text-twilight hover:bg-twilight/5 transition-colors"
-            >
-              I&apos;m a photographer
-            </Link>
-          </div>
-        </section>
-
-        {/* ── 2. The problem ────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-6 pb-20">
-          <div className="text-center mb-10">
-            <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
-              Sound familiar?
+        {/* HERO */}
+        <section className="mx-auto max-w-6xl px-6 pt-16 pb-20 grid md:grid-cols-2 gap-14 items-center">
+          <div>
+            <p className="text-sm font-semibold tracking-wide text-brass uppercase">For photographers who would rather be shooting</p>
+            <h1 className="mt-4 font-fraunces text-4xl md:text-6xl font-semibold text-ink leading-[1.08]">
+              Your website, bookings and client app. One place.
+            </h1>
+            <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-xl">
+              Camrhia turns your portfolio into a live website, helps new clients find you, and
+              runs the whole client experience from first hello to final photos. You stop
+              chasing admin. You start getting booked.
             </p>
-            <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink max-w-2xl mx-auto leading-snug">
-              Somewhere between the inquiry and the big day, everyone loses
-              the thread.
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {painPoints.map((pain) => (
-              <div key={pain} className="rounded-2xl bg-card border border-line p-6">
-                <p className="text-ink leading-relaxed">{pain}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── 3. Shared timeline ────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-6 pb-20">
-          <TimelineCard />
-        </section>
-
-        {/* ── 4. The reframe ────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-6 pb-20 text-center">
-          <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
-            Why Camrhia is different
-          </p>
-          <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink max-w-3xl mx-auto leading-snug mb-6">
-            Every other tool is built for the photographer. Camrhia is built for
-            the relationship.
-          </h2>
-          <p className="text-base md:text-lg text-ink-soft max-w-2xl mx-auto leading-relaxed">
-            That&apos;s the part nobody else gets right — a session isn&apos;t one
-            person&apos;s to-do list. It&apos;s two people planning one day, together,
-            and the tools should reflect that.
-          </p>
-        </section>
-
-        {/* ── 5. The plan ───────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-6 pb-20">
-          <div className="text-center mb-10">
-            <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
-              How it works
-            </p>
-            <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink">
-              Three steps. That&apos;s it.
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {steps.map(({ n, title, body }) => (
-              <div key={n} className="rounded-2xl bg-card border border-line p-6">
-                <div className="w-8 h-8 rounded-full bg-twilight/10 flex items-center justify-center mb-4">
-                  <span className="font-mono text-xs font-semibold text-twilight">{n}</span>
-                </div>
-                <h3 className="font-fraunces text-lg font-semibold text-ink mb-2">{title}</h3>
-                <p className="text-sm text-ink-soft leading-relaxed">{body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── 6. For photographers / For clients ────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-6 pb-20">
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Photographers */}
-            <div
-              id="photographers"
-              className="rounded-2xl bg-card border border-line overflow-hidden"
-            >
-              <div className="h-1 bg-twilight" />
-              <div className="p-8">
-                <p className="font-mono text-xs tracking-widest uppercase text-twilight mb-3">
-                  For photographers
-                </p>
-                <h2 className="font-fraunces text-2xl font-semibold text-ink mb-1">
-                  Run your business, not paperwork.
-                </h2>
-                <p className="text-sm text-ink-soft mb-6">
-                  Everything from the first inquiry to the final delivery — in
-                  one place.
-                </p>
-                <ul className="space-y-3">
-                  {photographerFeatures.map((f) => (
-                    <li key={f} className="flex items-start gap-3 text-sm text-ink">
-                      <span className="mt-0.5 w-4 h-4 rounded-full bg-twilight/10 flex items-center justify-center shrink-0">
-                        <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-twilight" fill="none">
-                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-4">
+              <AppStoreButton />
+              <span className="text-sm text-ink-soft">14 days free. Cancel anytime.</span>
             </div>
+          </div>
+          <PhoneMock />
+        </section>
 
-            {/* Clients */}
-            <div
-              id="clients"
-              className="rounded-2xl bg-card border border-line overflow-hidden"
-            >
-              <div className="h-1 bg-brass" />
-              <div className="p-8">
-                <p className="font-mono text-xs tracking-widest uppercase text-brass mb-3">
-                  For clients
-                </p>
-                <h2 className="font-fraunces text-2xl font-semibold text-ink mb-1">
-                  Your day, in your hands.
-                </h2>
-                <p className="text-sm text-ink-soft mb-6">
-                  Stay connected with your photographer from the first hello to
-                  the last photo.
-                </p>
-                <ul className="space-y-3">
-                  {coupleFeatures.map((f) => (
-                    <li key={f} className="flex items-start gap-3 text-sm text-ink">
-                      <span className="mt-0.5 w-4 h-4 rounded-full bg-brass/10 flex items-center justify-center shrink-0">
-                        <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-brass" fill="none">
-                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+        {/* SOUND FAMILIAR */}
+        <section className="bg-paper-deep border-y border-line">
+          <div className="mx-auto max-w-3xl px-6 py-20">
+            <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink">Sound familiar?</h2>
+            <ul className="mt-8 space-y-4">
+              {PAINS.map((p) => (
+                <li key={p} className="flex gap-3 text-lg text-ink">
+                  <span className="text-brass mt-1">&#10005;</span>
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-10 font-fraunces text-2xl text-twilight">
+              You became a photographer to make beautiful things, not to run six apps.
+            </p>
+          </div>
+        </section>
+
+        {/* PORTFOLIO = WEBSITE */}
+        <section className="mx-auto max-w-6xl px-6 py-24 grid md:grid-cols-2 gap-14 items-center">
+          <div>
+            <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink leading-tight">
+              Your portfolio is your website.
+            </h2>
+            <p className="mt-6 text-lg text-ink-soft leading-relaxed">
+              Upload your work once and it is live at your own web address. Put the link in your
+              Instagram bio, your TikTok, your email signature. Clients tap it, fall in love,
+              and inquire without leaving the page.
+            </p>
+            <p className="mt-4 text-lg text-ink-soft leading-relaxed">
+              No developer. No monthly hosting bill for a site you never touch. Update a photo
+              on your phone and your website updates with it.
+            </p>
+          </div>
+          <div className="rounded-3xl bg-card border border-line p-8 shadow-sm">
+            <p className="text-xs uppercase tracking-widest text-ink-soft">Your link</p>
+            <p className="mt-2 font-fraunces text-2xl text-ink">camrhia.com/<span className="text-twilight">yourstudio</span></p>
+            <div className="mt-6 flex flex-wrap gap-2 text-sm">
+              {["Instagram bio", "TikTok", "Email signature", "Business card", "Facebook"].map((t) => (
+                <span key={t} className="rounded-full border border-line bg-paper px-3 py-1.5 text-ink-soft">{t}</span>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* ── 7. Real stories (honest placeholder) ──────────────────────── */}
-        <section className="mx-auto max-w-6xl px-6 pb-20">
-          <div className="rounded-2xl border border-line bg-card px-8 py-14 md:px-14 text-center">
-            <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
-              From real sessions
-            </p>
-            <h2 className="font-fraunces text-3xl font-semibold text-ink mb-4">
-              The stories are still being written.
+        {/* STACK */}
+        <section id="how" className="bg-paper-deep border-y border-line">
+          <div className="mx-auto max-w-6xl px-6 py-24">
+            <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink max-w-3xl leading-tight">
+              Everything you are paying for separately, now in one app.
             </h2>
-            <p className="text-ink-soft leading-relaxed max-w-lg mx-auto mb-8">
-              Camrhia is in early access — the first reviews from real clients
-              and photographers will show up here soon. Want to be one of the
-              first?
-            </p>
-            <WaitlistForm />
-          </div>
-        </section>
-
-        {/* ── 8. Stats strip ────────────────────────────────────────────── */}
-        <section className="bg-ink">
-          <div className="mx-auto max-w-6xl px-6 py-16">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
-              {[
-                { stat: "1 shared timeline", sub: "both sides always in sync" },
-                { stat: "0 spreadsheets",    sub: "required" },
-                { stat: "2 people",          sub: "planning one day, together" },
-              ].map(({ stat, sub }) => (
-                <div key={stat}>
-                  <p className="font-fraunces text-3xl font-semibold text-white mb-1">{stat}</p>
-                  <p className="text-sm text-white/50">{sub}</p>
+            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {STACK.map(([t, d]) => (
+                <div key={t} className="rounded-2xl bg-card border border-line p-6">
+                  <p className="font-fraunces text-xl font-semibold text-ink">{t}</p>
+                  <p className="mt-2 text-sm text-ink-soft leading-relaxed">{d}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── 9. Closing CTA ────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-6 py-24 text-center">
-          <blockquote className="font-fraunces text-3xl md:text-4xl italic font-medium text-ink max-w-2xl mx-auto mb-10 leading-snug">
-            &ldquo;For the day you&apos;ll never forget — and everything it takes to
-            get there.&rdquo;
-          </blockquote>
-          <WaitlistForm />
+        {/* GET FOUND */}
+        <section className="mx-auto max-w-4xl px-6 py-24 text-center">
+          <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink leading-tight">
+            Get found by clients who are ready to book.
+          </h2>
+          <p className="mt-6 text-lg text-ink-soft leading-relaxed">
+            Camrhia is also a marketplace. People looking for a photographer browse portfolios
+            right inside the app, then message you or send an inquiry. You show up where
+            they are already looking, with your best work front and center.
+          </p>
         </section>
 
-      </main>
+        {/* DELIVERY */}
+        <section className="bg-twilight text-white">
+          <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+            <h2 className="font-fraunces text-3xl md:text-5xl font-semibold leading-tight">
+              Delivery day, done beautifully.
+            </h2>
+            <p className="mt-6 text-lg text-white/80 leading-relaxed">
+              Your clients get their photos in the app they have been using the whole time.
+              No expired links, no zip files, no &ldquo;can you resend that?&rdquo; They open the
+              app and their memories are there.
+            </p>
+          </div>
+        </section>
 
+        {/* 3 STEPS */}
+        <section className="mx-auto max-w-5xl px-6 py-24">
+          <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink text-center">Live in three steps</h2>
+          <div className="mt-12 grid md:grid-cols-3 gap-6">
+            {STEPS.map(([t, d], i) => (
+              <div key={t} className="rounded-2xl bg-card border border-line p-7">
+                <p className="font-fraunces text-4xl text-brass">{i + 1}</p>
+                <p className="mt-3 font-fraunces text-xl font-semibold text-ink">{t}</p>
+                <p className="mt-2 text-sm text-ink-soft leading-relaxed">{d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* PRICING */}
+        <section id="pricing" className="bg-paper-deep border-y border-line">
+          <div className="mx-auto max-w-4xl px-6 py-24">
+            <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink text-center">
+              Simple pricing. Try it free first.
+            </h2>
+            <p className="mt-4 text-center text-ink-soft">
+              Every plan starts with 14 free days. If it is not for you, you owe nothing.
+            </p>
+            <div className="mt-12 grid md:grid-cols-2 gap-6">
+              <div className="rounded-3xl bg-card border border-line p-8">
+                <p className="font-fraunces text-2xl font-semibold text-ink">Solo</p>
+                <p className="mt-1 text-sm text-ink-soft">For the photographer running their own show.</p>
+                <p className="mt-6 font-fraunces text-5xl text-ink">$59.99<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="mt-1 text-sm text-ink-soft">or $590 /year</p>
+              </div>
+              <div className="rounded-3xl bg-card border-2 border-twilight p-8">
+                <p className="font-fraunces text-2xl font-semibold text-ink">Studio</p>
+                <p className="mt-1 text-sm text-ink-soft">For studios with a team.</p>
+                <p className="mt-6 font-fraunces text-5xl text-ink">$149<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="mt-1 text-sm text-ink-soft">or $999.99 /year</p>
+              </div>
+            </div>
+            <div className="mt-10 text-center">
+              <AppStoreButton />
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="mx-auto max-w-3xl px-6 py-24">
+          <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink text-center">Questions, answered</h2>
+          <div className="mt-10 divide-y divide-line border-y border-line">
+            {FAQ.map(([q, a]) => (
+              <details key={q} className="py-5">
+                <summary className="faq-summary cursor-pointer flex items-center justify-between gap-4">
+                  <span className="faq-question-text font-fraunces text-lg font-semibold text-ink">{q}</span>
+                  <span className="faq-chevron text-ink-soft">&#9662;</span>
+                </summary>
+                <p className="mt-3 text-ink-soft leading-relaxed">{a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {/* FOUNDER NOTE + FINAL CTA */}
+        <section className="bg-paper-deep border-t border-line">
+          <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+            <Wordmark className="text-5xl" />
+            <p className="mt-8 text-lg text-ink leading-relaxed">
+              I built Camrhia because photographers deserve a calmer way to run their business.
+              One place for your work, your clients and your time. Try it for 14 days. If it
+              gives you even one evening back, it was worth it.
+            </p>
+            <div className="mt-10">
+              <AppStoreButton label="Start your free 14 days" />
+            </div>
+          </div>
+        </section>
+      </main>
       <Footer />
-    </div>
+    </>
   )
 }
