@@ -3,11 +3,11 @@ import { Nav, Footer, AppStoreButton } from "@/app/components/SiteChrome"
 import Wordmark from "@/app/components/Wordmark"
 
 export const metadata: Metadata = {
-  title: "Camrhia | Get found. Get booked. Get your weekends back.",
+  title: "Camrhia | Become the photographer everyone is looking for.",
   description:
     "Stop juggling six tools. Camrhia gives photographers a live portfolio website, a place to get found, booking, contracts, payments and photo delivery. Free for 14 days.",
   openGraph: {
-    title: "Camrhia | Get found. Get booked. Get your weekends back.",
+    title: "Camrhia | Become the photographer everyone is looking for.",
     description:
       "A live portfolio website, bookings, contracts, payments and photo delivery. Everything your clients need, in one app.",
     type: "website",
@@ -69,15 +69,16 @@ export default function Home() {
         {/* HERO */}
         <section className="mx-auto max-w-6xl px-6 pt-16 pb-20 grid md:grid-cols-2 gap-14 items-center">
           <div>
-            <p className="text-sm font-semibold tracking-wide text-brass uppercase">For photographers who are ready for more</p>
+            <p className="text-sm font-semibold tracking-wide text-brass uppercase">Your camera could be your whole career</p>
             <h1 className="mt-4 font-fraunces text-4xl md:text-6xl font-semibold text-ink leading-[1.08]">
-              Get found. Get booked. Get your weekends back.
+              Become the photographer everyone is looking for.
             </h1>
             <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-xl">
-              You did not pick up a camera to spend your nights buried in admin. Camrhia puts
-              your work in front of the clients who are looking for you, then handles the
-              website, the booking, the contracts, the payments and the photo delivery. You
-              keep the part you love. We carry the rest.
+              Your work deserves more than a hidden Instagram grid and a stack of unanswered
+              messages. Camrhia gives you a website that sells for you, puts you in front of
+              clients searching for a photographer, and runs the entire business from first
+              hello to final photos. This is how photography stops being a side hustle and
+              becomes the life you pictured when you started.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-4">
               <AppStoreButton />
