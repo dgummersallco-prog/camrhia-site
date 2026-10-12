@@ -25,6 +25,19 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
     } catch {}
   }
 
+  // Opens the phone's share sheet (Messages, email, WhatsApp...). Falls back to the email app on desktop.
+  async function send(text: string) {
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share({ text })
+        return
+      }
+    } catch {
+      return // person closed the share sheet
+    }
+    window.location.href = `mailto:?subject=${encodeURIComponent('Join my Camrhia team')}&body=${encodeURIComponent(text)}`
+  }
+
   const btn = 'rounded-full px-5 py-2 text-sm font-medium'
 
   return (
@@ -38,6 +51,9 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
           </button>
           <button onClick={() => copy(message, 'msg')} className={`${btn} border border-white/30 text-white`}>
             {copied === 'msg' ? 'Copied' : 'Copy ready-made message'}
+          </button>
+          <button onClick={() => send(message)} className={btn} style={{ backgroundColor: '#A9853F', color: '#ffffff' }}>
+            Send message
           </button>
         </div>
       </section>
@@ -61,6 +77,9 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
           <input readOnly value={link} className="flex-1 rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink" />
           <button onClick={() => copy(link, 'link')} className={`${btn} border border-line text-ink hover:bg-paper`}>
             {copied === 'link' ? 'Copied' : 'Copy link'}
+          </button>
+          <button onClick={() => send(`Join my Camrhia affiliate team: ${link}`)} className={btn} style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}>
+            Send link
           </button>
         </div>
       </section>
