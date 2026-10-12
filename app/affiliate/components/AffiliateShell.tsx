@@ -51,6 +51,19 @@ export default function AffiliateShell({
     return () => { cancelled = true }
   }, [router])
 
+  const [teamName, setTeamName] = useState<string | null>(null)
+  useEffect(() => {
+    const client = supabase
+    if (!client || !affiliate?.parent_affiliate_id) return
+    let cancelled = false
+    ;(async () => {
+      const { data } = await client.rpc('get_my_team')
+      const row = Array.isArray(data) ? data[0] : data
+      if (!cancelled && row?.master_name) setTeamName(String(row.master_name))
+    })()
+    return () => { cancelled = true }
+  }, [affiliate?.parent_affiliate_id])
+
   async function signOut() {
     if (supabase) await supabase.auth.signOut()
     router.replace('/affiliate/login')
@@ -72,6 +85,18 @@ export default function AffiliateShell({
 
       <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-10 space-y-8">
         <AffiliateTabs />
+        {affiliate && (affiliate.is_master || teamName) ? (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {affiliate.is_master ? (
+              <span className="rounded-full bg-brass/15 text-brass px-3 py-1 font-medium">Master partner</span>
+            ) : null}
+            {teamName ? (
+              <span className="rounded-full bg-twilight/10 text-twilight px-3 py-1 font-medium">
+                On {teamName}&apos;s team
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <div>
           <h1 className="font-fraunces text-3xl font-semibold text-ink">{title}</h1>
           {subtitle ? <p className="mt-2 text-sm text-ink-soft max-w-2xl">{subtitle}</p> : null}
