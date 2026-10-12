@@ -9,12 +9,12 @@ const MESSAGES: Script[] = [
   {
     label: 'Opener (no link yet)',
     when: 'Use this first. Send it as an Instagram DM, text or email. Don\'t add a link yet.',
-    why: 'A specific compliment plus an easy question gets far more replies than a link. The question makes them picture a real, painful moment.',
+    why: 'A specific compliment plus an easy question gets far more replies than a link. An open question lets them name their own biggest frustration, so it fits every photographer.',
     startHere: true,
     body: () =>
       `Hey [Name], [something specific about their work] is gorgeous.
 
-Quick question: when a client says their payment "went through" and it never shows up, how long does it usually take you to catch it?`,
+Quick question: what's the most annoying part of the business side of photography for you? Contracts, getting paid, keeping clients on the same page, something else?`,
   },
   {
     label: 'After they reply',
@@ -41,7 +41,7 @@ No pressure at all. I just know how much you've got going on.`,
     when: 'Use this once, 3 to 5 days after your last message. Then let it go.',
     why: 'It reminds them of a real moment that slipped, and "the only thing you can lose is the chasing" removes the risk. The easy out keeps it friendly.',
     body: (link) =>
-      `Hey [Name], I don't want this to get buried. Think about the last time a payment or a timeline detail slipped through a text thread. That's exactly the thing Camrhia fixes.
+      `Hey [Name], I don't want this to get buried. Think about the last time something slipped through a text thread, like a payment, a signature or a session detail. That's exactly the kind of thing Camrhia fixes.
 
 It's free for 14 days, so the only thing you can lose is the chasing: ${link}
 
@@ -75,9 +75,9 @@ const CALL_STEPS: { title: string; say: string; why: string }[] = [
   },
   {
     title: 'Ask, then listen',
-    say: `"When a client says they've sent a payment and it hasn't shown up, how do you usually find out?"
+    say: `"What's the most annoying part of the business side for you? Contracts, getting paid, keeping clients on the same page?"
 
-Then ask: "What's the most annoying part of keeping contracts, payments and timelines straight?"
+Then ask: "What happens when that goes wrong?"
 
 Stop talking and let them answer. Repeat back what you heard.`,
     why: 'People believe their own words more than yours. Their stated pain becomes the reason for the next step.',
