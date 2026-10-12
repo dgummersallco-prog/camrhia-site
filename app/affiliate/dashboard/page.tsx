@@ -257,6 +257,21 @@ export default function AffiliateDashboardPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  async function sendLink() {
+    if (!affiliate) return
+    const link = `https://camrhia.com/r/${affiliate.referral_code}`
+    const text = `I use Camrhia to run my photography business. Try it free for 14 days: ${link}`
+    try {
+      if (typeof navigator !== 'undefined' && (navigator as any).share) {
+        await (navigator as any).share({ title: 'Camrhia', text, url: link })
+        return
+      }
+    } catch {
+      return
+    }
+    window.location.href = `mailto:?subject=${encodeURIComponent('Camrhia for photographers')}&body=${encodeURIComponent(text)}`
+  }
+
   async function savePayout(e: React.FormEvent) {
     e.preventDefault()
     if (!supabase || !affiliate) return
@@ -479,6 +494,12 @@ export default function AffiliateDashboardPage() {
                   Copy link
                 </>
               )}
+            </button>
+            <button
+              onClick={sendLink}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-medium text-ink hover:bg-white/90 transition-colors shrink-0"
+            >
+              Send link
             </button>
           </div>
         </div>
