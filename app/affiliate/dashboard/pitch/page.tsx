@@ -3,82 +3,111 @@
 import { useState } from 'react'
 import AffiliateShell, { type ShellAffiliate } from '../../components/AffiliateShell'
 
-type Script = { label: string; when: string; body: (link: string) => string }
+type Script = { label: string; when: string; why: string; body: (link: string) => string }
 
 const MESSAGES: Script[] = [
   {
-    label: 'First message (cold DM)',
-    when: 'You found their work online and want to start a conversation. Short on purpose.',
-    body: (link) =>
-      `Hey [Name], love your work, especially [something specific you noticed]. Quick question: how do you keep track of contracts, payments and the day-of timeline with your clients right now?
+    label: '1. The opener (no link yet)',
+    when: 'First contact on Instagram, Facebook or text. Do NOT include a link. Just start the conversation.',
+    why: 'A specific compliment plus an easy question gets far more replies than a link. The question makes them picture a real, painful moment.',
+    body: () =>
+      `Hey [Name], [something specific about their work] is gorgeous.
 
-I've been using an app called Camrhia that puts all of it in one shared place with the client. Happy to show you if you're curious. There's a free 14-day trial: ${link}`,
+Quick question, no pitch: when a client says their payment "went through" and it never shows up, how long does it usually take you to catch it?`,
   },
   {
-    label: 'Friend to friend',
-    when: 'You already know them. Keep it casual and honest.',
+    label: '2. After they reply',
+    when: 'Send once they answer your opener. This is where the link goes.',
+    why: 'Mirroring their answer builds trust. You sell the feeling of the outcome, then ask for one small step (their next booking), with a free trial that removes the risk.',
     body: (link) =>
-      `Hey [Name]! You're always juggling a ton of sessions, so I thought of you. I've been using Camrhia to keep the contract, payment schedule and session timeline in one shared spot with the client instead of scattered across texts and email.
+      `Ha, that's exactly why I started using Camrhia. [Repeat their answer back in one sentence.]
 
-It's free to try for 14 days if you want to poke around: ${link}`,
+Now the contract, the payment schedule and the timeline all live in one shared place with the client. The Saturday before a shoot, I open one screen and I know who's paid, who's signed, and what's left to do.
+
+It's free for 14 days. Try it on just your next booking and see how it feels: ${link}`,
+  },
+  {
+    label: 'Friend or someone you know',
+    when: 'You already have a relationship. Keep it casual and ask permission.',
+    why: 'Asking permission feels respectful and lowers resistance. "Two minutes" shrinks the effort, and a personal recommendation is the strongest proof there is.',
+    body: (link) =>
+      `Hey [Name]! Random thought. I've been using something that's saved me a ton of back-and-forth with clients about payments, contracts and timelines. Want me to send it over? Takes two minutes to look at, and it's free for 14 days: ${link}
+
+No pressure at all. I just know how much you've got going on.`,
   },
   {
     label: 'Follow-up (no reply yet)',
-    when: 'Send 3 to 5 days after your first message. Once is enough.',
+    when: 'Send once, 3 to 5 days after your last message. Then let it go.',
+    why: 'Loss framing ("the last time something slipped") plus risk reversal ("the only thing you can lose is the chasing"). Giving them an easy out keeps the tone friendly.',
     body: (link) =>
-      `Hey [Name], no pressure at all. Just circling back in case my last message got buried. If keeping payments and timelines organized is ever a headache, Camrhia might help, and the first 14 days are free: ${link}
+      `Hey [Name], I don't want this to get buried. Think about the last time a payment or a timeline detail slipped through a text thread. That's exactly the thing Camrhia fixes.
 
-Either way, keep up the great work.`,
+It's free for 14 days, so the only thing you can lose is the chasing: ${link}
+
+Totally fine if it's not for you.`,
   },
   {
     label: '"I already use something else"',
-    when: 'They said they have HoneyBook, a spreadsheet, or a system that works.',
+    when: 'They mention HoneyBook, a spreadsheet, or "my system works fine".',
+    why: 'You never argue with their current setup. You shrink the switching cost to one session and point to the one real difference: the client works in it too.',
     body: (link) =>
-      `Totally fair, if it's working, don't change it. The one thing Camrhia does differently is that the client works in it with you. They can see the timeline and their payments instead of you relaying everything over text.
+      `Totally fair. If it's working, I wouldn't change it either. You don't have to switch anything, though. Run just your next session through Camrhia during the free 14 days and compare.
 
-If that ever sounds useful, the trial is free for 14 days and it's easy to try alongside what you have now: ${link}`,
+The thing you'll notice is that your client sees the timeline and their payments themselves, so you're not relaying everything over text: ${link}`,
   },
   {
-    label: 'Photographer who asked for details',
-    when: 'They replied with interest and want to know more.',
+    label: 'They asked about price',
+    when: 'They are interested and ask what it costs.',
+    why: 'Frames $59.99 as about $2 a day and sets it next to the cost of the problem, not next to other software. The trial still lets them decide with no risk.',
     body: (link) =>
-      `Glad you asked! Here's the short version: Camrhia is where you and your client handle the contract, the payment schedule (with reminders) and the session timeline together. You can see who's paid and what's coming up without chasing anyone over text.
+      `Solo is $59.99/month, which works out to about $2 a day. Compare that to what one late or missed payment costs you in time and stress.
 
-It's $59.99/month for Solo, with a free 14-day trial first. Here's the link, and I'm happy to answer anything: ${link}`,
+You get 14 days free first, so you can see whether it's worth it on a real booking before paying anything: ${link}`,
   },
 ]
 
-const CALL_STEPS: { title: string; say: string }[] = [
+const CALL_STEPS: { title: string; say: string; why: string }[] = [
   {
-    title: '1. Open (10 seconds)',
-    say: `"Hi [Name], this is [your name]. I'm a photographer-friendly partner with an app called Camrhia, and I saw your work on [Instagram / website]. Do you have two minutes, or is this a bad time?"`,
+    title: '1. Open with permission (10 seconds)',
+    say: `"Hi [Name], this is [your name]. I love your work, especially [something specific]. Did I catch you at an okay time? I'll be quick."`,
+    why: 'Asking permission lowers defensiveness and makes them more likely to listen.',
   },
   {
-    title: '2. Ask first',
-    say: `"How are you handling contracts, payment reminders and the session timeline with clients right now?" Then listen. Let them tell you what's annoying about it.`,
+    title: '2. Ask, then stay quiet',
+    say: `"When a client says they've sent a payment and it hasn't shown up, how do you usually find out?" Then follow with: "What's the most annoying part of keeping contracts, payments and timelines straight?" Let them talk. Repeat back what you heard.`,
+    why: 'People believe their own words more than yours. Their stated pain becomes the reason for the next step.',
   },
   {
-    title: '3. The pitch (30 seconds)',
-    say: `"What I like about Camrhia is that you and the client work in one shared place. The contract, the payment schedule with reminders, and the timeline are all there, and they can see it too, so there's less chasing and re-explaining. It's $59.99 a month, and you get a free 14-day trial first."`,
+    title: '3. Paint the outcome (30 seconds)',
+    say: `"What I use is Camrhia. The contract, the payment schedule with reminders and the session timeline are all in one shared place with the client. So the Saturday before a shoot, you open one screen and you know who's paid, who's signed, and what's left. You're not chasing anyone."`,
+    why: 'Sell the feeling of the outcome, not the feature list.',
   },
   {
-    title: '4. If they say "I already have a system"',
-    say: `"Makes sense. The difference here is that your client is in it with you, not just you tracking things on your end. It's free to try for 14 days, so you could run one upcoming session through it and see."`,
+    title: '4. Make the ask tiny',
+    say: `"It's free for 14 days. What's your next booking? Run just that one through it and see how it feels. Can I text you the link right now?"`,
+    why: 'A small, specific next step ("your next booking") beats "sign up". Sending the link during the call removes the chance they forget.',
   },
   {
-    title: '5. If they say "it\'s too expensive"',
-    say: `"I get that. It's about two dollars a day, and the trial is free, so you'll know within two weeks whether it saves you enough time and chasing to be worth it."`,
+    title: 'If: "I already have a system"',
+    say: `"Makes sense, I wouldn't change something that works. You don't have to. Try it on one session during the free 14 days and compare. The difference you'll notice is your client is in it with you."`,
+    why: 'Lowers the cost of switching to one session and keeps you from arguing.',
   },
   {
-    title: '6. Close',
-    say: `"Want me to text you the link so you can try it on your next booking?" Send it right away, then follow up in 3 to 5 days.`,
+    title: 'If: "It\'s too expensive"',
+    say: `"I hear you. It's about $2 a day, and the first 14 days are free. Think about what one late payment costs you in time and stress. You'll know within two weeks if it pays off."`,
+    why: 'Reframes price against the cost of the problem and keeps the free trial in front of them.',
+  },
+  {
+    title: 'If: "Just send me info"',
+    say: `"Happy to. I'll text you the link now. When you've had a look, can I check in on [day] to see what you thought?"`,
+    why: 'Turns a polite brush-off into a scheduled follow-up they agreed to.',
   },
 ]
 
 const VOICEMAIL = (link: string) =>
-  `"Hi [Name], it's [your name]. I love your work, especially [something specific]. I use an app called Camrhia to keep contracts, payments and timelines in one shared place with clients, and thought it might help you too. There's a free 14-day trial. I'll text you the link. Have a great day!"
+  `"Hi [Name], it's [your name]. I love your work, especially [something specific]. I use an app called Camrhia that keeps contracts, payments and timelines in one shared place with clients, and I thought of you. It's free for 14 days. I'm texting you the link now. Have a great day!"
 
-Text to follow up with: Hi [Name], here's that link I mentioned: ${link}`
+Follow-up text: Hi [Name], here's the link I mentioned. It's free for 14 days, so try it on your next booking: ${link}`
 
 function CopyButton({ text, id, copied, setCopied }: { text: string; id: string; copied: string | null; setCopied: (v: string | null) => void }) {
   const isCopied = copied === id
@@ -107,7 +136,7 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
       <section className="rounded-2xl border border-line bg-card p-6">
         <h2 className="font-fraunces text-xl font-semibold text-ink">What is a pitch kit?</h2>
         <p className="mt-2 text-sm text-ink max-w-2xl leading-relaxed">
-          It&apos;s a set of ready-made things to say, so you never start from a blank screen. Pick a message to send or a call script to follow, change anything in <span className="font-mono">[brackets]</span> to make it yours, and your referral link is already in each one.
+          It&apos;s a set of ready-made things to say, so you never start from a blank screen. Pick a message to send or a call script to follow, change anything in <span className="font-mono">[brackets]</span> to make it yours, and your referral link is already in the messages that need it.
         </p>
         <ul className="mt-4 space-y-1.5 text-sm text-ink-soft list-disc list-inside">
           <li>Personalize the first line. Mention something real about their work. It&apos;s what gets replies.</li>
@@ -133,7 +162,8 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
                 <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/60">{m.label}</p>
                 <CopyButton text={text} id={`m${i}`} copied={copied} setCopied={setCopied} />
               </div>
-              <p className="text-xs text-ink-soft mb-4">{m.when}</p>
+              <p className="text-xs text-ink-soft mb-1">{m.when}</p>
+              <p className="text-xs text-sage mb-4"><span className="font-medium">Why it works:</span> {m.why}</p>
               <p className="text-sm text-ink leading-relaxed whitespace-pre-wrap">{text}</p>
             </div>
           )
@@ -150,6 +180,7 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
             <div key={s.title}>
               <p className="text-sm font-medium text-ink">{s.title}</p>
               <p className="mt-1 text-sm text-ink-soft leading-relaxed whitespace-pre-wrap">{s.say}</p>
+              <p className="mt-1 text-xs text-sage"><span className="font-medium">Why it works:</span> {s.why}</p>
             </div>
           ))}
         </div>
