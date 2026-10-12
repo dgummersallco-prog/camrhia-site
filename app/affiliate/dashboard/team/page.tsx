@@ -18,7 +18,6 @@ function TeamBody({ userId, isMaster, hasParent }: { userId: string; isMaster: b
       {!isMaster ? (
         <div className="rounded-2xl border border-line bg-card p-6">
           <p className="text-ink font-medium">You&apos;re part of a team.</p>
-          <p className="mt-1 text-sm text-ink-soft">Your master partner earns a bonus on your sales, and it never reduces your commission.</p>
         </div>
       ) : loading ? (
         <p className="text-sm text-ink-soft">Loading…</p>

@@ -17,6 +17,8 @@ const usd = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', c
 const r2 = (n: number) => Math.round(n * 100) / 100
 const pct = (n: number) => `${Math.round(n * 100)}%`
 const selectCls = 'rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink'
+const th = 'px-3 py-2 text-left text-xs uppercase tracking-widest text-ink-soft font-normal whitespace-nowrap'
+const td = 'px-3 py-2.5 whitespace-nowrap'
 
 function PayoutTable({ withMaster, override }: { withMaster: boolean; override: number }) {
   const plans = [
@@ -33,8 +35,6 @@ function PayoutTable({ withMaster, override }: { withMaster: boolean; override: 
       return { plan: p.label, price: p.price, rt, apple, aff, mas, cam: r2(p.price - apple - aff - mas) }
     })
   )
-  const th = 'px-3 py-2 text-left text-xs uppercase tracking-widest text-ink-soft font-normal whitespace-nowrap'
-  const td = 'px-3 py-2.5 whitespace-nowrap'
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -42,7 +42,7 @@ function PayoutTable({ withMaster, override }: { withMaster: boolean; override: 
           <tr>
             <th className={th}>Plan / month</th>
             <th className={th}>Affiliate rate</th>
-            {variant !== 'affiliate' ? <th className={th}>Apple</th> : null}
+            <th className={th}>Apple</th>
             <th className={th}>Affiliate gets</th>
             {withMaster ? <th className={th}>Master gets</th> : null}
             <th className={th}>Camrhia keeps</th>
@@ -53,7 +53,7 @@ function PayoutTable({ withMaster, override }: { withMaster: boolean; override: 
             <tr key={r.plan + r.rt}>
               <td className={td + ' text-ink font-medium'}>{r.plan} ({usd(r.price)})</td>
               <td className={td + ' text-ink'}>{pct(r.rt)}</td>
-              {variant !== 'affiliate' ? <td className={td + ' text-ink-soft'}>{usd(r.apple)}</td> : null}
+              <td className={td + ' text-ink-soft'}>{usd(r.apple)}</td>
               <td className={td + ' text-ink font-medium'}>{usd(r.aff)}</td>
               {withMaster ? <td className={td + ' text-ink font-medium'}>{usd(r.mas)}</td> : null}
               <td className={td + ' text-ink font-semibold'}>{usd(r.cam)}</td>
@@ -66,25 +66,25 @@ function PayoutTable({ withMaster, override }: { withMaster: boolean; override: 
 }
 
 function MasterBreakdown({ a }: { a: ShellAffiliate }) {
+  const masterShare = Number(a.override_rate ?? 0.5)
   const [planKey, setPlanKey] = useState('solo-m')
-  const channel: 'apple' | 'web' = 'apple'
   const [rate, setRate] = useState(Number(a.commission_rate ?? 0.2))
-  const [hasMaster, setHasMaster] = useState(!a.is_master && !!a.parent_affiliate_id)
-  const [override, setOverride] = useState(Number(a.override_rate ?? 0.5))
+  const [hasMaster, setHasMaster] = useState(false)
+  const [override, setOverride] = useState(masterShare)
 
   const rateOptions = Array.from(new Set([0.2, 0.25, 0.3, Number(a.commission_rate ?? 0.2)])).sort((x, y) => x - y)
-  const overrideOptions = Array.from(new Set([0.3, 0.4, 0.5, Number(a.override_rate ?? 0.5)])).sort((x, y) => x - y)
+  const overrideOptions = Array.from(new Set([0.3, 0.4, 0.5, masterShare])).sort((x, y) => x - y)
 
   const plan = PLANS.find((p) => p.key === planKey) ?? PLANS[0]
   const price = plan.price
-  const apple = channel === 'apple' ? r2(price * APPLE_RATE) : 0
+  const apple = r2(price * APPLE_RATE)
   const base = r2(price - apple)
   const affiliate = r2(base * rate)
   const master = hasMaster ? r2((base - affiliate) * override) : 0
   const camrhia = r2(price - apple - affiliate - master)
 
   const rows = [
-    { label: channel === 'apple' ? "Apple's cut" : 'Apple', value: apple, color: '#9AA0A6', show: channel === 'apple', note: `${pct(APPLE_RATE)} of the price` },
+    { label: "Apple's cut", value: apple, color: '#9AA0A6', show: true, note: `${pct(APPLE_RATE)} of the price` },
     { label: 'Affiliate commission', value: affiliate, color: '#3A4A6B', show: true, note: `${pct(rate)} of ${usd(base)}` },
     { label: 'Master partner bonus', value: master, color: '#A9853F', show: hasMaster, note: `${pct(override)} of what's left after the affiliate` },
     { label: 'Camrhia keeps', value: camrhia, color: '#6E7E60', show: true, note: 'before processing fees and taxes' },
@@ -101,14 +101,12 @@ function MasterBreakdown({ a }: { a: ShellAffiliate }) {
             based on how many referrals they have (1&ndash;10: 20%, 11&ndash;25: 25%, 26+: 30%).
           </li>
           <li>
-            If that affiliate is on a master&apos;s team, the master gets <span className="font-medium">50% of what&apos;s left after the affiliate is paid</span>.
+            If that affiliate is on a master&apos;s team, the master gets <span className="font-medium">a share of what&apos;s left after the affiliate is paid</span>.
             This never reduces the affiliate&apos;s share.
           </li>
           <li>Camrhia keeps the rest.</li>
         </ol>
-        <p className="mt-4 text-sm text-ink-soft">
-          Master partners also earn their own custom rate on photographers they refer directly. Yearly plans use the same percentages on the yearly price, paid once a year.
-        </p>
+        <p className="mt-4 text-sm text-ink-soft">Yearly plans use the same percentages on the yearly price, paid once a year.</p>
       </section>
 
       <section className="rounded-2xl border border-line bg-card p-6 space-y-5">
@@ -146,13 +144,11 @@ function MasterBreakdown({ a }: { a: ShellAffiliate }) {
       <section className="rounded-2xl border border-line bg-card p-6">
         <p className="text-sm text-ink-soft">One subscriber pays</p>
         <p className="font-fraunces text-4xl text-ink">{usd(price)}</p>
-
         <div className="mt-5 flex h-4 w-full overflow-hidden rounded-full bg-paper">
           {rows.map((r) => (
             <div key={r.label} style={{ width: `${(r.value / price) * 100}%`, backgroundColor: r.color }} />
           ))}
         </div>
-
         <ul className="mt-5 divide-y divide-line border-y border-line">
           {rows.map((r) => (
             <li key={r.label} className="py-3 flex items-center justify-between gap-4 text-sm">
@@ -172,21 +168,14 @@ function MasterBreakdown({ a }: { a: ShellAffiliate }) {
       <section className="rounded-2xl border border-line bg-card p-6">
         <h2 className="font-fraunces text-xl font-semibold text-ink">Every scenario, side by side</h2>
         <p className="mt-1 text-sm text-ink-soft">Per subscriber, per month, after Apple&apos;s 15%.</p>
-
         <p className="mt-5 text-sm font-medium text-ink">Sold by an affiliate with no master</p>
-        <PayoutTable withMaster={false} override={0.5} />
-
-        <p className="mt-6 text-sm font-medium text-ink">Sold by an affiliate on a master&apos;s team (50% master share)</p>
-        <PayoutTable withMaster override={0.5} />
+        <PayoutTable withMaster={false} override={masterShare} />
+        <p className="mt-6 text-sm font-medium text-ink">Sold by an affiliate on a master&apos;s team ({pct(masterShare)} master share)</p>
+        <PayoutTable withMaster={true} override={masterShare} />
       </section>
 
       <section className="rounded-2xl border border-line bg-card p-6 text-sm text-ink-soft space-y-2">
         <p>Commissions are paid on each real charge. The 14-day free trial earns nothing; the first payment after it does.</p>
-        <p>
-          {channel === 'apple'
-            ? 'For in-app subscriptions, Apple takes its cut first, and commissions are calculated on what is left.'
-            : 'For website subscriptions there is no Apple cut. Commissions are calculated on the full price, and Stripe\u2019s processing fee (about 2.9% + 30\u00A2) comes out of Camrhia\u2019s share.'}
-        </p>
         <p>Affiliates and master partners are independent partners and are responsible for their own taxes.</p>
       </section>
     </div>
@@ -203,8 +192,6 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
     { label: 'Solo', price: 59.99 },
     { label: 'Studio', price: 149 },
   ]
-  const th = 'px-3 py-2 text-left text-xs uppercase tracking-widest text-ink-soft font-normal whitespace-nowrap'
-  const td = 'px-3 py-2.5 whitespace-nowrap'
   const custom = a.commission_rate != null && ![0.2, 0.25, 0.3].includes(Number(a.commission_rate))
   return (
     <div className="space-y-6">
@@ -248,14 +235,10 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
   )
 }
 
-function Breakdown({ a }: { a: ShellAffiliate }) {
-  return a.is_master ? <MasterBreakdown a={a} /> : <AffiliateBreakdown a={a} />
-}
-
 export default function PayPage() {
   return (
-    <AffiliateShell title="Pay breakdown" subtitle="Exactly where each subscription dollar goes.">
-      {(a) => <Breakdown a={a} />}
+    <AffiliateShell title="Pay breakdown" subtitle="Where the money goes.">
+      {(a) => (a.is_master ? <MasterBreakdown a={a} /> : <AffiliateBreakdown a={a} />)}
     </AffiliateShell>
   )
 }
