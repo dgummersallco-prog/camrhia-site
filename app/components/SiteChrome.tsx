@@ -27,7 +27,7 @@ export function Nav() {
           <Link href="/blog" className="hover:text-ink transition-colors">Blog</Link>
           <Link href="/faq" className="hover:text-ink transition-colors">FAQ</Link>
           <Link href="/affiliate/signup" className="hover:text-ink transition-colors">Become an affiliate</Link>
-          <Link href="/login" className="hover:text-ink transition-colors">Log in</Link>
+          <Link href="/affiliate/login" className="hover:text-ink transition-colors">Affiliate log in</Link>
         </div>
         <a
           href={APP_STORE_URL}
@@ -54,7 +54,7 @@ export function Footer() {
           <Link href="/faq" className="hover:text-ink">FAQ</Link>
           <Link href="/affiliate/signup" className="hover:text-ink">Become an affiliate</Link>
           <Link href="/support" className="hover:text-ink">Support</Link>
-          <Link href="/login" className="hover:text-ink">Log in</Link>
+          <Link href="/affiliate/login" className="hover:text-ink">Affiliate log in</Link>
           <Link href="/admin/login" className="hover:text-ink">Admin</Link>
         </div>
       </div>
