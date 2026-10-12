@@ -9,13 +9,9 @@ export default async function ReferralPage(props: PageProps<"/r/[code]">) {
 
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from("affiliates")
-        .select("referral_code")
-        .eq("referral_code", code)
-        .maybeSingle()
+      const { data, error } = await supabase.rpc("check_referral_code", { p_code: code })
 
-      if (!error && data) {
+      if (!error && data === true) {
         referred = true
       }
     } catch {
@@ -52,7 +48,7 @@ export default async function ReferralPage(props: PageProps<"/r/[code]">) {
             </p>
 
             <a
-              href="#"
+              href="https://apps.apple.com/app/id6800011162"
               className="inline-flex items-center gap-2 rounded-2xl bg-ink text-white px-6 py-3.5 text-sm font-semibold hover:bg-ink/90 transition-colors mb-3"
               aria-label="Download on the App Store"
             >
@@ -68,7 +64,7 @@ export default async function ReferralPage(props: PageProps<"/r/[code]">) {
             </a>
 
             <p className="text-xs text-ink-soft">
-              Available soon on iOS. Android coming.
+              Available now on iOS. Android coming.
             </p>
           </div>
         ) : (
