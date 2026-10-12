@@ -572,7 +572,7 @@ export default function AffiliateDashboardPage() {
                     <span className="font-fraunces text-4xl font-semibold text-twilight leading-none" style={{ color: '#3A4A6B' }}>
                       {Math.round(nextRate * 100)}%
                     </span>
-                    <span className="text-sm text-ink-soft">per referral</span>
+                    <span className="text-sm text-ink-soft">of each subscription after Apple’s 15% fee · <Link href="/affiliate/dashboard/pay" className="text-twilight underline">see the full breakdown</Link></span>
                   </div>
                 </div>
                 {!tierInfo.atMax && (
