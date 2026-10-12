@@ -253,7 +253,7 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-line border-t border-line">
-              {[10, 20, 50, 100].map((n) => (
+              {[10, 20, 50, 100, 500].map((n) => (
                 <tr key={n}>
                   <td className={td + ' text-ink font-medium'}>{n}</td>
                   <td className={td + ' text-ink font-semibold'}>{usd(monthlyEarn(n, 59.99, custom ? Number(a.commission_rate) : null))}</td>
