@@ -32,7 +32,8 @@ function calcMonthlyEarnings(n: number): number {
   const tier1 = Math.min(n, 10)
   const tier2 = Math.max(0, Math.min(n, 25) - 10)
   const tier3 = Math.max(0, n - 25)
-  return tier1 * 59 * 0.20 + tier2 * 59 * 0.30 + tier3 * 59 * 0.40
+  const net = 59.99 * 0.85 // Solo monthly, after Apple's 15% fee
+  return tier1 * net * 0.20 + tier2 * net * 0.25 + tier3 * net * 0.30
 }
 
 function EarningsCalculator() {
@@ -255,7 +256,7 @@ export default function AffiliateSignupPage() {
           <h2 className="font-fraunces text-xl font-semibold text-ink mb-5">How the tiers work</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             {[
-              { n: '1', range: 'Referrals 1–10',  rate: '20%', desc: 'of their subscription, every month they stay.' },
+              { n: '1', range: 'Referrals 1–10',  rate: '20%', desc: "of what's left after Apple's 15% fee, every month they stay." },
               { n: '2', range: 'Referrals 11–25', rate: '25%', desc: '— automatically, once you cross 10.' },
               { n: '3', range: 'Referrals 26+',   rate: '30%', desc: '— your permanent rate from here on.' },
             ].map((tier) => (

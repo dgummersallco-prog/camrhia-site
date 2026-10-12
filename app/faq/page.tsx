@@ -70,7 +70,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How much can I earn?',
-        a: '20% recurring commission to start, climbing to 25% after 10 referrals and 30% after 25 — for as long as your referrals stay subscribed, with no cap.',
+        a: '20% recurring commission to start, climbing to 25% after 10 referrals and 30% after 25, calculated after the 15% App Store fee, for as long as your referrals stay subscribed, with no cap.',
       },
       {
         q: 'Do I need to be a photographer to join?',

@@ -18,6 +18,53 @@ const r2 = (n: number) => Math.round(n * 100) / 100
 const pct = (n: number) => `${Math.round(n * 100)}%`
 const selectCls = 'rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink'
 
+function PayoutTable({ withMaster, override }: { withMaster: boolean; override: number }) {
+  const plans = [
+    { label: 'Solo', price: 59.99 },
+    { label: 'Studio', price: 149 },
+  ]
+  const rates = [0.2, 0.25, 0.3]
+  const rows = plans.flatMap((p) =>
+    rates.map((rt) => {
+      const apple = r2(p.price * APPLE_RATE)
+      const base = r2(p.price - apple)
+      const aff = r2(base * rt)
+      const mas = withMaster ? r2((base - aff) * override) : 0
+      return { plan: p.label, price: p.price, rt, apple, aff, mas, cam: r2(p.price - apple - aff - mas) }
+    })
+  )
+  const th = 'px-3 py-2 text-left text-xs uppercase tracking-widest text-ink-soft font-normal whitespace-nowrap'
+  const td = 'px-3 py-2.5 whitespace-nowrap'
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr>
+            <th className={th}>Plan / month</th>
+            <th className={th}>Affiliate rate</th>
+            <th className={th}>Apple</th>
+            <th className={th}>Affiliate gets</th>
+            {withMaster ? <th className={th}>Master gets</th> : null}
+            <th className={th}>Camrhia keeps</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line border-t border-line">
+          {rows.map((r) => (
+            <tr key={r.plan + r.rt}>
+              <td className={td + ' text-ink font-medium'}>{r.plan} ({usd(r.price)})</td>
+              <td className={td + ' text-ink'}>{pct(r.rt)}</td>
+              <td className={td + ' text-ink-soft'}>{usd(r.apple)}</td>
+              <td className={td + ' text-ink font-medium'}>{usd(r.aff)}</td>
+              {withMaster ? <td className={td + ' text-ink font-medium'}>{usd(r.mas)}</td> : null}
+              <td className={td + ' text-ink font-semibold'}>{usd(r.cam)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function Breakdown({ a }: { a: ShellAffiliate }) {
   const [planKey, setPlanKey] = useState('solo-m')
   const channel: 'apple' | 'web' = 'apple'
@@ -45,6 +92,25 @@ function Breakdown({ a }: { a: ShellAffiliate }) {
 
   return (
     <div className="space-y-6">
+      <section className="rounded-2xl border border-line bg-card p-6">
+        <h2 className="font-fraunces text-xl font-semibold text-ink">How the money is split</h2>
+        <ol className="mt-4 space-y-2 text-sm text-ink list-decimal list-inside">
+          <li>Apple takes <span className="font-medium">15%</span> of the subscription price.</li>
+          <li>
+            The affiliate who referred the photographer gets <span className="font-medium">20%, 25% or 30%</span> of what&apos;s left,
+            based on how many referrals they have (1&ndash;10: 20%, 11&ndash;25: 25%, 26+: 30%).
+          </li>
+          <li>
+            If that affiliate is on a master&apos;s team, the master gets <span className="font-medium">50% of what&apos;s left after the affiliate is paid</span>.
+            This never reduces the affiliate&apos;s share.
+          </li>
+          <li>Camrhia keeps the rest.</li>
+        </ol>
+        <p className="mt-4 text-sm text-ink-soft">
+          Master partners also earn their own custom rate on photographers they refer directly. Yearly plans use the same percentages on the yearly price, paid once a year.
+        </p>
+      </section>
+
       <section className="rounded-2xl border border-line bg-card p-6 space-y-5">
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <label className="text-sm text-ink space-y-1.5 block">
@@ -101,6 +167,17 @@ function Breakdown({ a }: { a: ShellAffiliate }) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="rounded-2xl border border-line bg-card p-6">
+        <h2 className="font-fraunces text-xl font-semibold text-ink">Every scenario, side by side</h2>
+        <p className="mt-1 text-sm text-ink-soft">Per subscriber, per month, after Apple&apos;s 15%.</p>
+
+        <p className="mt-5 text-sm font-medium text-ink">Sold by an affiliate with no master</p>
+        <PayoutTable withMaster={false} override={0.5} />
+
+        <p className="mt-6 text-sm font-medium text-ink">Sold by an affiliate on a master&apos;s team (50% master share)</p>
+        <PayoutTable withMaster override={0.5} />
       </section>
 
       <section className="rounded-2xl border border-line bg-card p-6 text-sm text-ink-soft space-y-2">
