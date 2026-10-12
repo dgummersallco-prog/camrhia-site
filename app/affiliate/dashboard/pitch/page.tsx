@@ -14,7 +14,7 @@ const MESSAGES: Script[] = [
     body: () =>
       `Hey [Name], [something specific about their work] is gorgeous.
 
-Quick question, no pitch: when a client says their payment "went through" and it never shows up, how long does it usually take you to catch it?`,
+Quick question: when a client says their payment "went through" and it never shows up, how long does it usually take you to catch it?`,
   },
   {
     label: 'After they reply',
