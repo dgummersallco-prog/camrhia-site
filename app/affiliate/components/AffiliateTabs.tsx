@@ -54,6 +54,7 @@ export default function AffiliateTabs() {
     tabs.push({ href: '/affiliate/dashboard/numbers', label: 'Numbers' })
     tabs.push({ href: '/affiliate/dashboard/recruit', label: 'Recruit' })
   }
+  tabs.push({ href: '/affiliate/dashboard/pitch', label: 'Pitch kit' })
   tabs.push({ href: '/affiliate/dashboard/pay', label: 'Pay breakdown' })
 
   return (
