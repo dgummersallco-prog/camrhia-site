@@ -207,14 +207,14 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
       <section id="messages" className="space-y-4 scroll-mt-24">
         <div>
           <h2 className="font-fraunces text-xl font-semibold text-ink">Messages</h2>
-          <p className="text-sm text-ink-soft mt-0.5">For Instagram DMs, texts or email. Not sure where to start? Use the first one.</p>
+          <p className="text-sm text-ink-soft mt-0.5">For Instagram DMs, texts or email. Not sure where to start? Use Message 1, then Message 2 when they reply.</p>
         </div>
         {MESSAGES.map((m, i) => {
           const text = fill(m.body(link))
           return (
             <div key={m.label} className="rounded-2xl border border-line bg-card p-6">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <p className="font-medium text-ink">{m.label}</p>
+                <p className="font-medium text-ink"><span className="text-twilight">Message {i + 1}.</span> {m.label}</p>
                 {m.startHere ? <span className="rounded-full bg-sage/15 text-sage px-2.5 py-0.5 text-xs font-medium">Start here</span> : null}
               </div>
               <p className="text-sm text-ink-soft">{m.when}</p>
