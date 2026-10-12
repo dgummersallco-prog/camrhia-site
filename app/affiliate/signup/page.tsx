@@ -143,6 +143,19 @@ export default function AffiliateSignupPage() {
     } catch {}
   }, [])
 
+  const [teamInfo, setTeamInfo] = useState<{ valid: boolean; master_name?: string } | null>(null)
+
+  useEffect(() => {
+    const client = supabase
+    const code = teamCode.trim()
+    if (!code || !client) { setTeamInfo(null); return }
+    const t = setTimeout(async () => {
+      const { data } = await client.rpc('get_team_info', { p_code: code })
+      setTeamInfo((data as { valid: boolean; master_name?: string } | null) ?? null)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [teamCode])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!supabase) {
@@ -341,6 +354,12 @@ export default function AffiliateSignupPage() {
                 className="w-full rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition"
               />
             </div>
+
+            {teamInfo?.valid && (
+              <p className="rounded-xl bg-sage/10 border border-sage/30 px-4 py-3 text-sm text-ink">
+                You&apos;re joining <span className="font-medium">{teamInfo.master_name || 'a master partner'}&apos;s team</span>. Your team code is filled in below.
+              </p>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-ink mb-1.5">

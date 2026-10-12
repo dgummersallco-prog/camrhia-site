@@ -12,10 +12,10 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
 
   const code = a.team_code || a.referral_code
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://camrhia.com'
-  const link = `${origin}/affiliate/signup?recruit=${code}`
+  const link = `${origin}/t/${code}`
   const message =
     `Hey! I'm a partner with Camrhia, an app that gives photographers their own portfolio website plus bookings, contracts, payments and client messaging in one place. ` +
-    `You earn recurring commission for every photographer you refer. Sign up at ${origin}/affiliate/signup and enter my team code when it asks "Joining a team?": ${code}`
+    `You earn recurring commission for every photographer you refer. Sign up here and my team code will be filled in for you: ${link}`
 
   async function copy(text: string, key: string) {
     try {
@@ -45,9 +45,9 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
       <section className="rounded-2xl border border-line bg-card p-6">
         <h2 className="font-fraunces text-xl font-semibold text-ink">How to add someone to your team</h2>
         <ol className="mt-4 space-y-3 text-sm text-ink list-decimal list-inside">
-          <li>Send them your team code (or the ready-made message above).</li>
-          <li>They go to <span className="font-medium">camrhia.com/affiliate/signup</span> and fill out the form.</li>
-          <li>In the <span className="font-medium">Joining a team?</span> box, they type your code.</li>
+          <li>Send them your team link below, or the ready-made message. The link already has your team code in it.</li>
+          <li>They tap it and fill out the affiliate signup form. Your team code is already filled in.</li>
+          <li>If they signed up some other way, they can type your code in the <span className="font-medium">Joining a team?</span> box.</li>
           <li>They confirm their email and log in. They show up under your Team tab.</li>
         </ol>
         <p className="mt-4 text-sm text-ink-soft">
@@ -56,7 +56,7 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
       </section>
 
       <section className="rounded-2xl border border-line bg-card p-6">
-        <p className="text-sm font-medium text-ink">Prefer a link?</p>
+        <p className="text-sm font-medium text-ink">Your team link</p>
         <div className="mt-2 flex flex-col sm:flex-row gap-3">
           <input readOnly value={link} className="flex-1 rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink" />
           <button onClick={() => copy(link, 'link')} className={`${btn} border border-line text-ink hover:bg-paper`}>
