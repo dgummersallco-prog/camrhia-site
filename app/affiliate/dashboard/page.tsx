@@ -109,7 +109,7 @@ Camrhia is built the same way you shoot — considered, not chaotic. One shared 
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
-import TeamSection from './TeamSection'
+import AffiliateTabs from '../components/AffiliateTabs'
 
 export default function AffiliateDashboardPage() {
   const router = useRouter()
@@ -417,7 +417,7 @@ export default function AffiliateDashboardPage() {
 
       <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-10 space-y-8">
 
-        <TeamSection client={supabase} userId={affiliate.id} code={affiliate.referral_code} />
+        <AffiliateTabs />
 
         {/* Dark referral card */}
         <div className="rounded-2xl bg-ink p-8">

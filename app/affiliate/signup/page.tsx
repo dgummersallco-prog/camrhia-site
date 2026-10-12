@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { BRAND_NAME } from '@/lib/brand'
@@ -133,6 +133,14 @@ export default function AffiliateSignupPage() {
   const [error, setError]       = useState<string | null>(null)
   const [loading, setLoading]   = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+  const [teamCode, setTeamCode] = useState('')
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('camrhia_recruit')
+      if (saved) setTeamCode(saved)
+    } catch {}
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -146,13 +154,20 @@ export default function AffiliateSignupPage() {
       // Generate referral code before signUp so it can be stored in user metadata.
       // The DB trigger reads it from raw_user_meta_data and inserts the affiliates row —
       // no client-side insert needed, so no session is required at this point.
+      const code = teamCode.trim().toLowerCase()
+      if (code) {
+        const { data: tc } = await supabase.from('affiliates').select('referral_code').eq('referral_code', code).maybeSingle()
+        if (!tc) throw new Error("That team code wasn't found. Check it with whoever invited you, or leave it blank.")
+        try { window.localStorage.setItem('camrhia_recruit', code) } catch {}
+      }
+
       const referral_code = await uniqueReferralCode(name)
 
       const { data: signUpData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { account_kind: 'affiliate', name, referral_code },
+          data: { account_kind: 'affiliate', name, referral_code, ...(code ? { recruit_code: code } : {}) },
         },
       })
       if (authError) throw authError
@@ -322,6 +337,20 @@ export default function AffiliateSignupPage() {
                 required
                 minLength={8}
                 placeholder="At least 8 characters"
+                className="w-full rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-ink mb-1.5">
+                Joining a team? <span className="text-ink-soft font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={teamCode}
+                onChange={(e) => setTeamCode(e.target.value)}
+                placeholder="Team code"
+                autoCapitalize="none"
                 className="w-full rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition"
               />
             </div>
