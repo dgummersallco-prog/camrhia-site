@@ -20,7 +20,7 @@ const selectCls = 'rounded-lg border border-line bg-paper px-3 py-2 text-sm text
 
 function Breakdown({ a }: { a: ShellAffiliate }) {
   const [planKey, setPlanKey] = useState('solo-m')
-  const [channel, setChannel] = useState<'apple' | 'web'>('apple')
+  const channel: 'apple' | 'web' = 'apple'
   const [rate, setRate] = useState(Number(a.commission_rate ?? 0.2))
   const [hasMaster, setHasMaster] = useState(!a.is_master && !!a.parent_affiliate_id)
   const [override, setOverride] = useState(Number(a.override_rate ?? 0.5))
@@ -46,18 +46,11 @@ function Breakdown({ a }: { a: ShellAffiliate }) {
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-line bg-card p-6 space-y-5">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <label className="text-sm text-ink space-y-1.5 block">
             <span className="block font-medium">Plan</span>
             <select className={`${selectCls} w-full`} value={planKey} onChange={(e) => setPlanKey(e.target.value)}>
               {PLANS.map((p) => <option key={p.key} value={p.key}>{p.label} ({usd(p.price)})</option>)}
-            </select>
-          </label>
-          <label className="text-sm text-ink space-y-1.5 block">
-            <span className="block font-medium">Where they subscribe</span>
-            <select className={`${selectCls} w-full`} value={channel} onChange={(e) => setChannel(e.target.value as 'apple' | 'web')}>
-              <option value="apple">In the app (Apple)</option>
-              <option value="web">On the website (Stripe)</option>
             </select>
           </label>
           <label className="text-sm text-ink space-y-1.5 block">
