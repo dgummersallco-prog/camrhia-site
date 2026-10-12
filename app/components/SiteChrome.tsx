@@ -53,6 +53,7 @@ export function Footer() {
           <Link href="/faq" className="hover:text-ink">FAQ</Link>
           <Link href="/support" className="hover:text-ink">Support</Link>
           <Link href="/login" className="hover:text-ink">Log in</Link>
+          <Link href="/admin/login" className="hover:text-ink">Admin</Link>
         </div>
       </div>
       <div className="border-t border-line py-5 text-center text-xs text-ink-soft">
