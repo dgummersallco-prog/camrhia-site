@@ -9,112 +9,108 @@ const MESSAGES: Script[] = [
   {
     label: 'Opener (no link yet)',
     when: 'Use this first. Send it as an Instagram DM, text or email. Don\'t add a link yet.',
-    why: 'A specific compliment plus an easy question gets far more replies than a link. An open question lets them name their own biggest frustration, so it fits every photographer.',
+    why: 'A real compliment plus an easy question gets far more replies than a link. An open question lets them name their own biggest frustration, so it fits every photographer.',
     startHere: true,
     body: () =>
-      `Hey [Name], [something specific about their work] is gorgeous.
+      `hey [Name]! came across your page and [something specific about their work] is so good.
 
-Quick question: what's the most annoying part of the business side of photography for you? Contracts, getting paid, keeping clients on the same page, something else?`,
+random question, what's the most annoying part of the business side for you? contracts, getting paid, keeping clients in the loop, something else?`,
   },
   {
     label: 'After they reply',
     when: 'Use this when they answer your opener. This is the message with your link.',
-    why: 'Repeating their answer builds trust. You describe the outcome, then ask for one small step (their next booking), and the free trial removes the risk.',
+    why: 'Repeating their answer shows you listened. You describe the fix in plain words, then ask for one small step (their next booking), and the free trial removes the risk.',
     body: (link) =>
-      `Ha, that's exactly why I started using Camrhia. [Repeat their answer back in one sentence.]
+      `ha yeah, same. [Repeat their answer back in one sentence.]
 
-Now the contract, the payment schedule and the timeline all live in one shared place with the client. The Saturday before a shoot, I open one screen and I know who's paid, who's signed, and what's left to do.
+that's honestly why I started using Camrhia. the contract, payments and timeline are all in one spot and your client can see it too, so way less texting back and forth.
 
-It's free for 14 days. Try it on just your next booking and see how it feels: ${link}`,
+it's free for 14 days, try it on your next booking and see what you think: ${link}`,
   },
   {
     label: 'For a friend or someone you know',
     when: 'Use this instead of the opener if you already know them.',
-    why: 'Asking permission feels respectful and lowers resistance. "Two minutes" shrinks the effort, and a personal recommendation is the strongest proof there is.',
+    why: 'A personal recommendation from someone they know is the strongest proof there is. Keeping it short and low-pressure makes it easy to say yes.',
     body: (link) =>
-      `Hey [Name]! Random thought. I've been using something that's saved me a ton of back-and-forth with clients about payments, contracts and timelines. Want me to send it over? Takes two minutes to look at, and it's free for 14 days: ${link}
+      `hey [Name]! I've been using this app for contracts, payments and keeping clients updated and it's been a big help. thought of you. it's free for 14 days if you wanna check it out: ${link}
 
-No pressure at all. I just know how much you've got going on.`,
+no pressure at all!`,
   },
   {
     label: 'Follow-up (no reply yet)',
     when: 'Use this once, 3 to 5 days after your last message. Then let it go.',
-    why: 'It reminds them of a real moment that slipped, and "the only thing you can lose is the chasing" removes the risk. The easy out keeps it friendly.',
+    why: 'Most people mean to reply and forget. A friendly nudge with an easy out gets answers without feeling pushy.',
     body: (link) =>
-      `Hey [Name], I don't want this to get buried. Think about the last time something slipped through a text thread, like a payment, a signature or a session detail. That's exactly the kind of thing Camrhia fixes.
+      `hey [Name], just bumping this in case it got buried. no worries at all if it's not your thing!
 
-It's free for 14 days, so the only thing you can lose is the chasing: ${link}
-
-Totally fine if it's not for you.`,
+if keeping track of payments or paperwork ever gets annoying, here's the link. it's free for 14 days: ${link}`,
   },
   {
     label: 'They said "I already use something else"',
     when: 'Use this when they mention HoneyBook, a spreadsheet, or "my system works fine".',
-    why: 'You never argue with their current setup. You shrink the switching cost to one session and point to the one real difference: the client works in it too.',
+    why: 'You never argue with what they already use. You make trying it feel small (one session) and point to the one real difference: the client can see everything too.',
     body: (link) =>
-      `Totally fair. If it's working, I wouldn't change it either. You don't have to switch anything, though. Run just your next session through Camrhia during the free 14 days and compare.
+      `totally get it, if it works don't mess with it!
 
-The thing you'll notice is that your client sees the timeline and their payments themselves, so you're not relaying everything over text: ${link}`,
+if you ever wanna compare, you could run just one session through Camrhia during the free 14 days. the main difference is your client can see everything too, so there's less back and forth: ${link}`,
   },
   {
     label: 'They asked about price',
     when: 'Use this when they ask what it costs.',
-    why: 'Frames $59.99 as about $2 a day and sets it next to the cost of the problem, not next to other software. The trial still lets them decide with no risk.',
+    why: 'Saying it as "about $2 a day" makes it feel small, and the free trial means they can decide with no risk.',
     body: (link) =>
-      `Solo is $59.99/month, which works out to about $2 a day. Compare that to what one late or missed payment costs you in time and stress.
-
-You get 14 days free first, so you can see whether it's worth it on a real booking before paying anything: ${link}`,
+      `it's $59.99 a month for Solo, so about $2 a day. you get 14 days free first, so you can try it on a real booking before you pay anything: ${link}`,
   },
 ]
 
 const CALL_STEPS: { title: string; say: string; why: string }[] = [
   {
     title: 'Open',
-    say: `"Hi [Name], this is [your name]. I love your work, especially [something specific]. Did I catch you at an okay time? I'll be quick."`,
-    why: 'Asking permission lowers defensiveness and makes them more likely to listen.',
+    say: `"Hey [Name], it's [your name]. I really like your work, especially [something specific]. Got a minute?"`,
+    why: 'Asking if they have a minute is polite and makes them more likely to stay on the line.',
   },
   {
     title: 'Ask, then listen',
-    say: `"What's the most annoying part of the business side for you? Contracts, getting paid, keeping clients on the same page?"
+    say: `"What's the most annoying part of the business side for you? Contracts, getting paid, keeping clients in the loop?"
 
-Then ask: "What happens when that goes wrong?"
+Then ask: "Yeah, what happens when that goes wrong?"
 
-Stop talking and let them answer. Repeat back what you heard.`,
-    why: 'People believe their own words more than yours. Their stated pain becomes the reason for the next step.',
+Stop talking and let them answer.`,
+    why: 'People believe their own words more than yours. What they tell you is the reason they will care about the next part.',
   },
   {
-    title: 'Describe the outcome',
-    say: `"What I use is Camrhia. The contract, the payment schedule with reminders and the session timeline are all in one shared place with the client. So the Saturday before a shoot, you open one screen and you know who's paid, who's signed, and what's left. You're not chasing anyone."`,
-    why: 'Sell the feeling of the outcome, not the feature list.',
+    title: 'Tell them what you use',
+    say: `"So I use an app called Camrhia. The contract, payments and timeline are all in one spot, and your client can see it too. Way less chasing and texting back and forth."`,
+    why: 'Short and plain. They only need to hear the benefit, not a list of features.',
   },
   {
     title: 'Ask for one small thing',
-    say: `"It's free for 14 days. What's your next booking? Run just that one through it and see how it feels. Can I text you the link right now?"
+    say: `"It's free for 14 days. Want to try it on your next booking? I can text you the link right now."
 
 Send the link while you're still on the phone.`,
-    why: 'A small, specific next step ("your next booking") beats "sign up". Sending the link during the call means they can\'t forget.',
+    why: 'One small, specific step is easier to say yes to than "sign up". Sending the link during the call means they can\'t forget.',
   },
 ]
 
 const OBJECTIONS: { title: string; say: string }[] = [
   {
     title: 'They say: "I already have a system"',
-    say: `"Makes sense, I wouldn't change something that works. You don't have to. Try it on one session during the free 14 days and compare. The difference you'll notice is your client is in it with you."`,
+    say: `"Totally get it, if it works, don't change it. You could just try one session in it during the free 14 days and compare. The main thing is your client can see everything too."`,
   },
   {
     title: 'They say: "It\'s too expensive"',
-    say: `"I hear you. It's about $2 a day, and the first 14 days are free. Think about what one late payment costs you in time and stress. You'll know within two weeks if it pays off."`,
+    say: `"I hear you. It's about $2 a day, and the first 14 days are free, so you can see if it's worth it before you pay anything."`,
   },
   {
     title: 'They say: "Just send me info"',
-    say: `"Happy to. I'll text you the link now. When you've had a look, can I check in on [day] to see what you thought?"`,
+    say: `"Sure thing, I'll text you the link now. Mind if I check in on [day] to see what you thought?"`,
   },
 ]
 
 const VOICEMAIL = (link: string) =>
-  `"Hi [Name], it's [your name]. I love your work, especially [something specific]. I use an app called Camrhia that keeps contracts, payments and timelines in one shared place with clients, and I thought of you. It's free for 14 days. I'm texting you the link now. Have a great day!"
+  `"Hey [Name], it's [your name]. I really like your work, especially [something specific]. I've been using an app called Camrhia for contracts, payments and client stuff and thought of you. It's free for 14 days, I'll text you the link. Talk soon!"
 
-Follow-up text: Hi [Name], here's the link I mentioned. It's free for 14 days, so try it on your next booking: ${link}`
+Follow-up text: hey [Name], here's that link I mentioned. it's free for 14 days: ${link}`
 
 // Highlights anything still in [brackets] so it's obvious what to personalize.
 function Highlight({ text }: { text: string }) {
@@ -204,7 +200,7 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
           <a href="#call" className="rounded-full border border-line px-4 py-1.5 text-ink-soft hover:text-ink">Phone call script</a>
         </div>
         <p className="mt-4 text-xs text-ink-soft">
-          Two good habits: tell people you&apos;re a Camrhia partner, and send one follow-up, not five.
+          Before you use these, try the free trial yourself so everything you say is true. Tell people you&apos;re a Camrhia partner, and send one follow-up, not five.
         </p>
       </section>
 
