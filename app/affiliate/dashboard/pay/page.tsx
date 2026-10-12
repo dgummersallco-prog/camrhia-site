@@ -182,6 +182,17 @@ function MasterBreakdown({ a }: { a: ShellAffiliate }) {
   )
 }
 
+// Monthly earnings for n active subscribers on one plan. Each referral's rate is set by its
+// position (1-10: 20%, 11-25: 25%, 26+: 30%), unless the affiliate has a custom flat rate.
+function monthlyEarn(n: number, price: number, customRate: number | null) {
+  const base = r2(price * (1 - APPLE_RATE))
+  if (customRate != null) return r2(base * customRate * n)
+  const t1 = Math.min(n, 10)
+  const t2 = Math.max(0, Math.min(n, 25) - 10)
+  const t3 = Math.max(0, n - 25)
+  return r2(r2(base * 0.2) * t1 + r2(base * 0.25) * t2 + r2(base * 0.3) * t3)
+}
+
 function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
   const tiers = [
     { label: '1\u201310 referrals', rt: 0.2 },
@@ -225,6 +236,36 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
           </table>
         </div>
         <p className="mt-4 text-sm text-ink-soft">Amounts are after the App Store fee. Yearly plans pay the same percentage once a year.</p>
+      </section>
+
+      <section className="rounded-2xl border border-line bg-card p-6">
+        <h2 className="font-fraunces text-xl font-semibold text-ink">What it adds up to</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          Your monthly earnings if this many photographers are subscribed at the same time.
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                <th className={th}>Active photographers</th>
+                <th className={th}>On Solo / month</th>
+                <th className={th}>On Studio / month</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line border-t border-line">
+              {[10, 20, 50, 100].map((n) => (
+                <tr key={n}>
+                  <td className={td + ' text-ink font-medium'}>{n}</td>
+                  <td className={td + ' text-ink font-semibold'}>{usd(monthlyEarn(n, 59.99, custom ? Number(a.commission_rate) : null))}</td>
+                  <td className={td + ' text-ink font-semibold'}>{usd(monthlyEarn(n, 149, custom ? Number(a.commission_rate) : null))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-4 text-sm text-ink-soft">
+          Your rate rises as you grow, so these totals include the step-ups at 11 and 26 referrals. Each total assumes everyone is on that one plan; a mix of plans lands in between.
+        </p>
       </section>
 
       <section className="rounded-2xl border border-line bg-card p-6 text-sm text-ink-soft space-y-2">
