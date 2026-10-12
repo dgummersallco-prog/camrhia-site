@@ -229,6 +229,21 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function deleteMessage(id: string) {
+    if (!supabase) return
+    if (!window.confirm('Delete this message permanently?')) return
+    const { data, error } = await supabase
+      .from('support_messages')
+      .delete()
+      .eq('id', id)
+      .select('id')
+    if (error || !data || data.length === 0) {
+      window.alert('Could not delete: ' + (error?.message ?? 'not allowed. Run the delete policy SQL first.'))
+      return
+    }
+    setMessages((prev) => prev.filter((m) => m.id !== id))
+  }
+
   function toggleRow(id: string) {
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -428,6 +443,13 @@ export default function AdminDashboardPage() {
                                   <p className="text-sm text-ink leading-relaxed whitespace-pre-wrap rounded-xl bg-card border border-line px-4 py-3">
                                     {msg.body ?? <span className="text-ink-soft italic">No message body.</span>}
                                   </p>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id) }}
+                                    className="rounded-full border border-red-300 bg-red-50 px-4 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+                                  >
+                                    Delete message
+                                  </button>
                                 </div>
                               </td>
                             </tr>
