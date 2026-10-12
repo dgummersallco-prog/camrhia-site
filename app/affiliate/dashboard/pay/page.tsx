@@ -42,7 +42,7 @@ function PayoutTable({ withMaster, override }: { withMaster: boolean; override: 
           <tr>
             <th className={th}>Plan / month</th>
             <th className={th}>Affiliate rate</th>
-            <th className={th}>Apple</th>
+            {variant !== 'affiliate' ? <th className={th}>Apple</th> : null}
             <th className={th}>Affiliate gets</th>
             {withMaster ? <th className={th}>Master gets</th> : null}
             <th className={th}>Camrhia keeps</th>
@@ -53,7 +53,7 @@ function PayoutTable({ withMaster, override }: { withMaster: boolean; override: 
             <tr key={r.plan + r.rt}>
               <td className={td + ' text-ink font-medium'}>{r.plan} ({usd(r.price)})</td>
               <td className={td + ' text-ink'}>{pct(r.rt)}</td>
-              <td className={td + ' text-ink-soft'}>{usd(r.apple)}</td>
+              {variant !== 'affiliate' ? <td className={td + ' text-ink-soft'}>{usd(r.apple)}</td> : null}
               <td className={td + ' text-ink font-medium'}>{usd(r.aff)}</td>
               {withMaster ? <td className={td + ' text-ink font-medium'}>{usd(r.mas)}</td> : null}
               <td className={td + ' text-ink font-semibold'}>{usd(r.cam)}</td>
@@ -65,7 +65,7 @@ function PayoutTable({ withMaster, override }: { withMaster: boolean; override: 
   )
 }
 
-function Breakdown({ a }: { a: ShellAffiliate }) {
+function MasterBreakdown({ a }: { a: ShellAffiliate }) {
   const [planKey, setPlanKey] = useState('solo-m')
   const channel: 'apple' | 'web' = 'apple'
   const [rate, setRate] = useState(Number(a.commission_rate ?? 0.2))
@@ -191,6 +191,65 @@ function Breakdown({ a }: { a: ShellAffiliate }) {
       </section>
     </div>
   )
+}
+
+function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
+  const tiers = [
+    { label: '1\u201310 referrals', rt: 0.2 },
+    { label: '11\u201325 referrals', rt: 0.25 },
+    { label: '26+ referrals', rt: 0.3 },
+  ]
+  const plans = [
+    { label: 'Solo', price: 59.99 },
+    { label: 'Studio', price: 149 },
+  ]
+  const th = 'px-3 py-2 text-left text-xs uppercase tracking-widest text-ink-soft font-normal whitespace-nowrap'
+  const td = 'px-3 py-2.5 whitespace-nowrap'
+  const custom = a.commission_rate != null && ![0.2, 0.25, 0.3].includes(Number(a.commission_rate))
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-line bg-card p-6">
+        <h2 className="font-fraunces text-xl font-semibold text-ink">What you earn</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          Per photographer, per month, for as long as they stay subscribed.{custom ? ` Your rate is ${pct(Number(a.commission_rate))}.` : ''}
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                <th className={th}>Plan</th>
+                <th className={th}>Your referrals</th>
+                <th className={th}>Rate</th>
+                <th className={th}>You earn / month</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line border-t border-line">
+              {plans.flatMap((p) =>
+                tiers.map((t) => (
+                  <tr key={p.label + t.rt}>
+                    <td className={td + ' text-ink font-medium'}>{p.label} ({usd(p.price)})</td>
+                    <td className={td + ' text-ink-soft'}>{t.label}</td>
+                    <td className={td + ' text-ink'}>{pct(t.rt)}</td>
+                    <td className={td + ' text-ink font-semibold'}>{usd(r2(r2(p.price * (1 - APPLE_RATE)) * t.rt))}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-4 text-sm text-ink-soft">Amounts are after the App Store fee. Yearly plans pay the same percentage once a year.</p>
+      </section>
+
+      <section className="rounded-2xl border border-line bg-card p-6 text-sm text-ink-soft space-y-2">
+        <p>Commissions are paid on each real charge. The 14-day free trial earns nothing; the first payment after it does.</p>
+        <p>You are an independent partner and responsible for your own taxes.</p>
+      </section>
+    </div>
+  )
+}
+
+function Breakdown({ a }: { a: ShellAffiliate }) {
+  return a.is_master ? <MasterBreakdown a={a} /> : <AffiliateBreakdown a={a} />
 }
 
 export default function PayPage() {
