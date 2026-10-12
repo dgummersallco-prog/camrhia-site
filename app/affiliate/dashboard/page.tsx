@@ -419,13 +419,41 @@ export default function AffiliateDashboardPage() {
 
         <AffiliateTabs />
 
+        {/* How it works */}
+        <section className="rounded-2xl border border-line bg-card p-6">
+          <h2 className="font-fraunces text-xl font-semibold text-ink">How you earn</h2>
+          <ol className="mt-4 grid gap-4 sm:grid-cols-3 text-sm">
+            <li>
+              <p className="font-mono text-xs text-ink-soft">1</p>
+              <p className="mt-1 font-medium text-ink">Share your referral link</p>
+              <p className="mt-1 text-ink-soft">Send it to photographers: friends, groups, your audience. It&apos;s the link just below.</p>
+            </li>
+            <li>
+              <p className="font-mono text-xs text-ink-soft">2</p>
+              <p className="mt-1 font-medium text-ink">They sign up for Camrhia</p>
+              <p className="mt-1 text-ink-soft">They start with a 14-day free trial. You don&apos;t earn during the trial.</p>
+            </li>
+            <li>
+              <p className="font-mono text-xs text-ink-soft">3</p>
+              <p className="mt-1 font-medium text-ink">You earn every month</p>
+              <p className="mt-1 text-ink-soft">
+                Once they pay, you earn 20% (growing to 25% and 30%) of each payment after Apple&apos;s fee, for as long as they stay subscribed.{' '}
+                <Link href="/affiliate/dashboard/pay" className="text-twilight underline">See the full breakdown</Link>
+              </p>
+            </li>
+          </ol>
+        </section>
+
         {/* Dark referral card */}
         <div className="rounded-2xl bg-ink p-8">
           <p className="font-mono text-xs tracking-widest uppercase text-white/40 mb-3">
-            Your referral link
+            Your referral link (for photographers)
           </p>
           <p className="font-fraunces text-3xl font-semibold text-white mb-2 tracking-tight">
             {affiliate.referral_code}
+          </p>
+          <p className="text-sm text-white/70 max-w-xl">
+            This is the link you share with <span className="text-white">photographers</span>. When someone signs up for Camrhia through it and becomes a paying subscriber, you earn commission every month they stay.
           </p>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
             <span className="font-mono text-sm text-white/60 bg-white/5 px-3 py-1.5 rounded-lg truncate">

@@ -11,6 +11,7 @@ export type ShellAffiliate = {
   id: string
   name: string | null
   referral_code: string
+  team_code: string | null
   is_master: boolean | null
   commission_rate: number | null
   override_rate: number | null
@@ -39,7 +40,7 @@ export default function AffiliateShell({
       if (!session) { router.replace('/affiliate/login'); return }
       const { data } = await client
         .from('affiliates')
-        .select('id, name, referral_code, is_master, commission_rate, override_rate, parent_affiliate_id')
+        .select('id, name, referral_code, team_code, is_master, commission_rate, override_rate, parent_affiliate_id')
         .eq('id', session.user.id)
         .maybeSingle()
       if (!cancelled) {

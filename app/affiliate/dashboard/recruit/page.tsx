@@ -10,7 +10,7 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
     return <p className="text-sm text-ink-soft">Recruiting is for master partners.</p>
   }
 
-  const code = a.referral_code
+  const code = a.team_code || a.referral_code
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://camrhia.com'
   const link = `${origin}/affiliate/signup?recruit=${code}`
   const message =

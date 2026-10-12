@@ -34,7 +34,7 @@ export default function AffiliateTabs() {
             window.localStorage.getItem('camrhia_recruit') ||
             (user.user_metadata?.recruit_code as string | undefined)
           if (pending) {
-            await client.rpc('claim_recruiter', { p_code: pending })
+            await client.rpc('claim_team', { p_code: pending })
             window.localStorage.removeItem('camrhia_recruit')
             me = await load()
           }

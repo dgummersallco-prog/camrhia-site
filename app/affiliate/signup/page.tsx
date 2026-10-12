@@ -157,8 +157,8 @@ export default function AffiliateSignupPage() {
       // no client-side insert needed, so no session is required at this point.
       const code = teamCode.trim().toLowerCase()
       if (code) {
-        const { data: tc } = await supabase.from('affiliates').select('referral_code').eq('referral_code', code).maybeSingle()
-        if (!tc) throw new Error("That team code wasn't found. Check it with whoever invited you, or leave it blank.")
+        const { data: validTeam } = await supabase.rpc('check_team_code', { p_code: code })
+        if (!validTeam) throw new Error("That team code wasn't found. Check it with whoever invited you, or leave it blank.")
         try { window.localStorage.setItem('camrhia_recruit', code) } catch {}
       }
 
