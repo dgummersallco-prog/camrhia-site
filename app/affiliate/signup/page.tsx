@@ -252,16 +252,168 @@ export default function AffiliateSignupPage() {
       <main className="flex-1 mx-auto w-full max-w-2xl px-6 py-16">
 
         {/* ── Hero ── */}
-        <div className="mb-12">
+        <div className="mb-14">
           <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
-            Earn with Camrhia
+            Camrhia affiliate program
           </p>
-          <h1 className="font-fraunces text-4xl font-semibold text-ink leading-tight mb-4">
-            Most affiliate programs cap your best work. Ours rewards it.
+          <h1 className="font-fraunces text-4xl sm:text-5xl font-semibold text-ink leading-tight mb-5">
+            Get paid every month for telling photographers about the app that runs their business.
           </h1>
-          <p className="text-ink-soft text-base leading-relaxed max-w-xl">
-            Refer a few photographers and you&apos;ll earn like everyone else. Refer a lot, and your rate climbs — permanently, on every referral after that point. No cap on how many people you can refer. No cap on how long you earn.
+          <p className="text-ink-soft text-base leading-relaxed max-w-xl mb-7">
+            Camrhia puts a photographer&apos;s contracts, payments, clients and session details in one place. Every photographer you send us earns you 20 to 30% for every month they stay. Free to join. No quota. No cap.
           </p>
+          <div className="flex flex-wrap items-center gap-3 mb-5">
+            <a
+              href="#signup"
+              className="inline-flex items-center rounded-full px-7 py-3 text-sm font-semibold hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}
+            >
+              Become an affiliate
+            </a>
+            <a
+              href="#earnings"
+              className="inline-flex items-center rounded-full border border-line bg-card px-7 py-3 text-sm font-semibold text-ink hover:border-twilight transition-colors"
+            >
+              See what you could earn
+            </a>
+          </div>
+          <p className="font-mono text-xs text-ink-soft/70">
+            Free to join &nbsp;·&nbsp; 14-day free trial for every photographer you refer &nbsp;·&nbsp; You only earn on real charges
+          </p>
+        </div>
+
+        {/* ── Team code ── */}
+        <div className="mb-14 rounded-2xl border border-line bg-card p-5">
+          <p className="text-sm font-semibold text-ink mb-1">Did someone invite you? Enter their team code.</p>
+          <p className="text-sm text-ink-soft mb-4">
+            If a master partner sent you here, type their code and you will join their team when you sign up.
+          </p>
+          <input
+            type="text"
+            value={teamCode}
+            onChange={(e) => setTeamCode(e.target.value)}
+            placeholder="Team code"
+            autoCapitalize="none"
+            className="w-full max-w-xs rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition"
+          />
+          {teamInfo?.valid && (
+            <p className="mt-3 text-sm text-sage font-medium">
+              You&apos;re joining {teamInfo.master_name || 'a master partner'}&apos;s team. Create your account below.
+            </p>
+          )}
+          {teamCode.trim() && teamInfo && !teamInfo.valid && (
+            <p className="mt-3 text-sm text-red-700">
+              We couldn&apos;t find that code. Check it with whoever invited you.
+            </p>
+          )}
+        </div>
+
+        {/* ── Why join ── */}
+        <div className="mb-14">
+          <h2 className="font-fraunces text-2xl font-semibold text-ink mb-2">Why partner with Camrhia</h2>
+          <p className="text-sm text-ink-soft mb-6">Six reasons this is worth your time.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { t: 'You get paid every month', d: 'Not a one-time bounty. As long as a photographer you referred stays subscribed, you keep earning on them.' },
+              { t: 'Your rate climbs as you grow', d: 'Start at 20%, move to 25%, then 30%. Each referral locks in the rate it started at, and it never goes down.' },
+              { t: 'An easy first sentence', d: 'Every photographer gets 14 days free. You are not asking anyone to buy. You are asking them to try it.' },
+              { t: 'It solves a real headache', d: 'Most photographers juggle contracts, payments and client updates across a pile of apps. Camrhia puts it in one spot, so you are recommending something useful.' },
+              { t: 'You never start from a blank message', d: 'Your dashboard comes with a pitch kit: ready-to-send DMs, a phone call script and answers to the usual objections.' },
+              { t: 'No cost, no quota, no catch', d: 'Joining is free. There is nothing to buy, no minimum to hit, and you can see every referral and every dollar in your dashboard.' },
+            ].map((item) => (
+              <div key={item.t} className="rounded-2xl border border-line bg-card p-5">
+                <p className="font-fraunces text-lg font-semibold text-ink mb-1.5">{item.t}</p>
+                <p className="text-sm text-ink-soft leading-relaxed">{item.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Who we're looking for ── */}
+        <div className="mb-14">
+          <h2 className="font-fraunces text-2xl font-semibold text-ink mb-2">Who we&apos;re looking for</h2>
+          <p className="text-sm text-ink-soft mb-6 max-w-xl">
+            You do not need a big following. You need people who trust what you tell them.
+          </p>
+          <div className="space-y-3 mb-5">
+            {[
+              { t: 'Working photographers', d: 'You know second shooters, assistants and friends in your market who are tired of running their business out of texts and spreadsheets.' },
+              { t: 'Photography educators and mentors', d: 'Your students are exactly who this is for. Recommending a tool that helps them get paid and stay organized is a natural fit.' },
+              { t: 'Community and group admins', d: 'You run a photographer Facebook group, Discord, Slack or newsletter, and your members ask what software to use.' },
+              { t: 'Wedding industry pros', d: 'Planners, venue coordinators, videographers and vendor communities who work next to photographers every weekend.' },
+            ].map((item) => (
+              <div key={item.t} className="flex gap-4 rounded-2xl border border-line bg-card p-5">
+                <span className="mt-1 inline-block w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#3A4A6B' }} />
+                <div>
+                  <p className="text-sm font-semibold text-ink mb-1">{item.t}</p>
+                  <p className="text-sm text-ink-soft leading-relaxed">{item.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-ink-soft leading-relaxed rounded-2xl bg-paper-deep border border-line p-5">
+            <span className="font-medium text-ink">Not a fit?</span> If making a sale means spamming strangers or overpromising, skip this one. We want people who would recommend Camrhia to someone they respect.
+          </p>
+        </div>
+
+        {/* ── How it works ── */}
+        <div className="mb-14">
+          <h2 className="font-fraunces text-2xl font-semibold text-ink mb-6">How it works</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { n: '1', t: 'Create your free account', d: 'Takes about two minutes. You get your own personal referral link right away.' },
+              { n: '2', t: 'Share it your way', d: 'Send a DM, make a post, or pick up the phone. The pitch kit tells you exactly what to say.' },
+              { n: '3', t: 'Earn every month', d: 'When a photographer you referred starts paying after their free trial, you earn on them every month they stay.' },
+            ].map((step) => (
+              <div key={step.n} className="rounded-2xl border border-line bg-card p-5">
+                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full font-mono text-xs font-semibold mb-3" style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}>
+                  {step.n}
+                </span>
+                <p className="text-sm font-semibold text-ink mb-1">{step.t}</p>
+                <p className="text-sm text-ink-soft leading-relaxed">{step.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── See it inside ── */}
+        <div className="mb-14">
+          <h2 className="font-fraunces text-2xl font-semibold text-ink mb-2">See it inside</h2>
+          <p className="text-sm text-ink-soft mb-8 max-w-xl">
+            A look at the app photographers will be using every day.
+          </p>
+
+          <div className="grid grid-cols-2 gap-5 mb-10">
+            {[
+              { src: '/screens/1-sessions.png', alt: 'Camrhia session list for photographers', t: 'Every session in one place', d: 'Upcoming and past sessions at a glance.' },
+              { src: '/screens/2-timeline.png', alt: 'Camrhia session timeline screen', t: 'A timeline for every session', d: 'Build the schedule for the day in one spot.' },
+            ].map((shot) => (
+              <div key={shot.src}>
+                <img
+                  src={shot.src}
+                  alt={shot.alt}
+                  loading="lazy"
+                  className="w-full rounded-3xl border border-line shadow-sm mb-3"
+                />
+                <p className="text-sm font-semibold text-ink mb-0.5">{shot.t}</p>
+                <p className="text-xs text-ink-soft leading-relaxed">{shot.d}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            {[1, 2, 3].map((n) => (
+              <img
+                key={n}
+                src={`/screens/3-packages-${n}.png`}
+                alt={`Camrhia packages screen ${n}`}
+                loading="lazy"
+                className="w-full rounded-2xl border border-line shadow-sm"
+              />
+            ))}
+          </div>
+          <p className="text-sm font-semibold text-ink mb-0.5">Packages, set up once</p>
+          <p className="text-xs text-ink-soft leading-relaxed">Build your packages and use them on any session.</p>
         </div>
 
         {/* ── How the tiers work ── */}
@@ -303,10 +455,35 @@ export default function AffiliateSignupPage() {
         </div>
 
         {/* ── Calculator ── */}
-        <EarningsCalculator />
+        <div id="earnings" className="scroll-mt-6">
+          <EarningsCalculator />
+        </div>
+
+        {/* ── FAQ ── */}
+        <div className="mb-14">
+          <h2 className="font-fraunces text-2xl font-semibold text-ink mb-5">Questions people ask</h2>
+          <div className="space-y-3">
+            {[
+              { q: 'Does it cost anything to join?', a: 'No. Creating an affiliate account is free, and there is nothing to buy.' },
+              { q: 'When do I actually earn?', a: 'When a photographer you referred starts paying after their 14-day free trial. The trial itself earns nothing, so you only get paid on real charges.' },
+              { q: 'How long do I keep earning?', a: 'For as long as that photographer stays subscribed.' },
+              { q: 'Do I need a big audience?', a: 'No. One good recommendation to the right photographer beats a hundred random posts.' },
+              { q: 'Where do I see my referrals and earnings?', a: 'In your affiliate dashboard, which tracks every referral and what you have earned.' },
+              { q: 'What about taxes?', a: 'You are responsible for your own taxes on what you earn as an affiliate.' },
+            ].map((item) => (
+              <details key={item.q} className="group rounded-2xl border border-line bg-card px-5 py-4">
+                <summary className="cursor-pointer list-none flex items-center justify-between gap-4 text-sm font-semibold text-ink">
+                  {item.q}
+                  <span className="text-ink-soft/60 group-open:rotate-45 transition-transform text-lg leading-none">+</span>
+                </summary>
+                <p className="text-sm text-ink-soft leading-relaxed mt-3">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
 
         {/* ── Sign-up form ── */}
-        <div className="max-w-sm">
+        <div id="signup" className="max-w-sm scroll-mt-6">
           <p className="font-fraunces text-xl font-semibold text-ink mb-5">
             Create your account
           </p>
