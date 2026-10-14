@@ -20,12 +20,8 @@ async function uniqueReferralCode(name: string): Promise<string> {
     const suffix = Math.floor(100 + Math.random() * 900)
     const code = `${baseCode(name)}${suffix}`
     if (!supabase) return code
-    const { data } = await supabase
-      .from('affiliates')
-      .select('referral_code')
-      .eq('referral_code', code)
-      .maybeSingle()
-    if (!data) return code
+    const { data: taken } = await supabase.rpc('referral_code_taken', { p_code: code })
+    if (taken === false) return code
   }
   return `${baseCode(name)}${Date.now().toString().slice(-4)}`
 }
