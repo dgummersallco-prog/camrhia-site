@@ -40,8 +40,17 @@ function calcMonthlyEarnings(n: number): number {
   return tier1 * net * 0.20 + tier2 * net * 0.25 + tier3 * net * 0.30
 }
 
+// Slider stops: easy to hit at the low end, bigger jumps as it climbs to 1,000.
+const STOPS: number[] = [
+  ...Array.from({ length: 25 }, (_, i) => i + 1),      // 1 to 25, one at a time
+  ...Array.from({ length: 15 }, (_, i) => 30 + i * 5),  // 30 to 100, by 5
+  ...Array.from({ length: 15 }, (_, i) => 110 + i * 10), // 110 to 250, by 10
+  ...Array.from({ length: 15 }, (_, i) => 300 + i * 50), // 300 to 1,000, by 50
+]
+
 function EarningsCalculator() {
-  const [count, setCount] = useState(5)
+  const [idx, setIdx] = useState(4)
+  const count = STOPS[idx]
 
   const monthly = calcMonthlyEarnings(count)
   const yearly  = monthly * 12
@@ -67,14 +76,14 @@ function EarningsCalculator() {
       <div className="mb-8">
         <div className="flex items-baseline justify-between mb-3">
           <label className="text-sm font-medium text-ink">Photographers you refer</label>
-          <span className="font-fraunces text-4xl font-semibold text-ink leading-none">{count}</span>
+          <span className="font-fraunces text-4xl font-semibold text-ink leading-none">{count.toLocaleString('en-US')}</span>
         </div>
         <input
           type="range"
-          min={1}
-          max={1000}
-          value={count}
-          onChange={(e) => setCount(Number(e.target.value))}
+          min={0}
+          max={STOPS.length - 1}
+          value={idx}
+          onChange={(e) => setIdx(Number(e.target.value))}
           className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-line accent-twilight"
         />
         <div className="flex justify-between mt-1.5 text-xs text-ink-soft/50">
@@ -98,9 +107,14 @@ function EarningsCalculator() {
         </div>
       </div>
 
-      <p className="text-xs text-ink-soft/70 leading-relaxed">
-        {parts.join(', ')}, for as long as they stay subscribed. Based on the Solo plan after Apple&apos;s 15% fee. This is an estimate and assumes everyone stays subscribed.
-      </p>
+      <div className="space-y-2">
+        <p className="text-sm text-ink leading-relaxed">
+          How it adds up: {parts.join(', ')}.
+        </p>
+        <p className="text-xs text-ink-soft leading-relaxed">
+          This is an example, not a promise. It assumes every photographer you refer stays subscribed on the Solo plan, and it counts what is left after Apple takes its 15%. What you actually earn depends on how many people you refer and how long they stay.
+        </p>
+      </div>
     </div>
   )
 }
