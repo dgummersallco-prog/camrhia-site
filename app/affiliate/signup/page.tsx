@@ -384,11 +384,12 @@ export default function AffiliateSignupPage() {
             <div className="space-y-24 sm:space-y-36">
               <Story
                 title="A portfolio that looks like your studio, not a template."
-                body="Pick your own fonts, color scheme and style. Your portfolio goes live on the Camrhia marketplace, where couples search for photographers, and the website is free."
-                points={['Your fonts, your colors, your style', 'Live on the marketplace where couples search', 'A free website for your work']}
+                body="Build your portfolio in the app with your own fonts, color scheme and style. It becomes a live website, and it shows up on the Camrhia marketplace where couples search for photographers. The website is free."
+                points={['Your fonts, your colors, your style', 'A live website for your work', 'Listed on the marketplace couples search']}
                 panel={
                   <Panel tone="bg-twilight/10">
-                    <img src="/screens/portfolio.png" alt="Camrhia portfolio customization" loading="lazy" className={`${PHONE} left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
+                    <img src="/screens/portfolio.png" alt="Camrhia portfolio editor" loading="lazy" className={`${PHONE} left-[7%] top-[17%] w-[47%]`} />
+                    <img src="/screens/live-portfolio.png" alt="A live Camrhia portfolio website" loading="lazy" className={`${PHONE} right-[7%] top-[5%] w-[47%] z-10`} />
                   </Panel>
                 }
               />
@@ -396,11 +397,12 @@ export default function AffiliateSignupPage() {
               <Story
                 flip
                 title="Your whole business in one place, away from your personal life."
-                body="Talk to your clients inside the app so work stays together and out of your personal texts."
-                points={['Message clients right in the app', 'Keep work out of your personal inbox']}
+                body="Message your clients and check your calendar inside the app, so work stays together and out of your personal texts."
+                points={['Message clients right in the app', 'Your calendar next to your conversations', 'Keep work out of your personal inbox']}
                 panel={
                   <Panel tone="bg-sage/15">
-                    <img src="/screens/messages.png" alt="Camrhia messages tab" loading="lazy" className={`${PHONE} left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
+                    <img src="/screens/messages.png" alt="Camrhia messages tab" loading="lazy" className={`${PHONE} left-[7%] top-[17%] w-[47%]`} />
+                    <img src="/screens/calendar.png" alt="Camrhia calendar" loading="lazy" className={`${PHONE} right-[7%] top-[5%] w-[47%] z-10`} />
                   </Panel>
                 }
               />
