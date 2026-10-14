@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { BRAND_NAME } from '@/lib/brand'
+import Wordmark from "@/app/components/Wordmark"
 import AffiliateTabs from './AffiliateTabs'
 
 export type ShellAffiliate = {
@@ -74,7 +74,7 @@ export default function AffiliateShell({
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between gap-4">
           <Link href="/" className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors">
-            {BRAND_NAME} <span className="text-ink-soft font-normal">/ affiliate</span>
+            <Wordmark className="text-3xl" /> <span className="text-ink-soft font-normal">/ affiliate</span>
           </Link>
           <div className="flex items-center gap-4">
             <span className="hidden sm:block text-sm text-ink-soft">{affiliate?.name}</span>

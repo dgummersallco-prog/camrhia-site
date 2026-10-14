@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { BRAND_NAME } from "@/lib/brand"
+import Wordmark from "@/app/components/Wordmark"
 import CopyCode from "./CopyCode"
 
 export const dynamic = "force-dynamic"
@@ -55,7 +56,7 @@ export default async function SessionInvitePage(props: { params: Promise<{ code:
     <div className="min-h-screen bg-paper flex flex-col">
       <header className="border-b border-line bg-paper px-6 py-4">
         <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
-          {BRAND_NAME}
+          <Wordmark className="text-3xl" />
         </Link>
       </header>
 

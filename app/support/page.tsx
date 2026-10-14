@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { BRAND_NAME } from "@/lib/brand"
+import Wordmark from "@/app/components/Wordmark"
 import ContactForm from "./ContactForm"
 
 export const metadata = {
@@ -17,7 +18,7 @@ export default function SupportPage() {
           href="/"
           className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors"
         >
-          {BRAND_NAME}
+          <Wordmark className="text-3xl" />
         </Link>
       </header>
 

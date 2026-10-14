@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { supabase } from "@/lib/supabase"
 import { BRAND_NAME } from "@/lib/brand"
+import Wordmark from "@/app/components/Wordmark"
 import CopyRefOnClick from "./CopyRefOnClick"
 
 const APP_STORE_URL = "https://apps.apple.com/app/id6800011162"
@@ -54,7 +55,7 @@ export default async function ReferralPage(props: PageProps<"/r/[code]">) {
       <header className="border-b border-line bg-paper px-6 py-4">
         <div className="mx-auto max-w-6xl">
           <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
-            {BRAND_NAME}
+            <Wordmark className="text-3xl" />
           </Link>
         </div>
       </header>

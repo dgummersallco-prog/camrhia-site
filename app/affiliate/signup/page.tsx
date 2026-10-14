@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { BRAND_NAME } from '@/lib/brand'
+import Wordmark from "@/app/components/Wordmark"
 
 const NAVY = '#3A4A6B'
 const PHONE =
@@ -267,7 +267,7 @@ export default function AffiliateSignupPage() {
       <div className="min-h-screen bg-paper flex flex-col">
         <header className="border-b border-line bg-paper px-6 py-4">
           <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
-            {BRAND_NAME}{' '}
+            <Wordmark className="text-3xl" />{' '}
             <span className="text-ink-soft font-normal text-lg">/ affiliate</span>
           </Link>
         </header>
@@ -317,7 +317,7 @@ export default function AffiliateSignupPage() {
       <header className="border-b border-line bg-paper px-6 py-4">
         <div className="mx-auto max-w-6xl flex items-center justify-between">
           <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
-            {BRAND_NAME}{' '}
+            <Wordmark className="text-3xl" />{' '}
             <span className="text-ink-soft font-normal text-lg">/ affiliate</span>
           </Link>
           <div className="flex items-center gap-5 text-sm">

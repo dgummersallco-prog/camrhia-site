@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { BRAND_NAME } from '@/lib/brand'
+import Wordmark from "@/app/components/Wordmark"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -366,7 +366,7 @@ export default function AffiliateDashboardPage() {
             href="/"
             className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors"
           >
-            {BRAND_NAME}{' '}
+            <Wordmark className="text-3xl" />{' '}
             <span className="text-ink-soft font-normal">/ affiliate</span>
           </Link>
           <div className="flex items-center gap-4">

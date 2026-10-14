@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BRAND_NAME } from '@/lib/brand'
+import Wordmark from "@/app/components/Wordmark"
 
 export const metadata: Metadata = {
   title: `FAQ — ${BRAND_NAME}`,
@@ -109,7 +110,7 @@ export default function FaqPage() {
             href="/"
             className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors tracking-tight"
           >
-            {BRAND_NAME}
+            <Wordmark className="text-3xl" />
           </Link>
           <div className="hidden md:flex items-center gap-7 text-sm font-medium text-ink-soft">
             <Link href="/blog" className="hover:text-ink transition-colors">Blog</Link>

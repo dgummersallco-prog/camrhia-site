@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { BRAND_NAME } from '@/lib/brand'
+import Wordmark from "@/app/components/Wordmark"
 
 export default function AffiliateLoginPage() {
   const router = useRouter()
@@ -39,7 +39,7 @@ export default function AffiliateLoginPage() {
           href="/"
           className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors"
         >
-          {BRAND_NAME}{' '}
+          <Wordmark className="text-3xl" />{' '}
           <span className="text-ink-soft font-normal text-lg">/ affiliate</span>
         </Link>
       </header>

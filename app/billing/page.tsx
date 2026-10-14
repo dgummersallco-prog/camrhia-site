@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { BRAND_NAME } from '@/lib/brand'
+import Wordmark from "@/app/components/Wordmark"
 
 const SOLO_FEATURES = [
   'Shared session timeline — built with your client',
@@ -121,7 +122,7 @@ export default function BillingPage() {
       <div className="min-h-screen bg-paper flex flex-col">
         <header className="border-b border-line bg-paper px-6 py-4">
           <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
-            {BRAND_NAME}
+            <Wordmark className="text-3xl" />
           </Link>
         </header>
         <main className="flex-1 flex items-center justify-center px-6 py-16 text-center">
@@ -229,7 +230,7 @@ export default function BillingPage() {
     <div className="min-h-screen bg-paper flex flex-col">
       <header className="border-b border-line bg-paper px-6 py-4">
         <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
-          {BRAND_NAME}
+          <Wordmark className="text-3xl" />
         </Link>
       </header>
 

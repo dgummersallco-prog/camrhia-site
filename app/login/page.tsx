@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { BRAND_NAME } from '@/lib/brand'
+import Wordmark from "@/app/components/Wordmark"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -46,7 +47,7 @@ export default function LoginPage() {
           href="/"
           className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors"
         >
-          {BRAND_NAME}
+          <Wordmark className="text-3xl" />
         </Link>
       </header>
 
