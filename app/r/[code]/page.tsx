@@ -77,7 +77,7 @@ export default async function ReferralPage(props: PageProps<"/r/[code]">) {
               <ul className="space-y-3 mb-9">
                 {[
                   "A live portfolio website, included in your subscription",
-                  "Couples browse photographers in their area, so new clients can find you",
+                  "Clients browse photographers in their area, so they can find you",
                   "Bookings, contracts, payments, timelines and messaging in one place",
                 ].map((t) => (
                   <li key={t} className="flex gap-3 text-ink leading-snug">

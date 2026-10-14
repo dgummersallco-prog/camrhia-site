@@ -693,7 +693,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
           {(r.reviews?.length ?? 0) > 0 && (
             <div style={{ paddingTop: r.portfolio_section_spacing ?? 14, paddingBottom: 10 }}>
               <h2 style={{ fontFamily: "system-ui, sans-serif", fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8A8A8A', textAlign: 'center', marginBottom: 14 }}>
-                What couples say
+                What clients say
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {r.reviews.map((rev: any, i: number) => (

@@ -59,7 +59,7 @@ const jsonLd = {
       "operatingSystem": "iOS",
       "downloadUrl": "https://apps.apple.com/app/id6800011162",
       "description":
-        "Camrhia is an app for photographers with a live portfolio website, a marketplace where couples browse photographers in their area, bookings, contracts, payment tracking, client messaging, a calendar and gallery link delivery. Free for clients. 14-day free trial for photographers.",
+        "Camrhia is an app for photographers with a live portfolio website, a marketplace where clients browse photographers in their area, bookings, contracts, payment tracking, client messaging, a calendar and gallery link delivery. Free for clients. 14-day free trial for photographers.",
       "publisher": { "@id": "https://camrhia.com/#org" },
       "offers": [
         { "@type": "Offer", "name": "Solo, monthly", "price": "59.99", "priceCurrency": "USD" },

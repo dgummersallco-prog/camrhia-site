@@ -1,13 +1,13 @@
 # Camrhia
 
-> Camrhia is an iOS app and website platform for photographers. It gives photographers a live portfolio website, a marketplace where couples browse photographers in their area, bookings and sessions, contracts, payment tracking, client messaging, a calendar and gallery link delivery, all in one app. Photographers can try it free for 14 days.
+> Camrhia is an iOS app and website platform for photographers. It gives photographers a live portfolio website, a marketplace where clients browse photographers in their area, bookings and sessions, contracts, payment tracking, client messaging, a calendar and gallery link delivery, all in one app. Photographers can try it free for 14 days.
 
 ## Key facts
 - Built for photographers: weddings, portraits, newborns, families and events.
 - Available on the Apple App Store (iOS).
 - Photographer plans: Solo at $59.99 per month or $590 per year, and Studio at $149 per month or $999.99 per year. Every plan starts with a 14-day free trial.
 - The portfolio website is included with the subscription.
-- Free for clients: couples browse photographers in their area and manage their session, payments, messages and photos in the app.
+- Free for clients: they browse photographers in their area and manage their session, payments, messages and photos in the app.
 - Camrhia does not host galleries. Photographers keep using Pixieset, ShootProof, Google Drive or similar, and Camrhia delivers the link inside the client's app.
 - Camrhia also runs an affiliate program that pays 20 to 30 percent recurring commission on referred photographers.
 

@@ -388,15 +388,15 @@ export default function AffiliateSignupPage() {
                 What you&apos;d be recommending.
               </h2>
               <p className="text-lg text-ink-soft leading-relaxed">
-                A photographer&apos;s whole business in one app, from the portfolio couples find to the session they show up to.
+                A photographer&apos;s whole business in one app, from the portfolio clients find to the session they show up to.
               </p>
             </div>
 
             <div className="space-y-24 sm:space-y-36">
               <Story
                 title="A portfolio that looks like your studio, not a template."
-                body="Build your portfolio in the app with your own fonts, color scheme and style. It becomes a live website, included in your Camrhia subscription. Couples can browse every photographer in their area in the app, and it costs them nothing."
-                points={['Your fonts, your colors, your style', 'A live website, included in your subscription', 'Couples browse photographers in their area for free']}
+                body="Build your portfolio in the app with your own fonts, color scheme and style. It becomes a live website, included in your Camrhia subscription. Clients can browse every photographer in their area in the app, and it costs them nothing."
+                points={['Your fonts, your colors, your style', 'A live website, included in your subscription', 'Clients browse photographers in their area for free']}
                 panel={
                   <Panel tone="bg-twilight/10">
                     <img src="/screens/portfolio.png" alt="Camrhia portfolio editor" loading="lazy" className={`${PHONE} left-[7%] top-[17%] w-[47%]`} />

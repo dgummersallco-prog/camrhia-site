@@ -293,16 +293,16 @@ export default function Home() {
             <Story
               flip
               title="Get found by clients who are ready to book."
-              body="Camrhia is also a marketplace. Couples browse the photographers in their area right inside the app, and it costs them nothing. They find your portfolio, then message you or send an inquiry."
+              body="Camrhia is also a marketplace. Clients browse the photographers in their area right inside the app, and it costs them nothing. They find your portfolio, then message you or send an inquiry."
               points={[
-                "Couples browse photographers in their area",
-                "Free for the couples looking",
+                "Clients browse photographers in their area",
+                "Free for the clients looking",
                 "Your best work front and center",
               ]}
               panel={
                 <Panel tone="bg-brass/20">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/marketplace.png" alt="Couples browsing photographer studios in the Camrhia app" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
+                  <img src="/screens/marketplace.png" alt="Clients browsing photographer studios in the Camrhia app" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
                 </Panel>
               }
             />
