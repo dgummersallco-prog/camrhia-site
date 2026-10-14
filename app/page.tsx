@@ -289,16 +289,23 @@ export default function Home() {
 
         {/* GET FOUND */}
         <section className="border-y border-line bg-paper-deep">
-          <div className="mx-auto max-w-3xl px-6 py-24 sm:py-28 text-center">
-            <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink leading-[1.1]">
-              Get found by clients who are ready to book.
-            </h2>
-            <p className="mt-6 text-lg text-ink-soft leading-relaxed">
-              Camrhia is also a marketplace. Couples browse the photographers in their area right
-              inside the app, and it costs them nothing. They find your portfolio, then message you
-              or send an inquiry. You show up where they are already looking, with your best work
-              front and center.
-            </p>
+          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+            <Story
+              flip
+              title="Get found by clients who are ready to book."
+              body="Camrhia is also a marketplace. Couples browse the photographers in their area right inside the app, and it costs them nothing. They find your portfolio, then message you or send an inquiry."
+              points={[
+                "Couples browse photographers in their area",
+                "Free for the couples looking",
+                "Your best work front and center",
+              ]}
+              panel={
+                <Panel tone="bg-brass/20">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/screens/marketplace.png" alt="Couples browsing photographer studios in the Camrhia app" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
+                </Panel>
+              }
+            />
           </div>
         </section>
 
