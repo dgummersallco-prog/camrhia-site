@@ -267,13 +267,13 @@ export default function AffiliateDashboardPage() {
     setCodeError(null)
     const t = setTimeout(async () => {
       if (!supabase) return
-      const { data } = await supabase
-        .from('affiliates')
-        .select('id')
-        .eq('referral_code', codeInput)
-        .neq('id', affiliate.id)
-        .maybeSingle()
-      setCodeStatus(data ? 'taken' : 'available')
+      const { data: taken, error: checkErr } = await supabase.rpc('referral_code_taken', { p_code: codeInput })
+      if (checkErr) {
+        setCodeStatus('invalid')
+        setCodeError('Could not check availability. Try again.')
+        return
+      }
+      setCodeStatus(taken ? 'taken' : 'available')
     }, 400)
     return () => clearTimeout(t)
   }, [codeInput, affiliate])
@@ -286,7 +286,13 @@ export default function AffiliateDashboardPage() {
         .from('affiliates')
         .update({ referral_code: codeInput })
         .eq('id', affiliate.id)
-      if (error) throw error
+      if (error) {
+        if (error.code === '23505') {
+          setCodeStatus('taken')
+          return
+        }
+        throw new Error(error.message || 'Save failed.')
+      }
       // Update affiliate state everywhere — referral card + pitch kit re-render instantly
       setAffiliate({ ...affiliate, referral_code: codeInput })
       setCodeStatus('idle')
