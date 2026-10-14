@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase'
 import { BRAND_NAME } from '@/lib/brand'
 
 const NAVY = '#3A4A6B'
+const PHONE =
+  'absolute rounded-[1.9rem] ring-1 ring-black/10 bg-card shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]'
 
 // ── Referral code generation ───────────────────────────────────────────────────
 
@@ -53,22 +55,19 @@ function EarningsCalculator() {
     })
   }
 
-  const breakdownParts: string[] = []
-  if (count > 0) breakdownParts.push(`${Math.min(count, 10)} at 20%`)
-  if (count > 10) breakdownParts.push(`${Math.min(count, 25) - 10} at 25%`)
-  if (count > 25) breakdownParts.push(`${count - 25} at 30%`)
-  const showBreakdown = count > 10
+  const parts: string[] = []
+  if (count > 0) parts.push(`${Math.min(count, 10)} at 20%`)
+  if (count > 10) parts.push(`${Math.min(count, 25) - 10} at 25%`)
+  if (count > 25) parts.push(`${count - 25} at 30%`)
 
   return (
-    <div className="rounded-3xl bg-card border border-line p-7 sm:p-9 shadow-sm">
-      <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/60 mb-6">
-        Earnings calculator
-      </p>
+    <div className="rounded-[2rem] bg-card border border-line p-7 sm:p-10 shadow-sm">
+      <p className="font-fraunces text-xl font-semibold text-ink mb-7">What could you earn?</p>
 
       <div className="mb-8">
         <div className="flex items-baseline justify-between mb-3">
-          <label className="text-sm font-medium text-ink">Photographers you could refer</label>
-          <span className="font-fraunces text-3xl font-semibold text-ink leading-none">{count}</span>
+          <label className="text-sm font-medium text-ink">Photographers you refer</label>
+          <span className="font-fraunces text-4xl font-semibold text-ink leading-none">{count}</span>
         </div>
         <input
           type="range"
@@ -78,9 +77,9 @@ function EarningsCalculator() {
           onChange={(e) => setCount(Number(e.target.value))}
           className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-line accent-twilight"
         />
-        <div className="flex justify-between mt-1.5">
-          <span className="font-mono text-xs text-ink-soft/50">1</span>
-          <span className="font-mono text-xs text-ink-soft/50">50</span>
+        <div className="flex justify-between mt-1.5 text-xs text-ink-soft/50">
+          <span>1</span>
+          <span>50</span>
         </div>
       </div>
 
@@ -100,43 +99,78 @@ function EarningsCalculator() {
       </div>
 
       <p className="text-xs text-ink-soft/70 leading-relaxed">
-        {showBreakdown
-          ? `${breakdownParts.join(', ')} — ${fmt(monthly)}/mo — for as long as they stay subscribed.`
-          : `${count} referral${count !== 1 ? 's' : ''} at 20% — ${fmt(monthly)}/mo — for as long as they stay subscribed.`}
-        {' '}Based on the Solo plan after Apple&apos;s 15% fee. Estimate only, assumes everyone stays subscribed.
+        {parts.join(', ')}, for as long as they stay subscribed. Based on the Solo plan after Apple&apos;s 15% fee. This is an estimate and assumes everyone stays subscribed.
       </p>
     </div>
   )
 }
 
-// ── Page content ───────────────────────────────────────────────────────────────
+// ── Layout helpers ─────────────────────────────────────────────────────────────
+
+function Check() {
+  return (
+    <svg viewBox="0 0 20 20" className="w-4 h-4 mt-1 shrink-0 text-sage" fill="none" aria-hidden>
+      <path d="M3 10.5l4.5 4.5L17 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function Panel({ tone, children }: { tone: string; children: React.ReactNode }) {
+  return (
+    <div className={`relative overflow-hidden rounded-[2.5rem] aspect-[4/5] w-full max-w-md mx-auto ${tone}`}>
+      {children}
+    </div>
+  )
+}
+
+function Story({
+  flip, title, body, points, panel,
+}: {
+  flip?: boolean
+  title: string
+  body: string
+  points: string[]
+  panel: React.ReactNode
+}) {
+  return (
+    <div className="grid md:grid-cols-2 gap-10 md:gap-20 items-center">
+      <div className={flip ? 'md:order-2' : ''}>{panel}</div>
+      <div className={flip ? 'md:order-1' : ''}>
+        <h3 className="font-fraunces text-3xl sm:text-[2.6rem] font-semibold text-ink leading-[1.1] mb-5">{title}</h3>
+        <p className="text-lg text-ink-soft leading-relaxed mb-6 max-w-md">{body}</p>
+        <ul className="space-y-3">
+          {points.map((p) => (
+            <li key={p} className="flex gap-3 text-ink text-[0.95rem] leading-snug">
+              <Check />
+              <span>{p}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+// ── Content ────────────────────────────────────────────────────────────────────
 
 const WHY = [
   { t: 'You get paid every month', d: 'Not a one-time bounty. As long as a photographer you referred stays subscribed, you keep earning on them.' },
   { t: 'Your rate climbs as you grow', d: 'Start at 20%, move to 25%, then 30%. Each referral locks in the rate it started at, and it never goes down.' },
   { t: 'An easy first sentence', d: 'Every photographer gets 14 days free. You are not asking anyone to buy. You are asking them to try it.' },
-  { t: 'It fixes a real headache', d: 'Photographers juggle contracts, payments and client updates across a pile of apps. Camrhia puts it in one spot.' },
-  { t: 'Never start from a blank message', d: 'Your dashboard has a pitch kit: ready-to-send DMs, a phone call script and answers to the usual objections.' },
-  { t: 'No cost, no quota, no catch', d: 'Joining is free. Nothing to buy, no minimum to hit, and every referral and dollar shows in your dashboard.' },
+  { t: 'It fixes a real headache', d: 'Photographers juggle contracts, payments and client updates across a pile of apps. Camrhia puts it in one place.' },
+  { t: 'You never start from a blank message', d: 'Your dashboard has a pitch kit with ready-to-send DMs, a phone call script and answers to the usual objections.' },
+  { t: 'No cost, no quota', d: 'Joining is free. There is nothing to buy and no minimum to hit, and every referral and dollar shows in your dashboard.' },
 ]
 
 const WHO = [
-  { t: 'Working photographers', d: "You know second shooters, assistants and friends in your market who are tired of running their business out of texts and spreadsheets." },
-  { t: 'Educators and mentors', d: "Your students are exactly who this is for. Recommending a tool that helps them get paid and stay organized is a natural fit." },
-  { t: 'Community and group admins', d: "You run a photographer Facebook group, Discord, Slack or newsletter, and your members ask what software to use." },
-  { t: 'Wedding industry pros', d: "Planners, venue coordinators, videographers and vendor communities who work next to photographers every weekend." },
-]
-
-const SHOTS = [
-  { src: '/screens/1-sessions.png', alt: 'Camrhia session list', label: 'Every session in one place' },
-  { src: '/screens/2-timeline.png', alt: 'Camrhia session timeline', label: 'A timeline for every session' },
-  { src: '/screens/3-packages-1.png', alt: 'Camrhia packages, screen 1', label: 'Packages · 1 of 3' },
-  { src: '/screens/3-packages-2.png', alt: 'Camrhia packages, screen 2', label: 'Packages · 2 of 3' },
-  { src: '/screens/3-packages-3.png', alt: 'Camrhia packages, screen 3', label: 'Packages · 3 of 3' },
+  { t: 'Working photographers', d: 'You know second shooters, assistants and friends in your market who are tired of running their business out of texts and spreadsheets.' },
+  { t: 'Educators and mentors', d: 'Your students are exactly who this is for. Recommending a tool that helps them get paid and stay organized is a natural fit.' },
+  { t: 'Community and group admins', d: 'You run a photographer Facebook group, Discord, Slack or newsletter, and your members ask what software to use.' },
+  { t: 'Wedding industry pros', d: 'Planners, venue coordinators, videographers and vendor communities who work next to photographers every weekend.' },
 ]
 
 const STEPS = [
-  { n: '1', t: 'Create your free account', d: 'Takes about two minutes. Your personal referral link is ready right away.' },
+  { n: '1', t: 'Create your free account', d: 'It takes about two minutes. Your personal referral link is ready right away.' },
   { n: '2', t: 'Share it your way', d: 'Send a DM, make a post, or pick up the phone. The pitch kit tells you what to say.' },
   { n: '3', t: 'Earn every month', d: 'When a photographer you referred starts paying after their free trial, you earn every month they stay.' },
 ]
@@ -254,7 +288,7 @@ export default function AffiliateSignupPage() {
               href="/affiliate/login"
               className="inline-flex items-center rounded-full border border-twilight px-6 py-2.5 text-sm font-semibold text-twilight hover:bg-twilight/5 transition-colors"
             >
-              Go to login →
+              Go to login
             </Link>
           </div>
         </main>
@@ -269,15 +303,25 @@ export default function AffiliateSignupPage() {
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">
+      <style>{`
+        html { scroll-behavior: smooth; }
+        @keyframes phoneRise { from { opacity: 0; transform: translateY(36px); } to { opacity: 1; transform: none; } }
+        .phone-rise { animation: phoneRise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+        @media (prefers-reduced-motion: reduce) {
+          html { scroll-behavior: auto; }
+          .phone-rise { animation: none; }
+        }
+      `}</style>
+
       <header className="border-b border-line bg-paper px-6 py-4">
-        <div className="mx-auto max-w-5xl flex items-center justify-between">
+        <div className="mx-auto max-w-6xl flex items-center justify-between">
           <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
             {BRAND_NAME}{' '}
             <span className="text-ink-soft font-normal text-lg">/ affiliate</span>
           </Link>
           <div className="flex items-center gap-5 text-sm">
             <Link href="/affiliate/login" className="text-ink-soft hover:text-ink transition-colors">Sign in</Link>
-            <a href="#signup" className="rounded-full px-4 py-2 font-semibold hover:opacity-90 transition-opacity" style={{ backgroundColor: NAVY, color: '#ffffff' }}>
+            <a href="#signup" className="rounded-full px-5 py-2 font-semibold hover:opacity-90 transition-opacity" style={{ backgroundColor: NAVY, color: '#ffffff' }}>
               Join free
             </a>
           </div>
@@ -287,18 +331,15 @@ export default function AffiliateSignupPage() {
       <main className="flex-1">
 
         {/* ── Hero ── */}
-        <section className="mx-auto max-w-5xl px-6 pt-14 pb-16 sm:pt-20 sm:pb-24 grid md:grid-cols-2 gap-14 items-center">
+        <section className="mx-auto max-w-6xl px-6 pt-14 pb-24 sm:pt-20 sm:pb-32 grid md:grid-cols-2 gap-14 md:gap-16 items-center">
           <div>
-            <p className="font-mono text-xs tracking-widest uppercase text-brass mb-5">
-              Camrhia affiliate program
-            </p>
-            <h1 className="font-fraunces text-4xl sm:text-5xl font-semibold text-ink leading-[1.08] mb-6">
+            <h1 className="font-fraunces text-[2.6rem] sm:text-6xl font-semibold text-ink leading-[1.04] mb-6">
               Recommend Camrhia. Get paid every month they stay.
             </h1>
-            <p className="text-ink-soft text-lg leading-relaxed mb-8">
-              Camrhia runs a photographer&apos;s contracts, payments and clients in one app. Send us a photographer and you earn 20 to 30% of their subscription, every month, for as long as they stay.
+            <p className="text-ink-soft text-lg sm:text-xl leading-relaxed mb-9 max-w-lg">
+              Camrhia runs a photographer&apos;s portfolio, clients, contracts and payments in one app. Send us a photographer and you earn 20 to 30% of their subscription for as long as they stay.
             </p>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 mb-6">
               <a
                 href="#signup"
                 className="inline-flex items-center rounded-full px-8 py-3.5 text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -313,132 +354,130 @@ export default function AffiliateSignupPage() {
                 See what you could earn
               </a>
             </div>
+            <p className="text-sm text-ink-soft max-w-md leading-relaxed">
+              Free to join. Every photographer you refer gets 14 days free, and you only earn on real charges.
+            </p>
           </div>
 
-          {/* Overlapping phones */}
-          <div className="relative w-full max-w-md mx-auto aspect-[4/5]">
-            <img
-              src="/screens/2-timeline.png"
-              alt="Camrhia session timeline"
-              className="absolute right-0 top-[10%] w-[50%] rounded-[1.75rem] border border-line shadow-2xl rotate-[5deg]"
-            />
-            <img
-              src="/screens/1-sessions.png"
-              alt="Camrhia session list"
-              className="absolute left-0 top-0 w-[54%] rounded-[1.75rem] border border-line shadow-2xl -rotate-[3deg] z-10"
-            />
-          </div>
+          <Panel tone="bg-brass/15">
+            <div className="absolute left-[6%] top-[9%] w-[54%] z-10 -rotate-[2deg]">
+              <img src="/screens/portfolio.png" alt="Camrhia portfolio editor" className={`${PHONE} phone-rise relative w-full`} style={{ animationDelay: '0.15s', position: 'relative' }} />
+            </div>
+            <div className="absolute right-[5%] top-[22%] w-[46%] rotate-[4deg]">
+              <img src="/screens/2-timeline.png" alt="Camrhia session timeline" className={`${PHONE} phone-rise relative w-full`} style={{ animationDelay: '0.35s', position: 'relative' }} />
+            </div>
+          </Panel>
         </section>
 
-        {/* ── Numbers strip ── */}
-        <section className="border-y border-line bg-card">
-          <div className="mx-auto max-w-5xl px-6 py-10 grid grid-cols-3 divide-x divide-line text-center">
-            {[
-              { big: '20–30%', small: 'recurring, every month they stay' },
-              { big: '14 days', small: 'free trial for every photographer you refer' },
-              { big: '$0', small: 'to join. No quota, no cap' },
-            ].map((x) => (
-              <div key={x.big} className="px-2 sm:px-6">
-                <p className="font-fraunces text-2xl sm:text-4xl font-semibold leading-none mb-2" style={{ color: NAVY }}>{x.big}</p>
-                <p className="text-xs sm:text-sm text-ink-soft leading-snug">{x.small}</p>
-              </div>
-            ))}
+        {/* ── What you'd be recommending ── */}
+        <section className="pb-24 sm:pb-32">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="max-w-2xl mb-20 sm:mb-28">
+              <h2 className="font-fraunces text-4xl sm:text-5xl font-semibold text-ink leading-[1.08] mb-5">
+                What you&apos;d be recommending.
+              </h2>
+              <p className="text-lg text-ink-soft leading-relaxed">
+                A photographer&apos;s whole business in one app, from the portfolio couples find to the session they show up to.
+              </p>
+            </div>
+
+            <div className="space-y-24 sm:space-y-36">
+              <Story
+                title="A portfolio that looks like your studio, not a template."
+                body="Pick your own fonts, color scheme and style. Your portfolio goes live on the Camrhia marketplace, where couples search for photographers, and the website is free."
+                points={['Your fonts, your colors, your style', 'Live on the marketplace where couples search', 'A free website for your work']}
+                panel={
+                  <Panel tone="bg-twilight/10">
+                    <img src="/screens/portfolio.png" alt="Camrhia portfolio customization" loading="lazy" className={`${PHONE} left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
+                  </Panel>
+                }
+              />
+
+              <Story
+                flip
+                title="Your whole business in one place, away from your personal life."
+                body="Talk to your clients inside the app so work stays together and out of your personal texts."
+                points={['Message clients right in the app', 'Keep work out of your personal inbox']}
+                panel={
+                  <Panel tone="bg-sage/15">
+                    <img src="/screens/messages.png" alt="Camrhia messages tab" loading="lazy" className={`${PHONE} left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
+                  </Panel>
+                }
+              />
+
+              <Story
+                title="Set your studio up once."
+                body="Manage your packages and pricing, your questionnaires and how your studio runs, all from one dashboard."
+                points={['Packages and pricing', 'Questionnaires for your clients', 'Your studio setup']}
+                panel={
+                  <Panel tone="bg-brass/15">
+                    <img src="/screens/3-packages-1.png" alt="Camrhia packages" loading="lazy" className={`${PHONE} left-[2%] top-[28%] w-[38%]`} />
+                    <img src="/screens/3-packages-2.png" alt="Camrhia package details" loading="lazy" className={`${PHONE} right-[2%] top-[28%] w-[38%]`} />
+                    <img src="/screens/studio.png" alt="Camrhia studio settings" loading="lazy" className={`${PHONE} left-1/2 -translate-x-1/2 top-[8%] w-[50%] z-10`} />
+                  </Panel>
+                }
+              />
+
+              <Story
+                flip
+                title="Every session, and the plan for the day."
+                body="See all your sessions at a glance, and build a timeline for each one so the details of the day do not live in a text thread."
+                points={['Upcoming and past sessions together', 'A schedule for every session']}
+                panel={
+                  <Panel tone="bg-twilight/10">
+                    <img src="/screens/1-sessions.png" alt="Camrhia session list" loading="lazy" className={`${PHONE} left-[7%] top-[17%] w-[47%]`} />
+                    <img src="/screens/2-timeline.png" alt="Camrhia session timeline" loading="lazy" className={`${PHONE} right-[7%] top-[5%] w-[47%] z-10`} />
+                  </Panel>
+                }
+              />
+            </div>
           </div>
         </section>
 
         {/* ── Why join (dark band) ── */}
         <section style={{ backgroundColor: NAVY }}>
-          <div className="mx-auto max-w-5xl px-6 py-20 sm:py-24">
-            <p className="font-mono text-xs tracking-widest uppercase mb-4" style={{ color: 'rgba(255,255,255,0.55)' }}>Why partner with us</p>
-            <h2 className="font-fraunces text-3xl sm:text-4xl font-semibold leading-tight mb-14 max-w-xl" style={{ color: '#ffffff' }}>
-              An easy thing to recommend, and it pays you back every month.
-            </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-12">
+          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32 grid lg:grid-cols-5 gap-14">
+            <div className="lg:col-span-2">
+              <h2 className="font-fraunces text-4xl sm:text-5xl font-semibold leading-[1.08] lg:sticky lg:top-12" style={{ color: '#ffffff' }}>
+                An easy thing to recommend that pays you back every month.
+              </h2>
+            </div>
+            <div className="lg:col-span-3">
               {WHY.map((w, i) => (
-                <div key={w.t} className="pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
-                  <p className="font-mono text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>0{i + 1}</p>
-                  <p className="font-fraunces text-xl font-semibold mb-2" style={{ color: '#ffffff' }}>{w.t}</p>
-                  <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>{w.d}</p>
+                <div key={w.t} className="py-7" style={{ borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.18)' }}>
+                  <p className="font-fraunces text-2xl font-semibold mb-2" style={{ color: '#ffffff' }}>{w.t}</p>
+                  <p className="leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>{w.d}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── Who we're looking for ── */}
-        <section className="mx-auto max-w-5xl px-6 py-20 sm:py-24 grid lg:grid-cols-5 gap-14">
-          <div className="lg:col-span-2">
-            <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">Who we want</p>
-            <h2 className="font-fraunces text-3xl sm:text-4xl font-semibold text-ink leading-tight mb-5">
-              People photographers already trust.
-            </h2>
-            <p className="text-ink-soft leading-relaxed mb-8">
-              You do not need a big following. You need people who listen when you tell them something is worth using.
-            </p>
-            <p className="text-sm text-ink-soft leading-relaxed border-l-2 pl-4" style={{ borderColor: NAVY }}>
-              <span className="font-semibold text-ink">Not a fit?</span> If making a sale means spamming strangers or overpromising, skip this one. We want people who would recommend Camrhia to someone they respect.
-            </p>
-          </div>
-          <div className="lg:col-span-3 divide-y divide-line border-y border-line">
-            {WHO.map((w) => (
-              <div key={w.t} className="py-7">
-                <p className="font-fraunces text-xl font-semibold text-ink mb-1.5">{w.t}</p>
-                <p className="text-sm text-ink-soft leading-relaxed">{w.d}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── See it inside ── */}
-        <section className="bg-paper-deep border-y border-line">
-          <div className="mx-auto max-w-5xl px-6 pt-20 pb-24">
-            <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">The product</p>
-            <h2 className="font-fraunces text-3xl sm:text-4xl font-semibold text-ink leading-tight mb-3">
-              See what you&apos;d be recommending.
-            </h2>
-            <p className="text-ink-soft mb-12 max-w-xl">A look inside the app photographers use every day. Swipe to see more.</p>
-          </div>
-          <div className="-mt-12 pb-20 overflow-x-auto snap-x snap-mandatory">
-            <div className="flex gap-8 px-6 mx-auto w-max sm:px-[max(1.5rem,calc((100vw-64rem)/2+1.5rem))]">
-              {SHOTS.map((s) => (
-                <figure key={s.src} className="snap-center shrink-0 w-[230px] sm:w-[250px]">
-                  <img
-                    src={s.src}
-                    alt={s.alt}
-                    loading="lazy"
-                    className="w-full rounded-[1.75rem] border border-line bg-card shadow-xl mb-4"
-                  />
-                  <figcaption className="text-sm font-medium text-ink text-center">{s.label}</figcaption>
-                </figure>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── How you earn ── */}
-        <section className="mx-auto max-w-5xl px-6 py-20 sm:py-24">
-          <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">How you earn</p>
-          <h2 className="font-fraunces text-3xl sm:text-4xl font-semibold text-ink leading-tight mb-4 max-w-2xl">
-            The more you refer, the more every referral is worth.
-          </h2>
-          <p className="text-ink-soft leading-relaxed mb-12 max-w-2xl">
-            Most programs pay the same flat rate forever, so your 50th referral earns you exactly what your 1st did. Ours goes up as you do.
-          </p>
+        <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <div className="max-w-2xl mb-16">
+            <h2 className="font-fraunces text-4xl sm:text-5xl font-semibold text-ink leading-[1.08] mb-5">
+              The more you refer, the more every referral is worth.
+            </h2>
+            <p className="text-lg text-ink-soft leading-relaxed">
+              Most programs pay one flat rate forever, so your 50th referral earns what your first did. Ours goes up as you do.
+            </p>
+          </div>
 
-          <div className="grid sm:grid-cols-3 gap-10 sm:gap-6 mb-6">
+          <div className="grid sm:grid-cols-3 gap-10 sm:gap-8 mb-8">
             {[
               { rate: '20%', range: 'Referrals 1 to 10', desc: "of what's left after Apple's 15% fee, every month they stay." },
-              { rate: '25%', range: 'Referrals 11 to 25', desc: 'kicks in automatically once you cross 10.' },
-              { rate: '30%', range: 'Referrals 26+', desc: 'your top rate from there on.' },
+              { rate: '25%', range: 'Referrals 11 to 25', desc: 'starts automatically once you cross 10.' },
+              { rate: '30%', range: 'Referrals 26 and up', desc: 'your top rate from there on.' },
             ].map((t) => (
-              <div key={t.rate} className="border-t-2 pt-5" style={{ borderColor: NAVY }}>
-                <p className="font-fraunces text-6xl font-semibold leading-none mb-3" style={{ color: NAVY }}>{t.rate}</p>
-                <p className="font-mono text-xs tracking-wide uppercase text-ink-soft mb-2">{t.range}</p>
+              <div key={t.rate} className="border-t-2 pt-6" style={{ borderColor: NAVY }}>
+                <p className="font-fraunces text-7xl font-semibold leading-none mb-4" style={{ color: NAVY }}>{t.rate}</p>
+                <p className="text-sm font-semibold text-ink mb-1.5">{t.range}</p>
                 <p className="text-sm text-ink-soft leading-relaxed">{t.desc}</p>
               </div>
             ))}
           </div>
-          <p className="text-xs text-ink-soft/70 leading-relaxed mb-16 max-w-2xl">
+          <p className="text-sm text-ink-soft/80 leading-relaxed mb-20 max-w-2xl">
             Your rate locks in the moment each referral becomes a paying subscriber. It never goes down, even if a later referral lands in a different tier.
           </p>
 
@@ -447,25 +486,48 @@ export default function AffiliateSignupPage() {
           </div>
         </section>
 
-        {/* ── How it works ── */}
-        <section className="border-y border-line bg-card">
-          <div className="mx-auto max-w-5xl px-6 py-20">
-            <h2 className="font-fraunces text-3xl font-semibold text-ink mb-12">How it works</h2>
-            <div className="grid sm:grid-cols-3 gap-12 sm:gap-8">
-              {STEPS.map((s) => (
-                <div key={s.n}>
-                  <p className="font-fraunces text-6xl font-semibold leading-none mb-4" style={{ color: NAVY, opacity: 0.25 }}>{s.n}</p>
-                  <p className="font-fraunces text-xl font-semibold text-ink mb-2">{s.t}</p>
-                  <p className="text-sm text-ink-soft leading-relaxed">{s.d}</p>
+        {/* ── Who we're looking for ── */}
+        <section className="border-y border-line bg-paper-deep">
+          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32 grid lg:grid-cols-5 gap-14">
+            <div className="lg:col-span-2">
+              <h2 className="font-fraunces text-4xl sm:text-5xl font-semibold text-ink leading-[1.08] mb-6">
+                We want people photographers already trust.
+              </h2>
+              <p className="text-lg text-ink-soft leading-relaxed mb-8">
+                You do not need a big following. You need people who listen when you say something is worth using.
+              </p>
+              <p className="text-sm text-ink-soft leading-relaxed border-l-2 pl-4" style={{ borderColor: NAVY }}>
+                <span className="font-semibold text-ink">Not a fit?</span> If making a sale means spamming strangers or overpromising, skip this one. We want people who would recommend Camrhia to someone they respect.
+              </p>
+            </div>
+            <div className="lg:col-span-3 divide-y divide-line border-y border-line">
+              {WHO.map((w) => (
+                <div key={w.t} className="py-8">
+                  <p className="font-fraunces text-2xl font-semibold text-ink mb-2">{w.t}</p>
+                  <p className="text-ink-soft leading-relaxed">{w.d}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
+        {/* ── How it works ── */}
+        <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <h2 className="font-fraunces text-4xl sm:text-5xl font-semibold text-ink leading-[1.08] mb-14">How it works</h2>
+          <div className="grid sm:grid-cols-3 gap-12 sm:gap-10">
+            {STEPS.map((s) => (
+              <div key={s.n}>
+                <p className="font-fraunces text-7xl font-semibold leading-none mb-5" style={{ color: NAVY, opacity: 0.22 }}>{s.n}</p>
+                <p className="font-fraunces text-2xl font-semibold text-ink mb-2">{s.t}</p>
+                <p className="text-ink-soft leading-relaxed">{s.d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* ── FAQ ── */}
-        <section className="mx-auto max-w-2xl px-6 py-20">
-          <h2 className="font-fraunces text-3xl font-semibold text-ink mb-8">Questions people ask</h2>
+        <section className="mx-auto max-w-2xl px-6 pb-24 sm:pb-32">
+          <h2 className="font-fraunces text-3xl sm:text-4xl font-semibold text-ink mb-8">Questions people ask</h2>
           <div className="divide-y divide-line border-y border-line">
             {FAQ.map((f) => (
               <details key={f.q} className="group py-5">
@@ -480,27 +542,28 @@ export default function AffiliateSignupPage() {
         </section>
 
         {/* ── Sign-up (dark band) ── */}
-        <section id="signup" className="scroll-mt-0" style={{ backgroundColor: NAVY }}>
-          <div className="mx-auto max-w-5xl px-6 py-20 sm:py-24 grid lg:grid-cols-2 gap-14 items-center">
+        <section id="signup" style={{ backgroundColor: NAVY }}>
+          <div className="mx-auto max-w-6xl px-6 pt-24 sm:pt-28 pb-24 sm:pb-28 grid lg:grid-cols-2 gap-14 lg:gap-20 items-center">
             <div>
-              <h2 className="font-fraunces text-3xl sm:text-4xl font-semibold leading-tight mb-4" style={{ color: '#ffffff' }}>
+              <h2 className="font-fraunces text-4xl sm:text-5xl font-semibold leading-[1.08] mb-5" style={{ color: '#ffffff' }}>
                 Ready? It takes two minutes.
               </h2>
-              <p className="leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.75)' }}>
+              <p className="text-lg leading-relaxed mb-4 max-w-md" style={{ color: 'rgba(255,255,255,0.78)' }}>
                 Create your free affiliate account and your personal link is ready right away. No cost, no quota.
               </p>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <p className="text-sm mb-10" style={{ color: 'rgba(255,255,255,0.65)' }}>
                 Already have an account?{' '}
                 <Link href="/affiliate/login" className="underline" style={{ color: '#ffffff' }}>Sign in</Link>
               </p>
+              <div className="relative hidden lg:block h-64 overflow-hidden rounded-t-[2rem] max-w-xs" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <img src="/screens/3-packages-3.png" alt="Camrhia packages" loading="lazy" className={`${PHONE} left-1/2 -translate-x-1/2 top-8 w-44`} />
+              </div>
             </div>
 
-            <div className="rounded-3xl bg-card p-7 sm:p-8 shadow-xl">
+            <div className="rounded-[2rem] bg-card p-7 sm:p-9 shadow-xl">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="rounded-2xl bg-paper border border-line p-4">
-                  <label className="block text-sm font-medium text-ink mb-1">
-                    Invited by a master partner?
-                  </label>
+                  <label className="block text-sm font-medium text-ink mb-1">Invited by a master partner?</label>
                   <p className="text-xs text-ink-soft mb-3">Enter their team code to join their team. Skip it if you do not have one.</p>
                   <input
                     type="text"
