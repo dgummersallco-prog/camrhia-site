@@ -179,6 +179,7 @@ const FAQ = [
   { q: 'Does it cost anything to join?', a: 'No. Creating an affiliate account is free, and there is nothing to buy.' },
   { q: 'When do I actually earn?', a: 'When a photographer you referred starts paying after their 14-day free trial. The trial itself earns nothing, so you only get paid on real charges.' },
   { q: 'How long do I keep earning?', a: 'For as long as that photographer stays subscribed.' },
+  { q: 'How and when do I get paid?', a: 'Earnings are paid out monthly.' },
   { q: 'Do I need a big audience?', a: 'No. One good recommendation to the right photographer beats a hundred random posts.' },
   { q: 'Where do I see my referrals and earnings?', a: 'In your affiliate dashboard, which tracks every referral and what you have earned.' },
   { q: 'What about taxes?', a: 'You are responsible for your own taxes on what you earn as an affiliate.' },
@@ -384,8 +385,8 @@ export default function AffiliateSignupPage() {
             <div className="space-y-24 sm:space-y-36">
               <Story
                 title="A portfolio that looks like your studio, not a template."
-                body="Build your portfolio in the app with your own fonts, color scheme and style. It becomes a live website, and it shows up on the Camrhia marketplace where couples search for photographers. The website is free."
-                points={['Your fonts, your colors, your style', 'A live website for your work', 'Listed on the marketplace couples search']}
+                body="Build your portfolio in the app with your own fonts, color scheme and style. It becomes a live website, included in your Camrhia subscription. Couples can browse every photographer in their area in the app, and it costs them nothing."
+                points={['Your fonts, your colors, your style', 'A live website, included in your subscription', 'Couples browse photographers in their area for free']}
                 panel={
                   <Panel tone="bg-twilight/10">
                     <img src="/screens/portfolio.png" alt="Camrhia portfolio editor" loading="lazy" className={`${PHONE} left-[7%] top-[17%] w-[47%]`} />
