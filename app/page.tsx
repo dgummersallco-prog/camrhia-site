@@ -27,13 +27,13 @@ const PAINS = [
 ]
 
 const OLD_STACK = [
-  { name: "A website builder", example: "Squarespace", price: "$16 to $36", free: false },
-  { name: "Booking, contracts and invoices", example: "HoneyBook", price: "$29 to $49", free: false },
-  { name: "Gallery hosting", example: "Pixieset", price: "$10 to $20", free: false },
-  { name: "Email threads with clients", example: "", price: "Free, but buried", free: true },
-  { name: "A separate calendar", example: "", price: "Free, but disconnected", free: true },
-  { name: "Scattered notes and texts", example: "", price: "Free, but lost", free: true },
-  { name: "Gallery links lost in inboxes", example: "", price: "Free, but forgotten", free: true },
+  { name: "A website builder", example: "Squarespace", price: "$16 to $36", free: false, pain: "Pretty, but it has no idea who is booked." },
+  { name: "Booking, contracts and invoices", example: "HoneyBook", price: "$29 to $49", free: false, pain: "One more login for you. One more link for your client." },
+  { name: "Gallery hosting", example: "Pixieset", price: "$10 to $20", free: false, pain: "Delivered by a link buried in a thread." },
+  { name: "Email threads with clients", example: "", price: "Free, but buried", free: true, pain: "Was it the Tuesday email or the Thursday one?" },
+  { name: "A separate calendar", example: "", price: "Free, but disconnected", free: true, pain: "Double-booked, because it never saw the contract." },
+  { name: "Scattered notes and texts", example: "", price: "Free, but lost", free: true, pain: "The venue address is in a text from March." },
+  { name: "Gallery links lost in inboxes", example: "", price: "Free, but forgotten", free: true, pain: "Hey, can you resend our gallery? Again." },
 ]
 
 const NEW_STACK = [
@@ -199,12 +199,15 @@ export default function Home() {
             </h2>
             <div className="mt-14 grid md:grid-cols-2 gap-6">
               <div className="rounded-3xl border border-white/15 p-8">
-                <p className="text-sm text-white/55">What most photographers pay for, every month</p>
+                <p className="text-sm text-white/55">Your business, spread across 7 places</p>
                 <ul className="mt-6 space-y-3">
                   {OLD_STACK.map((t) => (
-                    <li key={t.name} className="flex items-baseline justify-between gap-4 text-lg text-white/70">
-                      <span>{t.name}{t.example ? <span className="text-sm text-white/40"> ({t.example})</span> : null}</span>
-                      <span className={`whitespace-nowrap ${t.free ? "text-sm text-white/40" : "text-white/90"}`}>{t.price}</span>
+                    <li key={t.name} className="text-white/70">
+                      <div className="flex items-baseline justify-between gap-4 text-lg">
+                        <span>{t.name}{t.example ? <span className="text-sm text-white/40"> ({t.example})</span> : null}</span>
+                        <span className={`whitespace-nowrap ${t.free ? "text-sm text-white/40" : "text-white/90"}`}>{t.price}</span>
+                      </div>
+                      <p className="mt-0.5 text-sm italic text-brass/80">{t.pain}</p>
                     </li>
                   ))}
                 </ul>
@@ -212,7 +215,8 @@ export default function Home() {
                   <span className="text-white/70">Total</span>
                   <span className="font-fraunces text-2xl font-semibold">$55 to $105 a month</span>
                 </div>
-                <p className="mt-3 text-xs text-white/45">Typical published plan prices. Check each company for current pricing.</p>
+                <p className="mt-3 text-base text-brass">Plus every hour you spend chasing it all down.</p>
+                <p className="mt-2 text-xs text-white/45">Typical published plan prices. Check each company for current pricing.</p>
               </div>
               <div className="rounded-3xl bg-card text-ink p-8 border-2 border-brass">
                 <p className="text-sm text-brass font-medium">With Camrhia</p>
