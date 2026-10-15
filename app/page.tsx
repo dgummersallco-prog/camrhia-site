@@ -27,9 +27,13 @@ const PAINS = [
 ]
 
 const OLD_STACK = [
-  { name: "A website builder", example: "Squarespace", price: "$16 to $36" },
-  { name: "Booking, contracts and invoices", example: "HoneyBook", price: "$29 to $49" },
-  { name: "Gallery hosting", example: "Pixieset", price: "$10 to $20" },
+  { name: "A website builder", example: "Squarespace", price: "$16 to $36", free: false },
+  { name: "Booking, contracts and invoices", example: "HoneyBook", price: "$29 to $49", free: false },
+  { name: "Gallery hosting", example: "Pixieset", price: "$10 to $20", free: false },
+  { name: "Email threads with clients", example: "", price: "Free, but buried", free: true },
+  { name: "A separate calendar", example: "", price: "Free, but disconnected", free: true },
+  { name: "Scattered notes and texts", example: "", price: "Free, but lost", free: true },
+  { name: "Gallery links lost in inboxes", example: "", price: "Free, but forgotten", free: true },
 ]
 
 const NEW_STACK = [
@@ -199,8 +203,8 @@ export default function Home() {
                 <ul className="mt-6 space-y-3">
                   {OLD_STACK.map((t) => (
                     <li key={t.name} className="flex items-baseline justify-between gap-4 text-lg text-white/70">
-                      <span>{t.name} <span className="text-sm text-white/40">({t.example})</span></span>
-                      <span className="whitespace-nowrap text-white/90">{t.price}</span>
+                      <span>{t.name}{t.example ? <span className="text-sm text-white/40"> ({t.example})</span> : null}</span>
+                      <span className={`whitespace-nowrap ${t.free ? "text-sm text-white/40" : "text-white/90"}`}>{t.price}</span>
                     </li>
                   ))}
                 </ul>
@@ -208,7 +212,7 @@ export default function Home() {
                   <span className="text-white/70">Total</span>
                   <span className="font-fraunces text-2xl font-semibold">$55 to $105 a month</span>
                 </div>
-                <p className="mt-3 text-xs text-white/45">Plus the email threads, separate calendar and scattered notes that hold it all together. Typical published plan prices. Check each company for current pricing.</p>
+                <p className="mt-3 text-xs text-white/45">Typical published plan prices. Check each company for current pricing.</p>
               </div>
               <div className="rounded-3xl bg-card text-ink p-8 border-2 border-brass">
                 <p className="text-sm text-brass font-medium">With Camrhia</p>
