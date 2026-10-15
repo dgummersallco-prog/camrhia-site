@@ -244,7 +244,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
           )}
         </div>
         <div style={{ maxWidth: 640, margin: '0 auto', padding: '28px 24px 0' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
             {photoUrl(r.logo_path) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={photoUrl(r.logo_path)!} alt={studioName} style={{ height: 40, objectFit: 'contain', marginBottom: 8 }} />
