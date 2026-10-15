@@ -26,15 +26,10 @@ const PAINS = [
   "Every year you say this is the year you go all in, and every year it stays a maybe",
 ]
 
-const OLD_TOOLS = [
-  "A website builder",
-  "A booking form",
-  "Contract software",
-  "An invoice app",
-  "Email threads with clients",
-  "A separate calendar",
-  "Scattered notes and texts",
-  "Gallery links lost in inboxes",
+const OLD_STACK = [
+  { name: "A website builder", example: "Squarespace", price: "$16 to $36" },
+  { name: "Booking, contracts and invoices", example: "HoneyBook", price: "$29 to $49" },
+  { name: "Gallery hosting", example: "Pixieset", price: "$10 to $20" },
 ]
 
 const NEW_STACK = [
@@ -56,7 +51,7 @@ const STEPS = [
 
 const FAQ = [
   ["Do I need a credit card to try it?", "Start free for 14 days. If it is not for you, you walk away. No awkward conversation."],
-  ["I already have a website. Why Camrhia?", "Keep it if you love it. Camrhia replaces the pile of tools behind it: booking, contracts, payments, messaging and delivery, and gives you a portfolio that updates itself."],
+  ["I already have a website. Why Camrhia?", "Keep it if you love it. Camrhia replaces the pile of tools behind it: booking, contracts, payment tracking, messaging and delivery, and gives you a portfolio that updates itself."],
   ["Is it hard to set up?", "If you can post to Instagram, you can set this up. Most photographers are live in an afternoon."],
   ["Will my clients have to figure out something new?", "They get one simple app with their session, payments, messages and photos. Fewer emails for you, less confusion for them."],
   ["Can I cancel anytime?", "Yes. Monthly plans cancel anytime through your Apple ID subscriptions."],
@@ -200,12 +195,20 @@ export default function Home() {
             </h2>
             <div className="mt-14 grid md:grid-cols-2 gap-6">
               <div className="rounded-3xl border border-white/15 p-8">
-                <p className="text-sm text-white/55">What most photographers juggle</p>
+                <p className="text-sm text-white/55">What most photographers pay for, every month</p>
                 <ul className="mt-6 space-y-3">
-                  {OLD_TOOLS.map((t) => (
-                    <li key={t} className="text-lg text-white/50 line-through decoration-brass/70">{t}</li>
+                  {OLD_STACK.map((t) => (
+                    <li key={t.name} className="flex items-baseline justify-between gap-4 text-lg text-white/70">
+                      <span>{t.name} <span className="text-sm text-white/40">({t.example})</span></span>
+                      <span className="whitespace-nowrap text-white/90">{t.price}</span>
+                    </li>
                   ))}
                 </ul>
+                <div className="mt-6 flex items-baseline justify-between border-t border-white/15 pt-4">
+                  <span className="text-white/70">Total</span>
+                  <span className="font-fraunces text-2xl font-semibold">$55 to $105 a month</span>
+                </div>
+                <p className="mt-3 text-xs text-white/45">Plus the email threads, separate calendar and scattered notes that hold it all together. Typical published plan prices. Check each company for current pricing.</p>
               </div>
               <div className="rounded-3xl bg-card text-ink p-8 border-2 border-brass">
                 <p className="text-sm text-brass font-medium">With Camrhia</p>
@@ -219,6 +222,7 @@ export default function Home() {
                 </ul>
                 <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login. One price.</p>
                 <p className="mt-1 text-sm text-ink-soft">Plans start at $59.99 a month. Your first 14 days are free.</p>
+                <p className="mt-3 text-sm text-ink-soft">Camrhia delivers your gallery link, so you keep your gallery host (Google Drive is free to about $10 a month, Pixieset about $10 to $20). Add it and the total is roughly $60 to $80.</p>
               </div>
             </div>
           </div>
