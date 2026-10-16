@@ -6,6 +6,7 @@ import { FaqAccordion } from "./FaqAccordion"
 import { DateCheckWidget } from "./DateCheckWidget"
 import { ContactButton } from "./ContactButton"
 import { CoverHero } from "./CoverHero"
+import { PortfolioLightbox } from "./PortfolioLightbox"
 
 // Same shape geometry as the app's lib/customShapes.ts — kept in sync
 // manually since this is a separate codebase from the mobile app.
@@ -127,6 +128,27 @@ function textStyle(opts: {
   return style
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
+  if (!supabase) return {}
+  const { data } = await supabase.rpc('get_public_profile', { p_token: token })
+  if (!data) return { title: 'Portfolio not available' }
+  const m = data as Record<string, any>
+  const name = m.studio_name ?? m.display_name ?? 'Photographer'
+  const place = [m.service_city, m.service_state].filter(Boolean).join(', ')
+  const title = place ? `${name} · ${place}` : name
+  const bio = typeof m.bio === 'string' ? m.bio.replace(/\s+/g, ' ').trim() : ''
+  const description = bio ? (bio.length > 155 ? bio.slice(0, 152) + '...' : bio) : `View ${name}'s photography portfolio.`
+  const first = (Array.isArray(m.cover_paths) && m.cover_paths.length > 0 ? m.cover_paths[0] : m.cover_path) as string | null
+  const image = photoUrl(first)
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: 'website', ...(image ? { images: [{ url: image }] } : {}) },
+    twitter: { card: image ? 'summary_large_image' : 'summary', title, description, ...(image ? { images: [image] } : {}) },
+  }
+}
+
 export default async function PublicPortfolioPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
 
@@ -237,6 +259,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
         <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?${fontLinks.map(f => `family=${f}`).join('&')}&display=swap`} />
       )}
       <div style={{ minHeight: '100vh', ...bgStyle }}>
+        <PortfolioLightbox />
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <CoverHero
           urls={((Array.isArray(r.cover_paths) && r.cover_paths.length > 0 ? r.cover_paths : [r.cover_path]) as string[]).map((x) => photoUrl(x)).filter(Boolean) as string[]}
@@ -373,7 +396,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                                       borderRadius: isCircle ? '50%' : radius, overflow: 'hidden',
                                       border: photo.border_width ? `${photo.border_width}px solid ${photo.border_color || 'transparent'}` : undefined,
                                     }}>
-                                      {uri && <img src={uri} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                                      {uri && <img src={uri} alt="" data-zoom="1" style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in' }} />}
                                     </div>
                                   )
                                 }
@@ -419,7 +442,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                         if (!photo) return null
                         return (
                           <div key={photo.id} style={{ overflow: 'hidden', backgroundColor: '#E5E1DB', borderRadius: 10, ...style }}>
-                            {uri && <img src={uri} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                            {uri && <img src={uri} alt="" data-zoom="1" style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in' }} />}
                           </div>
                         )
                       }
