@@ -267,13 +267,11 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                   <h2 style={{ ...sectionTitleStyle('about'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.about || 'About'}
                   </h2>
-                  <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-                    {photoUrl(r.avatar_path) && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photoUrl(r.avatar_path)!} alt={studioName} style={{ width: 104, height: 104, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                    )}
-                    <p style={{ ...sectionParagraphStyle('about_paragraph'), margin: 0, flex: 1 }}>{r.bio || ''}</p>
-                  </div>
+                  {photoUrl(r.avatar_path) && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photoUrl(r.avatar_path)!} alt={studioName} style={{ display: 'block', width: '100%', maxWidth: 300, aspectRatio: '4/5', objectFit: 'cover', borderRadius: 12, margin: '0 auto 18px' }} />
+                  )}
+                  <p style={sectionParagraphStyle('about_paragraph')}>{r.bio || ''}</p>
                 </div>
               )
             }
