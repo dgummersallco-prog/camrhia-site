@@ -5,6 +5,7 @@ import React from "react"
 import { FaqAccordion } from "./FaqAccordion"
 import { DateCheckWidget } from "./DateCheckWidget"
 import { ContactButton } from "./ContactButton"
+import { CoverHero } from "./CoverHero"
 
 // Same shape geometry as the app's lib/customShapes.ts — kept in sync
 // manually since this is a separate codebase from the mobile app.
@@ -237,12 +238,12 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
       )}
       <div style={{ minHeight: '100vh', ...bgStyle }}>
         {/* ── Hero ─────────────────────────────────────────────────────── */}
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', backgroundColor: '#E5E1DB' }}>
-          {photoUrl(r.cover_path) && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photoUrl(r.cover_path)!} alt={studioName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          )}
-        </div>
+        <CoverHero
+          urls={((Array.isArray(r.cover_paths) && r.cover_paths.length > 0 ? r.cover_paths : [r.cover_path]) as string[]).map((x) => photoUrl(x)).filter(Boolean) as string[]}
+          alt={studioName}
+          coverStyle={r.cover_style}
+          slideshow={!!r.cover_slideshow}
+        />
         <div style={{ maxWidth: 640, margin: '0 auto', padding: '28px 24px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
             {photoUrl(r.logo_path) ? (
@@ -266,7 +267,13 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                   <h2 style={{ ...sectionTitleStyle('about'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.about || 'About'}
                   </h2>
-                  <p style={sectionParagraphStyle('about_paragraph')}>{r.bio || ''}</p>
+                  <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+                    {photoUrl(r.avatar_path) && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photoUrl(r.avatar_path)!} alt={studioName} style={{ width: 104, height: 104, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                    )}
+                    <p style={{ ...sectionParagraphStyle('about_paragraph'), margin: 0, flex: 1 }}>{r.bio || ''}</p>
+                  </div>
                 </div>
               )
             }
