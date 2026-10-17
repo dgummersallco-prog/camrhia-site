@@ -1,18 +1,28 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { BRAND_NAME } from "@/lib/brand"
 import Wordmark from "@/app/components/Wordmark"
 
-// If the person already has the app installed, iOS should intercept this
-// URL before it ever reaches the browser (that's the whole point of
-// Universal Links). This page only shows up as a fallback — app not
-// installed yet, or on a device/browser that doesn't support the handoff.
-export default function ConfirmEmailFallbackPage() {
-  const appStoreLink = (
-    <Link href="#" className="inline-flex items-center gap-2 rounded-2xl bg-ink text-white px-6 py-3.5 text-sm font-semibold hover:bg-ink/90 transition-colors" aria-label="Download on the App Store">
-      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg>
-      Download on the App Store
-    </Link>
-  )
+const APP_STORE_URL = "https://apps.apple.com/app/id6800011162"
+
+// The email link lands here with a one-time sign-in code. We hand that code
+// to the app through its own address (camrhia://) so it can log the person in
+// without them typing their email and password again.
+export default function ConfirmEmailPage() {
+  const [openUrl, setOpenUrl] = useState("camrhia://confirm-email")
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("code")
+    if (!code) return
+    const url = `camrhia://confirm-email?code=${encodeURIComponent(code)}`
+    setOpenUrl(url)
+    const t = setTimeout(() => {
+      window.location.href = url
+    }, 400)
+    return () => clearTimeout(t)
+  }, [])
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">
@@ -30,9 +40,20 @@ export default function ConfirmEmailFallbackPage() {
             You&apos;re all set!
           </h1>
           <p className="text-ink-soft leading-relaxed mb-8">
-            Your email has been verified. Open the {BRAND_NAME} app to continue — if it doesn&apos;t open automatically, download it below.
+            Your email has been verified. Tap the button below to open {BRAND_NAME} and you&apos;ll be signed in automatically.
           </p>
-          {appStoreLink}
+          <a
+            href={openUrl}
+            className="inline-flex items-center justify-center rounded-2xl bg-ink text-white px-8 py-3.5 text-sm font-semibold hover:bg-ink/90 transition-colors"
+          >
+            Open {BRAND_NAME}
+          </a>
+          <p className="text-ink-soft text-sm mt-8">
+            Don&apos;t have the app yet?{" "}
+            <a href={APP_STORE_URL} className="underline text-ink">
+              Download it on the App Store
+            </a>
+          </p>
         </div>
       </main>
     </div>
