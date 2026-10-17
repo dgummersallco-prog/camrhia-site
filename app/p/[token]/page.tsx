@@ -739,7 +739,28 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
         </div>
         <div style={{ height: 90 }} />
       </div>
-      <ContactButton photographerId={r.photographer_id} studioName={studioName} />
+      <ContactButton
+        photographerId={r.photographer_id}
+        studioName={studioName}
+        accent={r.accent_color ?? '#3A4A6B'}
+        btn={{
+          bg: r.message_btn_bg_color ?? r.accent_color ?? '#3A4A6B',
+          textColor: r.message_btn_color ?? null,
+          fontFamily: fontFamilyFor(r.message_btn_font, "'Fraunces', serif"),
+          fontSize: r.message_btn_font_size ?? 15,
+          bold: r.message_btn_bold,
+          italic: r.message_btn_italic,
+          text: r.message_btn_text,
+          showIcon: r.message_btn_show_icon,
+          width: r.message_btn_width,
+          align: r.message_btn_align,
+          shadow: r.message_btn_shadow,
+          shadowColor: r.message_btn_shadow_color,
+          shadowX: r.message_btn_shadow_offset_x,
+          shadowY: r.message_btn_shadow_offset_y,
+          shadowBlur: r.message_btn_shadow_blur,
+        }}
+      />
     </>
   )
 }

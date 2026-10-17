@@ -8,9 +8,35 @@ const SESSION_TYPES = [
 ]
 const APP_STORE_URL = 'https://apps.apple.com/app/id6800011162'
 
+export interface MessageBtnStyle {
+  bg?: string | null
+  textColor?: string | null
+  fontFamily?: string
+  fontSize?: number | null
+  bold?: boolean | null
+  italic?: boolean | null
+  text?: string | null
+  showIcon?: boolean | null
+  width?: number | null
+  align?: string | null
+  shadow?: boolean | null
+  shadowColor?: string | null
+  shadowX?: number | null
+  shadowY?: number | null
+  shadowBlur?: number | null
+}
+
+function readableOn(bg: string): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(bg.trim())
+  if (!m) return '#fff'
+  const n = parseInt(m[1], 16)
+  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+  return lum > 0.6 ? '#2B2B2B' : '#fff'
+}
+
 export function ContactButton({
-  photographerId, studioName, accent = '#5B6B8C',
-}: { photographerId: string; studioName: string; accent?: string }) {
+  photographerId, studioName, accent = '#3A4A6B', btn,
+}: { photographerId: string; studioName: string; accent?: string; btn?: MessageBtnStyle }) {
   const [open, setOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
@@ -50,18 +76,38 @@ export function ContactButton({
   }
   const label: React.CSSProperties = { fontSize: 12, color: '#6B6B6B', marginBottom: 4, display: 'block', fontFamily: 'system-ui, sans-serif' }
 
+  const bgCol = btn?.bg || accent
+  const txtCol = btn?.textColor || readableOn(bgCol)
+  const rawW = btn?.width ?? 0.8
+  const widthPct = Math.round((rawW > 0 && rawW <= 1 ? rawW : 0.8) * 100)
+  const justify = btn?.align === 'left' ? 'flex-start' : btn?.align === 'right' ? 'flex-end' : 'center'
+  const btnLabel = (btn?.text && btn.text.trim()) || `Message ${studioName}`
+
   return (
     <>
       <button
         onClick={() => setOpen(true)}
         style={{
           position: 'fixed', left: '50%', bottom: 20, transform: 'translateX(-50%)', zIndex: 50,
-          background: accent, color: '#fff', border: 'none', borderRadius: 999,
-          padding: '14px 28px', fontSize: 15, fontWeight: 600, cursor: 'pointer',
-          boxShadow: '0 6px 20px rgba(0,0,0,0.25)', fontFamily: 'system-ui, sans-serif',
+          width: `${widthPct}%`, maxWidth: 480, boxSizing: 'border-box',
+          display: 'flex', alignItems: 'center', justifyContent: justify, gap: 10,
+          background: bgCol, color: txtCol, border: 'none', borderRadius: 999,
+          padding: '17px 20px', cursor: 'pointer',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+          fontFamily: btn?.fontFamily ?? 'system-ui, sans-serif',
+          fontSize: btn?.fontSize ?? 15,
+          fontWeight: btn?.bold ? 700 : 600,
+          fontStyle: btn?.italic ? 'italic' : 'normal',
+          letterSpacing: 0.2,
+          textShadow: btn?.shadow ? `${btn.shadowX ?? 0}px ${btn.shadowY ?? 2}px ${btn.shadowBlur ?? 4}px ${btn.shadowColor ?? '#000'}` : undefined,
         }}
       >
-        Message {studioName}
+        {(btn?.showIcon ?? true) && (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+          </svg>
+        )}
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{btnLabel}</span>
       </button>
 
       {open && (
