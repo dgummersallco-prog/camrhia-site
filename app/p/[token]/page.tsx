@@ -290,9 +290,9 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                   <h2 style={{ ...sectionTitleStyle('about'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.about || 'About'}
                   </h2>
-                  {r.show_about_photo !== false && photoUrl(r.avatar_path) && (
+                  {r.show_about_photo !== false && photoUrl(r.about_photo_path ?? r.avatar_path) && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={photoUrl(r.avatar_path)!} alt={studioName} style={{ display: 'block', width: '100%', maxWidth: 300, aspectRatio: '4/5', objectFit: 'cover', borderRadius: 12, margin: '0 auto 18px' }} />
+                    <img src={photoUrl(r.about_photo_path ?? r.avatar_path)!} alt={studioName} style={{ display: 'block', width: '100%', maxWidth: 300, aspectRatio: '4/5', objectFit: 'cover', borderRadius: 12, margin: '0 auto 18px' }} />
                   )}
                   <p style={sectionParagraphStyle('about_paragraph')}>{r.bio || ''}</p>
                 </div>
