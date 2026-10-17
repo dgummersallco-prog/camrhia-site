@@ -258,6 +258,9 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
       {fontLinks.length > 0 && (
         <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?${fontLinks.map(f => `family=${f}`).join('&')}&display=swap`} />
       )}
+      {/^#[0-9a-fA-F]{3,8}$/.test(String(bgColor)) && (
+        <style>{`html, body { background-color: ${bgColor}; }`}</style>
+      )}
       <div style={{ minHeight: '100vh', ...bgStyle }}>
         <PortfolioLightbox />
         {/* ── Hero ─────────────────────────────────────────────────────── */}
@@ -734,8 +737,8 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
             </div>
           )}
         </div>
+        <div style={{ height: 90 }} />
       </div>
-      <div style={{ height: 90 }} />
       <ContactButton photographerId={r.photographer_id} studioName={studioName} />
     </>
   )
