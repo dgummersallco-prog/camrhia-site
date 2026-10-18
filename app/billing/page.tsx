@@ -60,7 +60,7 @@ export default function BillingPage() {
         .eq('id', user.id)
         .single()
 
-      setSubscriptionActive(profile?.subscription_status === 'active')
+      setSubscriptionActive(['active', 'comped'].includes(profile?.subscription_status ?? ''))
       setPlanTier((profile?.plan_tier as PlanTier) ?? 'solo')
       setPageState('ready')
     }
