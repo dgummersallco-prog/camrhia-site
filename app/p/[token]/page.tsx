@@ -269,6 +269,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
           alt={studioName}
           coverStyle={r.cover_style}
           slideshow={!!r.cover_slideshow}
+          scale={r.cover_scale}
         />
         <div style={{ maxWidth: 640, margin: '0 auto', padding: '28px 24px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
