@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 type Photo = { id: string; filename: string | null; width: number | null; height: number | null; thumb: string | null; web: string | null }
 type Data = { title: string; allowDownloads: boolean; coverId: string | null; access: string; favorites: string[]; photos: Photo[] }
 type Phase = 'loading' | 'pin' | 'ready' | 'missing' | 'expired'
+type ZipFile = { id: string; name: string; size: number | null; url: string }
 
 function visitorId(): string {
   try {
@@ -36,6 +37,7 @@ export default function GalleryViewPage() {
   const [favs, setFavs] = useState<Set<string>>(new Set())
   const [onlyFavs, setOnlyFavs] = useState(false)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [zip, setZip] = useState<{ busy: boolean; done: number; total: number; error: string | null }>({ busy: false, done: 0, total: 0, error: null })
 
   const load = useCallback(async (pinValue?: string) => {
     let stored: string | null = null
@@ -87,6 +89,84 @@ export default function GalleryViewPage() {
     }).catch(() => null)
     if (!res || !res.ok) {
       setFavs((prev) => { const n = new Set(prev); if (on) n.delete(id); else n.add(id); return n })
+    }
+  }
+
+  // Builds the zip in the browser so big galleries never hit a server time limit.
+  async function downloadAll() {
+    if (!data || zip.busy) return
+    const w = window as unknown as {
+      showSaveFilePicker?: (o: unknown) => Promise<{ createWritable: () => Promise<WritableStream> }>
+    }
+    let done = 0
+    async function* items(list: ZipFile[]) {
+      for (const f of list) {
+        const r = await fetch(f.url)
+        if (!r.ok) throw new Error(`Could not fetch ${f.name}`)
+        yield { name: f.name, input: r, lastModified: new Date() }
+        done++
+        setZip((z) => ({ ...z, done }))
+      }
+    }
+    setZip({ busy: true, done: 0, total: 0, error: null })
+    try {
+      // The save dialog has to open while the click is still fresh.
+      let handle: { createWritable: () => Promise<WritableStream> } | null = null
+      if (w.showSaveFilePicker) {
+        try {
+          handle = await w.showSaveFilePicker({
+            suggestedName: `${(data.title || 'Gallery').replace(/[\\/:*?"<>|]+/g, '').trim() || 'Gallery'}.zip`,
+            types: [{ description: 'Zip file', accept: { 'application/zip': ['.zip'] } }],
+          })
+        } catch {
+          setZip({ busy: false, done: 0, total: 0, error: null })
+          return
+        }
+      }
+
+      const res = await fetch(`/api/gallery/download-all?access=${encodeURIComponent(data.access)}`)
+      if (!res.ok) {
+        throw new Error(res.status === 403 ? 'Downloads are turned off for this gallery.' : 'Could not prepare your download. Please try again.')
+      }
+      const j = (await res.json()) as { title: string; files: ZipFile[] }
+      const files = onlyFavs ? j.files.filter((f) => favs.has(f.id)) : j.files
+      if (files.length === 0) throw new Error('No photos to download.')
+      const safe = (j.title || 'Gallery').replace(/[\\/:*?"<>|]+/g, '').trim() || 'Gallery'
+      setZip({ busy: true, done: 0, total: files.length, error: null })
+
+      const { downloadZip } = await import('client-zip')
+
+      if (handle) {
+        const out = await handle.createWritable()
+        await downloadZip(items(files)).body!.pipeTo(out)
+      } else {
+        // Browsers without the save dialog build each zip in memory, so split into ~500 MB parts.
+        const parts: ZipFile[][] = []
+        let cur: ZipFile[] = []
+        let size = 0
+        for (const f of files) {
+          const sz = f.size ?? 10_000_000
+          if (cur.length && size + sz > 500_000_000) { parts.push(cur); cur = []; size = 0 }
+          cur.push(f)
+          size += sz
+        }
+        if (cur.length) parts.push(cur)
+        for (let i = 0; i < parts.length; i++) {
+          const blob = await downloadZip(items(parts[i])).blob()
+          const href = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = href
+          a.download = parts.length > 1 ? `${safe} (part ${i + 1} of ${parts.length}).zip` : `${safe}.zip`
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+          setTimeout(() => URL.revokeObjectURL(href), 60000)
+          await new Promise((r) => setTimeout(r, 800))
+        }
+      }
+      setZip({ busy: false, done: 0, total: 0, error: null })
+    } catch (e) {
+      setZip({ busy: false, done: 0, total: 0, error: e instanceof Error ? e.message : 'Download failed. Please try again.' })
     }
   }
 
@@ -171,7 +251,16 @@ export default function GalleryViewPage() {
         ) : (
           <span className="text-sm text-ink-soft">{data.photos.length} photos</span>
         )}
-        <div className="flex gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm">
+          {data.allowDownloads && list.length > 0 && (
+            <button
+              onClick={downloadAll}
+              disabled={zip.busy}
+              className="rounded-full border border-line px-4 py-1.5 text-ink transition hover:border-twilight disabled:opacity-60"
+            >
+              {zip.busy ? (zip.total ? `Zipping ${zip.done}/${zip.total}` : 'Preparing…') : onlyFavs ? 'Download favorites' : 'Download all'}
+            </button>
+          )}
           <button
             onClick={() => setOnlyFavs(false)}
             className={`rounded-full px-4 py-1.5 transition ${!onlyFavs ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
@@ -186,6 +275,11 @@ export default function GalleryViewPage() {
           </button>
         </div>
       </div>
+
+      {zip.busy && zip.total > 0 && (
+        <p className="px-6 pt-3 text-center text-sm text-ink-soft">Keep this tab open until your download finishes.</p>
+      )}
+      {zip.error && <p className="px-6 pt-3 text-center text-sm text-red-600">{zip.error}</p>}
 
       <main className="px-3 py-4 sm:px-6">
         {list.length === 0 ? (
