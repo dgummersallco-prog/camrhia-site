@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
@@ -24,6 +24,11 @@ export default function TestimonialsEditor() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const preview = useMemo(
+    () => (file && !/\.(heic|heif)$/i.test(file.name) ? URL.createObjectURL(file) : null),
+    [file],
+  )
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -104,6 +109,25 @@ export default function TestimonialsEditor() {
     await Promise.all(re.map((x) => sb.from('testimonials').update({ sort_order: x.sort_order }).eq('id', x.id)))
   }
 
+  async function replacePhoto(t: T, f: File) {
+    const sb = supabase
+    if (!sb || !uid) return
+    setMsg('Uploading photo…')
+    try {
+      const v = await makeVersions(f)
+      const path = `${uid}/testimonial_${Date.now()}.jpg`
+      const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+      if (up.error) throw up.error
+      const { error } = await sb.from('testimonials').update({ storage_path: path }).eq('id', t.id)
+      if (error) throw error
+      if (t.storage_path) await sb.storage.from('portfolio').remove([t.storage_path])
+      edit(t.id, { storage_path: path })
+      flash('Photo updated')
+    } catch (e) {
+      setMsg((e as { message?: string })?.message ?? 'Could not upload that photo.')
+    }
+  }
+
   function edit(id: string, patch: Partial<T>) {
     setItems((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x)))
   }
@@ -123,6 +147,10 @@ export default function TestimonialsEditor() {
           <input className={input} placeholder="Client name" value={name} onChange={(e) => setName(e.target.value)} />
           <textarea rows={3} className={input} placeholder="What they said" value={quote} onChange={(e) => setQuote(e.target.value)} />
           <div className="flex items-center gap-3">
+            {preview && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="" className="h-16 w-14 shrink-0 rounded-lg object-cover" />
+            )}
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,.heic,.heif" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-xs text-ink-soft" />
           </div>
           <button className={btn} disabled={busy || !quote.trim()} onClick={add}>{busy ? 'Adding…' : 'Add testimonial'}</button>
@@ -142,8 +170,15 @@ export default function TestimonialsEditor() {
               )}
               <div className="flex-1 space-y-2">
                 <input className={input} value={t.client_name ?? ''} placeholder="Client name" onChange={(e) => edit(t.id, { client_name: e.target.value })} onBlur={(e) => saveField(t, { client_name: e.target.value.trim() || null })} />
-                <textarea rows={3} className={input} value={t.quote ?? ''} placeholder="Quote" onChange={(e) => edit(t.id, { quote: e.target.value })} onBlur={(e) => saveField(t, { quote: e.target.value })} />
-                <button className="text-xs text-ink-soft underline hover:text-ink" onClick={() => remove(t)}>Remove</button>
+                <textarea rows={3} className={input} value={t.quote ?? ''} placeholder="Quote" onChange={(e) => edit(t.id, { quote: e.target.value })} onBlur={(e) => { if (e.target.value.trim()) saveField(t, { quote: e.target.value }); else { setMsg('A testimonial needs a quote.'); load() } }} />
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer text-xs text-ink-soft underline hover:text-ink">
+                    {t.storage_path ? 'Change photo' : 'Add photo'}
+                    <input type="file" accept="image/jpeg,image/png,image/webp,.heic,.heif" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) replacePhoto(t, f); e.target.value = '' }} />
+                  </label>
+                  <button className="text-xs text-ink-soft underline hover:text-ink" onClick={() => remove(t)}>Remove</button>
+                </div>
               </div>
             </section>
           ))}
