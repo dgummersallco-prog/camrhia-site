@@ -20,6 +20,8 @@ type Profile = {
   tiktok_url: string | null
   cover_path: string | null
   cover_paths: string[] | null
+  logo_path: string | null
+  avatar_path: string | null
   show_portfolio_public: boolean | null
   show_bio_public: boolean | null
   show_pricing_public: boolean | null
@@ -42,7 +44,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles'
+  'id, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -109,6 +111,10 @@ export default function PortfolioEditorPage() {
   const [previewKey, setPreviewKey] = useState(0)
   const [device, setDevice] = useState<'phone' | 'desktop'>('phone')
   const fileInput = useRef<HTMLInputElement>(null)
+  const logoInput = useRef<HTMLInputElement>(null)
+  const avatarInput = useRef<HTMLInputElement>(null)
+  const [brandBusy, setBrandBusy] = useState<string | null>(null)
+  const latest = useRef<{ save: () => void; dirty: boolean }>({ save: () => {}, dirty: false })
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -213,6 +219,71 @@ export default function PortfolioEditorPage() {
     }
   }
 
+  async function uploadBrand(kind: 'logo' | 'avatar', file: File) {
+    const sb = supabase
+    if (!sb || !form) return
+    setBrandBusy(kind)
+    setMessage(null)
+    try {
+      let blob: Blob = file
+      let ext = 'jpg'
+      let type = 'image/jpeg'
+      if (kind === 'logo' && (file.type === 'image/png' || file.type === 'image/webp')) {
+        if (file.size > 5_000_000) throw new Error('Logo must be under 5 MB.')
+        ext = file.type === 'image/png' ? 'png' : 'webp'
+        type = file.type
+      } else {
+        const v = await makeVersions(file)
+        blob = v.web.blob
+      }
+      const path = `${form.id}/${kind}_${Date.now()}.${ext}`
+      const up = await sb.storage.from('portfolio').upload(path, blob, { contentType: type, upsert: true })
+      if (up.error) throw up.error
+      const patch = kind === 'logo' ? { logo_path: path } : { avatar_path: path }
+      const { error } = await sb.from('profiles').update(patch).eq('id', form.id)
+      if (error) throw error
+      setForm((f) => (f ? { ...f, ...patch } : f))
+      setSaved((v) => (v ? { ...v, ...patch } : v))
+      setPreviewKey((k) => k + 1)
+      flash(kind === 'logo' ? 'Logo updated' : 'Profile photo updated')
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Could not upload that image.')
+    } finally {
+      setBrandBusy(null)
+    }
+  }
+
+  async function removeLogo() {
+    const sb = supabase
+    if (!sb || !form) return
+    const { error } = await sb.from('profiles').update({ logo_path: null }).eq('id', form.id)
+    if (error) { setMessage(error.message); return }
+    setForm((f) => (f ? { ...f, logo_path: null } : f))
+    setSaved((v) => (v ? { ...v, logo_path: null } : v))
+    setPreviewKey((k) => k + 1)
+    flash('Logo removed')
+  }
+
+  latest.current = { save, dirty }
+
+  useEffect(() => {
+    if (!dirty) return
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        if (latest.current.dirty) latest.current.save()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const coverUrl = form?.cover_paths?.[0] ?? form?.cover_path
   const portfolioUrl = form?.public_token ? `/p/${form.public_token}` : null
 
@@ -243,6 +314,47 @@ export default function PortfolioEditorPage() {
             <div className="grid gap-8 lg:grid-cols-[minmax(0,540px)_1fr]">
               {/* Form */}
               <div className="space-y-5">
+                <section className={card}>
+                  <p className={label}>Logo and profile photo</p>
+                  <div className="flex flex-wrap gap-8">
+                    <div>
+                      <p className="mb-2 text-xs text-ink-soft">Logo. Replaces your studio name at the top.</p>
+                      <div className="mb-2 flex h-16 w-40 items-center justify-center overflow-hidden rounded-xl bg-line">
+                        {form.logo_path && (
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={`${STORAGE_BASE}${form.logo_path}`} alt="" className="max-h-full max-w-full object-contain" />
+                          </>
+                        )}
+                      </div>
+                      <input ref={logoInput} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBrand('logo', f); e.target.value = '' }} />
+                      <div className="flex gap-3">
+                        <button className={btnGhost} disabled={brandBusy === 'logo'} onClick={() => logoInput.current?.click()}>
+                          {brandBusy === 'logo' ? 'Uploading…' : form.logo_path ? 'Change logo' : 'Add logo'}
+                        </button>
+                        {form.logo_path && <button type="button" className="text-xs text-ink-soft underline hover:text-ink" onClick={removeLogo}>Remove</button>}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs text-ink-soft">Profile photo. Shows in your About section.</p>
+                      <div className="mb-2 h-16 w-16 overflow-hidden rounded-full bg-line">
+                        {form.avatar_path && (
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={`${STORAGE_BASE}${form.avatar_path}`} alt="" className="h-full w-full object-cover" />
+                          </>
+                        )}
+                      </div>
+                      <input ref={avatarInput} type="file" accept="image/jpeg,image/png,image/webp,.heic,.heif" className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBrand('avatar', f); e.target.value = '' }} />
+                      <button className={btnGhost} disabled={brandBusy === 'avatar'} onClick={() => avatarInput.current?.click()}>
+                        {brandBusy === 'avatar' ? 'Uploading…' : form.avatar_path ? 'Change photo' : 'Add photo'}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
                 <section className={card}>
                   <p className={label}>Cover photo</p>
                   <div className="flex items-center gap-4">
@@ -322,7 +434,7 @@ export default function PortfolioEditorPage() {
                   <p className="text-sm font-medium text-ink">Photos and testimonials</p>
                   <a href="/portfolio/photos" className="block rounded-xl border border-line px-4 py-3 text-sm text-ink hover:border-twilight">Featured photo sets</a>
                   <a href="/portfolio/testimonials" className="block rounded-xl border border-line px-4 py-3 text-sm text-ink hover:border-twilight">Testimonials</a>
-                  <p className="text-xs text-ink-soft">Save any changes on this page first.</p>
+                  <p className="text-xs text-ink-soft">You will be asked to confirm if you leave with unsaved changes.</p>
                 </section>
 
                 <section className={`${card} space-y-4`}>
