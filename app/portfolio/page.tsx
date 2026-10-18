@@ -27,10 +27,16 @@ type Profile = {
   show_faq_public: boolean | null
   show_socials_public: boolean | null
   section_order: string[] | null
+  accent_color: string | null
+  portfolio_bg_color: string | null
+  title_color: string | null
+  location_color: string | null
+  paragraph_color: string | null
+  portfolio_section_spacing: number | null
 }
 
 const COLUMNS =
-  'id, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order'
+  'id, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -64,6 +70,17 @@ const input = 'w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm
 const btn = 'rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50'
 const btnGhost = 'rounded-xl border border-line px-4 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50'
 const label = 'mb-1.5 block text-sm font-medium text-ink'
+
+function ColorField({ title, value, fallback, onChange }: { title: string; value: string | null; fallback: string; onChange: (v: string | null) => void }) {
+  const hex = /^#[0-9a-f]{6}$/i.test(value ?? '') ? (value as string) : fallback
+  return (
+    <div className="flex items-center gap-3">
+      <input type="color" value={hex} onChange={(e) => onChange(e.target.value.toUpperCase())} className="h-9 w-12 cursor-pointer rounded-lg border border-line bg-transparent p-0.5" />
+      <span className="flex-1 text-sm text-ink">{title}</span>
+      {value && <button type="button" onClick={() => onChange(null)} className="text-xs text-ink-soft underline hover:text-ink">Reset</button>}
+    </div>
+  )
+}
 
 export default function PortfolioEditorPage() {
   const router = useRouter()
@@ -132,6 +149,12 @@ export default function PortfolioEditorPage() {
       show_faq_public: form.show_faq_public !== false,
       show_socials_public: form.show_socials_public !== false,
       section_order: form.section_order,
+      accent_color: t(form.accent_color),
+      portfolio_bg_color: t(form.portfolio_bg_color),
+      title_color: t(form.title_color),
+      location_color: t(form.location_color),
+      paragraph_color: t(form.paragraph_color),
+      portfolio_section_spacing: form.portfolio_section_spacing ?? 14,
     }
     setSaving(true)
     const { error } = await sb.from('profiles').update(patch).eq('id', form.id)
@@ -272,6 +295,24 @@ export default function PortfolioEditorPage() {
                   ))}
                 </section>
 
+                <section className={`${card} space-y-4`}>
+                  <p className="text-sm font-medium text-ink">Colors and spacing</p>
+                  <ColorField title="Page background" value={form.portfolio_bg_color} fallback="#F9F9F9" onChange={(v) => setField('portfolio_bg_color', v)} />
+                  <ColorField title="Studio name and headings" value={form.title_color} fallback="#A57E60" onChange={(v) => setField('title_color', v)} />
+                  <ColorField title="Body text" value={form.paragraph_color} fallback="#202020" onChange={(v) => setField('paragraph_color', v)} />
+                  <ColorField title="Location text" value={form.location_color} fallback="#202020" onChange={(v) => setField('location_color', v)} />
+                  <ColorField title="Accent and buttons" value={form.accent_color} fallback="#3A4A6B" onChange={(v) => setField('accent_color', v)} />
+                  <div>
+                    <label className={label}>Space between sections</label>
+                    <input
+                      type="range" min={0} max={48}
+                      value={form.portfolio_section_spacing ?? 14}
+                      onChange={(e) => setField('portfolio_section_spacing', Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                </section>
+
                 <section className={card}>
                   <p className="mb-1 text-sm font-medium text-ink">Sections</p>
                   <p className="mb-4 text-xs text-ink-soft">Turn sections on or off and reorder them with the arrows.</p>
@@ -304,7 +345,7 @@ export default function PortfolioEditorPage() {
                 </section>
 
                 <p className="text-xs text-ink-soft">
-                  Fonts, colors, photo layouts, packages and testimonials are edited in the Camrhia app for now. Anything you change here shows up there too.
+                  Fonts, photo layouts, packages and testimonials are edited in the Camrhia app for now. Anything you change here shows up there too.
                 </p>
               </div>
 
