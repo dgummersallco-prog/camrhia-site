@@ -99,10 +99,15 @@ export default function MyPage() {
           </div>
         ))}
 
+        {m?.has_contract && (m.contract_status === 'sent' || m.contract_status === 'signed') && (
+          <a href={`/my/contract/${r.wedding_id}`} className="mr-2 mt-4 inline-block rounded-full bg-twilight px-5 py-2 text-sm font-semibold text-white hover:opacity-90">
+            {m.contract_status === 'signed' ? 'View signed contract' : 'Review and sign contract'}
+          </a>
+        )}
         <a href={`/my/messages/${r.wedding_id}?s=${encodeURIComponent(studio)}`} className="mt-4 inline-block rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink hover:bg-paper-deep">
           Message {studio}
         </a>
-        <p className="mt-3 text-xs text-ink-soft">Contracts and questionnaires for this session are in the Camrhia app.</p>
+        <p className="mt-3 text-xs text-ink-soft">Questionnaires for this session are in the Camrhia app.</p>
       </section>
     )
   }
