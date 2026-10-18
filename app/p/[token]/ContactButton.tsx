@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 const SESSION_TYPES = [
@@ -48,12 +48,50 @@ export function ContactButton({
   const [date, setDate] = useState('')
   const [message, setMessage] = useState('')
   const [website, setWebsite] = useState('') // honeypot
+  const [city, setCity] = useState('')
+  const [isClient, setIsClient] = useState(false)
+  const [inquiryId, setInquiryId] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function prefill() {
+      const sb = supabase
+      if (!sb) return
+      const { data: sess } = await sb.auth.getSession()
+      const u = sess.session?.user
+      if (!u) return
+      const { data: p } = await sb.from('profiles').select('account_type, couple_names, first_name, last_name, display_name').eq('id', u.id).maybeSingle()
+      const pr = p as { account_type?: string; couple_names?: string; first_name?: string; last_name?: string; display_name?: string } | null
+      if (pr?.account_type !== 'couple') return
+      setIsClient(true)
+      setEmail(u.email ?? '')
+      setName(pr.couple_names || [pr.first_name, pr.last_name].filter(Boolean).join(' ') || pr.display_name || '')
+    }
+    prefill()
+  }, [])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!supabase) { setError('Something went wrong. Please try again.'); return }
     setSending(true)
     setError(null)
+    if (isClient) {
+      const key = sessionType.toLowerCase().startsWith('sports') ? 'sports' : sessionType.toLowerCase()
+      const { data: iid, error: ce } = await supabase.rpc('client_start_inquiry', {
+        p_photographer_id: photographerId,
+        p_names: name,
+        p_phone: phone || null,
+        p_session_type: key || null,
+        p_date: date || null,
+        p_city: city || null,
+        p_state: null,
+        p_note: message || null,
+      })
+      setSending(false)
+      if (ce) { setError(ce.message); return }
+      setInquiryId(iid as string)
+      setSent(true)
+      return
+    }
     const { error: rpcError } = await supabase.rpc('submit_web_inquiry', {
       p_photographer_id: photographerId,
       p_name: name,
@@ -61,7 +99,7 @@ export function ContactButton({
       p_phone: phone || null,
       p_session_type: sessionType || null,
       p_preferred_date: date || null,
-      p_message: message || null,
+      p_message: [city ? `Location: ${city}` : '', message].filter(Boolean).join('\n\n') || null,
       p_website: website || null,
     })
     setSending(false)
@@ -129,6 +167,11 @@ export function ContactButton({
             {sent ? (
               <div style={{ fontFamily: 'system-ui, sans-serif', color: '#4A4A4A', lineHeight: 1.55 }}>
                 <p style={{ marginTop: 0 }}>Thanks, {name.split(' ')[0] || 'friend'}! {studioName} has your message and will reach out to you soon.</p>
+                {inquiryId && (
+                  <a href={`/my/inquiry/${inquiryId}?s=${encodeURIComponent(studioName)}`} style={{ display: 'block', textAlign: 'center', background: accent, color: '#fff', textDecoration: 'none', borderRadius: 999, padding: '14px 20px', fontWeight: 600, margin: '14px 0' }}>
+                    Open your conversation
+                  </a>
+                )}
                 <p>Want to message, book, sign contracts and get your photos all in one place? Get the free Camrhia app.</p>
                 <a href={APP_STORE_URL} style={{ display: 'block', textAlign: 'center', background: accent, color: '#fff', textDecoration: 'none', borderRadius: 999, padding: '14px 20px', fontWeight: 600, marginTop: 14 }}>
                   Get the Camrhia app
@@ -149,6 +192,8 @@ export function ContactButton({
                   </select></div>
                 <div><label style={label}>Preferred date (optional)</label>
                   <input style={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+                <div><label style={label}>Location (city)</label>
+                  <input style={input} value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} placeholder="Where would the session be?" /></div>
                 <div><label style={label}>Message</label>
                   <textarea style={{ ...input, minHeight: 90, resize: 'vertical' }} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} placeholder="Tell them a little about what you have in mind" /></div>
 

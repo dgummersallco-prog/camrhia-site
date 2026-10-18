@@ -16,6 +16,8 @@ type Mine = {
   has_contract: boolean; has_questionnaire: boolean
 }
 
+type Convo = { id: string; photographer_id: string; status: string; session_type: string | null; created_at: string; studio: string }
+
 const TYPE_LABELS: Record<string, string> = {
   wedding: 'Wedding', engagement: 'Engagement', proposal: 'Proposal', maternity: 'Maternity', newborn: 'Newborn',
   family: 'Family', senior: 'Senior', headshots: 'Headshots', branding: 'Branding', graduation: 'Graduation',
@@ -34,6 +36,7 @@ export default function MyPage() {
   const [rows, setRows] = useState<Portal[]>([])
   const [mine, setMine] = useState<Record<string, Mine>>({})
   const [ready, setReady] = useState(false)
+  const [convos, setConvos] = useState<Convo[]>([])
   const [name, setName] = useState('')
 
   useEffect(() => {
@@ -53,6 +56,22 @@ export default function MyPage() {
       setMine(m)
       const pr = p.data as { first_name?: string; display_name?: string; couple_names?: string } | null
       setName(pr?.first_name || pr?.display_name || pr?.couple_names || '')
+      const { data: inq } = await sb
+        .from('inquiries')
+        .select('id, photographer_id, status, session_type, created_at')
+        .eq('couple_id', sess.session.user.id)
+        .neq('status', 'booked')
+        .order('created_at', { ascending: false })
+      const list = (inq ?? []) as Omit<Convo, 'studio'>[]
+      const studios: Record<string, string> = {}
+      await Promise.all(
+        Array.from(new Set(list.map((i) => i.photographer_id))).map(async (pid) => {
+          const { data } = await sb.rpc('get_photographer_public_info', { p_id: pid })
+          const d = (Array.isArray(data) ? data[0] : data) as { studio_name?: string; display_name?: string } | null
+          studios[pid] = d?.studio_name || d?.display_name || 'Photographer'
+        }),
+      )
+      setConvos(list.map((i) => ({ ...i, studio: studios[i.photographer_id] })))
       setReady(true)
     }
     load()
@@ -127,6 +146,21 @@ export default function MyPage() {
       <main className="mx-auto max-w-3xl px-6 py-10">
         <h1 className="font-fraunces text-3xl font-semibold text-ink">{name ? `Hi ${name}` : 'Your sessions'}</h1>
         <p className="mt-2 text-ink-soft">Every session you have booked through Camrhia, all in one place.</p>
+
+        {convos.length > 0 && (
+          <div className="mt-8 space-y-3">
+            <h2 className="font-mono text-xs uppercase tracking-widest text-ink-soft">Conversations</h2>
+            {convos.map((c) => (
+              <a key={c.id} href={`/my/inquiry/${c.id}?s=${encodeURIComponent(c.studio)}`} className="flex items-center justify-between rounded-2xl border border-line bg-card px-5 py-4 hover:bg-paper-deep">
+                <span>
+                  <span className="block font-fraunces text-lg font-semibold text-ink">{c.studio}</span>
+                  <span className="text-xs text-ink-soft">{label(c.session_type ?? 'other')} inquiry · {new Date(c.created_at).toLocaleDateString()}</span>
+                </span>
+                <span className="text-sm text-twilight">Open</span>
+              </a>
+            ))}
+          </div>
+        )}
 
         {!ready ? (
           <p className="mt-8 text-sm text-ink-soft">Loading…</p>
