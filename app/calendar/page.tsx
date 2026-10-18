@@ -26,6 +26,9 @@ export default function CalendarPage() {
   const [m, setM] = useState(now.getMonth())
   const [rows, setRows] = useState<Row[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [feedUrl, setFeedUrl] = useState<string | null>(null)
+  const [feedBusy, setFeedBusy] = useState(false)
+  const [feedCopied, setFeedCopied] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -76,6 +79,22 @@ export default function CalendarPage() {
     setM(now.getMonth())
   }
 
+  async function getFeed() {
+    const sb = supabase
+    if (!sb) return
+    setFeedBusy(true)
+    const { data, error: e } = await sb.rpc('get_calendar_token')
+    setFeedBusy(false)
+    if (e || !data) { setError(e?.message ?? 'Could not create your calendar link'); return }
+    setFeedUrl(`${window.location.origin}/api/calendar/${data as string}.ics`)
+  }
+  function copyFeed() {
+    if (!feedUrl) return
+    navigator.clipboard?.writeText(feedUrl)
+    setFeedCopied(true)
+    setTimeout(() => setFeedCopied(false), 1800)
+  }
+
   const btn = 'rounded-full border border-line px-4 py-1.5 text-sm text-ink hover:border-twilight'
 
   return (
@@ -95,6 +114,27 @@ export default function CalendarPage() {
         </div>
 
         {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+
+        <div className="mb-6 rounded-2xl border border-line bg-card p-4">
+          {!feedUrl ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-ink-soft">See your sessions in Google Calendar, Apple Calendar or Outlook.</p>
+              <button onClick={getFeed} disabled={feedBusy} className={`${btn} disabled:opacity-60`}>
+                {feedBusy ? 'Creating…' : 'Sync to my calendar app'}
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p className="mb-2 text-sm text-ink">Subscribe to this private link. It updates on its own.</p>
+              <div className="flex flex-wrap gap-2">
+                <input readOnly value={feedUrl} onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-xs text-ink" />
+                <button onClick={copyFeed} className={btn}>{feedCopied ? 'Copied!' : 'Copy'}</button>
+                <a href={feedUrl.replace(/^https?:/, 'webcal:')} className={btn}>Open in Apple Calendar</a>
+              </div>
+              <p className="mt-2 text-xs text-ink-soft">Google Calendar: Other calendars → From URL → paste the link. Anyone with this link can see your session names and places, so keep it private.</p>
+            </div>
+          )}
+        </div>
 
         {rows === null ? (
           <p className="text-sm text-ink-soft">Loading…</p>

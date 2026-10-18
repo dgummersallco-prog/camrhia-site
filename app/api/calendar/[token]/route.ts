@@ -1,145 +1,107 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 
-// Force dynamic — request-time token lookup, never cache
 export const dynamic = 'force-dynamic'
 
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+type FeedSession = {
+  id: string
+  names: string | null
+  date: string
+  type: string | null
+  venue: string | null
+  city: string | null
+  state: string | null
+  start: string | null
+  hours: number | null
+  status: string | null
 }
 
-// ── iCalendar helpers ─────────────────────────────────────────────────────────
-
-// 'YYYY-MM-DD' → 'YYYYMMDD'
-function icsDate(dateStr: string): string {
-  return dateStr.slice(0, 10).replace(/-/g, '')
+function esc(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n')
 }
 
-// 'YYYY-MM-DD' → 'YYYYMMDD' for the next day (all-day DTEND is exclusive)
-function icsDayAfter(dateStr: string): string {
-  const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number)
-  const next = new Date(y, m - 1, d + 1)
-  return (
-    String(next.getFullYear()) +
-    String(next.getMonth() + 1).padStart(2, '0') +
-    String(next.getDate()).padStart(2, '0')
-  )
+function pretty(t: string | null): string {
+  if (!t) return 'Session'
+  return t.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
 }
 
-// Current UTC instant in iCal format: YYYYMMDDTHHMMSSZ
-function dtstamp(): string {
-  return new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z'
+function pad(n: number): string {
+  return String(n).padStart(2, '0')
 }
 
-// RFC 5545 text escaping (backslash, semicolon, comma, newlines)
-function escapeText(s: string): string {
-  return s
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n')
+function parseStart(t: string | null): { h: number; m: number } | null {
+  if (!t) return null
+  const mt = t.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i)
+  if (!mt) return null
+  let h = Number(mt[1])
+  const m = mt[2] ? Number(mt[2]) : 0
+  const ap = mt[3]?.toLowerCase()
+  if (ap === 'pm' && h < 12) h += 12
+  if (ap === 'am' && h === 12) h = 0
+  if (h > 23 || m > 59) return null
+  return { h, m }
 }
 
-// RFC 5545 §3.1: fold lines longer than 75 octets with CRLF + SPACE
-function foldLine(line: string): string {
-  if (line.length <= 75) return line
-  const chunks: string[] = []
-  chunks.push(line.slice(0, 75))
-  let pos = 75
-  while (pos < line.length) {
-    chunks.push(' ' + line.slice(pos, pos + 74))
-    pos += 74
-  }
-  return chunks.join('\r\n')
+function stamp(d: Date): string {
+  return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00`
 }
 
-// ── Route handler ─────────────────────────────────────────────────────────────
+export async function GET(_req: Request, ctx: { params: Promise<{ token: string }> }) {
+  const { token: raw } = await ctx.params
+  const token = raw.replace(/\.ics$/i, '')
+  if (!supabase || !/^[a-f0-9]{20,64}$/.test(token)) return new Response('Not found', { status: 404 })
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ token: string }> }
-) {
-  const { token } = await params
-  const supabase = adminClient()
+  const { data, error } = await supabase.rpc('calendar_feed', { p_token: token })
+  if (error || !data) return new Response('Not found', { status: 404 })
 
-  // Token IS the access control — no other auth required
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('calendar_feed_token', token)
-    .maybeSingle()
+  const feed = data as { studio: string | null; sessions: FeedSession[] }
+  const now = new Date()
+  const nowStamp = stamp(now) + 'Z'
 
-  if (!profile) {
-    return new Response('Calendar not found', { status: 404 })
-  }
-
-  const stamp = dtstamp()
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Camrhia//Calendar Feed//EN',
+    'PRODID:-//Camrhia//Sessions//EN',
     'CALSCALE:GREGORIAN',
-    'X-WR-CALNAME:Camrhia',
-    'X-WR-CALDESC:Your Camrhia sessions and holds',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:${esc(feed.studio ? `${feed.studio} sessions` : 'Camrhia sessions')}`,
+    'REFRESH-INTERVAL;VALUE=DURATION:PT1H',
+    'X-PUBLISHED-TTL:PT1H',
   ]
 
-  // ── Sessions ──────────────────────────────────────────────────────────────
-  const { data: weddings } = await supabase
-    .from('weddings')
-    .select('id, names, wedding_date')
-    .eq('owner_id', profile.id)
-    .not('wedding_date', 'is', null)
+  for (const s of feed.sessions ?? []) {
+    const [y, mo, d] = s.date.split('-').map(Number)
+    const where = [s.venue, [s.city, s.state].filter(Boolean).join(', ')].filter(Boolean).join(', ')
+    const title = `${s.names || 'Session'} (${pretty(s.type)})`
+    lines.push('BEGIN:VEVENT', `UID:${s.id}@camrhia.com`, `DTSTAMP:${nowStamp}`)
 
-  for (const w of weddings ?? []) {
-    const dtstart = icsDate(w.wedding_date)
-    const dtend = icsDayAfter(w.wedding_date)
-    const summary = escapeText(`Session: ${w.names ?? 'Client'}`)
+    const st = parseStart(s.start)
+    if (st) {
+      const startD = new Date(Date.UTC(y, mo - 1, d, st.h, st.m))
+      const endD = new Date(startD.getTime() + (s.hours && s.hours > 0 ? s.hours : 2) * 3600000)
+      lines.push(`DTSTART:${stamp(startD)}`, `DTEND:${stamp(endD)}`)
+    } else {
+      const startD = new Date(Date.UTC(y, mo - 1, d))
+      const endD = new Date(startD.getTime() + 86400000)
+      lines.push(
+        `DTSTART;VALUE=DATE:${stamp(startD).slice(0, 8)}`,
+        `DTEND;VALUE=DATE:${stamp(endD).slice(0, 8)}`,
+      )
+    }
+
+    lines.push(`SUMMARY:${esc(title)}`)
+    if (where) lines.push(`LOCATION:${esc(where)}`)
     lines.push(
-      'BEGIN:VEVENT',
-      `UID:wedding-${w.id}@camrhia.com`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART;VALUE=DATE:${dtstart}`,
-      `DTEND;VALUE=DATE:${dtend}`,
-      `SUMMARY:${summary}`,
+      `DESCRIPTION:${esc(`${s.status ? `Status: ${s.status}\n` : ''}https://camrhia.com/sessions/${s.id}`)}`,
+      `URL:https://camrhia.com/sessions/${s.id}`,
       'END:VEVENT',
     )
   }
-
-  // ── Availability blocks ───────────────────────────────────────────────────
-  const { data: blocks } = await supabase
-    .from('availability_blocks')
-    .select('id, type, block_date')
-    .eq('owner_id', profile.id)
-
-  for (const b of blocks ?? []) {
-    const dtstart = icsDate(b.block_date)
-    const dtend = icsDayAfter(b.block_date)
-    const label = b.type ?? 'Hold'
-    const summary = escapeText(`Camrhia: ${label}`)
-    lines.push(
-      'BEGIN:VEVENT',
-      `UID:block-${b.id}@camrhia.com`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART;VALUE=DATE:${dtstart}`,
-      `DTEND;VALUE=DATE:${dtend}`,
-      `SUMMARY:${summary}`,
-      'END:VEVENT',
-    )
-  }
-
   lines.push('END:VCALENDAR')
 
-  const body = lines.map(foldLine).join('\r\n') + '\r\n'
-
-  return new Response(body, {
-    status: 200,
+  return new Response(lines.join('\r\n') + '\r\n', {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': 'inline; filename="camrhia.ics"',
-      // Allow calendar apps to poll for updates
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Cache-Control': 'private, max-age=300',
     },
   })
 }
