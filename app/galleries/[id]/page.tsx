@@ -128,12 +128,13 @@ export default function GalleryManagePage() {
     return () => window.removeEventListener('beforeunload', handler)
   }, [active])
 
-  async function saveSettings(patch: Partial<Gallery>) {
-    if (!supabase || !gallery) return
+  async function saveSettings(patch: Partial<Gallery>): Promise<boolean> {
+    if (!supabase || !gallery) return false
     const { error } = await supabase.from('galleries').update(patch).eq('id', gallery.id)
-    if (error) { setMessage(error.message); return }
+    if (error) { setMessage(error.message); return false }
     setGallery({ ...gallery, ...patch })
     flash('Saved')
+    return true
   }
 
   async function savePin(clear: boolean) {
@@ -253,7 +254,11 @@ export default function GalleryManagePage() {
             <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
               <h1 className="font-fraunces text-3xl font-semibold text-ink">{gallery.title}</h1>
               <button
-                onClick={() => saveSettings({ status: gallery.status === 'published' ? 'draft' : 'published' })}
+                onClick={async () => {
+                  const publishing = gallery.status !== 'published'
+                  const ok = await saveSettings({ status: publishing ? 'published' : 'draft' })
+                  if (ok && publishing) router.push('/galleries')
+                }}
                 className={gallery.status === 'published' ? btnGhost : btn}
               >
                 {gallery.status === 'published' ? 'Unpublish' : 'Publish gallery'}
