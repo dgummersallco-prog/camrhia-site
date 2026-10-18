@@ -358,11 +358,11 @@ export default function Home() {
               Delivery day, without the scramble.
             </h2>
             <p className="mt-6 text-lg text-white/80 leading-relaxed">
-              Upload hundreds of photos at once and share one PIN-protected link. Your clients
-              heart their favorites, see what they picked, and download in one tap. Already
-              love Pixieset or Google Drive? Keep it, and drop that link into the session
-              instead. Either way, the handoff happens inside the app, with the rest of their
-              session. No digging through email. No &ldquo;did you get my link?&rdquo;
+              Drag in your whole shoot and publish a PIN-protected gallery that opens with your
+              cover photo. Your clients heart their favorites and download everything as one
+              zip. It lands in the same app as their contract, questionnaire and messages, so
+              there is no digging through email and no &ldquo;did you get my link?&rdquo; Prefer
+              another gallery host? Paste its link into the session and deliver it the same way.
             </p>
           </div>
         </section>
