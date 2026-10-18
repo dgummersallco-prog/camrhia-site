@@ -16,6 +16,7 @@ type Gallery = {
   expires_at: string | null
   status: 'draft' | 'published'
   cover_photo_id: string | null
+  cover_path: string | null
 }
 type Photo = {
   id: string
@@ -107,7 +108,7 @@ export default function GalleryManagePage() {
     if (!sb) return
     const { data, error } = await sb
       .from('galleries')
-      .select('id, title, token, pin_hash, allow_downloads, expires_at, status, cover_photo_id')
+      .select('id, title, token, pin_hash, allow_downloads, expires_at, status, cover_photo_id, cover_path')
       .eq('id', galleryId)
       .maybeSingle()
     if (error || !data) { setMessage('Gallery not found.'); return }
@@ -197,6 +198,32 @@ export default function GalleryManagePage() {
     flash(clear ? 'PIN removed' : 'PIN saved')
   }
 
+  // Copies the cover photo into the public gallery-covers bucket so the app can show it as a card background.
+  async function syncCover(photoId: string | null, pool: Photo[] = photos): Promise<void> {
+    const sb = supabase
+    if (!sb || !userId || !gallery) return
+    const old = gallery.cover_path
+    const target = photoId ? pool.find((x) => x.id === photoId) : pool[0]
+    const src = target?.web_path ?? target?.thumb_path ?? null
+    if (!target || !src) {
+      if (old) {
+        await sb.storage.from('gallery-covers').remove([old])
+        await sb.from('galleries').update({ cover_path: null }).eq('id', gallery.id)
+        setGallery((g) => (g ? { ...g, cover_path: null } : g))
+      }
+      return
+    }
+    const dl = await sb.storage.from(BUCKET).download(src)
+    if (dl.error || !dl.data) { setMessage('Could not update the cover image.'); return }
+    const path = `${userId}/${gallery.id}-${Date.now()}.jpg`
+    const up = await sb.storage.from('gallery-covers').upload(path, dl.data, { contentType: 'image/jpeg', upsert: true })
+    if (up.error) { setMessage(up.error.message); return }
+    const { error } = await sb.from('galleries').update({ cover_path: path }).eq('id', gallery.id)
+    if (error) { setMessage(error.message); return }
+    if (old && old !== path) await sb.storage.from('gallery-covers').remove([old])
+    setGallery((g) => (g ? { ...g, cover_path: path } : g))
+  }
+
   async function uploadFiles(list: File[]) {
     const sb = supabase
     if (!sb || !userId || !gallery) return
@@ -281,7 +308,10 @@ export default function GalleryManagePage() {
     await sb.storage.from(BUCKET).remove(paths)
     const { error } = await sb.from('gallery_photos').delete().eq('id', p.id)
     if (error) { setMessage(error.message); return }
-    if (gallery?.cover_photo_id === p.id) await saveSettings({ cover_photo_id: null })
+    if (gallery?.cover_photo_id === p.id) {
+      await saveSettings({ cover_photo_id: null })
+      await syncCover(null, photos.filter((x) => x.id !== p.id))
+    }
     setPhotos((prev) => prev.filter((x) => x.id !== p.id))
   }
 
@@ -352,7 +382,10 @@ export default function GalleryManagePage() {
                 onClick={async () => {
                   const publishing = !isPublished
                   const ok = await saveSettings({ status: publishing ? 'published' : 'draft' })
-                  if (ok && publishing) router.push('/galleries')
+                  if (ok && publishing) {
+                    await syncCover(gallery.cover_photo_id)
+                    router.push('/galleries')
+                  }
                 }}
                 className={isPublished ? btnGhost : btn}
               >
@@ -487,7 +520,7 @@ export default function GalleryManagePage() {
                           </span>
                         )}
                         <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-black/60 p-1.5 opacity-0 transition group-hover:opacity-100">
-                          <button className="text-xs text-white" onClick={() => saveSettings({ cover_photo_id: p.id })}>Set cover</button>
+                          <button className="text-xs text-white" onClick={async () => { if (await saveSettings({ cover_photo_id: p.id })) await syncCover(p.id) }}>Set cover</button>
                           <button className="text-xs text-red-300" onClick={() => deletePhoto(p)}>Delete</button>
                         </div>
                       </div>
