@@ -25,7 +25,7 @@ export default function LoginPage() {
     try {
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
       if (authError) throw authError
-      router.push((() => { const n = new URLSearchParams(window.location.search).get('next'); return n && n.startsWith('/') && !n.startsWith('//') ? n : '/dashboard' })())
+      router.push((() => { const n = new URLSearchParams(window.location.search).get('next'); return n && n.startsWith('/') && !n.startsWith('//') ? n : '/start' })())
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : ''
       if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials')) {
