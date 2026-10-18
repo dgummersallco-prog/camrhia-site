@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { makeVersions, isHeic } from '@/lib/galleryImages'
-import Wordmark from '@/app/components/Wordmark'
+import { DashboardHeader } from '@/app/components/DashboardHeader'
 
 type Gallery = {
   id: string
@@ -325,18 +325,8 @@ export default function GalleryManagePage() {
   const isPublished = gallery?.status === 'published'
 
   return (
-    <div className="min-h-screen bg-paper">
-      <header className="flex items-center justify-between border-b border-line bg-paper px-6 py-4">
-        <div className="flex items-center gap-8">
-          <Link href="/"><Wordmark className="text-3xl" /></Link>
-          <nav className="hidden gap-6 text-sm sm:flex">
-            <Link href="/galleries" className="font-medium text-ink">Galleries</Link>
-            <Link href="/portfolio" className="text-ink-soft hover:text-ink">Portfolio</Link>
-            <Link href="/billing" className="text-ink-soft hover:text-ink">Billing</Link>
-          </nav>
-        </div>
-        <Link href="/galleries" className="text-sm text-ink-soft hover:text-ink">← All galleries</Link>
-      </header>
+    <div className="min-h-screen bg-paper lg:pl-60">
+      <DashboardHeader active="galleries" />
 
       <main className="mx-auto max-w-7xl px-6 py-8">
         {!gallery ? (

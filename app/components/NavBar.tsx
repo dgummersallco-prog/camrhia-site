@@ -63,7 +63,7 @@ export function Nav() {
     }
     setLoginOpen(false)
     setPassword('')
-    router.push('/galleries')
+    router.push('/dashboard')
   }
 
   const field =
@@ -92,8 +92,8 @@ export function Nav() {
           </Link>
 
           {signedIn ? (
-            <Link href="/galleries" className="text-sm font-medium text-ink transition-colors hover:text-twilight">
-              My galleries
+            <Link href="/dashboard" className="text-sm font-medium text-ink transition-colors hover:text-twilight">
+              Dashboard
             </Link>
           ) : (
             <div className="relative" ref={loginRef}>
@@ -185,8 +185,8 @@ export function Nav() {
               </Link>
             </li>
             <li>
-              <Link href={signedIn ? '/galleries' : '/login'} onClick={close} className="block py-4 text-lg font-medium text-ink">
-                {signedIn ? 'My galleries' : 'Log in'}
+              <Link href={signedIn ? '/dashboard' : '/login'} onClick={close} className="block py-4 text-lg font-medium text-ink">
+                {signedIn ? 'Dashboard' : 'Log in'}
               </Link>
             </li>
           </ul>

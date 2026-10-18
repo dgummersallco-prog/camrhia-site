@@ -1,34 +1,104 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
 
-type Tab = 'galleries' | 'portfolio' | 'billing'
+type Tab = 'dashboard' | 'galleries' | 'portfolio' | 'billing'
+
+const ICONS: Record<string, string> = {
+  dashboard: 'M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z',
+  galleries: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 M9 9.5h.01',
+  portfolio: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M3 12h18 M12 3c3 3 3 15 0 18 M12 3c-3 3-3 15 0 18',
+  billing: 'M3 6h18v12H3z M3 10h18',
+  affiliate: 'M4 12v8h16v-8 M2 8h20v4H2z M12 8v12 M12 8c-2 0-4-1-4-3s3-2 4 1c1-3 4-3 4-1s-2 3-4 3',
+}
+
+const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
+  { tab: 'dashboard', href: '/dashboard', label: 'Home' },
+  { tab: 'galleries', href: '/galleries', label: 'Galleries' },
+  { tab: 'portfolio', href: '/portfolio', label: 'Portfolio' },
+  { tab: 'billing', href: '/billing', label: 'Billing' },
+]
+
+function Icon({ name }: { name: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <path d={ICONS[name]} />
+    </svg>
+  )
+}
 
 export function DashboardHeader({ active }: { active: Tab }) {
   const router = useRouter()
-  const tab = (t: Tab, href: string, label: string) => (
-    <Link href={href} className={active === t ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'}>
-      {label}
-    </Link>
-  )
+  const [open, setOpen] = useState(false)
+
   async function signOut() {
     if (supabase) await supabase.auth.signOut()
     router.push('/login')
   }
+
+  const item = (it: { tab: Tab | 'affiliate'; href: string; label: string }, accent = false) => {
+    const isActive = active === it.tab
+    return (
+      <Link
+        key={it.href}
+        href={it.href}
+        onClick={() => setOpen(false)}
+        className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition ${
+          isActive
+            ? 'bg-twilight/10 text-twilight'
+            : accent
+              ? 'text-brass hover:bg-line/60'
+              : 'text-ink-soft hover:bg-line/60 hover:text-ink'
+        }`}
+      >
+        <Icon name={it.tab} />
+        {it.label}
+      </Link>
+    )
+  }
+
   return (
-    <header className="flex items-center justify-between border-b border-line bg-paper px-6 py-4">
-      <div className="flex items-center gap-8">
-        <Link href="/"><Wordmark className="text-3xl" /></Link>
-        <nav className="flex gap-6 text-sm">
-          {tab('galleries', '/galleries', 'Galleries')}
-          {tab('portfolio', '/portfolio', 'Portfolio')}
-          {tab('billing', '/billing', 'Billing')}
+    <>
+      {/* Desktop sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line bg-paper-deep px-4 py-6 lg:flex">
+        <Link href="/" className="mb-8 px-2"><Wordmark className="text-3xl" /></Link>
+        <nav className="flex flex-1 flex-col gap-1">
+          {ITEMS.map((it) => item(it))}
+          <div className="mt-6 border-t border-line pt-6">
+            {item({ tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
+          </div>
         </nav>
-      </div>
-      <button onClick={signOut} className="text-sm text-ink-soft hover:text-ink">Sign out</button>
-    </header>
+        <button onClick={signOut} className="rounded-xl px-3.5 py-2.5 text-left text-sm text-ink-soft transition hover:bg-line/60 hover:text-ink">
+          Sign out
+        </button>
+      </aside>
+
+      {/* Mobile top bar */}
+      <header className="sticky top-0 z-40 border-b border-line bg-paper lg:hidden">
+        <div className="flex items-center justify-between px-6 py-3">
+          <Link href="/"><Wordmark className="text-3xl" /></Link>
+          <button
+            onClick={() => setOpen((o) => !o)}
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-ink"
+          >
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+              {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+            </svg>
+          </button>
+        </div>
+        {open && (
+          <nav className="flex flex-col gap-1 border-t border-line px-4 pb-4 pt-2">
+            {ITEMS.map((it) => item(it))}
+            {item({ tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
+            <button onClick={signOut} className="rounded-xl px-3.5 py-2.5 text-left text-sm text-ink-soft">Sign out</button>
+          </nav>
+        )}
+      </header>
+    </>
   )
 }

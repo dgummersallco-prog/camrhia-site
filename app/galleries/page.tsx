@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import Wordmark from '@/app/components/Wordmark'
+import { DashboardHeader } from '@/app/components/DashboardHeader'
 
 type Row = {
   id: string
@@ -98,18 +98,8 @@ export default function GalleriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper">
-      <header className="flex items-center justify-between border-b border-line bg-paper px-6 py-4">
-        <div className="flex items-center gap-8">
-          <Link href="/"><Wordmark className="text-3xl" /></Link>
-          <nav className="hidden gap-6 text-sm sm:flex">
-            <Link href="/galleries" className="font-medium text-ink">Galleries</Link>
-            <Link href="/portfolio" className="text-ink-soft hover:text-ink">Portfolio</Link>
-            <Link href="/billing" className="text-ink-soft hover:text-ink">Billing</Link>
-          </nav>
-        </div>
-        <button onClick={signOut} className="text-sm text-ink-soft hover:text-ink">Sign out</button>
-      </header>
+    <div className="min-h-screen bg-paper lg:pl-60">
+      <DashboardHeader active="galleries" />
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">

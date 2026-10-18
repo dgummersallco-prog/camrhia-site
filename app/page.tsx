@@ -187,6 +187,20 @@ export default function Home() {
           </div>
         </section>
 
+        {/* 3 STEPS */}
+        <section id="how" className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink leading-[1.08]">Live in three steps</h2>
+          <div className="mt-14 grid md:grid-cols-3 gap-12 md:gap-10">
+            {STEPS.map(([t, d], i) => (
+              <div key={t}>
+                <p className="font-fraunces text-7xl font-semibold leading-none mb-5" style={{ color: NAVY, opacity: 0.22 }}>{i + 1}</p>
+                <p className="font-fraunces text-2xl font-semibold text-ink">{t}</p>
+                <p className="mt-2 text-ink-soft leading-relaxed">{d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* PORTFOLIO = WEBSITE */}
         <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <Story
@@ -208,48 +222,25 @@ export default function Home() {
           />
         </section>
 
-        {/* STACK */}
-        <section id="how" className="bg-ink text-white">
-          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
-            <h2 className="mx-auto max-w-3xl text-center font-fraunces text-3xl md:text-5xl font-semibold leading-[1.1]">
-              Stop paying for a pile of tools. Run your whole business from one app.
-            </h2>
-            <div className="mt-14 grid md:grid-cols-2 gap-6">
-              <div className="rounded-3xl border border-white/15 p-8">
-                <p className="text-sm text-white/55">Your business, spread across 7 places</p>
-                <ul className="mt-6 space-y-3">
-                  {OLD_STACK.map((t) => (
-                    <li key={t.name} className="text-white/70">
-                      <div className="flex items-baseline justify-between gap-4 text-lg">
-                        <span>{t.name}{t.example ? <span className="text-sm text-white/40"> ({t.example})</span> : null}</span>
-                        <span className={`whitespace-nowrap ${t.free ? "text-sm text-white/40" : "text-white/90"}`}>{t.price}</span>
-                      </div>
-                      <p className="mt-0.5 text-sm italic text-brass/80">{t.pain}</p>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6 flex items-baseline justify-between border-t border-white/15 pt-4">
-                  <span className="text-white/70">Total</span>
-                  <span className="font-fraunces text-2xl font-semibold">$55 to $105 a month</span>
-                </div>
-                <p className="mt-3 text-base text-brass">Plus every hour you spend chasing it all down.</p>
-                <p className="mt-2 text-xs text-white/45">Typical published plan prices. Check each company for current pricing.</p>
-              </div>
-              <div className="rounded-3xl bg-card text-ink p-8 border-2 border-brass">
-                <p className="text-sm text-brass font-medium">With Camrhia</p>
-                <ul className="mt-6 space-y-3">
-                  {NEW_STACK.map((t) => (
-                    <li key={t} className="flex gap-3 text-lg">
-                      <span className="text-sage font-bold">&#10003;</span>
-                      <span>{t}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login. One price.</p>
-                <p className="mt-1 text-sm text-ink-soft">Plans start at $59.99 a month. Your first 14 days are free.</p>
-                <p className="mt-3 text-sm text-ink-soft">Galleries are included too. Upload your photos, share a PIN-protected link, and your clients can favorite and download. No separate gallery host to pay for.</p>
-              </div>
-            </div>
+        {/* GET FOUND */}
+        <section className="border-y border-line bg-paper-deep">
+          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+            <Story
+              flip
+              title="Get found by clients who are ready to book."
+              body="Camrhia is also a marketplace. Clients browse the photographers in their area right inside the app, and it costs them nothing. They find your portfolio, then message you or send an inquiry."
+              points={[
+                "Clients browse photographers in their area",
+                "Free for the clients looking",
+                "Your best work front and center",
+              ]}
+              panel={
+                <Panel tone="bg-brass/20">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/screens/marketplace.png" alt="Clients browsing photographer studios in the Camrhia app" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
+                </Panel>
+              }
+            />
           </div>
         </section>
 
@@ -316,28 +307,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* GET FOUND */}
-        <section className="border-y border-line bg-paper-deep">
-          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-            <Story
-              flip
-              title="Get found by clients who are ready to book."
-              body="Camrhia is also a marketplace. Clients browse the photographers in their area right inside the app, and it costs them nothing. They find your portfolio, then message you or send an inquiry."
-              points={[
-                "Clients browse photographers in their area",
-                "Free for the clients looking",
-                "Your best work front and center",
-              ]}
-              panel={
-                <Panel tone="bg-brass/20">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/marketplace.png" alt="Clients browsing photographer studios in the Camrhia app" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
-                </Panel>
-              }
-            />
-          </div>
-        </section>
-
         {/* CLIENT EXPERIENCE */}
         <section id="clients" className="border-y border-line bg-paper-deep">
           <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
@@ -398,17 +367,48 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 3 STEPS */}
-        <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-          <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink leading-[1.08]">Live in three steps</h2>
-          <div className="mt-14 grid md:grid-cols-3 gap-12 md:gap-10">
-            {STEPS.map(([t, d], i) => (
-              <div key={t}>
-                <p className="font-fraunces text-7xl font-semibold leading-none mb-5" style={{ color: NAVY, opacity: 0.22 }}>{i + 1}</p>
-                <p className="font-fraunces text-2xl font-semibold text-ink">{t}</p>
-                <p className="mt-2 text-ink-soft leading-relaxed">{d}</p>
+        {/* STACK */}
+        <section id="compare" className="bg-ink text-white">
+          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
+            <h2 className="mx-auto max-w-3xl text-center font-fraunces text-3xl md:text-5xl font-semibold leading-[1.1]">
+              Stop paying for a pile of tools. Run your whole business from one app.
+            </h2>
+            <div className="mt-14 grid md:grid-cols-2 gap-6">
+              <div className="rounded-3xl border border-white/15 p-8">
+                <p className="text-sm text-white/55">Your business, spread across 7 places</p>
+                <ul className="mt-6 space-y-3">
+                  {OLD_STACK.map((t) => (
+                    <li key={t.name} className="text-white/70">
+                      <div className="flex items-baseline justify-between gap-4 text-lg">
+                        <span>{t.name}{t.example ? <span className="text-sm text-white/40"> ({t.example})</span> : null}</span>
+                        <span className={`whitespace-nowrap ${t.free ? "text-sm text-white/40" : "text-white/90"}`}>{t.price}</span>
+                      </div>
+                      <p className="mt-0.5 text-sm italic text-brass/80">{t.pain}</p>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-6 flex items-baseline justify-between border-t border-white/15 pt-4">
+                  <span className="text-white/70">Total</span>
+                  <span className="font-fraunces text-2xl font-semibold">$55 to $105 a month</span>
+                </div>
+                <p className="mt-3 text-base text-brass">Plus every hour you spend chasing it all down.</p>
+                <p className="mt-2 text-xs text-white/45">Typical published plan prices. Check each company for current pricing.</p>
               </div>
-            ))}
+              <div className="rounded-3xl bg-card text-ink p-8 border-2 border-brass">
+                <p className="text-sm text-brass font-medium">With Camrhia</p>
+                <ul className="mt-6 space-y-3">
+                  {NEW_STACK.map((t) => (
+                    <li key={t} className="flex gap-3 text-lg">
+                      <span className="text-sage font-bold">&#10003;</span>
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login. One price.</p>
+                <p className="mt-1 text-sm text-ink-soft">Plans start at $59.99 a month. Your first 14 days are free.</p>
+                <p className="mt-3 text-sm text-ink-soft">Galleries are included too. Upload your photos, share a PIN-protected link, and your clients can favorite and download. No separate gallery host to pay for.</p>
+              </div>
+            </div>
           </div>
         </section>
 

@@ -171,7 +171,7 @@ export default function PortfolioEditorPage() {
   const portfolioUrl = form?.public_token ? `/p/${form.public_token}` : null
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen bg-paper lg:pl-60">
       <DashboardHeader active="portfolio" />
       <main className="mx-auto max-w-7xl px-6 py-8">
         {!form ? (
