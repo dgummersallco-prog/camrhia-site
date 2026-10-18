@@ -99,7 +99,10 @@ export default function MyPage() {
           </div>
         ))}
 
-        <p className="mt-4 text-xs text-ink-soft">Contracts, questionnaires and messages for this session are in the Camrhia app.</p>
+        <a href={`/my/messages/${r.wedding_id}?s=${encodeURIComponent(studio)}`} className="mt-4 inline-block rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink hover:bg-paper-deep">
+          Message {studio}
+        </a>
+        <p className="mt-3 text-xs text-ink-soft">Contracts and questionnaires for this session are in the Camrhia app.</p>
       </section>
     )
   }
