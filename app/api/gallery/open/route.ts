@@ -28,15 +28,29 @@ export async function POST(req: Request) {
     const hasAccess = verifyAccess(body.access) === g.id
     if (!hasAccess) {
       if (!pin) return NextResponse.json({ needsPin: true, title: g.title }, { status: 401 })
-      const { data, error } = await sb.rpc('check_gallery_pin', { p_token: token, p_pin: pin })
-      const ok =
-        !error &&
-        (Array.isArray(data)
-          ? data.length > 0
-          : data && typeof data === 'object'
-            ? (data as { ok?: boolean }).ok !== false
-            : !!data)
-      if (!ok) return NextResponse.json({ needsPin: true, title: g.title, error: 'Wrong PIN' }, { status: 403 })
+      const ip =
+        req.headers.get('x-nf-client-connection-ip') ||
+        req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+        ''
+      const { data, error } = await sb.rpc('check_gallery_pin_limited', { p_token: token, p_pin: pin, p_ip: ip })
+      const res = data as { ok?: boolean; locked?: boolean; retry_after?: number; remaining?: number } | null
+      if (error || !res) {
+        return NextResponse.json({ needsPin: true, title: g.title, error: 'Something went wrong. Please try again.' }, { status: 500 })
+      }
+      if (res.locked) {
+        const mins = Math.max(1, Math.ceil((res.retry_after ?? 600) / 60))
+        return NextResponse.json(
+          { needsPin: true, title: g.title, locked: true, error: `Too many tries. Please wait ${mins} minute${mins === 1 ? '' : 's'} and try again.` },
+          { status: 403 },
+        )
+      }
+      if (!res.ok) {
+        const left = res.remaining ?? 0
+        return NextResponse.json(
+          { needsPin: true, title: g.title, error: left > 0 && left <= 2 ? `Wrong PIN. ${left} ${left === 1 ? 'try' : 'tries'} left.` : 'Wrong PIN' },
+          { status: 403 },
+        )
+      }
     }
   }
 
