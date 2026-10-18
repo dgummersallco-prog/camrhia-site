@@ -284,9 +284,10 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
         </div>
 
         {/* ── Sections ─────────────────────────────────────────────────── */}
-        <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 24px 60px' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px 60px' }}>
           {sectionOrder.map((key: string) => {
-            const spacingStyle: React.CSSProperties = { paddingTop: r.portfolio_section_spacing ?? 14, paddingBottom: 10 }
+            const spacingStyle: React.CSSProperties = { paddingTop: r.portfolio_section_spacing ?? 14, paddingBottom: 10, maxWidth: 640, margin: '0 auto', width: '100%' }
+            const wideStyle: React.CSSProperties = { ...spacingStyle, maxWidth: 900 }
 
             if (key === 'about' && r.show_bio_public !== false) {
               return (
@@ -347,7 +348,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
               const weddings: any[] = r.featured_weddings ?? []
               if (weddings.length === 0) return null
               return (
-                <div key="featured_photos" style={spacingStyle}>
+                <div key="featured_photos" style={wideStyle}>
                   <h2 style={{ ...sectionTitleStyle('featured_photos'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.featured_photos || 'Featured photos'}
                   </h2>
@@ -596,7 +597,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
               if (!(hasCustomImages || hasPackages) || r.show_pricing_public === false) return null
               const hasCoverPhoto = !!r.pricing_cover_image_path
               return (
-                <div key="pricing" style={spacingStyle}>
+                <div key="pricing" style={wideStyle}>
                   <h2 style={{ ...sectionTitleStyle('pricing'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.pricing || 'Packages'}
                   </h2>
@@ -632,7 +633,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
 
             if (key === 'testimonials' && (r.testimonials?.length ?? 0) > 0 && r.show_testimonials_public !== false) {
               return (
-                <div key="testimonials" style={spacingStyle}>
+                <div key="testimonials" style={wideStyle}>
                   <h2 style={{ ...sectionTitleStyle('testimonials'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
                     {sectionTitles.testimonials || 'Testimonials'}
                   </h2>
@@ -723,7 +724,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
           })}
 
           {(r.reviews?.length ?? 0) > 0 && (
-            <div style={{ paddingTop: r.portfolio_section_spacing ?? 14, paddingBottom: 10 }}>
+            <div style={{ paddingTop: r.portfolio_section_spacing ?? 14, paddingBottom: 10, maxWidth: 640, margin: '0 auto', width: '100%' }}>
               <h2 style={{ fontFamily: "system-ui, sans-serif", fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8A8A8A', textAlign: 'center', marginBottom: 14 }}>
                 What clients say
               </h2>

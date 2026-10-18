@@ -17,6 +17,7 @@ export function CoverHero({ urls, alt, coverStyle, slideshow, scale }: Props) {
   // the portfolio background shows around the cover.
   const s = Math.min(1, Math.max(0.5, Number(scale ?? 1) || 1))
   const shrunk = s < 0.999
+  const styleKey = coverStyle === 'tall' || coverStyle === 'wide' || coverStyle === 'full' ? coverStyle : 'standard'
 
   useEffect(() => {
     if (!slideshow || shown.length < 2) return
@@ -26,38 +27,50 @@ export function CoverHero({ urls, alt, coverStyle, slideshow, scale }: Props) {
   }, [slideshow, shown.length])
 
   const shape: React.CSSProperties =
-    coverStyle === 'tall' ? { aspectRatio: '4/5', maxHeight: `${88 * s}vh` }
-    : coverStyle === 'wide' ? { aspectRatio: '21/9' }
-    : coverStyle === 'full' ? { height: `${92 * s}vh` }
+    styleKey === 'tall' ? { aspectRatio: '4/5', maxHeight: `${88 * s}vh` }
+    : styleKey === 'wide' ? { aspectRatio: '21/9' }
+    : styleKey === 'full' ? { height: `${92 * s}vh` }
     : { aspectRatio: '16/9' }
 
   return (
-    <div style={{ width: '100%', paddingTop: shrunk ? 16 : 0 }}>
-      <div
-        style={{
-          position: 'relative',
-          width: shrunk ? `${s * 100}%` : '100%',
-          margin: '0 auto',
-          borderRadius: shrunk ? 14 : 0,
-          overflow: 'hidden',
-          backgroundColor: '#E5E1DB',
-          ...shape,
-        }}
-      >
-        {shown.map((u, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={u}
-            src={u}
-            alt={i === 0 ? alt : ''}
-            loading={i === 0 ? 'eager' : 'lazy'}
-            style={{
-              position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-              opacity: i === idx ? 1 : 0, transition: 'opacity 1.2s ease-in-out',
-            }}
-          />
-        ))}
+    <>
+      {/* Desktop only: frame the cover instead of stretching it edge to edge. */}
+      <style>{`
+        @media (min-width: 1024px) {
+          .cover-outer:not([data-style="full"]) { padding-top: 20px !important; padding-left: 24px; padding-right: 24px; }
+          .cover-box:not([data-style="full"]) { max-width: 1240px; border-radius: 16px !important; max-height: 80vh; }
+          .cover-box[data-style="tall"] { max-width: min(760px, 70vh); }
+        }
+      `}</style>
+      <div className="cover-outer" data-style={styleKey} style={{ width: '100%', paddingTop: shrunk ? 16 : 0 }}>
+        <div
+          className="cover-box"
+          data-style={styleKey}
+          style={{
+            position: 'relative',
+            width: shrunk ? `${s * 100}%` : '100%',
+            margin: '0 auto',
+            borderRadius: shrunk ? 14 : 0,
+            overflow: 'hidden',
+            backgroundColor: '#E5E1DB',
+            ...shape,
+          }}
+        >
+          {shown.map((u, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={u}
+              src={u}
+              alt={i === 0 ? alt : ''}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                opacity: i === idx ? 1 : 0, transition: 'opacity 1.2s ease-in-out',
+              }}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
