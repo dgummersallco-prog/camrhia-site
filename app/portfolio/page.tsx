@@ -318,6 +318,13 @@ export default function PortfolioEditorPage() {
                   ))}
                 </section>
 
+                <section className={`${card} space-y-3`}>
+                  <p className="text-sm font-medium text-ink">Photos and testimonials</p>
+                  <a href="/portfolio/photos" className="block rounded-xl border border-line px-4 py-3 text-sm text-ink hover:border-twilight">Featured photo sets</a>
+                  <a href="/portfolio/testimonials" className="block rounded-xl border border-line px-4 py-3 text-sm text-ink hover:border-twilight">Testimonials</a>
+                  <p className="text-xs text-ink-soft">Save any changes on this page first.</p>
+                </section>
+
                 <section className={`${card} space-y-4`}>
                   <p className="text-sm font-medium text-ink">Fonts</p>
                   <div>
@@ -438,7 +445,7 @@ export default function PortfolioEditorPage() {
                 </section>
 
                 <p className="text-xs text-ink-soft">
-                  Photo layouts, packages and testimonials are edited in the Camrhia app for now. Anything you change here shows up there too.
+                  Photo layouts and packages are edited in the Camrhia app for now. Anything you change here shows up there too.
                 </p>
               </div>
 
