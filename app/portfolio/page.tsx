@@ -33,10 +33,16 @@ type Profile = {
   location_color: string | null
   paragraph_color: string | null
   portfolio_section_spacing: number | null
+  faq: { question: string; answer: string }[] | null
+  title_font: string | null
+  title_bold: boolean | null
+  title_italic: boolean | null
+  paragraph_font: string | null
+  section_titles: Record<string, string> | null
 }
 
 const COLUMNS =
-  'id, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing'
+  'id, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -70,6 +76,17 @@ const input = 'w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm
 const btn = 'rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50'
 const btnGhost = 'rounded-xl border border-line px-4 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50'
 const label = 'mb-1.5 block text-sm font-medium text-ink'
+
+const FONTS: [string, string, string][] = [
+  ['playfair_display', 'Playfair Display', 'Serif'], ['cormorant_garamond', 'Cormorant Garamond', 'Serif'],
+  ['libre_baskerville', 'Libre Baskerville', 'Serif'], ['eb_garamond', 'EB Garamond', 'Serif'],
+  ['lora', 'Lora', 'Serif'], ['crimson_pro', 'Crimson Pro', 'Serif'], ['bodoni_moda', 'Bodoni Moda', 'Serif'],
+  ['dm_serif_display', 'DM Serif Display', 'Serif'], ['italiana', 'Italiana', 'Serif'],
+  ['great_vibes', 'Great Vibes', 'Script'], ['parisienne', 'Parisienne', 'Script'], ['sacramento', 'Sacramento', 'Script'],
+  ['allura', 'Allura', 'Script'], ['pinyon_script', 'Pinyon Script', 'Script'], ['alex_brush', 'Alex Brush', 'Script'],
+  ['montserrat', 'Montserrat', 'Sans-Serif'], ['poppins', 'Poppins', 'Sans-Serif'], ['josefin_sans', 'Josefin Sans', 'Sans-Serif'],
+  ['raleway', 'Raleway', 'Sans-Serif'], ['work_sans', 'Work Sans', 'Sans-Serif'],
+]
 
 function ColorField({ title, value, fallback, onChange }: { title: string; value: string | null; fallback: string; onChange: (v: string | null) => void }) {
   const hex = /^#[0-9a-f]{6}$/i.test(value ?? '') ? (value as string) : fallback
@@ -155,6 +172,12 @@ export default function PortfolioEditorPage() {
       location_color: t(form.location_color),
       paragraph_color: t(form.paragraph_color),
       portfolio_section_spacing: form.portfolio_section_spacing ?? 14,
+      title_font: t(form.title_font),
+      title_bold: form.title_bold ?? null,
+      title_italic: form.title_italic ?? null,
+      paragraph_font: t(form.paragraph_font),
+      section_titles: form.section_titles ?? {},
+      faq: (() => { const c = (form.faq ?? []).filter((f) => f.question.trim() || f.answer.trim()); return c.length ? c : null })(),
     }
     setSaving(true)
     const { error } = await sb.from('profiles').update(patch).eq('id', form.id)
@@ -296,6 +319,28 @@ export default function PortfolioEditorPage() {
                 </section>
 
                 <section className={`${card} space-y-4`}>
+                  <p className="text-sm font-medium text-ink">Fonts</p>
+                  <div>
+                    <label className={label}>Studio name font</label>
+                    <select className={input} value={form.title_font ?? ''} onChange={(e) => setField('title_font', e.target.value || null)}>
+                      <option value="">Default</option>
+                      {FONTS.map(([k, n, c]) => <option key={k} value={k}>{n} ({c})</option>)}
+                    </select>
+                    <div className="mt-2 flex gap-5 text-sm text-ink">
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={form.title_bold === true} onChange={(e) => setField('title_bold', e.target.checked)} />Bold</label>
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={form.title_italic === true} onChange={(e) => setField('title_italic', e.target.checked)} />Italic</label>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={label}>Body text font</label>
+                    <select className={input} value={form.paragraph_font ?? ''} onChange={(e) => setField('paragraph_font', e.target.value || null)}>
+                      <option value="">Default</option>
+                      {FONTS.map(([k, n, c]) => <option key={k} value={k}>{n} ({c})</option>)}
+                    </select>
+                  </div>
+                </section>
+
+                <section className={`${card} space-y-4`}>
                   <p className="text-sm font-medium text-ink">Colors and spacing</p>
                   <ColorField title="Page background" value={form.portfolio_bg_color} fallback="#F9F9F9" onChange={(v) => setField('portfolio_bg_color', v)} />
                   <ColorField title="Studio name and headings" value={form.title_color} fallback="#A57E60" onChange={(v) => setField('title_color', v)} />
@@ -344,8 +389,56 @@ export default function PortfolioEditorPage() {
                   </ul>
                 </section>
 
+                <section className={`${card} space-y-3`}>
+                  <p className="text-sm font-medium text-ink">Section names</p>
+                  <p className="text-xs text-ink-soft">Rename the headings on your portfolio. Leave blank to use the default.</p>
+                  {DEFAULT_ORDER.map((key) => (
+                    <div key={key}>
+                      <label className="mb-1 block text-xs text-ink-soft">{LABELS[key]}</label>
+                      <input
+                        className={input}
+                        value={form.section_titles?.[key] ?? ''}
+                        placeholder={LABELS[key]}
+                        onChange={(e) => {
+                          const next = { ...(form.section_titles ?? {}) }
+                          if (e.target.value) next[key] = e.target.value
+                          else delete next[key]
+                          setField('section_titles', next)
+                        }}
+                      />
+                    </div>
+                  ))}
+                </section>
+
+                <section className={`${card} space-y-4`}>
+                  <p className="text-sm font-medium text-ink">FAQ</p>
+                  {(form.faq ?? []).map((item, i) => (
+                    <div key={i} className="space-y-2 rounded-xl border border-line p-3">
+                      <input
+                        className={input}
+                        placeholder="Question"
+                        value={item.question}
+                        onChange={(e) => setField('faq', (form.faq ?? []).map((f, j) => (j === i ? { ...f, question: e.target.value } : f)))}
+                      />
+                      <textarea
+                        rows={3}
+                        className={input}
+                        placeholder="Answer"
+                        value={item.answer}
+                        onChange={(e) => setField('faq', (form.faq ?? []).map((f, j) => (j === i ? { ...f, answer: e.target.value } : f)))}
+                      />
+                      <button type="button" className="text-xs text-ink-soft underline hover:text-ink" onClick={() => setField('faq', (form.faq ?? []).filter((_, j) => j !== i))}>
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className={btnGhost} onClick={() => setField('faq', [...(form.faq ?? []), { question: '', answer: '' }])}>
+                    Add a question
+                  </button>
+                </section>
+
                 <p className="text-xs text-ink-soft">
-                  Fonts, photo layouts, packages and testimonials are edited in the Camrhia app for now. Anything you change here shows up there too.
+                  Photo layouts, packages and testimonials are edited in the Camrhia app for now. Anything you change here shows up there too.
                 </p>
               </div>
 
