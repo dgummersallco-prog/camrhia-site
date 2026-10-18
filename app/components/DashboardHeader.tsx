@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
 
-type Tab = 'dashboard' | 'sessions' | 'galleries' | 'portfolio' | 'reminders' | 'billing'
+type Tab = 'dashboard' | 'sessions' | 'calendar' | 'galleries' | 'portfolio' | 'reminders' | 'billing'
 
 const ICONS: Record<string, string> = {
   reminders: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10 21a2 2 0 0 0 4 0',
-  sessions: 'M4 6h16v14H4z M4 10h16 M8 3v4 M16 3v4',
+  sessions: 'M4 8h4l2-3h4l2 3h4v11H4z M12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
+  calendar: 'M4 6h16v14H4z M4 10h16 M8 3v4 M16 3v4 M8 14h2 M12 14h2 M8 17h2',
   dashboard: 'M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z',
   galleries: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 M9 9.5h.01',
   portfolio: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M3 12h18 M12 3c3 3 3 15 0 18 M12 3c-3 3-3 15 0 18',
@@ -21,6 +22,7 @@ const ICONS: Record<string, string> = {
 const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'dashboard', href: '/dashboard', label: 'Home' },
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
+  { tab: 'calendar', href: '/calendar', label: 'Calendar' },
   { tab: 'galleries', href: '/galleries', label: 'Galleries' },
   { tab: 'portfolio', href: '/portfolio', label: 'Portfolio' },
   { tab: 'reminders', href: '/reminders', label: 'Reminders' },
