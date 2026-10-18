@@ -43,7 +43,7 @@ const NEW_STACK = [
   "Contracts that fill themselves in",
   "Payments tracked and confirmed",
   "Client messaging, tied to each session",
-  "Gallery links delivered right in the app",
+  "Galleries hosted and delivered, with client favorites",
   "Your calendar, always current",
 ]
 
@@ -60,6 +60,23 @@ const FAQ = [
   ["Will my clients have to figure out something new?", "They get one simple app with their session, payments, messages and photos. Fewer emails for you, less confusion for them."],
   ["Can I cancel anytime?", "Yes. Monthly plans cancel anytime through your Apple ID subscriptions."],
   ["Is it only for weddings?", "No. Weddings, portraits, newborns, families, events. Set up the session types you shoot."],
+]
+
+const CLIENT_PERKS = [
+  ["One place for everything", "Their session timeline, contract, payments, messages and photos all live in one simple app. No more digging through email."],
+  ["Photos they will love opening", "A beautiful gallery with a PIN. They tap a heart on their favorites, download in one tap, and send you their picks without a single email."],
+  ["Always know what is next", "Reminders for session day, what to wear, where to arrive and when the next payment is due. Fewer questions for you, less stress for them."],
+  ["Payments that feel easy", "A clear schedule of what is due and when, with a friendly reminder before each date. You stop being the one who has to ask."],
+  ["Reminders that bring them back", "Time for this year of family photos. Holiday photos before the calendar fills. An anniversary note. Set it once and Camrhia keeps your past clients booking."],
+  ["Reviews while the joy is fresh", "A gentle nudge to leave you a review right after delivery, when they are happiest with their photos."],
+]
+
+const YEAR = [
+  ["Session day", "A reminder with what to wear, where to park and when to arrive"],
+  ["A week later", "Their gallery is ready, with a PIN-protected link"],
+  ["After delivery", "A friendly nudge to leave you a review"],
+  ["September", "Holiday photos? A nudge to book before the calendar fills"],
+  ["11 months later", "Time for this year of photos, one tap to book again"],
 ]
 
 function Check() {
@@ -230,7 +247,7 @@ export default function Home() {
                 </ul>
                 <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login. One price.</p>
                 <p className="mt-1 text-sm text-ink-soft">Plans start at $59.99 a month. Your first 14 days are free.</p>
-                <p className="mt-3 text-sm text-ink-soft">Camrhia delivers your gallery link, so you keep your gallery host (Google Drive is free to about $10 a month, Pixieset about $10 to $20). Add it and the total is roughly $60 to $80.</p>
+                <p className="mt-3 text-sm text-ink-soft">Galleries are included too. Upload your photos, share a PIN-protected link, and your clients can favorite and download. No separate gallery host to pay for.</p>
               </div>
             </div>
           </div>
@@ -321,6 +338,50 @@ export default function Home() {
           </div>
         </section>
 
+        {/* CLIENT EXPERIENCE */}
+        <section id="clients" className="border-y border-line bg-paper-deep">
+          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+            <div className="max-w-2xl">
+              <p className="text-base font-medium text-brass">The part your clients will tell their friends about</p>
+              <h2 className="mt-3 font-fraunces text-3xl md:text-5xl font-semibold text-ink leading-[1.08]">
+                Be the photographer clients never have to chase.
+              </h2>
+              <p className="mt-5 text-lg text-ink-soft leading-relaxed">
+                Most photographers lose repeat clients to a forgotten email. Camrhia gives every
+                client one calm, beautiful place for their session, and quietly brings them back
+                when it is time for the next one.
+              </p>
+            </div>
+
+            <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {CLIENT_PERKS.map(([t, d]) => (
+                <div key={t} className="rounded-3xl border border-line bg-card p-7">
+                  <p className="font-fraunces text-xl font-semibold text-ink">{t}</p>
+                  <p className="mt-2 leading-relaxed text-ink-soft">{d}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-20">
+              <h3 className="font-fraunces text-2xl md:text-4xl font-semibold text-ink leading-[1.1]">
+                One shoot. A whole year of staying in touch.
+              </h3>
+              <p className="mt-3 max-w-xl text-ink-soft">
+                You do the shoot. Camrhia handles the follow-up, so one booking turns into a client for life.
+              </p>
+              <ol className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+                {YEAR.map(([when, what], i) => (
+                  <li key={when} className="relative rounded-2xl border border-line bg-card p-5">
+                    <span className="font-fraunces text-4xl font-semibold leading-none" style={{ color: NAVY, opacity: 0.22 }}>{i + 1}</span>
+                    <p className="mt-3 text-sm font-semibold uppercase tracking-wider text-brass">{when}</p>
+                    <p className="mt-1 text-sm leading-snug text-ink">{what}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </section>
+
         {/* DELIVERY */}
         <section className="bg-twilight text-white">
           <div className="mx-auto max-w-3xl px-6 py-24 sm:py-28 text-center">
@@ -328,10 +389,11 @@ export default function Home() {
               Delivery day, without the scramble.
             </h2>
             <p className="mt-6 text-lg text-white/80 leading-relaxed">
-              Keep hosting your gallery wherever you love, Pixieset, ShootProof, Google Drive,
-              anywhere. Camrhia puts that link in your client&rsquo;s hands, inside the app with
-              the rest of their session. No digging through email. No &ldquo;did you get my
-              link?&rdquo; Just a clean, professional handoff every time.
+              Upload hundreds of photos at once and share one PIN-protected link. Your clients
+              heart their favorites, see what they picked, and download in one tap. Already
+              love Pixieset or Google Drive? Keep it, and drop that link into the session
+              instead. Either way, the handoff happens inside the app, with the rest of their
+              session. No digging through email. No &ldquo;did you get my link?&rdquo;
             </p>
           </div>
         </section>
@@ -375,6 +437,32 @@ export default function Home() {
             </div>
             <div className="mt-10 text-center">
               <AppStoreButton />
+            </div>
+          </div>
+        </section>
+
+        {/* AFFILIATE */}
+        <section className="bg-twilight text-white">
+          <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-8 px-6 py-16 md:flex-row md:items-center">
+            <div className="max-w-xl">
+              <p className="text-sm font-medium text-brass">Camrhia affiliate program</p>
+              <h2 className="mt-2 font-fraunces text-3xl font-semibold leading-[1.1] md:text-4xl">
+                Know photographers who would love this? Get paid to share it.
+              </h2>
+              <p className="mt-3 text-white/80 leading-relaxed">
+                Get your own link, share it anywhere, and track every signup from your affiliate dashboard.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center md:flex-col md:items-stretch">
+              <a
+                href="/affiliate/signup"
+                className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-base font-semibold text-twilight transition-colors hover:bg-white/90"
+              >
+                Become an affiliate
+              </a>
+              <a href="/affiliate/login" className="text-center text-sm text-white/75 hover:text-white">
+                Already an affiliate? Log in
+              </a>
             </div>
           </div>
         </section>

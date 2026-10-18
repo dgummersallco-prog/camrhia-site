@@ -1,6 +1,10 @@
 export type Version = { blob: Blob; width: number; height: number }
 export type Versions = { web: Version; thumb: Version; width: number; height: number }
 
+export function isHeic(f: File): boolean {
+  return /image\/hei[cf]/i.test(f.type) || /\.(heic|heif)$/i.test(f.name)
+}
+
 function encode(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
@@ -27,7 +31,13 @@ function scaled(bmp: ImageBitmap, maxEdge: number): HTMLCanvasElement {
 
 // Decodes a photo once and produces a web-size copy (2048px) and a thumbnail (480px).
 export async function makeVersions(file: File): Promise<Versions> {
-  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  let source: Blob = file
+  if (isHeic(file)) {
+    const mod = await import('heic2any')
+    const out = await mod.default({ blob: file, toType: 'image/jpeg', quality: 0.92 })
+    source = Array.isArray(out) ? out[0] : out
+  }
+  const bmp = await createImageBitmap(source, { imageOrientation: 'from-image' })
   try {
     const webCanvas = scaled(bmp, 2048)
     const thumbCanvas = scaled(bmp, 480)

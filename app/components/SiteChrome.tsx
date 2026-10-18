@@ -1,7 +1,8 @@
 import Link from "next/link"
 import Wordmark from "@/app/components/Wordmark"
 
-export const APP_STORE_URL = "https://apps.apple.com/app/id6800011162"
+import { APP_STORE_URL } from "@/lib/appStore"
+export { APP_STORE_URL }
 
 function BrandLockup() {
   return (
@@ -13,32 +14,7 @@ function BrandLockup() {
   )
 }
 
-export function Nav() {
-  return (
-    <nav className="sticky top-0 z-50 bg-paper/95 backdrop-blur border-b border-line">
-      <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-6">
-        <Link href="/" aria-label="Camrhia home">
-          <BrandLockup />
-        </Link>
-        <div className="hidden md:flex items-center gap-7 text-sm font-medium text-ink-soft">
-          <Link href="/#how" className="hover:text-ink transition-colors">How it works</Link>
-          <Link href="/#pricing" className="hover:text-ink transition-colors">Pricing</Link>
-          <Link href="/find" className="hover:text-ink transition-colors">Find a photographer</Link>
-          <Link href="/blog" className="hover:text-ink transition-colors">Blog</Link>
-          <Link href="/faq" className="hover:text-ink transition-colors">FAQ</Link>
-          <Link href="/affiliate/signup" className="hover:text-ink transition-colors">Become an affiliate</Link>
-          <Link href="/affiliate/login" className="hover:text-ink transition-colors">Affiliate log in</Link>
-        </div>
-        <a
-          href={APP_STORE_URL}
-          className="inline-flex items-center rounded-full bg-twilight px-5 py-2.5 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
-        >
-          Start free
-        </a>
-      </div>
-    </nav>
-  )
-}
+export { Nav } from "@/app/components/NavBar"
 
 export function Footer() {
   return (
@@ -54,6 +30,7 @@ export function Footer() {
           <Link href="/faq" className="hover:text-ink">FAQ</Link>
           <Link href="/affiliate/signup" className="hover:text-ink">Become an affiliate</Link>
           <Link href="/support" className="hover:text-ink">Support</Link>
+          <Link href="/login" className="hover:text-ink">Photographer log in</Link>
           <Link href="/affiliate/login" className="hover:text-ink">Affiliate log in</Link>
           <Link href="/admin/login" className="hover:text-ink">Admin</Link>
         </div>
