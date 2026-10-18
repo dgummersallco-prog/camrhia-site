@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
 
-type Tab = 'dashboard' | 'sessions' | 'galleries' | 'portfolio' | 'billing'
+type Tab = 'dashboard' | 'sessions' | 'galleries' | 'portfolio' | 'reminders' | 'billing'
 
 const ICONS: Record<string, string> = {
+  reminders: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10 21a2 2 0 0 0 4 0',
   sessions: 'M4 6h16v14H4z M4 10h16 M8 3v4 M16 3v4',
   dashboard: 'M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z',
   galleries: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 M9 9.5h.01',
@@ -22,6 +23,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
   { tab: 'galleries', href: '/galleries', label: 'Galleries' },
   { tab: 'portfolio', href: '/portfolio', label: 'Portfolio' },
+  { tab: 'reminders', href: '/reminders', label: 'Reminders' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
 ]
 
