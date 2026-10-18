@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
@@ -24,6 +24,8 @@ export default function PhotoSetsEditor() {
   const [loc, setLoc] = useState('')
   const [progress, setProgress] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
+  const [dropId, setDropId] = useState<string | null>(null)
+  const dragPhoto = useRef<string | null>(null)
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -64,21 +66,29 @@ export default function PhotoSetsEditor() {
     else flash('Saved')
   }
 
-  async function uploadTo(set: PSet, files: FileList | null) {
+  async function uploadTo(set: PSet, files: FileList | File[] | null) {
     const sb = supabase
     if (!sb || !uid || !files || files.length === 0) return
     const existing = photos.filter((p) => p.portfolio_wedding_id === set.id).length
-    const list = Array.from(files)
+    const list = Array.from(files).filter((f) => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name))
+    if (list.length === 0) { setMsg('Please choose image files.'); return }
     try {
-      for (let i = 0; i < list.length; i++) {
-        setProgress(`Uploading ${i + 1} of ${list.length}…`)
-        const v = await makeVersions(list[i])
-        const path = `${uid}/set_${set.id}_${Date.now()}_${i}.jpg`
-        const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
-        if (up.error) throw up.error
-        const { error } = await sb.from('portfolio_photos').insert({ owner_id: uid, storage_path: path, portfolio_wedding_id: set.id, sort_order: existing + i })
-        if (error) throw error
+      let done = 0
+      const queue = list.map((file, i) => ({ file, i }))
+      setProgress(`Uploading 0 of ${list.length}…`)
+      const worker = async () => {
+        for (let item = queue.shift(); item; item = queue.shift()) {
+          const v = await makeVersions(item.file)
+          const path = `${uid}/set_${set.id}_${Date.now()}_${item.i}.jpg`
+          const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+          if (up.error) throw up.error
+          const { error } = await sb.from('portfolio_photos').insert({ owner_id: uid, storage_path: path, portfolio_wedding_id: set.id, sort_order: existing + item.i })
+          if (error) throw error
+          done++
+          setProgress(`Uploading ${done} of ${list.length}…`)
+        }
       }
+      await Promise.all([worker(), worker(), worker()])
       flash('Photos added')
     } catch (e) {
       setMsg((e as { message?: string })?.message ?? 'Upload failed.')
@@ -121,6 +131,25 @@ export default function PhotoSetsEditor() {
     await Promise.all(re.map((x) => sb.from('portfolio_weddings').update({ sort_order: x.sort_order }).eq('id', x.id)))
   }
 
+  async function reorder(setId: string, fromId: string, toId: string) {
+    const sb = supabase
+    if (!sb) return
+    const mine = photos.filter((p) => p.portfolio_wedding_id === setId)
+    const a = mine.findIndex((p) => p.id === fromId)
+    const b = mine.findIndex((p) => p.id === toId)
+    if (a < 0 || b < 0 || a === b) return
+    const next = [...mine]
+    const [moved] = next.splice(a, 1)
+    next.splice(b, 0, moved)
+    const re = next.map((x, k) => ({ ...x, sort_order: k }))
+    setPhotos((prev) =>
+      prev.map((x) => re.find((r) => r.id === x.id) ?? x).sort((p, q) => (p.sort_order ?? 0) - (q.sort_order ?? 0)),
+    )
+    const res = await Promise.all(re.map((x) => sb.from('portfolio_photos').update({ sort_order: x.sort_order }).eq('id', x.id)))
+    const bad = res.find((r) => r.error)
+    if (bad?.error) setMsg(bad.error.message)
+  }
+
   function editSet(id: string, patch: Partial<PSet>) {
     setSets((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x)))
   }
@@ -134,7 +163,7 @@ export default function PhotoSetsEditor() {
           <h1 className="font-fraunces text-3xl font-semibold text-ink">Featured photos</h1>
           <span className="text-sm text-twilight">{progress ?? msg}</span>
         </div>
-        <p className="mb-6 text-sm text-ink-soft">Each set is a group of photos on your portfolio. New sets use the default layout. Change the layout style in the Camrhia app.</p>
+        <p className="mb-6 text-sm text-ink-soft">Each set is a group of photos on your portfolio. New sets use the default layout. Change the layout style in the Camrhia app. Drag photos from your computer onto a set to add them, and drag thumbnails to reorder. The first photo is the large one.</p>
 
         <section className={`${card} space-y-3`}>
           <p className="text-sm font-medium text-ink">New photo set</p>
@@ -150,7 +179,13 @@ export default function PhotoSetsEditor() {
           {sets.map((s, i) => {
             const mine = photos.filter((p) => p.portfolio_wedding_id === s.id)
             return (
-              <section key={s.id} className={card}>
+              <section
+                key={s.id}
+                className={`${card} ${dropId === s.id ? 'border-twilight bg-twilight/5' : ''}`}
+                onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); if (dropId !== s.id) setDropId(s.id) } }}
+                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropId(null) }}
+                onDrop={(e) => { if (e.dataTransfer.files.length > 0) { e.preventDefault(); setDropId(null); uploadTo(s, Array.from(e.dataTransfer.files)) } }}
+              >
                 <div className="flex items-start gap-3">
                   <div className="flex flex-col">
                     <button disabled={i === 0} onClick={() => moveSet(i, -1)} className="px-1 text-xs text-ink-soft hover:text-ink disabled:opacity-30" aria-label="Move up">▲</button>
@@ -163,11 +198,27 @@ export default function PhotoSetsEditor() {
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-5">
-                  {mine.map((p) => (
-                    <div key={p.id} className="group relative aspect-square overflow-hidden rounded-lg bg-line">
+                  {mine.map((p, idx) => (
+                    <div
+                      key={p.id}
+                      draggable
+                      onDragStart={() => { dragPhoto.current = p.id }}
+                      onDragEnd={() => { dragPhoto.current = null }}
+                      onDragOver={(e) => { if (dragPhoto.current) e.preventDefault() }}
+                      onDrop={(e) => {
+                        if (dragPhoto.current && dragPhoto.current !== p.id) { e.preventDefault(); e.stopPropagation(); reorder(s.id, dragPhoto.current, p.id) }
+                        dragPhoto.current = null
+                      }}
+                      className="group relative aspect-square cursor-grab overflow-hidden rounded-lg bg-line"
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={`${BASE}${p.storage_path}`} alt="" className="h-full w-full object-cover" />
-                      <button onClick={() => removePhoto(p)} className="absolute right-1 top-1 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100" aria-label="Remove photo">×</button>
+                      {idx === 0 ? (
+                        <span className="absolute left-1 top-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">Main photo</span>
+                      ) : (
+                        <button onClick={() => reorder(s.id, p.id, mine[0].id)} className="absolute bottom-1 left-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white sm:opacity-0 sm:transition sm:group-hover:opacity-100">Make first</button>
+                      )}
+                      <button onClick={() => removePhoto(p)} className="absolute right-1 top-1 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white sm:opacity-0 sm:transition sm:group-hover:opacity-100" aria-label="Remove photo">×</button>
                     </div>
                   ))}
                 </div>
