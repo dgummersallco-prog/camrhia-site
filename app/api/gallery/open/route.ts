@@ -1,0 +1,84 @@
+import { NextResponse } from 'next/server'
+import { admin, isLive, signAccess, signMap, verifyAccess } from '@/lib/galleryServer'
+
+export const dynamic = 'force-dynamic'
+
+export async function POST(req: Request) {
+  const sb = admin()
+  if (!sb) return NextResponse.json({ error: 'Not configured' }, { status: 500 })
+
+  const body = await req.json().catch(() => ({}))
+  const token = String(body.token ?? '')
+  const pin = body.pin ? String(body.pin) : ''
+  const visitorId = body.visitorId ? String(body.visitorId).slice(0, 64) : ''
+  if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 })
+
+  const { data: g } = await sb
+    .from('galleries')
+    .select('id, title, pin_hash, allow_downloads, expires_at, status, cover_photo_id')
+    .eq('token', token)
+    .maybeSingle()
+  if (!g) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const live = isLive(g)
+  if (live === 'missing') return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (live === 'expired') return NextResponse.json({ error: 'Expired' }, { status: 410 })
+
+  if (g.pin_hash) {
+    const hasAccess = verifyAccess(body.access) === g.id
+    if (!hasAccess) {
+      if (!pin) return NextResponse.json({ needsPin: true, title: g.title }, { status: 401 })
+      const { data, error } = await sb.rpc('check_gallery_pin', { p_token: token, p_pin: pin })
+      const ok =
+        !error &&
+        (Array.isArray(data)
+          ? data.length > 0
+          : data && typeof data === 'object'
+            ? (data as { ok?: boolean }).ok !== false
+            : !!data)
+      if (!ok) return NextResponse.json({ needsPin: true, title: g.title, error: 'Wrong PIN' }, { status: 403 })
+    }
+  }
+
+  const photos: { id: string; filename: string | null; width: number | null; height: number | null; web_path: string | null; thumb_path: string | null }[] = []
+  for (let from = 0; ; from += 1000) {
+    const { data } = await sb
+      .from('gallery_photos')
+      .select('id, filename, width, height, web_path, thumb_path')
+      .eq('gallery_id', g.id)
+      .order('sort_order', { ascending: true })
+      .range(from, from + 999)
+    const batch = data ?? []
+    photos.push(...batch)
+    if (batch.length < 1000) break
+  }
+
+  const SIX_HOURS = 6 * 3600
+  const urls = await signMap(
+    sb,
+    photos.flatMap((p) => [p.thumb_path, p.web_path]).filter((x): x is string => !!x),
+    SIX_HOURS,
+  )
+
+  let favorites: string[] = []
+  if (visitorId) {
+    const { data } = await sb.from('gallery_favorites').select('photo_id').eq('gallery_id', g.id).eq('visitor_id', visitorId)
+    favorites = (data ?? []).map((r: { photo_id: string }) => r.photo_id)
+  }
+
+  return NextResponse.json({
+    title: g.title,
+    allowDownloads: g.allow_downloads,
+    coverId: g.cover_photo_id,
+    access: signAccess(g.id),
+    favorites,
+    photos: photos.map((p) => ({
+      id: p.id,
+      filename: p.filename,
+      width: p.width,
+      height: p.height,
+      thumb: p.thumb_path ? urls[p.thumb_path] ?? null : null,
+      web: p.web_path ? urls[p.web_path] ?? null : null,
+    })),
+  })
+}
