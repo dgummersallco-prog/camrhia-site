@@ -91,6 +91,9 @@ export default function GalleryManagePage() {
   const folderInput = useRef<HTMLInputElement>(null)
   const failedRef = useRef<File[]>([])
   const dragId = useRef<string | null>(null)
+  const [selecting, setSelecting] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [view, setView] = useState<{ id: string; url: string | null } | null>(null)
 
   const active = uploads.some((u) => u.status === 'queued' || u.status === 'uploading')
   const doneCount = uploads.filter((u) => u.status === 'done').length
@@ -228,10 +231,14 @@ export default function GalleryManagePage() {
     const sb = supabase
     if (!sb || !userId || !gallery) return
     if (active) { setMessage('Wait for the current upload to finish.'); return }
+    const have = new Set(photos.map((p) => `${p.filename}|${p.size_bytes}`))
     const files = list
+      .filter((f) => !have.has(`${f.name}|${f.size}`))
       .filter(isAccepted)
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
     const skipped = list.filter((f) => !isAccepted(f) && !f.name.startsWith('.')).length
+    const dupes = list.filter((f) => isAccepted(f) && have.has(`${f.name}|${f.size}`)).length
+    if (dupes > 0) flash(`${dupes} already in this gallery, skipped.`)
     if (skipped > 0) setMessage(`${skipped} file(s) skipped. Supported: JPG, PNG, WebP and HEIC.`)
     if (files.length === 0) return
 
@@ -305,9 +312,9 @@ export default function GalleryManagePage() {
     if (!sb) return
     if (!window.confirm('Delete this photo?')) return
     const paths = [p.orig_path, p.web_path, p.thumb_path].filter((x): x is string => !!x)
-    await sb.storage.from(BUCKET).remove(paths)
     const { error } = await sb.from('gallery_photos').delete().eq('id', p.id)
     if (error) { setMessage(error.message); return }
+    await sb.storage.from(BUCKET).remove(paths)
     if (gallery?.cover_photo_id === p.id) {
       await saveSettings({ cover_photo_id: null })
       await syncCover(null, photos.filter((x) => x.id !== p.id))
@@ -353,6 +360,76 @@ export default function GalleryManagePage() {
   const shareUrl = gallery ? `${origin}/g/${gallery.token}` : ''
   const shown = filter === 'fav' ? photos.filter((p) => favCounts[p.id]) : photos
   const isPublished = gallery?.status === 'published'
+
+  function toggleSel(id: string) {
+    setSelected((prev) => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  }
+
+  async function bulkDelete() {
+    const sb = supabase
+    if (!sb || selected.size === 0) return
+    if (!window.confirm(`Delete ${selected.size} photo${selected.size === 1 ? '' : 's'}? This cannot be undone.`)) return
+    const ids = [...selected]
+    const doomed = photos.filter((p) => selected.has(p.id))
+    setMessage(`Deleting ${ids.length}…`)
+    for (let i = 0; i < ids.length; i += 100) {
+      const { error } = await sb.from('gallery_photos').delete().in('id', ids.slice(i, i + 100))
+      if (error) { setMessage(error.message); return }
+    }
+    const paths = doomed.flatMap((p) => [p.orig_path, p.web_path, p.thumb_path]).filter((x): x is string => !!x)
+    for (let i = 0; i < paths.length; i += 100) {
+      await sb.storage.from(BUCKET).remove(paths.slice(i, i + 100))
+    }
+    const remaining = photos.filter((p) => !selected.has(p.id))
+    const hadCover = !!gallery?.cover_photo_id && selected.has(gallery.cover_photo_id)
+    setPhotos(remaining)
+    setSelected(new Set())
+    setSelecting(false)
+    if (hadCover) {
+      await saveSettings({ cover_photo_id: null })
+      await syncCover(null, remaining)
+    }
+    flash(`${ids.length} deleted`)
+  }
+
+  function copyFavNames() {
+    const names = shown.map((p) => p.filename).filter((n): n is string => !!n)
+    if (names.length === 0) return
+    navigator.clipboard?.writeText(names.join('\n'))
+    flash(`${names.length} filenames copied`)
+  }
+
+  async function openView(p: Photo) {
+    const sb = supabase
+    if (!sb) return
+    setView({ id: p.id, url: null })
+    const src = p.web_path ?? p.thumb_path ?? p.orig_path
+    const { data } = await sb.storage.from(BUCKET).createSignedUrl(src, 3600)
+    setView((v) => (v && v.id === p.id ? { id: p.id, url: data?.signedUrl ?? null } : v))
+  }
+
+  function stepView(dir: -1 | 1) {
+    if (!view) return
+    const i = shown.findIndex((p) => p.id === view.id)
+    const nxt = shown[i + dir]
+    if (nxt) openView(nxt)
+  }
+
+  useEffect(() => {
+    if (!view) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setView(null)
+      if (e.key === 'ArrowRight') stepView(1)
+      if (e.key === 'ArrowLeft') stepView(-1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
   return (
     <div className="min-h-screen bg-paper lg:pl-60">
@@ -492,6 +569,23 @@ export default function GalleryManagePage() {
                   )}
                 </div>
 
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+                  {!selecting ? (
+                    <button className={btnGhost} disabled={photos.length === 0} onClick={() => { setSelecting(true); setSelected(new Set()) }}>
+                      Select
+                    </button>
+                  ) : (
+                    <>
+                      <button className={btnGhost} onClick={() => setSelected(new Set(shown.map((p) => p.id)))}>Select all ({shown.length})</button>
+                      <button className={`${btnGhost} text-red-600`} disabled={selected.size === 0} onClick={bulkDelete}>Delete {selected.size || ''}</button>
+                      <button className={btnGhost} onClick={() => { setSelecting(false); setSelected(new Set()) }}>Cancel</button>
+                    </>
+                  )}
+                  {filter === 'fav' && shown.length > 0 && (
+                    <button className={btnGhost} onClick={copyFavNames}>Copy favorite filenames</button>
+                  )}
+                </div>
+
                 {shown.length === 0 ? (
                   <p className="rounded-2xl border border-line bg-card py-16 text-center text-sm text-ink-soft">
                     {filter === 'fav' ? 'No client favorites yet.' : 'No photos yet. Drop some above.'}
@@ -501,15 +595,19 @@ export default function GalleryManagePage() {
                     {shown.map((p) => (
                       <div
                         key={p.id}
-                        draggable={filter === 'all'}
+                        draggable={filter === 'all' && !selecting}
+                        onClick={() => (selecting ? toggleSel(p.id) : openView(p))}
                         onDragStart={() => { dragId.current = p.id }}
                         onDragOver={(e) => { if (filter === 'all') e.preventDefault() }}
                         onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropOn(p.id) }}
-                        className={`group relative aspect-square overflow-hidden rounded-xl bg-line ${filter === 'all' ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                        className={`group relative aspect-square cursor-pointer overflow-hidden rounded-xl bg-line ${selected.has(p.id) ? 'ring-4 ring-twilight' : ''}`}
                       >
                         {p.thumb_path && thumbs[p.thumb_path] && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={thumbs[p.thumb_path]} alt={p.filename ?? ''} loading="lazy" draggable={false} className="h-full w-full object-cover" />
+                        )}
+                        {selecting && (
+                          <span className={`absolute bottom-2 left-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-xs ${selected.has(p.id) ? 'bg-twilight text-white' : 'bg-black/30 text-transparent'}`}>✓</span>
                         )}
                         {gallery.cover_photo_id === p.id && (
                           <span className="absolute left-2 top-2 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Cover</span>
@@ -519,9 +617,9 @@ export default function GalleryManagePage() {
                             ♥ {favCounts[p.id]}
                           </span>
                         )}
-                        <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-black/60 p-1.5 opacity-0 transition group-hover:opacity-100">
-                          <button className="text-xs text-white" onClick={async () => { if (await saveSettings({ cover_photo_id: p.id })) await syncCover(p.id) }}>Set cover</button>
-                          <button className="text-xs text-red-300" onClick={() => deletePhoto(p)}>Delete</button>
+                        <div className={`absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-black/60 p-1.5 sm:opacity-0 sm:transition sm:group-hover:opacity-100 ${selecting ? 'hidden' : ''}`}>
+                          <button className="text-xs text-white" onClick={async (e) => { e.stopPropagation(); if (await saveSettings({ cover_photo_id: p.id })) await syncCover(p.id) }}>Set cover</button>
+                          <button className="text-xs text-red-300" onClick={(e) => { e.stopPropagation(); deletePhoto(p) }}>Delete</button>
                         </div>
                       </div>
                     ))}
@@ -605,6 +703,33 @@ export default function GalleryManagePage() {
               </aside>
             </div>
           </>
+        )}
+        {view && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-black/95" onClick={() => setView(null)}>
+            <div className="flex items-center justify-between p-4 text-white" onClick={(e) => e.stopPropagation()}>
+              <span className="text-sm opacity-70">{shown.findIndex((x) => x.id === view.id) + 1} / {shown.length}</span>
+              <div className="flex items-center gap-5">
+                <button className="text-sm" onClick={async () => { if (await saveSettings({ cover_photo_id: view.id })) await syncCover(view.id) }}>
+                  Set as cover
+                </button>
+                <button className="text-2xl leading-none" onClick={() => setView(null)} aria-label="Close">×</button>
+              </div>
+            </div>
+            <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4">
+              {shown.findIndex((x) => x.id === view.id) > 0 && (
+                <button onClick={(e) => { e.stopPropagation(); stepView(-1) }} className="absolute left-2 z-10 rounded-full bg-white/10 px-3 py-2 text-2xl text-white hover:bg-white/20" aria-label="Previous">‹</button>
+              )}
+              {view.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={view.url} alt="" onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain" />
+              ) : (
+                <p className="text-sm text-white/70">Loading…</p>
+              )}
+              {shown.findIndex((x) => x.id === view.id) < shown.length - 1 && (
+                <button onClick={(e) => { e.stopPropagation(); stepView(1) }} className="absolute right-2 z-10 rounded-full bg-white/10 px-3 py-2 text-2xl text-white hover:bg-white/20" aria-label="Next">›</button>
+              )}
+            </div>
+          </div>
         )}
       </main>
     </div>
