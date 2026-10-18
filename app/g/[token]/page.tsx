@@ -7,6 +7,7 @@ type Photo = { id: string; filename: string | null; width: number | null; height
 type Data = { title: string; allowDownloads: boolean; coverId: string | null; access: string; favorites: string[]; photos: Photo[] }
 type Phase = 'loading' | 'pin' | 'ready' | 'missing' | 'expired'
 type ZipFile = { id: string; name: string; size: number | null; url: string }
+type Brand = { name: string | null; accent: string | null }
 
 function visitorId(): string {
   try {
@@ -37,6 +38,7 @@ export default function GalleryViewPage() {
   const [favs, setFavs] = useState<Set<string>>(new Set())
   const [onlyFavs, setOnlyFavs] = useState(false)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [brand, setBrand] = useState<Brand | null>(null)
   const [zip, setZip] = useState<{ busy: boolean; done: number; total: number; error: string | null }>({ busy: false, done: 0, total: 0, error: null })
 
   const load = useCallback(async (pinValue?: string) => {
@@ -50,6 +52,7 @@ export default function GalleryViewPage() {
         body: JSON.stringify({ token, pin: pinValue, access: pinValue ? undefined : stored, visitorId: visitorId() }),
       })
       const j = await res.json().catch(() => ({}))
+      if (j.brand) setBrand(j.brand as Brand)
       if (res.ok) {
         setData(j as Data)
         setFavs(new Set((j as Data).favorites))
@@ -60,7 +63,7 @@ export default function GalleryViewPage() {
       if (res.status === 401 || res.status === 403) {
         setTitle(j.title ?? '')
         setPhase('pin')
-        if (pinValue) setPinError('That PIN is not right. Please try again.')
+        if (pinValue) setPinError(!j.error || j.error === 'Wrong PIN' ? 'That PIN is not right. Please try again.' : j.error)
         return
       }
       setPhase(res.status === 410 ? 'expired' : 'missing')
@@ -72,6 +75,15 @@ export default function GalleryViewPage() {
   }, [token])
 
   useEffect(() => { load() }, [load])
+
+  // Tint the page with the photographer's accent color.
+  useEffect(() => {
+    const a = brand?.accent
+    if (!a) return
+    const root = document.documentElement
+    root.style.setProperty('--color-twilight', a)
+    return () => { root.style.removeProperty('--color-twilight') }
+  }, [brand])
 
   const list = useMemo(() => {
     if (!data) return []
@@ -206,7 +218,7 @@ export default function GalleryViewPage() {
           onSubmit={(e) => { e.preventDefault(); setPinError(null); load(pin.trim()) }}
           className="w-full max-w-sm text-center"
         >
-          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-brass">Private gallery</p>
+          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-brass">{brand?.name || 'Private gallery'}</p>
           <h1 className="mb-6 font-fraunces text-3xl font-semibold text-ink">{title || 'Enter your PIN'}</h1>
           <input
             value={pin}
@@ -240,7 +252,10 @@ export default function GalleryViewPage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={cover.web} alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/65 via-black/10 to-transparent p-6 sm:p-10">
-            <h1 className="font-fraunces text-4xl font-semibold text-white sm:text-5xl">{data.title}</h1>
+            <div>
+              {brand?.name && <p className="mb-2 font-mono text-xs uppercase tracking-widest text-white/80">{brand.name}</p>}
+              <h1 className="font-fraunces text-4xl font-semibold text-white sm:text-5xl">{data.title}</h1>
+            </div>
           </div>
         </div>
       )}
@@ -314,7 +329,7 @@ export default function GalleryViewPage() {
         )}
       </main>
 
-      <footer className="py-10 text-center text-xs text-ink-soft">Delivered with Camrhia</footer>
+      <footer className="py-10 text-center text-xs text-ink-soft">{brand?.name ? `${brand.name} · ` : ''}Delivered with Camrhia</footer>
 
       {current && openIndex !== null && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black/95" onClick={() => setOpenIndex(null)}>
