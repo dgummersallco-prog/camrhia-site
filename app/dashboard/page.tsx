@@ -34,6 +34,11 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<Activity[]>([])
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [studioName, setStudioName] = useState('')
+  const [portCount, setPortCount] = useState(0)
+  const [siteShared, setSiteShared] = useState(false)
+  const [hideSetup, setHideSetup] = useState(false)
+  const [recentFavs, setRecentFavs] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -43,16 +48,19 @@ export default function DashboardPage() {
       if (!sess.session) { router.replace('/login?next=/dashboard'); return }
       const uid = sess.session.user.id
 
-      const [prof, gal, favCount, favRecent] = await Promise.all([
+      const [prof, gal, favCount, favRecent, portRes, weekFavs] = await Promise.all([
         sb.from('profiles').select('first_name, studio_name, public_token').eq('id', uid).single(),
         sb.from('galleries').select('id, title, status, gallery_photos(count)').order('created_at', { ascending: false }),
         sb.from('gallery_favorites').select('id', { count: 'exact', head: true }),
         sb.from('gallery_favorites').select('id, gallery_id, photo_id, created_at').order('created_at', { ascending: false }).limit(8),
+        sb.from('portfolio_photos').select('id', { count: 'exact', head: true }),
+        sb.from('gallery_favorites').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
       ])
 
       if (prof.data) {
         setName((prof.data.first_name as string | null) || (prof.data.studio_name as string | null) || '')
         setToken((prof.data.public_token as string | null) ?? null)
+        setStudioName((prof.data.studio_name as string | null) ?? '')
       }
       const gals = (gal.data ?? []) as unknown as Gal[]
       setGalleries(gals)
@@ -82,6 +90,12 @@ export default function DashboardPage() {
           })),
         )
       }
+      setPortCount(portRes.count ?? 0)
+      setRecentFavs(weekFavs.count ?? 0)
+      try {
+        setSiteShared(localStorage.getItem('camrhia_site_shared') === '1')
+        setHideSetup(localStorage.getItem('camrhia_hide_setup') === '1')
+      } catch { /* ignore */ }
       setReady(true)
     }
     load()
@@ -94,8 +108,31 @@ export default function DashboardPage() {
     if (!token) return
     navigator.clipboard?.writeText(`${window.location.origin}/p/${token}`)
     setCopied(true)
+    setSiteShared(true)
+    try { localStorage.setItem('camrhia_site_shared', '1') } catch { /* ignore */ }
     setTimeout(() => setCopied(false), 1800)
   }
+
+  const photoCount = (g: Gal) => g.gallery_photos?.[0]?.count ?? 0
+  const readyDrafts = galleries.filter((g) => g.status === 'draft' && photoCount(g) > 0)
+  const emptyDrafts = galleries.filter((g) => g.status === 'draft' && photoCount(g) === 0)
+  const firstWithPhotos = galleries.find((g) => photoCount(g) > 0)
+  const firstGallery = galleries[0]
+  const steps: { label: string; hint: string; done: boolean; href?: string }[] = [
+    { label: 'Add your studio name', hint: 'Set it in the Camrhia app under Profile', done: !!studioName },
+    { label: 'Add photos to your portfolio', hint: 'Show clients your best work', done: portCount > 0, href: '/portfolio' },
+    { label: 'Create your first gallery', hint: 'One gallery per session', done: galleries.length > 0, href: '/galleries' },
+    { label: 'Upload photos to a gallery', hint: 'Drag and drop works', done: !!firstWithPhotos, href: firstGallery ? `/galleries/${firstGallery.id}` : '/galleries' },
+    { label: 'Publish a gallery', hint: 'Clients are notified in the app', done: published > 0, href: (readyDrafts[0] ?? firstGallery) ? `/galleries/${(readyDrafts[0] ?? firstGallery).id}` : '/galleries' },
+    { label: 'Share your site link', hint: 'Put it in your Instagram bio', done: siteShared },
+  ]
+  const doneCount = steps.filter((x) => x.done).length
+  const showSetup = !hideSetup && doneCount < steps.length
+  const attention: { key: string; text: string; href: string; cta: string }[] = [
+    ...readyDrafts.map((g) => ({ key: `d${g.id}`, text: `"${g.title}" has ${photoCount(g)} photos and is still a draft`, href: `/galleries/${g.id}`, cta: 'Review and publish' })),
+    ...emptyDrafts.map((g) => ({ key: `e${g.id}`, text: `"${g.title}" has no photos yet`, href: `/galleries/${g.id}`, cta: 'Upload photos' })),
+    ...(recentFavs > 0 ? [{ key: 'fav', text: `Clients hearted ${recentFavs} photo${recentFavs === 1 ? '' : 's'} in the last 7 days`, href: '/galleries', cta: 'See galleries' }] : []),
+  ]
 
   const action = 'flex flex-col gap-1 rounded-2xl border border-line bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md'
 
@@ -112,6 +149,63 @@ export default function DashboardPage() {
               {greeting()}{name ? `, ${name}` : ''}.
             </h1>
             <p className="mt-2 text-ink-soft">Here is what is happening with your studio.</p>
+
+            {attention.length > 0 && (
+              <section className={`${card} mt-8`}>
+                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Needs your attention</p>
+                <ul className="divide-y divide-line">
+                  {attention.slice(0, 5).map((a) => (
+                    <li key={a.key} className="flex flex-wrap items-center gap-3 py-3">
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-brass" />
+                      <p className="min-w-0 flex-1 text-sm text-ink">{a.text}</p>
+                      <Link href={a.href} className="shrink-0 text-sm font-medium text-twilight hover:underline">{a.cta} →</Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {showSetup && (
+              <section className={`${card} mt-6`}>
+                <div className="mb-3 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-fraunces text-xl font-semibold text-ink">Get your studio set up</p>
+                    <p className="text-xs text-ink-soft">{doneCount} of {steps.length} done</p>
+                  </div>
+                  <button
+                    onClick={() => { setHideSetup(true); try { localStorage.setItem('camrhia_hide_setup', '1') } catch { /* ignore */ } }}
+                    className="text-xs text-ink-soft hover:text-ink"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+                <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-line">
+                  <div className="h-full rounded-full bg-twilight transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+                </div>
+                <ul className="grid gap-2 md:grid-cols-2">
+                  {steps.map((st) => {
+                    const inner = (
+                      <>
+                        <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] ${st.done ? 'border-twilight bg-twilight text-white' : 'border-line text-transparent'}`}>✓</span>
+                        <span>
+                          <span className={`block text-sm ${st.done ? 'text-ink-soft line-through' : 'font-medium text-ink'}`}>{st.label}</span>
+                          {!st.done && <span className="block text-xs text-ink-soft">{st.hint}</span>}
+                        </span>
+                      </>
+                    )
+                    return (
+                      <li key={st.label}>
+                        {st.href && !st.done ? (
+                          <Link href={st.href} className="flex gap-3 rounded-xl p-2 hover:bg-paper">{inner}</Link>
+                        ) : (
+                          <div className="flex gap-3 p-2">{inner}</div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            )}
 
             {/* Quick actions */}
             <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
