@@ -54,6 +54,7 @@ export default function SessionDetailPage() {
   const [sendPin, setSendPin] = useState('')
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
+  const [notes, setNotes] = useState('')
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -71,6 +72,7 @@ export default function SessionDetailPage() {
     ])
     if (wr.error || !wr.data) { setError(wr.error?.message ?? 'Session not found.'); return }
     setW(wr.data as Wedding)
+    setNotes(((wr.data as Wedding).private_notes as string | null) ?? '')
     setEvents((ev.data ?? []) as Ev[])
     setContract(((ct.data ?? [])[0] as Contract | undefined) ?? null)
     setMsgs((ms.data ?? []) as Msg[])
@@ -79,6 +81,18 @@ export default function SessionDetailPage() {
   }, [id, router])
 
   useEffect(() => { load() }, [load])
+
+  // Pick up new client messages without a manual refresh.
+  useEffect(() => {
+    const sb = supabase
+    if (!sb || !id) return
+    const t = setInterval(async () => {
+      if (document.hidden) return
+      const { data } = await sb.from('messages').select('id, sender, body, created_at').eq('wedding_id', id).order('created_at', { ascending: true })
+      if (data) setMsgs(data as Msg[])
+    }, 20000)
+    return () => clearInterval(t)
+  }, [id])
 
   async function createGallery() {
     const sb = supabase
@@ -180,6 +194,18 @@ export default function SessionDetailPage() {
     load()
   }
 
+  async function saveNotes() {
+    const sb = supabase
+    if (!sb || !w) return
+    const next = notes.trim() || null
+    if (next === ((w.private_notes as string | null) ?? null)) return
+    const { error: e } = await sb.from('weddings').update({ private_notes: next }).eq('id', id)
+    if (e) { setError(e.message); return }
+    setW((prev) => (prev ? { ...prev, private_notes: next } : prev))
+    setNote('Notes saved.')
+    setTimeout(() => setNote(null), 2000)
+  }
+
   const place = w ? [w.venue, [w.city, w.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ') : ''
 
   return (
@@ -217,12 +243,17 @@ export default function SessionDetailPage() {
                   <Row label="Total" value={w.total_price ? `$${Number(w.total_price).toLocaleString()}` : null} />
                   <Row label="Balance" value={w.balance} />
                 </div>
-                {w.private_notes && (
-                  <div className="mt-4 rounded-xl bg-paper-deep p-3 text-sm text-ink">
-                    <p className="mb-1 text-xs uppercase tracking-wider text-ink-soft">Private notes</p>
-                    {w.private_notes}
-                  </div>
-                )}
+                <div className="mt-4">
+                  <p className="mb-1 text-xs uppercase tracking-wider text-ink-soft">Private notes (only you see these)</p>
+                  <textarea
+                    rows={3}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    onBlur={saveNotes}
+                    placeholder="Add notes about this client"
+                    className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+                  />
+                </div>
               </section>
 
               {/* Contract + timeline */}
@@ -356,6 +387,7 @@ export default function SessionDetailPage() {
                   rows={2}
                   value={reply}
                   onChange={(e) => setReply(e.target.value)}
+                  onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') sendReply() }}
                   placeholder="Write a reply"
                   className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
                 />
