@@ -331,6 +331,7 @@ export default function GalleryManagePage() {
           <Link href="/"><Wordmark className="text-3xl" /></Link>
           <nav className="hidden gap-6 text-sm sm:flex">
             <Link href="/galleries" className="font-medium text-ink">Galleries</Link>
+            <Link href="/portfolio" className="text-ink-soft hover:text-ink">Portfolio</Link>
             <Link href="/billing" className="text-ink-soft hover:text-ink">Billing</Link>
           </nav>
         </div>
