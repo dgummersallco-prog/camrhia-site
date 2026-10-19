@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
 }
 
-const NAVY = "#3A4A6B"
+const NAVY = "#A9545F"
 const PHONE =
   "rounded-[1.9rem] ring-1 ring-black/10 bg-card shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]"
 
@@ -141,7 +141,7 @@ export default function Home() {
         <section className="mx-auto max-w-6xl px-6 pt-14 pb-24 sm:pt-20 sm:pb-28 grid md:grid-cols-2 gap-14 md:gap-16 items-center">
           <div>
             <p className="text-base font-medium text-brass">Your camera could be your whole career</p>
-            <h1 className="mt-4 font-fraunces text-[2.6rem] md:text-6xl font-semibold text-ink leading-[1.05]">
+            <h1 className="mt-4 font-fraunces text-[3rem] md:text-7xl font-medium text-ink leading-[1.05]">
               Become the photographer everyone is looking for.
             </h1>
             <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-xl">
@@ -172,7 +172,7 @@ export default function Home() {
         {/* SOUND FAMILIAR */}
         <section className="bg-paper-deep border-y border-line">
           <div className="mx-auto max-w-3xl px-6 py-20 sm:py-24">
-            <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink leading-[1.08]">Talent is not what is holding you back</h2>
+            <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Talent is not what is holding you back</h2>
             <ul className="mt-9 space-y-4">
               {PAINS.map((p) => (
                 <li key={p} className="flex gap-3 text-lg text-ink">
@@ -189,7 +189,7 @@ export default function Home() {
 
         {/* 3 STEPS */}
         <section id="how" className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-          <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink leading-[1.08]">Live in three steps</h2>
+          <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Live in three steps</h2>
           <div className="mt-14 grid md:grid-cols-3 gap-12 md:gap-10">
             {STEPS.map(([t, d], i) => (
               <div key={t}>
@@ -247,7 +247,7 @@ export default function Home() {
         {/* SEE IT IN ACTION */}
         <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <div className="max-w-2xl mb-20 sm:mb-28">
-            <h2 className="font-fraunces text-4xl md:text-5xl font-semibold text-ink leading-[1.08] mb-5">
+            <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08] mb-5">
               See it in action
             </h2>
             <p className="text-lg text-ink-soft leading-relaxed">
@@ -312,7 +312,7 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
             <div className="max-w-2xl">
               <p className="text-base font-medium text-brass">The part your clients will tell their friends about</p>
-              <h2 className="mt-3 font-fraunces text-3xl md:text-5xl font-semibold text-ink leading-[1.08]">
+              <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">
                 Be the photographer clients never have to chase.
               </h2>
               <p className="mt-5 text-lg text-ink-soft leading-relaxed">
@@ -352,9 +352,9 @@ export default function Home() {
         </section>
 
         {/* DELIVERY */}
-        <section className="bg-twilight text-white">
+        <section className="bg-gradient-to-br from-[#A9545F] to-[#BC6470] text-white">
           <div className="mx-auto max-w-3xl px-6 py-24 sm:py-28 text-center">
-            <h2 className="font-fraunces text-3xl md:text-5xl font-semibold leading-[1.1]">
+            <h2 className="font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">
               Delivery day, without the scramble.
             </h2>
             <p className="mt-6 text-lg text-white/80 leading-relaxed">
@@ -370,7 +370,7 @@ export default function Home() {
         {/* STACK */}
         <section id="compare" className="bg-ink text-white">
           <div className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
-            <h2 className="mx-auto max-w-3xl text-center font-fraunces text-3xl md:text-5xl font-semibold leading-[1.1]">
+            <h2 className="mx-auto max-w-3xl text-center font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">
               Stop paying for a pile of tools. Run your whole business from one app.
             </h2>
             <div className="mt-14 grid md:grid-cols-2 gap-6">
@@ -415,7 +415,7 @@ export default function Home() {
         {/* PRICING */}
         <section id="pricing" className="bg-paper-deep border-y border-line">
           <div className="mx-auto max-w-4xl px-6 py-24">
-            <h2 className="font-fraunces text-3xl md:text-5xl font-semibold text-ink text-center">
+            <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink text-center">
               Simple pricing. Try it free first.
             </h2>
             <p className="mt-4 text-center text-ink-soft">
@@ -442,7 +442,7 @@ export default function Home() {
         </section>
 
         {/* AFFILIATE */}
-        <section className="bg-twilight text-white">
+        <section className="bg-gradient-to-br from-[#A9545F] to-[#BC6470] text-white">
           <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-8 px-6 py-16 md:flex-row md:items-center">
             <div className="max-w-xl">
               <p className="text-sm font-medium text-brass">Camrhia affiliate program</p>

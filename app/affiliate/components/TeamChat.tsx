@@ -85,7 +85,7 @@ export default function TeamChat({ userId, isMaster }: { userId: string; isMaste
                       ? 'max-w-[85%] rounded-2xl rounded-br-md px-4 py-2 text-sm text-white whitespace-pre-wrap'
                       : 'max-w-[85%] rounded-2xl rounded-bl-md border border-line bg-card px-4 py-2 text-sm text-ink whitespace-pre-wrap'
                   }
-                  style={mine ? { backgroundColor: '#3A4A6B' } : undefined}
+                  style={mine ? { backgroundColor: '#A9545F' } : undefined}
                 >
                   {m.body}
                 </div>
@@ -114,7 +114,7 @@ export default function TeamChat({ userId, isMaster }: { userId: string; isMaste
           type="submit"
           disabled={sending || !text.trim()}
           className="rounded-full px-5 py-2 text-sm font-medium text-white disabled:opacity-50"
-          style={{ backgroundColor: '#3A4A6B' }}
+          style={{ backgroundColor: '#A9545F' }}
         >
           {sending ? 'Sending…' : 'Send'}
         </button>

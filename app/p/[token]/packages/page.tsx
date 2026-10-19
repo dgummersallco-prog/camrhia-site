@@ -52,7 +52,7 @@ export default async function PackagesPage({ params }: { params: Promise<{ token
 
   const r = result as Record<string, any>
   const sessionTypes: { key: string; label: string }[] = sessionTypesRaw ?? []
-  const bgColor = r.portfolio_bg_color ?? '#FAF8F5'
+  const bgColor = r.portfolio_bg_color ?? '#FBF6F0'
   const isPamphlet = r.pricing_display_mode === 'pamphlet'
   const accent = r.accent_color ?? '#5B6B8C'
 
@@ -81,7 +81,7 @@ export default async function PackagesPage({ params }: { params: Promise<{ token
   const pamphletRowStyle: React.CSSProperties = {
     fontFamily: fontFamilyFor(r.pricing_pamphlet_font, 'system-ui, sans-serif'),
     fontSize: r.pricing_pamphlet_size ?? 15,
-    color: r.pricing_pamphlet_color ?? '#2B2B2B',
+    color: r.pricing_pamphlet_color ?? '#2A1F24',
     fontWeight: r.pricing_pamphlet_bold ? 700 : undefined,
     fontStyle: r.pricing_pamphlet_italic ? 'italic' : undefined,
   }
@@ -89,7 +89,7 @@ export default async function PackagesPage({ params }: { params: Promise<{ token
   const listNameStyle: React.CSSProperties = {
     fontFamily: fontFamilyFor(r.pricing_list_font, "'Fraunces', serif"),
     fontSize: r.pricing_list_size ?? 18,
-    color: r.pricing_list_color ?? '#2B2B2B',
+    color: r.pricing_list_color ?? '#2A1F24',
     fontWeight: r.pricing_list_bold ? 700 : undefined,
     fontStyle: r.pricing_list_italic ? 'italic' : undefined,
   }
@@ -112,7 +112,7 @@ export default async function PackagesPage({ params }: { params: Promise<{ token
             <div key={page.id} style={{ marginTop: pi > 0 && !isPamphlet ? 36 : pi > 0 ? 24 : 0 }}>
               {page.title && (
                 <p style={{
-                  ...(isPamphlet ? pamphletRowStyle : { fontFamily: "'Fraunces', serif", color: '#2B2B2B' }),
+                  ...(isPamphlet ? pamphletRowStyle : { fontFamily: "'Fraunces', serif", color: '#2A1F24' }),
                   fontSize: (isPamphlet ? pamphletRowStyle.fontSize as number : 18) * 1.25,
                   textAlign: 'center', marginBottom: 14,
                 }}>{page.title}</p>

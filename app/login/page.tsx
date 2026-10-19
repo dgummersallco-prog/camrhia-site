@@ -97,7 +97,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full rounded-full bg-twilight py-3 text-sm font-semibold text-white hover:bg-twilight/90 disabled:opacity-50 transition-colors mt-2"
-              style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}
+              style={{ backgroundColor: '#A9545F', color: '#ffffff' }}
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>

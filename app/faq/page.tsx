@@ -121,7 +121,7 @@ export default function FaqPage() {
           <Link
             href="/"
             className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#3A4A6B' }}
+            style={{ backgroundColor: '#A9545F' }}
           >
             Get early access
           </Link>
@@ -138,7 +138,7 @@ export default function FaqPage() {
           <p className="text-base text-ink-soft leading-relaxed">
             Questions about Camrhia for photographers, clients, and affiliates.
             Something missing?{' '}
-            <Link href="/support" className="text-twilight hover:underline" style={{ color: '#3A4A6B' }}>
+            <Link href="/support" className="text-twilight hover:underline" style={{ color: '#A9545F' }}>
               Ask us directly.
             </Link>
           </p>

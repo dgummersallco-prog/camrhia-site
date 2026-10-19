@@ -108,8 +108,8 @@ export default function TeamSection({ client, userId, code }: { client: any; use
         <div className="flex items-baseline justify-between">
           <p className="text-sm font-medium text-ink">Last 6 months</p>
           <p className="text-xs text-ink-soft">
-            <span className="inline-block w-2 h-2 rounded-sm mr-1" style={{ backgroundColor: '#3A4A6B' }} />Yours
-            <span className="inline-block w-2 h-2 rounded-sm ml-3 mr-1" style={{ backgroundColor: '#A9853F' }} />Team
+            <span className="inline-block w-2 h-2 rounded-sm mr-1" style={{ backgroundColor: '#A9545F' }} />Yours
+            <span className="inline-block w-2 h-2 rounded-sm ml-3 mr-1" style={{ backgroundColor: '#8C6B3F' }} />Team
           </p>
         </div>
         <div className="mt-3 flex items-end gap-3 h-32">
@@ -120,8 +120,8 @@ export default function TeamSection({ client, userId, code }: { client: any; use
             return (
               <div key={m.month} className="flex-1 flex flex-col items-center justify-end h-full">
                 <div className="w-full flex flex-col justify-end rounded-t-md overflow-hidden" style={{ height: `${Math.max(h, total > 0 ? 4 : 0)}%` }}>
-                  <div style={{ height: `${teamH}%`, backgroundColor: '#A9853F' }} />
-                  <div style={{ height: `${100 - teamH}%`, backgroundColor: '#3A4A6B' }} />
+                  <div style={{ height: `${teamH}%`, backgroundColor: '#8C6B3F' }} />
+                  <div style={{ height: `${100 - teamH}%`, backgroundColor: '#A9545F' }} />
                 </div>
                 <p className="mt-1 text-[11px] text-ink-soft">{monthLabel(m.month)}</p>
               </div>
@@ -137,7 +137,7 @@ export default function TeamSection({ client, userId, code }: { client: any; use
           <button
             onClick={() => copy(link, 'link')}
             className="rounded-full px-5 py-2 text-sm font-medium text-white"
-            style={{ backgroundColor: '#3A4A6B' }}
+            style={{ backgroundColor: '#A9545F' }}
           >
             {copiedLink ? 'Copied' : 'Copy link'}
           </button>

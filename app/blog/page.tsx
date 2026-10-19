@@ -50,7 +50,7 @@ export default function BlogIndexPage() {
                   <Link
                     href={`/blog/${post.slug}`}
                     className="inline-flex items-center text-sm font-semibold text-twilight hover:underline gap-1"
-                    style={{ color: '#3A4A6B' }}
+                    style={{ color: '#A9545F' }}
                   >
                     Read more →
                   </Link>

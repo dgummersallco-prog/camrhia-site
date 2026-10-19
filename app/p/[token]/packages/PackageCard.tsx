@@ -26,7 +26,7 @@ export function PackageCard({ pkg, nameStyle, priceColor, accent }: {
           {lines.map((line: string, i: number) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: accent, flexShrink: 0 }} />
-              <span style={{ fontFamily: 'system-ui, sans-serif', fontSize: 13.5, color: '#6B6B6B' }}>{line}</span>
+              <span style={{ fontFamily: 'system-ui, sans-serif', fontSize: 13.5, color: '#6F5E64' }}>{line}</span>
             </div>
           ))}
         </div>

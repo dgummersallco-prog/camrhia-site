@@ -42,7 +42,7 @@ export default function BillingCancelPage() {
             <Link
               href="/billing"
               className="inline-flex items-center rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
-              style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}
+              style={{ backgroundColor: '#A9545F', color: '#ffffff' }}
             >
               Try again →
             </Link>
