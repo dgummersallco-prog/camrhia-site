@@ -141,6 +141,24 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
     window.parent?.postMessage({ type: 'camrhia-preview-ready' }, '*')
     return () => window.removeEventListener('message', onMsg)
   }, [])
+  const ov = (r.desktop_overrides ?? {}) as Record<string, number>
+  const [wide, setWide] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    setWide(mq.matches)
+    const h = () => setWide(mq.matches)
+    mq.addEventListener('change', h)
+    return () => mq.removeEventListener('change', h)
+  }, [])
+  const px = (n: number) => `${n}px`
+  const secGap = r.portfolio_section_spacing ?? 14
+  const titleGap = r.portfolio_title_spacing ?? 10
+  const logoH = r.logo_height ?? 40
+  const nameSz = r.title_font_size ?? 34
+  const locSz = r.location_font_size ?? 14
+  const phoneVars = `--sec-gap:${px(secGap)};--title-gap:${px(titleGap)};--logo-h:${px(logoH)};--name-size:${px(nameSz)};--loc-size:${px(locSz)};`
+  const deskVars = `--sec-gap:${px(ov.portfolio_section_spacing ?? secGap)};--title-gap:${px(ov.portfolio_title_spacing ?? titleGap)};--logo-h:${px(ov.logo_height ?? logoH)};--name-size:${px(ov.title_font_size ?? nameSz)};--loc-size:${px(ov.location_font_size ?? locSz)};`
+  const rootCss = `.pv-root{${phoneVars}}@media (min-width:768px){.pv-root{${deskVars}}}`
   const studioName = r.studio_name ?? r.display_name ?? 'Studio'
   const cityLine = [
     [r.service_city, r.service_state].filter(Boolean).join(', '),
@@ -223,6 +241,8 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
     })
   }
 
+  const titleStyle2: React.CSSProperties = (r.title_font_size != null || ov.title_font_size != null) ? { ...titleStyle, fontSize: 'var(--name-size)' } : titleStyle
+  const locationStyle2: React.CSSProperties = (r.location_font_size != null || ov.location_font_size != null) ? { ...locationStyle, fontSize: 'var(--loc-size)' } : locationStyle
   const fontLinks = [...usedFontKeys].map(k => FONT_MAP[k]?.family).filter(Boolean)
 
   return (
@@ -233,7 +253,8 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
       {/^#[0-9a-fA-F]{3,8}$/.test(String(bgColor)) && (
         <style>{`html, body { background-color: ${bgColor}; }`}</style>
       )}
-      <div style={{ minHeight: '100vh', ...bgStyle }}>
+      <style>{rootCss}</style>
+      <div className="pv-root" style={{ minHeight: '100vh', ...bgStyle }}>
         <PortfolioLightbox />
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         {(r.cover_style_web || r.cover_scale_web) ? (
@@ -271,27 +292,27 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
             {photoUrl(r.logo_path) ? (
               <>
-                {r.show_name_with_logo && <h1 style={titleStyle}>{studioName}</h1>}
+                {r.show_name_with_logo && <h1 style={titleStyle2}>{studioName}</h1>}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photoUrl(r.logo_path)!} alt={studioName} style={{ height: r.logo_height ?? 40, objectFit: 'contain', marginBottom: 8 }} />
+                <img src={photoUrl(r.logo_path)!} alt={studioName} style={{ height: 'var(--logo-h)', objectFit: 'contain', marginBottom: 8 }} />
               </>
             ) : (
-              <h1 style={titleStyle}>{studioName}</h1>
+              <h1 style={titleStyle2}>{studioName}</h1>
             )}
-            {cityLine && <p style={locationStyle}>{cityLine}</p>}
+            {cityLine && <p style={locationStyle2}>{cityLine}</p>}
           </div>
         </div>
 
         {/* ── Sections ─────────────────────────────────────────────────── */}
         <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 24px 60px' }}>
           {sectionOrder.map((key: string) => {
-            const spacingStyle: React.CSSProperties = { paddingTop: r.portfolio_section_spacing ?? 14, paddingBottom: 10, maxWidth: 640, margin: '0 auto', width: '100%' }
+            const spacingStyle: React.CSSProperties = { paddingTop: 'var(--sec-gap)', paddingBottom: 10, maxWidth: 640, margin: '0 auto', width: '100%' }
             const wideStyle: React.CSSProperties = { ...spacingStyle, maxWidth: 900 }
 
             if (key === 'about' && r.show_bio_public !== false) {
               return (
                 <div key="about" style={spacingStyle}>
-                  <h2 style={{ ...sectionTitleStyle('about'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
+                  <h2 style={{ ...sectionTitleStyle('about'), marginBottom: 'var(--title-gap)' }}>
                     {sectionTitles.about || 'About'}
                   </h2>
                   {r.show_about_photo !== false && photoUrl(r.about_photo_path ?? r.avatar_path) && (
@@ -306,7 +327,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
             if (key === 'openings' && r.show_availability_public !== false) {
               return (
                 <div key="openings" style={spacingStyle}>
-                  <h2 style={{ ...sectionTitleStyle('openings'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
+                  <h2 style={{ ...sectionTitleStyle('openings'), marginBottom: 'var(--title-gap)' }}>
                     {sectionTitles.openings || 'Openings'}
                   </h2>
                   {r.openings_display_mode === 'badge' ? (
@@ -348,7 +369,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
               if (weddings.length === 0) return null
               return (
                 <div key="featured_photos" style={wideStyle}>
-                  <h2 style={{ ...sectionTitleStyle('featured_photos'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
+                  <h2 style={{ ...sectionTitleStyle('featured_photos'), marginBottom: 'var(--title-gap)' }}>
                     {sectionTitles.featured_photos || 'Featured photos'}
                   </h2>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
@@ -597,7 +618,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
               const hasCoverPhoto = !!r.pricing_cover_image_path
               return (
                 <div key="pricing" style={wideStyle}>
-                  <h2 style={{ ...sectionTitleStyle('pricing'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
+                  <h2 style={{ ...sectionTitleStyle('pricing'), marginBottom: 'var(--title-gap)' }}>
                     {sectionTitles.pricing || 'Packages'}
                   </h2>
                   <Link href={`/p/${token}/packages`} style={{
@@ -633,7 +654,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
             if (key === 'testimonials' && (r.testimonials?.length ?? 0) > 0 && r.show_testimonials_public !== false) {
               return (
                 <div key="testimonials" style={wideStyle}>
-                  <h2 style={{ ...sectionTitleStyle('testimonials'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
+                  <h2 style={{ ...sectionTitleStyle('testimonials'), marginBottom: 'var(--title-gap)' }}>
                     {sectionTitles.testimonials || 'Testimonials'}
                   </h2>
                   <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8 }}>
@@ -665,7 +686,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
               ]
               return (
                 <div key="faq" style={spacingStyle}>
-                  <h2 style={{ ...sectionTitleStyle('faq'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
+                  <h2 style={{ ...sectionTitleStyle('faq'), marginBottom: 'var(--title-gap)' }}>
                     {sectionTitles.faq || 'FAQ'}
                   </h2>
                   <FaqAccordion
@@ -694,7 +715,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
               }
               return (
                 <div key="links" style={spacingStyle}>
-                  <h2 style={{ ...sectionTitleStyle('links'), marginBottom: r.portfolio_title_spacing ?? 10 }}>
+                  <h2 style={{ ...sectionTitleStyle('links'), marginBottom: 'var(--title-gap)' }}>
                     {sectionTitles.links || 'Links'}
                   </h2>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
@@ -723,7 +744,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
           })}
 
           {(r.reviews?.length ?? 0) > 0 && (
-            <div style={{ paddingTop: r.portfolio_section_spacing ?? 14, paddingBottom: 10, maxWidth: 640, margin: '0 auto', width: '100%' }}>
+            <div style={{ paddingTop: 'var(--sec-gap)', paddingBottom: 10, maxWidth: 640, margin: '0 auto', width: '100%' }}>
               <h2 style={{ fontFamily: "system-ui, sans-serif", fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8A8A8A', textAlign: 'center', marginBottom: 14 }}>
                 What clients say
               </h2>
@@ -748,12 +769,12 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
           bg: r.message_btn_bg_color ?? r.accent_color ?? '#A9545F',
           textColor: r.message_btn_color ?? null,
           fontFamily: fontFamilyFor(r.message_btn_font, "'Fraunces', serif"),
-          fontSize: r.message_btn_font_size ?? 15,
+          fontSize: wide && ov.message_btn_font_size != null ? ov.message_btn_font_size : (r.message_btn_font_size ?? 15),
           bold: r.message_btn_bold,
           italic: r.message_btn_italic,
           text: r.message_btn_text,
           showIcon: r.message_btn_show_icon,
-          width: r.message_btn_width,
+          width: wide && ov.message_btn_width != null ? ov.message_btn_width : r.message_btn_width,
           align: r.message_btn_align,
           shadow: r.message_btn_shadow,
           shadowColor: r.message_btn_shadow_color,

@@ -33,6 +33,10 @@ type Profile = {
   cover_style_web: string | null
   cover_scale_web: number | null
   logo_height: number | null
+  desktop_overrides: Record<string, number> | null
+  title_font_size: number | null
+  location_font_size: number | null
+  portfolio_title_spacing: number | null
   show_name_with_logo: boolean | null
   openings_display_mode: string | null
   openings_badge_text: string | null
@@ -69,7 +73,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -293,6 +297,10 @@ export default function PortfolioEditorPage() {
       cover_scale_web: form.cover_scale_web ?? null,
       logo_height: form.logo_height ?? null,
       show_name_with_logo: form.show_name_with_logo === true,
+      desktop_overrides: form.desktop_overrides ?? {},
+      title_font_size: form.title_font_size ?? null,
+      location_font_size: form.location_font_size ?? null,
+      portfolio_title_spacing: form.portfolio_title_spacing ?? 10,
       openings_display_mode: form.openings_display_mode ?? 'date_check',
       openings_badge_text: t(form.openings_badge_text),
       openings_badge_color: t(form.openings_badge_color),
@@ -561,6 +569,47 @@ export default function PortfolioEditorPage() {
   }
 
   function editorBody(key: string): ReactNode {
+    const isDesk = device === 'desktop'
+    const ovMap = (form?.desktop_overrides ?? {}) as Record<string, number>
+    const eff = (k: string, phoneVal: number): number => (isDesk && ovMap[k] !== undefined ? ovMap[k] : phoneVal)
+    const setV = (phoneField: keyof Profile, k: string, v: number) => {
+      if (isDesk) setField('desktop_overrides', { ...ovMap, [k]: v })
+      else setField(phoneField, v as never)
+    }
+    const matchPhone = (k: string) => {
+      const next = { ...ovMap }
+      delete next[k]
+      setField('desktop_overrides', next)
+    }
+    const deviceBar = () => (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex gap-1 rounded-full border border-line bg-paper p-1">
+          {(['phone', 'desktop'] as const).map((d) => (
+            <button key={d} type="button" onClick={() => setDevice(d)}
+              className={`rounded-full px-4 py-1 text-sm capitalize transition ${device === d ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}>
+              {d}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-ink-soft">Editing the {isDesk ? 'desktop' : 'phone'} size</p>
+      </div>
+    )
+    const deviceSlider = (title: string, phoneField: keyof Profile, ovKey: string, min: number, max: number, step: number, phoneDefault: number, factor = 1, unit = 'px') => {
+      const phoneVal = Number((form as unknown as Record<string, unknown>)?.[phoneField as string] ?? phoneDefault)
+      const hasOv = isDesk && ovMap[ovKey] !== undefined
+      const val = eff(ovKey, phoneVal)
+      return (
+        <div>
+          <div className="flex items-center justify-between">
+            <p className={label}>{title}</p>
+            {hasOv && <button type="button" className="text-xs font-medium text-twilight hover:underline" onClick={() => matchPhone(ovKey)}>Match phone</button>}
+          </div>
+          <input type="range" min={min} max={max} step={step} value={Math.round(val * factor)}
+            onChange={(e) => setV(phoneField, ovKey, Number(e.target.value) / factor)} className="w-full accent-[var(--color-twilight)]" />
+          <p className="text-xs text-ink-soft">{Math.round(val * factor)} {unit} · {isDesk ? 'desktop' : 'phone'}{isDesk && !hasOv ? ' (same as phone)' : ''}</p>
+        </div>
+      )
+    }
     if (!form) return null
     const sec = (children: ReactNode) => <section className={`${card} space-y-4`}>{children}</section>
     switch (key) {
@@ -683,10 +732,12 @@ export default function PortfolioEditorPage() {
       case 'name':
         return sec(
           <>
+            {deviceBar()}
             <div>
               <label className={label}>Studio name</label>
               <input className={input} value={form.studio_name ?? ''} onChange={(e) => setField('studio_name', e.target.value)} />
             </div>
+            {deviceSlider('Name size', 'title_font_size', 'title_font_size', 16, 96, 1, 34)}
             <div>
               <p className={label}>Logo</p>
               <p className="mb-1 text-xs text-ink-soft">Shows at the top of your portfolio in place of your studio name.</p>
@@ -709,12 +760,7 @@ export default function PortfolioEditorPage() {
               </div>
               {form.logo_path && (
                 <div className="mt-4 space-y-4">
-                  <div>
-                    <p className={label}>Logo size</p>
-                    <input type="range" min={24} max={240} step={4} value={form.logo_height ?? 40}
-                      onChange={(e) => setField('logo_height', Number(e.target.value))} className="w-full accent-[var(--color-twilight)]" />
-                    <p className="text-xs text-ink-soft">{form.logo_height ?? 40} px tall. Watch the preview as you slide.</p>
-                  </div>
+                  {deviceSlider('Logo size (height)', 'logo_height', 'logo_height', 24, 320, 4, 40)}
                   <label className="flex items-center gap-2 text-sm text-ink">
                     <input type="checkbox" checked={form.show_name_with_logo === true} onChange={(e) => setField('show_name_with_logo', e.target.checked)} />
                     Also show my studio name above the logo
@@ -738,6 +784,8 @@ export default function PortfolioEditorPage() {
               </div>
             </div>
             <ColorField swatches={brandSwatches} title="Location text color" value={form.location_color} fallback="#202020" onChange={(v) => setField('location_color', v)} />
+            {deviceBar()}
+            {deviceSlider('Location text size', 'location_font_size', 'location_font_size', 10, 36, 1, 14)}
           </>,
         )
       case 'master':
@@ -771,14 +819,14 @@ export default function PortfolioEditorPage() {
         return sec(
           <div>
             <label className={label}>Space between sections</label>
-            <input type="range" min={0} max={48} value={form.portfolio_section_spacing ?? 14}
-              onChange={(e) => setField('portfolio_section_spacing', Number(e.target.value))} className="w-full" />
-            <p className="mt-1 text-xs text-ink-soft">{form.portfolio_section_spacing ?? 14} px</p>
+            {deviceBar()}
+            {deviceSlider('Space between sections', 'portfolio_section_spacing', 'portfolio_section_spacing', 0, 120, 2, 14)}
+            {deviceSlider('Space under section titles', 'portfolio_title_spacing', 'portfolio_title_spacing', 0, 60, 2, 10)}
           </div>,
         )
       case 'message': {
-        const bw = Math.min(1, Math.max(0.4, Number(form.message_btn_width ?? 0.8) || 0.8))
-        const bs = Math.min(24, Math.max(12, Number(form.message_btn_font_size ?? 15) || 15))
+        const bw = Math.min(1, Math.max(0.4, Number(eff('message_btn_width', form.message_btn_width ?? 0.8)) || 0.8))
+        const bs = Math.min(32, Math.max(12, Number(eff('message_btn_font_size', form.message_btn_font_size ?? 15)) || 15))
         const al = form.message_btn_align ?? 'center'
         const bgc = form.message_btn_bg_color ?? form.accent_color ?? '#A9545F'
         const tc = form.message_btn_color ?? '#FFFFFF'
@@ -800,16 +848,9 @@ export default function PortfolioEditorPage() {
             </div>
             <ColorField swatches={brandSwatches} title="Button color" value={form.message_btn_bg_color ?? form.accent_color} fallback="#A9545F" onChange={(v) => setField('message_btn_bg_color', v)} />
             <ColorField swatches={brandSwatches} title="Text color" value={form.message_btn_color} fallback="#FFFFFF" onChange={(v) => setField('message_btn_color', v)} />
-            <div>
-              <p className={label}>Text size</p>
-              <input type="range" min={12} max={24} step={1} value={bs} onChange={(e) => setField('message_btn_font_size', Number(e.target.value))} className="w-full accent-[var(--color-twilight)]" />
-              <p className="text-xs text-ink-soft">{bs} pt</p>
-            </div>
-            <div>
-              <p className={label}>Button width</p>
-              <input type="range" min={40} max={100} step={5} value={Math.round(bw * 100)} onChange={(e) => setField('message_btn_width', Number(e.target.value) / 100)} className="w-full accent-[var(--color-twilight)]" />
-              <p className="text-xs text-ink-soft">{Math.round(bw * 100)}% of the page width</p>
-            </div>
+            {deviceBar()}
+            {deviceSlider('Text size', 'message_btn_font_size', 'message_btn_font_size', 12, 32, 1, 15, 1, 'pt')}
+            {deviceSlider('Button width', 'message_btn_width', 'message_btn_width', 40, 100, 5, 0.8, 100, '%')}
             <div>
               <p className={label}>Text position</p>
               <div className="flex gap-2">
