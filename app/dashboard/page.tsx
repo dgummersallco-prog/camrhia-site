@@ -8,7 +8,9 @@ import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 
 type Gal = { id: string; title: string; status: 'draft' | 'published'; gallery_photos: { count: number }[] }
-type Sess = { id: string; names: string | null; wedding_date: string | null; session_type: string | null; gallery_due_date: string | null; gallery_url: string | null }
+type Sess = { id: string; names: string | null; wedding_date: string | null; session_type: string | null; gallery_due_date: string | null; gallery_url: string | null; balance: string | null; paid_in_full: boolean | null }
+type Notif = { id: string; title: string | null; body: string | null; wedding_id: string | null }
+type Unsigned = { wedding_id: string; sent_at: string | null }
 type Activity = { id: string; title: string; when: string; thumb: string | null }
 
 function greeting(): string {
@@ -44,6 +46,8 @@ export default function DashboardPage() {
   const [sessions, setSessions] = useState<Sess[]>([])
   const [usedBytes, setUsedBytes] = useState(0)
   const [limitBytes, setLimitBytes] = useState(0)
+  const [notifs, setNotifs] = useState<Notif[]>([])
+  const [unsigned, setUnsigned] = useState<Unsigned[]>([])
 
   useEffect(() => {
     async function load() {
@@ -60,7 +64,7 @@ export default function DashboardPage() {
         sb.from('gallery_favorites').select('id, gallery_id, photo_id, created_at').order('created_at', { ascending: false }).limit(8),
         sb.from('portfolio_photos').select('id', { count: 'exact', head: true }),
         sb.from('gallery_favorites').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
-        sb.from('weddings').select('id, names, wedding_date, session_type, gallery_due_date, gallery_url').eq('owner_id', uid),
+        sb.from('weddings').select('id, names, wedding_date, session_type, gallery_due_date, gallery_url, balance, paid_in_full').eq('owner_id', uid),
         sb.rpc('storage_usage'),
       ])
 
@@ -102,6 +106,16 @@ export default function DashboardPage() {
       setSessions((wed.data ?? []) as unknown as Sess[])
       setUsedBytes(((su.data ?? []) as { bytes: number | string }[]).reduce((n, r) => n + Number(r.bytes), 0))
       setLimitBytes(storageLimitBytes((prof.data?.plan_tier as string | null) ?? null, (prof.data?.storage_addon_packs as number | null) ?? 0))
+      const { data: nrows } = await sb
+        .from('notifications')
+        .select('id, title, body, wedding_id')
+        .eq('user_id', uid)
+        .eq('read', false)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setNotifs((nrows ?? []) as Notif[])
+      const { data: crows } = await sb.from('contracts').select('wedding_id, sent_at').eq('owner_id', uid).eq('status', 'sent')
+      setUnsigned((crows ?? []) as Unsigned[])
       try {
         setSiteShared(localStorage.getItem('camrhia_site_shared') === '1')
         setHideSetup(localStorage.getItem('camrhia_hide_setup') === '1')
@@ -149,7 +163,27 @@ export default function DashboardPage() {
     .filter((x) => x.wedding_date && x.wedding_date >= todayStr)
     .sort((a, b) => (a.wedding_date! < b.wedding_date! ? -1 : 1))
     .slice(0, 6)
-  const attention: { key: string; text: string; href: string; cta: string }[] = [
+  async function markRead(id: string) {
+    setNotifs((n) => n.filter((x) => x.id !== id))
+    if (supabase) await supabase.from('notifications').update({ read: true }).eq('id', id)
+  }
+  const owed = sessions.filter((x) => {
+    if (x.paid_in_full || !x.wedding_date || x.wedding_date >= todayStr || !x.balance) return false
+    return parseFloat(String(x.balance).replace(/[^0-9.]/g, '')) > 0
+  })
+  const attention: { key: string; text: string; href: string; cta: string; notifId?: string }[] = [
+    ...notifs.map((n) => ({
+      key: `n${n.id}`,
+      text: [n.title, n.body].filter(Boolean).join(': '),
+      href: n.wedding_id ? `/sessions/${n.wedding_id}` : '/dashboard',
+      cta: n.wedding_id ? 'Open session' : 'Got it',
+      notifId: n.id,
+    })),
+    ...unsigned.map((u) => {
+      const sx = sessions.find((x) => x.id === u.wedding_id)
+      return { key: `c${u.wedding_id}`, text: `${sx?.names || 'A session'}: contract sent, waiting for a signature`, href: `/sessions/${u.wedding_id}`, cta: 'Open contract' }
+    }),
+    ...owed.map((x) => ({ key: `b${x.id}`, text: `${x.names || 'A session'}: balance of ${x.balance} still outstanding`, href: `/sessions/${x.id}`, cta: 'Open session' })),
     ...dueGalleries.map((x) => ({
       key: `due${x.id}`,
       text: `${x.names || 'A session'}: gallery ${x.gallery_due_date! < todayStr ? 'was due' : 'is due'} ${fmtDay(x.gallery_due_date!)}`,
@@ -181,11 +215,18 @@ export default function DashboardPage() {
               <section className={`${card} mt-8`}>
                 <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Needs your attention</p>
                 <ul className="divide-y divide-line">
-                  {attention.slice(0, 5).map((a) => (
+                  {attention.slice(0, 8).map((a) => (
                     <li key={a.key} className="flex flex-wrap items-center gap-3 py-3">
                       <span className="h-2 w-2 shrink-0 rounded-full bg-brass" />
                       <p className="min-w-0 flex-1 text-sm text-ink">{a.text}</p>
-                      <Link href={a.href} className="shrink-0 text-sm font-medium text-twilight hover:underline">{a.cta} →</Link>
+                      <Link
+                        href={a.href}
+                        onClick={() => { if (a.notifId) markRead(a.notifId) }}
+                        className="shrink-0 text-sm font-medium text-twilight hover:underline"
+                      >{a.cta} →</Link>
+                      {a.notifId && (
+                        <button type="button" onClick={() => markRead(a.notifId!)} className="shrink-0 text-xs text-ink-soft hover:text-ink">Dismiss</button>
+                      )}
                     </li>
                   ))}
                 </ul>
