@@ -1,0 +1,253 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import { ClientHeader } from '@/app/components/ClientHeader'
+
+type Gallery = { token: string; title: string | null; has_pin: boolean }
+type Portal = {
+  wedding_id: string; session_type: string; names: string | null; wedding_date: string | null
+  venue: string | null; city: string | null; state: string | null
+  studio_name: string | null; display_name: string | null; galleries: Gallery[] | null
+}
+type Mine = {
+  wedding_id: string; share_token: string | null; gallery_password: string | null
+  contract_status: string | null; has_contract: boolean; has_questionnaire: boolean; has_timeline: boolean
+  questionnaire_answered: number; questionnaire_total: number
+  timeline_approved: boolean | null; timeline_shared_at: string | null
+}
+type Detail = {
+  package_name: string | null; coverage: string | null; deliverables: string | null; guests: number | null
+  session_start_time: string | null; session_length_hours: number | null
+  total_price: number | null; timeline_approved_at: string | null
+}
+type Pay = { id: string; label: string | null; amount: number; due_date: string | null; status: string | null; paid_at: string | null; method: string | null; sent_by_couple: boolean | null }
+type Shot = { id: string; label: string; done: boolean }
+type Contact = { id: string; name: string; role: string | null; phone: string | null }
+
+const TYPE_LABELS: Record<string, string> = {
+  wedding: 'Wedding', engagement: 'Engagement', proposal: 'Proposal', maternity: 'Maternity', newborn: 'Newborn',
+  family: 'Family', senior: 'Senior', headshots: 'Headshots', branding: 'Branding', graduation: 'Graduation',
+  sports: 'Sports', team: 'Team', boudoir: 'Boudoir',
+}
+const label = (t: string) => TYPE_LABELS[t] ?? t.charAt(0).toUpperCase() + t.slice(1).replace(/_/g, ' ')
+const day = (d: string | null) => (d ? new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'Date to be set')
+const short = (d: string | null) => (d ? new Date(d + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '')
+const money = (n: number) => '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+const card = 'rounded-2xl border border-line bg-card p-5'
+const btn = 'inline-block rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink transition hover:border-twilight'
+const btnPrimary = 'inline-block rounded-full bg-twilight px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50'
+
+function Row({ k, v }: { k: string; v: React.ReactNode }) {
+  if (v === null || v === undefined || v === '') return null
+  return (
+    <div className="flex justify-between gap-4 py-2.5 text-sm">
+      <span className="text-ink-soft">{k}</span>
+      <span className="text-right text-ink">{v}</span>
+    </div>
+  )
+}
+
+export default function ClientSessionPage() {
+  const router = useRouter()
+  const params = useParams<{ id: string }>()
+  const id = params.id
+  const [row, setRow] = useState<Portal | null>(null)
+  const [mine, setMine] = useState<Mine | null>(null)
+  const [d, setD] = useState<Detail | null>(null)
+  const [pays, setPays] = useState<Pay[]>([])
+  const [shots, setShots] = useState<Shot[]>([])
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [ready, setReady] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [missing, setMissing] = useState(false)
+
+  const load = useCallback(async () => {
+    const sb = supabase
+    if (!sb) return
+    const { data: sess } = await sb.auth.getSession()
+    if (!sess.session) { router.replace(`/login?next=/my/session/${id}`); return }
+    const [a, b] = await Promise.all([sb.rpc('client_portal_sessions'), sb.rpc('get_my_wedding')])
+    const r = ((a.data ?? []) as Portal[]).find((x) => x.wedding_id === id) ?? null
+    const m = ((b.data ?? []) as Mine[]).find((x) => x.wedding_id === id) ?? null
+    if (!r) { setMissing(true); setReady(true); return }
+    setRow(r)
+    setMine(m)
+    const [w, p, s, c] = await Promise.all([
+      sb.from('weddings').select('package_name, coverage, deliverables, guests, session_start_time, session_length_hours, total_price, timeline_approved_at').eq('id', id).maybeSingle(),
+      sb.from('payment_schedule').select('id, label, amount, due_date, status, paid_at, method, sent_by_couple').eq('wedding_id', id).order('sort_order', { ascending: true }),
+      sb.from('shot_list').select('id, label, done').eq('wedding_id', id).order('sort_order', { ascending: true }),
+      sb.from('wedding_contacts').select('id, name, role, phone').eq('wedding_id', id).order('sort_order', { ascending: true }),
+    ])
+    setD((w.data ?? null) as Detail | null)
+    setPays((p.data ?? []) as Pay[])
+    setShots((s.data ?? []) as Shot[])
+    setContacts((c.data ?? []) as Contact[])
+    setReady(true)
+  }, [id, router])
+
+  useEffect(() => { load() }, [load])
+
+  async function approve() {
+    const sb = supabase
+    if (!sb || !mine?.share_token) return
+    setBusy(true)
+    setError(null)
+    const { error: e } = await sb.rpc('approve_timeline', { p_token: mine.share_token })
+    setBusy(false)
+    if (e) { setError(e.message); return }
+    load()
+  }
+
+  const studio = row ? (row.studio_name || row.display_name || 'Your photographer') : ''
+  const place = row ? [row.venue, [row.city, row.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ') : ''
+  const paidTotal = pays.filter((x) => x.status === 'paid').reduce((n, x) => n + Number(x.amount), 0)
+  const remaining = pays.filter((x) => x.status !== 'paid').reduce((n, x) => n + Number(x.amount), 0)
+  const timelineShared = !!mine?.timeline_shared_at
+  const approved = !!mine?.timeline_approved
+
+  return (
+    <div className="min-h-screen bg-paper lg:pl-60">
+      <ClientHeader active="sessions" />
+      <main className="mx-auto max-w-4xl px-6 py-10">
+        <Link href="/my" className="text-sm text-ink-soft hover:text-ink">← Home</Link>
+        {!ready ? (
+          <p className="mt-6 text-sm text-ink-soft">Loading…</p>
+        ) : missing || !row ? (
+          <p className={`${card} mt-6 text-ink-soft`}>We could not find that session.</p>
+        ) : (
+          <>
+            <div className="mb-8 mt-4">
+              <p className="font-mono text-xs uppercase tracking-widest text-brass">{label(row.session_type)}</p>
+              <h1 className="mt-1 font-fraunces text-3xl font-semibold text-ink md:text-4xl">{studio}</h1>
+              <p className="mt-1 text-ink-soft">{day(row.wedding_date)}{place ? ` · ${place}` : ''}</p>
+            </div>
+            {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+
+            <div className="mb-6 flex flex-wrap gap-2">
+              {mine?.has_contract && (mine.contract_status === 'sent' || mine.contract_status === 'signed') && (
+                <Link href={`/my/contract/${id}`} className={mine.contract_status === 'sent' ? btnPrimary : btn}>
+                  {mine.contract_status === 'signed' ? 'View signed contract' : 'Review and sign contract'}
+                </Link>
+              )}
+              {mine?.has_questionnaire && mine.questionnaire_total > 0 && (
+                <Link href={`/my/questionnaire/${id}`} className={btn}>
+                  {mine.questionnaire_answered >= mine.questionnaire_total ? 'Review questionnaire' : `Questionnaire (${mine.questionnaire_answered}/${mine.questionnaire_total})`}
+                </Link>
+              )}
+              {(row.galleries ?? []).map((g) => (
+                <a key={g.token} href={`/g/${g.token}`} className={btnPrimary}>{g.title || 'View your photos'}</a>
+              ))}
+              <Link href={`/my/messages/${id}?s=${encodeURIComponent(studio)}`} className={btn}>Message {studio}</Link>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <section className={card}>
+                <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Details</p>
+                <div className="divide-y divide-line">
+                  <Row k="Package" v={d?.package_name} />
+                  <Row k="Coverage" v={d?.coverage} />
+                  <Row k="Deliverables" v={d?.deliverables} />
+                  <Row k="Start time" v={d?.session_start_time} />
+                  <Row k="Length" v={d?.session_length_hours ? `${d.session_length_hours} hour${Number(d.session_length_hours) === 1 ? '' : 's'}` : null} />
+                  <Row k="Guests" v={d?.guests} />
+                  <Row k="Total" v={d?.total_price ? money(d.total_price) : null} />
+                </div>
+                {!d?.package_name && !d?.session_start_time && !d?.total_price && (
+                  <p className="text-sm text-ink-soft">Your photographer will add the details here.</p>
+                )}
+              </section>
+
+              <section className={card}>
+                <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Payments</p>
+                {pays.length === 0 ? (
+                  <p className="text-sm text-ink-soft">No payment schedule yet.</p>
+                ) : (
+                  <>
+                    <ul className="divide-y divide-line">
+                      {pays.map((p) => (
+                        <li key={p.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                          <span className="min-w-0">
+                            <span className="block truncate text-ink">{p.label || 'Payment'}</span>
+                            <span className="block text-xs text-ink-soft">
+                              {p.status === 'paid'
+                                ? `Paid${p.paid_at ? ' ' + new Date(p.paid_at).toLocaleDateString() : ''}${p.method ? ' · ' + p.method : ''}`
+                                : p.sent_by_couple ? 'You marked this as sent'
+                                : p.due_date ? `Due ${short(p.due_date)}` : 'Unpaid'}
+                            </span>
+                          </span>
+                          <span className={p.status === 'paid' ? 'text-emerald-700' : 'text-ink'}>{money(p.amount)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-3 flex justify-between border-t border-line pt-3 text-sm">
+                      <span className="text-ink-soft">Paid {money(paidTotal)}</span>
+                      <span className="font-semibold text-ink">{remaining > 0 ? `${money(remaining)} remaining` : 'Paid in full'}</span>
+                    </div>
+                  </>
+                )}
+              </section>
+
+              {mine?.has_timeline && (
+                <section className={card}>
+                  <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Timeline</p>
+                  {!timelineShared ? (
+                    <p className="text-sm text-ink-soft">Your photographer will share your session timeline here.</p>
+                  ) : (
+                    <>
+                      <div className="divide-y divide-line">
+                        <Row k="Start time" v={d?.session_start_time} />
+                        <Row k="Length" v={d?.session_length_hours ? `${d.session_length_hours} hours` : null} />
+                      </div>
+                      {approved ? (
+                        <p className="mt-3 text-sm text-emerald-700">
+                          Approved{d?.timeline_approved_at ? ` on ${new Date(d.timeline_approved_at).toLocaleDateString()}` : ''}.
+                        </p>
+                      ) : (
+                        <button type="button" disabled={busy} onClick={approve} className={`${btnPrimary} mt-4`}>{busy ? 'Approving…' : 'Approve timeline'}</button>
+                      )}
+                    </>
+                  )}
+                </section>
+              )}
+
+              {shots.length > 0 && (
+                <section className={card}>
+                  <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Shot list</p>
+                  <ul className="divide-y divide-line">
+                    {shots.map((s) => (
+                      <li key={s.id} className="flex items-center gap-3 py-2.5 text-sm">
+                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] ${s.done ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-line'}`}>{s.done ? '✓' : ''}</span>
+                        <span className={s.done ? 'text-ink-soft line-through' : 'text-ink'}>{s.label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {contacts.length > 0 && (
+                <section className={card}>
+                  <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Key contacts</p>
+                  <ul className="divide-y divide-line">
+                    {contacts.map((c) => (
+                      <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                        <span>
+                          <span className="block text-ink">{c.name}</span>
+                          {c.role && <span className="block text-xs text-ink-soft">{c.role}</span>}
+                        </span>
+                        {c.phone && <a href={`tel:${c.phone}`} className="text-twilight hover:underline">{c.phone}</a>}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          </>
+        )}
+      </main>
+    </div>
+  )
+}
