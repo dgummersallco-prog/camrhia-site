@@ -1057,6 +1057,10 @@ export default function PortfolioEditorPage() {
               </div>
             </div>
 
+            <div className="mb-6 rounded-2xl border border-line bg-card p-4 text-sm text-ink-soft">
+              <span className="font-medium text-ink">This is your app profile.</span> It&apos;s what clients see when they shop for photographers on Camrhia, so it&apos;s kept short and quick on purpose. For galleries, your story and more, build your <a href="/website" className="text-twilight underline">website</a>.
+            </div>
+
             <div className="grid gap-8 lg:grid-cols-[minmax(0,540px)_1fr]">
               {/* Form */}
               <div className="space-y-5">

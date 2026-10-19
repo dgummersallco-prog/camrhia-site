@@ -65,8 +65,13 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   const aboutPhoto = photoUrl(r.about_photo_path ?? r.avatar_path)
   const st: Record<string, string> = r.section_titles ?? {}
 
-  const galleries = ((r.featured_weddings ?? []) as any[])
-    .map((w) => ({ id: w.id, title: w.title as string | null, photos: [...(w.photos ?? [])].sort((a: any, b: any) => a.sort_order - b.sort_order) }))
+  const galleries = ((r.site_galleries ?? []) as any[])
+    .map((g) => ({
+      id: g.id as string,
+      title: (g.title ?? '') as string,
+      cover_photo_id: (g.cover_photo_id ?? null) as string | null,
+      photos: [...(g.photos ?? [])].sort((x: any, y: any) => (x.sort_order ?? 0) - (y.sort_order ?? 0)) as any[],
+    }))
     .filter((g) => g.photos.length > 0)
   const packages = ((r.packages ?? []) as any[]).filter((p) => p.show_public !== false && !!p.page_id)
   const quotes: { text: string; who: string }[] = [
@@ -235,20 +240,22 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           </div>, true)}
 
         {/* ── Portfolio ── */}
-        {hasPortfolio && sec('portfolio', st.featured_photos || 'Portfolio',
-          <div className="flex flex-col gap-16">
-            {galleries.map((g) => (
-              <div key={g.id}>
-                {g.title && <h3 className="mb-6 text-center text-2xl" style={{ ...headStyle, color: soft }}>{g.title}</h3>}
-                <div className="columns-2 gap-3 md:columns-3">
-                  {g.photos.map((p: any) => {
-                    const u = photoUrl(p.storage_path)
-                    // eslint-disable-next-line @next/next/no-img-element
-                    return u ? <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="mb-3 block w-full" style={{ cursor: 'zoom-in' }} /> : null
-                  })}
-                </div>
-              </div>
-            ))}
+        {hasPortfolio && sec('portfolio', 'Portfolio',
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {galleries.map((g) => {
+              const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
+              const u = photoUrl(cover?.storage_path)
+              return (
+                <a key={g.id} href={`/site/${token}/g/${g.id}`} className="group relative block overflow-hidden" style={{ aspectRatio: '4/5', background: '#E5E1DB' }}>
+                  {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
+                  <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+                    <p className="text-3xl" style={headStyle}>{g.title}</p>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.22em] opacity-90">{g.photos.length} photos →</p>
+                  </div>
+                </a>
+              )
+            })}
           </div>)}
 
         {/* ── Investment ── */}

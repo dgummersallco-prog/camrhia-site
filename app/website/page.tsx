@@ -188,6 +188,12 @@ export default function WebsitePage() {
             <div className="grid gap-8 lg:grid-cols-[minmax(0,460px)_1fr]">
               <div className="space-y-5">
                 <section className={card}>
+                  <h2 className="mb-1 font-fraunces text-lg font-semibold text-ink">Your galleries</h2>
+                  <p className="mb-4 text-sm text-ink-soft">Make a gallery for each kind of work: Weddings, Seniors, Families. Each one gets its own page on your website, with as many photos as you like.</p>
+                  <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
+                </section>
+
+                <section className={card}>
                   <h2 className="mb-1 font-fraunces text-lg font-semibold text-ink">Pick a look</h2>
                   <p className="mb-4 text-sm text-ink-soft">Same content, different feel. Switch any time.</p>
                   <div className="grid grid-cols-3 gap-3">
@@ -249,7 +255,7 @@ export default function WebsitePage() {
                   <h2 className="mb-1 font-fraunces text-lg font-semibold text-ink">Your content</h2>
                   <p className="mb-4 text-sm text-ink-soft">Your website shows what you already have. Edit it here and it updates everywhere.</p>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <Link href="/portfolio/photos" className={btnGhost + ' text-center'}>Photos</Link>
+                    <Link href="/website/galleries" className={btnGhost + ' text-center'}>Galleries</Link>
                     <Link href="/portfolio/packages" className={btnGhost + ' text-center'}>Packages &amp; prices</Link>
                     <Link href="/portfolio/testimonials" className={btnGhost + ' text-center'}>Testimonials</Link>
                     <Link href="/portfolio" className={btnGhost + ' text-center'}>Bio, FAQ &amp; links</Link>
