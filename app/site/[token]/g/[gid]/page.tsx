@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { PortfolioLightbox } from "../../../../p/[token]/PortfolioLightbox"
+import { resolveTheme } from "@/lib/siteTheme"
 
 export const dynamic = 'force-dynamic'
 
@@ -9,12 +10,6 @@ const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   : ''
 function photoUrl(path: string | null | undefined): string | null {
   return path ? `${STORAGE_BASE}${path}` : null
-}
-
-const PAIRS: Record<string, { head: string; body: string; css: string }> = {
-  serif: { head: "'Cormorant Garamond', Georgia, serif", body: "'Montserrat', system-ui, sans-serif", css: 'family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600' },
-  modern: { head: "'Josefin Sans', system-ui, sans-serif", body: "'Work Sans', system-ui, sans-serif", css: 'family=Josefin+Sans:wght@300;400;600&family=Work+Sans:wght@300;400;500' },
-  romantic: { head: "'Playfair Display', Georgia, serif", body: "'Lora', Georgia, serif", css: 'family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lora:wght@400;500' },
 }
 
 async function loadProfile(token: string) {
@@ -50,16 +45,13 @@ export default async function SiteGalleryPage({ params }: { params: Promise<{ to
     )
   }
 
-  const pair = PAIRS[r.site_font_pair as string] ?? PAIRS.serif
-  const accent = /^#[0-9a-fA-F]{3,8}$/.test(String(r.site_accent ?? '')) ? (r.site_accent as string) : (r.accent_color ?? '#A9545F')
-  const tpl = r.site_template
-  const bg = tpl === 'minimal' ? '#FFFFFF' : tpl === 'split' ? '#F6F1EA' : '#FAF7F2'
-  const ink = '#2A1F24'
-  const soft = '#6F5E64'
+  const t = resolveTheme(r)
+  const { accent, bg, ink, soft, line } = t
   const name: string = r.studio_name ?? r.display_name ?? 'Studio'
-  const head = { fontFamily: pair.head, fontWeight: 500, letterSpacing: '0.01em' } as const
+  const head = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' } as const
   const photos = [...gal.photos].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
   const others = galleries.filter((g) => g.id !== gid)
+
   const secs = [...(gal.sections ?? [])].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
   const secIds = new Set(secs.map((x: any) => x.id))
   const groups: { id: string; title: string | null; photos: any[] }[] = []
@@ -70,17 +62,28 @@ export default async function SiteGalleryPage({ params }: { params: Promise<{ to
     if (ps.length) groups.push({ id: sec.id, title: sec.title as string, photos: ps })
   }
 
+  const gap = t.gallery.gap
+  const imgs = (list: any[], mode: string) =>
+    list.map((p: any) => {
+      const u = photoUrl(p.storage_path)
+      if (!u) return null
+      // eslint-disable-next-line @next/next/no-img-element
+      return mode === 'grid'
+        ? <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="block w-full object-cover" style={{ aspectRatio: '1/1', cursor: 'zoom-in' }} />
+        : <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="block w-full" style={{ cursor: 'zoom-in', marginBottom: mode === 'masonry' ? gap : 0 }} />
+    })
+
   return (
     <>
-      <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?${pair.css}&display=swap`} />
-      <style>{`html,body{background:${bg}}`}</style>
+      <link rel="stylesheet" href={t.fontsHref} />
+      <style>{`html{font-size:${Math.round(t.fontScale * 100)}%}html,body{background:${bg}}`}</style>
       <PortfolioLightbox />
-      <div style={{ background: bg, color: ink, fontFamily: pair.body, minHeight: '100vh' }}>
+      <div style={{ background: bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <Link href={`/site/${token}`} style={{ ...head, fontSize: 24 }}>{name}</Link>
           <div className="flex gap-6 text-[11px] uppercase tracking-[0.2em]">
-            <Link href={`/site/${token}#portfolio`}>Portfolio</Link>
-            <Link href={`/site/${token}#contact`}>Contact</Link>
+            <Link href={`/site/${token}#portfolio`}>{t.menu.labels.portfolio?.trim() || 'Portfolio'}</Link>
+            <Link href={`/site/${token}#contact`}>{t.menu.labels.contact?.trim() || 'Contact'}</Link>
           </div>
         </nav>
 
@@ -94,25 +97,27 @@ export default async function SiteGalleryPage({ params }: { params: Promise<{ to
             {groups.map((grp) => (
               <div key={grp.id}>
                 {grp.title && <h2 className="mb-6 text-center text-3xl" style={head}>{grp.title}</h2>}
-                <div className="columns-1 gap-3 sm:columns-2 lg:columns-3">
-                  {grp.photos.map((p: any) => {
-                    const u = photoUrl(p.storage_path)
-                    // eslint-disable-next-line @next/next/no-img-element
-                    return u ? <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="mb-3 block w-full" style={{ cursor: 'zoom-in' }} /> : null
-                  })}
-                </div>
+                {t.gallery.layout === 'masonry' && (
+                  <div className="columns-1 sm:columns-2 lg:columns-3" style={{ columnGap: gap }}>{imgs(grp.photos, 'masonry')}</div>
+                )}
+                {t.gallery.layout === 'grid' && (
+                  <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap }}>{imgs(grp.photos, 'grid')}</div>
+                )}
+                {t.gallery.layout === 'single' && (
+                  <div className="mx-auto flex max-w-3xl flex-col" style={{ gap }}>{imgs(grp.photos, 'single')}</div>
+                )}
               </div>
             ))}
           </div>
 
           <div className="mt-14 text-center">
-            <Link href={`/site/${token}#contact`} className="inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: '#fff' }}>
-              Check availability
+            <Link href={`/site/${token}#contact`} className="inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: '#fff', borderRadius: t.radius }}>
+              {t.hero.ctaText}
             </Link>
           </div>
 
           {others.length > 0 && (
-            <div className="mt-16 border-t pt-10 text-center" style={{ borderColor: 'rgba(42,31,36,0.12)' }}>
+            <div className="mt-16 border-t pt-10 text-center" style={{ borderColor: line }}>
               <p className="mb-5 text-[11px] uppercase tracking-[0.25em]" style={{ color: soft }}>More galleries</p>
               <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
                 {others.map((g) => (
@@ -124,6 +129,7 @@ export default async function SiteGalleryPage({ params }: { params: Promise<{ to
         </main>
 
         <footer className="px-6 pb-12 text-center text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>
+          {t.text.footer && <p className="mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 13 }}>{t.text.footer}</p>}
           © {new Date().getFullYear()} {name} · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
         </footer>
       </div>

@@ -5,6 +5,7 @@ import { FaqAccordion } from '../../p/[token]/FaqAccordion'
 import { DateCheckWidget } from '../../p/[token]/DateCheckWidget'
 import { ContactButton } from '../../p/[token]/ContactButton'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
+import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 
 const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
@@ -13,28 +14,12 @@ function photoUrl(path: string | null | undefined): string | null {
   return path ? `${STORAGE_BASE}${path}` : null
 }
 
-const PAIRS: Record<string, { head: string; body: string; css: string }> = {
-  serif: {
-    head: "'Cormorant Garamond', Georgia, serif",
-    body: "'Montserrat', system-ui, sans-serif",
-    css: 'family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600',
-  },
-  modern: {
-    head: "'Josefin Sans', system-ui, sans-serif",
-    body: "'Work Sans', system-ui, sans-serif",
-    css: 'family=Josefin+Sans:wght@300;400;600&family=Work+Sans:wght@300;400;500',
-  },
-  romantic: {
-    head: "'Playfair Display', Georgia, serif",
-    body: "'Lora', Georgia, serif",
-    css: 'family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lora:wght@400;500',
-  },
-}
-const TEMPLATES = ['editorial', 'split', 'minimal']
+const DOOR_SUB: Record<string, string> = { about: 'Get to know me', portfolio: 'See my work', investment: 'What does it cost?' }
 
 export function SiteView({ initial, token }: { initial: Record<string, any>; token: string }) {
   const [r, setR] = useState<Record<string, any>>(initial)
   const [open, setOpen] = useState(false)
+  const [slide, setSlide] = useState(0)
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('preview') !== '1') return
@@ -47,23 +32,27 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
     return () => window.removeEventListener('message', onMsg)
   }, [])
 
-  const tpl = TEMPLATES.includes(r.site_template) ? (r.site_template as string) : 'editorial'
-  const pair = PAIRS[r.site_font_pair as string] ?? PAIRS.serif
-  const accent = /^#[0-9a-fA-F]{3,8}$/.test(String(r.site_accent ?? '')) ? (r.site_accent as string) : (r.accent_color ?? '#A9545F')
-  const ink = '#2A1F24'
-  const soft = '#6F5E64'
-  const line = 'rgba(42,31,36,0.12)'
-  const bg = tpl === 'minimal' ? '#FFFFFF' : tpl === 'split' ? '#F6F1EA' : '#FAF7F2'
-  const alt = tpl === 'minimal' ? '#F7F5F2' : '#F0EAE1'
+  const t = resolveTheme(r)
+  const { tpl, accent, ink, soft, line, bg, tint } = t
 
   const name: string = r.studio_name ?? r.display_name ?? 'Studio'
   const cityLine = [[r.service_city, r.service_state].filter(Boolean).join(', '), r.location_custom_text || null].filter(Boolean).join(' · ')
   const headline: string = (r.site_headline || '').trim() || (r.service_city ? `${r.service_city} Photographer` : 'Photographer')
   const subhead: string = (r.site_subhead || '').trim() || cityLine
-  const heroUrl = photoUrl((Array.isArray(r.cover_paths) && r.cover_paths.length > 0 ? r.cover_paths[0] : r.cover_path) as string | null)
   const logo = photoUrl(r.logo_path)
   const aboutPhoto = photoUrl(r.about_photo_path ?? r.avatar_path)
-  const st: Record<string, string> = r.section_titles ?? {}
+
+  const coverFallback = ((Array.isArray(r.cover_paths) && r.cover_paths.length > 0 ? r.cover_paths[0] : r.cover_path) as string | null) ?? ''
+  const heroPaths: string[] = t.hero.photos.length > 0 ? t.hero.photos : [coverFallback].filter(Boolean)
+  const heroUrls = heroPaths.map((p) => photoUrl(p)).filter(Boolean) as string[]
+  const shownHero = t.hero.slideshow ? heroUrls : heroUrls.slice(0, 1)
+
+  useEffect(() => {
+    if (shownHero.length < 2) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = setInterval(() => setSlide((i) => i + 1), 5000)
+    return () => clearInterval(id)
+  }, [shownHero.length])
 
   const galleries = ((r.site_galleries ?? []) as any[])
     .map((g) => ({
@@ -75,30 +64,37 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
     .filter((g) => g.photos.length > 0)
   const packages = ((r.packages ?? []) as any[]).filter((p) => p.show_public !== false && !!p.page_id)
   const quotes: { text: string; who: string; img: string | null }[] = [
-    ...((r.testimonials ?? []) as any[]).filter((t) => t.quote).map((t) => ({ text: t.quote as string, who: (t.client_name ?? '') as string, img: photoUrl(t.storage_path) })),
+    ...((r.testimonials ?? []) as any[]).filter((x) => x.quote).map((x) => ({ text: x.quote as string, who: (x.client_name ?? '') as string, img: photoUrl(x.storage_path) })),
     ...((r.reviews ?? []) as any[]).filter((v) => v.body).map((v) => ({ text: v.body as string, who: (v.couple_names ?? '') as string, img: null })),
   ]
   const faq = (r.faq ?? []) as any[]
 
-  const hasAbout = r.site_sections?.about !== false && !!(r.bio || aboutPhoto)
-  const hasPortfolio = r.site_sections?.portfolio !== false && galleries.length > 0
-  const hasInvest = r.site_sections?.investment !== false && packages.length > 0
-  const hasQuotes = r.site_sections?.testimonials !== false && quotes.length > 0
-  const hasFaq = r.site_sections?.faq !== false && faq.length > 0
+  const on = (k: string) => r.site_sections?.[k] !== false
+  const showMap: Record<string, boolean> = {
+    about: on('about') && !!(t.text.about || r.bio || aboutPhoto),
+    portfolio: on('portfolio') && galleries.length > 0,
+    investment: on('investment') && packages.length > 0,
+    testimonials: on('testimonials') && quotes.length > 0,
+    faq: on('faq') && faq.length > 0,
+    contact: true,
+  }
+  const visible = t.order.filter((k) => showMap[k])
 
-  const navItems: { id: string; label: string }[] = [{ id: 'top', label: 'Home' }]
-  if (hasAbout) navItems.push({ id: 'about', label: 'About' })
-  if (hasPortfolio) navItems.push({ id: 'portfolio', label: 'Portfolio' })
-  if (hasInvest) navItems.push({ id: 'investment', label: 'Investment' })
-  navItems.push({ id: 'contact', label: 'Contact' })
+  const navKeys = ['home', ...visible.filter((k) => k === 'about' || k === 'portfolio' || k === 'investment'), 'contact']
+  const navItems = navKeys
+    .filter((k) => !t.menu.hidden.includes(k))
+    .map((k) => ({ id: k === 'home' ? 'top' : k, label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k] }))
+  const doors = visible
+    .filter((k) => k === 'about' || k === 'portfolio' || k === 'investment')
+    .map((k) => ({ href: `#${k}`, t: t.titles[k], s: DOOR_SUB[k] }))
 
-  const headStyle: React.CSSProperties = { fontFamily: pair.head, fontWeight: 500, letterSpacing: '0.01em' }
+  const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' }
+  const btnStyle: React.CSSProperties = { background: accent, color: '#fff', fontFamily: t.body, borderRadius: t.radius }
 
-  const cta = () => (
-    <a href="#contact" className="inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: '#fff', fontFamily: pair.body }}>
-      Check availability
-    </a>
-  )
+  const cta = (force?: boolean) =>
+    t.hero.ctaShow || force ? (
+      <a href="#contact" className="inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.hero.ctaText}</a>
+    ) : null
 
   const renderNav = (overlay: boolean, center: boolean) => {
     const brand = logo
@@ -108,14 +104,14 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
     return (
       <nav
         className={overlay ? 'absolute inset-x-0 top-0 z-20' : 'sticky top-0 z-20'}
-        style={overlay ? { color: '#fff' } : { color: ink, background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
+        style={overlay ? { color: '#fff' } : { color: ink, background: `color-mix(in srgb, ${bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
       >
         <div className={center ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex h-16 max-w-6xl items-center justify-between px-6'}>
           <a href="#top">{brand}</a>
           <ul className="hidden gap-8 md:flex">
             {navItems.map((n) => (
               <li key={n.id}>
-                <a href={`#${n.id}`} className="text-[11px] uppercase tracking-[0.2em] opacity-90 hover:opacity-100" style={{ fontFamily: pair.body }}>{n.label}</a>
+                <a href={`#${n.id}`} className="text-[11px] uppercase tracking-[0.2em] opacity-90 hover:opacity-100" style={{ fontFamily: t.body }}>{n.label}</a>
               </li>
             ))}
           </ul>
@@ -124,10 +120,10 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           </button>
         </div>
         {open && (
-          <ul className="flex flex-col gap-4 px-6 pb-5 md:hidden" style={{ background: overlay ? 'rgba(0,0,0,0.72)' : '#fff' }}>
+          <ul className="flex flex-col gap-4 px-6 pb-5 md:hidden" style={{ background: overlay ? 'rgba(0,0,0,0.72)' : bg }}>
             {navItems.map((n) => (
               <li key={n.id}>
-                <a href={`#${n.id}`} onClick={() => setOpen(false)} className="text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: pair.body }}>{n.label}</a>
+                <a href={`#${n.id}`} onClick={() => setOpen(false)} className="text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body }}>{n.label}</a>
               </li>
             ))}
           </ul>
@@ -137,25 +133,30 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   }
 
   const heroImg = (cls: string) =>
-    heroUrl
-      ? // eslint-disable-next-line @next/next/no-img-element
-        <img src={heroUrl} alt={name} className={cls} style={{ objectFit: 'cover' }} />
-      : <div className={cls} style={{ background: accent, opacity: 0.85 }} />
+    shownHero.length === 0 ? (
+      <div className={cls} style={{ background: accent, opacity: 0.85 }} />
+    ) : (
+      <>
+        {shownHero.map((u, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={u} src={u} alt={i === 0 ? name : ''} className={cls}
+            style={{ objectFit: 'cover', opacity: i === slide % shownHero.length ? 1 : 0, transition: 'opacity 1.2s ease-in-out' }} />
+        ))}
+      </>
+    )
 
-  const sec = (id: string, title: string | null, children: React.ReactNode, tint?: boolean) => (
-    <section id={id} className="scroll-mt-16 px-6 py-20 md:py-28" style={tint ? { background: alt } : undefined}>
+  const alignCls = t.hero.align === 'left' ? 'items-start text-left' : t.hero.align === 'right' ? 'items-end text-right' : 'items-center text-center'
+  const vCls = t.hero.valign === 'top' ? 'pt-32' : t.hero.valign === 'center' ? 'my-auto py-20' : 'mt-auto pb-20 md:pb-28'
+  const ov = t.hero.overlay
+
+  const sec = (id: string, title: string | null, children: React.ReactNode, tinted: boolean) => (
+    <section id={id} className="scroll-mt-16 px-6" style={{ background: tinted ? tint : undefined, paddingTop: t.padCss, paddingBottom: t.padCss }}>
       <div className="mx-auto max-w-6xl">
         {title && <h2 className="mb-12 text-center text-4xl md:text-5xl" style={headStyle}>{title}</h2>}
         {children}
       </div>
     </section>
   )
-
-  const blocks = [
-    hasAbout && { href: '#about', t: 'About', s: 'Get to know me' },
-    hasPortfolio && { href: '#portfolio', t: 'Portfolio', s: 'See my work' },
-    hasInvest && { href: '#investment', t: 'Investment', s: 'What does it cost?' },
-  ].filter(Boolean) as { href: string; t: string; s: string }[]
 
   const socials = [
     { label: 'Instagram', url: r.instagram_url },
@@ -165,34 +166,135 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
     { label: 'Website', url: r.website_url },
   ].filter((s) => !!s.url)
 
+  const renderSection = (k: string, tinted: boolean): React.ReactNode => {
+    switch (k) {
+      case 'about':
+        return sec('about', t.titles.about,
+          <div className={`mx-auto grid max-w-5xl items-center gap-12 ${aboutPhoto ? 'md:grid-cols-2' : ''}`}>
+            {aboutPhoto && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={aboutPhoto} alt={name} className="w-full" style={{ aspectRatio: '4/5', objectFit: 'cover' }} />
+            )}
+            <div>
+              <p className="whitespace-pre-line text-[16px] leading-[1.85]" style={{ color: soft }}>{t.text.about ?? r.bio ?? ''}</p>
+              <div className="mt-8">{cta(true)}</div>
+            </div>
+          </div>, tinted)
+      case 'portfolio':
+        return sec('portfolio', t.titles.portfolio,
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ gap: t.gallery.gap + 8 }}>
+            {galleries.map((g) => {
+              const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
+              const u = photoUrl(cover?.storage_path)
+              return (
+                <a key={g.id} href={`/site/${token}/g/${g.id}`} className="group relative block overflow-hidden" style={{ aspectRatio: t.cardRatio, background: '#E5E1DB' }}>
+                  {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
+                  <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+                    <p className="text-3xl" style={headStyle}>{g.title}</p>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.22em] opacity-90">{g.photos.length} photos →</p>
+                  </div>
+                </a>
+              )
+            })}
+          </div>, tinted)
+      case 'investment':
+        return sec('investment', t.titles.investment,
+          <div className="mx-auto max-w-3xl">
+            {packages.map((p, i) => {
+              const desc = (p.description ?? p.details ?? p.blurb ?? '') as string
+              return (
+                <div key={p.id} className="flex items-start justify-between gap-6 py-6" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
+                  <div>
+                    <h3 className="text-2xl" style={headStyle}>{p.name}</h3>
+                    {desc && <p className="mt-1 whitespace-pre-line text-sm leading-relaxed" style={{ color: soft }}>{desc}</p>}
+                  </div>
+                  {p.price && <span className="whitespace-nowrap text-lg" style={{ color: accent, fontFamily: t.head }}>{p.price}</span>}
+                </div>
+              )
+            })}
+            <div className="mt-10 text-center">
+              <a href={`/p/${token}/packages`} className="text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>See full details →</a>
+            </div>
+          </div>, tinted)
+      case 'testimonials':
+        return sec('words', t.titles.testimonials,
+          <div className="grid gap-10 md:grid-cols-3">
+            {quotes.slice(0, 6).map((q, i) => (
+              <figure key={i} className="text-center">
+                {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 w-full object-cover" style={{ aspectRatio: '4/5' }} />}
+                <blockquote className="text-xl italic leading-relaxed" style={{ fontFamily: t.head }}>&ldquo;{q.text}&rdquo;</blockquote>
+                {q.who && <figcaption className="mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
+              </figure>
+            ))}
+          </div>, tinted)
+      case 'faq':
+        return sec('faq', t.titles.faq,
+          <div className="mx-auto max-w-2xl">
+            <FaqAccordion
+              items={faq}
+              questionStyle={{ fontFamily: t.head, fontSize: 20, color: ink }}
+              answerStyle={{ fontFamily: t.body, fontSize: 15, color: soft, lineHeight: 1.7 }}
+            />
+          </div>, tinted)
+      case 'contact':
+        return sec('contact', t.titles.contact,
+          <div className="mx-auto max-w-xl text-center">
+            <p className="mb-8 whitespace-pre-line text-[15px] leading-relaxed" style={{ color: soft }}>
+              {t.text.contact ?? 'Tell me about your day. Check a date below, or tap the message button to send me an inquiry.'}
+            </p>
+            {on('availability') && (
+              <div className="mb-10">
+                <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} />
+              </div>
+            )}
+            {socials.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
+                {socials.map((s) => (
+                  <a key={s.label} href={String(s.url).startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
+                    className="text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>{s.label}</a>
+                ))}
+              </div>
+            )}
+          </div>, tinted)
+      default:
+        return null
+    }
+  }
+
   return (
     <>
-      <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?${pair.css}&display=swap`} />
-      <style>{`html{scroll-behavior:smooth}html,body{background:${bg}}`}</style>
+      <link rel="stylesheet" href={t.fontsHref} />
+      <style>{`html{scroll-behavior:smooth;font-size:${Math.round(t.fontScale * 100)}%}html,body{background:${bg}}`}</style>
       <PortfolioLightbox />
-      <div style={{ background: bg, color: ink, fontFamily: pair.body }}>
+      <div style={{ background: bg, color: ink, fontFamily: t.body }}>
         {/* ── Hero ── */}
         {tpl === 'editorial' && (
-          <header id="top" className="relative flex min-h-[92vh] flex-col overflow-hidden">
-            {heroImg('absolute inset-0 h-full w-full')}
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(rgba(0,0,0,0.38), rgba(0,0,0,0.12) 40%, rgba(0,0,0,0.58))' }} />
-            {renderNav(true, false)}
-            <div className="relative mx-auto mt-auto max-w-3xl px-6 pb-20 text-center text-white md:pb-28">
-              <h1 className="text-5xl leading-[1.05] md:text-7xl" style={headStyle}>{headline}</h1>
-              {subhead && <p className="mt-4 text-[12px] uppercase tracking-[0.28em] opacity-90">{subhead}</p>}
-              <div className="mt-8">{cta()}</div>
-            </div>
-          </header>
+          <>
+            {t.menu.solid && renderNav(false, false)}
+            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: t.menu.solid ? 'calc(92vh - 4rem)' : '92vh' }}>
+              {heroImg('absolute inset-0 h-full w-full')}
+              <div className="absolute inset-0" style={{ background: `linear-gradient(rgba(0,0,0,${ov}), rgba(0,0,0,${(ov * 0.35).toFixed(2)}) 40%, rgba(0,0,0,${Math.min(0.85, ov * 1.6).toFixed(2)}))` }} />
+              {!t.menu.solid && renderNav(true, false)}
+              <div className={`relative mx-auto flex w-full max-w-5xl flex-col px-6 text-white ${alignCls} ${vCls}`}>
+                <div className="max-w-3xl">
+                  <h1 className="text-5xl leading-[1.05] md:text-7xl" style={headStyle}>{headline}</h1>
+                  {subhead && <p className="mt-4 text-[12px] uppercase tracking-[0.28em] opacity-90">{subhead}</p>}
+                  <div className="mt-8">{cta()}</div>
+                </div>
+              </div>
+            </header>
+          </>
         )}
         {tpl === 'split' && (
           <header id="top">
             {renderNav(false, false)}
             <div className="grid min-h-[calc(100vh-4rem)] md:grid-cols-2">
-              <div className="order-2 flex flex-col justify-center px-8 py-16 md:order-1 md:px-16">
+              <div className={`order-2 flex flex-col justify-center px-8 py-16 md:order-1 md:px-16 ${t.hero.align === 'center' ? 'items-center text-center' : t.hero.align === 'right' ? 'items-end text-right' : 'items-start text-left'}`}>
                 {subhead && <p className="mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
                 <h1 className="text-5xl leading-[1.05] md:text-6xl" style={headStyle}>{headline}</h1>
                 <p className="mt-6 max-w-md text-[15px] leading-relaxed" style={{ color: soft }}>
-                  {(r.bio || '').toString().split(/\n+/)[0].slice(0, 220)}
+                  {(t.text.about ?? r.bio ?? '').toString().split(/\n+/)[0].slice(0, 220)}
                 </p>
                 <div className="mt-8">{cta()}</div>
               </div>
@@ -206,7 +308,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             <div className="mx-auto max-w-6xl px-6 pt-6">
               <div className="relative aspect-[16/10] overflow-hidden md:aspect-[21/9]">{heroImg('absolute inset-0 h-full w-full')}</div>
             </div>
-            <div className="px-6 py-14 text-center">
+            <div className={`mx-auto flex max-w-3xl flex-col px-6 py-14 ${alignCls}`}>
               <h1 className="text-4xl md:text-6xl" style={headStyle}>{headline}</h1>
               {subhead && <p className="mt-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
               <div className="mt-8">{cta()}</div>
@@ -215,10 +317,10 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         )}
 
         {/* ── Three doors ── */}
-        {blocks.length > 0 && (
-          <div className="mx-auto grid max-w-6xl gap-0 px-6 py-16 md:grid-cols-3">
-            {blocks.map((b, i) => (
-              <a key={b.href} href={b.href} className="group block px-6 py-8 text-center" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
+        {doors.length > 0 && (
+          <div className="mx-auto grid max-w-6xl gap-0 px-6 py-16" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
+            {doors.map((b, i) => (
+              <a key={b.href} href={b.href} className="block px-6 py-8 text-center" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
                 <p className="text-3xl" style={headStyle}>{b.t}</p>
                 <p className="mt-2 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>{b.s} →</p>
               </a>
@@ -226,102 +328,13 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           </div>
         )}
 
-        {/* ── About ── */}
-        {hasAbout && sec('about', st.about || 'About',
-          <div className={`mx-auto grid max-w-5xl items-center gap-12 ${aboutPhoto ? 'md:grid-cols-2' : ''}`}>
-            {aboutPhoto && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={aboutPhoto} alt={name} className="w-full" style={{ aspectRatio: '4/5', objectFit: 'cover' }} />
-            )}
-            <div>
-              <p className="whitespace-pre-line text-[16px] leading-[1.85]" style={{ color: soft }}>{r.bio || ''}</p>
-              <div className="mt-8">{cta()}</div>
-            </div>
-          </div>, true)}
-
-        {/* ── Portfolio ── */}
-        {hasPortfolio && sec('portfolio', 'Portfolio',
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {galleries.map((g) => {
-              const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
-              const u = photoUrl(cover?.storage_path)
-              return (
-                <a key={g.id} href={`/site/${token}/g/${g.id}`} className="group relative block overflow-hidden" style={{ aspectRatio: '4/5', background: '#E5E1DB' }}>
-                  {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
-                  <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                    <p className="text-3xl" style={headStyle}>{g.title}</p>
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.22em] opacity-90">{g.photos.length} photos →</p>
-                  </div>
-                </a>
-              )
-            })}
-          </div>)}
-
-        {/* ── Investment ── */}
-        {hasInvest && sec('investment', st.pricing || 'Investment',
-          <div className="mx-auto max-w-3xl">
-            {packages.map((p, i) => {
-              const desc = (p.description ?? p.details ?? p.blurb ?? '') as string
-              return (
-                <div key={p.id} className="flex items-start justify-between gap-6 py-6" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
-                  <div>
-                    <h3 className="text-2xl" style={headStyle}>{p.name}</h3>
-                    {desc && <p className="mt-1 whitespace-pre-line text-sm leading-relaxed" style={{ color: soft }}>{desc}</p>}
-                  </div>
-                  {p.price && <span className="whitespace-nowrap text-lg" style={{ color: accent, fontFamily: pair.head }}>{p.price}</span>}
-                </div>
-              )
-            })}
-            <div className="mt-10 text-center">
-              <a href={`/p/${token}/packages`} className="text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>See full details →</a>
-            </div>
-          </div>, true)}
-
-        {/* ── Kind words ── */}
-        {hasQuotes && sec('words', st.testimonials || 'Kind words',
-          <div className="grid gap-10 md:grid-cols-3">
-            {quotes.slice(0, 6).map((q, i) => (
-              <figure key={i} className="text-center">
-                {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 w-full object-cover" style={{ aspectRatio: '4/5' }} />}
-                <blockquote className="text-xl italic leading-relaxed" style={{ fontFamily: pair.head }}>&ldquo;{q.text}&rdquo;</blockquote>
-                {q.who && <figcaption className="mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
-              </figure>
-            ))}
-          </div>)}
-
-        {/* ── FAQ ── */}
-        {hasFaq && sec('faq', st.faq || 'FAQ',
-          <div className="mx-auto max-w-2xl">
-            <FaqAccordion
-              items={faq}
-              questionStyle={{ fontFamily: pair.head, fontSize: 20, color: ink }}
-              answerStyle={{ fontFamily: pair.body, fontSize: 15, color: soft, lineHeight: 1.7 }}
-            />
-          </div>, true)}
-
-        {/* ── Contact ── */}
-        {sec('contact', "Let's connect",
-          <div className="mx-auto max-w-xl text-center">
-            <p className="mb-8 text-[15px] leading-relaxed" style={{ color: soft }}>
-              Tell me about your day. Check a date below, or tap the message button to send me an inquiry.
-            </p>
-            {r.site_sections?.availability !== false && (
-              <div className="mb-10">
-                <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={pair.head} />
-              </div>
-            )}
-            {socials.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
-                {socials.map((s) => (
-                  <a key={s.label} href={String(s.url).startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
-                    className="text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>{s.label}</a>
-                ))}
-              </div>
-            )}
-          </div>)}
+        {/* ── Sections in the chosen order ── */}
+        {visible.map((k, i) => (
+          <React.Fragment key={k}>{renderSection(k, i % 2 === 1)}</React.Fragment>
+        ))}
 
         <footer className="px-6 pb-28 pt-6 text-center text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>
+          {t.text.footer && <p className="mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 13 }}>{t.text.footer}</p>}
           © {new Date().getFullYear()} {name} · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
         </footer>
       </div>
@@ -333,7 +346,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         btn={{
           bg: accent,
           textColor: '#FFFFFF',
-          fontFamily: pair.head,
+          fontFamily: t.head,
           fontSize: 16,
           text: 'Inquire',
           showIcon: true,
