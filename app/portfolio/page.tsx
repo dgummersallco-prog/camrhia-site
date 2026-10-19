@@ -797,7 +797,8 @@ export default function PortfolioEditorPage() {
       case 'pricing':
         return sec(
           <>
-            <p className="text-sm text-ink-soft">Packages and prices are edited in the Camrhia app for now. Anything you change there shows up on your site.</p>
+            <a href="/portfolio/packages" className={`${btnGhost} inline-block`}>Open your packages</a>
+            <p className="text-xs text-ink-soft">Add, edit, hide and reorder your packages. Anything you change here shows up in the Camrhia app too.</p>
             {headingField('pricing')}
             {showToggle('pricing')}
           </>,
