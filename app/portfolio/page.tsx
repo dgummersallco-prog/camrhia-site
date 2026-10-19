@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
@@ -9,6 +9,7 @@ import { DashboardHeader } from '@/app/components/DashboardHeader'
 type Profile = {
   id: string
   public_token: string | null
+  is_listed: boolean | null
   studio_name: string | null
   bio: string | null
   service_city: string | null
@@ -44,7 +45,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -109,7 +110,7 @@ export default function PortfolioEditorPage() {
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [previewKey, setPreviewKey] = useState(0)
-  const [step, setStep] = useState(1)
+  const [open, setOpen] = useState<string | null>(null)
   const [device, setDevice] = useState<'phone' | 'desktop'>('phone')
   const fileInput = useRef<HTMLInputElement>(null)
   const logoInput = useRef<HTMLInputElement>(null)
@@ -288,6 +289,343 @@ export default function PortfolioEditorPage() {
   const coverUrl = form?.cover_paths?.[0] ?? form?.cover_path
   const portfolioUrl = form?.public_token ? `/p/${form.public_token}` : null
 
+  const EDITOR_TITLES: Record<string, string> = {
+    cover: 'Cover photo', name: 'Studio name', location: 'Location', master: 'Master style',
+    background: 'Background', spacing: 'Section spacing', message: 'Message button', listed: 'List me publicly', ...LABELS,
+  }
+  const STYLE_KEYS = ['cover', 'name', 'location', 'master', 'background', 'spacing', 'message']
+
+  function summary(key: string): string {
+    if (!form) return ''
+    const links = [form.website_url, form.instagram_url, form.facebook_url, form.pinterest_url, form.tiktok_url].filter(Boolean).length
+    switch (key) {
+      case 'cover': return coverUrl ? 'Photo added' : 'Add your cover photo'
+      case 'name': return form.studio_name || 'Add your studio name'
+      case 'location': return [form.service_city, form.service_state].filter(Boolean).join(', ') || 'Add your city and state'
+      case 'master': { const f = FONTS.find(([k]) => k === form.title_font); return f ? f[1] : 'Fonts and text colors' }
+      case 'background': return form.portfolio_bg_color ?? 'Default color'
+      case 'spacing': return `${form.portfolio_section_spacing ?? 14} px between sections`
+      case 'message': return 'Button color'
+      case 'about': return form.bio ? 'Written' : 'Tell clients who you are'
+      case 'featured_photos': return 'Your photo sets'
+      case 'testimonials': return 'Kind words from clients'
+      case 'pricing': return 'Packages and prices'
+      case 'openings': return 'Open dates'
+      case 'faq': { const n = (form.faq ?? []).length; return n ? `${n} question${n === 1 ? '' : 's'}` : 'Add common questions' }
+      case 'links': return links ? `${links} link${links === 1 ? '' : 's'}` : 'Website and social'
+      case 'listed': return form.is_listed ? 'Clients can find you on Camrhia' : 'Hidden from search'
+      default: return ''
+    }
+  }
+
+  async function setListed(v: boolean) {
+    const sb = supabase
+    if (!sb || !form) return
+    const { error } = await sb.from('profiles').update({ is_listed: v }).eq('id', form.id)
+    if (error) { flash(error.message); return }
+    setForm((f) => (f ? { ...f, is_listed: v } : f))
+    setSaved((f) => (f ? { ...f, is_listed: v } : f))
+    flash(v ? 'You are now listed' : 'You are now hidden')
+  }
+
+  function goBack() {
+    if (dirty) save()
+    setOpen(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function hubRow(key: string, extra?: ReactNode, dim?: boolean) {
+    return (
+      <div key={key} className="flex items-center gap-2 rounded-2xl border border-line bg-card pr-3 transition hover:border-twilight">
+        <button type="button" onClick={() => { setOpen(key); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="flex flex-1 items-center gap-3 px-4 py-3.5 text-left">
+          <span className="flex-1">
+            <span className={`block text-sm font-medium ${dim ? 'text-ink-soft' : 'text-ink'}`}>{EDITOR_TITLES[key]}</span>
+            <span className="block text-xs text-ink-soft">{summary(key)}</span>
+          </span>
+          <span className="text-lg text-ink-soft">›</span>
+        </button>
+        {extra}
+      </div>
+    )
+  }
+
+  function groupHeading(text: string, sub: string) {
+    return (
+      <div className="mb-3 mt-8 first:mt-0">
+        <p className="font-mono text-xs uppercase tracking-widest text-brass">{text}</p>
+        <p className="mt-1 text-xs text-ink-soft">{sub}</p>
+      </div>
+    )
+  }
+
+  function headingField(key: string) {
+    return (
+      <div>
+        <label className={label}>Heading on your site</label>
+        <input
+          className={input}
+          value={form?.section_titles?.[key] ?? ''}
+          placeholder={LABELS[key]}
+          onChange={(e) => {
+            const next = { ...(form?.section_titles ?? {}) }
+            if (e.target.value) next[key] = e.target.value
+            else delete next[key]
+            setField('section_titles', next)
+          }}
+        />
+      </div>
+    )
+  }
+
+  function showToggle(key: string) {
+    const toggle = TOGGLE[key]
+    if (!toggle || !form) return null
+    return (
+      <label className="flex items-center gap-3 text-sm text-ink">
+        <input type="checkbox" className="h-5 w-5" checked={form[toggle] !== false} onChange={(e) => setField(toggle, e.target.checked as never)} />
+        Show this section on my site
+      </label>
+    )
+  }
+
+  function editorBody(key: string): ReactNode {
+    if (!form) return null
+    const sec = (children: ReactNode) => <section className={`${card} space-y-4`}>{children}</section>
+    switch (key) {
+      case 'cover':
+        return sec(
+          <>
+            <div className="flex items-center gap-4">
+              <div className="h-24 w-36 shrink-0 overflow-hidden rounded-xl bg-line">
+                {coverUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`${STORAGE_BASE}${coverUrl}`} alt="" className="h-full w-full object-cover" />
+                )}
+              </div>
+              <div>
+                <input
+                  ref={fileInput}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,.heic,.heif"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.target.value = '' }}
+                />
+                <button className={btnGhost} disabled={uploading} onClick={() => fileInput.current?.click()}>
+                  {uploading ? 'Uploading…' : coverUrl ? 'Change photo' : 'Add photo'}
+                </button>
+                <p className="mt-2 text-xs text-ink-soft">Cover size, shape and rotation are set in the app for now.</p>
+              </div>
+            </div>
+          </>,
+        )
+      case 'name':
+        return sec(
+          <>
+            <div>
+              <label className={label}>Studio name</label>
+              <input className={input} value={form.studio_name ?? ''} onChange={(e) => setField('studio_name', e.target.value)} />
+            </div>
+            <div>
+              <p className={label}>Logo</p>
+              <p className="mb-2 text-xs text-ink-soft">Replaces your studio name at the top.</p>
+              <div className="mb-2 flex h-16 w-40 items-center justify-center overflow-hidden rounded-xl bg-line">
+                {form.logo_path && (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`${STORAGE_BASE}${form.logo_path}`} alt="" className="max-h-full max-w-full object-contain" />
+                  </>
+                )}
+              </div>
+              <input ref={logoInput} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBrand('logo', f); e.target.value = '' }} />
+              <div className="flex gap-3">
+                <button className={btnGhost} disabled={brandBusy === 'logo'} onClick={() => logoInput.current?.click()}>
+                  {brandBusy === 'logo' ? 'Uploading…' : form.logo_path ? 'Change logo' : 'Add logo'}
+                </button>
+                {form.logo_path && <button type="button" className="text-xs text-ink-soft underline hover:text-ink" onClick={removeLogo}>Remove</button>}
+              </div>
+            </div>
+          </>,
+        )
+      case 'location':
+        return sec(
+          <>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <label className={label}>City</label>
+                <input className={input} value={form.service_city ?? ''} onChange={(e) => setField('service_city', e.target.value)} />
+              </div>
+              <div>
+                <label className={label}>State</label>
+                <input className={input} value={form.service_state ?? ''} onChange={(e) => setField('service_state', e.target.value)} />
+              </div>
+            </div>
+            <ColorField title="Location text color" value={form.location_color} fallback="#202020" onChange={(v) => setField('location_color', v)} />
+          </>,
+        )
+      case 'master':
+        return sec(
+          <>
+            <div>
+              <label className={label}>Heading font</label>
+              <select className={input} value={form.title_font ?? ''} onChange={(e) => setField('title_font', e.target.value || null)}>
+                <option value="">Default</option>
+                {FONTS.map(([k, n, c]) => <option key={k} value={k}>{n} ({c})</option>)}
+              </select>
+              <div className="mt-2 flex gap-5 text-sm text-ink">
+                <label className="flex items-center gap-2"><input type="checkbox" checked={form.title_bold === true} onChange={(e) => setField('title_bold', e.target.checked)} />Bold</label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={form.title_italic === true} onChange={(e) => setField('title_italic', e.target.checked)} />Italic</label>
+              </div>
+            </div>
+            <div>
+              <label className={label}>Body text font</label>
+              <select className={input} value={form.paragraph_font ?? ''} onChange={(e) => setField('paragraph_font', e.target.value || null)}>
+                <option value="">Default</option>
+                {FONTS.map(([k, n, c]) => <option key={k} value={k}>{n} ({c})</option>)}
+              </select>
+            </div>
+            <ColorField title="Headings" value={form.title_color} fallback="#A57E60" onChange={(v) => setField('title_color', v)} />
+            <ColorField title="Body text" value={form.paragraph_color} fallback="#202020" onChange={(v) => setField('paragraph_color', v)} />
+          </>,
+        )
+      case 'background':
+        return sec(<ColorField title="Page background" value={form.portfolio_bg_color} fallback="#F9F9F9" onChange={(v) => setField('portfolio_bg_color', v)} />)
+      case 'spacing':
+        return sec(
+          <div>
+            <label className={label}>Space between sections</label>
+            <input type="range" min={0} max={48} value={form.portfolio_section_spacing ?? 14}
+              onChange={(e) => setField('portfolio_section_spacing', Number(e.target.value))} className="w-full" />
+            <p className="mt-1 text-xs text-ink-soft">{form.portfolio_section_spacing ?? 14} px</p>
+          </div>,
+        )
+      case 'message':
+        return sec(
+          <>
+            <ColorField title="Message button color" value={form.accent_color} fallback="#A9545F" onChange={(v) => setField('accent_color', v)} />
+            <p className="text-xs text-ink-soft">Button text, size and shape are set in the app for now.</p>
+          </>,
+        )
+      case 'about':
+        return sec(
+          <>
+            <div>
+              <p className={label}>Profile photo</p>
+              <p className="mb-2 text-xs text-ink-soft">Shows in your About section.</p>
+              <div className="mb-2 h-16 w-16 overflow-hidden rounded-full bg-line">
+                {form.avatar_path && (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`${STORAGE_BASE}${form.avatar_path}`} alt="" className="h-full w-full object-cover" />
+                  </>
+                )}
+              </div>
+              <input ref={avatarInput} type="file" accept="image/jpeg,image/png,image/webp,.heic,.heif" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBrand('avatar', f); e.target.value = '' }} />
+              <button className={btnGhost} disabled={brandBusy === 'avatar'} onClick={() => avatarInput.current?.click()}>
+                {brandBusy === 'avatar' ? 'Uploading…' : form.avatar_path ? 'Change photo' : 'Add photo'}
+              </button>
+            </div>
+            <div>
+              <label className={label}>About you</label>
+              <textarea rows={6} className={input} value={form.bio ?? ''} onChange={(e) => setField('bio', e.target.value)}
+                placeholder="Tell clients who you are and how you shoot." />
+            </div>
+            {headingField('about')}
+            {showToggle('about')}
+          </>,
+        )
+      case 'featured_photos':
+        return sec(
+          <>
+            <a href="/portfolio/photos" className={`${btnGhost} inline-block`}>Open your featured photo sets</a>
+            <p className="text-xs text-ink-soft">You will be asked to confirm if you leave with unsaved changes.</p>
+            {headingField('featured_photos')}
+            {showToggle('featured_photos')}
+          </>,
+        )
+      case 'testimonials':
+        return sec(
+          <>
+            <a href="/portfolio/testimonials" className={`${btnGhost} inline-block`}>Open your testimonials</a>
+            {headingField('testimonials')}
+            <p className="text-xs text-ink-soft">Shows when you have some.</p>
+          </>,
+        )
+      case 'pricing':
+        return sec(
+          <>
+            <p className="text-sm text-ink-soft">Packages and prices are edited in the Camrhia app for now. Anything you change there shows up on your site.</p>
+            {headingField('pricing')}
+            {showToggle('pricing')}
+          </>,
+        )
+      case 'openings':
+        return sec(
+          <>
+            <p className="text-sm text-ink-soft">Your open dates are managed in the Camrhia app. Turn the section on or off here.</p>
+            {headingField('openings')}
+            {showToggle('openings')}
+          </>,
+        )
+      case 'faq':
+        return sec(
+          <>
+            {(form.faq ?? []).map((item, i) => (
+              <div key={i} className="space-y-2 rounded-xl border border-line p-3">
+                <input className={input} placeholder="Question" value={item.question}
+                  onChange={(e) => setField('faq', (form.faq ?? []).map((f, j) => (j === i ? { ...f, question: e.target.value } : f)))} />
+                <textarea rows={3} className={input} placeholder="Answer" value={item.answer}
+                  onChange={(e) => setField('faq', (form.faq ?? []).map((f, j) => (j === i ? { ...f, answer: e.target.value } : f)))} />
+                <button type="button" className="text-xs text-ink-soft underline hover:text-ink"
+                  onClick={() => setField('faq', (form.faq ?? []).filter((_, j) => j !== i))}>Remove</button>
+              </div>
+            ))}
+            <button type="button" className={btnGhost} onClick={() => setField('faq', [...(form.faq ?? []), { question: '', answer: '' }])}>Add a question</button>
+            {headingField('faq')}
+            {showToggle('faq')}
+          </>,
+        )
+      case 'links':
+        return sec(
+          <>
+            {(
+              [
+                ['website_url', 'Website'],
+                ['instagram_url', 'Instagram'],
+                ['facebook_url', 'Facebook'],
+                ['pinterest_url', 'Pinterest'],
+                ['tiktok_url', 'TikTok'],
+              ] as [keyof Profile, string][]
+            ).map(([k, name]) => (
+              <div key={k}>
+                <label className="mb-1 block text-xs text-ink-soft">{name}</label>
+                <input className={input} value={(form[k] as string | null) ?? ''} onChange={(e) => setField(k, e.target.value as never)} placeholder="https://" />
+              </div>
+            ))}
+            {headingField('links')}
+            {showToggle('links')}
+          </>,
+        )
+      case 'listed':
+        return sec(
+          <>
+            <label className="flex items-start gap-3 text-sm text-ink">
+              <input type="checkbox" className="mt-0.5 h-5 w-5" checked={form.is_listed === true} onChange={(e) => setListed(e.target.checked)} />
+              <span>
+                List me publicly
+                <span className="mt-1 block text-xs text-ink-soft">
+                  Lets clients browsing Camrhia find your portfolio. Your own portfolio link works either way. This saves right away.
+                </span>
+              </span>
+            </label>
+          </>,
+        )
+      default:
+        return null
+    }
+  }
+
   return (
     <div className="min-h-screen bg-paper lg:pl-60">
       <DashboardHeader active="portfolio" />
@@ -299,7 +637,7 @@ export default function PortfolioEditorPage() {
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Your website</p>
-                <h1 className="font-fraunces text-3xl font-semibold text-ink">Portfolio</h1>
+                <h1 className="font-fraunces text-3xl font-semibold text-ink">Your website</h1>
               </div>
               <div className="flex items-center gap-3">
                 {message && <span className="text-sm text-twilight">{message}</span>}
@@ -315,281 +653,43 @@ export default function PortfolioEditorPage() {
             <div className="grid gap-8 lg:grid-cols-[minmax(0,540px)_1fr]">
               {/* Form */}
               <div className="space-y-5">
-                <div className="mb-1">
-                  <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-line">
-                    <div className="h-full rounded-full bg-twilight transition-all" style={{ width: `${(step / 4) * 100}%` }} />
-                  </div>
-                  <div className="flex flex-wrap gap-2 text-sm">
-                    {(['About you', 'Photos', 'Look', 'Sections'] as const).map((t, i) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setStep(i + 1)}
-                        className={`rounded-full px-4 py-1.5 ${step === i + 1 ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
-                      >
-                        {i + 1}. {t}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className={`space-y-5 ${step === 1 ? '' : 'hidden'}`}>
-<section className={card}>
-                  <p className={label}>Logo and profile photo</p>
-                  <div className="flex flex-wrap gap-8">
-                    <div>
-                      <p className="mb-2 text-xs text-ink-soft">Logo. Replaces your studio name at the top.</p>
-                      <div className="mb-2 flex h-16 w-40 items-center justify-center overflow-hidden rounded-xl bg-line">
-                        {form.logo_path && (
-                          <>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={`${STORAGE_BASE}${form.logo_path}`} alt="" className="max-h-full max-w-full object-contain" />
-                          </>
-                        )}
-                      </div>
-                      <input ref={logoInput} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBrand('logo', f); e.target.value = '' }} />
-                      <div className="flex gap-3">
-                        <button className={btnGhost} disabled={brandBusy === 'logo'} onClick={() => logoInput.current?.click()}>
-                          {brandBusy === 'logo' ? 'Uploading…' : form.logo_path ? 'Change logo' : 'Add logo'}
-                        </button>
-                        {form.logo_path && <button type="button" className="text-xs text-ink-soft underline hover:text-ink" onClick={removeLogo}>Remove</button>}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="mb-2 text-xs text-ink-soft">Profile photo. Shows in your About section.</p>
-                      <div className="mb-2 h-16 w-16 overflow-hidden rounded-full bg-line">
-                        {form.avatar_path && (
-                          <>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={`${STORAGE_BASE}${form.avatar_path}`} alt="" className="h-full w-full object-cover" />
-                          </>
-                        )}
-                      </div>
-                      <input ref={avatarInput} type="file" accept="image/jpeg,image/png,image/webp,.heic,.heif" className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBrand('avatar', f); e.target.value = '' }} />
-                      <button className={btnGhost} disabled={brandBusy === 'avatar'} onClick={() => avatarInput.current?.click()}>
-                        {brandBusy === 'avatar' ? 'Uploading…' : form.avatar_path ? 'Change photo' : 'Add photo'}
-                      </button>
-                    </div>
-                  </div>
-                </section>
-
-<section className={`${card} space-y-4`}>
+                {open === null ? (
                   <div>
-                    <label className={label}>Studio name</label>
-                    <input className={input} value={form.studio_name ?? ''} onChange={(e) => setField('studio_name', e.target.value)} />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-2">
-                      <label className={label}>City</label>
-                      <input className={input} value={form.service_city ?? ''} onChange={(e) => setField('service_city', e.target.value)} />
-                    </div>
-                    <div>
-                      <label className={label}>State</label>
-                      <input className={input} value={form.service_state ?? ''} onChange={(e) => setField('service_state', e.target.value)} />
-                    </div>
-                  </div>
-                  <div>
-                    <label className={label}>About you</label>
-                    <textarea
-                      rows={6}
-                      className={input}
-                      value={form.bio ?? ''}
-                      onChange={(e) => setField('bio', e.target.value)}
-                      placeholder="Tell clients who you are and how you shoot."
-                    />
-                  </div>
-                </section>
+                    {groupHeading('Portfolio style', 'The look and feel of your site.')}
+                    <div className="space-y-2.5">{STYLE_KEYS.map((k) => hubRow(k))}</div>
 
-<section className={`${card} space-y-4`}>
-                  <p className="text-sm font-medium text-ink">Links</p>
-                  {(
-                    [
-                      ['website_url', 'Website'],
-                      ['instagram_url', 'Instagram'],
-                      ['facebook_url', 'Facebook'],
-                      ['pinterest_url', 'Pinterest'],
-                      ['tiktok_url', 'TikTok'],
-                    ] as [keyof Profile, string][]
-                  ).map(([key, name]) => (
-                    <div key={key}>
-                      <label className="mb-1 block text-xs text-ink-soft">{name}</label>
-                      <input
-                        className={input}
-                        value={(form[key] as string | null) ?? ''}
-                        onChange={(e) => setField(key, e.target.value as never)}
-                        placeholder="https://"
-                      />
+                    {groupHeading('Sections', 'Turn sections on or off and reorder them with the arrows.')}
+                    <div className="space-y-2.5">
+                      {(form.section_order ?? []).map((key, i, arr) => {
+                        const toggle = TOGGLE[key]
+                        const on = toggle ? form[toggle] !== false : true
+                        return hubRow(
+                          key,
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col">
+                              <button type="button" disabled={i === 0} onClick={() => move(key, -1)} className="px-1 text-xs text-ink-soft hover:text-ink disabled:opacity-30" aria-label="Move up">▲</button>
+                              <button type="button" disabled={i === arr.length - 1} onClick={() => move(key, 1)} className="px-1 text-xs text-ink-soft hover:text-ink disabled:opacity-30" aria-label="Move down">▼</button>
+                            </div>
+                            {toggle ? (
+                              <input type="checkbox" checked={on} onChange={(e) => setField(toggle, e.target.checked as never)} className="h-5 w-5" aria-label={`Show ${LABELS[key]}`} />
+                            ) : null}
+                          </div>,
+                          !on,
+                        )
+                      })}
                     </div>
-                  ))}
-                </section>
-                </div>
-                <div className={`space-y-5 ${step === 2 ? '' : 'hidden'}`}>
-<section className={card}>
-                  <p className={label}>Cover photo</p>
-                  <div className="flex items-center gap-4">
-                    <div className="h-24 w-36 shrink-0 overflow-hidden rounded-xl bg-line">
-                      {coverUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={`${STORAGE_BASE}${coverUrl}`} alt="" className="h-full w-full object-cover" />
-                      )}
-                    </div>
-                    <div>
-                      <input
-                        ref={fileInput}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,.heic,.heif"
-                        className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.target.value = '' }}
-                      />
-                      <button className={btnGhost} disabled={uploading} onClick={() => fileInput.current?.click()}>
-                        {uploading ? 'Uploading…' : coverUrl ? 'Change photo' : 'Add photo'}
-                      </button>
-                      <p className="mt-2 text-xs text-ink-soft">Cover size, shape and rotation are set in the app for now.</p>
-                    </div>
+
+                    {groupHeading('Visibility', 'Who can find you.')}
+                    <div className="space-y-2.5">{hubRow('listed')}</div>
                   </div>
-                </section>
-
-<section className={`${card} space-y-3`}>
-                  <p className="text-sm font-medium text-ink">Photos and testimonials</p>
-                  <a href="/portfolio/photos" className="block rounded-xl border border-line px-4 py-3 text-sm text-ink hover:border-twilight">Featured photo sets</a>
-                  <a href="/portfolio/testimonials" className="block rounded-xl border border-line px-4 py-3 text-sm text-ink hover:border-twilight">Testimonials</a>
-                  <p className="text-xs text-ink-soft">You will be asked to confirm if you leave with unsaved changes.</p>
-                </section>
-                </div>
-                <div className={`space-y-5 ${step === 3 ? '' : 'hidden'}`}>
-<section className={`${card} space-y-4`}>
-                  <p className="text-sm font-medium text-ink">Fonts</p>
-                  <div>
-                    <label className={label}>Studio name font</label>
-                    <select className={input} value={form.title_font ?? ''} onChange={(e) => setField('title_font', e.target.value || null)}>
-                      <option value="">Default</option>
-                      {FONTS.map(([k, n, c]) => <option key={k} value={k}>{n} ({c})</option>)}
-                    </select>
-                    <div className="mt-2 flex gap-5 text-sm text-ink">
-                      <label className="flex items-center gap-2"><input type="checkbox" checked={form.title_bold === true} onChange={(e) => setField('title_bold', e.target.checked)} />Bold</label>
-                      <label className="flex items-center gap-2"><input type="checkbox" checked={form.title_italic === true} onChange={(e) => setField('title_italic', e.target.checked)} />Italic</label>
-                    </div>
+                ) : (
+                  <div className="space-y-5">
+                    <button type="button" className="text-sm text-ink-soft hover:text-ink" onClick={goBack}>← All sections</button>
+                    <h2 className="font-fraunces text-2xl font-semibold text-ink">{EDITOR_TITLES[open]}</h2>
+                    {editorBody(open)}
+                    <button type="button" className={btn} onClick={goBack}>Done</button>
                   </div>
-                  <div>
-                    <label className={label}>Body text font</label>
-                    <select className={input} value={form.paragraph_font ?? ''} onChange={(e) => setField('paragraph_font', e.target.value || null)}>
-                      <option value="">Default</option>
-                      {FONTS.map(([k, n, c]) => <option key={k} value={k}>{n} ({c})</option>)}
-                    </select>
-                  </div>
-                </section>
-
-<section className={`${card} space-y-4`}>
-                  <p className="text-sm font-medium text-ink">Colors and spacing</p>
-                  <ColorField title="Page background" value={form.portfolio_bg_color} fallback="#F9F9F9" onChange={(v) => setField('portfolio_bg_color', v)} />
-                  <ColorField title="Studio name and headings" value={form.title_color} fallback="#A57E60" onChange={(v) => setField('title_color', v)} />
-                  <ColorField title="Body text" value={form.paragraph_color} fallback="#202020" onChange={(v) => setField('paragraph_color', v)} />
-                  <ColorField title="Location text" value={form.location_color} fallback="#202020" onChange={(v) => setField('location_color', v)} />
-                  <ColorField title="Accent and buttons" value={form.accent_color} fallback="#A9545F" onChange={(v) => setField('accent_color', v)} />
-                  <div>
-                    <label className={label}>Space between sections</label>
-                    <input
-                      type="range" min={0} max={48}
-                      value={form.portfolio_section_spacing ?? 14}
-                      onChange={(e) => setField('portfolio_section_spacing', Number(e.target.value))}
-                      className="w-full"
-                    />
-                  </div>
-                </section>
-                </div>
-                <div className={`space-y-5 ${step === 4 ? '' : 'hidden'}`}>
-<section className={card}>
-                  <p className="mb-1 text-sm font-medium text-ink">Sections</p>
-                  <p className="mb-4 text-xs text-ink-soft">Turn sections on or off and reorder them with the arrows.</p>
-                  <ul className="divide-y divide-line">
-                    {(form.section_order ?? []).map((key, i, arr) => {
-                      const toggle = TOGGLE[key]
-                      const on = toggle ? form[toggle] !== false : true
-                      return (
-                        <li key={key} className="flex items-center gap-3 py-3">
-                          <div className="flex flex-col">
-                            <button disabled={i === 0} onClick={() => move(key, -1)} className="px-1 text-xs text-ink-soft hover:text-ink disabled:opacity-30" aria-label="Move up">▲</button>
-                            <button disabled={i === arr.length - 1} onClick={() => move(key, 1)} className="px-1 text-xs text-ink-soft hover:text-ink disabled:opacity-30" aria-label="Move down">▼</button>
-                          </div>
-                          <span className={`flex-1 text-sm ${on ? 'text-ink' : 'text-ink-soft line-through'}`}>{LABELS[key]}</span>
-                          {toggle ? (
-                            <input
-                              type="checkbox"
-                              checked={on}
-                              onChange={(e) => setField(toggle, e.target.checked as never)}
-                              className="h-5 w-5"
-                              aria-label={`Show ${LABELS[key]}`}
-                            />
-                          ) : (
-                            <span className="text-xs text-ink-soft">Shows when you have some</span>
-                          )}
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </section>
-
-<section className={`${card} space-y-3`}>
-                  <p className="text-sm font-medium text-ink">Section names</p>
-                  <p className="text-xs text-ink-soft">Rename the headings on your portfolio. Leave blank to use the default.</p>
-                  {DEFAULT_ORDER.map((key) => (
-                    <div key={key}>
-                      <label className="mb-1 block text-xs text-ink-soft">{LABELS[key]}</label>
-                      <input
-                        className={input}
-                        value={form.section_titles?.[key] ?? ''}
-                        placeholder={LABELS[key]}
-                        onChange={(e) => {
-                          const next = { ...(form.section_titles ?? {}) }
-                          if (e.target.value) next[key] = e.target.value
-                          else delete next[key]
-                          setField('section_titles', next)
-                        }}
-                      />
-                    </div>
-                  ))}
-                </section>
-
-<section className={`${card} space-y-4`}>
-                  <p className="text-sm font-medium text-ink">FAQ</p>
-                  {(form.faq ?? []).map((item, i) => (
-                    <div key={i} className="space-y-2 rounded-xl border border-line p-3">
-                      <input
-                        className={input}
-                        placeholder="Question"
-                        value={item.question}
-                        onChange={(e) => setField('faq', (form.faq ?? []).map((f, j) => (j === i ? { ...f, question: e.target.value } : f)))}
-                      />
-                      <textarea
-                        rows={3}
-                        className={input}
-                        placeholder="Answer"
-                        value={item.answer}
-                        onChange={(e) => setField('faq', (form.faq ?? []).map((f, j) => (j === i ? { ...f, answer: e.target.value } : f)))}
-                      />
-                      <button type="button" className="text-xs text-ink-soft underline hover:text-ink" onClick={() => setField('faq', (form.faq ?? []).filter((_, j) => j !== i))}>
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                  <button type="button" className={btnGhost} onClick={() => setField('faq', [...(form.faq ?? []), { question: '', answer: '' }])}>
-                    Add a question
-                  </button>
-                </section>
-
-                <section className={`${card} text-center`}>
-                  <p className="font-fraunces text-xl font-semibold text-ink">You&apos;re all set</p>
-                  <p className="mt-1 text-sm text-ink-soft">Save your changes, then take a look at your live site.</p>
-                  {portfolioUrl && (
-                    <a href={portfolioUrl} target="_blank" rel="noreferrer" className={`${btn} mt-4 inline-block`}>View live site</a>
-                  )}
-                </section>
-                </div>
-                <div className="flex items-center justify-between pt-2">
-                  <button type="button" className={btnGhost} disabled={step === 1} onClick={() => { if (dirty) save(); setStep(step - 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Back</button>
-                  {step < 4 && <button type="button" className={btn} onClick={() => { if (dirty) save(); setStep(step + 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Next</button>}
-                </div>
+                )}
 
                 <p className="text-xs text-ink-soft">
                   Photo layouts and packages are edited in the Camrhia app for now. Anything you change here shows up there too.
