@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { ContractPanel } from './ContractPanel'
 
 type Wedding = Record<string, any>
 type Ev = { id: string; title: string | null; event_date: string | null; event_time: string | null; location: string | null; type: string | null; notes: string | null }
@@ -388,18 +389,7 @@ export default function SessionDetailPage() {
 
               {/* Contract + timeline */}
               <div className="space-y-6">
-                <section className={card}>
-                  <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Contract</p>
-                  {contract ? (
-                    <div className="divide-y divide-line">
-                      <Row label="Status" value={contract.status} />
-                      <Row label="Sent" value={contract.sent_at ? new Date(contract.sent_at).toLocaleDateString() : null} />
-                      <Row label="Signed" value={contract.signed_at ? `${new Date(contract.signed_at).toLocaleDateString()}${contract.signer_name ? ` by ${contract.signer_name}` : ''}` : 'Not signed yet'} />
-                    </div>
-                  ) : (
-                    <p className="text-sm text-ink-soft">No contract yet.</p>
-                  )}
-                </section>
+                <ContractPanel weddingId={id} w={w as unknown as Record<string, any>} onChanged={load} />
 
                 <section className={card}>
                   <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Timeline</p>
