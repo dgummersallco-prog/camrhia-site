@@ -11,12 +11,13 @@ function fmtDate(dateStr: string): string {
 }
 
 export function DateCheckWidget({
-  photographerId, accent, dayColor, selectedColor, monthColor, availableColor, unavailableColor, resultTextColor, fontFamily, fontSize, bgColor,
+  photographerId, accent, dayColor, selectedColor, monthColor, availableColor, unavailableColor, resultTextColor, fontFamily, fontSize, bgColor, onPick,
 }: {
   photographerId: string; accent: string
   dayColor?: string | null; selectedColor?: string | null; monthColor?: string | null
   availableColor?: string | null; unavailableColor?: string | null; resultTextColor?: string | null
   fontFamily?: string; fontSize?: number | null; bgColor?: string | null
+  onPick?: (date: string, available: boolean) => void
 }) {
   const [viewDate, setViewDate] = useState(() => { const d = new Date(); d.setDate(1); return d })
   const [selected, setSelected] = useState<string | null>(null)
@@ -39,6 +40,7 @@ export function DateCheckWidget({
     if (error || !data) { setResult({ status: 'error' }); return }
     if (data.available) setResult({ status: 'available' })
     else setResult({ status: 'unavailable', nearby: data.nearby ?? [] })
+    onPick?.(dateStr, !!data.available)
   }
 
   const todayStr = new Date().toISOString().split('T')[0]

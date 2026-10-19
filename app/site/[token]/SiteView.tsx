@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
-import { DateCheckWidget } from '../../p/[token]/DateCheckWidget'
-import { ContactButton } from '../../p/[token]/ContactButton'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 
@@ -20,9 +18,11 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   const [r, setR] = useState<Record<string, any>>(initial)
   const [open, setOpen] = useState(false)
   const [slide, setSlide] = useState(0)
+  const [isPreview, setIsPreview] = useState(false)
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('preview') !== '1') return
+    setIsPreview(true)
     function onMsg(e: MessageEvent) {
       const d = e.data as { type?: string; patch?: Record<string, any> } | null
       if (d && d.type === 'camrhia-preview' && d.patch) setR((prev) => ({ ...prev, ...d.patch }))
@@ -34,6 +34,8 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
 
   const t = resolveTheme(r)
   const { tpl, accent, ink, soft, line, bg, tint } = t
+  const qs = isPreview ? '?preview=1' : ''
+  const availHref = `/site/${token}/availability${qs}`
 
   const name: string = r.studio_name ?? r.display_name ?? 'Studio'
   const cityLine = [[r.service_city, r.service_state].filter(Boolean).join(', '), r.location_custom_text || null].filter(Boolean).join(' · ')
@@ -62,7 +64,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
       photos: [...(g.photos ?? [])].sort((x: any, y: any) => (x.sort_order ?? 0) - (y.sort_order ?? 0)) as any[],
     }))
     .filter((g) => g.photos.length > 0)
-  const packages = ((r.packages ?? []) as any[]).filter((p) => p.show_public !== false && !!p.page_id)
+  const sitePkgs = (r.site_packages ?? []) as { id: string; title: string; price: string | null; description: string | null }[]
   const quotes: { text: string; who: string; img: string | null }[] = [
     ...((r.testimonials ?? []) as any[]).filter((x) => x.quote).map((x) => ({ text: x.quote as string, who: (x.client_name ?? '') as string, img: photoUrl(x.storage_path) })),
     ...((r.reviews ?? []) as any[]).filter((v) => v.body).map((v) => ({ text: v.body as string, who: (v.couple_names ?? '') as string, img: null })),
@@ -73,7 +75,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   const showMap: Record<string, boolean> = {
     about: on('about') && !!(t.text.about || r.bio || aboutPhoto),
     portfolio: on('portfolio') && galleries.length > 0,
-    investment: on('investment') && packages.length > 0,
+    investment: on('investment') && sitePkgs.length > 0,
     testimonials: on('testimonials') && quotes.length > 0,
     faq: on('faq') && faq.length > 0,
     contact: true,
@@ -93,7 +95,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
 
   const cta = (force?: boolean) =>
     t.hero.ctaShow || force ? (
-      <a href="#contact" className="inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.hero.ctaText}</a>
+      <a href={availHref} className="inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.hero.ctaText}</a>
     ) : null
 
   const renderNav = (overlay: boolean, center: boolean) => {
@@ -148,9 +150,11 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   const alignCls = t.hero.align === 'left' ? 'items-start text-left' : t.hero.align === 'right' ? 'items-end text-right' : 'items-center text-center'
   const vCls = t.hero.valign === 'top' ? 'pt-32' : t.hero.valign === 'center' ? 'my-auto py-20' : 'mt-auto pb-20 md:pb-28'
   const ov = t.hero.overlay
+  const h1Big: React.CSSProperties = { ...headStyle, fontSize: 'var(--hl)', lineHeight: 1.05 }
+  const h1Mid: React.CSSProperties = { ...headStyle, fontSize: 'calc(var(--hl) * 0.85)', lineHeight: 1.05 }
 
   const sec = (id: string, title: string | null, children: React.ReactNode, tinted: boolean) => (
-    <section id={id} className="scroll-mt-16 px-6" style={{ background: tinted ? tint : undefined, paddingTop: t.padCss, paddingBottom: t.padCss }}>
+    <section id={id} className="scroll-mt-16 px-6" style={{ background: tinted ? tint : undefined, paddingTop: 'var(--space)', paddingBottom: 'var(--space)' }}>
       <div className="mx-auto max-w-6xl">
         {title && <h2 className="mb-12 text-center text-4xl md:text-5xl" style={headStyle}>{title}</h2>}
         {children}
@@ -182,12 +186,12 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           </div>, tinted)
       case 'portfolio':
         return sec('portfolio', t.titles.portfolio,
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ gap: t.gallery.gap + 8 }}>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
             {galleries.map((g) => {
               const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
               const u = photoUrl(cover?.storage_path)
               return (
-                <a key={g.id} href={`/site/${token}/g/${g.id}`} className="group relative block overflow-hidden" style={{ aspectRatio: t.cardRatio, background: '#E5E1DB' }}>
+                <a key={g.id} href={`/site/${token}/g/${g.id}${qs}`} className="group relative block overflow-hidden" style={{ aspectRatio: t.cardRatio, background: '#E5E1DB' }}>
                   {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
                   <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
                   <div className="absolute inset-x-0 bottom-0 p-6 text-white">
@@ -201,21 +205,16 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
       case 'investment':
         return sec('investment', t.titles.investment,
           <div className="mx-auto max-w-3xl">
-            {packages.map((p, i) => {
-              const desc = (p.description ?? p.details ?? p.blurb ?? '') as string
-              return (
-                <div key={p.id} className="flex items-start justify-between gap-6 py-6" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
-                  <div>
-                    <h3 className="text-2xl" style={headStyle}>{p.name}</h3>
-                    {desc && <p className="mt-1 whitespace-pre-line text-sm leading-relaxed" style={{ color: soft }}>{desc}</p>}
-                  </div>
-                  {p.price && <span className="whitespace-nowrap text-lg" style={{ color: accent, fontFamily: t.head }}>{p.price}</span>}
+            {sitePkgs.map((p, i) => (
+              <div key={p.id} className="flex items-start justify-between gap-6 py-6" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
+                <div>
+                  <h3 className="text-2xl" style={headStyle}>{p.title}</h3>
+                  {p.description && <p className="mt-1 whitespace-pre-line text-sm leading-relaxed" style={{ color: soft }}>{p.description}</p>}
                 </div>
-              )
-            })}
-            <div className="mt-10 text-center">
-              <a href={`/p/${token}/packages`} className="text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>See full details →</a>
-            </div>
+                {p.price && <span className="whitespace-nowrap text-lg" style={{ color: accent, fontFamily: t.head }}>{p.price}</span>}
+              </div>
+            ))}
+            <div className="mt-10 text-center">{cta(true)}</div>
           </div>, tinted)
       case 'testimonials':
         return sec('words', t.titles.testimonials,
@@ -241,13 +240,9 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         return sec('contact', t.titles.contact,
           <div className="mx-auto max-w-xl text-center">
             <p className="mb-8 whitespace-pre-line text-[15px] leading-relaxed" style={{ color: soft }}>
-              {t.text.contact ?? 'Tell me about your day. Check a date below, or tap the message button to send me an inquiry.'}
+              {t.text.contact ?? 'Tell me about your day. Check a date and send me a message.'}
             </p>
-            {on('availability') && (
-              <div className="mb-10">
-                <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} />
-              </div>
-            )}
+            <div className="mb-10">{cta(true)}</div>
             {socials.length > 0 && (
               <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
                 {socials.map((s) => (
@@ -265,20 +260,19 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   return (
     <>
       <link rel="stylesheet" href={t.fontsHref} />
-      <style>{`html{scroll-behavior:smooth;font-size:${Math.round(t.fontScale * 100)}%}html,body{background:${bg}}`}</style>
+      <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}html,body{background:${bg}}`}</style>
       <PortfolioLightbox />
       <div style={{ background: bg, color: ink, fontFamily: t.body }}>
-        {/* ── Hero ── */}
         {tpl === 'editorial' && (
           <>
             {t.menu.solid && renderNav(false, false)}
-            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: t.menu.solid ? 'calc(92vh - 4rem)' : '92vh' }}>
+            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: t.menu.solid ? 'calc(var(--hero-h) - 4rem)' : 'var(--hero-h)' }}>
               {heroImg('absolute inset-0 h-full w-full')}
               <div className="absolute inset-0" style={{ background: `linear-gradient(rgba(0,0,0,${ov}), rgba(0,0,0,${(ov * 0.35).toFixed(2)}) 40%, rgba(0,0,0,${Math.min(0.85, ov * 1.6).toFixed(2)}))` }} />
               {!t.menu.solid && renderNav(true, false)}
               <div className={`relative mx-auto flex w-full max-w-5xl flex-col px-6 text-white ${alignCls} ${vCls}`}>
                 <div className="max-w-3xl">
-                  <h1 className="text-5xl leading-[1.05] md:text-7xl" style={headStyle}>{headline}</h1>
+                  <h1 style={h1Big}>{headline}</h1>
                   {subhead && <p className="mt-4 text-[12px] uppercase tracking-[0.28em] opacity-90">{subhead}</p>}
                   <div className="mt-8">{cta()}</div>
                 </div>
@@ -289,10 +283,10 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         {tpl === 'split' && (
           <header id="top">
             {renderNav(false, false)}
-            <div className="grid min-h-[calc(100vh-4rem)] md:grid-cols-2">
+            <div className="grid md:grid-cols-2" style={{ minHeight: 'calc(var(--hero-h) - 4rem)' }}>
               <div className={`order-2 flex flex-col justify-center px-8 py-16 md:order-1 md:px-16 ${t.hero.align === 'center' ? 'items-center text-center' : t.hero.align === 'right' ? 'items-end text-right' : 'items-start text-left'}`}>
                 {subhead && <p className="mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
-                <h1 className="text-5xl leading-[1.05] md:text-6xl" style={headStyle}>{headline}</h1>
+                <h1 style={h1Mid}>{headline}</h1>
                 <p className="mt-6 max-w-md text-[15px] leading-relaxed" style={{ color: soft }}>
                   {(t.text.about ?? r.bio ?? '').toString().split(/\n+/)[0].slice(0, 220)}
                 </p>
@@ -309,14 +303,13 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
               <div className="relative aspect-[16/10] overflow-hidden md:aspect-[21/9]">{heroImg('absolute inset-0 h-full w-full')}</div>
             </div>
             <div className={`mx-auto flex max-w-3xl flex-col px-6 py-14 ${alignCls}`}>
-              <h1 className="text-4xl md:text-6xl" style={headStyle}>{headline}</h1>
+              <h1 style={h1Mid}>{headline}</h1>
               {subhead && <p className="mt-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
               <div className="mt-8">{cta()}</div>
             </div>
           </header>
         )}
 
-        {/* ── Three doors ── */}
         {doors.length > 0 && (
           <div className="mx-auto grid max-w-6xl gap-0 px-6 py-16" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
             {doors.map((b, i) => (
@@ -328,7 +321,6 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           </div>
         )}
 
-        {/* ── Sections in the chosen order ── */}
         {visible.map((k, i) => (
           <React.Fragment key={k}>{renderSection(k, i % 2 === 1)}</React.Fragment>
         ))}
@@ -339,21 +331,12 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         </footer>
       </div>
 
-      <ContactButton
-        photographerId={r.photographer_id}
-        studioName={name}
-        accent={accent}
-        btn={{
-          bg: accent,
-          textColor: '#FFFFFF',
-          fontFamily: t.head,
-          fontSize: 16,
-          text: 'Inquire',
-          showIcon: true,
-          width: null,
-          align: 'right',
-        } as any}
-      />
+      {t.availability.float && (
+        <a href={availHref} className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap px-8 py-3.5 text-[11px] uppercase tracking-[0.22em]"
+          style={{ ...btnStyle, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}>
+          {t.hero.ctaText}
+        </a>
+      )}
     </>
   )
 }

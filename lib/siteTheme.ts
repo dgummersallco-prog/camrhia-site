@@ -39,6 +39,9 @@ function num(v: unknown, min: number, max: number, d: number): number {
 function str(v: unknown): string | null {
   return typeof v === 'string' && v.trim() ? v.trim() : null
 }
+function pairNum(v: any, min: number, max: number, dp: number, dd: number) {
+  return { phone: num(v?.phone, min, max, dp), desktop: num(v?.desktop, min, max, dd) }
+}
 
 export function resolveTheme(r: Record<string, any>) {
   const s = (r.site_settings ?? {}) as Record<string, any>
@@ -50,8 +53,6 @@ export function resolveTheme(r: Record<string, any>) {
   const bg = hex(s.colors?.bg, tpl === 'minimal' ? '#FFFFFF' : tpl === 'split' ? '#F6F1EA' : '#FAF7F2')
   const ink = hex(s.colors?.text, '#2A1F24')
   const tint = hex(s.colors?.tint, tpl === 'minimal' ? '#F7F5F2' : '#F0EAE1')
-  const spacing = pick(s.spacing, ['tight', 'normal', 'airy'] as const, 'normal')
-  const pad = spacing === 'tight' ? 56 : spacing === 'airy' ? 128 : 88
   const shape = pick(s.button?.shape, ['square', 'rounded', 'pill'] as const, 'square')
 
   const savedOrder: string[] = Array.isArray(s.order)
@@ -76,7 +77,6 @@ export function resolveTheme(r: Record<string, any>) {
   }
   const gallery = {
     layout: pick(s.gallery?.layout, ['masonry', 'grid', 'single'] as const, 'masonry'),
-    gap: num(s.gallery?.gap, 0, 40, 12),
     card: pick(s.gallery?.card, ['portrait', 'square', 'landscape'] as const, 'portrait'),
   }
   const cardRatio = gallery.card === 'square' ? '1/1' : gallery.card === 'landscape' ? '3/2' : '4/5'
@@ -86,6 +86,24 @@ export function resolveTheme(r: Record<string, any>) {
     hidden: Array.isArray(s.menu?.hidden) ? (s.menu.hidden as string[]) : [],
   }
   const text = { about: str(s.text?.about), contact: str(s.text?.contact), footer: str(s.text?.footer) }
+  const availability = {
+    title: str(s.availability?.title) ?? 'Check availability',
+    intro: str(s.availability?.intro) ?? 'Pick a date to see if I am free, then tell me a little about your day.',
+    button: str(s.availability?.button) ?? 'Send inquiry',
+    success: str(s.availability?.success),
+    float: s.availability?.float !== false,
+  }
+
+  const sizes = {
+    text: pairNum(s.sizes?.text, 80, 130, 100, 100),
+    headline: pairNum(s.sizes?.headline, 24, 140, 44, 72),
+    sectionSpace: pairNum(s.sizes?.sectionSpace, 16, 220, 56, 88),
+    photoGap: pairNum(s.sizes?.photoGap, 0, 60, 8, 12),
+    heroHeight: pairNum(s.sizes?.heroHeight, 40, 100, 80, 92),
+  }
+  const vars = (d: 'phone' | 'desktop') =>
+    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--hero-h:${sizes.heroHeight[d]}vh;`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}`
 
   return {
     tpl,
@@ -93,7 +111,6 @@ export function resolveTheme(r: Record<string, any>) {
     bodyKey,
     head: FONT_OPTIONS[headKey].family,
     body: FONT_OPTIONS[bodyKey].family,
-    fontScale: num(s.fonts?.scale, 0.85, 1.25, 1),
     fontsHref:
       'https://fonts.googleapis.com/css2?' +
       Array.from(new Set([headKey, bodyKey])).map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') +
@@ -104,8 +121,6 @@ export function resolveTheme(r: Record<string, any>) {
     tint,
     soft: `color-mix(in srgb, ${ink} 68%, ${bg})`,
     line: `color-mix(in srgb, ${ink} 14%, transparent)`,
-    spacing,
-    padCss: `clamp(${Math.round(pad * 0.6)}px, 8vw, ${pad}px)`,
     radius: shape === 'pill' ? 999 : shape === 'rounded' ? 10 : 0,
     shape,
     order,
@@ -115,5 +130,8 @@ export function resolveTheme(r: Record<string, any>) {
     gallery,
     cardRatio,
     menu,
+    availability,
+    sizes,
+    cssVars,
   }
 }

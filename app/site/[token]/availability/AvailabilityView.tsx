@@ -1,0 +1,185 @@
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { DateCheckWidget } from '../../../p/[token]/DateCheckWidget'
+import { resolveTheme } from '@/lib/siteTheme'
+
+const SESSION_TYPES = [
+  'Wedding', 'Engagement', 'Proposal', 'Family', 'Maternity', 'Newborn', 'Senior',
+  'Headshots', 'Branding', 'Graduation', 'Sports / Team', 'Boudoir', 'Other',
+]
+const APP_STORE_URL = 'https://apps.apple.com/app/id6800011162'
+
+export function AvailabilityView({ initial, token }: { initial: Record<string, any>; token: string }) {
+  const [r, setR] = useState<Record<string, any>>(initial)
+  const [isPreview, setIsPreview] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [sessionType, setSessionType] = useState('')
+  const [date, setDate] = useState('')
+  const [city, setCity] = useState('')
+  const [message, setMessage] = useState('')
+  const [website, setWebsite] = useState('')
+  const [isClient, setIsClient] = useState(false)
+  const [inquiryId, setInquiryId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('preview') !== '1') return
+    setIsPreview(true)
+    function onMsg(e: MessageEvent) {
+      const d = e.data as { type?: string; patch?: Record<string, any> } | null
+      if (d && d.type === 'camrhia-preview' && d.patch) setR((prev) => ({ ...prev, ...d.patch }))
+    }
+    window.addEventListener('message', onMsg)
+    window.parent?.postMessage({ type: 'camrhia-preview-ready' }, '*')
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
+
+  useEffect(() => {
+    async function prefill() {
+      const sb = supabase
+      if (!sb) return
+      const { data: sess } = await sb.auth.getSession()
+      const u = sess.session?.user
+      if (!u) return
+      const { data: p } = await sb.from('profiles').select('account_type, couple_names, first_name, last_name, display_name').eq('id', u.id).maybeSingle()
+      const pr = p as { account_type?: string; couple_names?: string; first_name?: string; last_name?: string; display_name?: string } | null
+      if (pr?.account_type !== 'couple') return
+      setIsClient(true)
+      setEmail(u.email ?? '')
+      setName(pr.couple_names || [pr.first_name, pr.last_name].filter(Boolean).join(' ') || pr.display_name || '')
+    }
+    prefill()
+  }, [])
+
+  const t = resolveTheme(r)
+  const { accent, ink, soft, line, bg } = t
+  const studio: string = r.studio_name ?? r.display_name ?? 'Studio'
+  const qs = isPreview ? '?preview=1' : ''
+  const head: React.CSSProperties = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' }
+  const input: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', padding: '12px 14px', fontSize: 16, border: `1px solid ${line}`,
+    borderRadius: 10, background: '#fff', color: '#2A1F24', fontFamily: t.body,
+  }
+  const label: React.CSSProperties = {
+    fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: soft, marginBottom: 6, display: 'block', fontFamily: t.body,
+  }
+  const stepLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.25em', textTransform: 'uppercase', color: accent, marginBottom: 14, fontFamily: t.body }
+  const primary: React.CSSProperties = { background: accent, color: '#fff', border: 'none', borderRadius: t.radius, padding: '15px 28px', fontSize: 12, letterSpacing: '0.22em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: t.body }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!supabase) { setError('Something went wrong. Please try again.'); return }
+    setSending(true)
+    setError(null)
+    if (isClient) {
+      const key = sessionType.toLowerCase().startsWith('sports') ? 'sports' : sessionType.toLowerCase()
+      const { data: iid, error: ce } = await supabase.rpc('client_start_inquiry', {
+        p_photographer_id: r.photographer_id,
+        p_names: name,
+        p_phone: phone || null,
+        p_session_type: key || null,
+        p_date: date || null,
+        p_city: city || null,
+        p_state: null,
+        p_note: message || null,
+      })
+      setSending(false)
+      if (ce) { setError(ce.message); return }
+      setInquiryId(iid as string)
+      setSent(true)
+      return
+    }
+    const { error: rpcError } = await supabase.rpc('submit_web_inquiry', {
+      p_photographer_id: r.photographer_id,
+      p_name: name,
+      p_email: email,
+      p_phone: phone || null,
+      p_session_type: sessionType || null,
+      p_preferred_date: date || null,
+      p_message: [city ? `Location: ${city}` : '', message].filter(Boolean).join('\n\n') || null,
+      p_website: website || null,
+    })
+    setSending(false)
+    if (rpcError) { setError(rpcError.message); return }
+    setSent(true)
+  }
+
+  return (
+    <>
+      <link rel="stylesheet" href={t.fontsHref} />
+      <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
+      <div style={{ background: bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
+        <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+          <a href={`/site/${token}${qs}`} style={{ ...head, fontSize: 24 }}>{studio}</a>
+          <a href={`/site/${token}${qs}`} className="text-[11px] uppercase tracking-[0.2em]">← Back</a>
+        </nav>
+
+        <main className="mx-auto max-w-xl px-6 pb-24 pt-8">
+          <h1 className="text-center" style={{ ...head, fontSize: 'calc(var(--hl) * 0.75)', lineHeight: 1.1 }}>{t.availability.title}</h1>
+          <p className="mx-auto mt-4 max-w-md whitespace-pre-line text-center text-[15px] leading-relaxed" style={{ color: soft }}>{t.availability.intro}</p>
+
+          {sent ? (
+            <div className="mt-10 rounded-2xl p-6" style={{ background: '#fff', border: `1px solid ${line}`, lineHeight: 1.6 }}>
+              <h2 style={{ ...head, fontSize: 28 }}>Thank you{name ? `, ${name.split(' ')[0]}` : ''}.</h2>
+              <p className="mt-3 whitespace-pre-line text-[15px]" style={{ color: soft }}>
+                {t.availability.success ?? `${studio} has your request and will reach out soon.`}
+              </p>
+              {!isClient && (
+                <div className="mt-5 text-[15px]" style={{ color: soft }}>
+                  <p><strong style={{ color: ink }}>One more step</strong> to get your request to {studio}:</p>
+                  <ol className="mt-3 grid gap-2 pl-5" style={{ listStyle: 'decimal' }}>
+                    <li>Download the free Camrhia app and create your account.</li>
+                    <li>Sign up with this exact email: <strong style={{ color: ink }}>{email}</strong></li>
+                    <li>The moment your account is ready, your message is sent to {studio} automatically.</li>
+                  </ol>
+                </div>
+              )}
+              {inquiryId && (
+                <a href={`/my/inquiry/${inquiryId}?s=${encodeURIComponent(studio)}`} className="mt-6 block text-center" style={primary}>Open your conversation</a>
+              )}
+              <a href={APP_STORE_URL} className="mt-4 block text-center" style={primary}>{isClient ? 'Get the Camrhia app' : 'Download the app and create your account'}</a>
+            </div>
+          ) : (
+            <>
+              <section className="mt-10">
+                <p style={stepLabel}>1 · Pick a date</p>
+                <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} bgColor="#fff" onPick={(d) => setDate(d)} />
+              </section>
+
+              <form onSubmit={submit} className="mt-12 grid gap-4">
+                <p style={stepLabel}>2 · Tell me about your day</p>
+                <div><label style={label}>Your name *</label>
+                  <input style={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} autoComplete="name" /></div>
+                <div><label style={label}>Email *</label>
+                  <input style={input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={200} autoComplete="email" /></div>
+                <div><label style={label}>Phone (optional)</label>
+                  <input style={input} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} autoComplete="tel" /></div>
+                <div><label style={label}>What are you looking for?</label>
+                  <select style={input} value={sessionType} onChange={(e) => setSessionType(e.target.value)}>
+                    <option value="">Choose a session type</option>
+                    {SESSION_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select></div>
+                <div><label style={label}>Date</label>
+                  <input style={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+                <div><label style={label}>Location (city)</label>
+                  <input style={input} value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} placeholder="Where would the session be?" /></div>
+                <div><label style={label}>Message</label>
+                  <textarea style={{ ...input, minHeight: 100, resize: 'vertical' }} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} placeholder="Tell me a little about what you have in mind" /></div>
+                <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={(e) => setWebsite(e.target.value)}
+                  style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
+                {error && <p style={{ margin: 0, color: '#B83232', fontSize: 14 }}>{error}</p>}
+                <button type="submit" disabled={sending} style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
+              </form>
+            </>
+          )}
+        </main>
+      </div>
+    </>
+  )
+}

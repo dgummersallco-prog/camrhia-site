@@ -24,6 +24,8 @@ type Site = {
   site_settings: Record<string, any> | null
 }
 type Tm = { id: string; storage_path: string | null; quote: string | null; client_name: string | null; sort_order: number }
+type WPkg = { id: string; title: string; price: string | null; description: string | null; sort_order: number }
+type Dev = 'phone' | 'desktop'
 
 const COLUMNS = 'id, public_token, slug, accent_color, cover_path, cover_paths, site_template, site_accent, site_font_pair, site_headline, site_subhead, site_sections, site_settings'
 const BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
@@ -43,6 +45,17 @@ const btn = 'rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white
 const btnGhost = 'rounded-full border border-line px-5 py-2.5 text-sm text-ink hover:bg-paper-deep'
 const inputCls = 'w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink'
 const card = 'rounded-2xl border border-line bg-card p-5'
+
+const SLIDER_CSS = `
+.cr-range{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;cursor:pointer;margin:0}
+.cr-range::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:linear-gradient(to right,#2A1F24 var(--pct),#D9CFC3 var(--pct))}
+.cr-range::-moz-range-track{height:2px;border-radius:2px;background:#D9CFC3}
+.cr-range::-moz-range-progress{height:2px;border-radius:2px;background:#2A1F24}
+.cr-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;margin-top:-7px;border-radius:50%;background:#FAF7F2;border:1.5px solid #2A1F24;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.cr-range::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#FAF7F2;border:1.5px solid #2A1F24}
+.cr-range:focus-visible{outline:none}
+.cr-range:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px rgba(42,31,36,.18)}
+`
 
 function Group({ title, hint, open, children }: { title: string; hint?: string; open?: boolean; children: React.ReactNode }) {
   return (
@@ -78,6 +91,52 @@ function Switch({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
     <button type="button" onClick={() => onChange(!on)} aria-pressed={on} className={`relative h-6 w-11 shrink-0 rounded-full transition ${on ? 'bg-twilight' : 'bg-line'}`}>
       <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all" style={{ left: on ? 22 : 2 }} />
     </button>
+  )
+}
+function Slider({ min, max, step, value, onChange }: { min: number; max: number; step: number; value: number; onChange: (v: number) => void }) {
+  const clamped = Math.min(max, Math.max(min, value))
+  const pct = max > min ? ((clamped - min) / (max - min)) * 100 : 0
+  return (
+    <input type="range" className="cr-range" min={min} max={max} step={step} value={clamped}
+      onChange={(e) => onChange(Number(e.target.value))} style={{ '--pct': `${pct}%` } as React.CSSProperties} />
+  )
+}
+function NumBox({ value, min, max, step, unit, onChange }: { value: number; min: number; max: number; step: number; unit: string; onChange: (v: number) => void }) {
+  const [txt, setTxt] = useState(String(value))
+  const [focus, setFocus] = useState(false)
+  useEffect(() => { if (!focus) setTxt(String(value)) }, [value, focus])
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1">
+      <input type="number" value={txt} min={min} max={max} step={step}
+        onFocus={() => setFocus(true)}
+        onChange={(e) => {
+          setTxt(e.target.value)
+          const n = Number(e.target.value)
+          if (e.target.value !== '' && Number.isFinite(n)) onChange(Math.min(max, Math.max(min, n)))
+        }}
+        onBlur={() => { setFocus(false); const n = Number(txt); if (txt === '' || !Number.isFinite(n)) setTxt(String(value)) }}
+        className="w-16 rounded-lg border border-line bg-white px-2 py-1 text-right text-sm text-ink" />
+      <span className="w-5 text-xs text-ink-soft">{unit}</span>
+    </span>
+  )
+}
+function SizeControl({ label, unit, min, max, step, value, onChange }: {
+  label: string; unit: string; min: number; max: number; step: number
+  value: { phone: number; desktop: number }; onChange: (d: Dev, v: number) => void
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-sm text-ink">{label}</p>
+      <div className="space-y-2">
+        {(['phone', 'desktop'] as const).map((d) => (
+          <div key={d} className="flex items-center gap-3">
+            <span className="w-14 shrink-0 text-[11px] uppercase tracking-widest text-ink-soft">{d}</span>
+            <div className="min-w-0 flex-1"><Slider min={min} max={max} step={step} value={value[d]} onChange={(v) => onChange(d, v)} /></div>
+            <NumBox value={value[d]} min={min} max={max} step={step} unit={unit} onChange={(v) => onChange(d, v)} />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -123,11 +182,13 @@ export default function WebsitePage() {
   const [saved, setSaved] = useState<Site | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [device, setDevice] = useState<'phone' | 'desktop'>('desktop')
+  const [device, setDevice] = useState<Dev>('desktop')
+  const [previewPage, setPreviewPage] = useState<'home' | 'availability'>('home')
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
   const [stageW, setStageW] = useState(0)
   const formRef = useRef<Site | null>(null)
   const [tms, setTms] = useState<Tm[]>([])
+  const [pkgs, setPkgs] = useState<WPkg[]>([])
   const [tName, setTName] = useState('')
   const [tQuote, setTQuote] = useState('')
   const [tFile, setTFile] = useState<File | null>(null)
@@ -183,7 +244,7 @@ export default function WebsitePage() {
     return () => ro.disconnect()
   }, [stageEl])
 
-  const loadTms = useCallback(async () => {
+  const loadExtras = useCallback(async () => {
     const sb = supabase
     if (!sb) return
     const { data: sess } = await sb.auth.getSession()
@@ -191,10 +252,12 @@ export default function WebsitePage() {
     if (!id) return
     const { data } = await sb.from('testimonials').select('id, storage_path, quote, client_name, sort_order').eq('owner_id', id).order('sort_order', { ascending: true })
     setTms((data ?? []) as Tm[])
+    const pk = await sb.from('website_packages').select('id, title, price, description, sort_order').eq('photographer_id', id).order('sort_order', { ascending: true })
+    setPkgs((pk.data ?? []) as WPkg[])
     const ph = await sb.from('website_photos').select('storage_path').eq('photographer_id', id).order('created_at', { ascending: false }).limit(80)
     setCandsDb(((ph.data ?? []) as { storage_path: string }[]).map((x) => x.storage_path))
   }, [])
-  useEffect(() => { loadTms() }, [loadTms])
+  useEffect(() => { loadExtras() }, [loadExtras])
 
   function flash(text: string) {
     setMessage(text)
@@ -285,7 +348,7 @@ export default function WebsitePage() {
       const { error } = await sb.from('testimonials').insert({ owner_id: id, quote: tQuote.trim(), client_name: tName.trim() || null, storage_path: path, sort_order: tms.length })
       if (error) throw error
       setTName(''); setTQuote(''); setTFile(null)
-      await loadTms()
+      await loadExtras()
       setPreviewKey((k) => k + 1)
       flash('Testimonial added')
     } catch (e) {
@@ -300,8 +363,71 @@ export default function WebsitePage() {
     const { error } = await sb.from('testimonials').delete().eq('id', t.id)
     if (error) { flash(error.message); return }
     if (t.storage_path) await sb.storage.from('portfolio').remove([t.storage_path])
-    await loadTms()
+    await loadExtras()
     setPreviewKey((k) => k + 1)
+  }
+
+  async function addPkg() {
+    const sb = supabase
+    if (!sb) return
+    const { data: sess } = await sb.auth.getSession()
+    const id = sess.session?.user.id
+    if (!id) return
+    const { error } = await sb.from('website_packages').insert({ photographer_id: id, title: 'New package', price: null, description: null, sort_order: pkgs.length })
+    if (error) { flash(error.message); return }
+    await loadExtras()
+    setPreviewKey((k) => k + 1)
+  }
+  async function updatePkg(p: WPkg, patch: Partial<WPkg>) {
+    const sb = supabase
+    if (!sb) return
+    const { error } = await sb.from('website_packages').update(patch).eq('id', p.id)
+    if (error) { flash(error.message); return }
+    setPkgs((list) => list.map((x) => (x.id === p.id ? { ...x, ...patch } : x)))
+    setPreviewKey((k) => k + 1)
+  }
+  async function removePkg(p: WPkg) {
+    const sb = supabase
+    if (!sb || !window.confirm(`Remove "${p.title}"?`)) return
+    const { error } = await sb.from('website_packages').delete().eq('id', p.id)
+    if (error) { flash(error.message); return }
+    await loadExtras()
+    setPreviewKey((k) => k + 1)
+  }
+  async function movePkg(p: WPkg, dir: -1 | 1) {
+    const sb = supabase
+    if (!sb) return
+    const arr = [...pkgs].sort((a, b) => a.sort_order - b.sort_order)
+    const i = arr.findIndex((x) => x.id === p.id)
+    const j = i + dir
+    if (i < 0 || j < 0 || j >= arr.length) return
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp
+    await Promise.all(arr.map((x, idx) => sb.from('website_packages').update({ sort_order: idx }).eq('id', x.id)))
+    await loadExtras()
+    setPreviewKey((k) => k + 1)
+  }
+  async function copyFromApp() {
+    const sb = supabase
+    if (!sb || !form?.public_token) return
+    const { data: sess } = await sb.auth.getSession()
+    const id = sess.session?.user.id
+    if (!id) return
+    const { data } = await sb.rpc('get_public_profile', { p_token: form.public_token })
+    const list = (((data as Record<string, any> | null)?.packages ?? []) as any[]).filter((p) => p.show_public !== false && !!p.page_id)
+    if (list.length === 0) { flash('No app packages to copy.'); return }
+    if (!window.confirm(`Copy ${list.length} packages from your app? They become separate from the app after this.`)) return
+    const rows = list.map((p, i) => ({
+      photographer_id: id,
+      title: String(p.name ?? 'Package'),
+      price: p.price ? String(p.price) : null,
+      description: (p.description ?? p.details ?? p.blurb ?? null) as string | null,
+      sort_order: pkgs.length + i,
+    }))
+    const { error } = await sb.from('website_packages').insert(rows)
+    if (error) { flash(error.message); return }
+    await loadExtras()
+    setPreviewKey((k) => k + 1)
+    flash('Packages copied')
   }
 
   const T = form ? resolveTheme(form as unknown as Record<string, any>) : null
@@ -322,6 +448,10 @@ export default function WebsitePage() {
   }
   function setHero(patch: Record<string, any>) { upd((s) => { s.hero = { ...(s.hero ?? {}), ...patch } }) }
   function setIn(group: string, patch: Record<string, any>) { upd((s) => { s[group] = { ...(s[group] ?? {}), ...patch } }) }
+  function setSize(key: string, d: Dev, v: number) {
+    upd((s) => { s.sizes = { ...(s.sizes ?? {}), [key]: { ...(s.sizes?.[key] ?? {}), [d]: v } } })
+    setDevice(d)
+  }
   function colorRow(label: string, key: string, current: string) {
     return (
       <Row label={label}>
@@ -343,6 +473,7 @@ export default function WebsitePage() {
 
   return (
     <div className="min-h-screen bg-paper lg:pl-60">
+      <style>{SLIDER_CSS}</style>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Montserrat:wght@400&family=Josefin+Sans:wght@400&family=Work+Sans:wght@400&family=Playfair+Display:wght@500&family=Lora:wght@400&display=swap" />
       <DashboardHeader active="website" />
       <main className="mx-auto max-w-7xl px-6 py-8">
@@ -354,6 +485,7 @@ export default function WebsitePage() {
               <div>
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Your website</p>
                 <h1 className="font-fraunces text-3xl font-semibold text-ink">Design your website</h1>
+                <p className="mt-1 text-sm text-ink-soft">Work down the steps. The preview updates as you go, and nothing is live until you press Save.</p>
               </div>
               <div className="flex items-center gap-3">
                 {message && <span className="text-sm text-twilight">{message}</span>}
@@ -366,13 +498,69 @@ export default function WebsitePage() {
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
               <div className="space-y-4">
-                <section className={card}>
-                  <h2 className="mb-1 font-fraunces text-lg font-semibold text-ink">Your galleries</h2>
-                  <p className="mb-4 text-sm text-ink-soft">Make a gallery for each kind of work: Weddings, Seniors, Families. Each one gets its own page on your website.</p>
-                  <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
-                </section>
+                <Group title="1. Your content" hint="photos, prices, kind words" open>
+                  <div className="rounded-xl border border-line bg-paper p-4">
+                    <p className="font-medium text-ink">Galleries</p>
+                    <p className="mb-3 mt-1 text-sm text-ink-soft">One gallery per kind of work: Weddings, Seniors, Families. Each gets its own page.</p>
+                    <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
+                  </div>
 
-                <Group title="Look" hint="template, color" open>
+                  <div className="rounded-xl border border-line bg-paper p-4">
+                    <p className="font-medium text-ink">Packages &amp; prices</p>
+                    <p className="mb-3 mt-1 text-sm text-ink-soft">Your website&apos;s own price list. It&apos;s separate from the pricing in your app.</p>
+                    {pkgs.map((p, i) => (
+                      <div key={p.id} className="mb-3 rounded-lg border border-line bg-white p-3">
+                        <div className="mb-2 flex gap-2">
+                          <input defaultValue={p.title} onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== p.title) updatePkg(p, { title: v }) }} className={inputCls} placeholder="Package name" />
+                          <input defaultValue={p.price ?? ''} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (p.price ?? '')) updatePkg(p, { price: v || null }) }} className={inputCls + ' max-w-[110px]'} placeholder="$2,400" />
+                        </div>
+                        <textarea defaultValue={p.description ?? ''} rows={2} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (p.description ?? '')) updatePkg(p, { description: v || null }) }} className={inputCls} placeholder="What's included" />
+                        <div className="mt-2 flex gap-3 text-xs text-ink-soft">
+                          <button type="button" disabled={i === 0} onClick={() => movePkg(p, -1)} className="disabled:opacity-30">↑ Up</button>
+                          <button type="button" disabled={i === pkgs.length - 1} onClick={() => movePkg(p, 1)} className="disabled:opacity-30">↓ Down</button>
+                          <button type="button" onClick={() => removePkg(p)} className="ml-auto hover:text-ink">Remove</button>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex flex-wrap gap-2">
+                      <button className={btn} onClick={addPkg}>Add package</button>
+                      <button className={btnGhost} onClick={copyFromApp}>Copy from my app packages</button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-line bg-paper p-4">
+                    <p className="font-medium text-ink">Testimonials</p>
+                    <p className="mb-3 mt-1 text-sm text-ink-soft">Kind words, with a picture if you have one. Shown on your website and your app profile.</p>
+                    {tms.length === 0 && <p className="mb-3 text-sm text-ink-soft">No testimonials yet.</p>}
+                    {tms.map((t) => (
+                      <div key={t.id} className="mb-3 flex gap-3 rounded-lg border border-line bg-white p-3">
+                        {t.storage_path ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={BASE + t.storage_path} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                        ) : (
+                          <div className="h-16 w-16 shrink-0 rounded-lg bg-line/50" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 text-sm text-ink">&ldquo;{t.quote}&rdquo;</p>
+                          {t.client_name && <p className="mt-1 text-xs text-ink-soft">{t.client_name}</p>}
+                        </div>
+                        <button onClick={() => removeTm(t)} className="self-start text-xs text-ink-soft hover:text-ink">Remove</button>
+                      </div>
+                    ))}
+                    <div className="mt-3 space-y-2 border-t border-line pt-3">
+                      <input className={inputCls} value={tName} onChange={(e) => setTName(e.target.value)} placeholder="Client name, e.g. Sarah & Tom" />
+                      <textarea className={inputCls} rows={3} value={tQuote} onChange={(e) => setTQuote(e.target.value)} placeholder="What they said" />
+                      <input type="file" accept="image/*,.heic,.heif" onChange={(e) => setTFile(e.target.files?.[0] ?? null)} className="block w-full text-xs text-ink-soft" />
+                      <button className={btn} disabled={!tQuote.trim() || tBusy} onClick={addTm}>{tBusy ? 'Adding…' : 'Add testimonial'}</button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <Link href="/portfolio" className={btnGhost + ' text-center'}>Bio, FAQ &amp; links</Link>
+                  </div>
+                </Group>
+
+                <Group title="2. Template" hint="the structure">
                   <div className="grid grid-cols-3 gap-3">
                     {TEMPLATES.map((t) => (
                       <button key={t.key} onClick={() => set('site_template', t.key)} className={`text-left ${tpl === t.key ? '' : 'opacity-80 hover:opacity-100'}`}>
@@ -382,6 +570,9 @@ export default function WebsitePage() {
                       </button>
                     ))}
                   </div>
+                </Group>
+
+                <Group title="3. Color & fonts" hint="the mood">
                   <div>
                     <p className="mb-2 text-sm text-ink">Accent color</p>
                     <div className="flex flex-wrap items-center gap-3">
@@ -400,9 +591,30 @@ export default function WebsitePage() {
                   {colorRow('Background', 'bg', T.bg)}
                   {colorRow('Text', 'text', T.ink)}
                   {colorRow('Alternating section tint', 'tint', T.tint)}
+                  <div className="grid grid-cols-3 gap-3 pt-2">
+                    {Object.entries(PAIR_PRESETS).map(([key, p]) => {
+                      const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
+                      return (
+                        <button key={key} onClick={() => pickPair(key)} className={`rounded-xl border p-3 text-left ${sel ? 'border-twilight ring-1 ring-twilight' : 'border-line'}`}>
+                          <p style={{ fontFamily: FONT_OPTIONS[p.head].family, fontSize: 24, lineHeight: 1.1 }} className="text-ink">Aa</p>
+                          <p style={{ fontFamily: FONT_OPTIONS[p.body].family, fontSize: 11 }} className="mt-1 text-ink-soft">{p.name}</p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <Row label="Heading font">
+                    <select value={T.headKey} onChange={(e) => setIn('fonts', { head: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
+                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
+                    </select>
+                  </Row>
+                  <Row label="Body font">
+                    <select value={T.bodyKey} onChange={(e) => setIn('fonts', { body: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
+                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
+                    </select>
+                  </Row>
                 </Group>
 
-                <Group title="Hero" hint="the first screen">
+                <Group title="4. Hero" hint="the first screen">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
@@ -432,30 +644,34 @@ export default function WebsitePage() {
                     </div>
                   </div>
                   <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
-                  <Row label="Photo darkness (editorial)">
-                    <input type="range" min={0} max={0.8} step={0.05} value={T.hero.overlay} onChange={(e) => setHero({ overlay: Number(e.target.value) })} className="w-40" />
-                  </Row>
+                  <div>
+                    <p className="mb-2 text-sm text-ink">Photo darkness (editorial)</p>
+                    <div className="flex items-center gap-3">
+                      <div className="min-w-0 flex-1"><Slider min={0} max={80} step={5} value={Math.round(T.hero.overlay * 100)} onChange={(v) => setHero({ overlay: v / 100 })} /></div>
+                      <NumBox value={Math.round(T.hero.overlay * 100)} min={0} max={80} step={5} unit="%" onChange={(v) => setHero({ overlay: v / 100 })} />
+                    </div>
+                  </div>
                   <Row label="Text alignment">
                     <Seg value={T.hero.align} options={[{ v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setHero({ align: v })} />
                   </Row>
                   <Row label="Text position (editorial)">
                     <Seg value={T.hero.valign} options={[{ v: 'top', label: 'Top' }, { v: 'center', label: 'Middle' }, { v: 'bottom', label: 'Bottom' }]} onChange={(v) => setHero({ valign: v })} />
                   </Row>
-                  <Row label="Show button"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
+                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
+                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (used on every button)</label>
                     <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
                   </div>
                 </Group>
 
-                <Group title="Your words" hint="website-only text">
+                <Group title="5. Your words" hint="website-only text">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">About text</label>
                     <textarea rows={4} value={S.text?.about ?? ''} onChange={(e) => setIn('text', { about: e.target.value })} placeholder="Leave empty to use your bio from the app" className={inputCls} />
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
-                    <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date below, or tap the message button to send me an inquiry." className={inputCls} />
+                    <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
@@ -463,7 +679,29 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
-                <Group title="Sections" hint="order, names, on/off">
+                <Group title="6. Check availability screen" hint="where every button leads">
+                  <p className="text-sm text-ink-soft">Every button on your website opens this screen: a date check, then a short form. Requests land in your Camrhia inbox.</p>
+                  <button className={btnGhost} onClick={() => setPreviewPage('availability')}>Preview this screen</button>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Heading</label>
+                    <input value={S.availability?.title ?? ''} onChange={(e) => setIn('availability', { title: e.target.value })} placeholder="Check availability" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Intro</label>
+                    <textarea rows={2} value={S.availability?.intro ?? ''} onChange={(e) => setIn('availability', { intro: e.target.value })} placeholder="Pick a date to see if I am free, then tell me a little about your day." className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Send button wording</label>
+                    <input value={S.availability?.button ?? ''} onChange={(e) => setIn('availability', { button: e.target.value })} placeholder="Send inquiry" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Thank-you message</label>
+                    <textarea rows={2} value={S.availability?.success ?? ''} onChange={(e) => setIn('availability', { success: e.target.value })} placeholder="Thanks! I will reach out within a day." className={inputCls} />
+                  </div>
+                  <Row label="Floating button on every page"><Switch on={T.availability.float} onChange={(v) => setIn('availability', { float: v })} /></Row>
+                </Group>
+
+                <Group title="7. Sections" hint="order, names, on/off">
                   <div className="space-y-2">
                     {T.order.map((k, i) => (
                       <div key={k} className="flex items-center gap-2 rounded-xl border border-line bg-paper px-3 py-2">
@@ -481,60 +719,27 @@ export default function WebsitePage() {
                       </div>
                     ))}
                   </div>
-                  <Row label="Check-a-date calendar">
-                    <Switch on={form.site_sections?.availability !== false} onChange={(v) => set('site_sections', { ...(form.site_sections ?? {}), availability: v })} />
-                  </Row>
                 </Group>
 
-                <Group title="Fonts">
-                  <div className="grid grid-cols-3 gap-3">
-                    {Object.entries(PAIR_PRESETS).map(([key, p]) => {
-                      const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
-                      return (
-                        <button key={key} onClick={() => pickPair(key)} className={`rounded-xl border p-3 text-left ${sel ? 'border-twilight ring-1 ring-twilight' : 'border-line'}`}>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.head].family, fontSize: 24, lineHeight: 1.1 }} className="text-ink">Aa</p>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.body].family, fontSize: 11 }} className="mt-1 text-ink-soft">{p.name}</p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <Row label="Heading font">
-                    <select value={T.headKey} onChange={(e) => setIn('fonts', { head: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
-                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
-                    </select>
-                  </Row>
-                  <Row label="Body font">
-                    <select value={T.bodyKey} onChange={(e) => setIn('fonts', { body: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
-                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
-                    </select>
-                  </Row>
-                  <Row label="Text size">
-                    <input type="range" min={0.85} max={1.25} step={0.05} value={T.fontScale} onChange={(e) => setIn('fonts', { scale: Number(e.target.value) })} className="w-40" />
-                  </Row>
-                </Group>
-
-                <Group title="Buttons & spacing">
-                  <Row label="Button shape">
-                    <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
-                  </Row>
-                  <Row label="Spacing">
-                    <Seg value={T.spacing} options={[{ v: 'tight', label: 'Tight' }, { v: 'normal', label: 'Normal' }, { v: 'airy', label: 'Airy' }]} onChange={(v) => upd((s) => { s.spacing = v })} />
-                  </Row>
-                </Group>
-
-                <Group title="Gallery layout">
-                  <Row label="Photo layout">
+                <Group title="8. Layout & sizes" hint="phone and desktop">
+                  <Row label="Gallery photo layout">
                     <Seg value={T.gallery.layout} options={[{ v: 'masonry', label: 'Masonry' }, { v: 'grid', label: 'Even grid' }, { v: 'single', label: 'Single column' }]} onChange={(v) => setIn('gallery', { layout: v })} />
-                  </Row>
-                  <Row label="Space between photos">
-                    <input type="range" min={0} max={40} step={2} value={T.gallery.gap} onChange={(e) => setIn('gallery', { gap: Number(e.target.value) })} className="w-40" />
                   </Row>
                   <Row label="Gallery card shape">
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>
+                  <Row label="Button shape">
+                    <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
+                  </Row>
+                  <p className="text-xs text-ink-soft">Move a phone or desktop control and the preview switches to that size. You can also type an exact number.</p>
+                  <SizeControl label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
+                  <SizeControl label="Headline size" unit="px" min={24} max={140} step={2} value={T.sizes.headline} onChange={(d, v) => setSize('headline', d, v)} />
+                  <SizeControl label="Hero height" unit="vh" min={40} max={100} step={5} value={T.sizes.heroHeight} onChange={(d, v) => setSize('heroHeight', d, v)} />
+                  <SizeControl label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
+                  <SizeControl label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 
-                <Group title="Menu">
+                <Group title="9. Menu" hint="last, trim it down">
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
@@ -550,43 +755,6 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
-                <section className={card}>
-                  <h2 className="mb-1 font-fraunces text-lg font-semibold text-ink">Testimonials</h2>
-                  <p className="mb-4 text-sm text-ink-soft">Kind words from clients, with a picture if you have one. Shown on your website and your app profile.</p>
-                  {tms.length === 0 && <p className="mb-3 text-sm text-ink-soft">No testimonials yet.</p>}
-                  {tms.map((t) => (
-                    <div key={t.id} className="mb-3 flex gap-3 rounded-xl border border-line bg-paper p-3">
-                      {t.storage_path ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={BASE + t.storage_path} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
-                      ) : (
-                        <div className="h-16 w-16 shrink-0 rounded-lg bg-line/50" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="line-clamp-2 text-sm text-ink">&ldquo;{t.quote}&rdquo;</p>
-                        {t.client_name && <p className="mt-1 text-xs text-ink-soft">{t.client_name}</p>}
-                      </div>
-                      <button onClick={() => removeTm(t)} className="self-start text-xs text-ink-soft hover:text-ink">Remove</button>
-                    </div>
-                  ))}
-                  <div className="mt-4 space-y-2 border-t border-line pt-4">
-                    <input className={inputCls} value={tName} onChange={(e) => setTName(e.target.value)} placeholder="Client name, e.g. Sarah & Tom" />
-                    <textarea className={inputCls} rows={3} value={tQuote} onChange={(e) => setTQuote(e.target.value)} placeholder="What they said" />
-                    <input type="file" accept="image/*,.heic,.heif" onChange={(e) => setTFile(e.target.files?.[0] ?? null)} className="block w-full text-xs text-ink-soft" />
-                    <button className={btn} disabled={!tQuote.trim() || tBusy} onClick={addTm}>{tBusy ? 'Adding…' : 'Add testimonial'}</button>
-                  </div>
-                </section>
-
-                <section className={card}>
-                  <h2 className="mb-1 font-fraunces text-lg font-semibold text-ink">Your content</h2>
-                  <p className="mb-4 text-sm text-ink-soft">Your website shows what you already have. Edit it here and it updates everywhere.</p>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <Link href="/website/galleries" className={btnGhost + ' text-center'}>Galleries</Link>
-                    <Link href="/portfolio/packages" className={btnGhost + ' text-center'}>Packages &amp; prices</Link>
-                    <Link href="/portfolio" className={btnGhost + ' text-center'}>Bio, FAQ &amp; links</Link>
-                  </div>
-                </section>
-
                 {fullUrl && (
                   <section className={card}>
                     <h2 className="mb-1 font-fraunces text-lg font-semibold text-ink">Your link</h2>
@@ -597,12 +765,9 @@ export default function WebsitePage() {
               </div>
 
               <div id="site-preview" className="lg:sticky lg:top-6 lg:self-start">
-                <div className="mb-3 flex items-center justify-between">
-                  <p className="font-mono text-xs uppercase tracking-widest text-brass">Live preview</p>
-                  <div className="flex gap-2 text-sm">
-                    <button onClick={() => setDevice('phone')} className={`rounded-full px-4 py-1.5 ${device === 'phone' ? 'bg-twilight text-white' : 'border border-line text-ink'}`}>Phone</button>
-                    <button onClick={() => setDevice('desktop')} className={`rounded-full px-4 py-1.5 ${device === 'desktop' ? 'bg-twilight text-white' : 'border border-line text-ink'}`}>Desktop</button>
-                  </div>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <Seg value={previewPage} options={[{ v: 'home', label: 'Website' }, { v: 'availability', label: 'Check availability' }]} onChange={setPreviewPage} />
+                  <Seg value={device} options={[{ v: 'phone', label: 'Phone' }, { v: 'desktop', label: 'Desktop' }]} onChange={setDevice} />
                 </div>
                 {token ? (
                   <div ref={setStageEl} className="overflow-hidden rounded-2xl border border-line bg-line/50 p-3">
@@ -616,8 +781,8 @@ export default function WebsitePage() {
                         <div style={{ width: Math.min(inner || w, w * scale), height: hCss, margin: '0 auto', overflow: 'hidden', borderRadius: 12, background: '#fff' }}>
                           <iframe
                             id="site-frame"
-                            key={previewKey}
-                            src={`/site/${token}?preview=1`}
+                            key={previewKey + previewPage}
+                            src={`/site/${token}${previewPage === 'availability' ? '/availability' : ''}?preview=1`}
                             title="Website preview"
                             style={{ width: w, height: `calc(${hCss} / ${scale})`, border: 0, transform: `scale(${scale})`, transformOrigin: 'top left', background: '#fff' }}
                           />
