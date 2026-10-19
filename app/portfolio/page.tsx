@@ -30,6 +30,10 @@ type Profile = {
   show_about_photo: boolean | null
   cover_style: string | null
   cover_scale: number | null
+  cover_style_web: string | null
+  cover_scale_web: number | null
+  logo_height: number | null
+  show_name_with_logo: boolean | null
   openings_display_mode: string | null
   openings_badge_text: string | null
   openings_badge_color: string | null
@@ -65,7 +69,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -175,6 +179,36 @@ export default function PortfolioEditorPage() {
   const [previewKey, setPreviewKey] = useState(0)
   const [open, setOpen] = useState<string | null>(null)
   const [device, setDevice] = useState<'phone' | 'desktop'>('phone')
+  const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
+  const [stageW, setStageW] = useState(0)
+  const formRef = useRef<Profile | null>(null)
+  const sendPreview = useCallback(() => {
+    const f = formRef.current
+    if (!f) return
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, public_token: _pt, ...patch } = f as unknown as Record<string, unknown>
+    const frame = document.getElementById('portfolio-frame') as HTMLIFrameElement | null
+    frame?.contentWindow?.postMessage({ type: 'camrhia-preview', patch }, '*')
+  }, [])
+  useEffect(() => {
+    formRef.current = form
+    const t = setTimeout(sendPreview, 80)
+    return () => clearTimeout(t)
+  }, [form, sendPreview])
+  useEffect(() => {
+    function onMsg(e: MessageEvent) {
+      if (e.data && e.data.type === 'camrhia-preview-ready') sendPreview()
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [sendPreview])
+  useEffect(() => {
+    if (!stageEl) return
+    const ro = new ResizeObserver(() => setStageW(stageEl.clientWidth))
+    ro.observe(stageEl)
+    setStageW(stageEl.clientWidth)
+    return () => ro.disconnect()
+  }, [stageEl])
   const fileInput = useRef<HTMLInputElement>(null)
   const logoInput = useRef<HTMLInputElement>(null)
   const avatarInput = useRef<HTMLInputElement>(null)
@@ -255,6 +289,10 @@ export default function PortfolioEditorPage() {
       section_titles: form.section_titles ?? {},
       cover_style: form.cover_style ?? 'standard',
       cover_scale: form.cover_scale ?? 1,
+      cover_style_web: form.cover_style_web ?? null,
+      cover_scale_web: form.cover_scale_web ?? null,
+      logo_height: form.logo_height ?? null,
+      show_name_with_logo: form.show_name_with_logo === true,
       openings_display_mode: form.openings_display_mode ?? 'date_check',
       openings_badge_text: t(form.openings_badge_text),
       openings_badge_color: t(form.openings_badge_color),
@@ -544,19 +582,38 @@ export default function PortfolioEditorPage() {
         )
       }
       case 'cover': {
-        const shapes: { key: string; label: string; sub: string; ratio: string }[] = [
-          { key: 'standard', label: 'Standard', sub: 'Classic 16:9', ratio: '16 / 9' },
-          { key: 'tall', label: 'Tall', sub: 'Portrait 4:5', ratio: '4 / 5' },
-          { key: 'wide', label: 'Wide', sub: 'Banner 21:9', ratio: '21 / 9' },
-          { key: 'full', label: 'Full screen', sub: 'Phone 9:16', ratio: '9 / 16' },
+        const shapes: { key: string; label: string; sub: string; ratio: number }[] = [
+          { key: 'standard', label: 'Standard', sub: 'Classic 16:9', ratio: 16 / 9 },
+          { key: 'tall', label: 'Tall', sub: 'Portrait 4:5', ratio: 4 / 5 },
+          { key: 'wide', label: 'Wide', sub: 'Banner 21:9', ratio: 21 / 9 },
+          { key: 'full', label: 'Full screen', sub: 'Phone 9:16', ratio: 9 / 16 },
         ]
-        const curStyle = form.cover_style ?? 'standard'
-        const curScale = Math.min(1, Math.max(0.5, Number(form.cover_scale ?? 1) || 1))
-        const curRatio = shapes.find((x) => x.key === curStyle)?.ratio ?? '16 / 9'
+        const isDesk = device === 'desktop'
+        const curStyle = (isDesk ? form.cover_style_web ?? form.cover_style : form.cover_style) ?? 'standard'
+        const rawScale = isDesk ? form.cover_scale_web ?? form.cover_scale : form.cover_scale
+        const curScale = Math.min(1, Math.max(0.5, Number(rawScale ?? 1) || 1))
+        const ratio = shapes.find((x) => x.key === curStyle)?.ratio ?? 16 / 9
+        const baseW = Math.min(240, 180 * ratio)
+        const bw = baseW * curScale
+        const bh = bw / ratio
+        const hasWeb = form.cover_style_web != null || form.cover_scale_web != null
+        const setStyle = (k: string) => setField(isDesk ? 'cover_style_web' : 'cover_style', k)
+        const setScale = (v: number) => setField(isDesk ? 'cover_scale_web' : 'cover_scale', v)
         return sec(
           <>
-            <div className="mx-auto w-full max-w-[220px]">
-              <div className="mx-auto overflow-hidden rounded-xl bg-line" style={{ aspectRatio: curRatio, width: `${curScale * 100}%` }}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="inline-flex gap-1 rounded-full border border-line bg-paper p-1">
+                {(['phone', 'desktop'] as const).map((d) => (
+                  <button key={d} type="button" onClick={() => setDevice(d)}
+                    className={`rounded-full px-4 py-1 text-sm capitalize transition ${device === d ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-ink-soft">You are editing the {isDesk ? 'desktop' : 'phone'} cover</p>
+            </div>
+            <div className="flex h-[200px] items-center justify-center rounded-xl bg-paper">
+              <div className="overflow-hidden rounded-lg bg-line" style={{ width: bw, height: bh }}>
                 {coverUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={`${STORAGE_BASE}${coverUrl}`} alt="" className="h-full w-full object-cover" />
@@ -582,7 +639,7 @@ export default function PortfolioEditorPage() {
                   <button
                     key={sh.key}
                     type="button"
-                    onClick={() => setField('cover_style', sh.key)}
+                    onClick={() => setStyle(sh.key)}
                     className={`rounded-xl border px-3 py-2 text-left transition ${curStyle === sh.key ? 'border-twilight bg-blush-wash' : 'border-line hover:border-twilight'}`}
                   >
                     <span className="block text-sm font-medium text-ink">{sh.label}</span>
@@ -594,7 +651,7 @@ export default function PortfolioEditorPage() {
             <div>
               <div className="flex items-center justify-between">
                 <p className={label}>Cover size</p>
-                <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => setField('cover_scale', 1)}>Reset</button>
+                <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => setScale(1)}>Reset</button>
               </div>
               <input
                 type="range"
@@ -602,11 +659,24 @@ export default function PortfolioEditorPage() {
                 max={100}
                 step={5}
                 value={Math.round(curScale * 100)}
-                onChange={(e) => setField('cover_scale', Number(e.target.value) / 100)}
+                onChange={(e) => setScale(Number(e.target.value) / 100)}
                 className="w-full accent-[var(--color-twilight)]"
               />
               <p className="text-xs text-ink-soft">{Math.round(curScale * 100)}% of the page width. Slide left to make the cover smaller.</p>
             </div>
+            {isDesk ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xs text-ink-soft">Desktop matches your phone cover until you change it here.</p>
+                {hasWeb && (
+                  <button type="button" className="text-xs font-medium text-twilight hover:underline"
+                    onClick={() => { setField('cover_style_web', null); setField('cover_scale_web', null) }}>
+                    Match phone
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-ink-soft">Switch to Desktop above to give big screens their own cover shape and size.</p>
+            )}
           </>,
         )
       }
@@ -619,7 +689,8 @@ export default function PortfolioEditorPage() {
             </div>
             <div>
               <p className={label}>Logo</p>
-              <p className="mb-2 text-xs text-ink-soft">Replaces your studio name at the top.</p>
+              <p className="mb-1 text-xs text-ink-soft">Shows at the top of your portfolio in place of your studio name.</p>
+              <p className="mb-2 text-xs text-ink-soft">Suggested size: <span className="font-medium text-ink">1200 × 400 px</span> (wide 3:1), saved as a PNG with a transparent background. A square logo works at 800 × 800 px. In Canva, choose Custom size, enter those numbers, and download as PNG with Transparent background on.</p>
               <div className="mb-2 flex h-16 w-40 items-center justify-center overflow-hidden rounded-xl bg-line">
                 {form.logo_path && (
                   <>
@@ -636,6 +707,20 @@ export default function PortfolioEditorPage() {
                 </button>
                 {form.logo_path && <button type="button" className="text-xs text-ink-soft underline hover:text-ink" onClick={removeLogo}>Remove</button>}
               </div>
+              {form.logo_path && (
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <p className={label}>Logo size</p>
+                    <input type="range" min={24} max={240} step={4} value={form.logo_height ?? 40}
+                      onChange={(e) => setField('logo_height', Number(e.target.value))} className="w-full accent-[var(--color-twilight)]" />
+                    <p className="text-xs text-ink-soft">{form.logo_height ?? 40} px tall. Watch the preview as you slide.</p>
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-ink">
+                    <input type="checkbox" checked={form.show_name_with_logo === true} onChange={(e) => setField('show_name_with_logo', e.target.checked)} />
+                    Also show my studio name above the logo
+                  </label>
+                </div>
+              )}
             </div>
           </>,
         )
@@ -1019,14 +1104,25 @@ export default function PortfolioEditorPage() {
                   </div>
                 </div>
                 {portfolioUrl ? (
-                  <div className="flex justify-center overflow-hidden rounded-2xl border border-line bg-line/50 p-3">
-                    <iframe
-                      key={previewKey}
-                      src={portfolioUrl}
-                      title="Portfolio preview"
-                      className="h-[calc(100vh-14rem)] min-h-[520px] rounded-xl bg-white"
-                      style={{ width: device === 'phone' ? 390 : '100%', maxWidth: '100%' }}
-                    />
+                  <div ref={setStageEl} className="overflow-hidden rounded-2xl border border-line bg-line/50 p-3">
+                    {(() => {
+                      const inner = Math.max(0, stageW - 24)
+                      const phone = device === 'phone'
+                      const scale = phone ? 1 : inner > 0 ? Math.min(1, inner / 1280) : 0.5
+                      const w = phone ? 390 : 1280
+                      const hCss = 'max(520px, calc(100vh - 14rem))'
+                      return (
+                        <div style={{ width: Math.min(inner || w, w * scale), height: hCss, margin: '0 auto', overflow: 'hidden', borderRadius: 12, background: '#fff' }}>
+                          <iframe
+                            id="portfolio-frame"
+                            key={previewKey}
+                            src={`${portfolioUrl}?preview=1`}
+                            title="Portfolio preview"
+                            style={{ width: w, height: `calc(${hCss} / ${scale})`, border: 0, transform: `scale(${scale})`, transformOrigin: 'top left', background: '#fff' }}
+                          />
+                        </div>
+                      )
+                    })()}
                   </div>
                 ) : (
                   <p className="rounded-2xl border border-line bg-card p-8 text-center text-sm text-ink-soft">
