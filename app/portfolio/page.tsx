@@ -182,7 +182,7 @@ export default function PortfolioEditorPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [previewKey, setPreviewKey] = useState(0)
   const [open, setOpen] = useState<string | null>(null)
-  const [device, setDevice] = useState<'phone' | 'desktop'>('phone')
+  const device: 'phone' | 'desktop' = 'phone'
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
   const [stageW, setStageW] = useState(0)
   const formRef = useRef<Profile | null>(null)
@@ -581,19 +581,7 @@ export default function PortfolioEditorPage() {
       delete next[k]
       setField('desktop_overrides', next)
     }
-    const deviceBar = () => (
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex gap-1 rounded-full border border-line bg-paper p-1">
-          {(['phone', 'desktop'] as const).map((d) => (
-            <button key={d} type="button" onClick={() => setDevice(d)}
-              className={`rounded-full px-4 py-1 text-sm capitalize transition ${device === d ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}>
-              {d}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-ink-soft">Editing the {isDesk ? 'desktop' : 'phone'} size</p>
-      </div>
-    )
+    const deviceBar = () => null
     const deviceSlider = (title: string, phoneField: keyof Profile, ovKey: string, min: number, max: number, step: number, phoneDefault: number, factor = 1, unit = 'px') => {
       const phoneVal = Number((form as unknown as Record<string, unknown>)?.[phoneField as string] ?? phoneDefault)
       const hasOv = isDesk && ovMap[ovKey] !== undefined
@@ -606,7 +594,7 @@ export default function PortfolioEditorPage() {
           </div>
           <input type="range" min={min} max={max} step={step} value={Math.round(val * factor)}
             onChange={(e) => setV(phoneField, ovKey, Number(e.target.value) / factor)} className="w-full accent-[var(--color-twilight)]" />
-          <p className="text-xs text-ink-soft">{Math.round(val * factor)} {unit} · {isDesk ? 'desktop' : 'phone'}{isDesk && !hasOv ? ' (same as phone)' : ''}</p>
+          <p className="text-xs text-ink-soft">{Math.round(val * factor)} {unit}</p>
         </div>
       )
     }
@@ -650,17 +638,6 @@ export default function PortfolioEditorPage() {
         const setScale = (v: number) => setField(isDesk ? 'cover_scale_web' : 'cover_scale', v)
         return sec(
           <>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="inline-flex gap-1 rounded-full border border-line bg-paper p-1">
-                {(['phone', 'desktop'] as const).map((d) => (
-                  <button key={d} type="button" onClick={() => setDevice(d)}
-                    className={`rounded-full px-4 py-1 text-sm capitalize transition ${device === d ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}>
-                    {d}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-ink-soft">You are editing the {isDesk ? 'desktop' : 'phone'} cover</p>
-            </div>
             <div className="flex h-[200px] items-center justify-center rounded-xl bg-paper">
               <div className="overflow-hidden rounded-lg bg-line" style={{ width: bw, height: bh }}>
                 {coverUrl && (
@@ -713,19 +690,6 @@ export default function PortfolioEditorPage() {
               />
               <p className="text-xs text-ink-soft">{Math.round(curScale * 100)}% of the page width. Slide left to make the cover smaller.</p>
             </div>
-            {isDesk ? (
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xs text-ink-soft">Desktop matches your phone cover until you change it here.</p>
-                {hasWeb && (
-                  <button type="button" className="text-xs font-medium text-twilight hover:underline"
-                    onClick={() => { setField('cover_style_web', null); setField('cover_scale_web', null) }}>
-                    Match phone
-                  </button>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-ink-soft">Switch to Desktop above to give big screens their own cover shape and size.</p>
-            )}
           </>,
         )
       }
@@ -1132,20 +1096,6 @@ export default function PortfolioEditorPage() {
               <div id="portfolio-preview" className="lg:sticky lg:top-6 lg:self-start">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-medium text-ink">Live preview</p>
-                  <div className="flex gap-2 text-sm">
-                    <button
-                      onClick={() => setDevice('phone')}
-                      className={`rounded-full px-4 py-1.5 ${device === 'phone' ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
-                    >
-                      Phone
-                    </button>
-                    <button
-                      onClick={() => setDevice('desktop')}
-                      className={`rounded-full px-4 py-1.5 ${device === 'desktop' ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
-                    >
-                      Desktop
-                    </button>
-                  </div>
                 </div>
                 {portfolioUrl ? (
                   <div ref={setStageEl} className="overflow-hidden rounded-2xl border border-line bg-line/50 p-3">
