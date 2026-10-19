@@ -142,11 +142,12 @@ export default function RemindersPage() {
                     value={draft}
                     onChange={(e) => setDrafts((d) => ({ ...d, [k.key]: e.target.value }))}
                     onBlur={() => { if (draft !== st.custom) persist(k.key, { custom: draft }) }}
+                    maxLength={160}
                     placeholder="Write your own wording (optional)"
                     className="mt-3 w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
                   />
                   <div className="mt-2 flex items-center justify-between text-xs text-ink-soft">
-                    <span>Sent {sent[k.key] ?? 0} time{(sent[k.key] ?? 0) === 1 ? '' : 's'} in the last 90 days</span>
+                    <span>Sent {sent[k.key] ?? 0} time{(sent[k.key] ?? 0) === 1 ? '' : 's'} in the last 90 days{draft ? ` · ${draft.length}/160` : ''}</span>
                     {st.custom.trim() && (
                       <button
                         onClick={() => { setDrafts((d) => ({ ...d, [k.key]: '' })); persist(k.key, { custom: '' }) }}
