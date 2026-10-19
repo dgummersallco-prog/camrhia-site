@@ -34,6 +34,9 @@ const TEMPLATES = [
   { key: 'editorial', name: 'Editorial', blurb: 'Full-screen photo with your headline over it.' },
   { key: 'split', name: 'Split', blurb: 'Words on one side, a big photo on the other.' },
   { key: 'minimal', name: 'Minimal', blurb: 'Clean white, photo first, lots of air.' },
+  { key: 'framed', name: 'Framed', blurb: 'Photo with your words in a centered card.' },
+  { key: 'magazine', name: 'Magazine', blurb: 'Huge headline over a wide photo.' },
+  { key: 'mosaic', name: 'Mosaic', blurb: 'A collage of your best shots.' },
 ]
 const SWATCHES = ['#A9545F', '#5B6B8C', '#7C8B6F', '#B08D57', '#8A5A83', '#2A1F24']
 const SECTION_LABELS: Record<string, string> = {
@@ -165,6 +168,33 @@ function Thumb({ kind }: { kind: string }) {
           </div>
           <div style={{ flex: 1, background: photo }} />
         </div>
+      )}
+      {kind === 'framed' && (
+        <>
+          <div style={{ position: 'absolute', inset: 0, background: photo }} />
+          <div style={{ position: 'absolute', left: '22%', right: '22%', top: '24%', bottom: '24%', background: '#FAF7F2', padding: 4 }}>
+            <div style={{ border: '1px solid #cfc6bb', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>{lines(text)}</div>
+          </div>
+        </>
+      )}
+      {kind === 'magazine' && (
+        <>
+          <div style={{ padding: 8 }}>
+            <div style={{ height: 7, width: '85%', background: text, borderRadius: 2, marginBottom: 3 }} />
+            <div style={{ height: 7, width: '55%', background: text, borderRadius: 2 }} />
+          </div>
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '45%', background: photo }} />
+        </>
+      )}
+      {kind === 'mosaic' && (
+        <>
+          <div style={{ padding: '8px 8px 0' }}>{lines(text)}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gridTemplateRows: '1fr 1fr', gap: 3, position: 'absolute', left: 8, right: 8, bottom: 8, height: '52%' }}>
+            <div style={{ gridRow: 'span 2', background: photo }} />
+            <div style={{ background: photo, opacity: 0.8 }} />
+            <div style={{ background: photo, opacity: 0.65 }} />
+          </div>
+        </>
       )}
       {kind === 'minimal' && (
         <div style={{ padding: 8 }}>
@@ -474,7 +504,19 @@ export default function WebsitePage() {
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
               <div className="space-y-4">
-                <Group title="1. Your content" hint="photos, prices, kind words" open>
+                <Group title="1. Template" hint="pick a look" open>
+                  <div className="grid grid-cols-3 gap-3">
+                    {TEMPLATES.map((t) => (
+                      <button key={t.key} onClick={() => set('site_template', t.key)} className={`text-left ${tpl === t.key ? '' : 'opacity-80 hover:opacity-100'}`}>
+                        <div className={`rounded-xl p-1 ${tpl === t.key ? 'ring-2 ring-twilight' : ''}`}><Thumb kind={t.key} /></div>
+                        <p className="mt-2 text-sm font-medium text-ink">{t.name}</p>
+                        <p className="text-xs text-ink-soft">{t.blurb}</p>
+                      </button>
+                    ))}
+                  </div>
+                </Group>
+
+                <Group title="2. Your content" hint="photos, prices, kind words">
                   <div className="rounded-xl border border-line bg-paper p-4">
                     <p className="font-medium text-ink">Galleries</p>
                     <p className="mb-3 mt-1 text-sm text-ink-soft">One gallery per kind of work: Weddings, Seniors, Families. Each gets its own page.</p>
@@ -542,18 +584,6 @@ export default function WebsitePage() {
 
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <Link href="/portfolio" className={btnGhost + ' text-center'}>Bio, FAQ &amp; links</Link>
-                  </div>
-                </Group>
-
-                <Group title="2. Template" hint="the structure">
-                  <div className="grid grid-cols-3 gap-3">
-                    {TEMPLATES.map((t) => (
-                      <button key={t.key} onClick={() => set('site_template', t.key)} className={`text-left ${tpl === t.key ? '' : 'opacity-80 hover:opacity-100'}`}>
-                        <div className={`rounded-xl p-1 ${tpl === t.key ? 'ring-2 ring-twilight' : ''}`}><Thumb kind={t.key} /></div>
-                        <p className="mt-2 text-sm font-medium text-ink">{t.name}</p>
-                        <p className="text-xs text-ink-soft">{t.blurb}</p>
-                      </button>
-                    ))}
                   </div>
                 </Group>
 

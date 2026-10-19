@@ -76,6 +76,10 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
     ...((r.reviews ?? []) as any[]).filter((v) => v.body).map((v) => ({ text: v.body as string, who: (v.couple_names ?? '') as string, img: null })),
   ]
   const faq = (r.faq ?? []) as any[]
+  const galleryCovers = galleries
+    .map((g) => photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path))
+    .filter(Boolean) as string[]
+  const mosaicUrls = Array.from(new Set([...heroUrls, ...galleryCovers])).slice(0, 3)
 
   const on = (k: string) => r.site_sections?.[k] !== false
   const showMap: Record<string, boolean> = {
@@ -394,6 +398,55 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
               <h1 style={h1Mid}>{headline}</h1>
               {subhead && <p className="mt-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
               <div className="mt-8">{cta()}</div>
+            </div>
+          </header>
+        )}
+
+        {tpl === 'framed' && (
+          <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+            {heroImg('absolute inset-0 h-full w-full')}
+            <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${(ov * 0.6).toFixed(2)})` }} />
+            {renderNav(true, false)}
+            <div className="relative mx-auto my-auto w-full max-w-xl px-6 py-28">
+              <div className="p-3" style={{ background: bg, color: ink }}>
+                <div className="px-8 py-12 text-center" style={{ border: `1px solid ${line}` }}>
+                  {subhead && <p className="mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+                  <h1 style={h1Mid}>{headline}</h1>
+                  <div className="mt-8">{cta()}</div>
+                </div>
+              </div>
+            </div>
+          </header>
+        )}
+        {tpl === 'magazine' && (
+          <header id="top">
+            {renderNav(false, false)}
+            <div className="mx-auto max-w-6xl px-6 pt-14" style={{ textAlign: t.hero.align }}>
+              {subhead && <p className="mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+              <h1 style={{ ...headStyle, fontSize: 'calc(var(--hl) * 1.5)', lineHeight: 0.98 }}>{headline}</h1>
+            </div>
+            <div className="relative mt-10 w-full overflow-hidden" style={{ height: 'calc(var(--hero-h) * 0.8)' }}>
+              {heroImg('absolute inset-0 h-full w-full')}
+              <div className="absolute bottom-0 left-0 px-6 pb-6">{cta()}</div>
+            </div>
+          </header>
+        )}
+        {tpl === 'mosaic' && (
+          <header id="top">
+            {renderNav(false, true)}
+            <div className="mx-auto max-w-3xl px-6 pb-10 pt-12 text-center">
+              {subhead && <p className="mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+              <h1 style={h1Mid}>{headline}</h1>
+              <div className="mt-7">{cta()}</div>
+            </div>
+            <div className="mx-auto max-w-6xl px-6 pb-4">
+              <div className="grid" style={{ height: 'calc(var(--hero-h) * 0.75)', gap: 'var(--gap)', gridTemplateColumns: mosaicUrls.length > 1 ? '1.4fr 1fr' : '1fr', gridTemplateRows: mosaicUrls.length > 2 ? '1fr 1fr' : '1fr' }}>
+                {mosaicUrls.length === 0 && <div style={{ background: accent, opacity: 0.85 }} />}
+                {mosaicUrls.map((u, i) => {
+                  // eslint-disable-next-line @next/next/no-img-element
+                  return <img key={u} src={u} alt="" className="h-full w-full object-cover" style={{ minHeight: 0, gridRow: i === 0 && mosaicUrls.length > 2 ? 'span 2' : undefined }} />
+                })}
+              </div>
             </div>
           </header>
         )}

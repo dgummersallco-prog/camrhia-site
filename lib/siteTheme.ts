@@ -45,7 +45,7 @@ function pairNum(v: any, min: number, max: number, dp: number, dd: number) {
 
 export function resolveTheme(r: Record<string, any>) {
   const s = (r.site_settings ?? {}) as Record<string, any>
-  const tpl = pick(r.site_template, ['editorial', 'split', 'minimal'] as const, 'editorial')
+  const tpl = pick(r.site_template, ['editorial', 'split', 'minimal', 'framed', 'magazine', 'mosaic'] as const, 'editorial')
   const preset = PAIR_PRESETS[r.site_font_pair as string] ?? PAIR_PRESETS.serif
   const headKey: string = FONT_OPTIONS[s.fonts?.head as string] ? (s.fonts.head as string) : preset.head
   const bodyKey: string = FONT_OPTIONS[s.fonts?.body as string] ? (s.fonts.body as string) : preset.body
