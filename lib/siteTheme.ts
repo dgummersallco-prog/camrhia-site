@@ -108,9 +108,10 @@ export function resolveTheme(r: Record<string, any>) {
     sectionSpace: pairNum(s.sizes?.sectionSpace, 16, 220, 56, 88),
     photoGap: pairNum(s.sizes?.photoGap, 0, 60, 8, 12),
     heroHeight: pairNum(s.sizes?.heroHeight, 40, 100, 80, 92),
+    logo: pairNum(s.sizes?.logo, 16, 120, 30, 38),
   }
   const vars = (d: 'phone' | 'desktop') =>
-    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--hero-h:${sizes.heroHeight[d]}vh;`
+    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;`
   const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}`
 
   return {

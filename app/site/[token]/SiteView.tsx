@@ -111,14 +111,14 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   const renderNav = (overlay: boolean, center: boolean) => {
     const brand = logo
       ? // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt={name} style={{ height: 34, objectFit: 'contain' }} />
+        <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
       : <span style={{ ...headStyle, fontSize: 24 }}>{name}</span>
     return (
       <nav
         className={overlay ? 'absolute inset-x-0 top-0 z-20' : 'sticky top-0 z-20'}
         style={overlay ? { color: '#fff' } : { color: ink, background: `color-mix(in srgb, ${bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
       >
-        <div className={center ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex h-16 max-w-6xl items-center justify-between px-6'}>
+        <div className={center ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 py-2'}>
           <a href="#top" onClick={(e) => go(e, 'top')}>{brand}</a>
           <ul className="hidden gap-8 md:flex">
             {navItems.map((n) => (

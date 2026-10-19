@@ -15,6 +15,7 @@ type Site = {
   accent_color: string | null
   cover_path: string | null
   cover_paths: string[] | null
+  logo_path: string | null
   site_template: string | null
   site_accent: string | null
   site_font_pair: string | null
@@ -27,7 +28,7 @@ type Tm = { id: string; storage_path: string | null; quote: string | null; clien
 type WPkg = { id: string; title: string; price: string | null; description: string | null; sort_order: number }
 type Dev = 'phone' | 'desktop'
 
-const COLUMNS = 'id, public_token, slug, accent_color, cover_path, cover_paths, site_template, site_accent, site_font_pair, site_headline, site_subhead, site_sections, site_settings'
+const COLUMNS = 'id, public_token, slug, accent_color, cover_path, cover_paths, logo_path, site_template, site_accent, site_font_pair, site_headline, site_subhead, site_sections, site_settings'
 const BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 
 const TEMPLATES = [
@@ -143,6 +144,50 @@ function SizeControl({ label, unit, min, max, step, value, onChange }: {
   )
 }
 
+function ColorField({ label, value, swatches, onChange, onReset }: {
+  label: string; value: string; swatches: { name: string; hex: string }[]
+  onChange: (hex: string) => void; onReset?: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [txt, setTxt] = useState(value)
+  useEffect(() => { setTxt(value) }, [value])
+  const ok = (v: string) => /^#[0-9a-fA-F]{6}$/.test(v)
+  return (
+    <div className="relative">
+      <Row label={label}>
+        <button type="button" onClick={() => setOpen(!open)} className="flex items-center gap-2 rounded-lg border border-line bg-white px-2 py-1.5">
+          <span className="h-5 w-5 rounded border border-line" style={{ background: value }} />
+          <span className="font-mono text-xs uppercase text-ink">{value}</span>
+        </button>
+      </Row>
+      {open && (
+        <>
+          <button type="button" aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-40 mt-2 w-72 rounded-2xl border border-line bg-card p-4 shadow-lg">
+            <p className="mb-2 text-[11px] uppercase tracking-widest text-ink-soft">Your colors</p>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {swatches.map((sw) => (
+                <button key={sw.name + sw.hex} type="button" title={sw.name} onClick={() => onChange(sw.hex)} className="h-8 w-8 rounded-full border border-line"
+                  style={{ background: sw.hex, boxShadow: value.toLowerCase() === sw.hex.toLowerCase() ? '0 0 0 2px #fff, 0 0 0 4px #2A1F24' : undefined }} />
+              ))}
+            </div>
+            <p className="mb-2 text-[11px] uppercase tracking-widest text-ink-soft">Pick any color</p>
+            <div className="flex items-center gap-2">
+              <input type="color" value={ok(value) ? value : '#FFFFFF'} onChange={(e) => onChange(e.target.value)} className="h-10 w-12 cursor-pointer rounded border border-line bg-transparent" />
+              <input value={txt} maxLength={7} placeholder="#A9545F" className={inputCls + ' font-mono uppercase'}
+                onChange={(e) => { let v = e.target.value.trim(); setTxt(v); if (v && !v.startsWith('#')) v = '#' + v; if (ok(v)) onChange(v) }} />
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              {onReset ? <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { onReset(); setOpen(false) }}>Reset</button> : <span />}
+              <button type="button" className="text-xs font-medium text-twilight" onClick={() => setOpen(false)}>Done</button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function Thumb({ kind }: { kind: string }) {
   const photo = '#9A8F88'
   const text = '#2A1F24'
@@ -243,6 +288,7 @@ export default function WebsitePage() {
     const f = formRef.current
     if (!f) return
     const patch = {
+      logo_path: f.logo_path,
       site_template: f.site_template ?? 'editorial',
       site_accent: f.site_accent,
       site_font_pair: f.site_font_pair ?? 'serif',
@@ -319,6 +365,7 @@ export default function WebsitePage() {
     if (!form || !sb) return
     setSaving(true)
     const { error } = await sb.from('profiles').update({
+      logo_path: form.logo_path,
       site_template: form.site_template ?? 'editorial',
       site_accent: form.site_accent,
       site_font_pair: form.site_font_pair ?? 'serif',
@@ -357,6 +404,26 @@ export default function WebsitePage() {
       toggleHero(path)
     } catch (e) {
       flash((e as { message?: string })?.message ?? 'Upload failed.')
+    }
+  }
+
+  async function uploadLogo(file: File) {
+    const sb = supabase
+    if (!sb) return
+    const { data: sess } = await sb.auth.getSession()
+    const id = sess.session?.user.id
+    if (!id) return
+    try {
+      const keep = /\.(png|svg|webp)$/i.test(file.name)
+      const ext = keep ? (file.name.split('.').pop() ?? 'png').toLowerCase() : 'jpg'
+      const body: Blob = keep ? file : (await makeVersions(file)).web.blob
+      const ct = ext === 'svg' ? 'image/svg+xml' : ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
+      const path = `${id}/logo_${Date.now()}.${ext}`
+      const up = await sb.storage.from('portfolio').upload(path, body, { contentType: ct, upsert: true })
+      if (up.error) throw up.error
+      set('logo_path', path)
+    } catch (e) {
+      flash((e as { message?: string })?.message ?? 'Logo upload failed.')
     }
   }
 
@@ -458,14 +525,22 @@ export default function WebsitePage() {
     upd((s) => { s.sizes = { ...(s.sizes ?? {}), [key]: { ...(s.sizes?.[key] ?? {}), [d]: v } } })
     setDevice(d)
   }
+  function brandHex() {
+    const b = form?.accent_color ?? ''
+    return /^#[0-9a-fA-F]{6}$/.test(b) ? b : '#A9545F'
+  }
+  function palette() {
+    const out: { name: string; hex: string }[] = [{ name: 'My brand color', hex: brandHex() }]
+    if (form?.site_accent && /^#[0-9a-fA-F]{6}$/.test(form.site_accent)) out.push({ name: 'Site accent', hex: form.site_accent })
+    for (const c of SWATCHES) out.push({ name: 'Suggested', hex: c })
+    out.push({ name: 'White', hex: '#FFFFFF' }, { name: 'Cream', hex: '#FAF7F2' }, { name: 'Warm paper', hex: '#F0EAE1' }, { name: 'Ink', hex: '#2A1F24' }, { name: 'Black', hex: '#000000' })
+    return out
+  }
   function colorRow(label: string, key: string, current: string) {
     return (
-      <Row label={label}>
-        <div className="flex items-center gap-2">
-          <input type="color" value={current.length === 7 ? current : '#FFFFFF'} onChange={(e) => setIn('colors', { [key]: e.target.value })} className="h-8 w-10 cursor-pointer rounded border border-line bg-transparent" />
-          <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => upd((s) => { const c = { ...(s.colors ?? {}) }; delete c[key]; s.colors = c })}>Reset</button>
-        </div>
-      </Row>
+      <ColorField label={label} value={/^#[0-9a-fA-F]{6}$/.test(current) ? current : '#FFFFFF'} swatches={palette()}
+        onChange={(h) => setIn('colors', { [key]: h })}
+        onReset={() => upd((s) => { const c = { ...(s.colors ?? {}) }; delete c[key]; s.colors = c })} />
     )
   }
 
@@ -516,7 +591,104 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
-                <Group title="2. Your content" hint="photos, prices, kind words">
+                <Group title="2. Color & fonts" hint="the mood">
+                  <ColorField label="Button & accent color" value={form.site_accent ?? brandHex()} swatches={palette()}
+                    onChange={(h) => set('site_accent', h)} onReset={() => set('site_accent', null)} />
+                  {colorRow('Background', 'bg', T.bg)}
+                  {colorRow('Text', 'text', T.ink)}
+                  {colorRow('Alternating section tint', 'tint', T.tint)}
+                  <div className="grid grid-cols-3 gap-3 pt-2">
+                    {Object.entries(PAIR_PRESETS).map(([key, p]) => {
+                      const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
+                      return (
+                        <button key={key} onClick={() => pickPair(key)} className={`rounded-xl border p-3 text-left ${sel ? 'border-twilight ring-1 ring-twilight' : 'border-line'}`}>
+                          <p style={{ fontFamily: FONT_OPTIONS[p.head].family, fontSize: 24, lineHeight: 1.1 }} className="text-ink">Aa</p>
+                          <p style={{ fontFamily: FONT_OPTIONS[p.body].family, fontSize: 11 }} className="mt-1 text-ink-soft">{p.name}</p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <Row label="Heading font">
+                    <select value={T.headKey} onChange={(e) => setIn('fonts', { head: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
+                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
+                    </select>
+                  </Row>
+                  <Row label="Body font">
+                    <select value={T.bodyKey} onChange={(e) => setIn('fonts', { body: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
+                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
+                    </select>
+                  </Row>
+                </Group>
+
+                <Group title="3. Hero" hint="photos, logo, headline">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
+                    <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Line under it</label>
+                    <input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Honest, joyful photos for people in love" className={inputCls} />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-sm text-ink">Hero photos</p>
+                    <p className="mb-2 text-xs text-ink-soft">Tap photos to choose up to 6. The first one you pick leads. With none picked, your app cover is used.</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {cands.map((p) => {
+                        const idx = heroSel.indexOf(p)
+                        return (
+                          <button key={p} type="button" onClick={() => toggleHero(p)} className={`relative aspect-square overflow-hidden rounded-lg ${idx >= 0 ? 'ring-2 ring-twilight' : ''}`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={BASE + p} alt="" className="h-full w-full object-cover" loading="lazy" />
+                            {idx >= 0 && <span className="absolute left-1 top-1 rounded bg-twilight px-1.5 text-[10px] text-white">{idx + 1}</span>}
+                          </button>
+                        )
+                      })}
+                      <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line text-center text-xs text-ink-soft hover:border-twilight">
+                        <span className="text-xl text-ink">+</span>Upload
+                        <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadHero(f); e.target.value = '' }} />
+                      </label>
+                    </div>
+                  </div>
+                  <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
+                  <div>
+                    <p className="mb-2 text-sm text-ink">Photo darkness (editorial)</p>
+                    <div className="flex items-center gap-3">
+                      <div className="min-w-0 flex-1"><Slider min={0} max={80} step={5} value={Math.round(T.hero.overlay * 100)} onChange={(v) => setHero({ overlay: v / 100 })} /></div>
+                      <NumBox value={Math.round(T.hero.overlay * 100)} min={0} max={80} step={5} unit="%" onChange={(v) => setHero({ overlay: v / 100 })} />
+                    </div>
+                  </div>
+                  <div className="border-t border-line pt-4">
+                    <p className="mb-1 text-sm text-ink">Logo</p>
+                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {form.logo_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
+                      ) : (
+                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
+                      )}
+                      <label className={btnGhost + ' cursor-pointer'}>
+                        {form.logo_path ? 'Replace' : 'Upload logo'}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
+                      </label>
+                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
+                    </div>
+                  </div>
+                  <SizeControl label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
+                  <Row label="Text alignment">
+                    <Seg value={T.hero.align} options={[{ v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setHero({ align: v })} />
+                  </Row>
+                  <Row label="Text position (editorial)">
+                    <Seg value={T.hero.valign} options={[{ v: 'top', label: 'Top' }, { v: 'center', label: 'Middle' }, { v: 'bottom', label: 'Bottom' }]} onChange={(v) => setHero({ valign: v })} />
+                  </Row>
+                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (used on every button)</label>
+                    <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
+                  </div>
+                </Group>
+
+                <Group title="4. Your content" hint="galleries, prices, kind words">
                   <div className="rounded-xl border border-line bg-paper p-4">
                     <p className="font-medium text-ink">Galleries</p>
                     <p className="mb-3 mt-1 text-sm text-ink-soft">One gallery per kind of work: Weddings, Seniors, Families. Each gets its own page.</p>
@@ -584,98 +756,6 @@ export default function WebsitePage() {
 
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <Link href="/portfolio" className={btnGhost + ' text-center'}>Bio, FAQ &amp; links</Link>
-                  </div>
-                </Group>
-
-                <Group title="3. Color & fonts" hint="the mood">
-                  <div>
-                    <p className="mb-2 text-sm text-ink">Accent color</p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <button onClick={() => set('site_accent', null)}
-                        className={`rounded-full border px-3 py-1.5 text-xs ${accent === null ? 'border-twilight bg-twilight text-white' : 'border-line text-ink'}`}>
-                        <span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ background: brand }} />
-                        My brand color
-                      </button>
-                      {SWATCHES.map((c) => (
-                        <button key={c} onClick={() => set('site_accent', c)} aria-label={c} className="h-8 w-8 rounded-full"
-                          style={{ background: c, boxShadow: accent === c ? `0 0 0 2px #fff, 0 0 0 4px ${c}` : undefined }} />
-                      ))}
-                      <input type="color" value={accent ?? (brand.length === 7 ? brand : '#A9545F')} onChange={(e) => set('site_accent', e.target.value)} className="h-8 w-10 cursor-pointer rounded border border-line bg-transparent" aria-label="Custom color" />
-                    </div>
-                  </div>
-                  {colorRow('Background', 'bg', T.bg)}
-                  {colorRow('Text', 'text', T.ink)}
-                  {colorRow('Alternating section tint', 'tint', T.tint)}
-                  <div className="grid grid-cols-3 gap-3 pt-2">
-                    {Object.entries(PAIR_PRESETS).map(([key, p]) => {
-                      const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
-                      return (
-                        <button key={key} onClick={() => pickPair(key)} className={`rounded-xl border p-3 text-left ${sel ? 'border-twilight ring-1 ring-twilight' : 'border-line'}`}>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.head].family, fontSize: 24, lineHeight: 1.1 }} className="text-ink">Aa</p>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.body].family, fontSize: 11 }} className="mt-1 text-ink-soft">{p.name}</p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <Row label="Heading font">
-                    <select value={T.headKey} onChange={(e) => setIn('fonts', { head: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
-                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
-                    </select>
-                  </Row>
-                  <Row label="Body font">
-                    <select value={T.bodyKey} onChange={(e) => setIn('fonts', { body: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
-                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
-                    </select>
-                  </Row>
-                </Group>
-
-                <Group title="4. Hero" hint="the first screen">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
-                    <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Line under it</label>
-                    <input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Honest, joyful photos for people in love" className={inputCls} />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-ink">Hero photos</p>
-                    <p className="mb-2 text-xs text-ink-soft">Tap photos to choose up to 6. The first one you pick leads. With none picked, your app cover is used.</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {cands.map((p) => {
-                        const idx = heroSel.indexOf(p)
-                        return (
-                          <button key={p} type="button" onClick={() => toggleHero(p)} className={`relative aspect-square overflow-hidden rounded-lg ${idx >= 0 ? 'ring-2 ring-twilight' : ''}`}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={BASE + p} alt="" className="h-full w-full object-cover" loading="lazy" />
-                            {idx >= 0 && <span className="absolute left-1 top-1 rounded bg-twilight px-1.5 text-[10px] text-white">{idx + 1}</span>}
-                          </button>
-                        )
-                      })}
-                      <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line text-center text-xs text-ink-soft hover:border-twilight">
-                        <span className="text-xl text-ink">+</span>Upload
-                        <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadHero(f); e.target.value = '' }} />
-                      </label>
-                    </div>
-                  </div>
-                  <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
-                  <div>
-                    <p className="mb-2 text-sm text-ink">Photo darkness (editorial)</p>
-                    <div className="flex items-center gap-3">
-                      <div className="min-w-0 flex-1"><Slider min={0} max={80} step={5} value={Math.round(T.hero.overlay * 100)} onChange={(v) => setHero({ overlay: v / 100 })} /></div>
-                      <NumBox value={Math.round(T.hero.overlay * 100)} min={0} max={80} step={5} unit="%" onChange={(v) => setHero({ overlay: v / 100 })} />
-                    </div>
-                  </div>
-                  <Row label="Text alignment">
-                    <Seg value={T.hero.align} options={[{ v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setHero({ align: v })} />
-                  </Row>
-                  <Row label="Text position (editorial)">
-                    <Seg value={T.hero.valign} options={[{ v: 'top', label: 'Top' }, { v: 'center', label: 'Middle' }, { v: 'bottom', label: 'Bottom' }]} onChange={(v) => setHero({ valign: v })} />
-                  </Row>
-                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (used on every button)</label>
-                    <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
                   </div>
                 </Group>
 
