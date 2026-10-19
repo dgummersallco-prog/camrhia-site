@@ -109,6 +109,7 @@ export default function PortfolioEditorPage() {
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [previewKey, setPreviewKey] = useState(0)
+  const [step, setStep] = useState(1)
   const [device, setDevice] = useState<'phone' | 'desktop'>('phone')
   const fileInput = useRef<HTMLInputElement>(null)
   const logoInput = useRef<HTMLInputElement>(null)
@@ -314,7 +315,25 @@ export default function PortfolioEditorPage() {
             <div className="grid gap-8 lg:grid-cols-[minmax(0,540px)_1fr]">
               {/* Form */}
               <div className="space-y-5">
-                <section className={card}>
+                <div className="mb-1">
+                  <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-line">
+                    <div className="h-full rounded-full bg-twilight transition-all" style={{ width: `${(step / 4) * 100}%` }} />
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-sm">
+                    {(['About you', 'Photos', 'Look', 'Sections'] as const).map((t, i) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setStep(i + 1)}
+                        className={`rounded-full px-4 py-1.5 ${step === i + 1 ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
+                      >
+                        {i + 1}. {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className={`space-y-5 ${step === 1 ? '' : 'hidden'}`}>
+<section className={card}>
                   <p className={label}>Logo and profile photo</p>
                   <div className="flex flex-wrap gap-8">
                     <div>
@@ -355,32 +374,7 @@ export default function PortfolioEditorPage() {
                   </div>
                 </section>
 
-                <section className={card}>
-                  <p className={label}>Cover photo</p>
-                  <div className="flex items-center gap-4">
-                    <div className="h-24 w-36 shrink-0 overflow-hidden rounded-xl bg-line">
-                      {coverUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={`${STORAGE_BASE}${coverUrl}`} alt="" className="h-full w-full object-cover" />
-                      )}
-                    </div>
-                    <div>
-                      <input
-                        ref={fileInput}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,.heic,.heif"
-                        className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.target.value = '' }}
-                      />
-                      <button className={btnGhost} disabled={uploading} onClick={() => fileInput.current?.click()}>
-                        {uploading ? 'Uploading…' : coverUrl ? 'Change photo' : 'Add photo'}
-                      </button>
-                      <p className="mt-2 text-xs text-ink-soft">Cover size, shape and rotation are set in the app for now.</p>
-                    </div>
-                  </div>
-                </section>
-
-                <section className={`${card} space-y-4`}>
+<section className={`${card} space-y-4`}>
                   <div>
                     <label className={label}>Studio name</label>
                     <input className={input} value={form.studio_name ?? ''} onChange={(e) => setField('studio_name', e.target.value)} />
@@ -407,7 +401,7 @@ export default function PortfolioEditorPage() {
                   </div>
                 </section>
 
-                <section className={`${card} space-y-4`}>
+<section className={`${card} space-y-4`}>
                   <p className="text-sm font-medium text-ink">Links</p>
                   {(
                     [
@@ -429,15 +423,42 @@ export default function PortfolioEditorPage() {
                     </div>
                   ))}
                 </section>
+                </div>
+                <div className={`space-y-5 ${step === 2 ? '' : 'hidden'}`}>
+<section className={card}>
+                  <p className={label}>Cover photo</p>
+                  <div className="flex items-center gap-4">
+                    <div className="h-24 w-36 shrink-0 overflow-hidden rounded-xl bg-line">
+                      {coverUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={`${STORAGE_BASE}${coverUrl}`} alt="" className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        ref={fileInput}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,.heic,.heif"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.target.value = '' }}
+                      />
+                      <button className={btnGhost} disabled={uploading} onClick={() => fileInput.current?.click()}>
+                        {uploading ? 'Uploading…' : coverUrl ? 'Change photo' : 'Add photo'}
+                      </button>
+                      <p className="mt-2 text-xs text-ink-soft">Cover size, shape and rotation are set in the app for now.</p>
+                    </div>
+                  </div>
+                </section>
 
-                <section className={`${card} space-y-3`}>
+<section className={`${card} space-y-3`}>
                   <p className="text-sm font-medium text-ink">Photos and testimonials</p>
                   <a href="/portfolio/photos" className="block rounded-xl border border-line px-4 py-3 text-sm text-ink hover:border-twilight">Featured photo sets</a>
                   <a href="/portfolio/testimonials" className="block rounded-xl border border-line px-4 py-3 text-sm text-ink hover:border-twilight">Testimonials</a>
                   <p className="text-xs text-ink-soft">You will be asked to confirm if you leave with unsaved changes.</p>
                 </section>
-
-                <section className={`${card} space-y-4`}>
+                </div>
+                <div className={`space-y-5 ${step === 3 ? '' : 'hidden'}`}>
+<section className={`${card} space-y-4`}>
                   <p className="text-sm font-medium text-ink">Fonts</p>
                   <div>
                     <label className={label}>Studio name font</label>
@@ -459,7 +480,7 @@ export default function PortfolioEditorPage() {
                   </div>
                 </section>
 
-                <section className={`${card} space-y-4`}>
+<section className={`${card} space-y-4`}>
                   <p className="text-sm font-medium text-ink">Colors and spacing</p>
                   <ColorField title="Page background" value={form.portfolio_bg_color} fallback="#F9F9F9" onChange={(v) => setField('portfolio_bg_color', v)} />
                   <ColorField title="Studio name and headings" value={form.title_color} fallback="#A57E60" onChange={(v) => setField('title_color', v)} />
@@ -476,8 +497,9 @@ export default function PortfolioEditorPage() {
                     />
                   </div>
                 </section>
-
-                <section className={card}>
+                </div>
+                <div className={`space-y-5 ${step === 4 ? '' : 'hidden'}`}>
+<section className={card}>
                   <p className="mb-1 text-sm font-medium text-ink">Sections</p>
                   <p className="mb-4 text-xs text-ink-soft">Turn sections on or off and reorder them with the arrows.</p>
                   <ul className="divide-y divide-line">
@@ -508,7 +530,7 @@ export default function PortfolioEditorPage() {
                   </ul>
                 </section>
 
-                <section className={`${card} space-y-3`}>
+<section className={`${card} space-y-3`}>
                   <p className="text-sm font-medium text-ink">Section names</p>
                   <p className="text-xs text-ink-soft">Rename the headings on your portfolio. Leave blank to use the default.</p>
                   {DEFAULT_ORDER.map((key) => (
@@ -529,7 +551,7 @@ export default function PortfolioEditorPage() {
                   ))}
                 </section>
 
-                <section className={`${card} space-y-4`}>
+<section className={`${card} space-y-4`}>
                   <p className="text-sm font-medium text-ink">FAQ</p>
                   {(form.faq ?? []).map((item, i) => (
                     <div key={i} className="space-y-2 rounded-xl border border-line p-3">
@@ -556,13 +578,26 @@ export default function PortfolioEditorPage() {
                   </button>
                 </section>
 
+                <section className={`${card} text-center`}>
+                  <p className="font-fraunces text-xl font-semibold text-ink">You&apos;re all set</p>
+                  <p className="mt-1 text-sm text-ink-soft">Save your changes, then take a look at your live site.</p>
+                  {portfolioUrl && (
+                    <a href={portfolioUrl} target="_blank" rel="noreferrer" className={`${btn} mt-4 inline-block`}>View live site</a>
+                  )}
+                </section>
+                </div>
+                <div className="flex items-center justify-between pt-2">
+                  <button type="button" className={btnGhost} disabled={step === 1} onClick={() => { if (dirty) save(); setStep(step - 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Back</button>
+                  {step < 4 && <button type="button" className={btn} onClick={() => { if (dirty) save(); setStep(step + 1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Next</button>}
+                </div>
+
                 <p className="text-xs text-ink-soft">
                   Photo layouts and packages are edited in the Camrhia app for now. Anything you change here shows up there too.
                 </p>
               </div>
 
               {/* Preview */}
-              <div className="lg:sticky lg:top-6 lg:self-start">
+              <div id="portfolio-preview" className="lg:sticky lg:top-6 lg:self-start">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-medium text-ink">Live preview</p>
                   <div className="flex gap-2 text-sm">
@@ -597,6 +632,7 @@ export default function PortfolioEditorPage() {
                 )}
               </div>
             </div>
+            <a href="#portfolio-preview" className="fixed bottom-5 right-5 z-40 rounded-full bg-twilight px-5 py-3 text-sm font-medium text-white shadow-lg lg:hidden">Preview</a>
           </>
         )}
       </main>
