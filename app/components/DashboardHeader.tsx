@@ -26,8 +26,6 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
   { tab: 'calendar', href: '/calendar', label: 'Calendar' },
   { tab: 'portfolio', href: '/portfolio', label: 'Your website' },
-  { tab: 'reminders', href: '/reminders', label: 'Reminders' },
-  { tab: 'storage', href: '/storage', label: 'Storage' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
 ]
 

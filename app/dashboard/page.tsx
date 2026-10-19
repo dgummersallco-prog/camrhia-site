@@ -346,6 +346,17 @@ export default function DashboardPage() {
                 <p className="text-sm text-ink-soft">{formatBytes(usedBytes)} used across {galleries.length} galler{galleries.length === 1 ? 'y' : 'ies'}</p>
               )}
             </section>
+
+            {/* Reminders */}
+            <section className={`${card} mt-6`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-fraunces text-xl font-semibold text-ink">Client reminders</p>
+                  <p className="text-sm text-ink-soft">Choose which automatic reminders your clients get and edit the wording.</p>
+                </div>
+                <Link href="/reminders" className="text-sm font-medium text-twilight hover:underline">Manage reminders →</Link>
+              </div>
+            </section>
           </>
         )}
       </main>

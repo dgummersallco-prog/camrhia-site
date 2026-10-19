@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
@@ -93,8 +94,9 @@ export default function RemindersPage() {
 
   return (
     <div className="min-h-screen bg-paper lg:pl-60">
-      <DashboardHeader active="reminders" />
+      <DashboardHeader active="dashboard" />
       <main className="mx-auto max-w-3xl px-6 py-10">
+        <Link href="/dashboard" className="mb-4 inline-block text-sm text-ink-soft hover:text-twilight">← Home</Link>
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Studio</p>
         <h1 className="font-fraunces text-3xl font-semibold text-ink">Client reminders</h1>
         <p className="mt-2 max-w-xl text-ink-soft">

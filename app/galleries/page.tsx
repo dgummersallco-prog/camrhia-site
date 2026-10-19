@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { GalleryTabs } from '@/app/components/GalleryTabs'
 
 type Row = {
   id: string
@@ -172,6 +173,7 @@ export default function GalleriesPage() {
       <DashboardHeader active="galleries" />
 
       <main className="mx-auto max-w-6xl px-6 py-10">
+        <GalleryTabs active="galleries" />
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Photographer</p>
