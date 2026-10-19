@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { ClientHeader } from '@/app/components/ClientHeader'
 
 type Q = { id: string; section: string | null; prompt: string; hint: string | null; sort_order: number }
 type Mine = { wedding_id: string; owner_id: string | null; session_type: string; photographer_studio: string | null }
@@ -58,8 +59,9 @@ export default function ClientQuestionnairePage() {
   })
 
   return (
-    <div className="min-h-screen bg-paper">
-      <header className="sticky top-0 z-10 border-b border-line bg-card">
+    <div className="min-h-screen bg-paper lg:pl-60">
+      <div className="print:hidden"><ClientHeader active="sessions" /></div>
+      <header className="border-b border-line bg-card">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4">
             <a href="/my" className="text-sm text-ink-soft underline hover:text-ink">Back</a>

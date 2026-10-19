@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { ClientHeader } from '@/app/components/ClientHeader'
 
 type Contract = {
   id: string; status: string; body: string | null
@@ -62,7 +63,8 @@ export default function ClientContractPage() {
   const signed = contract?.status === 'signed'
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen bg-paper lg:pl-60 print:pl-0">
+      <div className="print:hidden"><ClientHeader active="sessions" /></div>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Dancing+Script&family=Great+Vibes&family=Sacramento&display=swap" />
       <header className="border-b border-line bg-card print:hidden">
         <div className="mx-auto flex max-w-2xl items-center gap-4 px-6 py-4">

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { ClientHeader } from '@/app/components/ClientHeader'
 
 type Msg = { id: string; sender: string; body: string; created_at: string }
 
@@ -68,7 +69,8 @@ export default function ClientThreadPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper">
+    <div className="flex min-h-screen flex-col bg-paper lg:pl-60">
+      <div className="print:hidden"><ClientHeader active="messages" /></div>
       <header className="border-b border-line bg-card">
         <div className="mx-auto flex max-w-2xl items-center gap-4 px-6 py-4">
           <a href="/my" className="text-sm text-ink-soft underline hover:text-ink">Back</a>
