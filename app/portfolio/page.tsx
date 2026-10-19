@@ -45,10 +45,11 @@ type Profile = {
   title_italic: boolean | null
   paragraph_font: string | null
   section_titles: Record<string, string> | null
+  brand_colors_named: Record<string, string | null> | null
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -82,6 +83,14 @@ const input = 'w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm
 const btn = 'rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50'
 const btnGhost = 'rounded-xl border border-line px-4 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50'
 const label = 'mb-1.5 block text-sm font-medium text-ink'
+
+const BRAND_ROLES: { key: string; label: string; sub: string; preset: string }[] = [
+  { key: 'primary',   label: 'Primary',   sub: 'Main brand identity. Your app accent.', preset: '#A9545F' },
+  { key: 'secondary', label: 'Secondary', sub: 'Badges, and your booked calendar color.', preset: '#5E7F5A' },
+  { key: 'accent',    label: 'Accent',    sub: 'Buttons, links, and your hold calendar color.', preset: '#B5654B' },
+  { key: 'neutral1',  label: 'Neutral 1', sub: 'Background or text.', preset: '#FAF6EF' },
+  { key: 'neutral2',  label: 'Neutral 2', sub: 'Background or text.', preset: '#2A1F24' },
+]
 
 const FONTS: [string, string, string][] = [
   ['playfair_display', 'Playfair Display', 'Serif'], ['cormorant_garamond', 'Cormorant Garamond', 'Serif'],
@@ -118,13 +127,24 @@ function SortableRow({ id, render }: { id: string; render: (h: { attributes: Rec
   )
 }
 
-function ColorField({ title, value, fallback, onChange }: { title: string; value: string | null; fallback: string; onChange: (v: string | null) => void }) {
+function ColorField({ title, value, fallback, onChange, swatches }: { title: string; value: string | null; fallback: string; onChange: (v: string | null) => void; swatches?: string[] }) {
   const hex = /^#[0-9a-f]{6}$/i.test(value ?? '') ? (value as string) : fallback
   return (
-    <div className="flex items-center gap-3">
-      <input type="color" value={hex} onChange={(e) => onChange(e.target.value.toUpperCase())} className="h-9 w-12 cursor-pointer rounded-lg border border-line bg-transparent p-0.5" />
-      <span className="flex-1 text-sm text-ink">{title}</span>
-      {value && <button type="button" onClick={() => onChange(null)} className="text-xs text-ink-soft underline hover:text-ink">Reset</button>}
+    <div>
+      <div className="flex items-center gap-3">
+        <input type="color" value={hex} onChange={(e) => onChange(e.target.value.toUpperCase())} className="h-9 w-12 cursor-pointer rounded-lg border border-line bg-transparent p-0.5" />
+        <span className="flex-1 text-sm text-ink">{title}</span>
+        {value && <button type="button" onClick={() => onChange(null)} className="text-xs text-ink-soft underline hover:text-ink">Reset</button>}
+      </div>
+      {swatches && swatches.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-[60px]">
+          <span className="mr-1 text-[11px] text-ink-soft">Brand</span>
+          {swatches.map((c) => (
+            <button key={c} type="button" aria-label={`Use ${c}`} onClick={() => onChange(c.toUpperCase())}
+              className="h-5 w-5 rounded-full border border-line" style={{ backgroundColor: c }} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -216,6 +236,10 @@ export default function PortfolioEditorPage() {
       title_italic: form.title_italic ?? null,
       paragraph_font: t(form.paragraph_font),
       section_titles: form.section_titles ?? {},
+      ...(form.brand_colors_named ? {
+        brand_colors_named: form.brand_colors_named,
+        brand_colors: BRAND_ROLES.map((r) => form.brand_colors_named?.[r.key]).filter((c): c is string => !!c),
+      } : {}),
       faq: (() => { const c = (form.faq ?? []).filter((f) => f.question.trim() || f.answer.trim()); return c.length ? c : null })(),
     }
     setSaving(true)
@@ -320,16 +344,18 @@ export default function PortfolioEditorPage() {
   const coverUrl = form?.cover_paths?.[0] ?? form?.cover_path
   const portfolioUrl = form?.public_token ? `/p/${form.public_token}` : null
 
+  const brandSwatches = Object.values(form?.brand_colors_named ?? {}).filter((c): c is string => !!c)
   const EDITOR_TITLES: Record<string, string> = {
-    cover: 'Cover photo', name: 'Studio name', location: 'Location', master: 'Master style',
+    brand: 'Brand colors', cover: 'Cover photo', name: 'Studio name', location: 'Location', master: 'Master style',
     background: 'Background', spacing: 'Section spacing', message: 'Message button', listed: 'List me publicly', ...LABELS,
   }
-  const STYLE_KEYS = ['cover', 'name', 'location', 'master', 'background', 'spacing', 'message']
+  const STYLE_KEYS = ['brand', 'cover', 'name', 'location', 'master', 'background', 'spacing', 'message']
 
   function summary(key: string): string {
     if (!form) return ''
     const links = [form.website_url, form.instagram_url, form.facebook_url, form.pinterest_url, form.tiktok_url].filter(Boolean).length
     switch (key) {
+      case 'brand': { const n = Object.values(form.brand_colors_named ?? {}).filter(Boolean).length; return n ? `${n} of 5 colors set` : 'Your five brand colors' }
       case 'cover': return coverUrl ? 'Photo added' : 'Add your cover photo'
       case 'name': return form.studio_name || 'Add your studio name'
       case 'location': return [form.service_city, form.service_state].filter(Boolean).join(', ') || 'Add your city and state'
@@ -434,6 +460,23 @@ export default function PortfolioEditorPage() {
     if (!form) return null
     const sec = (children: ReactNode) => <section className={`${card} space-y-4`}>{children}</section>
     switch (key) {
+      case 'brand': {
+        const named = form.brand_colors_named ?? {}
+        return sec(
+          <>
+            <p className="text-xs text-ink-soft">
+              Your five brand colors. They show up as swatches in every color picker on your website and in the Camrhia app, and changes here appear in the app too.
+            </p>
+            {BRAND_ROLES.map((r) => (
+              <div key={r.key}>
+                <ColorField title={r.label} value={named[r.key] ?? null} fallback={r.preset}
+                  onChange={(v) => setField('brand_colors_named', { ...named, [r.key]: v })} />
+                <p className="mt-1 pl-[60px] text-xs text-ink-soft">{r.sub}</p>
+              </div>
+            ))}
+          </>,
+        )
+      }
       case 'cover':
         return sec(
           <>
@@ -502,7 +545,7 @@ export default function PortfolioEditorPage() {
                 <input className={input} value={form.service_state ?? ''} onChange={(e) => setField('service_state', e.target.value)} />
               </div>
             </div>
-            <ColorField title="Location text color" value={form.location_color} fallback="#202020" onChange={(v) => setField('location_color', v)} />
+            <ColorField swatches={brandSwatches} title="Location text color" value={form.location_color} fallback="#202020" onChange={(v) => setField('location_color', v)} />
           </>,
         )
       case 'master':
@@ -526,12 +569,12 @@ export default function PortfolioEditorPage() {
                 {FONTS.map(([k, n, c]) => <option key={k} value={k}>{n} ({c})</option>)}
               </select>
             </div>
-            <ColorField title="Headings" value={form.title_color} fallback="#A57E60" onChange={(v) => setField('title_color', v)} />
-            <ColorField title="Body text" value={form.paragraph_color} fallback="#202020" onChange={(v) => setField('paragraph_color', v)} />
+            <ColorField swatches={brandSwatches} title="Headings" value={form.title_color} fallback="#A57E60" onChange={(v) => setField('title_color', v)} />
+            <ColorField swatches={brandSwatches} title="Body text" value={form.paragraph_color} fallback="#202020" onChange={(v) => setField('paragraph_color', v)} />
           </>,
         )
       case 'background':
-        return sec(<ColorField title="Page background" value={form.portfolio_bg_color} fallback="#F9F9F9" onChange={(v) => setField('portfolio_bg_color', v)} />)
+        return sec(<ColorField swatches={brandSwatches} title="Page background" value={form.portfolio_bg_color} fallback="#F9F9F9" onChange={(v) => setField('portfolio_bg_color', v)} />)
       case 'spacing':
         return sec(
           <div>
@@ -544,7 +587,7 @@ export default function PortfolioEditorPage() {
       case 'message':
         return sec(
           <>
-            <ColorField title="Message button color" value={form.accent_color} fallback="#A9545F" onChange={(v) => setField('accent_color', v)} />
+            <ColorField swatches={brandSwatches} title="Message button color" value={form.accent_color} fallback="#A9545F" onChange={(v) => setField('accent_color', v)} />
             <p className="text-xs text-ink-soft">Button text, size and shape are set in the app for now.</p>
           </>,
         )
