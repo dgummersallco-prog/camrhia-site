@@ -36,6 +36,12 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   const { tpl, accent, ink, soft, line, bg, tint } = t
   const qs = isPreview ? '?preview=1' : ''
   const availHref = `/site/${token}/availability${qs}`
+  const go = (e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    if (id === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return }
+    const el = document.getElementById(id)
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })
+  }
 
   const name: string = r.studio_name ?? r.display_name ?? 'Studio'
   const cityLine = [[r.service_city, r.service_state].filter(Boolean).join(', '), r.location_custom_text || null].filter(Boolean).join(' · ')
@@ -109,11 +115,11 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         style={overlay ? { color: '#fff' } : { color: ink, background: `color-mix(in srgb, ${bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
       >
         <div className={center ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex h-16 max-w-6xl items-center justify-between px-6'}>
-          <a href="#top">{brand}</a>
+          <a href="#top" onClick={(e) => go(e, 'top')}>{brand}</a>
           <ul className="hidden gap-8 md:flex">
             {navItems.map((n) => (
               <li key={n.id}>
-                <a href={`#${n.id}`} className="text-[11px] uppercase tracking-[0.2em] opacity-90 hover:opacity-100" style={{ fontFamily: t.body }}>{n.label}</a>
+                <a href={n.id === 'contact' ? availHref : `#${n.id}`} onClick={n.id === 'contact' ? undefined : (e) => go(e, n.id)} className="text-[11px] uppercase tracking-[0.2em] opacity-90 hover:opacity-100" style={{ fontFamily: t.body }}>{n.label}</a>
               </li>
             ))}
           </ul>
@@ -125,7 +131,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           <ul className="flex flex-col gap-4 px-6 pb-5 md:hidden" style={{ background: overlay ? 'rgba(0,0,0,0.72)' : bg }}>
             {navItems.map((n) => (
               <li key={n.id}>
-                <a href={`#${n.id}`} onClick={() => setOpen(false)} className="text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body }}>{n.label}</a>
+                <a href={n.id === 'contact' ? availHref : `#${n.id}`} onClick={(e) => { setOpen(false); if (n.id !== 'contact') go(e, n.id) }} className="text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body }}>{n.label}</a>
               </li>
             ))}
           </ul>
@@ -395,7 +401,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         {doors.length > 0 && (
           <div className="mx-auto grid max-w-6xl gap-0 px-6 py-16" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
             {doors.map((b, i) => (
-              <a key={b.href} href={b.href} className="block px-6 py-8 text-center" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
+              <a key={b.href} href={b.href} onClick={(e) => go(e, b.href.slice(1))} className="block px-6 py-8 text-center" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
                 <p className="text-3xl" style={headStyle}>{b.t}</p>
                 <p className="mt-2 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>{b.s} →</p>
               </a>
@@ -407,18 +413,12 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           <React.Fragment key={k}>{renderSection(k, i % 2 === 1)}</React.Fragment>
         ))}
 
-        <footer className="px-6 pb-28 pt-6 text-center text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>
+        <footer className="px-6 pb-12 pt-6 text-center text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>
           {t.text.footer && <p className="mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 13 }}>{t.text.footer}</p>}
           © {new Date().getFullYear()} {name} · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
         </footer>
       </div>
 
-      {t.availability.float && (
-        <a href={availHref} className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap px-8 py-3.5 text-[11px] uppercase tracking-[0.22em]"
-          style={{ ...btnStyle, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}>
-          {t.hero.ctaText}
-        </a>
-      )}
     </>
   )
 }

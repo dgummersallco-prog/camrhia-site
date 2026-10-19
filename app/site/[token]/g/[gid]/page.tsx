@@ -133,12 +133,6 @@ export default async function SiteGalleryPage({ params }: { params: Promise<{ to
         </footer>
       </div>
 
-      {t.availability.float && (
-        <Link href={`/site/${token}/availability`} className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap px-8 py-3.5 text-[11px] uppercase tracking-[0.22em]"
-          style={{ background: accent, color: '#fff', borderRadius: t.radius, fontFamily: t.body, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}>
-          {t.hero.ctaText}
-        </Link>
-      )}
     </>
   )
 }

@@ -683,7 +683,7 @@ export default function WebsitePage() {
                     <label className="mb-1 block text-xs font-medium text-ink">Thank-you message</label>
                     <textarea rows={2} value={S.availability?.success ?? ''} onChange={(e) => setIn('availability', { success: e.target.value })} placeholder="Thanks! I will reach out within a day." className={inputCls} />
                   </div>
-                  <Row label="Floating button on every page"><Switch on={T.availability.float} onChange={(v) => setIn('availability', { float: v })} /></Row>
+                  
                 </Group>
 
                 <Group title="7. Sections" hint="order, names, on/off">
