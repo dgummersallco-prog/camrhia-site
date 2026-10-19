@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { makeVersions, isHeic } from '@/lib/galleryImages'
+import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
 type Gallery = {
@@ -248,6 +249,17 @@ export default function GalleryManagePage() {
     if (skipped > 0) setMessage(`${skipped} file(s) skipped. Supported: JPG, PNG, WebP and HEIC.`)
     if (files.length === 0) return
 
+    const incoming = files.reduce((n, f) => n + f.size, 0)
+    const [usageRes, profRes] = await Promise.all([
+      sb.rpc('storage_usage'),
+      sb.from('profiles').select('plan_tier, storage_addon_packs').eq('id', userId).single(),
+    ])
+    const used = ((usageRes.data ?? []) as { bytes: number }[]).reduce((n, r) => n + Number(r.bytes), 0)
+    const limit = storageLimitBytes(profRes.data?.plan_tier as string | null, (profRes.data?.storage_addon_packs as number | null) ?? 0)
+    if (used + incoming > limit) {
+      setMessage(`Not enough storage. You are using ${formatBytes(used)} of ${formatBytes(limit)}. Delete old galleries or add storage on the Storage page.`)
+      return
+    }
     const base = photos.reduce((m, p) => Math.max(m, p.sort_order), -1) + 1
     const items: UploadItem[] = files.map((f, i) => ({ key: `${Date.now()}-${i}`, name: f.name, status: 'queued' }))
     setUploads(items)

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
 
-type Tab = 'dashboard' | 'sessions' | 'calendar' | 'galleries' | 'portfolio' | 'reminders' | 'billing'
+type Tab = 'dashboard' | 'sessions' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'reminders' | 'billing'
 
 const ICONS: Record<string, string> = {
   reminders: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10 21a2 2 0 0 0 4 0',
@@ -16,6 +16,7 @@ const ICONS: Record<string, string> = {
   galleries: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 M9 9.5h.01',
   portfolio: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M3 12h18 M12 3c3 3 3 15 0 18 M12 3c-3 3-3 15 0 18',
   billing: 'M3 6h18v12H3z M3 10h18',
+  storage: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6',
   affiliate: 'M4 12v8h16v-8 M2 8h20v4H2z M12 8v12 M12 8c-2 0-4-1-4-3s3-2 4 1c1-3 4-3 4-1s-2 3-4 3',
 }
 
@@ -26,6 +27,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'galleries', href: '/galleries', label: 'Galleries' },
   { tab: 'portfolio', href: '/portfolio', label: 'Portfolio' },
   { tab: 'reminders', href: '/reminders', label: 'Reminders' },
+  { tab: 'storage', href: '/storage', label: 'Storage' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
 ]
 
