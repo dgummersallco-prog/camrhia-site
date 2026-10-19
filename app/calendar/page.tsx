@@ -125,13 +125,18 @@ export default function CalendarPage() {
             </div>
           ) : (
             <div>
-              <p className="mb-2 text-sm text-ink">Subscribe to this private link. It updates on its own.</p>
+              <p className="mb-3 text-sm text-ink">Add your sessions to your calendar. It stays up to date on its own.</p>
               <div className="flex flex-wrap gap-2">
-                <input readOnly value={feedUrl} onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-xs text-ink" />
-                <button onClick={copyFeed} className={btn}>{feedCopied ? 'Copied!' : 'Copy'}</button>
-                <a href={feedUrl.replace(/^https?:/, 'webcal:')} className={btn}>Open in Apple Calendar</a>
+                <a href={feedUrl.replace(/^https?:/, 'webcal:')} className={btn}>Apple Calendar</a>
+                <a href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(feedUrl.replace(/^https?:/, 'webcal:'))}`} target="_blank" rel="noreferrer" className={btn}>Google Calendar</a>
+                <a href={`https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(feedUrl)}&name=Camrhia`} target="_blank" rel="noreferrer" className={btn}>Outlook</a>
+                <button onClick={copyFeed} className={btn}>{feedCopied ? 'Link copied!' : 'Copy link'}</button>
               </div>
-              <p className="mt-2 text-xs text-ink-soft">Google Calendar: Other calendars → From URL → paste the link. Anyone with this link can see your session names and places, so keep it private.</p>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-xs text-ink-soft hover:text-ink">Show link</summary>
+                <input readOnly value={feedUrl} onFocus={(e) => e.currentTarget.select()} className="mt-2 w-full rounded-xl border border-line bg-paper px-3 py-2 text-xs text-ink" />
+              </details>
+              <p className="mt-3 text-xs text-ink-soft">This link is private. Anyone who has it can see your session names and places, so only share it with your own calendar apps.</p>
             </div>
           )}
         </div>
