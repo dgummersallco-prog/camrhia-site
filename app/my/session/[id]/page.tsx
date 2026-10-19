@@ -14,7 +14,7 @@ type Portal = {
 }
 type Mine = {
   wedding_id: string; share_token: string | null; gallery_password: string | null
-  contract_status: string | null; has_contract: boolean; has_questionnaire: boolean; has_timeline: boolean
+  contract_status: string | null; has_contract: boolean; has_questionnaire: boolean; has_timeline: boolean; has_photographer: boolean
   questionnaire_answered: number; questionnaire_total: number
   timeline_approved: boolean | null; timeline_shared_at: string | null
 }
@@ -22,6 +22,8 @@ type Detail = {
   package_name: string | null; coverage: string | null; deliverables: string | null; guests: number | null
   session_start_time: string | null; session_length_hours: number | null
   total_price: number | null; timeline_approved_at: string | null
+  partner1_name: string | null; partner1_role: string | null; partner2_name: string | null; partner2_role: string | null
+  last_name: string | null; venue: string | null; wedding_date: string | null
 }
 type Pay = { id: string; label: string | null; amount: number; due_date: string | null; status: string | null; paid_at: string | null; method: string | null; sent_by_couple: boolean | null }
 type Shot = { id: string; label: string; done: boolean }
@@ -36,6 +38,7 @@ const label = (t: string) => TYPE_LABELS[t] ?? t.charAt(0).toUpperCase() + t.sli
 const day = (d: string | null) => (d ? new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'Date to be set')
 const short = (d: string | null) => (d ? new Date(d + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 const money = (n: number) => '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+const ROLES = ['Bride', 'Groom', 'Partner']
 const METHODS = ['Venmo', 'Zelle', 'Cash', 'Check', 'Card', 'Other']
 const card = 'rounded-2xl border border-line bg-card p-5'
 const btn = 'inline-block rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink transition hover:border-twilight'
@@ -68,6 +71,8 @@ export default function ClientSessionPage() {
   const [reporting, setReporting] = useState<string | null>(null)
   const [howPaid, setHowPaid] = useState('')
   const [payNote, setPayNote] = useState('')
+  const [editInfo, setEditInfo] = useState(false)
+  const [f, setF] = useState({ p1: '', p1r: 'Partner', p2: '', p2r: 'Partner', last: '', date: '', venue: '' })
   const [editGuests, setEditGuests] = useState(false)
   const [guestsVal, setGuestsVal] = useState('')
 
@@ -83,7 +88,7 @@ export default function ClientSessionPage() {
     setRow(r)
     setMine(m)
     const [w, p, s, c] = await Promise.all([
-      sb.from('weddings').select('package_name, coverage, deliverables, guests, session_start_time, session_length_hours, total_price, timeline_approved_at').eq('id', id).maybeSingle(),
+      sb.from('weddings').select('package_name, coverage, deliverables, guests, session_start_time, session_length_hours, total_price, timeline_approved_at, partner1_name, partner1_role, partner2_name, partner2_role, last_name, venue, wedding_date').eq('id', id).maybeSingle(),
       sb.from('payment_schedule').select('id, label, amount, due_date, status, paid_at, method, sent_by_couple').eq('wedding_id', id).order('sort_order', { ascending: true }),
       sb.from('shot_list').select('id, label, done').eq('wedding_id', id).order('sort_order', { ascending: true }),
       sb.from('wedding_contacts').select('id, name, role, phone').eq('wedding_id', id).order('sort_order', { ascending: true }),
@@ -118,6 +123,42 @@ export default function ClientSessionPage() {
     setBusy(false)
     if (e) { setError(e.message); return }
     setReporting(null)
+    load()
+  }
+
+  function startEditInfo() {
+    setF({
+      p1: d?.partner1_name ?? '', p1r: d?.partner1_role ?? 'Partner',
+      p2: d?.partner2_name ?? '', p2r: d?.partner2_role ?? 'Partner',
+      last: d?.last_name ?? '', date: d?.wedding_date ?? row?.wedding_date ?? '', venue: d?.venue ?? row?.venue ?? '',
+    })
+    setEditInfo(true)
+  }
+
+  async function saveInfo() {
+    const sb = supabase
+    if (!sb || !row) return
+    const couple = row.session_type === 'wedding' || row.session_type === 'engagement'
+    if (!f.p1.trim() && !f.p2.trim()) { setError('Add at least one name.'); return }
+    const canDate = !mine?.has_photographer || !row.wedding_date
+    const canVenue = !mine?.has_photographer || !row.venue
+    const base = [f.p1.trim(), f.p2.trim()].filter(Boolean).join(' & ')
+    const names = f.last.trim() ? `${base} ${f.last.trim()}` : base
+    const patch: Record<string, unknown> = couple
+      ? {
+          partner1_name: f.p1.trim() || null, partner1_role: f.p1r,
+          partner2_name: f.p2.trim() || null, partner2_role: f.p2r,
+          last_name: f.last.trim() || null, names,
+        }
+      : { partner1_name: f.p1.trim() || null, names: f.p1.trim() }
+    if (canDate) patch.wedding_date = f.date.trim() || null
+    if (canVenue) patch.venue = f.venue.trim() || null
+    setBusy(true)
+    setError(null)
+    const { error: e } = await sb.from('weddings').update(patch).eq('id', id)
+    setBusy(false)
+    if (e) { setError(e.code === '42501' ? 'You do not have permission to change that.' : e.message); return }
+    setEditInfo(false)
     load()
   }
 
@@ -178,6 +219,57 @@ export default function ClientSessionPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
+              <section className={card}>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="font-fraunces text-xl font-semibold text-ink">Session info</p>
+                  {!editInfo && <button type="button" onClick={startEditInfo} className="text-sm text-twilight hover:underline">Edit</button>}
+                </div>
+                {!editInfo ? (
+                  <div className="divide-y divide-line">
+                    <Row k="Name" v={row.names} />
+                    <Row k="Date" v={row.wedding_date ? day(row.wedding_date) : 'Not set'} />
+                    <Row k="Location" v={place || 'Not set'} />
+                  </div>
+                ) : (
+                  <div className="space-y-3 text-sm">
+                    {(row.session_type === 'wedding' || row.session_type === 'engagement') ? (
+                      <>
+                        <div className="flex gap-2">
+                          <input value={f.p1} onChange={(e) => setF({ ...f, p1: e.target.value })} placeholder="First name" className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-ink focus:border-twilight focus:outline-none" />
+                          <select value={f.p1r} onChange={(e) => setF({ ...f, p1r: e.target.value })} className="rounded-xl border border-line bg-paper px-2 py-2 text-ink">{ROLES.map((r) => <option key={r}>{r}</option>)}</select>
+                        </div>
+                        <div className="flex gap-2">
+                          <input value={f.p2} onChange={(e) => setF({ ...f, p2: e.target.value })} placeholder="Second name" className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-ink focus:border-twilight focus:outline-none" />
+                          <select value={f.p2r} onChange={(e) => setF({ ...f, p2r: e.target.value })} className="rounded-xl border border-line bg-paper px-2 py-2 text-ink">{ROLES.map((r) => <option key={r}>{r}</option>)}</select>
+                        </div>
+                        <input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} placeholder="Last name" className="w-full rounded-xl border border-line bg-paper px-3 py-2 text-ink focus:border-twilight focus:outline-none" />
+                      </>
+                    ) : (
+                      <input value={f.p1} onChange={(e) => setF({ ...f, p1: e.target.value })} placeholder="Name" className="w-full rounded-xl border border-line bg-paper px-3 py-2 text-ink focus:border-twilight focus:outline-none" />
+                    )}
+                    {(!mine?.has_photographer || !row.wedding_date) && (
+                      <div>
+                        <p className="mb-1 text-xs uppercase tracking-wider text-ink-soft">Date</p>
+                        <input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} className="w-full rounded-xl border border-line bg-paper px-3 py-2 text-ink focus:border-twilight focus:outline-none" />
+                      </div>
+                    )}
+                    {(!mine?.has_photographer || !row.venue) && (
+                      <div>
+                        <p className="mb-1 text-xs uppercase tracking-wider text-ink-soft">Venue</p>
+                        <input value={f.venue} onChange={(e) => setF({ ...f, venue: e.target.value })} placeholder="Venue or location" className="w-full rounded-xl border border-line bg-paper px-3 py-2 text-ink focus:border-twilight focus:outline-none" />
+                      </div>
+                    )}
+                    {mine?.has_photographer && row.wedding_date && row.venue && (
+                      <p className="text-xs text-ink-soft">To change the date or venue, message your photographer.</p>
+                    )}
+                    <div className="flex gap-2">
+                      <button type="button" disabled={busy} onClick={saveInfo} className={btnPrimary}>{busy ? 'Saving…' : 'Save'}</button>
+                      <button type="button" onClick={() => setEditInfo(false)} className={btn}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </section>
+
               <section className={card}>
                 <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Details</p>
                 <div className="divide-y divide-line">
