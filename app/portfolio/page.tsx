@@ -817,8 +817,7 @@ export default function PortfolioEditorPage() {
         return sec(<ColorField swatches={brandSwatches} title="Page background" value={form.portfolio_bg_color} fallback="#F9F9F9" onChange={(v) => setField('portfolio_bg_color', v)} />)
       case 'spacing':
         return sec(
-          <div>
-            <label className={label}>Space between sections</label>
+          <div className="space-y-4">
             {deviceBar()}
             {deviceSlider('Space between sections', 'portfolio_section_spacing', 'portfolio_section_spacing', 0, 120, 2, 14)}
             {deviceSlider('Space under section titles', 'portfolio_title_spacing', 'portfolio_title_spacing', 0, 60, 2, 10)}
