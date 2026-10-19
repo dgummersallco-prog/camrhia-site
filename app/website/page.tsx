@@ -50,6 +50,12 @@ const btnGhost = 'rounded-full border border-line px-5 py-2.5 text-sm text-ink h
 const inputCls = 'w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink'
 const card = 'rounded-2xl border border-line bg-card p-5'
 
+const ALL_FONTS_HREF =
+  'https://fonts.googleapis.com/css2?' +
+  Object.values(FONT_OPTIONS).map((f) => 'family=' + f.gf.split(':')[0]).join('&') +
+  '&display=swap'
+const CAT_LABEL: Record<string, string> = { serif: 'Serif', sans: 'Sans', script: 'Script', display: 'Display' }
+
 const SLIDER_CSS = `
 .cr-range{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;cursor:pointer;margin:0}
 .cr-range::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:linear-gradient(to right,#2A1F24 var(--pct),#D9CFC3 var(--pct))}
@@ -180,6 +186,39 @@ function ColorField({ label, value, swatches, onChange, onReset }: {
             <div className="mt-3 flex items-center justify-between">
               {onReset ? <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { onReset(); setOpen(false) }}>Reset</button> : <span />}
               <button type="button" className="text-xs font-medium text-twilight" onClick={() => setOpen(false)}>Done</button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function FontPicker({ label, value, onChange, cats }: { label: string; value: string; onChange: (k: string) => void; cats: string[] }) {
+  const [open, setOpen] = useState(false)
+  const [cat, setCat] = useState('all')
+  const list = Object.entries(FONT_OPTIONS).filter(([, f]) => cats.includes(f.cat) && (cat === 'all' || f.cat === cat))
+  const cur = FONT_OPTIONS[value]
+  return (
+    <div className="relative">
+      <Row label={label}>
+        <button type="button" onClick={() => setOpen(!open)} className="rounded-lg border border-line bg-white px-3 py-1.5 text-base text-ink" style={{ fontFamily: cur?.family }}>
+          {cur?.label ?? 'Choose'} ▾
+        </button>
+      </Row>
+      {open && (
+        <>
+          <button type="button" aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-40 mt-2 w-80 rounded-2xl border border-line bg-card p-3 shadow-lg">
+            <Seg value={cat} options={[{ v: 'all', label: 'All' }, ...cats.map((c) => ({ v: c, label: CAT_LABEL[c] }))]} onChange={setCat} />
+            <div className="mt-3 max-h-80 overflow-y-auto">
+              {list.map(([k, f]) => (
+                <button key={k} type="button" onClick={() => { onChange(k); setOpen(false) }}
+                  className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-paper-deep ${k === value ? 'bg-paper-deep' : ''}`}>
+                  <span className="text-xl text-ink" style={{ fontFamily: f.family }}>{f.label}</span>
+                  {k === value && <span className="text-xs text-twilight">✓</span>}
+                </button>
+              ))}
             </div>
           </div>
         </>
@@ -555,7 +594,7 @@ export default function WebsitePage() {
   return (
     <div className="min-h-screen bg-paper lg:pl-60">
       <style>{SLIDER_CSS}</style>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Montserrat:wght@400&family=Josefin+Sans:wght@400&family=Work+Sans:wght@400&family=Playfair+Display:wght@500&family=Lora:wght@400&display=swap" />
+      <link rel="stylesheet" href={ALL_FONTS_HREF} />
       <DashboardHeader active="website" />
       <main className="mx-auto max-w-7xl px-6 py-8">
         {!form || !T ? (
@@ -608,16 +647,8 @@ export default function WebsitePage() {
                       )
                     })}
                   </div>
-                  <Row label="Heading font">
-                    <select value={T.headKey} onChange={(e) => setIn('fonts', { head: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
-                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
-                    </select>
-                  </Row>
-                  <Row label="Body font">
-                    <select value={T.bodyKey} onChange={(e) => setIn('fonts', { body: e.target.value })} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
-                      {Object.entries(FONT_OPTIONS).map(([k, f]) => <option key={k} value={k}>{f.label}</option>)}
-                    </select>
-                  </Row>
+                  <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
+                  <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
                 </Group>
 
                 <Group title="3. Hero" hint="photos, logo, headline">

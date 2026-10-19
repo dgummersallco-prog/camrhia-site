@@ -1,14 +1,53 @@
-export const FONT_OPTIONS: Record<string, { label: string; family: string; gf: string }> = {
-  cormorant: { label: 'Cormorant Garamond', family: "'Cormorant Garamond', Georgia, serif", gf: 'Cormorant+Garamond:wght@400;500;600' },
-  playfair: { label: 'Playfair Display', family: "'Playfair Display', Georgia, serif", gf: 'Playfair+Display:wght@400;500;600' },
-  dmserif: { label: 'DM Serif Display', family: "'DM Serif Display', Georgia, serif", gf: 'DM+Serif+Display' },
-  bodoni: { label: 'Bodoni Moda', family: "'Bodoni Moda', Georgia, serif", gf: 'Bodoni+Moda:wght@400;500;600' },
-  italiana: { label: 'Italiana', family: "'Italiana', Georgia, serif", gf: 'Italiana' },
-  josefin: { label: 'Josefin Sans', family: "'Josefin Sans', system-ui, sans-serif", gf: 'Josefin+Sans:wght@300;400;600' },
-  montserrat: { label: 'Montserrat', family: "'Montserrat', system-ui, sans-serif", gf: 'Montserrat:wght@300;400;500;600' },
-  worksans: { label: 'Work Sans', family: "'Work Sans', system-ui, sans-serif", gf: 'Work+Sans:wght@300;400;500' },
-  raleway: { label: 'Raleway', family: "'Raleway', system-ui, sans-serif", gf: 'Raleway:wght@300;400;500;600' },
-  lora: { label: 'Lora', family: "'Lora', Georgia, serif", gf: 'Lora:wght@400;500' },
+export type FontCat = 'serif' | 'sans' | 'script' | 'display'
+type FontOpt = { label: string; family: string; gf: string; cat: FontCat }
+
+const GENERIC: Record<FontCat, string> = {
+  serif: 'Georgia, serif',
+  sans: 'system-ui, sans-serif',
+  script: 'cursive',
+  display: 'Georgia, serif',
+}
+function mk(label: string, cat: FontCat, gf?: string): FontOpt {
+  return { label, cat, family: `'${label}', ${GENERIC[cat]}`, gf: gf ?? label.replace(/ /g, '+') }
+}
+
+const LEGACY: Record<string, FontOpt> = {
+  cormorant: mk('Cormorant Garamond', 'serif', 'Cormorant+Garamond:wght@400;500;600'),
+  playfair: mk('Playfair Display', 'serif', 'Playfair+Display:wght@400;500;600'),
+  dmserif: mk('DM Serif Display', 'serif', 'DM+Serif+Display'),
+  bodoni: mk('Bodoni Moda', 'serif', 'Bodoni+Moda:wght@400;500;600'),
+  italiana: mk('Italiana', 'serif', 'Italiana'),
+  lora: mk('Lora', 'serif', 'Lora:wght@400;500'),
+  josefin: mk('Josefin Sans', 'sans', 'Josefin+Sans:wght@300;400;600'),
+  montserrat: mk('Montserrat', 'sans', 'Montserrat:wght@300;400;500;600'),
+  worksans: mk('Work Sans', 'sans', 'Work+Sans:wght@300;400;500'),
+  raleway: mk('Raleway', 'sans', 'Raleway:wght@300;400;500;600'),
+}
+
+const MORE: [string, FontCat][] = [
+  ['EB Garamond', 'serif'], ['Libre Baskerville', 'serif'], ['Cinzel', 'serif'], ['Cormorant', 'serif'],
+  ['Cormorant Infant', 'serif'], ['Marcellus', 'serif'], ['Gilda Display', 'serif'], ['Prata', 'serif'],
+  ['Abril Fatface', 'serif'], ['Fraunces', 'serif'], ['Crimson Text', 'serif'], ['Spectral', 'serif'],
+  ['Libre Caslon Text', 'serif'], ['Old Standard TT', 'serif'], ['Rufina', 'serif'], ['Yeseva One', 'serif'],
+  ['Bellefair', 'serif'], ['Noto Serif Display', 'serif'], ['Young Serif', 'serif'], ['Instrument Serif', 'serif'],
+  ['Newsreader', 'serif'],
+  ['Inter', 'sans'], ['Poppins', 'sans'], ['Jost', 'sans'], ['Lato', 'sans'], ['Open Sans', 'sans'],
+  ['Nunito Sans', 'sans'], ['Manrope', 'sans'], ['DM Sans', 'sans'], ['Outfit', 'sans'], ['Figtree', 'sans'],
+  ['Karla', 'sans'], ['Quicksand', 'sans'], ['Questrial', 'sans'], ['Tenor Sans', 'sans'], ['Syncopate', 'sans'],
+  ['Archivo', 'sans'], ['Space Grotesk', 'sans'], ['Cabin', 'sans'], ['Mulish', 'sans'], ['Poiret One', 'sans'],
+  ['Didact Gothic', 'sans'], ['Urbanist', 'sans'], ['Albert Sans', 'sans'],
+  ['Great Vibes', 'script'], ['Allura', 'script'], ['Dancing Script', 'script'], ['Pinyon Script', 'script'],
+  ['Parisienne', 'script'], ['Sacramento', 'script'], ['Alex Brush', 'script'], ['Playball', 'script'],
+  ['Tangerine', 'script'], ['Italianno', 'script'], ['Satisfy', 'script'], ['Mrs Saint Delafield', 'script'],
+  ['La Belle Aurore', 'script'], ['Cookie', 'script'],
+  ['Bebas Neue', 'display'], ['Oswald', 'display'], ['Anton', 'display'], ['Limelight', 'display'],
+  ['Julius Sans One', 'display'], ['Federo', 'display'],
+]
+
+export const FONT_OPTIONS: Record<string, FontOpt> = { ...LEGACY }
+for (const [label, cat] of MORE) {
+  const key = label.toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (!FONT_OPTIONS[key]) FONT_OPTIONS[key] = mk(label, cat)
 }
 
 export const PAIR_PRESETS: Record<string, { name: string; head: string; body: string }> = {
