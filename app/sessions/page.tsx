@@ -90,7 +90,10 @@ export default function SessionsPage() {
       <DashboardHeader active="sessions" />
       <main className="mx-auto max-w-5xl px-6 py-10">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Studio</p>
-        <h1 className="mb-6 font-fraunces text-3xl font-semibold text-ink">Sessions</h1>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-fraunces text-3xl font-semibold text-ink">Sessions</h1>
+          <Link href="/sessions/new" className="rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New session</Link>
+        </div>
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-2">
