@@ -74,17 +74,17 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
     }))
     .filter((g) => g.photos.length > 0)
   const packages = ((r.packages ?? []) as any[]).filter((p) => p.show_public !== false && !!p.page_id)
-  const quotes: { text: string; who: string }[] = [
-    ...((r.testimonials ?? []) as any[]).filter((t) => t.quote).map((t) => ({ text: t.quote as string, who: (t.client_name ?? '') as string })),
-    ...((r.reviews ?? []) as any[]).filter((v) => v.body).map((v) => ({ text: v.body as string, who: (v.couple_names ?? '') as string })),
+  const quotes: { text: string; who: string; img: string | null }[] = [
+    ...((r.testimonials ?? []) as any[]).filter((t) => t.quote).map((t) => ({ text: t.quote as string, who: (t.client_name ?? '') as string, img: photoUrl(t.storage_path) })),
+    ...((r.reviews ?? []) as any[]).filter((v) => v.body).map((v) => ({ text: v.body as string, who: (v.couple_names ?? '') as string, img: null })),
   ]
   const faq = (r.faq ?? []) as any[]
 
-  const hasAbout = r.show_bio_public !== false && !!(r.bio || aboutPhoto)
-  const hasPortfolio = r.show_portfolio_public !== false && galleries.length > 0
-  const hasInvest = r.show_pricing_public !== false && packages.length > 0
-  const hasQuotes = r.show_testimonials_public !== false && quotes.length > 0
-  const hasFaq = r.show_faq_public !== false && faq.length > 0
+  const hasAbout = r.site_sections?.about !== false && !!(r.bio || aboutPhoto)
+  const hasPortfolio = r.site_sections?.portfolio !== false && galleries.length > 0
+  const hasInvest = r.site_sections?.investment !== false && packages.length > 0
+  const hasQuotes = r.site_sections?.testimonials !== false && quotes.length > 0
+  const hasFaq = r.site_sections?.faq !== false && faq.length > 0
 
   const navItems: { id: string; label: string }[] = [{ id: 'top', label: 'Home' }]
   if (hasAbout) navItems.push({ id: 'about', label: 'About' })
@@ -283,6 +283,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           <div className="grid gap-10 md:grid-cols-3">
             {quotes.slice(0, 6).map((q, i) => (
               <figure key={i} className="text-center">
+                {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 w-full object-cover" style={{ aspectRatio: '4/5' }} />}
                 <blockquote className="text-xl italic leading-relaxed" style={{ fontFamily: pair.head }}>&ldquo;{q.text}&rdquo;</blockquote>
                 {q.who && <figcaption className="mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
               </figure>
@@ -305,7 +306,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             <p className="mb-8 text-[15px] leading-relaxed" style={{ color: soft }}>
               Tell me about your day. Check a date below, or tap the message button to send me an inquiry.
             </p>
-            {r.show_availability_public !== false && r.openings_display_mode !== 'badge' && (
+            {r.site_sections?.availability !== false && (
               <div className="mb-10">
                 <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={pair.head} />
               </div>
