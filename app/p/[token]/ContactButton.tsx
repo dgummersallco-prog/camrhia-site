@@ -176,6 +176,16 @@ export function ContactButton({
                       <li>Sign up with this exact email: <strong>{email}</strong></li>
                       <li>The moment your account is ready, your message is sent to {studioName} automatically. You will find the conversation in the Messages tab.</li>
                     </ol>
+                    <div style={{ background: '#fff', border: '1px solid #E7E2DA', borderRadius: 14, padding: '14px 16px', margin: '16px 0 4px' }}>
+                      <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#2B2B2B' }}>Everything for your session, in one place</p>
+                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 7, fontSize: 14 }}>
+                        <li>✓ Message {studioName} directly</li>
+                        <li>✓ Complete your questionnaire so your photographer is prepared</li>
+                        <li>✓ Review and sign your contract online</li>
+                        <li>✓ See your session details and timeline</li>
+                        <li>✓ Receive your finished gallery when it is ready</li>
+                      </ul>
+                    </div>
                   </>
                 )}
                 {inquiryId && (
