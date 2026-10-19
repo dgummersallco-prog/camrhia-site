@@ -36,6 +36,7 @@ const label = (t: string) => TYPE_LABELS[t] ?? t.charAt(0).toUpperCase() + t.sli
 const day = (d: string | null) => (d ? new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'Date to be set')
 const short = (d: string | null) => (d ? new Date(d + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 const money = (n: number) => '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+const METHODS = ['Venmo', 'Zelle', 'Cash', 'Check', 'Card', 'Other']
 const card = 'rounded-2xl border border-line bg-card p-5'
 const btn = 'inline-block rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink transition hover:border-twilight'
 const btnPrimary = 'inline-block rounded-full bg-twilight px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50'
@@ -64,6 +65,11 @@ export default function ClientSessionPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [missing, setMissing] = useState(false)
+  const [reporting, setReporting] = useState<string | null>(null)
+  const [howPaid, setHowPaid] = useState('')
+  const [payNote, setPayNote] = useState('')
+  const [editGuests, setEditGuests] = useState(false)
+  const [guestsVal, setGuestsVal] = useState('')
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -99,6 +105,33 @@ export default function ClientSessionPage() {
     const { error: e } = await sb.rpc('approve_timeline', { p_token: mine.share_token })
     setBusy(false)
     if (e) { setError(e.message); return }
+    load()
+  }
+
+  async function reportPayment(lineId: string) {
+    const sb = supabase
+    if (!sb) return
+    if (!howPaid) { setError('Choose how you sent the payment first.'); return }
+    setBusy(true)
+    setError(null)
+    const { error: e } = await sb.rpc('report_payment', { p_line_id: lineId, p_method: howPaid, p_note: payNote.trim() || null })
+    setBusy(false)
+    if (e) { setError(e.message); return }
+    setReporting(null)
+    load()
+  }
+
+  async function saveGuests() {
+    const sb = supabase
+    if (!sb) return
+    const n = parseInt(guestsVal, 10)
+    if (!Number.isFinite(n) || n < 0) { setError('Enter a guest count.'); return }
+    setBusy(true)
+    setError(null)
+    const { error: e } = await sb.from('weddings').update({ guests: n }).eq('id', id)
+    setBusy(false)
+    if (e) { setError(e.message); return }
+    setEditGuests(false)
     load()
   }
 
@@ -153,7 +186,22 @@ export default function ClientSessionPage() {
                   <Row k="Deliverables" v={d?.deliverables} />
                   <Row k="Start time" v={d?.session_start_time} />
                   <Row k="Length" v={d?.session_length_hours ? `${d.session_length_hours} hour${Number(d.session_length_hours) === 1 ? '' : 's'}` : null} />
-                  <Row k="Guests" v={d?.guests} />
+                  <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                    <span className="text-ink-soft">Guests</span>
+                    {editGuests ? (
+                      <span className="flex items-center gap-2">
+                        <input value={guestsVal} onChange={(e) => setGuestsVal(e.target.value)} inputMode="numeric"
+                          className="w-20 rounded-lg border border-line bg-paper px-2 py-1 text-right text-sm text-ink focus:border-twilight focus:outline-none" />
+                        <button type="button" disabled={busy} onClick={saveGuests} className="text-twilight hover:underline disabled:opacity-50">Save</button>
+                        <button type="button" onClick={() => setEditGuests(false)} className="text-ink-soft hover:underline">Cancel</button>
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-3">
+                        <span className="text-ink">{d?.guests ?? 'Not set'}</span>
+                        <button type="button" onClick={() => { setGuestsVal(d?.guests != null ? String(d.guests) : ''); setEditGuests(true) }} className="text-twilight hover:underline">Edit</button>
+                      </span>
+                    )}
+                  </div>
                   <Row k="Total" v={d?.total_price ? money(d.total_price) : null} />
                 </div>
                 {!d?.package_name && !d?.session_start_time && !d?.total_price && (
@@ -169,7 +217,8 @@ export default function ClientSessionPage() {
                   <>
                     <ul className="divide-y divide-line">
                       {pays.map((p) => (
-                        <li key={p.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                        <li key={p.id} className="py-2.5 text-sm">
+                          <div className="flex items-center justify-between gap-3">
                           <span className="min-w-0">
                             <span className="block truncate text-ink">{p.label || 'Payment'}</span>
                             <span className="block text-xs text-ink-soft">
@@ -180,7 +229,29 @@ export default function ClientSessionPage() {
                             </span>
                           </span>
                           <span className={p.status === 'paid' ? 'text-emerald-700' : 'text-ink'}>{money(p.amount)}</span>
-                        </li>
+                        </div>
+                          {p.status !== 'paid' && !p.sent_by_couple && (
+                            reporting === p.id ? (
+                              <div className="mt-3 rounded-xl bg-paper p-3">
+                                <p className="mb-2 text-xs text-ink-soft">How did you send it?</p>
+                                <div className="mb-2 flex flex-wrap gap-2">
+                                  {METHODS.map((m) => (
+                                    <button key={m} type="button" onClick={() => setHowPaid(m)}
+                                      className={`rounded-full border px-3 py-1 text-xs ${howPaid === m ? 'border-twilight bg-twilight text-white' : 'border-line text-ink'}`}>{m}</button>
+                                  ))}
+                                </div>
+                                <input value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder="Add a note (optional)"
+                                  className="mb-2 w-full rounded-lg border border-line bg-card px-3 py-2 text-xs text-ink focus:border-twilight focus:outline-none" />
+                                <div className="flex gap-2">
+                                  <button type="button" disabled={busy} onClick={() => reportPayment(p.id)} className="rounded-full bg-twilight px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Let my photographer know</button>
+                                  <button type="button" onClick={() => setReporting(null)} className="rounded-full border border-line px-4 py-1.5 text-xs text-ink">Cancel</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button type="button" onClick={() => { setReporting(p.id); setHowPaid(''); setPayNote('') }} className="mt-2 text-xs font-semibold text-twilight hover:underline">I have sent this payment</button>
+                            )
+                          )}
+                          </li>
                       ))}
                     </ul>
                     <div className="mt-3 flex justify-between border-t border-line pt-3 text-sm">
