@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { BRAND_NAME } from '@/lib/brand'
 import Wordmark from "@/app/components/Wordmark"
+import { DashboardHeader } from '@/app/components/DashboardHeader'
 
 const SOLO_FEATURES = [
   'Shared session timeline — built with your client',
@@ -13,7 +14,9 @@ const SOLO_FEATURES = [
   'Auto-built payment schedules',
   'One shared calendar per session',
   'Public photographer profile with verified reviews',
-  'In-app gallery delivery',
+  'Client galleries with PIN, favorites and one-click zip download',
+  'Portfolio website with a live editor',
+  'Calendar feed for Google and Apple Calendar',
 ]
 
 const STUDIO_FEATURES = [
@@ -38,6 +41,8 @@ export default function BillingPage() {
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
   const [actionLoading, setActionLoading] = useState<PlanTier | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<string | null>(null)
+  const [trialEnds, setTrialEnds] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadProfile() {
@@ -56,12 +61,14 @@ export default function BillingPage() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('subscription_status, plan_tier')
+        .select('subscription_status, plan_tier, trial_ends_at')
         .eq('id', user.id)
         .single()
 
       setSubscriptionActive(['active', 'comped'].includes(profile?.subscription_status ?? ''))
       setPlanTier((profile?.plan_tier as PlanTier) ?? 'solo')
+      setStatus((profile?.subscription_status as string | null) ?? null)
+      setTrialEnds((profile?.trial_ends_at as string | null) ?? null)
       setPageState('ready')
     }
 
@@ -226,9 +233,22 @@ export default function BillingPage() {
     )
   }
 
+  const trialDaysLeft = trialEnds ? Math.ceil((new Date(trialEnds).getTime() - Date.now()) / 86400000) : null
+  const bannerText =
+    status === 'comped'
+      ? 'Your account is complimentary. Nothing to pay.'
+      : status === 'past_due'
+        ? 'Your last payment did not go through. Update your payment method to keep your account active.'
+        : status === 'active'
+          ? `You are subscribed to the ${planTier === 'studio' ? 'Studio' : 'Photographer'} plan. Update your card, download invoices or cancel in the billing portal.`
+          : trialDaysLeft !== null && trialDaysLeft > 0
+            ? `Your free trial ends in ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'}. Subscribe to keep your galleries and sessions.`
+            : null
+
   return (
-    <div className="min-h-screen bg-paper flex flex-col">
-      <header className="border-b border-line bg-paper px-6 py-4">
+    <div className="min-h-screen bg-paper flex flex-col lg:pl-60">
+      <DashboardHeader active="billing" />
+      <header className="hidden">
         <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
           <Wordmark className="text-3xl" />
         </Link>
@@ -263,6 +283,21 @@ export default function BillingPage() {
               </button>
             ))}
           </div>
+
+          {bannerText && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-card px-5 py-4 text-sm">
+              <p className="text-ink">{bannerText}</p>
+              {(status === 'active' || status === 'past_due') && (
+                <button
+                  onClick={handleManage}
+                  disabled={actionLoading !== null}
+                  className="shrink-0 rounded-full border border-twilight px-4 py-2 text-xs font-semibold text-twilight transition hover:bg-twilight/5 disabled:opacity-50"
+                >
+                  {actionLoading !== null ? 'Opening…' : 'Manage billing'}
+                </button>
+              )}
+            </div>
+          )}
 
           {error && (
             <p className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-6 text-center">
