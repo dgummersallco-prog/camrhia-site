@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import { useParams } from 'next/navigation'
 
 type Photo = { id: string; filename: string | null; width: number | null; height: number | null; thumb: string | null; web: string | null }
@@ -46,9 +47,11 @@ export default function GalleryViewPage() {
     try { stored = sessionStorage.getItem(`g_access_${token}`) } catch {}
     setBusy(true)
     try {
+      let bearer = ''
+      try { const { data: ss } = (await supabase?.auth.getSession()) ?? { data: null }; bearer = ss?.session?.access_token ?? '' } catch {}
       const res = await fetch('/api/gallery/open', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}) },
         body: JSON.stringify({ token, pin: pinValue, access: pinValue ? undefined : stored, visitorId: visitorId() }),
       })
       const j = await res.json().catch(() => ({}))
@@ -175,6 +178,15 @@ export default function GalleryViewPage() {
           setTimeout(() => URL.revokeObjectURL(href), 60000)
           await new Promise((r) => setTimeout(r, 800))
         }
+      }
+      if (!onlyFavs) {
+        let bearer2 = ''
+        try { const { data: ss } = (await supabase?.auth.getSession()) ?? { data: null }; bearer2 = ss?.session?.access_token ?? '' } catch {}
+        fetch('/api/gallery/downloaded', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(bearer2 ? { Authorization: `Bearer ${bearer2}` } : {}) },
+          body: JSON.stringify({ access: data.access }),
+        }).catch(() => {})
       }
       setZip({ busy: false, done: 0, total: 0, error: null })
     } catch (e) {

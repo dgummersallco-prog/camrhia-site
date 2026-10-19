@@ -18,6 +18,7 @@ export function Nav() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
+  const [who, setWho] = useState<'photographer' | 'client'>('photographer')
   const [signedIn, setSignedIn] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -63,7 +64,7 @@ export function Nav() {
     }
     setLoginOpen(false)
     setPassword('')
-    router.push('/dashboard')
+    router.push('/start')
   }
 
   const field =
@@ -92,7 +93,7 @@ export function Nav() {
           </Link>
 
           {signedIn ? (
-            <Link href="/dashboard" className="text-sm font-medium text-ink transition-colors hover:text-twilight">
+            <Link href="/start" className="text-sm font-medium text-ink transition-colors hover:text-twilight">
               Dashboard
             </Link>
           ) : (
@@ -107,8 +108,21 @@ export function Nav() {
               </button>
               {loginOpen && (
                 <div className="absolute right-0 top-full mt-5 w-80 rounded-2xl border border-line bg-paper p-5 shadow-xl">
-                  <p className="mb-1 font-mono text-[11px] uppercase tracking-widest text-brass">Photographer</p>
-                  <p className="mb-4 font-fraunces text-xl font-semibold text-ink">Sign in</p>
+                  <div className="mb-4 flex rounded-full border border-line bg-card p-1 text-xs font-semibold">
+                    {(['photographer', 'client'] as const).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => { setWho(t); setError(null) }}
+                        className={`flex-1 rounded-full px-3 py-1.5 capitalize transition ${who === t ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mb-4 font-fraunces text-xl font-semibold text-ink">
+                    {who === 'photographer' ? 'Photographer dashboard' : 'Your client page'}
+                  </p>
                   <form onSubmit={signIn} className="space-y-3">
                     <input
                       type="email"
@@ -135,10 +149,15 @@ export function Nav() {
                       disabled={busy}
                       className="w-full rounded-xl bg-twilight px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
                     >
-                      {busy ? 'Signing in…' : 'Sign in'}
+                      {busy ? 'Logging in…' : 'Log in'}
                     </button>
                   </form>
                   <p className="mt-4 text-center text-xs text-ink-soft">
+                    {who === 'photographer' ? 'New to Camrhia?' : 'New here?'}{' '}
+                    <a href={APP_STORE_URL} className="underline hover:text-ink">Get the free app</a>
+                    {who === 'client' ? ' and use the same login on your phone.' : ' to start your free trial.'}
+                  </p>
+                  <p className="mt-2 text-center text-xs text-ink-soft">
                     Affiliate?{' '}
                     <Link href="/affiliate/login" className="underline hover:text-ink" onClick={() => setLoginOpen(false)}>
                       Log in here
@@ -185,7 +204,7 @@ export function Nav() {
               </Link>
             </li>
             <li>
-              <Link href={signedIn ? '/dashboard' : '/login'} onClick={close} className="block py-4 text-lg font-medium text-ink">
+              <Link href={signedIn ? '/start' : '/login'} onClick={close} className="block py-4 text-lg font-medium text-ink">
                 {signedIn ? 'Dashboard' : 'Log in'}
               </Link>
             </li>

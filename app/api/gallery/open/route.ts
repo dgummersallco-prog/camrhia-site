@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
   const { data: g } = await sb
     .from('galleries')
-    .select('id, owner_id, title, pin_hash, allow_downloads, expires_at, status, cover_photo_id')
+    .select('id, owner_id, session_id, title, pin_hash, allow_downloads, expires_at, status, cover_photo_id')
     .eq('token', token)
     .maybeSingle()
   if (!g) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -70,6 +70,31 @@ export async function POST(req: Request) {
         )
       }
     }
+  }
+
+  // First open by the client (not the photographer previewing while signed in).
+  if (g.session_id) {
+    try {
+      let viewerId: string | null = null
+      const jwt = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '')
+      if (jwt) {
+        const { data: u } = await sb.auth.getUser(jwt)
+        viewerId = u.user?.id ?? null
+      }
+      if (viewerId !== g.owner_id) {
+        const { data: w } = await sb.from('weddings').select('id, names, gallery_opened_at').eq('id', g.session_id).maybeSingle()
+        if (w && !w.gallery_opened_at) {
+          await sb.from('weddings').update({ gallery_opened_at: new Date().toISOString() }).eq('id', w.id)
+          await sb.from('notifications').insert({
+            user_id: g.owner_id,
+            wedding_id: w.id,
+            type: 'session_update',
+            title: 'Gallery opened',
+            body: `${w.names || 'Your client'} opened their gallery.`,
+          })
+        }
+      }
+    } catch { /* tracking must never block the gallery */ }
   }
 
   const photos: { id: string; filename: string | null; width: number | null; height: number | null; web_path: string | null; thumb_path: string | null }[] = []

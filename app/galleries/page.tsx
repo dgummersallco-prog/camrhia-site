@@ -29,6 +29,7 @@ type Sess = {
   gallery_url: string | null
   gallery_sent_at: string | null
   gallery_opened_at: string | null
+  gallery_downloaded_all_at: string | null
 }
 
 export default function GalleriesPage() {
@@ -63,7 +64,7 @@ export default function GalleriesPage() {
     setRows(list)
     const { data: ses } = await sb
       .from('weddings')
-      .select('id, names, wedding_date, gallery_url, gallery_sent_at, gallery_opened_at')
+      .select('id, names, wedding_date, gallery_url, gallery_sent_at, gallery_opened_at, gallery_downloaded_all_at')
       .order('wedding_date', { ascending: false, nullsFirst: false })
     setSessions((ses ?? []) as Sess[])
 
@@ -133,7 +134,7 @@ export default function GalleriesPage() {
   function sentState(g: Row): string | null {
     const x = g.session_id ? sessById.get(g.session_id) : undefined
     if (!x || !x.gallery_sent_at || !x.gallery_url || !x.gallery_url.includes(g.token)) return null
-    return x.gallery_opened_at ? 'Client opened' : 'Sent to client'
+    return x.gallery_downloaded_all_at ? 'Downloaded · safe to free space' : x.gallery_opened_at ? 'Client opened' : 'Sent to client'
   }
 
   const collections = Array.from(new Set((rows ?? []).map((g) => g.collection).filter((x): x is string => !!x))).sort()
