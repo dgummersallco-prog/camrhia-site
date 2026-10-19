@@ -308,17 +308,45 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             {!t.pricing.button && <div className="mt-10 text-center">{cta(true)}</div>}
           </div>, tinted)
       }
-      case 'testimonials':
+      case 'testimonials': {
+        const L = t.testi.layout
+        const list = quotes.slice(0, 6)
         return sec('words', t.titles.testimonials,
-          <div className="grid gap-10 md:grid-cols-3">
-            {quotes.slice(0, 6).map((q, i) => (
-              <figure key={i} className="text-center">
-                {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 w-full object-cover" style={{ aspectRatio: '4/5' }} />}
-                <blockquote className="text-xl italic leading-relaxed" style={{ fontFamily: t.head }}>&ldquo;{q.text}&rdquo;</blockquote>
-                {q.who && <figcaption className="mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
-              </figure>
-            ))}
-          </div>, tinted)
+          L === 'stacked' ? (
+            <div className="mx-auto max-w-3xl">
+              {list.map((q, i) => (
+                <figure key={i} className="py-10 text-center" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
+                  {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 h-24 w-24 rounded-full object-cover" />}
+                  <blockquote className="text-2xl italic leading-relaxed" style={{ fontFamily: t.head }}>&ldquo;{q.text}&rdquo;</blockquote>
+                  {q.who && <figcaption className="mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          ) : L === 'cards' ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {list.map((q, i) => (
+                <figure key={i} className="flex flex-col p-8" style={{ background: `color-mix(in srgb, ${bg} 40%, #fff)`, border: `1px solid ${line}` }}>
+                  <span style={{ ...headStyle, color: accent, fontSize: 48, lineHeight: 1 }}>&ldquo;</span>
+                  <blockquote className="mt-2 flex-1 text-[15px] leading-relaxed">{q.text}</blockquote>
+                  <figcaption className="mt-6 flex items-center gap-3">
+                    {q.img && <img src={q.img} alt="" loading="lazy" className="h-10 w-10 rounded-full object-cover" />}
+                    {q.who && <span className="text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</span>}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-10 md:grid-cols-3">
+              {list.map((q, i) => (
+                <figure key={i} className="text-center">
+                  {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 w-full object-cover" style={{ aspectRatio: '4/5' }} />}
+                  <blockquote className="text-xl italic leading-relaxed" style={{ fontFamily: t.head }}>&ldquo;{q.text}&rdquo;</blockquote>
+                  {q.who && <figcaption className="mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          ), tinted)
+      }
       case 'faq':
         return sec('faq', t.titles.faq,
           <div className="mx-auto max-w-2xl">

@@ -710,15 +710,25 @@ export default function WebsitePage() {
                   
                 </Group>
 
-                <Group title="4. Your content" hint="galleries, prices, kind words">
-                  <div className="rounded-xl border border-line bg-paper p-4">
-                    <p className="font-medium text-ink">Galleries</p>
+                <Group title="4. Galleries" hint="your work, by category">
+<div>
+                    
                     <p className="mb-3 mt-1 text-sm text-ink-soft">One gallery per kind of work: Weddings, Seniors, Families. Each gets its own page.</p>
                     <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
                   </div>
 
-                  <div className="rounded-xl border border-line bg-paper p-4">
-                    <p className="font-medium text-ink">Packages &amp; prices</p>
+                  
+<Row label="Gallery photo layout">
+                    <Seg value={T.gallery.layout} options={[{ v: 'masonry', label: 'Masonry' }, { v: 'grid', label: 'Even grid' }, { v: 'single', label: 'Single column' }]} onChange={(v) => setIn('gallery', { layout: v })} />
+                  </Row>
+                  <Row label="Gallery card shape">
+                    <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
+                  </Row>
+                  
+</Group>
+<Group title="5. Pricing" hint="packages and price list style">
+<div>
+                    
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Your website&apos;s own price list. It&apos;s separate from the pricing in your app.</p>
                     <div className="mb-4 space-y-3">
                       <Row label="Price list style">
@@ -749,8 +759,12 @@ export default function WebsitePage() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-line bg-paper p-4">
-                    <p className="font-medium text-ink">Testimonials</p>
+                  
+</Group>
+<Group title="6. Testimonials" hint="kind words with pictures">
+<Row label="Layout"><Seg value={T.testi.layout} options={[{ v: 'grid', label: 'Grid' }, { v: 'stacked', label: 'Stacked' }, { v: 'cards', label: 'Cards' }]} onChange={(v) => setIn('testimonials', { layout: v })} /></Row>
+<div>
+                    
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Kind words, with a picture if you have one. Shown on your website and your app profile.</p>
                     {tms.length === 0 && <p className="mb-3 text-sm text-ink-soft">No testimonials yet.</p>}
                     {tms.map((t) => (
@@ -776,12 +790,11 @@ export default function WebsitePage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <Link href="/portfolio" className={btnGhost + ' text-center'}>Bio, FAQ &amp; links</Link>
-                  </div>
-                </Group>
+                  
+</Group>
 
-                <Group title="5. Your words" hint="website-only text">
+                <Group title="7. Your words" hint="website-only text">
+                  <Link href="/portfolio" className={btnGhost + ' inline-block'}>Bio, FAQ &amp; social links</Link>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">About text</label>
                     <textarea rows={4} value={S.text?.about ?? ''} onChange={(e) => setIn('text', { about: e.target.value })} placeholder="Leave empty to use your bio from the app" className={inputCls} />
@@ -796,7 +809,7 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
-                <Group title="6. Check availability screen" hint="where every button leads">
+                <Group title="8. Check availability screen" hint="where every button leads">
                   <p className="text-sm text-ink-soft">Every button on your website opens this screen: a date check, then a short form. Requests land in your Camrhia inbox.</p>
                   <button className={btnGhost} onClick={() => setPreviewPage('availability')}>Preview this screen</button>
                   <div>
@@ -822,7 +835,7 @@ export default function WebsitePage() {
                   
                 </Group>
 
-                <Group title="7. Sections" hint="order, names, on/off">
+                <Group title="9. Sections" hint="order, names, on/off">
                   <div className="space-y-2">
                     {T.order.map((k, i) => (
                       <div key={k} className="flex items-center gap-2 rounded-xl border border-line bg-paper px-3 py-2">
@@ -842,13 +855,7 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
-                <Group title="8. Layout & sizes" hint="phone and desktop">
-                  <Row label="Gallery photo layout">
-                    <Seg value={T.gallery.layout} options={[{ v: 'masonry', label: 'Masonry' }, { v: 'grid', label: 'Even grid' }, { v: 'single', label: 'Single column' }]} onChange={(v) => setIn('gallery', { layout: v })} />
-                  </Row>
-                  <Row label="Gallery card shape">
-                    <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
-                  </Row>
+                <Group title="10. Layout & sizes" hint="phone and desktop">
                   <Row label="Button shape">
                     <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
                   </Row>
@@ -860,7 +867,7 @@ export default function WebsitePage() {
                   <SizeControl label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 
-                <Group title="9. Menu" hint="last, trim it down">
+                <Group title="11. Menu" hint="last, trim it down">
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
