@@ -26,6 +26,10 @@ type Profile = {
   cover_paths: string[] | null
   logo_path: string | null
   avatar_path: string | null
+  about_photo_path: string | null
+  show_about_photo: boolean | null
+  cover_style: string | null
+  cover_scale: number | null
   show_portfolio_public: boolean | null
   show_bio_public: boolean | null
   show_pricing_public: boolean | null
@@ -49,7 +53,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -162,6 +166,7 @@ export default function PortfolioEditorPage() {
   const fileInput = useRef<HTMLInputElement>(null)
   const logoInput = useRef<HTMLInputElement>(null)
   const avatarInput = useRef<HTMLInputElement>(null)
+  const aboutInput = useRef<HTMLInputElement>(null)
   const [brandBusy, setBrandBusy] = useState<string | null>(null)
   const latest = useRef<{ save: () => void; dirty: boolean }>({ save: () => {}, dirty: false })
   const sensors = useSensors(
@@ -236,6 +241,9 @@ export default function PortfolioEditorPage() {
       title_italic: form.title_italic ?? null,
       paragraph_font: t(form.paragraph_font),
       section_titles: form.section_titles ?? {},
+      cover_style: form.cover_style ?? 'standard',
+      cover_scale: form.cover_scale ?? 1,
+      show_about_photo: form.show_about_photo !== false,
       ...(form.brand_colors_named ? {
         brand_colors_named: form.brand_colors_named,
         brand_colors: BRAND_ROLES.map((r) => form.brand_colors_named?.[r.key]).filter((c): c is string => !!c),
@@ -274,6 +282,40 @@ export default function PortfolioEditorPage() {
     } finally {
       setUploading(false)
     }
+  }
+
+  async function uploadAbout(file: File) {
+    const sb = supabase
+    if (!sb || !form) return
+    setBrandBusy('about')
+    setMessage(null)
+    try {
+      const v = await makeVersions(file)
+      const path = `${form.id}/about_${Date.now()}.jpg`
+      const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+      if (up.error) throw up.error
+      const { error } = await sb.from('profiles').update({ about_photo_path: path }).eq('id', form.id)
+      if (error) throw error
+      setForm((f) => (f ? { ...f, about_photo_path: path } : f))
+      setSaved((v2) => (v2 ? { ...v2, about_photo_path: path } : v2))
+      setPreviewKey((k) => k + 1)
+      flash('About photo updated')
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Could not upload that image.')
+    } finally {
+      setBrandBusy(null)
+    }
+  }
+
+  async function removeAbout() {
+    const sb = supabase
+    if (!sb || !form) return
+    const { error } = await sb.from('profiles').update({ about_photo_path: null }).eq('id', form.id)
+    if (error) { setMessage(error.message); return }
+    setForm((f) => (f ? { ...f, about_photo_path: null } : f))
+    setSaved((v2) => (v2 ? { ...v2, about_photo_path: null } : v2))
+    setPreviewKey((k) => k + 1)
+    flash('About photo removed')
   }
 
   async function uploadBrand(kind: 'logo' | 'avatar', file: File) {
@@ -477,32 +519,73 @@ export default function PortfolioEditorPage() {
           </>,
         )
       }
-      case 'cover':
+      case 'cover': {
+        const shapes: { key: string; label: string; sub: string; ratio: string }[] = [
+          { key: 'standard', label: 'Standard', sub: 'Classic 16:9', ratio: '16 / 9' },
+          { key: 'tall', label: 'Tall', sub: 'Portrait 4:5', ratio: '4 / 5' },
+          { key: 'wide', label: 'Wide', sub: 'Banner 21:9', ratio: '21 / 9' },
+          { key: 'full', label: 'Full screen', sub: 'Phone 9:16', ratio: '9 / 16' },
+        ]
+        const curStyle = form.cover_style ?? 'standard'
+        const curScale = Math.min(1, Math.max(0.5, Number(form.cover_scale ?? 1) || 1))
+        const curRatio = shapes.find((x) => x.key === curStyle)?.ratio ?? '16 / 9'
         return sec(
           <>
-            <div className="flex items-center gap-4">
-              <div className="h-24 w-36 shrink-0 overflow-hidden rounded-xl bg-line">
+            <div className="mx-auto w-full max-w-[220px]">
+              <div className="mx-auto overflow-hidden rounded-xl bg-line" style={{ aspectRatio: curRatio, width: `${curScale * 100}%` }}>
                 {coverUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={`${STORAGE_BASE}${coverUrl}`} alt="" className="h-full w-full object-cover" />
                 )}
               </div>
-              <div>
-                <input
-                  ref={fileInput}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,.heic,.heif"
-                  className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.target.value = '' }}
-                />
-                <button className={btnGhost} disabled={uploading} onClick={() => fileInput.current?.click()}>
-                  {uploading ? 'Uploading…' : coverUrl ? 'Change photo' : 'Add photo'}
-                </button>
-                <p className="mt-2 text-xs text-ink-soft">Cover size, shape and rotation are set in the app for now.</p>
+            </div>
+            <div>
+              <input
+                ref={fileInput}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,.heic,.heif"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.target.value = '' }}
+              />
+              <button className={btnGhost} disabled={uploading} onClick={() => fileInput.current?.click()}>
+                {uploading ? 'Uploading…' : coverUrl ? 'Change photo' : 'Add photo'}
+              </button>
+            </div>
+            <div>
+              <p className={label}>Cover shape</p>
+              <div className="grid grid-cols-2 gap-2">
+                {shapes.map((sh) => (
+                  <button
+                    key={sh.key}
+                    type="button"
+                    onClick={() => setField('cover_style', sh.key)}
+                    className={`rounded-xl border px-3 py-2 text-left transition ${curStyle === sh.key ? 'border-twilight bg-blush-wash' : 'border-line hover:border-twilight'}`}
+                  >
+                    <span className="block text-sm font-medium text-ink">{sh.label}</span>
+                    <span className="block text-xs text-ink-soft">{sh.sub}</span>
+                  </button>
+                ))}
               </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <p className={label}>Cover size</p>
+                <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => setField('cover_scale', 1)}>Reset</button>
+              </div>
+              <input
+                type="range"
+                min={50}
+                max={100}
+                step={5}
+                value={Math.round(curScale * 100)}
+                onChange={(e) => setField('cover_scale', Number(e.target.value) / 100)}
+                className="w-full accent-[var(--color-twilight)]"
+              />
+              <p className="text-xs text-ink-soft">{Math.round(curScale * 100)}% of the page width. Slide left to make the cover smaller.</p>
             </div>
           </>,
         )
+      }
       case 'name':
         return sec(
           <>
@@ -595,21 +678,30 @@ export default function PortfolioEditorPage() {
         return sec(
           <>
             <div>
-              <p className={label}>Profile photo</p>
-              <p className="mb-2 text-xs text-ink-soft">Shows in your About section.</p>
-              <div className="mb-2 h-16 w-16 overflow-hidden rounded-full bg-line">
-                {form.avatar_path && (
+              <p className={label}>About photo</p>
+              <p className="mb-2 text-xs text-ink-soft">The portrait that shows above your bio. Separate from your round profile photo.</p>
+              <div className="mb-2 aspect-[4/5] w-28 overflow-hidden rounded-xl bg-line">
+                {(form.about_photo_path ?? form.avatar_path) && (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`${STORAGE_BASE}${form.avatar_path}`} alt="" className="h-full w-full object-cover" />
+                    <img src={`${STORAGE_BASE}${form.about_photo_path ?? form.avatar_path}`} alt="" className="h-full w-full object-cover" />
                   </>
                 )}
               </div>
-              <input ref={avatarInput} type="file" accept="image/jpeg,image/png,image/webp,.heic,.heif" className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBrand('avatar', f); e.target.value = '' }} />
-              <button className={btnGhost} disabled={brandBusy === 'avatar'} onClick={() => avatarInput.current?.click()}>
-                {brandBusy === 'avatar' ? 'Uploading…' : form.avatar_path ? 'Change photo' : 'Add photo'}
-              </button>
+              <input ref={aboutInput} type="file" accept="image/jpeg,image/png,image/webp,.heic,.heif" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAbout(f); e.target.value = '' }} />
+              <div className="flex flex-wrap items-center gap-3">
+                <button className={btnGhost} disabled={brandBusy === 'about'} onClick={() => aboutInput.current?.click()}>
+                  {brandBusy === 'about' ? 'Uploading…' : form.about_photo_path ? 'Change photo' : 'Add photo'}
+                </button>
+                {form.about_photo_path && (
+                  <button type="button" className="text-sm text-ink-soft hover:text-ink" onClick={removeAbout}>Remove</button>
+                )}
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-sm text-ink">
+                <input type="checkbox" checked={form.show_about_photo !== false} onChange={(e) => setField('show_about_photo', e.target.checked)} />
+                Show this photo in my About section
+              </label>
             </div>
             <div>
               <label className={label}>About you</label>
