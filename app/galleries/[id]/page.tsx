@@ -31,6 +31,7 @@ type UploadItem = { key: string; name: string; status: 'queued' | 'uploading' | 
 
 const BUCKET = 'galleries'
 const CONCURRENCY = 3
+const MAX_BYTES = 50 * 1024 * 1024 // per-file limit on the current Supabase plan
 const isAccepted = (f: File) => isHeic(f) || /^image\/(jpeg|png|webp)$/.test(f.type)
 
 function toDateInput(iso: string): string {
@@ -234,11 +235,16 @@ export default function GalleryManagePage() {
     const have = new Set(photos.map((p) => `${p.filename}|${p.size_bytes}`))
     const files = list
       .filter((f) => !have.has(`${f.name}|${f.size}`))
+      .filter((f) => f.size <= MAX_BYTES)
       .filter(isAccepted)
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
     const skipped = list.filter((f) => !isAccepted(f) && !f.name.startsWith('.')).length
     const dupes = list.filter((f) => isAccepted(f) && have.has(`${f.name}|${f.size}`)).length
     if (dupes > 0) flash(`${dupes} already in this gallery, skipped.`)
+    const tooBig = list.filter((f) => isAccepted(f) && f.size > MAX_BYTES)
+    if (tooBig.length > 0) {
+      setMessage(`${tooBig.length} file${tooBig.length === 1 ? '' : 's'} over 50 MB skipped: ${tooBig.slice(0, 3).map((f) => f.name).join(', ')}${tooBig.length > 3 ? '…' : ''}`)
+    }
     if (skipped > 0) setMessage(`${skipped} file(s) skipped. Supported: JPG, PNG, WebP and HEIC.`)
     if (files.length === 0) return
 
@@ -498,7 +504,7 @@ export default function GalleryManagePage() {
                   onDrop={onDrop}
                 >
                   <p className="font-fraunces text-xl text-ink">Drop photos or a whole folder here</p>
-                  <p className="mt-1 text-sm text-ink-soft">JPG, PNG, WebP and HEIC. Select hundreds at once. Keep this tab open until they finish.</p>
+                  <p className="mt-1 text-sm text-ink-soft">JPG, PNG, WebP and HEIC, up to 50 MB each. Select hundreds at once. Keep this tab open until they finish.</p>
                   <input
                     ref={fileInput}
                     type="file"
