@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
+import { downloadZip } from 'client-zip'
 
 type Row = { gallery_id: string; title: string; status: string; photos: number; bytes: number; created_at: string }
 
@@ -17,6 +18,7 @@ export default function StoragePage() {
   const [plan, setPlan] = useState<string | null>(null)
   const [packs, setPacks] = useState(0)
   const [busy, setBusy] = useState<string | null>(null)
+  const [dl, setDl] = useState<{ id: string; done: number; total: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -36,10 +38,10 @@ export default function StoragePage() {
 
   useEffect(() => { load() }, [load])
 
-  async function remove(r: Row) {
+  async function remove(r: Row, skipConfirm = false) {
     const sb = supabase
     if (!sb) return
-    if (!window.confirm(`Delete "${r.title}" and its ${r.photos} photos? This cannot be undone.`)) return
+    if (!skipConfirm && !window.confirm(`Delete "${r.title}" and its ${r.photos} photos? This cannot be undone.`)) return
     setBusy(r.gallery_id)
     setError(null)
     const paths: string[] = []
@@ -58,6 +60,72 @@ export default function StoragePage() {
     if (g?.cover_path) await sb.storage.from('gallery-covers').remove([g.cover_path as string])
     setBusy(null)
     load()
+  }
+
+  async function download(r: Row) {
+    const sb = supabase
+    if (!sb) return
+    setError(null)
+    const { data: sess } = await sb.auth.getSession()
+    const token = sess.session?.access_token
+    if (!token) { setError('Please sign in again.'); return }
+
+    const safe = r.title.replace(/[^\w\- ]+/g, '').trim() || 'gallery'
+    const w = window as unknown as {
+      showSaveFilePicker?: (o: unknown) => Promise<{ createWritable: () => Promise<WritableStream<Uint8Array>> }>
+    }
+    try {
+      // Must run right after the click, before any waiting, or the browser blocks it.
+      let handle: Awaited<ReturnType<NonNullable<typeof w.showSaveFilePicker>>> | null = null
+      if (w.showSaveFilePicker) {
+        handle = await w.showSaveFilePicker({
+          suggestedName: `${safe}.zip`,
+          types: [{ description: 'Zip file', accept: { 'application/zip': ['.zip'] } }],
+        })
+      } else if (r.bytes > 1.5e9) {
+        setError('This gallery is too big for this browser. Please use Chrome or Edge on a computer to download it.')
+        return
+      }
+
+      setDl({ id: r.gallery_id, done: 0, total: 0 })
+      const res = await fetch(`/api/storage/manifest?id=${r.gallery_id}`, { headers: { Authorization: `Bearer ${token}` } })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error || 'Could not start the download')
+      const files = j.files as { name: string; url: string }[]
+      if (files.length === 0) throw new Error('This gallery has no photos to download.')
+
+      let n = 0
+      async function* gen() {
+        for (const f of files) {
+          const resp = await fetch(f.url)
+          if (!resp.ok) throw new Error(`Could not read ${f.name}`)
+          n++
+          setDl({ id: r.gallery_id, done: n, total: files.length })
+          yield { name: f.name, input: resp }
+        }
+      }
+      const zip = downloadZip(gen())
+      if (handle) {
+        const ws = await handle.createWritable()
+        await zip.body!.pipeTo(ws)
+      } else {
+        const blob = await zip.blob()
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = `${safe}.zip`
+        a.click()
+        setTimeout(() => URL.revokeObjectURL(a.href), 60000)
+      }
+      setDl(null)
+      if (window.confirm(`Saved to your computer. Delete "${r.title}" from the site now? Clients will no longer be able to open it.`)) {
+        await remove(r, true)
+      }
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return
+      setError(e instanceof Error ? e.message : 'Download failed')
+    } finally {
+      setDl(null)
+    }
   }
 
   const used = (rows ?? []).reduce((n, r) => n + r.bytes, 0)
@@ -119,6 +187,13 @@ export default function StoragePage() {
                         </p>
                       </Link>
                       <span className="text-sm font-medium text-ink">{formatBytes(r.bytes)}</span>
+                      <button
+                        onClick={() => download(r)}
+                        disabled={dl !== null || busy === r.gallery_id || r.photos === 0}
+                        className="text-xs text-twilight underline disabled:opacity-50"
+                      >
+                        {dl?.id === r.gallery_id ? `Zipping ${dl.done}/${dl.total || '…'}` : 'Download'}
+                      </button>
                       <button
                         onClick={() => remove(r)}
                         disabled={busy === r.gallery_id}
