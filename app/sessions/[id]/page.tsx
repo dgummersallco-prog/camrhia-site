@@ -138,7 +138,7 @@ export default function SessionDetailPage() {
 
   const sentTo = (g: Gal): string =>
     w && w.gallery_url && w.gallery_url.includes(g.token) && w.gallery_sent_at
-      ? (w.gallery_opened_at ? ' · Sent, client opened it' : ' · Sent to client')
+      ? (w.gallery_downloaded_all_at ? ' · Client downloaded everything. Safe to free up storage' : w.gallery_opened_at ? ' · Sent, client opened it' : ' · Sent to client')
       : ''
 
   async function deliver(g: Gal) {
