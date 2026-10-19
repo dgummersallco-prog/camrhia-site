@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { ClientHeader } from '@/app/components/ClientHeader'
 
 type Gallery = { token: string; title: string | null; has_pin: boolean; allow_downloads: boolean; expires_at: string | null }
 type Portal = {
@@ -13,9 +15,9 @@ type Portal = {
 type Mine = {
   wedding_id: string; gallery_password: string | null; contract_status: string | null
   questionnaire_answered: number; questionnaire_total: number; payment_status: string | null
-  has_contract: boolean; has_questionnaire: boolean
+  has_contract: boolean; has_questionnaire: boolean; has_timeline: boolean
+  timeline_approved: boolean | null; timeline_shared_at: string | null
 }
-
 type Convo = { id: string; photographer_id: string; status: string; session_type: string | null; created_at: string; studio: string }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -25,11 +27,7 @@ const TYPE_LABELS: Record<string, string> = {
 }
 const label = (t: string) => TYPE_LABELS[t] ?? t.charAt(0).toUpperCase() + t.slice(1).replace(/_/g, ' ')
 const when = (d: string | null) => (d ? new Date(d + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : 'Date to be set')
-
-function Chip({ children, tone = 'plain' }: { children: React.ReactNode; tone?: 'plain' | 'ok' | 'due' }) {
-  const cls = tone === 'ok' ? 'bg-emerald-100 text-emerald-800' : tone === 'due' ? 'bg-brass/15 text-ink' : 'bg-line text-ink-soft'
-  return <span className={`rounded-full px-3 py-1 text-xs font-medium ${cls}`}>{children}</span>
-}
+const card = 'rounded-2xl border border-line bg-card p-5'
 
 export default function MyPage() {
   const router = useRouter()
@@ -77,108 +75,118 @@ export default function MyPage() {
     load()
   }, [router])
 
-  async function signOut() {
-    await supabase?.auth.signOut()
-    router.replace('/login')
-  }
-
   const today = new Date().toISOString().slice(0, 10)
   const upcoming = rows.filter((r) => r.wedding_date && r.wedding_date >= today).reverse()
   const past = rows.filter((r) => !r.wedding_date || r.wedding_date < today)
+  const studioOf = (r: Portal) => r.studio_name || r.display_name || 'Your photographer'
 
-  function Card({ r }: { r: Portal }) {
+  const attention: { key: string; text: string; href: string; cta: string }[] = []
+  rows.forEach((r) => {
     const m = mine[r.wedding_id]
-    const studio = r.studio_name || r.display_name || 'Your photographer'
+    if (!m) return
+    const s = studioOf(r)
+    if (m.has_contract && m.contract_status === 'sent') attention.push({ key: `c${r.wedding_id}`, text: `${s}: your contract is ready to sign`, href: `/my/contract/${r.wedding_id}`, cta: 'Review and sign' })
+    if (m.has_questionnaire && m.questionnaire_total > 0 && m.questionnaire_answered < m.questionnaire_total)
+      attention.push({ key: `q${r.wedding_id}`, text: `${s}: questionnaire ${m.questionnaire_answered} of ${m.questionnaire_total} answered`, href: `/my/questionnaire/${r.wedding_id}`, cta: 'Continue' })
+    if (m.payment_status === 'due') attention.push({ key: `p${r.wedding_id}`, text: `${s}: you have a balance due`, href: `/my/session/${r.wedding_id}`, cta: 'See payments' })
+    if (m.has_timeline && m.timeline_shared_at && !m.timeline_approved)
+      attention.push({ key: `t${r.wedding_id}`, text: `${s}: your timeline is ready to review`, href: `/my/session/${r.wedding_id}`, cta: 'Review timeline' })
+  })
+
+  const photos = rows.flatMap((r) => (r.galleries ?? []).map((g) => ({ g, r })))
+
+  function SessionRow({ r }: { r: Portal }) {
     const place = [r.venue, [r.city, r.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')
     return (
-      <section className="rounded-2xl border border-line bg-card p-5">
-        <p className="font-mono text-xs uppercase tracking-widest text-brass">{label(r.session_type)}</p>
-        <h2 className="mt-1 font-fraunces text-xl font-semibold text-ink">{studio}</h2>
-        <p className="text-sm text-ink-soft">{when(r.wedding_date)}{place ? ` · ${place}` : ''}</p>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {m?.has_contract && m.contract_status && <Chip tone={m.contract_status === 'signed' ? 'ok' : 'due'}>Contract {m.contract_status}</Chip>}
-          {m?.has_questionnaire && m.questionnaire_total > 0 && (
-            <Chip tone={m.questionnaire_answered >= m.questionnaire_total ? 'ok' : 'due'}>
-              Questionnaire {m.questionnaire_answered}/{m.questionnaire_total}
-            </Chip>
-          )}
-          {m?.payment_status && <Chip tone={m.payment_status === 'paid' ? 'ok' : 'due'}>{m.payment_status === 'paid' ? 'Paid in full' : 'Balance due'}</Chip>}
-        </div>
-
-        {(r.galleries ?? []).map((g) => (
-          <div key={g.token} className="mt-4 rounded-xl bg-paper-deep p-4">
-            <p className="text-sm font-semibold text-ink">{g.title || 'Your photos'}</p>
-            {g.has_pin && m?.gallery_password && (
-              <p className="mt-1 text-xs text-ink-soft">PIN: <span className="font-mono text-ink">{m.gallery_password}</span></p>
-            )}
-            <a href={`/g/${g.token}`} className="mt-3 inline-block rounded-full bg-twilight px-5 py-2 text-sm font-semibold text-white hover:opacity-90">
-              View and download photos
-            </a>
-          </div>
-        ))}
-
-        {m?.has_questionnaire && m.questionnaire_total > 0 && (
-          <a href={`/my/questionnaire/${r.wedding_id}`} className="mr-2 mt-4 inline-block rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink hover:bg-paper-deep">
-            {m.questionnaire_answered >= m.questionnaire_total ? 'Review questionnaire' : 'Answer questionnaire'}
-          </a>
-        )}
-        {m?.has_contract && (m.contract_status === 'sent' || m.contract_status === 'signed') && (
-          <a href={`/my/contract/${r.wedding_id}`} className="mr-2 mt-4 inline-block rounded-full bg-twilight px-5 py-2 text-sm font-semibold text-white hover:opacity-90">
-            {m.contract_status === 'signed' ? 'View signed contract' : 'Review and sign contract'}
-          </a>
-        )}
-        <a href={`/my/messages/${r.wedding_id}?s=${encodeURIComponent(studio)}`} className="mt-4 inline-block rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink hover:bg-paper-deep">
-          Message {studio}
-        </a>
-      </section>
+      <Link href={`/my/session/${r.wedding_id}`} className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card px-5 py-4 transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md">
+        <span className="min-w-0">
+          <span className="block font-mono text-xs uppercase tracking-widest text-brass">{label(r.session_type)}</span>
+          <span className="block truncate font-fraunces text-lg font-semibold text-ink">{studioOf(r)}</span>
+          <span className="block truncate text-sm text-ink-soft">{when(r.wedding_date)}{place ? ` · ${place}` : ''}</span>
+        </span>
+        <span className="shrink-0 text-sm text-twilight">Open →</span>
+      </Link>
     )
   }
 
   return (
-    <div className="min-h-screen bg-paper">
-      <header className="border-b border-line bg-card">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <a href="/" className="font-fraunces text-xl font-semibold text-ink">Camrhia</a>
-          <button onClick={signOut} className="text-sm text-ink-soft underline hover:text-ink">Sign out</button>
-        </div>
-      </header>
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <h1 className="font-fraunces text-3xl font-semibold text-ink">{name ? `Hi ${name}` : 'Your sessions'}</h1>
-        <p className="mt-2 text-ink-soft">Every session you have booked through Camrhia, all in one place.</p>
-
-        {convos.length > 0 && (
-          <div className="mt-8 space-y-3">
-            <h2 className="font-mono text-xs uppercase tracking-widest text-ink-soft">Conversations</h2>
-            {convos.map((c) => (
-              <a key={c.id} href={`/my/inquiry/${c.id}?s=${encodeURIComponent(c.studio)}`} className="flex items-center justify-between rounded-2xl border border-line bg-card px-5 py-4 hover:bg-paper-deep">
-                <span>
-                  <span className="block font-fraunces text-lg font-semibold text-ink">{c.studio}</span>
-                  <span className="text-xs text-ink-soft">{label(c.session_type ?? 'other')} inquiry · {new Date(c.created_at).toLocaleDateString()}</span>
-                </span>
-                <span className="text-sm text-twilight">Open</span>
-              </a>
-            ))}
-          </div>
-        )}
-
+    <div className="min-h-screen bg-paper lg:pl-60">
+      <ClientHeader active="home" />
+      <main className="mx-auto max-w-4xl px-6 py-10">
         {!ready ? (
-          <p className="mt-8 text-sm text-ink-soft">Loading…</p>
-        ) : rows.length === 0 ? (
-          <p className="mt-8 rounded-2xl border border-line bg-card p-6 text-ink-soft">No sessions yet. When a photographer adds you to a session, it will show up here.</p>
+          <p className="text-sm text-ink-soft">Loading…</p>
         ) : (
           <>
-            {upcoming.length > 0 && (
-              <div className="mt-8 space-y-4">
-                <h2 className="font-mono text-xs uppercase tracking-widest text-ink-soft">Upcoming</h2>
-                {upcoming.map((r) => <Card key={r.wedding_id} r={r} />)}
-              </div>
+            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Home</p>
+            <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">{name ? `Hi ${name}.` : 'Welcome.'}</h1>
+            <p className="mt-2 text-ink-soft">Everything for your sessions, in one place.</p>
+
+            {attention.length > 0 && (
+              <section className={`${card} mt-8`}>
+                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Needs your attention</p>
+                <ul className="divide-y divide-line">
+                  {attention.map((a) => (
+                    <li key={a.key} className="flex flex-wrap items-center gap-3 py-3">
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-brass" />
+                      <p className="min-w-0 flex-1 text-sm text-ink">{a.text}</p>
+                      <Link href={a.href} className="shrink-0 text-sm font-medium text-twilight hover:underline">{a.cta} →</Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
-            {past.length > 0 && (
-              <div className="mt-8 space-y-4">
-                <h2 className="font-mono text-xs uppercase tracking-widest text-ink-soft">Past sessions</h2>
-                {past.map((r) => <Card key={r.wedding_id} r={r} />)}
-              </div>
+
+            {photos.length > 0 && (
+              <section className={`${card} mt-6`}>
+                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Your photos</p>
+                <div className="space-y-3">
+                  {photos.map(({ g, r }) => (
+                    <div key={g.token} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-paper-deep p-4">
+                      <div>
+                        <p className="text-sm font-semibold text-ink">{g.title || 'Your photos'}</p>
+                        <p className="text-xs text-ink-soft">{studioOf(r)}{g.has_pin && mine[r.wedding_id]?.gallery_password ? ` · PIN ${mine[r.wedding_id].gallery_password}` : ''}</p>
+                      </div>
+                      <a href={`/g/${g.token}`} className="rounded-full bg-twilight px-5 py-2 text-sm font-semibold text-white hover:opacity-90">View and download</a>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {convos.length > 0 && (
+              <section className="mt-8">
+                <h2 className="mb-3 font-mono text-xs uppercase tracking-widest text-ink-soft">Conversations</h2>
+                <div className="space-y-3">
+                  {convos.map((c) => (
+                    <Link key={c.id} href={`/my/inquiry/${c.id}?s=${encodeURIComponent(c.studio)}`} className="flex items-center justify-between rounded-2xl border border-line bg-card px-5 py-4 transition hover:border-twilight">
+                      <span>
+                        <span className="block font-fraunces text-lg font-semibold text-ink">{c.studio}</span>
+                        <span className="text-xs text-ink-soft">{label(c.session_type ?? 'other')} inquiry · {new Date(c.created_at).toLocaleDateString()}</span>
+                      </span>
+                      <span className="text-sm text-twilight">Open</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {rows.length === 0 ? (
+              <p className={`${card} mt-8 text-ink-soft`}>No sessions yet. When a photographer adds you to a session, it will show up here.</p>
+            ) : (
+              <>
+                {upcoming.length > 0 && (
+                  <section className="mt-8">
+                    <h2 className="mb-3 font-mono text-xs uppercase tracking-widest text-ink-soft">Upcoming</h2>
+                    <div className="space-y-3">{upcoming.map((r) => <SessionRow key={r.wedding_id} r={r} />)}</div>
+                  </section>
+                )}
+                {past.length > 0 && (
+                  <section className="mt-8">
+                    <h2 className="mb-3 font-mono text-xs uppercase tracking-widest text-ink-soft">Past sessions</h2>
+                    <div className="space-y-3">{past.map((r) => <SessionRow key={r.wedding_id} r={r} />)}</div>
+                  </section>
+                )}
+              </>
             )}
           </>
         )}
