@@ -277,19 +277,28 @@ export default function DashboardPage() {
                 )}
               </section>
 
-              {/* Coming next */}
+              {/* Everything in one place */}
               <section className={card}>
-                <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Coming to the website</p>
+                <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Everything in one place</p>
                 <p className="text-sm text-ink-soft">
-                  Your sessions, clients and messages still live in the Camrhia app. They are moving to your dashboard next.
+                  Your sessions, messages, calendar, galleries and portfolio all live here, and everything stays in sync with the Camrhia app.
                 </p>
-                <ul className="mt-4 space-y-2 text-sm text-ink">
-                  {['Sessions and clients', 'Messages', 'Calendar', 'Contracts and payments'].map((t) => (
-                    <li key={t} className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-brass" /> {t}
+                <ul className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                  {[
+                    ['Sessions and messages', '/sessions'],
+                    ['Calendar', '/calendar'],
+                    ['Galleries', '/galleries'],
+                    ['Portfolio', '/portfolio'],
+                  ].map(([t, href]) => (
+                    <li key={href}>
+                      <a href={href} className="flex items-center justify-between rounded-xl border border-line px-3.5 py-2.5 text-ink transition hover:border-twilight">
+                        {t}
+                        <span className="text-twilight">→</span>
+                      </a>
                     </li>
                   ))}
                 </ul>
+                <p className="mt-4 text-xs text-ink-soft">Still in the Camrhia app: payments, plus photo layouts.</p>
               </section>
             </div>
           </>
