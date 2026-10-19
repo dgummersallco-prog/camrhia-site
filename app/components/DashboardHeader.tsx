@@ -1,15 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
+import { fetchUnreadCount } from '@/lib/unreadMessages'
 
-type Tab = 'dashboard' | 'sessions' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'reminders' | 'billing'
+type Tab = 'dashboard' | 'messages' | 'sessions' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'reminders' | 'billing'
 
 const ICONS: Record<string, string> = {
   dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+  messages: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
   sessions: 'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   calendar: 'M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
   galleries: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M9 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21',
@@ -24,6 +26,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'dashboard', href: '/dashboard', label: 'Home' },
   { tab: 'galleries', href: '/galleries', label: 'Galleries' },
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
+  { tab: 'messages', href: '/messages', label: 'Messages' },
   { tab: 'calendar', href: '/calendar', label: 'Calendar' },
   { tab: 'portfolio', href: '/portfolio', label: 'Your website' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
@@ -40,6 +43,23 @@ function Icon({ name }: { name: string }) {
 export function DashboardHeader({ active }: { active: Tab }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    let off = false
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const n = await fetchUnreadCount(sb, data.session.user.id)
+      if (!off) setUnread(n)
+    }
+    run()
+    const t = setInterval(run, 30000)
+    window.addEventListener('camrhia-unread', run)
+    return () => { off = true; clearInterval(t); window.removeEventListener('camrhia-unread', run) }
+  }, [])
 
   async function signOut() {
     if (supabase) await supabase.auth.signOut()
@@ -64,6 +84,9 @@ export function DashboardHeader({ active }: { active: Tab }) {
         {isActive && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-twilight" />}
         <Icon name={it.tab} />
         {it.label}
+        {it.tab === 'messages' && unread > 0 && (
+          <span className="ml-auto rounded-full bg-brass px-2 py-0.5 text-[11px] font-semibold text-white">{unread > 9 ? '9+' : unread}</span>
+        )}
       </Link>
     )
   }

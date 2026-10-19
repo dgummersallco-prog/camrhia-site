@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
+import { fetchUnreadCount } from '@/lib/unreadMessages'
 
 type Gal = { id: string; title: string; status: 'draft' | 'published'; gallery_photos: { count: number }[] }
 type Sess = { id: string; names: string | null; wedding_date: string | null; session_type: string | null; gallery_due_date: string | null; gallery_url: string | null; balance: string | null; paid_in_full: boolean | null }
@@ -47,6 +48,7 @@ export default function DashboardPage() {
   const [usedBytes, setUsedBytes] = useState(0)
   const [limitBytes, setLimitBytes] = useState(0)
   const [notifs, setNotifs] = useState<Notif[]>([])
+  const [unreadMsgs, setUnreadMsgs] = useState(0)
   const [unsigned, setUnsigned] = useState<Unsigned[]>([])
 
   useEffect(() => {
@@ -106,6 +108,7 @@ export default function DashboardPage() {
       setSessions((wed.data ?? []) as unknown as Sess[])
       setUsedBytes(((su.data ?? []) as { bytes: number | string }[]).reduce((n, r) => n + Number(r.bytes), 0))
       setLimitBytes(storageLimitBytes((prof.data?.plan_tier as string | null) ?? null, (prof.data?.storage_addon_packs as number | null) ?? 0))
+      setUnreadMsgs(await fetchUnreadCount(sb, uid))
       const { data: nrows } = await sb
         .from('notifications')
         .select('id, title, body, wedding_id')
@@ -172,6 +175,7 @@ export default function DashboardPage() {
     return parseFloat(String(x.balance).replace(/[^0-9.]/g, '')) > 0
   })
   const attention: { key: string; text: string; href: string; cta: string; notifId?: string }[] = [
+    ...(unreadMsgs > 0 ? [{ key: 'msgs', text: `${unreadMsgs} unread conversation${unreadMsgs === 1 ? '' : 's'}`, href: '/messages', cta: 'Open messages' }] : []),
     ...notifs.map((n) => ({
       key: `n${n.id}`,
       text: [n.title, n.body].filter(Boolean).join(': '),

@@ -48,6 +48,7 @@ export default function MessagesPage() {
     const col = t.kind === 'inq' ? 'inquiry_id' : 'wedding_id'
     await sb.from('thread_reads').delete().eq('user_id', me).eq(col, t.id)
     await sb.from('thread_reads').insert({ user_id: me, [col]: t.id, read_at: new Date().toISOString() })
+    window.dispatchEvent(new Event('camrhia-unread'))
   }, [])
 
   const loadMsgs = useCallback(async (me: string, key: string) => {
@@ -197,7 +198,7 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen bg-paper lg:pl-60">
-      <DashboardHeader active="dashboard" />
+      <DashboardHeader active="messages" />
       <main className="mx-auto max-w-5xl px-6 py-10">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Messages</p>
         <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">Messages and inquiries</h1>
