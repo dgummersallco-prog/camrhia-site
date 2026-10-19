@@ -15,7 +15,18 @@ type Row = {
   expires_at: string | null
   pin_hash: string | null
   cover_photo_id: string | null
+  cover_path: string | null
+  session_id: string | null
   gallery_photos: { count: number }[]
+}
+
+type Sess = {
+  id: string
+  names: string | null
+  wedding_date: string | null
+  gallery_url: string | null
+  gallery_sent_at: string | null
+  gallery_opened_at: string | null
 }
 
 export default function GalleriesPage() {
@@ -28,22 +39,31 @@ export default function GalleriesPage() {
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [sessions, setSessions] = useState<Sess[]>([])
+  const [sessionPick, setSessionPick] = useState('')
+  const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
+  const [q, setQ] = useState('')
 
   const load = useCallback(async () => {
     const sb = supabase
     if (!sb) return
     const { data, error: e } = await sb
       .from('galleries')
-      .select('id, title, token, status, created_at, expires_at, pin_hash, cover_photo_id, gallery_photos(count)')
+      .select('id, title, token, status, created_at, expires_at, pin_hash, cover_photo_id, cover_path, session_id, gallery_photos(count)')
       .order('created_at', { ascending: false })
     if (e) { setError(e.message); return }
     const list = (data ?? []) as unknown as Row[]
     setRows(list)
+    const { data: ses } = await sb
+      .from('weddings')
+      .select('id, names, wedding_date, gallery_url, gallery_sent_at, gallery_opened_at')
+      .order('wedding_date', { ascending: false, nullsFirst: false })
+    setSessions((ses ?? []) as Sess[])
 
     // Find a cover thumbnail for each gallery: chosen cover, else the first photo.
     const pathFor: Record<string, string> = {}
     await Promise.all(
-      list.map(async (g) => {
+      list.filter((g) => !g.cover_path).map(async (g) => {
         const q = sb.from('gallery_photos').select('thumb_path').eq('gallery_id', g.id)
         const { data: ph } = g.cover_photo_id
           ? await q.eq('id', g.cover_photo_id).limit(1)
@@ -78,7 +98,7 @@ export default function GalleriesPage() {
     setError(null)
     const { data, error: err } = await supabase
       .from('galleries')
-      .insert({ owner_id: userId, title: title.trim() })
+      .insert({ owner_id: userId, title: title.trim(), session_id: sessionPick || null })
       .select('id')
       .single()
     setCreating(false)
@@ -89,6 +109,23 @@ export default function GalleriesPage() {
   async function signOut() {
     if (supabase) await supabase.auth.signOut()
     router.push('/login')
+  }
+
+  const sessById = new Map(sessions.map((x) => [x.id, x]))
+  const needle = q.trim().toLowerCase()
+  const visible = (rows ?? []).filter((g) => {
+    if (filter !== 'all' && g.status !== filter) return false
+    if (needle) {
+      const hay = `${g.title} ${sessById.get(g.session_id ?? '')?.names ?? ''}`.toLowerCase()
+      if (!hay.includes(needle)) return false
+    }
+    return true
+  })
+  const COVER_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/gallery-covers/`
+  function sentState(g: Row): string | null {
+    const x = g.session_id ? sessById.get(g.session_id) : undefined
+    if (!x || !x.gallery_sent_at || !x.gallery_url || !x.gallery_url.includes(g.token)) return null
+    return x.gallery_opened_at ? 'Client opened' : 'Sent to client'
   }
 
   function copyLink(g: Row) {
@@ -118,13 +155,30 @@ export default function GalleriesPage() {
         </div>
 
         {showNew && (
-          <form onSubmit={createGallery} className="mb-8 flex gap-3">
+          <form onSubmit={createGallery} className="mb-8 flex flex-wrap items-center gap-3">
+            <select
+              value={sessionPick}
+              onChange={(e) => {
+                const v = e.target.value
+                setSessionPick(v)
+                const sel = sessions.find((x) => x.id === v)
+                if (sel?.names && !title.trim()) setTitle(sel.names)
+              }}
+              className="w-full rounded-xl border border-line bg-card px-3 py-2.5 text-sm text-ink sm:w-64"
+            >
+              <option value="">Not linked to a session</option>
+              {sessions.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.names || 'Untitled'}{x.wedding_date ? ` · ${new Date(`${x.wedding_date}T00:00:00`).toLocaleDateString()}` : ''}
+                </option>
+              ))}
+            </select>
             <input
               autoFocus
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Gallery name, e.g. The Cooks Wedding"
-              className="w-full rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+              className="min-w-[200px] flex-1 rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
             />
             <button
               type="submit"
@@ -139,6 +193,28 @@ export default function GalleriesPage() {
           </form>
         )}
 
+        {rows && rows.length > 0 && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-2 text-sm">
+              {(['all', 'published', 'draft'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`rounded-full px-4 py-1.5 capitalize ${filter === f ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search galleries"
+              className="w-full rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none sm:w-64"
+            />
+          </div>
+        )}
+
         {error && <p className="mb-6 text-sm text-red-600">{error}</p>}
 
         {rows === null ? (
@@ -150,7 +226,8 @@ export default function GalleriesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {rows.map((g) => {
+            {visible.length === 0 && <p className="col-span-full text-sm text-ink-soft">No galleries match.</p>}
+            {visible.map((g) => {
               const count = g.gallery_photos?.[0]?.count ?? 0
               return (
                 <div
@@ -162,9 +239,9 @@ export default function GalleriesPage() {
                   className="group cursor-pointer overflow-hidden rounded-2xl border border-line bg-card transition hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-line">
-                    {covers[g.id] ? (
+                    {g.cover_path || covers[g.id] ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={covers[g.id]} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                      <img src={g.cover_path ? `${COVER_BASE}${g.cover_path}` : covers[g.id]} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-sm text-ink-soft">No photos yet</div>
                     )}
@@ -177,9 +254,13 @@ export default function GalleriesPage() {
                   <div className="flex items-start justify-between gap-3 p-4">
                     <div className="min-w-0">
                       <p className="truncate font-fraunces text-lg font-semibold text-ink">{g.title}</p>
+                      {g.session_id && sessById.get(g.session_id)?.names && (
+                        <p className="truncate text-xs text-ink-soft">{sessById.get(g.session_id)?.names}</p>
+                      )}
                       <p className="mt-0.5 text-xs text-ink-soft">
                         {count} {count === 1 ? 'photo' : 'photos'}
                         {g.pin_hash ? ' · PIN' : ''}
+                        {sentState(g) ? ` · ${sentState(g)}` : ''}
                         {g.expires_at ? ` · expires ${new Date(g.expires_at).toLocaleDateString()}` : ''}
                       </p>
                     </div>
