@@ -30,6 +30,15 @@ type Profile = {
   show_about_photo: boolean | null
   cover_style: string | null
   cover_scale: number | null
+  message_btn_text: string | null
+  message_btn_bg_color: string | null
+  message_btn_color: string | null
+  message_btn_font_size: number | null
+  message_btn_width: number | null
+  message_btn_align: string | null
+  message_btn_bold: boolean | null
+  message_btn_italic: boolean | null
+  message_btn_show_icon: boolean | null
   show_portfolio_public: boolean | null
   show_bio_public: boolean | null
   show_pricing_public: boolean | null
@@ -53,7 +62,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -243,6 +252,15 @@ export default function PortfolioEditorPage() {
       section_titles: form.section_titles ?? {},
       cover_style: form.cover_style ?? 'standard',
       cover_scale: form.cover_scale ?? 1,
+      message_btn_text: t(form.message_btn_text),
+      message_btn_bg_color: t(form.message_btn_bg_color),
+      message_btn_color: t(form.message_btn_color),
+      message_btn_font_size: form.message_btn_font_size ?? null,
+      message_btn_width: form.message_btn_width ?? null,
+      message_btn_align: form.message_btn_align ?? null,
+      message_btn_bold: form.message_btn_bold ?? null,
+      message_btn_italic: form.message_btn_italic ?? null,
+      message_btn_show_icon: form.message_btn_show_icon !== false,
       show_about_photo: form.show_about_photo !== false,
       ...(form.brand_colors_named ? {
         brand_colors_named: form.brand_colors_named,
@@ -667,13 +685,60 @@ export default function PortfolioEditorPage() {
             <p className="mt-1 text-xs text-ink-soft">{form.portfolio_section_spacing ?? 14} px</p>
           </div>,
         )
-      case 'message':
+      case 'message': {
+        const bw = Math.min(1, Math.max(0.4, Number(form.message_btn_width ?? 0.8) || 0.8))
+        const bs = Math.min(24, Math.max(12, Number(form.message_btn_font_size ?? 15) || 15))
+        const al = form.message_btn_align ?? 'center'
+        const bgc = form.message_btn_bg_color ?? form.accent_color ?? '#A9545F'
+        const tc = form.message_btn_color ?? '#FFFFFF'
+        const bt = (form.message_btn_text && form.message_btn_text.trim()) || `Message ${form.studio_name ?? ''}`.trim()
         return sec(
           <>
-            <ColorField swatches={brandSwatches} title="Message button color" value={form.accent_color} fallback="#A9545F" onChange={(v) => setField('accent_color', v)} />
-            <p className="text-xs text-ink-soft">Button text, size and shape are set in the app for now.</p>
+            <div className="rounded-xl bg-paper p-4">
+              <div
+                className={`mx-auto flex items-center gap-2 rounded-full px-4 py-3 ${al === 'left' ? 'justify-start' : al === 'right' ? 'justify-end' : 'justify-center'}`}
+                style={{ width: `${Math.round(bw * 100)}%`, backgroundColor: bgc, color: tc, fontSize: bs, fontWeight: form.message_btn_bold ? 700 : 500, fontStyle: form.message_btn_italic ? 'italic' : 'normal' }}
+              >
+                {form.message_btn_show_icon !== false && <span aria-hidden>💬</span>}
+                <span className="truncate">{bt}</span>
+              </div>
+            </div>
+            <div>
+              <label className={label}>Button text</label>
+              <input className={input} value={form.message_btn_text ?? ''} onChange={(e) => setField('message_btn_text', e.target.value)} placeholder={`Message ${form.studio_name ?? ''}`.trim()} />
+            </div>
+            <ColorField swatches={brandSwatches} title="Button color" value={form.message_btn_bg_color ?? form.accent_color} fallback="#A9545F" onChange={(v) => setField('message_btn_bg_color', v)} />
+            <ColorField swatches={brandSwatches} title="Text color" value={form.message_btn_color} fallback="#FFFFFF" onChange={(v) => setField('message_btn_color', v)} />
+            <div>
+              <p className={label}>Text size</p>
+              <input type="range" min={12} max={24} step={1} value={bs} onChange={(e) => setField('message_btn_font_size', Number(e.target.value))} className="w-full accent-[var(--color-twilight)]" />
+              <p className="text-xs text-ink-soft">{bs} pt</p>
+            </div>
+            <div>
+              <p className={label}>Button width</p>
+              <input type="range" min={40} max={100} step={5} value={Math.round(bw * 100)} onChange={(e) => setField('message_btn_width', Number(e.target.value) / 100)} className="w-full accent-[var(--color-twilight)]" />
+              <p className="text-xs text-ink-soft">{Math.round(bw * 100)}% of the page width</p>
+            </div>
+            <div>
+              <p className={label}>Text position</p>
+              <div className="flex gap-2">
+                {['left', 'center', 'right'].map((x) => (
+                  <button key={x} type="button" onClick={() => setField('message_btn_align', x)}
+                    className={`rounded-full border px-4 py-1.5 text-sm capitalize transition ${al === x ? 'border-twilight bg-blush-wash text-twilight' : 'border-line text-ink hover:border-twilight'}`}>
+                    {x}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-5 text-sm text-ink">
+              <label className="flex items-center gap-2"><input type="checkbox" checked={!!form.message_btn_bold} onChange={(e) => setField('message_btn_bold', e.target.checked)} />Bold</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={!!form.message_btn_italic} onChange={(e) => setField('message_btn_italic', e.target.checked)} />Italic</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={form.message_btn_show_icon !== false} onChange={(e) => setField('message_btn_show_icon', e.target.checked)} />Show icon</label>
+            </div>
+            <p className="text-xs text-ink-soft">The font and text shadow are set in the app for now.</p>
           </>,
         )
+      }
       case 'about':
         return sec(
           <>
