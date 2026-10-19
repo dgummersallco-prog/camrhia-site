@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 type Profile = {
   id: string
@@ -91,6 +94,30 @@ const FONTS: [string, string, string][] = [
   ['raleway', 'Raleway', 'Sans-Serif'], ['work_sans', 'Work Sans', 'Sans-Serif'],
 ]
 
+function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={() => onChange(!on)}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? 'bg-twilight' : 'bg-line'}`}
+    >
+      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
+    </button>
+  )
+}
+
+function SortableRow({ id, render }: { id: string; render: (h: { attributes: Record<string, unknown>; listeners: Record<string, unknown> | undefined }) => ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, position: 'relative', zIndex: isDragging ? 20 : undefined, opacity: isDragging ? 0.9 : 1 }}>
+      {render({ attributes: attributes as unknown as Record<string, unknown>, listeners: listeners as Record<string, unknown> | undefined })}
+    </div>
+  )
+}
+
 function ColorField({ title, value, fallback, onChange }: { title: string; value: string | null; fallback: string; onChange: (v: string | null) => void }) {
   const hex = /^#[0-9a-f]{6}$/i.test(value ?? '') ? (value as string) : fallback
   return (
@@ -117,6 +144,10 @@ export default function PortfolioEditorPage() {
   const avatarInput = useRef<HTMLInputElement>(null)
   const [brandBusy, setBrandBusy] = useState<string | null>(null)
   const latest = useRef<{ save: () => void; dirty: boolean }>({ save: () => {}, dirty: false })
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -328,15 +359,26 @@ export default function PortfolioEditorPage() {
     flash(v ? 'You are now listed' : 'You are now hidden')
   }
 
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e
+    if (!over || active.id === over.id || !form) return
+    const order = form.section_order ?? []
+    const from = order.indexOf(String(active.id))
+    const to = order.indexOf(String(over.id))
+    if (from < 0 || to < 0) return
+    setField('section_order', arrayMove(order, from, to))
+  }
+
   function goBack() {
     if (dirty) save()
     setOpen(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  function hubRow(key: string, extra?: ReactNode, dim?: boolean) {
+  function hubRow(key: string, extra?: ReactNode, dim?: boolean, lead?: ReactNode) {
     return (
       <div key={key} className="flex items-center gap-2 rounded-2xl border border-line bg-card pr-3 transition hover:border-twilight">
+        {lead}
         <button type="button" onClick={() => { setOpen(key); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="flex flex-1 items-center gap-3 px-4 py-3.5 text-left">
           <span className="flex-1">
             <span className={`block text-sm font-medium ${dim ? 'text-ink-soft' : 'text-ink'}`}>{EDITOR_TITLES[key]}</span>
@@ -382,7 +424,7 @@ export default function PortfolioEditorPage() {
     if (!toggle || !form) return null
     return (
       <label className="flex items-center gap-3 text-sm text-ink">
-        <input type="checkbox" className="h-5 w-5" checked={form[toggle] !== false} onChange={(e) => setField(toggle, e.target.checked as never)} />
+        <Toggle on={form[toggle] !== false} onChange={(v) => setField(toggle, v as never)} label="Show this section on my site" />
         Show this section on my site
       </label>
     )
@@ -611,7 +653,7 @@ export default function PortfolioEditorPage() {
         return sec(
           <>
             <label className="flex items-start gap-3 text-sm text-ink">
-              <input type="checkbox" className="mt-0.5 h-5 w-5" checked={form.is_listed === true} onChange={(e) => setListed(e.target.checked)} />
+              <Toggle on={form.is_listed === true} onChange={(v) => setListed(v)} label="List me publicly" />
               <span>
                 List me publicly
                 <span className="mt-1 block text-xs text-ink-soft">
@@ -658,26 +700,47 @@ export default function PortfolioEditorPage() {
                     {groupHeading('Portfolio style', 'The look and feel of your site.')}
                     <div className="space-y-2.5">{STYLE_KEYS.map((k) => hubRow(k))}</div>
 
-                    {groupHeading('Sections', 'Turn sections on or off and reorder them with the arrows.')}
-                    <div className="space-y-2.5">
-                      {(form.section_order ?? []).map((key, i, arr) => {
-                        const toggle = TOGGLE[key]
-                        const on = toggle ? form[toggle] !== false : true
-                        return hubRow(
-                          key,
-                          <div className="flex items-center gap-3">
-                            <div className="flex flex-col">
-                              <button type="button" disabled={i === 0} onClick={() => move(key, -1)} className="px-1 text-xs text-ink-soft hover:text-ink disabled:opacity-30" aria-label="Move up">▲</button>
-                              <button type="button" disabled={i === arr.length - 1} onClick={() => move(key, 1)} className="px-1 text-xs text-ink-soft hover:text-ink disabled:opacity-30" aria-label="Move down">▼</button>
-                            </div>
-                            {toggle ? (
-                              <input type="checkbox" checked={on} onChange={(e) => setField(toggle, e.target.checked as never)} className="h-5 w-5" aria-label={`Show ${LABELS[key]}`} />
-                            ) : null}
-                          </div>,
-                          !on,
-                        )
-                      })}
-                    </div>
+                    {groupHeading('Sections', 'Use the switch to show or hide a section on your site. Drag the dots up or down to change the order. Your changes apply to your website and to the Camrhia app.')}
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                      <SortableContext items={form.section_order ?? []} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-2.5">
+                          {(form.section_order ?? []).map((key) => {
+                            const toggle = TOGGLE[key]
+                            const on = toggle ? form[toggle] !== false : true
+                            return (
+                              <SortableRow
+                                key={key}
+                                id={key}
+                                render={(h) =>
+                                  hubRow(
+                                    key,
+                                    toggle ? (
+                                      <Toggle on={on} onChange={(v) => setField(toggle, v as never)} label={`Show ${LABELS[key]}`} />
+                                    ) : (
+                                      <span className="text-xs text-ink-soft">Auto</span>
+                                    ),
+                                    !on,
+                                    <button
+                                      type="button"
+                                      aria-label={`Drag ${LABELS[key]} to reorder`}
+                                      className="cursor-grab touch-none py-4 pl-3 pr-1 text-ink-soft hover:text-ink active:cursor-grabbing"
+                                      {...(h.attributes as object)}
+                                      {...(h.listeners as object)}
+                                    >
+                                      <svg width="14" height="18" viewBox="0 0 14 18" fill="currentColor" aria-hidden="true">
+                                        <circle cx="4" cy="3" r="1.5" /><circle cx="10" cy="3" r="1.5" />
+                                        <circle cx="4" cy="9" r="1.5" /><circle cx="10" cy="9" r="1.5" />
+                                        <circle cx="4" cy="15" r="1.5" /><circle cx="10" cy="15" r="1.5" />
+                                      </svg>
+                                    </button>,
+                                  )
+                                }
+                              />
+                            )
+                          })}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
 
                     {groupHeading('Visibility', 'Who can find you.')}
                     <div className="space-y-2.5">{hubRow('listed')}</div>
