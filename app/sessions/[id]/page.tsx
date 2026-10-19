@@ -43,6 +43,9 @@ export default function SessionDetailPage() {
   const [w, setW] = useState<Wedding | null>(null)
   const [events, setEvents] = useState<Ev[]>([])
   const [contract, setContract] = useState<Contract | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [ef, setEf] = useState<Record<string, string>>({})
+  const [savingEdit, setSavingEdit] = useState(false)
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [gals, setGals] = useState<Gal[]>([])
   const [loose, setLoose] = useState<{ id: string; title: string }[]>([])
@@ -194,6 +197,66 @@ export default function SessionDetailPage() {
     load()
   }
 
+  function startEdit() {
+    const x = (w ?? {}) as Record<string, any>
+    setEf({
+      names: x.names ?? '',
+      wedding_date: x.wedding_date ?? '',
+      session_start_time: x.session_start_time ?? '',
+      session_length_hours: x.session_length_hours != null ? String(x.session_length_hours) : '',
+      package_name: x.package_name ?? '',
+      total_price: x.total_price != null ? String(x.total_price) : '',
+      city: x.city ?? '',
+      state: x.state ?? '',
+      venue: x.venue ?? '',
+      delivery_days: x.delivery_days != null ? String(x.delivery_days) : '',
+      gallery_due_date: x.gallery_due_date ?? '',
+    })
+    setEditing(true)
+  }
+
+  function dueFrom(ds: string, n: number): string {
+    const d = new Date(`${ds}T00:00:00`)
+    d.setDate(d.getDate() + n)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+
+  function pickDays(n: number) {
+    setEf((f) => ({ ...f, delivery_days: String(n), gallery_due_date: f.wedding_date ? dueFrom(f.wedding_date, n) : f.gallery_due_date }))
+  }
+
+  async function saveEdit() {
+    const sb = supabase
+    if (!sb || !w) return
+    const x = w as Record<string, any>
+    const num = (v: string) => { const n = parseFloat(v); return Number.isFinite(n) ? n : null }
+    const t = (v: string) => (v.trim() ? v.trim() : null)
+    setSavingEdit(true)
+    setError(null)
+    const { error: e } = await sb
+      .from('weddings')
+      .update({
+        names: ef.names.trim() || x.names,
+        wedding_date: ef.wedding_date || null,
+        session_start_time: t(ef.session_start_time),
+        session_length_hours: num(ef.session_length_hours),
+        package_name: t(ef.package_name),
+        total_price: num(ef.total_price),
+        city: t(ef.city),
+        state: t(ef.state),
+        venue: t(ef.venue),
+        delivery_days: ef.delivery_days ? parseInt(ef.delivery_days, 10) : null,
+        gallery_due_date: ef.gallery_due_date || null,
+      })
+      .eq('id', id)
+    setSavingEdit(false)
+    if (e) { setError(e.message); return }
+    setEditing(false)
+    setNote('Saved.')
+    setTimeout(() => setNote(null), 3000)
+    load()
+  }
+
   async function saveNotes() {
     const sb = supabase
     if (!sb || !w) return
@@ -232,7 +295,72 @@ export default function SessionDetailPage() {
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Details */}
               <section className={card}>
-                <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Details</p>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="font-fraunces text-xl font-semibold text-ink">Details</p>
+                  {!editing && <button type="button" onClick={startEdit} className="text-sm font-medium text-twilight hover:underline">Edit details</button>}
+                </div>
+                {editing ? (
+                  <div className="space-y-3">
+                    {([
+                      ['names', 'Session name', 'text'],
+                      ['wedding_date', 'Session date', 'date'],
+                      ['session_start_time', 'Start time', 'text'],
+                      ['session_length_hours', 'Length (hours)', 'number'],
+                      ['package_name', 'Package', 'text'],
+                      ['total_price', 'Total price ($)', 'number'],
+                      ['city', 'City', 'text'],
+                      ['state', 'State', 'text'],
+                      ['venue', 'Venue', 'text'],
+                    ] as const).map(([k, lab, type]) => (
+                      <div key={k}>
+                        <label className="mb-1 block text-xs uppercase tracking-wider text-ink-soft">{lab}</label>
+                        <input
+                          type={type}
+                          value={ef[k] ?? ''}
+                          onChange={(e) => setEf((f) => ({ ...f, [k]: e.target.value }))}
+                          className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+                        />
+                      </div>
+                    ))}
+                    <div>
+                      <label className="mb-1 block text-xs uppercase tracking-wider text-ink-soft">Gallery delivery (days after the session)</label>
+                      <div className="mb-2 flex flex-wrap gap-2">
+                        {[7, 14, 21, 30, 45, 60].map((n) => (
+                          <button key={n} type="button" onClick={() => pickDays(n)}
+                            className={`rounded-full border px-3.5 py-1 text-sm transition ${ef.delivery_days === String(n) ? 'border-twilight bg-blush-wash text-twilight' : 'border-line text-ink hover:border-twilight'}`}>
+                            {n} days
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        inputMode="numeric"
+                        value={ef.delivery_days ?? ''}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/[^0-9]/g, '')
+                          setEf((f) => ({ ...f, delivery_days: v, gallery_due_date: v && f.wedding_date ? dueFrom(f.wedding_date, parseInt(v, 10)) : f.gallery_due_date }))
+                        }}
+                        placeholder="Custom number of days"
+                        className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs uppercase tracking-wider text-ink-soft">Gallery due date</label>
+                      <input
+                        type="date"
+                        value={ef.gallery_due_date ?? ''}
+                        onChange={(e) => setEf((f) => ({ ...f, gallery_due_date: e.target.value }))}
+                        className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+                      />
+                      <p className="mt-1 text-xs text-ink-soft">Your client sees this date as their delivery date.</p>
+                    </div>
+                    <div className="flex gap-3 pt-1">
+                      <button type="button" disabled={savingEdit} onClick={saveEdit} className="rounded-xl bg-twilight px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">
+                        {savingEdit ? 'Saving…' : 'Save'}
+                      </button>
+                      <button type="button" onClick={() => setEditing(false)} className="rounded-xl border border-line px-5 py-2.5 text-sm text-ink hover:border-twilight">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
                 <div className="divide-y divide-line">
                   <Row label="Package" value={w.package_name} />
                   <Row label="Coverage" value={w.coverage} />
@@ -241,8 +369,10 @@ export default function SessionDetailPage() {
                   <Row label="Length" value={w.session_length_hours ? `${w.session_length_hours} hours` : null} />
                   <Row label="Guests" value={w.guests} />
                   <Row label="Total" value={w.total_price ? `$${Number(w.total_price).toLocaleString()}` : null} />
+                  <Row label="Gallery due" value={(w as Record<string, any>).gallery_due_date ? fmtDate((w as Record<string, any>).gallery_due_date) : null} />
                   <Row label="Balance" value={w.balance} />
                 </div>
+                )}
                 <div className="mt-4">
                   <p className="mb-1 text-xs uppercase tracking-wider text-ink-soft">Private notes (only you see these)</p>
                   <textarea
