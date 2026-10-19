@@ -23,6 +23,13 @@ export default function ClientThreadPage() {
     const { data, error: e } = await sb.rpc('client_get_thread', { p_wedding_id: id })
     if (e) { setError('Could not load messages.'); return }
     setMsgs((data ?? []) as Msg[])
+    const { data: sess } = await sb.auth.getSession()
+    const me = sess.session?.user.id
+    if (me) {
+      await sb.from('thread_reads').delete().eq('user_id', me).eq('wedding_id', id)
+      await sb.from('thread_reads').insert({ user_id: me, wedding_id: id, read_at: new Date().toISOString() })
+      window.dispatchEvent(new Event('camrhia-unread'))
+    }
   }, [id])
 
   useEffect(() => {

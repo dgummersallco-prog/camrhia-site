@@ -38,6 +38,7 @@ export default function ClientInquiryThread() {
     setMsgs((data ?? []) as Msg[])
     await sb.from('thread_reads').delete().eq('user_id', userId).eq('inquiry_id', id)
     await sb.from('thread_reads').insert({ user_id: userId, inquiry_id: id, read_at: new Date().toISOString() })
+    window.dispatchEvent(new Event('camrhia-unread'))
   }, [id])
 
   useEffect(() => {

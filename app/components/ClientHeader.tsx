@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
+import { loadClientThreads } from '@/lib/clientThreads'
 
 export type ClientTab = 'home' | 'sessions' | 'galleries' | 'messages' | 'account'
 
@@ -35,6 +36,23 @@ function Icon({ name }: { name: ClientTab }) {
 export function ClientHeader({ active }: { active: ClientTab }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    let off = false
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const t = await loadClientThreads(sb, data.session.user.id)
+      if (!off) setUnread(t.filter((x) => x.unread).length)
+    }
+    run()
+    const timer = setInterval(run, 45000)
+    window.addEventListener('camrhia-unread', run)
+    return () => { off = true; clearInterval(timer); window.removeEventListener('camrhia-unread', run) }
+  }, [])
 
   async function signOut() {
     if (supabase) await supabase.auth.signOut()
@@ -55,6 +73,9 @@ export function ClientHeader({ active }: { active: ClientTab }) {
         {isActive && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-twilight" />}
         <Icon name={it.tab} />
         {it.label}
+        {it.tab === 'messages' && unread > 0 && (
+          <span className="ml-auto rounded-full bg-brass px-2 py-0.5 text-[11px] font-semibold text-white">{unread > 9 ? '9+' : unread}</span>
+        )}
       </Link>
     )
   }
