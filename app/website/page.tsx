@@ -675,17 +675,8 @@ export default function WebsitePage() {
                     </div>
                   </div>
                   <SizeControl label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
-                  <Row label="Text alignment">
-                    <Seg value={T.hero.align} options={[{ v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setHero({ align: v })} />
-                  </Row>
-                  <Row label="Text position (editorial)">
-                    <Seg value={T.hero.valign} options={[{ v: 'top', label: 'Top' }, { v: 'center', label: 'Middle' }, { v: 'bottom', label: 'Bottom' }]} onChange={(v) => setHero({ valign: v })} />
-                  </Row>
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (used on every button)</label>
-                    <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
-                  </div>
+                  
                 </Group>
 
                 <Group title="4. Your content" hint="galleries, prices, kind words">
@@ -777,6 +768,10 @@ export default function WebsitePage() {
                 <Group title="6. Check availability screen" hint="where every button leads">
                   <p className="text-sm text-ink-soft">Every button on your website opens this screen: a date check, then a short form. Requests land in your Camrhia inbox.</p>
                   <button className={btnGhost} onClick={() => setPreviewPage('availability')}>Preview this screen</button>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (used on every button on the site)</label>
+                    <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
+                  </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Heading</label>
                     <input value={S.availability?.title ?? ''} onChange={(e) => setIn('availability', { title: e.target.value })} placeholder="Check availability" className={inputCls} />
