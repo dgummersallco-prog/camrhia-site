@@ -149,7 +149,7 @@ export default function AdminAffiliatesPage() {
                     ? 'rounded-full border border-line px-5 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-60'
                     : 'rounded-full px-5 py-2 text-sm font-medium text-white disabled:opacity-60'
                 }
-                style={r.is_master ? undefined : { backgroundColor: '#3A4A6B' }}
+                style={r.is_master ? undefined : { backgroundColor: '#A9545F' }}
               >
                 {busyId === r.id ? 'Saving…' : r.is_master ? 'Remove master' : 'Promote to master'}
               </button>

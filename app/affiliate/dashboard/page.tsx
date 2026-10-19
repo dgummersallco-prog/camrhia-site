@@ -340,7 +340,7 @@ export default function AffiliateDashboardPage() {
           onClick={activateAffiliate}
           disabled={activating}
           className="rounded-full px-6 py-3 text-sm font-medium text-white disabled:opacity-60"
-          style={{ backgroundColor: '#3A4A6B' }}
+          style={{ backgroundColor: '#A9545F' }}
         >
           {activating ? 'Activating…' : 'Activate affiliate account'}
         </button>
@@ -500,7 +500,7 @@ export default function AffiliateDashboardPage() {
               onClick={saveCode}
               disabled={codeStatus !== 'available' || codeSaving || codeInput === affiliate.referral_code}
               className="rounded-xl bg-twilight px-5 py-2.5 text-sm font-semibold text-white hover:bg-twilight/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-              style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}
+              style={{ backgroundColor: '#A9545F', color: '#ffffff' }}
             >
               {codeSaving ? 'Saving…' : 'Save'}
             </button>
@@ -575,7 +575,7 @@ export default function AffiliateDashboardPage() {
                     Commission tier
                   </p>
                   <div className="flex items-baseline gap-2">
-                    <span className="font-fraunces text-4xl font-semibold text-twilight leading-none" style={{ color: '#3A4A6B' }}>
+                    <span className="font-fraunces text-4xl font-semibold text-twilight leading-none" style={{ color: '#A9545F' }}>
                       {Math.round(nextRate * 100)}%
                     </span>
                     <span className="text-sm text-ink-soft">of each subscription after Apple’s 15% fee · <Link href="/affiliate/dashboard/pay" className="text-twilight underline">see the full breakdown</Link></span>
@@ -591,7 +591,7 @@ export default function AffiliateDashboardPage() {
               {tierInfo.atMax ? (
                 <div>
                   <div className="h-1.5 w-full rounded-full bg-twilight/20 mb-2">
-                    <div className="h-1.5 rounded-full bg-twilight w-full" style={{ backgroundColor: '#3A4A6B' }} />
+                    <div className="h-1.5 rounded-full bg-twilight w-full" style={{ backgroundColor: '#A9545F' }} />
                   </div>
                   <p className="text-xs text-ink-soft">
                     Maximum tier — 30% on every referral, for life.
@@ -602,7 +602,7 @@ export default function AffiliateDashboardPage() {
                   <div className="h-1.5 w-full rounded-full bg-line mb-2 overflow-hidden">
                     <div
                       className="h-1.5 rounded-full bg-twilight transition-all duration-300"
-                      style={{ width: `${Math.min(tierInfo.barFill * 100, 100)}%`, backgroundColor: '#3A4A6B' }}
+                      style={{ width: `${Math.min(tierInfo.barFill * 100, 100)}%`, backgroundColor: '#A9545F' }}
                     />
                   </div>
                   <p className="text-xs text-ink-soft">

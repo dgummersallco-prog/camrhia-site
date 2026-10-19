@@ -31,11 +31,11 @@ function readableOn(bg: string): string {
   if (!m) return '#fff'
   const n = parseInt(m[1], 16)
   const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
-  return lum > 0.6 ? '#2B2B2B' : '#fff'
+  return lum > 0.6 ? '#2A1F24' : '#fff'
 }
 
 export function ContactButton({
-  photographerId, studioName, accent = '#3A4A6B', btn,
+  photographerId, studioName, accent = '#A9545F', btn,
 }: { photographerId: string; studioName: string; accent?: string; btn?: MessageBtnStyle }) {
   const [open, setOpen] = useState(false)
   const [sending, setSending] = useState(false)
@@ -109,10 +109,10 @@ export function ContactButton({
 
   const input: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box', padding: '12px 14px', fontSize: 16,
-    border: '1px solid #DDD8D0', borderRadius: 10, background: '#fff', color: '#2B2B2B',
+    border: '1px solid #EADFD6', borderRadius: 10, background: '#fff', color: '#2A1F24',
     fontFamily: 'system-ui, sans-serif',
   }
-  const label: React.CSSProperties = { fontSize: 12, color: '#6B6B6B', marginBottom: 4, display: 'block', fontFamily: 'system-ui, sans-serif' }
+  const label: React.CSSProperties = { fontSize: 12, color: '#6F5E64', marginBottom: 4, display: 'block', fontFamily: 'system-ui, sans-serif' }
 
   const bgCol = btn?.bg || accent
   const txtCol = btn?.textColor || readableOn(bgCol)
@@ -155,13 +155,13 @@ export function ContactButton({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: '#FAF8F5', width: '100%', maxWidth: 520, maxHeight: '92vh', overflowY: 'auto', borderRadius: '20px 20px 0 0', padding: 22 }}
+            style={{ background: '#FBF6F0', width: '100%', maxWidth: 520, maxHeight: '92vh', overflowY: 'auto', borderRadius: '20px 20px 0 0', padding: 22 }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h2 style={{ margin: 0, fontSize: 20, fontFamily: "'Fraunces', serif", color: '#2B2B2B' }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontFamily: "'Fraunces', serif", color: '#2A1F24' }}>
                 {sent ? 'Message sent' : `Message ${studioName}`}
               </h2>
-              <button onClick={() => setOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 26, cursor: 'pointer', color: '#6B6B6B', lineHeight: 1 }}>×</button>
+              <button onClick={() => setOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 26, cursor: 'pointer', color: '#6F5E64', lineHeight: 1 }}>×</button>
             </div>
 
             {sent ? (
@@ -177,7 +177,7 @@ export function ContactButton({
                       <li>The moment your account is ready, your message is sent to {studioName} automatically. You will find the conversation in the Messages tab.</li>
                     </ol>
                     <div style={{ background: '#fff', border: '1px solid #E7E2DA', borderRadius: 14, padding: '14px 16px', margin: '16px 0 4px' }}>
-                      <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#2B2B2B' }}>Everything for your session, in one place</p>
+                      <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#2A1F24' }}>Everything for your session, in one place</p>
                       <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 7, fontSize: 14 }}>
                         <li>✓ Message {studioName} directly</li>
                         <li>✓ Complete your questionnaire so your photographer is prepared</li>

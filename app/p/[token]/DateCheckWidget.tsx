@@ -25,7 +25,7 @@ export function DateCheckWidget({
   const selColor = selectedColor ?? accent
   const availColor = availableColor ?? '#3F9142'
   const unavailColor = unavailableColor ?? '#8A8A8A'
-  const resultColor = resultTextColor ?? '#6B6B6B'
+  const resultColor = resultTextColor ?? '#6F5E64'
   const calFont = fontFamily ?? "'Playfair Display', serif"
   const baseSize = fontSize ?? 13
 
@@ -53,7 +53,7 @@ export function DateCheckWidget({
       <div style={{ border: '1px solid #eee', borderRadius: 12, overflow: 'hidden', backgroundColor: bgColor ?? '#fff', padding: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <button onClick={() => setViewDate(new Date(year, month - 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: selColor, fontSize: 18 }}>‹</button>
-          <span style={{ fontFamily: calFont, fontSize: baseSize + 3, color: monthColor ?? dayColor ?? '#2B2B2B' }}>{monthLabel}</span>
+          <span style={{ fontFamily: calFont, fontSize: baseSize + 3, color: monthColor ?? dayColor ?? '#2A1F24' }}>{monthLabel}</span>
           <button onClick={() => setViewDate(new Date(year, month + 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: selColor, fontSize: 18 }}>›</button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, fontFamily: calFont, fontSize: Math.max(baseSize - 3, 8), color: dayColor ?? '#8A8A8A', textAlign: 'center', marginBottom: 4 }}>
@@ -74,7 +74,7 @@ export function DateCheckWidget({
                   aspectRatio: '1', border: 'none', borderRadius: '50%', cursor: isPast ? 'default' : 'pointer',
                   fontFamily: calFont, fontSize: baseSize,
                   backgroundColor: isSelected ? selColor : 'transparent',
-                  color: isSelected ? '#fff' : isPast ? `${dayColor ?? '#2B2B2B'}55` : (dayColor ?? '#2B2B2B'),
+                  color: isSelected ? '#fff' : isPast ? `${dayColor ?? '#2A1F24'}55` : (dayColor ?? '#2A1F24'),
                 }}
               >{day}</button>
             )

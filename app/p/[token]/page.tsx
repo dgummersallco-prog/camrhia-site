@@ -175,7 +175,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
     r.location_custom_text || null,
   ].filter(Boolean).join(' · ')
 
-  const bgColor = r.portfolio_bg_color ?? '#FAF8F5'
+  const bgColor = r.portfolio_bg_color ?? '#FBF6F0'
   const bgStyle: React.CSSProperties = r.portfolio_bg_gradient_enabled
     ? { background: `linear-gradient(${r.portfolio_bg_gradient_direction === 'horizontal' ? '90deg' : '180deg'}, ${r.portfolio_bg_gradient_start ?? bgColor}, ${r.portfolio_bg_gradient_end ?? bgColor})` }
     : { backgroundColor: bgColor }
@@ -199,14 +199,14 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
     bold: r.title_bold, italic: r.title_italic, align: r.title_align ?? 'center',
     shadow: r.title_shadow, shadowColor: r.title_shadow_color,
     shadowOffsetX: r.title_shadow_offset_x, shadowOffsetY: r.title_shadow_offset_y, shadowBlur: r.title_shadow_blur,
-    fallbackFont: "'Fraunces', serif", fallbackColor: '#2B2B2B', fallbackSize: 34,
+    fallbackFont: "'Fraunces', serif", fallbackColor: '#2A1F24', fallbackSize: 34,
   })
   const locationStyle = textStyle({
     font: r.location_font, size: r.location_font_size, color: r.location_color,
     bold: r.location_bold, italic: r.location_italic, align: r.location_align ?? 'center',
     shadow: r.location_shadow, shadowColor: r.location_shadow_color,
     shadowOffsetX: r.location_shadow_offset_x, shadowOffsetY: r.location_shadow_offset_y, shadowBlur: r.location_shadow_blur,
-    fallbackFont: "system-ui, sans-serif", fallbackColor: '#6B6B6B', fallbackSize: 14,
+    fallbackFont: "system-ui, sans-serif", fallbackColor: '#6F5E64', fallbackSize: 14,
   })
   function sectionTitleStyle(key: string): React.CSSProperties {
     const custom = r.section_styles?.[key]
@@ -215,7 +215,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
         font: custom.font, size: custom.size, color: custom.color, bold: custom.bold, italic: custom.italic,
         align: custom.align, shadow: custom.shadow, shadowColor: custom.shadowColor,
         shadowOffsetX: custom.shadowOffsetX, shadowOffsetY: custom.shadowOffsetY, shadowBlur: custom.shadowBlur,
-        fallbackFont: "system-ui, sans-serif", fallbackColor: '#2B2B2B', fallbackSize: 20,
+        fallbackFont: "system-ui, sans-serif", fallbackColor: '#2A1F24', fallbackSize: 20,
       })
     }
     if (r.master_section_style_enabled) {
@@ -224,7 +224,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
         bold: r.master_section_bold, italic: r.master_section_italic, align: r.master_section_align,
         shadow: r.master_section_shadow, shadowColor: r.master_section_shadow_color,
         shadowOffsetX: r.master_section_shadow_offset_x, shadowOffsetY: r.master_section_shadow_offset_y, shadowBlur: r.master_section_shadow_blur,
-        fallbackFont: "system-ui, sans-serif", fallbackColor: '#2B2B2B', fallbackSize: 20,
+        fallbackFont: "system-ui, sans-serif", fallbackColor: '#2A1F24', fallbackSize: 20,
       })
     }
     return { fontFamily: "system-ui, sans-serif", fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8A8A8A', textAlign: 'center' }
@@ -316,7 +316,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                         display: 'inline-block', padding: '10px 20px', borderRadius: r.openings_badge_corner_radius ?? 999,
                         backgroundColor: r.openings_badge_bg_gradient_enabled ? undefined : (r.openings_badge_bg_color ?? '#5B6B8C'),
                         backgroundImage: r.openings_badge_bg_gradient_enabled
-                          ? `linear-gradient(${r.openings_badge_bg_gradient_direction === 'horizontal' ? '90deg' : '180deg'}, ${r.openings_badge_bg_gradient_start ?? '#fff'}, ${r.openings_badge_bg_gradient_end ?? '#191E29'})`
+                          ? `linear-gradient(${r.openings_badge_bg_gradient_direction === 'horizontal' ? '90deg' : '180deg'}, ${r.openings_badge_bg_gradient_start ?? '#fff'}, ${r.openings_badge_bg_gradient_end ?? '#2A1F24'})`
                           : undefined,
                         fontFamily: fontFamilyFor(r.openings_badge_font, "'Fraunces', serif"),
                         fontSize: r.openings_badge_font_size ?? 16,
@@ -617,7 +617,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                     <p style={{
                       position: 'relative', fontFamily: fontFamilyFor(r.pricing_cover_title_font, "'Fraunces', serif"),
                       fontSize: r.pricing_cover_title_size ?? 16,
-                      color: r.pricing_cover_title_color ?? (hasCoverPhoto ? '#FFFFFF' : '#2B2B2B'),
+                      color: r.pricing_cover_title_color ?? (hasCoverPhoto ? '#FFFFFF' : '#2A1F24'),
                       textAlign: 'center', padding: '0 20px', margin: 0,
                     }}>{r.pricing_cover_title || 'View Packages'}</p>
                     <p style={{
@@ -648,7 +648,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                           <img src={photoUrl(t.storage_path)!} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: t.photo_opacity ?? 1 }} />
                         )}
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 18, background: photoUrl(t.storage_path) ? 'linear-gradient(transparent 40%, rgba(0,0,0,0.6))' : undefined }}>
-                          {t.quote && <p style={{ color: photoUrl(t.storage_path) ? '#fff' : '#2B2B2B', fontFamily: "'Fraunces', serif", fontStyle: 'italic', fontSize: 15, lineHeight: 1.4, margin: 0 }}>&ldquo;{t.quote}&rdquo;</p>}
+                          {t.quote && <p style={{ color: photoUrl(t.storage_path) ? '#fff' : '#2A1F24', fontFamily: "'Fraunces', serif", fontStyle: 'italic', fontSize: 15, lineHeight: 1.4, margin: 0 }}>&ldquo;{t.quote}&rdquo;</p>}
                           {t.client_name && <p style={{ color: photoUrl(t.storage_path) ? 'rgba(255,255,255,0.85)' : '#8A8A8A', fontFamily: "system-ui, sans-serif", fontSize: 12, marginTop: 8 }}>{t.client_name}</p>}
                         </div>
                       </div>
@@ -703,7 +703,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
                       <div style={{ display: 'flex', gap: r.links_icon_spacing ?? 20 }}>
                         {brandLinks.map((l: any) => (
                           <a key={l.icon} href={l.url.startsWith('http') ? l.url : `https://${l.url}`} target="_blank" rel="noopener noreferrer">
-                            <svg width={r.links_icon_size ?? 20} height={r.links_icon_size ?? 20} viewBox="0 0 24 24" fill={r.links_icon_color ?? '#6B6B6B'}>
+                            <svg width={r.links_icon_size ?? 20} height={r.links_icon_size ?? 20} viewBox="0 0 24 24" fill={r.links_icon_color ?? '#6F5E64'}>
                               <path d={iconPaths[l.icon]} />
                             </svg>
                           </a>
@@ -744,9 +744,9 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
       <ContactButton
         photographerId={r.photographer_id}
         studioName={studioName}
-        accent={r.accent_color ?? '#3A4A6B'}
+        accent={r.accent_color ?? '#A9545F'}
         btn={{
-          bg: r.message_btn_bg_color ?? r.accent_color ?? '#3A4A6B',
+          bg: r.message_btn_bg_color ?? r.accent_color ?? '#A9545F',
           textColor: r.message_btn_color ?? null,
           fontFamily: fontFamilyFor(r.message_btn_font, "'Fraunces', serif"),
           fontSize: r.message_btn_font_size ?? 15,

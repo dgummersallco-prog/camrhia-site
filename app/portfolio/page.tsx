@@ -465,7 +465,7 @@ export default function PortfolioEditorPage() {
                   <ColorField title="Studio name and headings" value={form.title_color} fallback="#A57E60" onChange={(v) => setField('title_color', v)} />
                   <ColorField title="Body text" value={form.paragraph_color} fallback="#202020" onChange={(v) => setField('paragraph_color', v)} />
                   <ColorField title="Location text" value={form.location_color} fallback="#202020" onChange={(v) => setField('location_color', v)} />
-                  <ColorField title="Accent and buttons" value={form.accent_color} fallback="#3A4A6B" onChange={(v) => setField('accent_color', v)} />
+                  <ColorField title="Accent and buttons" value={form.accent_color} fallback="#A9545F" onChange={(v) => setField('accent_color', v)} />
                   <div>
                     <label className={label}>Space between sections</label>
                     <input

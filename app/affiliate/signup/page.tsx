@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import Wordmark from "@/app/components/Wordmark"
 
-const NAVY = '#3A4A6B'
+const NAVY = '#A9545F'
 const PHONE =
   'absolute rounded-[1.9rem] ring-1 ring-black/10 bg-card shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]'
 

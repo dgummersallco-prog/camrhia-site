@@ -46,13 +46,13 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
         <p className="font-mono text-xs tracking-widest uppercase text-white/40 mb-3">Your team code</p>
         <p className="font-fraunces text-4xl text-white tracking-wide break-all">{code}</p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <button onClick={() => copy(code, 'code')} className={btn} style={{ backgroundColor: '#ffffff', color: '#191E29' }}>
+          <button onClick={() => copy(code, 'code')} className={btn} style={{ backgroundColor: '#ffffff', color: '#2A1F24' }}>
             {copied === 'code' ? 'Copied' : 'Copy code'}
           </button>
           <button onClick={() => copy(message, 'msg')} className={`${btn} border border-white/30 text-white`}>
             {copied === 'msg' ? 'Copied' : 'Copy ready-made message'}
           </button>
-          <button onClick={() => send(message)} className={btn} style={{ backgroundColor: '#A9853F', color: '#ffffff' }}>
+          <button onClick={() => send(message)} className={btn} style={{ backgroundColor: '#8C6B3F', color: '#ffffff' }}>
             Send message
           </button>
         </div>
@@ -78,7 +78,7 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
           <button onClick={() => copy(link, 'link')} className={`${btn} border border-line text-ink hover:bg-paper`}>
             {copied === 'link' ? 'Copied' : 'Copy link'}
           </button>
-          <button onClick={() => send(`Join my Camrhia affiliate team: ${link}`)} className={btn} style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}>
+          <button onClick={() => send(`Join my Camrhia affiliate team: ${link}`)} className={btn} style={{ backgroundColor: '#A9545F', color: '#ffffff' }}>
             Send link
           </button>
         </div>
