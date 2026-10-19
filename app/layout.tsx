@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
-import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google"
+import { Cormorant_Garamond, Instrument_Sans, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { BRAND_NAME } from "@/lib/brand"
 
-const fraunces = Fraunces({
+const fraunces = Cormorant_Garamond({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--ff-fraunces",
   display: "swap",
 })
