@@ -153,9 +153,11 @@ export function Nav() {
                     </button>
                   </form>
                   <p className="mt-4 text-center text-xs text-ink-soft">
-                    {who === 'photographer' ? 'New to Camrhia?' : 'New here?'}{' '}
-                    <a href={APP_STORE_URL} className="underline hover:text-ink">Get the free app</a>
-                    {who === 'client' ? ' and use the same login on your phone.' : ' to start your free trial.'}
+                    {who === 'photographer' ? (
+                      <>New to Camrhia? <a href={APP_STORE_URL} className="underline hover:text-ink">Get the app</a> to start your free trial.</>
+                    ) : (
+                      <>New here? <Link href="/signup" className="underline hover:text-ink" onClick={() => setLoginOpen(false)}>Create a free account</Link> or <a href={APP_STORE_URL} className="underline hover:text-ink">get the app</a>.</>
+                    )}
                   </p>
                   <p className="mt-2 text-center text-xs text-ink-soft">
                     Affiliate?{' '}

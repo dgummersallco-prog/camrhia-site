@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { BRAND_NAME } from "@/lib/brand"
+import { supabase } from "@/lib/supabase"
 import Wordmark from "@/app/components/Wordmark"
 
 const APP_STORE_URL = "https://apps.apple.com/app/id6800011162"
@@ -14,6 +15,13 @@ export default function ConfirmEmailPage() {
   const [openUrl, setOpenUrl] = useState("camrhia://confirm-email")
 
   useEffect(() => {
+    // Website sign-ups arrive with sign-in tokens in the address; sign in here and continue.
+    if (window.location.hash.includes("access_token") && supabase) {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) window.location.replace("/start")
+      })
+      return
+    }
     const code = new URLSearchParams(window.location.search).get("code")
     if (!code) return
     const url = `camrhia://confirm-email?code=${encodeURIComponent(code)}`
