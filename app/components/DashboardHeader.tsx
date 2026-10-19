@@ -9,23 +9,23 @@ import Wordmark from '@/app/components/Wordmark'
 type Tab = 'dashboard' | 'sessions' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'reminders' | 'billing'
 
 const ICONS: Record<string, string> = {
-  reminders: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10 21a2 2 0 0 0 4 0',
-  sessions: 'M4 8h4l2-3h4l2 3h4v11H4z M12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
-  calendar: 'M4 6h16v14H4z M4 10h16 M8 3v4 M16 3v4 M8 14h2 M12 14h2 M8 17h2',
-  dashboard: 'M4 4h7v7H4z M13 4h7v4h-7z M13 10h7v10h-7z M4 13h7v7H4z',
-  galleries: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 M9 9.5h.01',
-  portfolio: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M3 12h18 M12 3c3 3 3 15 0 18 M12 3c-3 3-3 15 0 18',
-  billing: 'M3 6h18v12H3z M3 10h18',
-  storage: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6',
-  affiliate: 'M4 12v8h16v-8 M2 8h20v4H2z M12 8v12 M12 8c-2 0-4-1-4-3s3-2 4 1c1-3 4-3 4-1s-2 3-4 3',
+  dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+  sessions: 'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  calendar: 'M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
+  galleries: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M9 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21',
+  portfolio: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M3 12h18 M12 3a14 14 0 0 1 0 18 M12 3a14 14 0 0 0 0 18',
+  reminders: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0',
+  storage: 'M22 12H2 M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z M6 16h.01 M10 16h.01',
+  billing: 'M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M1 10h22',
+  affiliate: 'M20 12v10H4V12 M2 7h20v5H2z M12 22V7 M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z',
 }
 
 const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
-  { tab: 'dashboard', href: '/dashboard', label: 'Home' },
+  { tab: 'dashboard', href: '/dashboard', label: 'Overview' },
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
   { tab: 'calendar', href: '/calendar', label: 'Calendar' },
   { tab: 'galleries', href: '/galleries', label: 'Galleries' },
-  { tab: 'portfolio', href: '/portfolio', label: 'Portfolio' },
+  { tab: 'portfolio', href: '/portfolio', label: 'Your website' },
   { tab: 'reminders', href: '/reminders', label: 'Reminders' },
   { tab: 'storage', href: '/storage', label: 'Storage' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
@@ -33,7 +33,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
 
 function Icon({ name }: { name: string }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <path d={ICONS[name]} />
     </svg>
   )
@@ -55,14 +55,15 @@ export function DashboardHeader({ active }: { active: Tab }) {
         key={it.href}
         href={it.href}
         onClick={() => setOpen(false)}
-        className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition ${
+        className={`relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13.5px] font-medium tracking-wide transition ${
           isActive
-            ? 'bg-twilight/10 text-twilight'
+            ? 'bg-blush-wash text-twilight'
             : accent
-              ? 'text-brass hover:bg-line/60'
-              : 'text-ink-soft hover:bg-line/60 hover:text-ink'
+              ? 'text-brass hover:bg-blush-wash/60'
+              : 'text-ink-soft hover:bg-blush-wash/60 hover:text-ink'
         }`}
       >
+        {isActive && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-twilight" />}
         <Icon name={it.tab} />
         {it.label}
       </Link>
@@ -72,7 +73,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line bg-paper-deep px-4 py-6 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line bg-card px-4 py-6 lg:flex">
         <Link href="/" className="mb-8 px-2"><Wordmark className="text-3xl" /></Link>
         <nav className="flex flex-1 flex-col gap-1">
           {ITEMS.map((it) => item(it))}
