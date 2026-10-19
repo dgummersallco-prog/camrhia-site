@@ -94,6 +94,14 @@ export function resolveTheme(r: Record<string, any>) {
     float: s.availability?.float !== false,
   }
 
+  const pricing = {
+    layout: pick(s.pricing?.layout, ['cards', 'menu', 'columns'] as const, 'cards'),
+    featured: str(s.pricing?.featured),
+    intro: str(s.pricing?.intro),
+    note: str(s.pricing?.note),
+    button: s.pricing?.button !== false,
+  }
+
   const sizes = {
     text: pairNum(s.sizes?.text, 80, 130, 100, 100),
     headline: pairNum(s.sizes?.headline, 24, 140, 44, 72),
@@ -131,6 +139,7 @@ export function resolveTheme(r: Record<string, any>) {
     cardRatio,
     menu,
     availability,
+    pricing,
     sizes,
     cssVars,
   }

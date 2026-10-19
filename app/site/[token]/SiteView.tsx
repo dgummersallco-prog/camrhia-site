@@ -202,20 +202,102 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
               )
             })}
           </div>, tinted)
-      case 'investment':
+      case 'investment': {
+        const feats = (d: string | null) => (d ?? '').split('\n').map((x) => x.trim()).filter(Boolean)
+        const L = t.pricing.layout
+        const fid = t.pricing.featured
+        const anyHot = sitePkgs.some((p) => p.id === fid)
+        const panel = `color-mix(in srgb, ${bg} 40%, #fff)`
+        const book = (hot: boolean, mt = 'mt-8') =>
+          t.pricing.button ? (
+            <a href={availHref} className={`${mt} inline-block px-7 py-3 text-[11px] uppercase tracking-[0.22em]`}
+              style={{ borderRadius: t.radius, fontFamily: t.body, background: hot ? accent : 'transparent', color: hot ? '#fff' : accent, border: `1px solid ${accent}` }}>
+              {t.hero.ctaText}
+            </a>
+          ) : null
+        const tag = (hot: boolean) =>
+          hot ? (
+            <p className="mb-3 text-[10px] uppercase tracking-[0.28em]" style={{ color: accent }}>Most popular</p>
+          ) : anyHot ? (
+            <p className="mb-3 text-[10px]">&nbsp;</p>
+          ) : null
+        const list = (d: string | null) =>
+          feats(d).length > 0 && (
+            <ul className="grid gap-2.5 text-center text-[14px] leading-snug" style={{ color: soft }}>
+              {feats(d).map((f, j) => <li key={j}>{f}</li>)}
+            </ul>
+          )
         return sec('investment', t.titles.investment,
-          <div className="mx-auto max-w-3xl">
-            {sitePkgs.map((p, i) => (
-              <div key={p.id} className="flex items-start justify-between gap-6 py-6" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
-                <div>
-                  <h3 className="text-2xl" style={headStyle}>{p.title}</h3>
-                  {p.description && <p className="mt-1 whitespace-pre-line text-sm leading-relaxed" style={{ color: soft }}>{p.description}</p>}
-                </div>
-                {p.price && <span className="whitespace-nowrap text-lg" style={{ color: accent, fontFamily: t.head }}>{p.price}</span>}
+          <div className="mx-auto max-w-5xl">
+            {t.pricing.intro && (
+              <p className="mx-auto mb-12 max-w-xl whitespace-pre-line text-center text-[15px] leading-relaxed" style={{ color: soft }}>{t.pricing.intro}</p>
+            )}
+
+            {L === 'cards' && (
+              <div className="grid items-stretch" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24 }}>
+                {sitePkgs.map((p) => {
+                  const hot = p.id === fid
+                  return (
+                    <div key={p.id} className="flex flex-col items-center px-8 py-10 text-center"
+                      style={{ background: panel, border: `1px solid ${hot ? accent : line}`, boxShadow: hot ? '0 10px 30px rgba(0,0,0,0.08)' : undefined }}>
+                      {tag(hot)}
+                      <h3 className="text-2xl" style={headStyle}>{p.title}</h3>
+                      {p.price && <p className="mt-3 text-4xl" style={{ ...headStyle, color: accent }}>{p.price}</p>}
+                      <div className="my-6 h-px w-10" style={{ background: line }} />
+                      {list(p.description)}
+                      <div className="mt-auto">{book(hot)}</div>
+                    </div>
+                  )
+                })}
               </div>
-            ))}
-            <div className="mt-10 text-center">{cta(true)}</div>
+            )}
+
+            {L === 'menu' && (
+              <div className="mx-auto max-w-3xl">
+                {sitePkgs.map((p, i) => {
+                  const hot = p.id === fid
+                  return (
+                    <div key={p.id} className="py-8" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
+                      {hot && <p className="mb-2 text-[10px] uppercase tracking-[0.28em]" style={{ color: accent }}>Most popular</p>}
+                      <div className="flex items-baseline gap-3">
+                        <h3 className="text-2xl" style={{ ...headStyle, color: hot ? accent : ink }}>{p.title}</h3>
+                        <span className="flex-1" style={{ borderBottom: `1px dotted ${soft}`, opacity: 0.5, transform: 'translateY(-4px)' }} />
+                        {p.price && <span className="text-2xl" style={{ ...headStyle, color: accent }}>{p.price}</span>}
+                      </div>
+                      {feats(p.description).length > 0 && (
+                        <p className="mt-3 text-[14px] leading-relaxed" style={{ color: soft }}>{feats(p.description).join('   ·   ')}</p>
+                      )}
+                      {book(hot, 'mt-5')}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {L === 'columns' && (
+              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 1, background: line, border: `1px solid ${line}` }}>
+                {sitePkgs.map((p) => {
+                  const hot = p.id === fid
+                  return (
+                    <div key={p.id} className="flex flex-col items-center px-8 py-12 text-center" style={{ background: hot ? tint : bg }}>
+                      {tag(hot)}
+                      <h3 className="text-2xl" style={headStyle}>{p.title}</h3>
+                      {p.price && <p className="mt-3 text-3xl" style={{ ...headStyle, color: accent }}>{p.price}</p>}
+                      <div className="my-6 h-px w-10" style={{ background: accent, opacity: 0.6 }} />
+                      {list(p.description)}
+                      <div className="mt-auto">{book(hot)}</div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {t.pricing.note && (
+              <p className="mx-auto mt-10 max-w-xl whitespace-pre-line text-center text-[14px] italic leading-relaxed" style={{ color: soft }}>{t.pricing.note}</p>
+            )}
+            {!t.pricing.button && <div className="mt-10 text-center">{cta(true)}</div>}
           </div>, tinted)
+      }
       case 'testimonials':
         return sec('words', t.titles.testimonials,
           <div className="grid gap-10 md:grid-cols-3">

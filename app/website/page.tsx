@@ -406,30 +406,6 @@ export default function WebsitePage() {
     await loadExtras()
     setPreviewKey((k) => k + 1)
   }
-  async function copyFromApp() {
-    const sb = supabase
-    if (!sb || !form?.public_token) return
-    const { data: sess } = await sb.auth.getSession()
-    const id = sess.session?.user.id
-    if (!id) return
-    const { data } = await sb.rpc('get_public_profile', { p_token: form.public_token })
-    const list = (((data as Record<string, any> | null)?.packages ?? []) as any[]).filter((p) => p.show_public !== false && !!p.page_id)
-    if (list.length === 0) { flash('No app packages to copy.'); return }
-    if (!window.confirm(`Copy ${list.length} packages from your app? They become separate from the app after this.`)) return
-    const rows = list.map((p, i) => ({
-      photographer_id: id,
-      title: String(p.name ?? 'Package'),
-      price: p.price ? String(p.price) : null,
-      description: (p.description ?? p.details ?? p.blurb ?? null) as string | null,
-      sort_order: pkgs.length + i,
-    }))
-    const { error } = await sb.from('website_packages').insert(rows)
-    if (error) { flash(error.message); return }
-    await loadExtras()
-    setPreviewKey((k) => k + 1)
-    flash('Packages copied')
-  }
-
   const T = form ? resolveTheme(form as unknown as Record<string, any>) : null
   const S = (form?.site_settings ?? {}) as Record<string, any>
   const heroSel: string[] = Array.isArray(S.hero?.photos) ? (S.hero.photos as string[]) : []
@@ -508,23 +484,32 @@ export default function WebsitePage() {
                   <div className="rounded-xl border border-line bg-paper p-4">
                     <p className="font-medium text-ink">Packages &amp; prices</p>
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Your website&apos;s own price list. It&apos;s separate from the pricing in your app.</p>
+                    <div className="mb-4 space-y-3">
+                      <Row label="Price list style">
+                        <Seg value={T.pricing.layout} options={[{ v: 'cards', label: 'Cards' }, { v: 'menu', label: 'Menu' }, { v: 'columns', label: 'Columns' }]} onChange={(v) => setIn('pricing', { layout: v })} />
+                      </Row>
+                      <Row label="Button on each package"><Switch on={T.pricing.button} onChange={(v) => setIn('pricing', { button: v })} /></Row>
+                      <input value={S.pricing?.intro ?? ''} onChange={(e) => setIn('pricing', { intro: e.target.value })} placeholder="Line above the prices, e.g. Every collection includes a private gallery" className={inputCls} />
+                      <input value={S.pricing?.note ?? ''} onChange={(e) => setIn('pricing', { note: e.target.value })} placeholder="Line below, e.g. Custom collections available. Just ask." className={inputCls} />
+                    </div>
                     {pkgs.map((p, i) => (
                       <div key={p.id} className="mb-3 rounded-lg border border-line bg-white p-3">
                         <div className="mb-2 flex gap-2">
                           <input defaultValue={p.title} onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== p.title) updatePkg(p, { title: v }) }} className={inputCls} placeholder="Package name" />
                           <input defaultValue={p.price ?? ''} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (p.price ?? '')) updatePkg(p, { price: v || null }) }} className={inputCls + ' max-w-[110px]'} placeholder="$2,400" />
                         </div>
-                        <textarea defaultValue={p.description ?? ''} rows={2} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (p.description ?? '')) updatePkg(p, { description: v || null }) }} className={inputCls} placeholder="What's included" />
+                        <textarea defaultValue={p.description ?? ''} rows={5} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (p.description ?? '')) updatePkg(p, { description: v || null }) }} className={inputCls} placeholder={"What is included, one per line:\n8 hours of coverage\nOnline gallery\nPrint release"} />
                         <div className="mt-2 flex gap-3 text-xs text-ink-soft">
                           <button type="button" disabled={i === 0} onClick={() => movePkg(p, -1)} className="disabled:opacity-30">↑ Up</button>
                           <button type="button" disabled={i === pkgs.length - 1} onClick={() => movePkg(p, 1)} className="disabled:opacity-30">↓ Down</button>
+                          <button type="button" onClick={() => setIn('pricing', { featured: S.pricing?.featured === p.id ? null : p.id })} className={S.pricing?.featured === p.id ? 'font-medium text-twilight' : ''}>★ Most popular</button>
                           <button type="button" onClick={() => removePkg(p)} className="ml-auto hover:text-ink">Remove</button>
                         </div>
                       </div>
                     ))}
                     <div className="flex flex-wrap gap-2">
                       <button className={btn} onClick={addPkg}>Add package</button>
-                      <button className={btnGhost} onClick={copyFromApp}>Copy from my app packages</button>
+                      
                     </div>
                   </div>
 
