@@ -118,8 +118,11 @@ export default function BillingPage() {
 
   if (pageState === 'loading') {
     return (
-      <div className="min-h-screen bg-paper flex items-center justify-center">
-        <p className="text-ink-soft text-sm animate-pulse">Loading…</p>
+      <div className="min-h-screen bg-paper lg:pl-60">
+        <DashboardHeader active="billing" />
+        <main className="mx-auto max-w-3xl px-6 py-10">
+          <p className="text-ink-soft text-sm animate-pulse">Loading…</p>
+        </main>
       </div>
     )
   }
@@ -245,6 +248,49 @@ export default function BillingPage() {
             ? `Your free trial ends in ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'}. Subscribe to keep your galleries and sessions.`
             : null
 
+  if (status === 'comped') {
+    return (
+      <div className="min-h-screen bg-paper lg:pl-60">
+        <DashboardHeader active="billing" />
+        <main className="mx-auto max-w-3xl px-6 py-10">
+          <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Billing</p>
+          <h1 className="mb-6 font-fraunces text-3xl font-medium text-ink">A thank you from Camrhia</h1>
+          <section className="rounded-2xl border border-line bg-card p-8 sm:p-12">
+            <span className="mb-8 inline-block rounded-full bg-blush-wash px-4 py-1.5 font-mono text-xs uppercase tracking-widest text-twilight">
+              Founding photographer · Complimentary for life
+            </span>
+            <div className="space-y-5 font-fraunces text-xl leading-relaxed text-ink sm:text-2xl">
+              <p>Dear friend,</p>
+              <p>
+                You were here before anyone else. Before the reviews, before the rankings, before the first thousand
+                photographers, you trusted Camrhia with your studio. That means more to me than I can say.
+              </p>
+              <p>
+                Everything you use here exists because photographers told me what was missing, and what you ask for next
+                will shape what we build. As a founding photographer, your voice will always carry extra weight.
+              </p>
+              <p>
+                As a thank you, your account is complimentary for life. No subscription, no renewal and no catch, for as
+                long as Camrhia exists.
+              </p>
+              <p>
+                If something is broken, confusing or missing, tell me. You can reach us anytime at{' '}
+                <a href="/support" className="text-twilight underline underline-offset-4 hover:text-ink">camrhia.com/support</a>.
+              </p>
+              <p className="pt-2">
+                With gratitude,
+                <br />
+                Derek
+                <br />
+                <span className="text-lg text-ink-soft sm:text-xl">Founder, Camrhia</span>
+              </p>
+            </div>
+          </section>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-paper flex flex-col lg:pl-60">
       <DashboardHeader active="billing" />
@@ -254,12 +300,13 @@ export default function BillingPage() {
         </Link>
       </header>
 
-      <main className="flex-1 flex flex-col items-center px-6 py-16">
+      <main className="flex-1 flex flex-col items-center px-6 py-10">
         <div className="w-full max-w-3xl">
-          <h1 className="font-fraunces text-4xl font-semibold text-ink mb-2 leading-tight text-center">
+          <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Billing</p>
+          <h1 className="font-fraunces text-3xl font-medium text-ink mb-2 leading-tight">
             {subscriptionActive ? 'Your plan' : `Subscribe to ${BRAND_NAME}`}
           </h1>
-          <p className="text-ink-soft text-sm mb-8 text-center">
+          <p className="text-ink-soft text-sm mb-8">
             {subscriptionActive
               ? 'Manage or change your subscription below.'
               : 'Choose the plan that fits how you work.'}
