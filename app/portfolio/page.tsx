@@ -1043,8 +1043,8 @@ export default function PortfolioEditorPage() {
           <>
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Your website</p>
-                <h1 className="font-fraunces text-3xl font-semibold text-ink">Your website</h1>
+                <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">App portfolio</p>
+                <h1 className="font-fraunces text-3xl font-semibold text-ink">App portfolio</h1>
               </div>
               <div className="flex items-center gap-3">
                 {message && <span className="text-sm text-twilight">{message}</span>}

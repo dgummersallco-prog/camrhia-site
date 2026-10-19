@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
 
-type Tab = 'dashboard' | 'messages' | 'sessions' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'reminders' | 'billing'
+type Tab = 'dashboard' | 'messages' | 'sessions' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing'
 
 const ICONS: Record<string, string> = {
   dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
@@ -16,6 +16,7 @@ const ICONS: Record<string, string> = {
   calendar: 'M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
   galleries: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M9 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21',
   portfolio: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M3 12h18 M12 3a14 14 0 0 1 0 18 M12 3a14 14 0 0 0 0 18',
+  website: 'M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M2 9h20 M6 6.5h.01 M9 6.5h.01',
   reminders: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0',
   storage: 'M22 12H2 M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z M6 16h.01 M10 16h.01',
   billing: 'M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M1 10h22',
@@ -28,7 +29,8 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
   { tab: 'messages', href: '/messages', label: 'Messages' },
   { tab: 'calendar', href: '/calendar', label: 'Calendar' },
-  { tab: 'portfolio', href: '/portfolio', label: 'Your website' },
+  { tab: 'website', href: '/website', label: 'Your website' },
+  { tab: 'portfolio', href: '/portfolio', label: 'App portfolio' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
 ]
 
