@@ -60,6 +60,15 @@ export default async function SiteGalleryPage({ params }: { params: Promise<{ to
   const head = { fontFamily: pair.head, fontWeight: 500, letterSpacing: '0.01em' } as const
   const photos = [...gal.photos].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
   const others = galleries.filter((g) => g.id !== gid)
+  const secs = [...(gal.sections ?? [])].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+  const secIds = new Set(secs.map((x: any) => x.id))
+  const groups: { id: string; title: string | null; photos: any[] }[] = []
+  const loose = photos.filter((p: any) => !p.section_id || !secIds.has(p.section_id))
+  if (loose.length) groups.push({ id: 'loose', title: null, photos: loose })
+  for (const sec of secs) {
+    const ps = photos.filter((p: any) => p.section_id === sec.id)
+    if (ps.length) groups.push({ id: sec.id, title: sec.title as string, photos: ps })
+  }
 
   return (
     <>
@@ -81,12 +90,19 @@ export default async function SiteGalleryPage({ params }: { params: Promise<{ to
         </header>
 
         <main className="mx-auto max-w-6xl px-6 pb-16">
-          <div className="columns-1 gap-3 sm:columns-2 lg:columns-3">
-            {photos.map((p: any) => {
-              const u = photoUrl(p.storage_path)
-              // eslint-disable-next-line @next/next/no-img-element
-              return u ? <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="mb-3 block w-full" style={{ cursor: 'zoom-in' }} /> : null
-            })}
+          <div className="flex flex-col gap-14">
+            {groups.map((grp) => (
+              <div key={grp.id}>
+                {grp.title && <h2 className="mb-6 text-center text-3xl" style={head}>{grp.title}</h2>}
+                <div className="columns-1 gap-3 sm:columns-2 lg:columns-3">
+                  {grp.photos.map((p: any) => {
+                    const u = photoUrl(p.storage_path)
+                    // eslint-disable-next-line @next/next/no-img-element
+                    return u ? <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="mb-3 block w-full" style={{ cursor: 'zoom-in' }} /> : null
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="mt-14 text-center">
