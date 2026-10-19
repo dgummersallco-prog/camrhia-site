@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
 type Gal = { id: string; title: string; status: 'draft' | 'published'; gallery_photos: { count: number }[] }
+type Sess = { id: string; names: string | null; wedding_date: string | null; session_type: string | null; gallery_due_date: string | null; gallery_url: string | null }
 type Activity = { id: string; title: string; when: string; thumb: string | null }
 
 function greeting(): string {
@@ -39,6 +40,7 @@ export default function DashboardPage() {
   const [siteShared, setSiteShared] = useState(false)
   const [hideSetup, setHideSetup] = useState(false)
   const [recentFavs, setRecentFavs] = useState(0)
+  const [sessions, setSessions] = useState<Sess[]>([])
 
   useEffect(() => {
     async function load() {
@@ -48,13 +50,14 @@ export default function DashboardPage() {
       if (!sess.session) { router.replace('/login?next=/dashboard'); return }
       const uid = sess.session.user.id
 
-      const [prof, gal, favCount, favRecent, portRes, weekFavs] = await Promise.all([
+      const [prof, gal, favCount, favRecent, portRes, weekFavs, wed] = await Promise.all([
         sb.from('profiles').select('first_name, studio_name, public_token').eq('id', uid).single(),
         sb.from('galleries').select('id, title, status, gallery_photos(count)').order('created_at', { ascending: false }),
         sb.from('gallery_favorites').select('id', { count: 'exact', head: true }),
         sb.from('gallery_favorites').select('id, gallery_id, photo_id, created_at').order('created_at', { ascending: false }).limit(8),
         sb.from('portfolio_photos').select('id', { count: 'exact', head: true }),
         sb.from('gallery_favorites').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
+        sb.from('weddings').select('id, names, wedding_date, session_type, gallery_due_date, gallery_url').eq('owner_id', uid),
       ])
 
       if (prof.data) {
@@ -92,6 +95,7 @@ export default function DashboardPage() {
       }
       setPortCount(portRes.count ?? 0)
       setRecentFavs(weekFavs.count ?? 0)
+      setSessions((wed.data ?? []) as unknown as Sess[])
       try {
         setSiteShared(localStorage.getItem('camrhia_site_shared') === '1')
         setHideSetup(localStorage.getItem('camrhia_hide_setup') === '1')
@@ -128,7 +132,24 @@ export default function DashboardPage() {
   ]
   const doneCount = steps.filter((x) => x.done).length
   const showSetup = !hideSetup && doneCount < steps.length
+  const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })()
+  const soonStr = (() => { const d = new Date(Date.now() + 7 * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })()
+  const fmtDay = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+  const typeLabel = (t: string | null) => (t ? t.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()) : 'Session')
+  const dueGalleries = sessions
+    .filter((x) => x.gallery_due_date && !x.gallery_url && x.wedding_date && x.wedding_date <= todayStr && x.gallery_due_date <= soonStr)
+    .sort((a, b) => (a.gallery_due_date! < b.gallery_due_date! ? -1 : 1))
+  const upcoming = sessions
+    .filter((x) => x.wedding_date && x.wedding_date >= todayStr)
+    .sort((a, b) => (a.wedding_date! < b.wedding_date! ? -1 : 1))
+    .slice(0, 6)
   const attention: { key: string; text: string; href: string; cta: string }[] = [
+    ...dueGalleries.map((x) => ({
+      key: `due${x.id}`,
+      text: `${x.names || 'A session'}: gallery ${x.gallery_due_date! < todayStr ? 'was due' : 'is due'} ${fmtDay(x.gallery_due_date!)}`,
+      href: '/galleries',
+      cta: 'Open galleries',
+    })),
     ...readyDrafts.map((g) => ({ key: `d${g.id}`, text: `"${g.title}" has ${photoCount(g)} photos and is still a draft`, href: `/galleries/${g.id}`, cta: 'Review and publish' })),
     ...emptyDrafts.map((g) => ({ key: `e${g.id}`, text: `"${g.title}" has no photos yet`, href: `/galleries/${g.id}`, cta: 'Upload photos' })),
     ...(recentFavs > 0 ? [{ key: 'fav', text: `Clients hearted ${recentFavs} photo${recentFavs === 1 ? '' : 's'} in the last 7 days`, href: '/galleries', cta: 'See galleries' }] : []),
@@ -144,7 +165,7 @@ export default function DashboardPage() {
           <p className="text-sm text-ink-soft">{error ?? 'Loading…'}</p>
         ) : (
           <>
-            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Dashboard</p>
+            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Home</p>
             <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">
               {greeting()}{name ? `, ${name}` : ''}.
             </h1>
@@ -214,7 +235,7 @@ export default function DashboardPage() {
                 <span className="text-xs text-ink-soft">Upload and deliver photos</span>
               </Link>
               <Link href="/portfolio" className={action}>
-                <span className="font-fraunces text-lg font-semibold text-ink">Edit portfolio</span>
+                <span className="font-fraunces text-lg font-semibold text-ink">Edit website</span>
                 <span className="text-xs text-ink-soft">Update your website</span>
               </Link>
               {token ? (
@@ -277,27 +298,27 @@ export default function DashboardPage() {
                 )}
               </section>
 
-              {/* Everything in one place */}
+              {/* Coming up */}
               <section className={card}>
-                <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Everything in one place</p>
-                <p className="text-sm text-ink-soft">
-                  Your sessions, messages, calendar, galleries and portfolio all live here, and everything stays in sync with the Camrhia app.
-                </p>
-                <ul className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                  {[
-                    ['Sessions and messages', '/sessions'],
-                    ['Calendar', '/calendar'],
-                    ['Galleries', '/galleries'],
-                    ['Portfolio', '/portfolio'],
-                  ].map(([t, href]) => (
-                    <li key={href}>
-                      <a href={href} className="flex items-center justify-between rounded-xl border border-line px-3.5 py-2.5 text-ink transition hover:border-twilight">
-                        {t}
-                        <span className="text-twilight">→</span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Coming up</p>
+                {upcoming.length === 0 ? (
+                  <p className="text-sm text-ink-soft">No upcoming sessions. New bookings show up here.</p>
+                ) : (
+                  <ul className="divide-y divide-line">
+                    {upcoming.map((x) => (
+                      <li key={x.id}>
+                        <Link href="/sessions" className="flex items-center justify-between gap-3 py-2.5 hover:opacity-80">
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium text-ink">{x.names || 'Untitled session'}</span>
+                            <span className="block text-xs text-ink-soft">{typeLabel(x.session_type)}</span>
+                          </span>
+                          <span className="shrink-0 text-xs text-ink-soft">{fmtDay(x.wedding_date!)}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Link href="/calendar" className="mt-3 block text-sm font-medium text-twilight hover:underline">Open calendar →</Link>
                 <p className="mt-4 text-xs text-ink-soft">Still in the Camrhia app: payments, plus photo layouts.</p>
               </section>
             </div>

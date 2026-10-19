@@ -21,10 +21,10 @@ const ICONS: Record<string, string> = {
 }
 
 const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
-  { tab: 'dashboard', href: '/dashboard', label: 'Overview' },
+  { tab: 'dashboard', href: '/dashboard', label: 'Home' },
+  { tab: 'galleries', href: '/galleries', label: 'Galleries' },
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
   { tab: 'calendar', href: '/calendar', label: 'Calendar' },
-  { tab: 'galleries', href: '/galleries', label: 'Galleries' },
   { tab: 'portfolio', href: '/portfolio', label: 'Your website' },
   { tab: 'reminders', href: '/reminders', label: 'Reminders' },
   { tab: 'storage', href: '/storage', label: 'Storage' },
