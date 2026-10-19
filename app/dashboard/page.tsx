@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 
 type Gal = { id: string; title: string; status: 'draft' | 'published'; gallery_photos: { count: number }[] }
 type Sess = { id: string; names: string | null; wedding_date: string | null; session_type: string | null; gallery_due_date: string | null; gallery_url: string | null }
@@ -41,6 +42,8 @@ export default function DashboardPage() {
   const [hideSetup, setHideSetup] = useState(false)
   const [recentFavs, setRecentFavs] = useState(0)
   const [sessions, setSessions] = useState<Sess[]>([])
+  const [usedBytes, setUsedBytes] = useState(0)
+  const [limitBytes, setLimitBytes] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -50,14 +53,15 @@ export default function DashboardPage() {
       if (!sess.session) { router.replace('/login?next=/dashboard'); return }
       const uid = sess.session.user.id
 
-      const [prof, gal, favCount, favRecent, portRes, weekFavs, wed] = await Promise.all([
-        sb.from('profiles').select('first_name, studio_name, public_token').eq('id', uid).single(),
+      const [prof, gal, favCount, favRecent, portRes, weekFavs, wed, su] = await Promise.all([
+        sb.from('profiles').select('first_name, studio_name, public_token, plan_tier, storage_addon_packs').eq('id', uid).single(),
         sb.from('galleries').select('id, title, status, gallery_photos(count)').order('created_at', { ascending: false }),
         sb.from('gallery_favorites').select('id', { count: 'exact', head: true }),
         sb.from('gallery_favorites').select('id, gallery_id, photo_id, created_at').order('created_at', { ascending: false }).limit(8),
         sb.from('portfolio_photos').select('id', { count: 'exact', head: true }),
         sb.from('gallery_favorites').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
         sb.from('weddings').select('id, names, wedding_date, session_type, gallery_due_date, gallery_url').eq('owner_id', uid),
+        sb.rpc('storage_usage'),
       ])
 
       if (prof.data) {
@@ -96,6 +100,8 @@ export default function DashboardPage() {
       setPortCount(portRes.count ?? 0)
       setRecentFavs(weekFavs.count ?? 0)
       setSessions((wed.data ?? []) as unknown as Sess[])
+      setUsedBytes(((su.data ?? []) as { bytes: number | string }[]).reduce((n, r) => n + Number(r.bytes), 0))
+      setLimitBytes(storageLimitBytes((prof.data?.plan_tier as string | null) ?? null, (prof.data?.storage_addon_packs as number | null) ?? 0))
       try {
         setSiteShared(localStorage.getItem('camrhia_site_shared') === '1')
         setHideSetup(localStorage.getItem('camrhia_hide_setup') === '1')
@@ -322,6 +328,24 @@ export default function DashboardPage() {
                 <p className="mt-4 text-xs text-ink-soft">Still in the Camrhia app: payments, plus photo layouts.</p>
               </section>
             </div>
+
+            {/* Storage */}
+            <section className={`${card} mt-6`}>
+              <div className="mb-2 flex items-center justify-between gap-4">
+                <p className="font-fraunces text-xl font-semibold text-ink">Storage</p>
+                <Link href="/storage" className="text-sm font-medium text-twilight hover:underline">Manage storage →</Link>
+              </div>
+              {Number.isFinite(limitBytes) && limitBytes > 0 ? (
+                <>
+                  <div className="h-2 overflow-hidden rounded-full bg-line">
+                    <div className={`h-full rounded-full ${usedBytes / limitBytes > 0.9 ? 'bg-brass' : 'bg-twilight'}`} style={{ width: `${Math.min(100, (usedBytes / limitBytes) * 100)}%` }} />
+                  </div>
+                  <p className="mt-2 text-xs text-ink-soft">{formatBytes(usedBytes)} of {formatBytes(limitBytes)} used across {galleries.length} galler{galleries.length === 1 ? 'y' : 'ies'}</p>
+                </>
+              ) : (
+                <p className="text-sm text-ink-soft">{formatBytes(usedBytes)} used across {galleries.length} galler{galleries.length === 1 ? 'y' : 'ies'}</p>
+              )}
+            </section>
           </>
         )}
       </main>
