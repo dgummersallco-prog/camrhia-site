@@ -30,6 +30,9 @@ type Profile = {
   show_about_photo: boolean | null
   cover_style: string | null
   cover_scale: number | null
+  openings_display_mode: string | null
+  openings_badge_text: string | null
+  openings_badge_color: string | null
   message_btn_text: string | null
   message_btn_bg_color: string | null
   message_btn_color: string | null
@@ -62,7 +65,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -252,6 +255,9 @@ export default function PortfolioEditorPage() {
       section_titles: form.section_titles ?? {},
       cover_style: form.cover_style ?? 'standard',
       cover_scale: form.cover_scale ?? 1,
+      openings_display_mode: form.openings_display_mode ?? 'date_check',
+      openings_badge_text: t(form.openings_badge_text),
+      openings_badge_color: t(form.openings_badge_color),
       message_btn_text: t(form.message_btn_text),
       message_btn_bg_color: t(form.message_btn_bg_color),
       message_btn_color: t(form.message_btn_color),
@@ -806,7 +812,40 @@ export default function PortfolioEditorPage() {
       case 'openings':
         return sec(
           <>
-            <p className="text-sm text-ink-soft">Your open dates are managed in the Camrhia app. Turn the section on or off here.</p>
+            <div>
+              <p className={label}>How openings show</p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  ['date_check', 'Date check', 'Clients pick a date and see if you are free'],
+                  ['badge', 'Badge', 'A simple banner like "Booking Now"'],
+                ] as const).map(([k, t, sub]) => {
+                  const on = (form.openings_display_mode ?? 'date_check') === k
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setField('openings_display_mode', k)}
+                      className={`rounded-xl border px-3 py-2 text-left transition ${on ? 'border-twilight bg-blush-wash' : 'border-line hover:border-twilight'}`}
+                    >
+                      <span className="block text-sm font-medium text-ink">{t}</span>
+                      <span className="block text-xs text-ink-soft">{sub}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            {(form.openings_display_mode ?? 'date_check') === 'badge' ? (
+              <>
+                <div>
+                  <label className={label}>Badge text</label>
+                  <input className={input} value={form.openings_badge_text ?? ''} onChange={(e) => setField('openings_badge_text', e.target.value)} placeholder="Booking Now" />
+                </div>
+                <ColorField swatches={brandSwatches} title="Badge text color" value={form.openings_badge_color} fallback="#FFFFFF" onChange={(v) => setField('openings_badge_color', v)} />
+                <p className="text-xs text-ink-soft">Badge background, gradient, corners and shadow are set in the app for now.</p>
+              </>
+            ) : (
+              <p className="text-xs text-ink-soft">Open days come from your Calendar. Block or hold days there and this updates on its own.</p>
+            )}
             {headingField('openings')}
             {showToggle('openings')}
           </>,
