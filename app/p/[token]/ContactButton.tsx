@@ -166,15 +166,26 @@ export function ContactButton({
 
             {sent ? (
               <div style={{ fontFamily: 'system-ui, sans-serif', color: '#4A4A4A', lineHeight: 1.55 }}>
-                <p style={{ marginTop: 0 }}>Thanks, {name.split(' ')[0] || 'friend'}! {studioName} has your message and will reach out to you soon.</p>
+                {isClient ? (
+                  <p style={{ marginTop: 0 }}>Thanks, {name.split(' ')[0] || 'friend'}! {studioName} has your message and will reach out to you soon.</p>
+                ) : (
+                  <>
+                    <p style={{ marginTop: 0 }}>Thanks, {name.split(' ')[0] || 'friend'}! Your request is saved. <strong>One more step</strong> to get it to {studioName}:</p>
+                    <ol style={{ paddingLeft: 20, margin: '12px 0', display: 'grid', gap: 8 }}>
+                      <li>Download the free Camrhia app and create your account.</li>
+                      <li>Sign up with this exact email: <strong>{email}</strong></li>
+                      <li>The moment your account is ready, your message is sent to {studioName} automatically. You will find the conversation in the Messages tab.</li>
+                    </ol>
+                  </>
+                )}
                 {inquiryId && (
                   <a href={`/my/inquiry/${inquiryId}?s=${encodeURIComponent(studioName)}`} style={{ display: 'block', textAlign: 'center', background: accent, color: '#fff', textDecoration: 'none', borderRadius: 999, padding: '14px 20px', fontWeight: 600, margin: '14px 0' }}>
                     Open your conversation
                   </a>
                 )}
-                <p>Want to message, book, sign contracts and get your photos all in one place? Get the free Camrhia app.</p>
+                {isClient && <p>Want to message, book, sign contracts and get your photos all in one place? Get the free Camrhia app.</p>}
                 <a href={APP_STORE_URL} style={{ display: 'block', textAlign: 'center', background: accent, color: '#fff', textDecoration: 'none', borderRadius: 999, padding: '14px 20px', fontWeight: 600, marginTop: 14 }}>
-                  Get the Camrhia app
+                  {isClient ? 'Get the Camrhia app' : 'Download the app and create your account'}
                 </a>
               </div>
             ) : (
