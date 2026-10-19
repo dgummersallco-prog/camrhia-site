@@ -17,6 +17,7 @@ type Row = {
   cover_photo_id: string | null
   cover_path: string | null
   session_id: string | null
+  collection: string | null
   gallery_photos: { count: number }[]
 }
 
@@ -43,13 +44,18 @@ export default function GalleriesPage() {
   const [sessionPick, setSessionPick] = useState('')
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [q, setQ] = useState('')
+  const [colFilter, setColFilter] = useState('')
+  const [selecting, setSelecting] = useState(false)
+  const [sel, setSel] = useState<Set<string>>(new Set())
+  const [colName, setColName] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
     const sb = supabase
     if (!sb) return
     const { data, error: e } = await sb
       .from('galleries')
-      .select('id, title, token, status, created_at, expires_at, pin_hash, cover_photo_id, cover_path, session_id, gallery_photos(count)')
+      .select('id, title, token, status, created_at, expires_at, pin_hash, cover_photo_id, cover_path, session_id, collection, gallery_photos(count)')
       .order('created_at', { ascending: false })
     if (e) { setError(e.message); return }
     const list = (data ?? []) as unknown as Row[]
@@ -115,6 +121,7 @@ export default function GalleriesPage() {
   const needle = q.trim().toLowerCase()
   const visible = (rows ?? []).filter((g) => {
     if (filter !== 'all' && g.status !== filter) return false
+    if (colFilter && g.collection !== colFilter) return false
     if (needle) {
       const hay = `${g.title} ${sessById.get(g.session_id ?? '')?.names ?? ''}`.toLowerCase()
       if (!hay.includes(needle)) return false
@@ -126,6 +133,32 @@ export default function GalleriesPage() {
     const x = g.session_id ? sessById.get(g.session_id) : undefined
     if (!x || !x.gallery_sent_at || !x.gallery_url || !x.gallery_url.includes(g.token)) return null
     return x.gallery_opened_at ? 'Client opened' : 'Sent to client'
+  }
+
+  const collections = Array.from(new Set((rows ?? []).map((g) => g.collection).filter((x): x is string => !!x))).sort()
+
+  function toggleSel(id: string) {
+    setSel((prev) => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  }
+
+  async function applyCollection(name: string | null) {
+    const sb = supabase
+    if (!sb || sel.size === 0) return
+    setSaving(true)
+    setError(null)
+    const { error: e } = await sb.from('galleries').update({ collection: name }).in('id', Array.from(sel))
+    setSaving(false)
+    if (e) { setError(e.message); return }
+    setSel(new Set())
+    setSelecting(false)
+    setColName('')
+    setColFilter('')
+    load()
   }
 
   function copyLink(g: Row) {
@@ -195,7 +228,7 @@ export default function GalleriesPage() {
 
         {rows && rows.length > 0 && (
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex gap-2 text-sm">
+            <div className="flex flex-wrap gap-2 text-sm">
               {(['all', 'published', 'draft'] as const).map((f) => (
                 <button
                   key={f}
@@ -205,6 +238,21 @@ export default function GalleriesPage() {
                   {f}
                 </button>
               ))}
+              {collections.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setColFilter(colFilter === c ? '' : c)}
+                  className={`rounded-full px-4 py-1.5 ${colFilter === c ? 'bg-brass text-white' : 'border border-line text-ink'}`}
+                >
+                  {c}
+                </button>
+              ))}
+              <button
+                onClick={() => { setSelecting((v) => !v); setSel(new Set()) }}
+                className={`rounded-full px-4 py-1.5 ${selecting ? 'bg-ink text-white' : 'border border-line text-ink'}`}
+              >
+                {selecting ? 'Done' : 'Select'}
+              </button>
             </div>
             <input
               value={q}
@@ -212,6 +260,39 @@ export default function GalleriesPage() {
               placeholder="Search galleries"
               className="w-full rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none sm:w-64"
             />
+          </div>
+        )}
+
+        {selecting && (
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-card p-4 text-sm">
+            <span className="text-ink">{sel.size} selected</span>
+            <button onClick={() => setSel(new Set(visible.map((g) => g.id)))} className="text-xs text-twilight underline">
+              Select all shown
+            </button>
+            <input
+              list="collection-names"
+              value={colName}
+              onChange={(e) => setColName(e.target.value)}
+              placeholder="Collection, e.g. Fall 2026 Seniors"
+              className="min-w-[220px] flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none"
+            />
+            <datalist id="collection-names">
+              {collections.map((c) => <option key={c} value={c} />)}
+            </datalist>
+            <button
+              onClick={() => applyCollection(colName.trim())}
+              disabled={saving || sel.size === 0 || !colName.trim()}
+              className="rounded-xl bg-twilight px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Add to collection'}
+            </button>
+            <button
+              onClick={() => applyCollection(null)}
+              disabled={saving || sel.size === 0}
+              className="rounded-xl border border-line px-4 py-2 text-sm text-ink disabled:opacity-50"
+            >
+              Remove from collection
+            </button>
           </div>
         )}
 
@@ -234,10 +315,17 @@ export default function GalleriesPage() {
                   key={g.id}
                   role="link"
                   tabIndex={0}
-                  onClick={() => router.push(`/galleries/${g.id}`)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/galleries/${g.id}`) }}
-                  className="group cursor-pointer overflow-hidden rounded-2xl border border-line bg-card transition hover:-translate-y-0.5 hover:shadow-lg"
+                  onClick={() => (selecting ? toggleSel(g.id) : router.push(`/galleries/${g.id}`))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { if (selecting) toggleSel(g.id); else router.push(`/galleries/${g.id}`) } }}
+                  className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-line bg-card transition hover:-translate-y-0.5 hover:shadow-lg ${sel.has(g.id) ? 'ring-2 ring-twilight' : ''}`}
                 >
+                  {selecting && (
+                    <span
+                      className={`absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full border text-xs ${sel.has(g.id) ? 'border-twilight bg-twilight text-white' : 'border-white bg-black/30 text-transparent'}`}
+                    >
+                      ✓
+                    </span>
+                  )}
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-line">
                     {g.cover_path || covers[g.id] ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -259,6 +347,7 @@ export default function GalleriesPage() {
                       )}
                       <p className="mt-0.5 text-xs text-ink-soft">
                         {count} {count === 1 ? 'photo' : 'photos'}
+                        {g.collection ? ` · ${g.collection}` : ''}
                         {g.pin_hash ? ' · PIN' : ''}
                         {sentState(g) ? ` · ${sentState(g)}` : ''}
                         {g.expires_at ? ` · expires ${new Date(g.expires_at).toLocaleDateString()}` : ''}

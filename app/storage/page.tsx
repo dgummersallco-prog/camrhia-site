@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -8,7 +8,7 @@ import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 import { downloadZip } from 'client-zip'
 
-type Row = { gallery_id: string; title: string; status: string; photos: number; bytes: number; created_at: string }
+type Row = { gallery_id: string; title: string; status: string; photos: number; bytes: number; created_at: string; collection: string | null }
 
 const card = 'rounded-2xl border border-line bg-card p-5'
 
@@ -129,6 +129,26 @@ export default function StoragePage() {
   }
 
   const used = (rows ?? []).reduce((n, r) => n + r.bytes, 0)
+  const keyOf = (r: Row) => r.collection ?? ''
+  const groupTotals: Record<string, { bytes: number; count: number }> = {}
+  for (const r of rows ?? []) {
+    const k = keyOf(r)
+    const t = groupTotals[k] ?? { bytes: 0, count: 0 }
+    t.bytes += r.bytes
+    t.count += 1
+    groupTotals[k] = t
+  }
+  const hasCollections = Object.keys(groupTotals).some((k) => k !== '')
+  const ordered = hasCollections
+    ? [...(rows ?? [])].sort((a, b) => {
+        const ka = keyOf(a)
+        const kb = keyOf(b)
+        if (ka === kb) return b.bytes - a.bytes
+        if (ka === '') return 1
+        if (kb === '') return -1
+        return groupTotals[kb].bytes - groupTotals[ka].bytes
+      })
+    : (rows ?? [])
   const limit = storageLimitBytes(plan, packs)
   const pct = Math.min(100, (used / limit) * 100)
   const barColor = used >= limit ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-twilight'
@@ -178,8 +198,15 @@ export default function StoragePage() {
                 <p className="text-sm text-ink-soft">No galleries yet.</p>
               ) : (
                 <ul className="divide-y divide-line">
-                  {rows.map((r) => (
-                    <li key={r.gallery_id} className="flex flex-wrap items-center gap-3 py-3">
+                  {ordered.map((r, idx) => (
+                    <Fragment key={r.gallery_id}>
+                    {hasCollections && (idx === 0 || keyOf(ordered[idx - 1]) !== keyOf(r)) && (
+                      <li className="flex items-center justify-between pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-ink-soft">
+                        <span>{r.collection ?? 'No collection'}</span>
+                        <span>{groupTotals[keyOf(r)].count} {groupTotals[keyOf(r)].count === 1 ? 'gallery' : 'galleries'} · {formatBytes(groupTotals[keyOf(r)].bytes)}</span>
+                      </li>
+                    )}
+                    <li className="flex flex-wrap items-center gap-3 py-3">
                       <Link href={`/galleries/${r.gallery_id}`} className="min-w-0 flex-1">
                         <p className="truncate font-medium text-ink">{r.title}</p>
                         <p className="text-xs text-ink-soft">
@@ -202,6 +229,7 @@ export default function StoragePage() {
                         {busy === r.gallery_id ? 'Deleting…' : 'Delete'}
                       </button>
                     </li>
+                    </Fragment>
                   ))}
                 </ul>
               )}
