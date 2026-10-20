@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
-import { getBoard, starter, blank, newItem } from '@/lib/aboutCanvas'
+import { getBoard, starter, blank, newItem, hasBoard, galleryStarter } from '@/lib/aboutCanvas'
 import type { CItem } from '@/lib/aboutCanvas'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { FONT_OPTIONS, PAIR_PRESETS, NAV_DEFAULTS, DEFAULT_TITLES, resolveTheme } from '@/lib/siteTheme'
@@ -432,16 +432,19 @@ export default function WebsitePage() {
   const [cvSel, setCvSel] = useState<string | null>(null)
   const [cvBoard, setCvBoard] = useState<string | null>(null)
   const [cvNew, setCvNew] = useState<string | null>(null)
+  const [cvGalleries, setCvGalleries] = useState<{ id: string; title: string }[]>([])
   const cvBridge = useState(() => ({ upd: null as any, board: null as string | null }))[0]
 
   useEffect(() => {
     function onMsg(e: MessageEvent) {
-      const d = e.data as { type?: string; dev?: string; board?: unknown; id?: string | null; boardId?: string } | null
+      const d = e.data as { type?: string; dev?: string; board?: unknown; id?: string | null; boardId?: string; list?: unknown } | null
       if (!d) return
       if (d.type === 'camrhia-canvas' && d.dev && d.board && cvBridge.upd) {
         const bid = d.boardId ?? 'about'
         cvBridge.upd((st: any) => {
-          if (bid === 'about') {
+          if (bid === 'galleries') {
+            st.galindex = { ...(st.galindex ?? {}), canvas: { ...((st.galindex ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
+          } else if (bid === 'about') {
             const a2 = { ...(st.about ?? {}) }
             a2.canvas = { ...(a2.canvas ?? {}), [d.dev as string]: d.board }
             st.about = a2
@@ -450,6 +453,7 @@ export default function WebsitePage() {
           }
         })
       }
+      if (d.type === 'camrhia-galleries' && Array.isArray(d.list)) setCvGalleries(d.list as { id: string; title: string }[])
       if (d.type === 'camrhia-canvas-select') {
         if (d.id == null) {
           if (cvBridge.board && d.boardId !== cvBridge.board) return
@@ -667,13 +671,19 @@ export default function WebsitePage() {
 
   function canvasPanel(boardId: string) {
     const isAbout = boardId === 'about'
+    const isGal = boardId === 'galleries'
     const customsList = (S.customs ?? []) as any[]
-    const canvasData = isAbout ? S.about?.canvas : customsList.find((c) => c.id === boardId)?.canvas
+    const canvasData = isAbout ? S.about?.canvas : isGal ? S.galindex?.canvas : customsList.find((c) => c.id === boardId)?.canvas
     const ph2 = isAbout ? S.about?.photo2 : null
-    const b = getBoard(canvasData, device, ph2, !isAbout)
+    const galIds = cvGalleries.map((g) => g.id)
+    const b = isGal && !hasBoard(canvasData, device) ? galleryStarter(device, galIds) : getBoard(canvasData, device, ph2, !isAbout)
     const sel: CItem | null = cvBoard === boardId ? (b.items.find((i) => i.id === cvSel) ?? null) : null
     const setBoard = (nb: { h: number; items: CItem[] }) => upd((st: any) => {
-      if (isAbout) {
+      if (isGal) {
+        const g2 = { ...(st.galindex ?? {}) }
+        g2.canvas = { ...(g2.canvas ?? {}), [device]: nb }
+        st.galindex = g2
+      } else if (isAbout) {
         const a2 = { ...(st.about ?? {}) }
         a2.canvas = { ...(a2.canvas ?? {}), [device]: nb }
         st.about = a2
@@ -688,12 +698,13 @@ export default function WebsitePage() {
       cvBridge.board = id ? boardId : null
       ;(document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-canvas-pick', id, boardId }, '*')
     }
-    const add = (type: 'photo' | 'card' | 'heading' | 'button') => {
+    const add = (type: 'photo' | 'card' | 'heading' | 'button' | 'gallery') => {
       const it = newItem(type, device, Math.max(0, ...b.items.map((i) => i.z)) + 1)
+      if (type === 'gallery') it.galleryId = galIds.find((id) => !b.items.some((i) => i.galleryId === id)) ?? galIds[0]
       setBoard({ ...b, items: [...b.items, it] })
       pick(it.id)
     }
-    const names: Record<string, string> = { photo: 'Photo', card: 'Text card', heading: 'Heading', button: 'Button' }
+    const names: Record<string, string> = { photo: 'Photo', card: 'Text card', heading: 'Heading', button: 'Button', gallery: 'Gallery tile' }
     async function up(id: string, file: File) {
       const sb = supabase
       if (!sb) return
@@ -715,7 +726,7 @@ export default function WebsitePage() {
         <p className="text-sm text-ink">Free layout <span className="text-xs text-ink-soft">· arranging the {device} page</span></p>
         <p className="text-xs text-ink-soft">Drag anything in the preview to move it, and drag the small square on its corner to resize. Use the Phone / Desktop switch above the preview to arrange each size.</p>
         <div className="flex flex-wrap gap-2">
-          {(['photo', 'card', 'heading', 'button'] as const).map((tp) => (
+          {((isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery')[]).map((tp) => (
             <button key={tp} type="button" className={btnGhost} onClick={() => add(tp)}>+ {names[tp]}</button>
           ))}
         </div>
@@ -746,6 +757,27 @@ export default function WebsitePage() {
                 <div>
                   <p className="mb-1 text-xs text-ink-soft">Rounded corners</p>
                   <Slider min={0} max={30} step={1} value={sel.radius ?? 0} onChange={(v) => patch(sel.id, { radius: v })} />
+                </div>
+              </>
+            )}
+            {sel.type === 'gallery' && (
+              <>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-ink">Gallery</label>
+                  <select value={sel.galleryId ?? ''} onChange={(e) => patch(sel.id, { galleryId: e.target.value })} className={inputCls}>
+                    {cvGalleries.map((g) => <option key={g.id} value={g.id}>{g.title || 'Untitled'}</option>)}
+                  </select>
+                </div>
+                <Row label="Title">
+                  <Seg value={sel.titleMode ?? 'overlay'} options={[{ v: 'overlay', label: 'On photo' }, { v: 'below', label: 'Below' }, { v: 'none', label: 'Hidden' }]} onChange={(v) => patch(sel.id, { titleMode: v as 'overlay' | 'below' | 'none' })} />
+                </Row>
+                <div>
+                  <p className="mb-1 text-xs text-ink-soft">Title size</p>
+                  <Slider min={0.8} max={5} step={0.1} value={sel.fs ?? 1.8} onChange={(v) => patch(sel.id, { fs: v })} />
+                </div>
+                <div>
+                  <p className="mb-1 text-xs text-ink-soft">Rounded corners</p>
+                  <Slider min={0} max={20} step={1} value={sel.radius ?? 0} onChange={(v) => patch(sel.id, { radius: v })} />
                 </div>
               </>
             )}
@@ -791,8 +823,8 @@ export default function WebsitePage() {
             </div>
           </div>
         )}
-        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard(isAbout ? starter(device, ph2) : blank(device)); pick(null) }}>
-          Start over with the {isAbout ? 'starter' : 'blank'} layout
+        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard(isAbout ? starter(device, ph2) : isGal ? galleryStarter(device, galIds) : blank(device)); pick(null) }}>
+          Start over with the {isAbout ? 'starter' : isGal ? 'default' : 'blank'} layout
         </button>
       </div>
     )
@@ -1359,8 +1391,9 @@ export default function WebsitePage() {
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={(S.galindex?.layout ?? T.galindex.layout) as any} onChange={(v) => setIn('galindex', { layout: v })}
-                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }, { v: 'checker', name: 'Checkerboard', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="24" height="10" /><rect x="30" y="14" width="24" height="10" /><rect x="6" y="24" width="24" height="10" /></g><g fill="#B9AFA2"><rect x="34" y="8" width="16" height="2" /><rect x="10" y="18" width="16" height="2" /><rect x="34" y="28" width="16" height="2" /></g></svg> }]} />
+                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }, { v: 'checker', name: 'Checkerboard', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="24" height="10" /><rect x="30" y="14" width="24" height="10" /><rect x="6" y="24" width="24" height="10" /></g><g fill="#B9AFA2"><rect x="34" y="8" width="16" height="2" /><rect x="10" y="18" width="16" height="2" /><rect x="34" y="28" width="16" height="2" /></g></svg> }, { v: 'rows', name: 'Alternating rows', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="5" y="5" width="24" height="14" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="34" y="9" width="20" height="3" /><rect x="34" y="14" width="14" height="2" /></g><g fill="#B9AFA2"><rect x="6" y="26" width="20" height="3" /><rect x="6" y="31" width="14" height="2" /></g><rect x="31" y="22" width="24" height="14" fill="#D8D0C4" /></svg> }, { v: 'custom', name: 'Custom', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="6" width="20" height="14" rx="1" fill="#D8D0C4" /><rect x="30" y="10" width="24" height="12" rx="1" fill="#C9BFB2" /><rect x="12" y="24" width="20" height="11" rx="1" fill="#F2EBDD" stroke="#9A8A74" strokeWidth="0.8" strokeDasharray="2 1.5" /><rect x="29" y="31" width="5" height="5" fill="#B08D57" /></svg> }]} />
                   </div>
+                  {(S.galindex?.layout ?? T.galindex.layout) === 'custom' && canvasPanel('galleries')}
                   {(S.galindex?.layout ?? T.galindex.layout) === 'checker' && (
                     <FontPicker label="Gallery name font" value={S.galindex?.font ?? 'barlowcondensed'} cats={['display', 'sans', 'serif']} onChange={(k) => setIn('galindex', { font: k })} />
                   )}

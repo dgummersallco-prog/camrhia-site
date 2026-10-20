@@ -2,6 +2,7 @@
 
 import { TestimonialCarousel } from './TestimonialCarousel'
 import { AboutCanvas } from './AboutCanvas'
+import { galleryStarter } from '@/lib/aboutCanvas'
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
@@ -271,7 +272,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       }
       case 'portfolio': {
         const rawGal = (r as any).site_settings?.galindex?.layout
-        const L: string = page === 'galleries' ? (rawGal === 'checker' ? 'checker' : t.galindex.layout) : t.portfolio.layout
+        const L: string = page === 'galleries' ? (['checker', 'rows', 'custom'].includes(rawGal) ? rawGal : t.galindex.layout) : t.portfolio.layout
         const list = page === 'home' ? galleries.slice(0, 6) : galleries
         const card = (g: any, style: React.CSSProperties, cls = '', big = false) => {
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
@@ -314,6 +315,40 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   })}
                 </div>
               </div>
+            ) : L === 'rows' ? (
+              <div className="mx-auto max-w-5xl">
+                {list.map((g, i) => {
+                  const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
+                  const u = photoUrl(cover?.storage_path)
+                  const href = `/site/${token}/g/${g.id}${qs}`
+                  const odd = i % 2 === 1
+                  return (
+                    <div key={g.id} className="grid items-center md:grid-cols-2" style={{ marginTop: i > 0 ? 'calc(var(--gap) + 24px)' : 0 }}>
+                      <a href={href} className={`group relative block overflow-hidden ${odd ? 'md:order-2' : ''}`} style={{ aspectRatio: '4/3', background: '#E5E1DB' }}>
+                        {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
+                      </a>
+                      <div className={`flex flex-col items-center justify-center px-6 py-10 text-center ${odd ? 'md:order-1' : ''}`}>
+                        <span className="text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
+                        <a href={href} className="mt-3 text-4xl md:text-5xl" style={headStyle}>{g.title}</a>
+                        <p className="mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{g.photos.length} photos</p>
+                        <a href={href} className="mt-6 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>View gallery →</a>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : L === 'custom' ? (
+              <AboutCanvas
+                canvas={(r as any).site_settings?.galindex?.canvas} photo2={null} aboutPhoto={aboutPhoto} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
+                title={null} bio="" headStyle={headStyle} ink={ink} soft={soft} tint={tint}
+                bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId="galleries"
+                galleries={galleries.map((g) => ({ id: g.id, title: g.title, coverUrl: photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path) }))}
+                galleryHref={(id) => `/site/${token}/g/${id}${qs}`}
+                fallback={(dv) => galleryStarter(dv, galleries.map((g) => g.id))}
+                renderButton={(label) => (
+                  <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+                )}
+              />
             ) : L === 'banners' ? (
               <div className="flex flex-col" style={{ gap: 'calc(var(--gap) + 8px)' }}>
                 {list.map((g) => card(g, { aspectRatio: '21/9', minHeight: 180 }))}

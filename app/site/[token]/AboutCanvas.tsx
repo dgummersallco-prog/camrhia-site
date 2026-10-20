@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as RPE, ReactNode } from 'react'
-import { getBoard } from '@/lib/aboutCanvas'
+import { getBoard, hasBoard } from '@/lib/aboutCanvas'
 import type { Board, CItem, Dev } from '@/lib/aboutCanvas'
 
 type Props = {
@@ -20,6 +20,9 @@ type Props = {
   headWeight: number | null
   defaultButton: string
   boardId?: string
+  galleries?: { id: string; title: string; coverUrl?: string | null }[]
+  galleryHref?: (id: string) => string
+  fallback?: (dev: Dev) => Board
   renderButton: (label: string) => ReactNode
 }
 
@@ -28,7 +31,7 @@ type Drag = { id: string; mode: 'move' | 'size'; sx: number; sy: number; ix: num
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi))
 
 function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: string; p: Props; sel: string | null; setSel: (id: string | null) => void }) {
-  const board = getBoard(p.canvas, dev, p.photo2, (p.boardId ?? 'about') !== 'about')
+  const board = p.fallback && !hasBoard(p.canvas, dev) ? p.fallback(dev) : getBoard(p.canvas, dev, p.photo2, (p.boardId ?? 'about') !== 'about')
   const [local, setLocal] = useState<Board | null>(null)
   const ref = useRef<HTMLDivElement>(null)
   const drag = useRef<Drag | null>(null)
@@ -104,6 +107,34 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
           )}
           <div style={{ fontFamily: p.bodyFont, fontWeight: 300, fontSize: `${fs}cqw`, lineHeight: 1.85, textAlign: 'justify', whiteSpace: 'pre-line', color: p.soft }}>{text}</div>
         </div>
+      )
+    }
+    if (it.type === 'gallery') {
+      const g = p.galleries?.find((x) => x.id === it.galleryId)
+      if (!g) {
+        return p.editing ? (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4cqw', color: p.soft, background: p.tint }}>Pick a gallery</div>
+        ) : null
+      }
+      const mode = it.titleMode ?? 'overlay'
+      const fs = it.fs ?? 1.8
+      return (
+        <a href={p.galleryHref ? p.galleryHref(g.id) : '#'} draggable={false} onClick={(e) => { if (p.editing) e.preventDefault() }}
+          style={{ display: 'block', position: 'relative', width: '100%', height: '100%' }}>
+          <div style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: mode === 'below' ? `${fs * 2.6}cqw` : 0, overflow: 'hidden', borderRadius: `${it.radius ?? 0}cqw`, background: p.tint }}>
+            {g.coverUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={g.coverUrl} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }} />
+            )}
+            {mode === 'overlay' && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.6))' }} />}
+          </div>
+          {mode === 'overlay' && (
+            <div style={{ ...p.headStyle, position: 'absolute', left: '1.6cqw', right: '1.6cqw', bottom: '1.4cqw', color: '#fff', fontSize: `${fs}cqw`, lineHeight: 1.1 }}>{g.title}</div>
+          )}
+          {mode === 'below' && (
+            <div style={{ ...p.headStyle, position: 'absolute', left: 0, right: 0, bottom: 0, color: p.ink, fontSize: `${fs}cqw`, lineHeight: 1.1 }}>{g.title}</div>
+          )}
+        </a>
       )
     }
     if (it.type === 'heading') {
@@ -182,6 +213,12 @@ export function AboutCanvas(props: Props) {
     window.addEventListener('cr-canvas-active', onActive)
     return () => window.removeEventListener('cr-canvas-active', onActive)
   }, [props.boardId])
+
+  useEffect(() => {
+    if (props.editing && props.boardId === 'galleries' && props.galleries) {
+      window.parent?.postMessage({ type: 'camrhia-galleries', list: props.galleries.map((g) => ({ id: g.id, title: g.title })) }, '*')
+    }
+  }, [props.editing, props.boardId, props.galleries?.length])
 
   return (
     <>
