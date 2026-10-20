@@ -3,6 +3,7 @@
 import { TestimonialCarousel } from './TestimonialCarousel'
 import { AboutCanvas } from './AboutCanvas'
 import { galleryStarter } from '@/lib/aboutCanvas'
+import { installPreviewGlow } from '@/lib/previewGlow'
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
@@ -33,16 +34,13 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const el = document.getElementById(d.id)
         if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })
       }
-      if (d && d.type === 'camrhia-outline') {
-        document.querySelectorAll('[data-cr-outline]').forEach((n) => { (n as HTMLElement).style.outline = ''; n.removeAttribute('data-cr-outline') })
-        const el = d.id ? document.getElementById(d.id) : null
-        if (el) { el.style.outline = '2px dashed #B08D57'; el.style.outlineOffset = '-6px'; el.setAttribute('data-cr-outline', '1') }
-      }
     }
     window.addEventListener('message', onMsg)
     window.parent?.postMessage({ type: 'camrhia-preview-ready' }, '*')
     return () => window.removeEventListener('message', onMsg)
   }, [])
+
+  useEffect(() => installPreviewGlow(), [])
 
   const t = resolveTheme(r)
   const { tpl, accent, ink, soft, line, bg, tint } = t

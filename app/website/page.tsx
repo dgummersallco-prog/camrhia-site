@@ -1385,7 +1385,7 @@ export default function WebsitePage() {
                 </Group>
 {customBlock('home')}
 </>)}
-{tab === 'galleries' && (<><Group open title="1. Galleries page" hint="your list of galleries" onOpen={() => setPreviewPage('galleries')}>
+{tab === 'galleries' && (<><Group open title="1. Galleries page" hint="your list of galleries" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
                   {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
                   <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
                   <div>
@@ -1503,7 +1503,7 @@ export default function WebsitePage() {
                 </Group>{customBlock('about')}
 </>)}
 {tab === 'book' && (<>
-                <Group open title="1. Layout" hint="photo and form arrangement" onOpen={() => setShowSent(false)}>
+                <Group open title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>
                   <LayoutPicker value={T.availability.layout === 'centered' ? 'centered' : 'side'} onChange={(v) => setIn('availability', { layout: v })}
                     options={[
                       { v: 'side', name: 'Side by side', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="8" width="22" height="24" rx="2" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="33" y="10" width="21" height="3" /><rect x="33" y="16" width="21" height="3" /><rect x="33" y="22" width="21" height="3" /><rect x="33" y="28" width="21" height="4" rx="1" /></g></svg> },
@@ -1513,7 +1513,7 @@ export default function WebsitePage() {
                   <p className="text-xs text-ink-soft">On a phone the calendar always sits above the form. Turn the calendar off in step 3 to show only the form.</p>
                 </Group>
 
-                <Group title="2. Title & fonts" hint="heading and intro" onOpen={() => setShowSent(false)}>
+                <Group title="2. Title & fonts" hint="heading and intro" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-head'), 500) }}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Heading</label>
                     <input value={S.availability?.title ?? ''} onChange={(e) => setIn('availability', { title: e.target.value })} placeholder="Check availability" className={inputCls} />
@@ -1527,7 +1527,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.bookHeading} onChange={(d, v) => setSize('bookHeading', d, v)} />
                 </Group>
 
-                <Group title="3. Calendar" hint="colors and on/off" onOpen={() => setShowSent(false)}>
+                <Group title="3. Calendar" hint="colors and on/off" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-cal'), 500) }}>
                   <Row label="Show the calendar"><Switch on={T.calendar.show} onChange={(v) => setIn('calendar', { show: v })} /></Row>
                   <p className="text-xs text-ink-soft">Dates and bookings always stay in sync with your app, whether the calendar is shown or not.</p>
                   {T.calendar.show && (
@@ -1550,7 +1550,7 @@ export default function WebsitePage() {
                   )}
                 </Group>
 
-                <Group title="4. Form" hint="the inquiry form" onOpen={() => setShowSent(false)}>
+                <Group title="4. Form" hint="the inquiry form" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-form'), 500) }}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Send button wording</label>
                     <input value={S.availability?.button ?? ''} onChange={(e) => setIn('availability', { button: e.target.value })} placeholder="Send inquiry" className={inputCls} />
@@ -1558,7 +1558,7 @@ export default function WebsitePage() {
                   <p className="text-xs text-ink-soft">Requests go straight to your Camrhia inbox, with their date and message attached.</p>
                 </Group>
 
-                <Group title="5. After they send" hint="the message and the app" onOpen={() => setShowSent(true)}>
+                <Group title="5. After they send" hint="the message and the app" onOpen={() => { setShowSent(true); setTimeout(() => scrollPreview('book-sent'), 900) }}>
                   <Row label="Preview">
                     <Seg value={showSent ? 'sent' : 'form'} options={[{ v: 'form', label: 'Form' }, { v: 'sent', label: 'After sending' }]} onChange={(v) => setShowSent(v === 'sent')} />
                   </Row>

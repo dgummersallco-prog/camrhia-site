@@ -1,5 +1,6 @@
 'use client'
 
+import { installPreviewGlow } from '@/lib/previewGlow'
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DateCheckWidget } from '../../../p/[token]/DateCheckWidget'
@@ -70,6 +71,8 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   const photoPath: string | null = t.hero.photos[0] ?? ((Array.isArray(r.cover_paths) && r.cover_paths[0]) || r.cover_path || null)
   const photo = photoPath ? STORAGE_BASE + photoPath : null
   const L = t.availability.layout
+
+  useEffect(() => installPreviewGlow(), [])
 
   useEffect(() => {
     if (!sent || isClient || isPreview || !t.availability.redirect) return
@@ -142,14 +145,14 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   const stacked = L === 'centered'
 
   const headerBlock = (
-    <div>
+    <div id="book-head">
       <h1 className="text-center" style={{ ...head, fontFamily: t.availability.family, fontSize: 'var(--book-h)', lineHeight: 1.1 }}>{t.availability.title}</h1>
       <p className="mx-auto mt-4 max-w-md whitespace-pre-line text-center text-[15px] leading-relaxed" style={{ color: soft }}>{t.availability.intro}</p>
     </div>
   )
 
   const sentBlock = (
-    <div className="rounded-2xl p-6" style={{ background: '#fff', border: `1px solid ${line}`, lineHeight: 1.6 }}>
+    <div id="book-sent" className="rounded-2xl p-6" style={{ background: '#fff', border: `1px solid ${line}`, lineHeight: 1.6 }}>
       <h2 style={{ ...head, fontSize: 28 }}>Thank you{name ? `, ${name.split(' ')[0]}` : ''}.</h2>
       <p className="mt-3 whitespace-pre-line text-[15px]" style={{ color: soft }}>
         {t.availability.success ?? `${studio} has your request and will reach out soon.`}
@@ -175,14 +178,14 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   )
 
   const calBlock = t.calendar.show ? (
-    <section>
+    <section id="book-cal">
       <p style={stepLabel}>1 · Pick a date</p>
       <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} {...cal} onPick={(d) => setDate(d)} />
     </section>
   ) : null
 
   const formBlock = (
-    <form onSubmit={submit} className="grid gap-4">
+    <form id="book-form" onSubmit={submit} className="grid gap-4">
       <p style={stepLabel}>{t.calendar.show ? 2 : 1} · Tell me about your day</p>
       <div><label style={label}>Your name *</label>
         <input style={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} autoComplete="name" /></div>
@@ -232,7 +235,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
           </div>
         )}
 
-        <main className={`mx-auto px-6 pb-24 pt-8 ${!stacked && !sent && calBlock ? 'max-w-5xl' : 'max-w-xl'}`}>
+        <main id="book-main" className={`mx-auto px-6 pb-24 pt-8 ${!stacked && !sent && calBlock ? 'max-w-5xl' : 'max-w-xl'}`}>
           {headerBlock}
           {sent ? (
             <div className="mt-10">{sentBlock}</div>
