@@ -16,6 +16,7 @@ type Site = {
   cover_path: string | null
   cover_paths: string[] | null
   logo_path: string | null
+  brand_colors_named: Record<string, string | null> | null
   site_template: string | null
   site_accent: string | null
   site_font_pair: string | null
@@ -28,7 +29,7 @@ type Tm = { id: string; storage_path: string | null; quote: string | null; clien
 type WPkg = { id: string; title: string; price: string | null; description: string | null; sort_order: number }
 type Dev = 'phone' | 'desktop'
 
-const COLUMNS = 'id, public_token, slug, accent_color, cover_path, cover_paths, logo_path, site_template, site_accent, site_font_pair, site_headline, site_subhead, site_sections, site_settings'
+const COLUMNS = 'id, public_token, slug, accent_color, cover_path, cover_paths, logo_path, brand_colors_named, site_template, site_accent, site_font_pair, site_headline, site_subhead, site_sections, site_settings'
 const BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 
 const TEMPLATES = [
@@ -652,7 +653,11 @@ export default function WebsitePage() {
     return /^#[0-9a-fA-F]{6}$/.test(b) ? b : '#A9545F'
   }
   function palette() {
-    const out: { name: string; hex: string }[] = [{ name: 'My brand color', hex: brandHex() }]
+    const out: { name: string; hex: string }[] = []
+    for (const [k, v] of Object.entries(form?.brand_colors_named ?? {})) {
+      if (v && /^#[0-9a-fA-F]{6}$/.test(v)) out.push({ name: k.replace(/_/g, ' '), hex: v })
+    }
+    if (out.length === 0) out.push({ name: 'My brand color', hex: brandHex() })
     if (form?.site_accent && /^#[0-9a-fA-F]{6}$/.test(form.site_accent)) out.push({ name: 'Site accent', hex: form.site_accent })
     for (const c of SWATCHES) out.push({ name: 'Suggested', hex: c })
     out.push({ name: 'White', hex: '#FFFFFF' }, { name: 'Cream', hex: '#FAF7F2' }, { name: 'Warm paper', hex: '#F0EAE1' }, { name: 'Ink', hex: '#2A1F24' }, { name: 'Black', hex: '#000000' })
