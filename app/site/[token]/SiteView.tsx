@@ -123,18 +123,20 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.hero.ctaText}</a>
     ) : null
 
+  const burger = (r as any).site_settings?.menu?.icon === 'burger'
   const renderNav = (overlay: boolean, center: boolean) => {
     const brand = logo
       ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
       : <span style={{ ...headStyle, fontSize: 24 }}>{name}</span>
     return (
+      <>
       <nav
         className={overlay ? 'absolute inset-x-0 top-0 z-20' : 'sticky top-0 z-20'}
         style={overlay ? { color: '#fff' } : { color: ink, background: `color-mix(in srgb, ${bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
       >
         <div className={center ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 py-2'}>
           <a href={hrefs.home}>{brand}</a>
-          <ul className="hidden gap-8 md:flex">
+          <ul className={burger ? 'hidden' : 'hidden gap-8 md:flex'}>
             {navItems.map((n) => (
               <li key={n.key}>
                 <a href={n.href} className="text-[11px] uppercase tracking-[0.2em]"
@@ -144,11 +146,13 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </li>
             ))}
           </ul>
-          <button className="absolute right-5 top-4 md:hidden" aria-label="Menu" onClick={() => setOpen(!open)} style={{ fontSize: 22, lineHeight: 1 }}>
-            {open ? '✕' : '☰'}
+          <button className={burger ? 'absolute right-5 top-1/2 -translate-y-1/2 p-1' : 'absolute right-5 top-4 md:hidden'} aria-label="Menu" onClick={() => setOpen(!open)} style={{ fontSize: 22, lineHeight: 1 }}>
+            {burger ? (
+              <svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="currentColor" strokeWidth="3"><path d="M0 3h30M0 11h30M0 19h30" /></svg>
+            ) : open ? '✕' : '☰'}
           </button>
         </div>
-        {open && (
+        {open && !burger && (
           <ul className="flex flex-col gap-4 px-6 pb-5 md:hidden" style={{ background: overlay ? 'rgba(0,0,0,0.72)' : bg }}>
             {navItems.map((n) => (
               <li key={n.key}>
@@ -158,6 +162,15 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </ul>
         )}
       </nav>
+      {open && burger && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8" style={{ background: bg, color: ink }}>
+          <button aria-label="Close menu" onClick={() => setOpen(false)} className="absolute right-6 top-5 text-3xl" style={{ lineHeight: 1 }}>✕</button>
+          {navItems.map((n) => (
+            <a key={n.key} href={n.href} onClick={() => setOpen(false)} className="text-4xl md:text-5xl" style={{ ...headStyle, opacity: n.active ? 1 : 0.75 }}>{n.label}</a>
+          ))}
+        </div>
+      )}
+      </>
     )
   }
 
@@ -222,7 +235,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           ), tinted)
       }
       case 'portfolio': {
-        const L = page === 'galleries' ? t.galindex.layout : t.portfolio.layout
+        const rawGal = (r as any).site_settings?.galindex?.layout
+        const L: string = page === 'galleries' ? (rawGal === 'checker' ? 'checker' : t.galindex.layout) : t.portfolio.layout
         const list = page === 'home' ? galleries.slice(0, 6) : galleries
         const card = (g: any, style: React.CSSProperties, cls = '', big = false) => {
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
@@ -238,9 +252,34 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </a>
           )
         }
-        return sec('portfolio', t.titles.portfolio,
+        return sec('portfolio', L === 'checker' ? null : t.titles.portfolio,
           <>
-            {L === 'banners' ? (
+            {L === 'checker' ? (
+              <div>
+                <div className="mb-10 text-center">
+                  <h1 className="text-[13px] uppercase tracking-[0.35em]" style={{ fontFamily: t.body }}>{t.titles.portfolio}</h1>
+                  <div className="mx-auto mt-4 h-[2px] w-12" style={{ background: line }} />
+                </div>
+                <div className="grid grid-cols-2">
+                  {list.map((g, i) => {
+                    const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
+                    const u = photoUrl(cover?.storage_path)
+                    const href = `/site/${token}/g/${g.id}${qs}`
+                    const photoTile = (
+                      <a key={g.id + 'p'} href={href} className="relative block aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>
+                        {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 hover:scale-105" />}
+                      </a>
+                    )
+                    const textTile = (
+                      <a key={g.id + 't'} href={href} className="flex aspect-square items-center justify-center p-4 text-center" style={{ background: bg }}>
+                        <span style={{ ...headStyle, fontWeight: 700, fontStretch: 'condensed', textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'clamp(1.4rem, 4.2vw, 3.6rem)' }}>{g.title}</span>
+                      </a>
+                    )
+                    return i % 2 === 0 ? [photoTile, textTile] : [textTile, photoTile]
+                  })}
+                </div>
+              </div>
+            ) : L === 'banners' ? (
               <div className="flex flex-col" style={{ gap: 'calc(var(--gap) + 8px)' }}>
                 {list.map((g) => card(g, { aspectRatio: '21/9', minHeight: 180 }))}
               </div>

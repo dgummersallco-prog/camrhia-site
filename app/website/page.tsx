@@ -890,6 +890,9 @@ export default function WebsitePage() {
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
+                  <Row label="Menu on desktop">
+                    <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
+                  </Row>
                   <SizeControl device={device} label="Menu word size" unit="px" min={9} max={22} step={1} value={T.sizes.menu} onChange={(d, v) => setSize('menu', d, v)} />
                   <div className="space-y-2">
                     {MENU_KEYS.map((k) => (
@@ -1108,8 +1111,8 @@ export default function WebsitePage() {
                   </div>
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
-                    <LayoutPicker value={T.galindex.layout} onChange={(v) => setIn('galindex', { layout: v })}
-                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }]} />
+                    <LayoutPicker value={(S.galindex?.layout ?? T.galindex.layout) as any} onChange={(v) => setIn('galindex', { layout: v })}
+                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }, { v: 'checker', name: 'Checkerboard', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="24" height="10" /><rect x="30" y="14" width="24" height="10" /><rect x="6" y="24" width="24" height="10" /></g><g fill="#B9AFA2"><rect x="34" y="8" width="16" height="2" /><rect x="10" y="18" width="16" height="2" /><rect x="34" y="28" width="16" height="2" /></g></svg> }]} />
                   </div>
                   <Row label="Cover shape">
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
