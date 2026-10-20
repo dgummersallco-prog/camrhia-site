@@ -1254,7 +1254,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 </>)}
-{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group open title="1. Logo" hint="upload, size and position" onOpen={() => scrollPreview('nav')}>
+{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group title="1. Logo" hint="upload, size and position" onOpen={() => scrollPreview('nav')}>
 <div className="border-t border-line pt-4">
                     <p className="mb-1 text-sm text-ink">Logo</p>
                     <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
@@ -1276,7 +1276,22 @@ export default function WebsitePage() {
                   <Row label="Logo position">
                     <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
                   </Row>
-                  <SizeControl device={device} label="Nudge left / right" unit="px" min={-80} max={80} step={1} value={T.sizes.logoNudge} onChange={(d, v) => setSize('logoNudge', d, v)} />
+                  {(() => {
+                    const nv = T.sizes.logoNudge[device]
+                    return (
+                      <div>
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="text-sm text-ink">Nudge left / right</span>
+                          <span className="font-mono text-xs text-ink-soft">{nv > 0 ? '+' : ''}{nv}px</span>
+                        </div>
+                        <div className="relative">
+                          <Slider min={-80} max={80} step={1} value={nv} onChange={(x) => setSize('logoNudge', device, Math.abs(x) <= 4 ? 0 : x)} />
+                          <div className="pointer-events-none absolute left-1/2 top-1/2 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded bg-brass" style={{ opacity: nv === 0 ? 1 : 0.55 }} />
+                        </div>
+                        <p className="mt-1 text-center text-[11px] text-ink-soft">{nv === 0 ? 'Centered on its spot' : 'Slide to the line to snap back'}</p>
+                      </div>
+                    )
+                  })()}
                   </Group>
 <Group title="2. Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
 <Row label="Menu bar">
@@ -1442,7 +1457,7 @@ export default function WebsitePage() {
 </Group>
 {customBlock('home')}
 </>)}
-{tab === 'galleries' && (<><Group open title="1. Galleries page" hint="your list of galleries" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
+{tab === 'galleries' && (<><Group title="1. Galleries page" hint="your list of galleries" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
                   {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
                   <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
                   <div>
@@ -1483,7 +1498,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
                 </Group>{customBlock('galleries')}
 </>)}
-{tab === 'about' && (<><Group open title="1. About" hint="your story" onOpen={() => scrollPreview('about')}>
+{tab === 'about' && (<><Group title="1. About" hint="your story" onOpen={() => scrollPreview('about')}>
                   {sectionHead('about')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -1564,7 +1579,7 @@ export default function WebsitePage() {
 </Group>{customBlock('about')}
 </>)}
 {tab === 'book' && (<>
-                <Group open title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>
+                <Group title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>
                   <LayoutPicker value={T.availability.layout === 'centered' ? 'centered' : 'side'} onChange={(v) => setIn('availability', { layout: v })}
                     options={[
                       { v: 'side', name: 'Side by side', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="8" width="22" height="24" rx="2" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="33" y="10" width="21" height="3" /><rect x="33" y="16" width="21" height="3" /><rect x="33" y="22" width="21" height="3" /><rect x="33" y="28" width="21" height="4" rx="1" /></g></svg> },
