@@ -13,25 +13,13 @@ const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
   : ''
 function photoUrl(path: string | null | undefined): string | null {
-  if (path && path.startsWith('data:')) return path
+  if (path && (path.startsWith('data:') || path.startsWith('http'))) return path
   return path ? `${STORAGE_BASE}${path}` : null
 }
 
 // Shown only inside the designer preview, so every section is visible while building.
-function phScene(i: number): string {
-  const pal = [
-    ['#f6d9b8', '#e8a87c', '#b5b0a1', '#8c9a86', '#5f735f'],
-    ['#dfe7ef', '#a9bfd6', '#8aa0b8', '#6d8499', '#4d6377'],
-    ['#f3e3e3', '#e2b5b0', '#c58d8a', '#a36b6b', '#7d4f50'],
-    ['#efe9d6', '#d9cd9f', '#b8a86c', '#8d8350', '#605a35'],
-    ['#e6ddf0', '#c0aedb', '#9b86c0', '#7a66a1', '#574678'],
-    ['#dcefe9', '#a8d4c5', '#7db5a3', '#559182', '#376659'],
-  ][i % 6]
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${pal[0]}"/><stop offset="0.6" stop-color="${pal[1]}"/></linearGradient></defs><rect width="800" height="1000" fill="url(#g)"/><circle cx="560" cy="300" r="90" fill="#ffffff" fill-opacity="0.55"/><path d="M0 640 C150 560 300 600 450 560 S700 540 800 580 V1000 H0Z" fill="${pal[2]}"/><path d="M0 740 C200 660 350 720 520 680 S720 660 800 700 V1000 H0Z" fill="${pal[3]}"/><path d="M0 850 C220 790 420 850 800 800 V1000 H0Z" fill="${pal[4]}"/></svg>`
-  return 'data:image/svg+xml,' + encodeURIComponent(svg)
-}
-const PH_SCENES = [0, 1, 2, 3, 4, 5].map(phScene)
-const PH_AVATAR = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#e4ddd0"/><circle cx="100" cy="78" r="38" fill="#b9ae9c"/><path d="M30 200 C40 132 160 132 170 200Z" fill="#b9ae9c"/></svg>')
+const PH_SCENES = [1, 2, 3, 4, 5, 6].map((n) => 'https://picsum.photos/seed/camrhia' + n + '/800/1000')
+const PH_AVATAR = 'https://i.pravatar.cc/200?img=47'
 const PH_GALLERIES = ['Wedding day', 'Engagement', 'Family'].map((title, gi) => ({
   id: 'ph' + gi,
   title,
@@ -40,8 +28,8 @@ const PH_GALLERIES = ['Wedding day', 'Engagement', 'Family'].map((title, gi) => 
 }))
 const PH_QUOTES = [
   { text: 'This is where your testimonials will show. Add one in the app and it replaces this.', who: 'Client name', img: PH_AVATAR as string | null },
-  { text: 'A kind word from a happy client goes here.', who: 'Another client', img: PH_AVATAR as string | null },
-  { text: 'Short and sweet works best.', who: 'Third client', img: PH_AVATAR as string | null },
+  { text: 'A kind word from a happy client goes here.', who: 'Another client', img: 'https://i.pravatar.cc/200?img=12' as string | null },
+  { text: 'Short and sweet works best.', who: 'Third client', img: 'https://i.pravatar.cc/200?img=32' as string | null },
 ]
 const PH_PKGS = [
   { id: 'ph1', title: 'Package one', price: '$0000', description: 'What is included\nAnother thing included' },
