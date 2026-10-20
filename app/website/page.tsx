@@ -1260,6 +1260,9 @@ export default function WebsitePage() {
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
+                  <Row label="Logo position">
+                    <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
+                  </Row>
                   <Row label="Menu on desktop">
                     <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
                   </Row>

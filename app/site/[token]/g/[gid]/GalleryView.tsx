@@ -50,7 +50,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
   )
 
   const nav = (
-    <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <nav className={'mx-auto flex max-w-6xl px-6 py-4 ' + (t.menu.logoPos === 'center' ? 'flex-col items-center gap-3' : 'items-center justify-between' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : ''))}>
       <Link href={`/site/${token}${qs}`}>
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -59,7 +59,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
           <span style={{ ...head, fontSize: 24 }}>{name}</span>
         )}
       </Link>
-      <div className="flex flex-wrap justify-end gap-x-5 gap-y-1 text-[11px] uppercase tracking-[0.2em]" style={{ fontSize: 'var(--menu)' }}>
+      <div className={'flex flex-wrap gap-x-5 gap-y-1 text-[11px] uppercase tracking-[0.2em] ' + (t.menu.logoPos === 'center' ? 'justify-center' : t.menu.logoPos === 'right' ? 'justify-start' : 'justify-end')} style={{ fontSize: 'var(--menu)' }}>
         {([['home', `/site/${token}${qs}`], ['galleries', `/site/${token}/galleries${qs}`], ['about', `/site/${token}/about${qs}`], ['book', `/site/${token}/availability${qs}`]] as [string, string][])
           .filter(([k]) => !t.menu.hidden.includes(k))
           .map(([k, h]) => <Link key={k} href={h}>{t.menu.labels[k]?.trim() || NAV_DEFAULTS[k]}</Link>)}

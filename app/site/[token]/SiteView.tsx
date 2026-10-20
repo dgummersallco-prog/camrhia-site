@@ -185,7 +185,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         className={overlay ? 'absolute inset-x-0 top-0 z-20' : 'sticky top-0 z-20'}
         style={overlay ? { color: '#fff' } : { color: ink, background: `color-mix(in srgb, ${bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
       >
-        <div className={center ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 py-2'}>
+        <div className={(t.menu.logoPos ? t.menu.logoPos === 'center' : center) ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 py-2' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : '')}>
           <a href={hrefs.home}>{brand}</a>
           <ul className={burger ? 'hidden' : 'hidden gap-8 md:flex'}>
             {navItems.map((n) => (
@@ -197,7 +197,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </li>
             ))}
           </ul>
-          <button className={burger ? 'absolute right-5 top-1/2 -translate-y-1/2 p-1' : 'absolute right-5 top-4 md:hidden'} aria-label="Menu" onClick={() => setOpen(!open)} style={{ fontSize: 22, lineHeight: 1 }}>
+          <button className={(burger ? 'absolute top-1/2 -translate-y-1/2 p-1 ' : 'absolute top-4 md:hidden ') + (t.menu.logoPos === 'right' ? 'left-5' : 'right-5')} aria-label="Menu" onClick={() => setOpen(!open)} style={{ fontSize: 22, lineHeight: 1 }}>
             {burger ? (
               <svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="currentColor" strokeWidth="3"><path d="M0 3h30M0 11h30M0 19h30" /></svg>
             ) : open ? '✕' : '☰'}

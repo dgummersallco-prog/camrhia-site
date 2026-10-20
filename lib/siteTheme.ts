@@ -165,6 +165,7 @@ export function resolveTheme(r: Record<string, any>) {
   const cardRatio = gallery.card === 'square' ? '1/1' : gallery.card === 'landscape' ? '3/2' : '4/5'
   const menu = {
     solid: s.menu?.style === 'solid',
+    logoPos: (['left', 'center', 'right'].includes(s.menu?.logoPos) ? s.menu.logoPos : '') as '' | 'left' | 'center' | 'right',
     labels: (s.menu?.labels ?? {}) as Record<string, string>,
     hidden: Array.isArray(s.menu?.hidden) ? (s.menu.hidden as string[]) : [],
   }
