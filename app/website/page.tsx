@@ -1001,6 +1001,24 @@ export default function WebsitePage() {
     out.push({ name: 'White', hex: '#FFFFFF' }, { name: 'Cream', hex: '#FAF7F2' }, { name: 'Warm paper', hex: '#F0EAE1' }, { name: 'Ink', hex: '#2A1F24' }, { name: 'Black', hex: '#000000' })
     return out
   }
+  function secStyleBlock(id: string) {
+    if (!T) return null
+    const sv = ((S as any).secStyle?.[id] ?? {}) as { bg?: string; text?: string; head?: string; body?: string }
+    const put = (patch: Record<string, string | undefined>) => setIn('secStyle', { [id]: { ...sv, ...patch } })
+    return (
+      <div className="space-y-4 border-t border-line pt-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Colors and fonts for this section</p>
+        <ColorField label="Background" value={sv.bg ?? T.bg} swatches={palette()} onChange={(h) => put({ bg: h })} onReset={() => put({ bg: undefined })} />
+        <ColorField label="Text color" value={sv.text ?? T.ink} swatches={palette()} onChange={(h) => put({ text: h })} onReset={() => put({ text: undefined })} />
+        <FontPicker label="Heading font" value={sv.head ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => put({ head: k })} />
+        <FontPicker label="Body font" value={sv.body ?? T.bodyKey} cats={['serif', 'sans']} onChange={(k) => put({ body: k })} />
+        {(sv.bg || sv.text || sv.head || sv.body) && (
+          <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => setIn('secStyle', { [id]: undefined })}>Use the site-wide look for this section</button>
+        )}
+      </div>
+    )
+  }
+
   function pickTab(t: 'style' | 'home' | 'galleries' | 'about' | 'book') {
     setTab(t)
     setPreviewPage(t === 'book' ? 'availability' : t === 'style' ? 'home' : t)
@@ -1167,7 +1185,6 @@ export default function WebsitePage() {
                   
                   {colorRow('Background', 'bg', T.bg)}
                   {colorRow('Text', 'text', T.ink)}
-                  {colorRow('Alternating section tint', 'tint', T.tint)}
                   <div className="grid grid-cols-3 gap-3 pt-2">
                     {Object.entries(PAIR_PRESETS).map(([key, p]) => {
                       const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
@@ -1257,7 +1274,8 @@ export default function WebsitePage() {
                       </div>
                     ))}
                   </div>
-                </Group>
+                {secStyleBlock('nav')}
+</Group>
 <Group title="2. Hero" hint="photos and headline" onOpen={() => scrollPreview('top')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
@@ -1296,7 +1314,8 @@ export default function WebsitePage() {
                   
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   
-                </Group>
+                {secStyleBlock('top')}
+</Group>
 <Group title="3. Explore" hint="links to your other pages" onOpen={() => scrollPreview('explore')}>
   <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
@@ -1324,6 +1343,7 @@ export default function WebsitePage() {
     </div>
   ))}
   <p className="text-xs text-ink-soft">Leave a title empty to use the name from your Menu step.</p>
+{secStyleBlock('explore')}
 </Group>
 <Group title="4. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
@@ -1344,6 +1364,7 @@ export default function WebsitePage() {
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>
                   
+{secStyleBlock('portfolio')}
 </Group>
 <Group title="5. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
@@ -1380,6 +1401,7 @@ export default function WebsitePage() {
                   </div>
 
                   
+{secStyleBlock('words')}
 </Group>
 <Group title="6. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
@@ -1387,13 +1409,15 @@ export default function WebsitePage() {
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
-                </Group>
+                {secStyleBlock('contact')}
+</Group>
 <Group title="7. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
                   </div>
-                </Group>
+                {secStyleBlock('footer')}
+</Group>
 {customBlock('home')}
 </>)}
 {tab === 'galleries' && (<><Group open title="1. Galleries page" hint="your list of galleries" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
@@ -1417,7 +1441,8 @@ export default function WebsitePage() {
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>
                   )}
-                </Group>
+                {secStyleBlock('portfolio')}
+</Group>
 <Group title="2. Inside a gallery" hint="what opens when a cover is clicked" onOpen={() => { setPreviewPage('gallery'); setTimeout(() => scrollPreview('gal-main'), 700) }}>
                   
                   
@@ -1468,7 +1493,8 @@ export default function WebsitePage() {
                   )}
                   {(S.about?.layout ?? T.about.layout) === 'canvas' && canvasPanel('about')}
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
-                </Group>
+                {secStyleBlock('about')}
+</Group>
 <Group title="2. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
 <div>
@@ -1506,12 +1532,14 @@ export default function WebsitePage() {
                   </div>
 
                   
+{secStyleBlock('investment')}
 </Group>
 <Group title="3. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
-                </Group>{customBlock('about')}
+                {secStyleBlock('faq')}
+</Group>{customBlock('about')}
 </>)}
 {tab === 'book' && (<>
                 <Group open title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>

@@ -4,6 +4,7 @@ import { TestimonialCarousel } from './TestimonialCarousel'
 import { AboutCanvas } from './AboutCanvas'
 import { galleryStarter } from '@/lib/aboutCanvas'
 import { installPreviewGlow } from '@/lib/previewGlow'
+import { FONT_OPTIONS } from '@/lib/siteTheme'
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
@@ -148,6 +149,23 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   ]
 
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: t.headWeight ?? 500, letterSpacing: '0.01em' }
+
+  // Per-section look: background, text color and fonts chosen in the designer.
+  const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string }>)
+  const famOf = (k?: string) => (k && FONT_OPTIONS[k] ? FONT_OPTIONS[k].family : null)
+  const hexOk = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
+  const secCss = Object.entries(secStyles).map(([id, v]) => {
+    if (!v || !/^[A-Za-z0-9_-]+$/.test(id)) return ''
+    const rules: string[] = []
+    if (hexOk(v.bg)) rules.push('background:' + hexOk(v.bg) + ' !important')
+    if (hexOk(v.text)) rules.push('color:' + hexOk(v.text) + ' !important')
+    if (famOf(v.body)) rules.push('font-family:' + famOf(v.body) + ' !important')
+    let css = rules.length ? '#' + id + ' {' + rules.join(';') + '}' : ''
+    if (famOf(v.head)) css += '#' + id + ' [style*="letter-spacing: 0.01em"] {font-family:' + famOf(v.head) + ' !important}'
+    return css
+  }).join('\n')
+  const extraFontKeys = Array.from(new Set(Object.values(secStyles).flatMap((v) => [v?.head, v?.body]).filter((k): k is string => !!k && !!FONT_OPTIONS[k])))
+  const extraFontsHref = extraFontKeys.length ? 'https://fonts.googleapis.com/css2?' + extraFontKeys.map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') + '&display=swap' : null
   const btnStyle: React.CSSProperties = { background: accent, color: t.btnText, fontFamily: t.body, borderRadius: t.radius }
 
   const cta = (force?: boolean) =>
@@ -580,6 +598,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   return (
     <>
       <link rel="stylesheet" href={t.fontsHref} />
+      {extraFontsHref && <link rel="stylesheet" href={extraFontsHref} />}
+      {secCss && <style dangerouslySetInnerHTML={{ __html: secCss }} />}
       <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${bg}}`}</style>
       <PortfolioLightbox />
       <div style={{ background: bg, color: ink, fontFamily: t.body }}>
