@@ -25,11 +25,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: `${BRAND_NAME} | Your photography website, bookings and client app in one`,
   description:
-    "A live portfolio website, bookings, contracts, payments and gallery delivery for photographers. Free for clients. Try it free for 14 days.",
+    "A website builder, bookings, contracts, payments and gallery delivery for photographers. Free for clients. Try it free for 14 days.",
   openGraph: {
     title: `${BRAND_NAME} | Your photography website, bookings and client app in one`,
     description:
-      "A live portfolio website, bookings, contracts, payments and gallery delivery for photographers. Free for clients. Try it free for 14 days.",
+      "A website builder, bookings, contracts, payments and gallery delivery for photographers. Free for clients. Try it free for 14 days.",
     url: "https://camrhia.com",
     siteName: "Camrhia",
     type: "website",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${BRAND_NAME} | Your photography website, bookings and client app in one`,
     description:
-      "A live portfolio website, bookings, contracts, payments and gallery delivery for photographers. Free for clients. Try it free for 14 days.",
+      "A website builder, bookings, contracts, payments and gallery delivery for photographers. Free for clients. Try it free for 14 days.",
   },
 }
 
@@ -60,7 +60,7 @@ const jsonLd = {
       "operatingSystem": "iOS",
       "downloadUrl": "https://apps.apple.com/app/id6800011162",
       "description":
-        "Camrhia is an app for photographers with a live portfolio website, a marketplace where clients browse photographers in their area, bookings, contracts, payment tracking, client messaging, a calendar and gallery link delivery. Free for clients. 14-day free trial for photographers.",
+        "Camrhia is an app for photographers with a website builder, a marketplace where clients browse photographers in their area, bookings, contracts, payment tracking, client messaging, a calendar and gallery link delivery. Free for clients. 14-day free trial for photographers.",
       "publisher": { "@id": "https://camrhia.com/#org" },
       "offers": [
         { "@type": "Offer", "name": "Solo, monthly", "price": "59.99", "priceCurrency": "USD" },

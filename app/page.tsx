@@ -5,11 +5,11 @@ import Wordmark from "@/app/components/Wordmark"
 export const metadata: Metadata = {
   title: "Camrhia | Become the photographer everyone is looking for.",
   description:
-    "Stop juggling six tools. Camrhia gives photographers a live portfolio website, a place to get found, booking, contracts, payments and gallery delivery. Free for 14 days.",
+    "Stop juggling six tools. Camrhia gives photographers a website of their own, a place to get found, booking, contracts, payments and gallery delivery. Free for 14 days.",
   openGraph: {
     title: "Camrhia | Become the photographer everyone is looking for.",
     description:
-      "A live portfolio website, bookings, contracts, payments and gallery delivery. Everything your clients need, in one app.",
+      "A website builder, bookings, contracts, payments and gallery delivery. Everything your clients need, in one app.",
     type: "website",
   },
 }
@@ -37,7 +37,7 @@ const OLD_STACK = [
 ]
 
 const NEW_STACK = [
-  "A live portfolio website, at your own web address",
+  "Your own website, built in minutes, at your own web address",
   "A marketplace where new clients find you",
   "Bookings and sessions, organized",
   "Contracts that fill themselves in",
@@ -204,12 +204,12 @@ export default function Home() {
         {/* PORTFOLIO = WEBSITE */}
         <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <Story
-            title="Your portfolio is your website."
-            body="Upload your work once and it is live at your own web address, like camrhia.com/yourstudio. Put the link in your Instagram bio, your TikTok, your email signature. Clients tap it, fall in love, and inquire without leaving the page."
+            title="A website that sells for you."
+            body="Build your site on your phone or your computer with a live preview. Pick a look, arrange your sections, add your photos, and it is live at your own web address, like camrhia.com/yourstudio. Put the link in your Instagram bio, your TikTok, your email signature. Clients tap it, fall in love, and inquire without leaving the page."
             points={[
-              "Pick your own fonts, color scheme and style",
+              "Start from a template, then make every section yours: fonts, colors, layouts and photos",
               "No developer, and the website is included in your subscription",
-              "Update a photo on your phone and your website updates with it",
+              "Inquiries and open dates connect to your app, so nothing gets retyped",
             ]}
             panel={
               <Panel tone="bg-twilight/10">
@@ -277,8 +277,8 @@ export default function Home() {
             <Story
               flip
               title="Set your studio up once."
-              body="Your studio name, your packages and your look. Manage your packages and pricing, your questionnaires and how your studio runs from one dashboard, then let it run."
-              points={["Packages and pricing", "Questionnaires for your clients", "Your studio setup"]}
+              body="Your studio name, your packages and your look. Manage your packages and pricing, your questionnaires and how your studio runs, then let it run. Prefer a big screen? Sign in at camrhia.com with the same email and password and do it all from your computer."
+              points={["Packages and pricing", "Questionnaires for your clients", "Your studio setup", "On your phone or your computer"]}
               panel={
                 <Panel tone="bg-brass/15">
                   {/* eslint-disable-next-line @next/next/no-img-element */}

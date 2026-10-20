@@ -8,7 +8,13 @@ export const metadata = {
   description: "Get help with Camrhia — browse frequently asked questions or reach out to our team directly.",
 }
 
-const faqs: { q: string; a: string }[] = []
+const faqs: { q: string; a: string }[] = [
+  { q: "How do I build my website?", a: "Open the online dashboard at camrhia.com, sign in with the same email and password as the app, and choose Website. Pick a look, then work down the steps. The preview updates as you go, and nothing is live until you press Save." },
+  { q: "How do I change my web address?", a: "In the app, open the Studio tab and tap Change address. In the online dashboard, use Change name above the preview. Your old link stops working when you change it, so update it anywhere you shared it." },
+  { q: "How do I share my portfolio with a client?", a: "Open the Portfolio tab and tap Share My Portfolio. It sends a text with a link. If your client has Camrhia, it opens your portfolio in the app. If not, they download the app, create a free account, and land on your portfolio." },
+  { q: "How do I sign in to the online dashboard?", a: "Go to camrhia.com/login and use the same email and password as the app. It is the same account and the same data." },
+  { q: "How do I cancel my subscription?", a: "Camrhia subscriptions run through your Apple ID. On your iPhone, open Settings, tap your name, tap Subscriptions, and choose Camrhia." },
+]
 
 export default function SupportPage() {
   return (

@@ -19,7 +19,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How much does Camrhia cost?',
-        a: '$59/month, or $590/year (2 months free). Every photographer gets a free 14-day trial first — no credit card required to start.',
+        a: '$59.99/month, or $590/year (2 months free). Every photographer gets a free 14-day trial first — no credit card required to start.',
       },
       {
         q: 'Is there a free trial?',
@@ -32,6 +32,22 @@ const FAQ_SECTIONS = [
       {
         q: 'Do my clients pay anything?',
         a: 'No. Camrhia is completely free for your clients. Only photographers have a subscription.',
+      },
+      {
+        q: 'Do I get a website?',
+        a: "Yes, it is included. Build it with a live preview on your phone or your computer: pick a look, choose your fonts and colors, arrange your sections and add your photos. It lives at camrhia.com/yourname/site, and you can change the name any time.",
+      },
+      {
+        q: 'What is the difference between my website and my portfolio?',
+        a: "Your website is your public home on the web, the link you put in your Instagram bio. Your portfolio lives inside the Camrhia app, where clients browse photographers. When you share your portfolio, clients get a link that opens it in the app.",
+      },
+      {
+        q: 'Is there a computer version?',
+        a: "Yes. Sign in at camrhia.com with the same email and password as the app. It is the same account and the same data, with a big screen for building your website, uploading full galleries and managing your calendar and packages.",
+      },
+      {
+        q: 'Can I use my own domain?',
+        a: "Not yet. Your website lives at camrhia.com/yourname/site, and you can change the name whenever you like.",
       },
       {
         q: 'How does the timeline actually work between me and my client?',
