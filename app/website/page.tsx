@@ -927,7 +927,34 @@ export default function WebsitePage() {
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   
                 </Group>
-<Group title="2. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
+<Group title="2. Explore" hint="links to your other pages" onOpen={() => scrollPreview('explore')}>
+  <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
+  <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
+    options={[
+      { v: 'lines', name: 'Lines', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="5" y="14" width="12" height="3" /><rect x="24" y="14" width="12" height="3" /><rect x="43" y="14" width="12" height="3" /></g><g fill="#D8D0C4"><rect x="5" y="21" width="12" height="2" /><rect x="24" y="21" width="12" height="2" /><rect x="43" y="21" width="12" height="2" /></g></svg> },
+      { v: 'tiles', name: 'Big tiles', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="8" width="16" height="24" rx="2" /><rect x="22" y="8" width="16" height="24" rx="2" /><rect x="40" y="8" width="16" height="24" rx="2" /></g><g fill="#B9AFA2"><rect x="7" y="25" width="10" height="3" /><rect x="25" y="25" width="10" height="3" /><rect x="43" y="25" width="10" height="3" /></g></svg> },
+      { v: 'list', name: 'Numbered list', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="6" y="9" width="30" height="4" /><rect x="6" y="19" width="30" height="4" /><rect x="6" y="29" width="30" height="4" /></g><g fill="#D8D0C4"><rect x="42" y="10" width="12" height="2" /><rect x="42" y="20" width="12" height="2" /><rect x="42" y="30" width="12" height="2" /></g></svg> },
+      { v: 'cards', name: 'Cards', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="9" width="16" height="22" rx="2" /><rect x="22" y="9" width="16" height="22" rx="2" /><rect x="40" y="9" width="16" height="22" rx="2" /></g><g fill="#9A8A74"><rect x="4" y="9" width="16" height="2" /><rect x="22" y="9" width="16" height="2" /><rect x="40" y="9" width="16" height="2" /></g></svg> },
+    ]} />
+  <div>
+    <label className="mb-1 block text-xs font-medium text-ink">Small heading (optional)</label>
+    <input value={S.explore?.heading ?? ''} onChange={(e) => setIn('explore', { heading: e.target.value })} placeholder="Explore" className={inputCls} />
+  </div>
+  <div>
+    <label className="mb-1 block text-xs font-medium text-ink">Line under Galleries</label>
+    <input value={S.explore?.lines?.galleries ?? ''} onChange={(e) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), galleries: e.target.value } })} placeholder="See my work" className={inputCls} />
+  </div>
+  <div>
+    <label className="mb-1 block text-xs font-medium text-ink">Line under About</label>
+    <input value={S.explore?.lines?.about ?? ''} onChange={(e) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), about: e.target.value } })} placeholder="Get to know me" className={inputCls} />
+  </div>
+  <div>
+    <label className="mb-1 block text-xs font-medium text-ink">Line under Book</label>
+    <input value={S.explore?.lines?.book ?? ''} onChange={(e) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), book: e.target.value } })} placeholder="Check my dates" className={inputCls} />
+  </div>
+  <p className="text-xs text-ink-soft">The page names come from your Menu step.</p>
+</Group>
+<Group title="3. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -947,7 +974,7 @@ export default function WebsitePage() {
                   </Row>
                   
 </Group>
-<Group title="3. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="4. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -983,14 +1010,14 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="4. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
+<Group title="5. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
                 </Group>
-<Group title="5. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
+<Group title="6. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />

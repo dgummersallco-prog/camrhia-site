@@ -107,10 +107,12 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     .filter((k) => !t.menu.hidden.includes(k) && !(k === 'galleries' && galleries.length === 0))
     .map((k) => ({ key: k, href: hrefs[k], label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === page }))
 
+  const ex = ((r as any).site_settings?.explore ?? {}) as { show?: boolean; layout?: string; heading?: string; lines?: Record<string, string> }
+  const exLayout = ['lines', 'tiles', 'list', 'cards'].includes(ex.layout ?? '') ? (ex.layout as string) : 'lines'
   const doors = [
-    ...(galleries.length > 0 ? [{ href: hrefs.galleries, t: t.menu.labels.galleries?.trim() || NAV_DEFAULTS.galleries, s: 'See my work' }] : []),
-    { href: hrefs.about, t: t.menu.labels.about?.trim() || NAV_DEFAULTS.about, s: 'Get to know me' },
-    { href: hrefs.book, t: t.menu.labels.book?.trim() || NAV_DEFAULTS.book, s: 'Check my dates' },
+    ...(galleries.length > 0 ? [{ href: hrefs.galleries, t: t.menu.labels.galleries?.trim() || NAV_DEFAULTS.galleries, s: ex.lines?.galleries?.trim() || 'See my work' }] : []),
+    { href: hrefs.about, t: t.menu.labels.about?.trim() || NAV_DEFAULTS.about, s: ex.lines?.about?.trim() || 'Get to know me' },
+    { href: hrefs.book, t: t.menu.labels.book?.trim() || NAV_DEFAULTS.book, s: ex.lines?.book?.trim() || 'Check my dates' },
   ]
 
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' }
@@ -525,14 +527,61 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </header>
         )}
 
-        {page === 'home' && doors.length > 0 && (
-          <div className="mx-auto grid max-w-6xl gap-0 px-6 py-16" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
-            {doors.map((b, i) => (
-              <a key={b.href} href={b.href} className="block px-6 py-8 text-center" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
-                <p className="text-3xl" style={headStyle}>{b.t}</p>
-                <p className="mt-2 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>{b.s} →</p>
-              </a>
-            ))}
+        {page === 'home' && doors.length > 0 && ex.show !== false && (
+          <div id="explore" className="mx-auto max-w-6xl px-6 py-16">
+            {ex.heading?.trim() && (
+              <p className="mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
+            )}
+
+            {exLayout === 'lines' && (
+              <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="block px-3 py-8 text-center sm:px-6" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
+                    <p className="text-2xl sm:text-3xl" style={headStyle}>{b.t}</p>
+                    <p className="mt-2 text-[10px] uppercase tracking-[0.2em] sm:text-[11px] sm:tracking-[0.22em]" style={{ color: accent }}>{b.s} →</p>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'tiles' && (
+              <div className="grid gap-4 sm:grid-cols-3">
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="group flex min-h-[200px] flex-col justify-between p-7 transition hover:-translate-y-1" style={{ background: tint, border: `1px solid ${line}`, borderRadius: t.radius }}>
+                    <span className="text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
+                    <div>
+                      <p className="text-4xl" style={headStyle}>{b.t}</p>
+                      <p className="mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{b.s} →</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'list' && (
+              <div style={{ borderTop: `1px solid ${line}` }}>
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="flex items-baseline gap-5 py-7 transition hover:opacity-70" style={{ borderBottom: `1px solid ${line}` }}>
+                    <span className="w-8 text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
+                    <span className="flex-1 text-3xl sm:text-5xl" style={headStyle}>{b.t}</span>
+                    <span className="hidden text-[11px] uppercase tracking-[0.22em] sm:block" style={{ color: soft }}>{b.s}</span>
+                    <span className="text-xl" style={{ color: accent }}>→</span>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'cards' && (
+              <div className="grid gap-5 sm:grid-cols-3">
+                {doors.map((b) => (
+                  <a key={b.href} href={b.href} className="block px-6 py-9 text-center transition hover:-translate-y-1" style={{ background: tint, borderTop: `3px solid ${accent}`, borderRadius: t.radius }}>
+                    <p className="text-3xl" style={headStyle}>{b.t}</p>
+                    <p className="mx-auto mt-3 max-w-[16rem] text-sm" style={{ color: soft }}>{b.s}</p>
+                    <p className="mt-5 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>Visit →</p>
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
