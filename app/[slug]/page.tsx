@@ -1,19 +1,17 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { supabase } from "@/lib/supabase"
-import PublicPortfolioPage from "../p/[token]/page"
 
-// Short vanity URL: camrhia.com/<studio-name> renders the same public
-// portfolio as camrhia.com/p/<token>. Existing static routes (privacy,
-// terms, p, s, etc.) always win over this catch-all, and those names are
-// also reserved in the database so nobody can claim them.
+// Short vanity URL: camrhia.com/<studio-name> opens the photographer's website
+// (camrhia.com/<studio-name>/site). The portfolio itself lives only in the app;
+// shared portfolio links use camrhia.com/p/<token>, which is an app landing page.
 export const dynamic = "force-dynamic"
 
-export default async function VanityPortfolioPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function VanityPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   if (!supabase) notFound()
 
   const { data: token } = await supabase.rpc("get_token_by_slug", { p_slug: slug })
   if (!token || typeof token !== "string") notFound()
 
-  return PublicPortfolioPage({ params: Promise.resolve({ token }) })
+  redirect("/" + slug + "/site")
 }
