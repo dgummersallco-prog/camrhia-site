@@ -217,7 +217,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
       <div style={{ background: bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <nav className={'mx-auto flex max-w-6xl px-6 py-4 ' + (t.menu.logoPos === 'center' ? 'flex-col items-center gap-3' : 'items-center justify-between' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : ''))}>
-          <a href={`/site/${token}${qs}`}>
+          <a href={`/site/${token}${qs}`} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logo} alt={studio} style={{ height: 'var(--logo)', objectFit: 'contain' }} />

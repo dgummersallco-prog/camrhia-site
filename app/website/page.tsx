@@ -1017,6 +1017,24 @@ export default function WebsitePage() {
     if (out.length === 0) out.push({ name: 'My brand color', hex: brandHex() })
     return out.slice(0, 5)
   }
+  function nudgeCtl(label: string, key: string, lim: number) {
+    if (!T) return null
+    const nv = ((T.sizes as any)[key]?.[device] ?? 0) as number
+    return (
+      <div>
+        <div className="mb-1 flex items-center justify-between">
+          <span className="text-sm text-ink">{label}</span>
+          <span className="font-mono text-xs text-ink-soft">{nv > 0 ? '+' : ''}{nv}px</span>
+        </div>
+        <div className="relative">
+          <Slider min={-lim} max={lim} step={1} value={nv} onChange={(x) => setSize(key as any, device, Math.abs(x) <= 3 ? 0 : x)} />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded bg-brass" style={{ opacity: nv === 0 ? 1 : 0.55 }} />
+        </div>
+        <p className="mt-1 text-center text-[11px] text-ink-soft">{nv === 0 ? 'Centered on its spot' : 'Slide to the line to snap back'}</p>
+      </div>
+    )
+  }
+
   function secStyleBlock(id: string) {
     if (!T) return null
     const sv = ((S as any).secStyle?.[id] ?? {}) as { bg?: string; text?: string; head?: string; body?: string }
@@ -1276,22 +1294,8 @@ export default function WebsitePage() {
                   <Row label="Logo position">
                     <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
                   </Row>
-                  {(() => {
-                    const nv = T.sizes.logoNudge[device]
-                    return (
-                      <div>
-                        <div className="mb-1 flex items-center justify-between">
-                          <span className="text-sm text-ink">Nudge left / right</span>
-                          <span className="font-mono text-xs text-ink-soft">{nv > 0 ? '+' : ''}{nv}px</span>
-                        </div>
-                        <div className="relative">
-                          <Slider min={-80} max={80} step={1} value={nv} onChange={(x) => setSize('logoNudge', device, Math.abs(x) <= 4 ? 0 : x)} />
-                          <div className="pointer-events-none absolute left-1/2 top-1/2 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded bg-brass" style={{ opacity: nv === 0 ? 1 : 0.55 }} />
-                        </div>
-                        <p className="mt-1 text-center text-[11px] text-ink-soft">{nv === 0 ? 'Centered on its spot' : 'Slide to the line to snap back'}</p>
-                      </div>
-                    )
-                  })()}
+                  {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
+                  {nudgeCtl('Nudge up / down', 'logoNudgeY', 40)}
                   </Group>
 <Group title="2. Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
 <Row label="Menu bar">
@@ -1301,6 +1305,7 @@ export default function WebsitePage() {
                     <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
                   </Row>
                   <SizeControl device={device} label="Menu word size" unit="px" min={9} max={22} step={1} value={T.sizes.menu} onChange={(d, v) => setSize('menu', d, v)} />
+                  {nudgeCtl('Menu words up / down', 'menuNudgeY', 40)}
                   <div className="space-y-2">
                     {MENU_KEYS.map((k) => (
                       <div key={k} className="flex items-center gap-3">
@@ -1326,23 +1331,37 @@ export default function WebsitePage() {
                   </div>
                   <div>
                     <p className="mb-1 text-sm text-ink">Hero photos</p>
-                    <p className="mb-2 text-xs text-ink-soft">Tap photos to choose up to 6. The first one you pick leads. With none picked, your app cover is used.</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {cands.map((p) => {
-                        const idx = heroSel.indexOf(p)
-                        return (
-                          <button key={p} type="button" onClick={() => toggleHero(p)} className={`relative aspect-square overflow-hidden rounded-lg ${idx >= 0 ? 'ring-2 ring-twilight' : ''}`}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={BASE + p} alt="" className="h-full w-full object-cover" loading="lazy" />
-                            {idx >= 0 && <span className="absolute left-1 top-1 rounded bg-twilight px-1.5 text-[10px] text-white">{idx + 1}</span>}
-                          </button>
-                        )
-                      })}
-                      <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line text-center text-xs text-ink-soft hover:border-twilight">
-                        <span className="text-xl text-ink">+</span>Upload
-                        <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadHero(f); e.target.value = '' }} />
-                      </label>
+                    <p className="mb-2 text-xs text-ink-soft">Up to 6 photos. The first one leads. With none, your app cover photos are used.</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {heroSel.map((p, idx) => (
+                        <div key={p} className="relative aspect-square overflow-hidden rounded-lg ring-1 ring-line">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={BASE + p} alt="" className="h-full w-full object-cover" loading="lazy" />
+                          <span className="absolute left-1 top-1 rounded bg-twilight px-1.5 text-[10px] text-white">{idx + 1}</span>
+                          <button type="button" aria-label="Remove photo" onClick={() => toggleHero(p)} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-sm leading-none text-white">×</button>
+                        </div>
+                      ))}
+                      {heroSel.length < 6 && (
+                        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line text-center text-xs text-ink-soft hover:border-twilight">
+                          <span className="text-xl text-ink">+</span>Upload
+                          <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadHero(f); e.target.value = '' }} />
+                        </label>
+                      )}
                     </div>
+                    {heroSel.length < 6 && cands.filter((p) => !heroSel.includes(p)).length > 0 && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-xs text-ink-soft">Add from my other photos</summary>
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          {cands.filter((p) => !heroSel.includes(p)).map((p) => (
+                            <button key={p} type="button" onClick={() => toggleHero(p)} className="relative aspect-square overflow-hidden rounded-lg ring-1 ring-line">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={BASE + p} alt="" className="h-full w-full object-cover" loading="lazy" />
+                              <span className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-twilight text-sm leading-none text-white">+</span>
+                            </button>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                   </div>
                   <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
                   
