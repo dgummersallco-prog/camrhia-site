@@ -187,7 +187,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         style={overlay ? { color: '#fff' } : { color: ink, background: `color-mix(in srgb, ${bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
       >
         <div className={(t.menu.logoPos ? t.menu.logoPos === 'center' : center) ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 py-2' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : '')}>
-          <a href={hrefs.home}>{brand}</a>
+          <a href={hrefs.home} style={{ display: 'inline-flex', transform: 'translateX(var(--nudge, 0px))' }}>{brand}</a>
           <ul className={burger ? 'hidden' : 'hidden gap-8 md:flex'}>
             {navItems.map((n) => (
               <li key={n.key}>

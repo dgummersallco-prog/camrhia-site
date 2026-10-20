@@ -1274,6 +1274,7 @@ export default function WebsitePage() {
                   <Row label="Logo position">
                     <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
                   </Row>
+                  <SizeControl device={device} label="Nudge left / right" unit="px" min={-80} max={80} step={1} value={T.sizes.logoNudge} onChange={(d, v) => setSize('logoNudge', d, v)} />
                   </Group>
 <Group title="2. Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
 <Row label="Menu bar">
