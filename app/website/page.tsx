@@ -421,7 +421,7 @@ export default function WebsitePage() {
   const [saving, setSaving] = useState(false)
   const [device, setDevice] = useState<Dev>('desktop')
   const [previewPage, setPreviewPage] = useState<'home' | 'galleries' | 'gallery' | 'about' | 'availability'>('home')
-  const [tab, setTab] = useState<'home' | 'galleries' | 'about' | 'book'>('home')
+  const [tab, setTab] = useState<'style' | 'home' | 'galleries' | 'about' | 'book'>('home')
   const [firstGid, setFirstGid] = useState<string | null>(null)
   const [showSent, setShowSent] = useState(false)
   const [slugOverride, setSlugOverride] = useState<string | null>(null)
@@ -995,9 +995,9 @@ export default function WebsitePage() {
     out.push({ name: 'White', hex: '#FFFFFF' }, { name: 'Cream', hex: '#FAF7F2' }, { name: 'Warm paper', hex: '#F0EAE1' }, { name: 'Ink', hex: '#2A1F24' }, { name: 'Black', hex: '#000000' })
     return out
   }
-  function pickTab(t: 'home' | 'galleries' | 'about' | 'book') {
+  function pickTab(t: 'style' | 'home' | 'galleries' | 'about' | 'book') {
     setTab(t)
-    setPreviewPage(t === 'book' ? 'availability' : t)
+    setPreviewPage(t === 'book' ? 'availability' : t === 'style' ? 'home' : t)
   }
   function previewSrc() {
     const b = `/site/${token}`
@@ -1131,18 +1131,19 @@ export default function WebsitePage() {
                 )}
                 <div>
                   <div className="flex flex-wrap gap-x-7 border-b border-line">
-                    {([{ v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }] as const).map((o) => (
+                    {([{ v: 'style', label: 'Style' }, { v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }] as const).map((o) => (
                       <button key={o.v} type="button" onClick={() => pickTab(o.v)}
                         className={`-mb-px border-b-2 pb-3 font-fraunces text-lg transition ${tab === o.v ? 'border-ink text-ink' : 'border-transparent text-ink-soft hover:text-ink'}`}>
                         {o.label}
                       </button>
                     ))}
                   </div>
-                  <p className={tab === 'home' ? 'hidden' : 'mt-3 text-xs text-ink-soft'}>
+                  <p className={tab === 'home' || tab === 'style' ? 'hidden' : 'mt-3 text-xs text-ink-soft'}>
                     {tab === 'home' ? 'Your main page, plus the look that every page shares.' : tab === 'galleries' ? 'Your list of galleries, and the page inside each one.' : tab === 'about' ? 'Your story, your pricing and your FAQ.' : 'Where every button leads: the date check and inquiry form.'}
                   </p>
                 </div>
-                {tab === 'home' && (<><Group title="Template" hint="pick a look" open onOpen={() => scrollPreview('')}>
+                {tab === 'style' && (<>
+<Group title="Template" hint="pick a look" open onOpen={() => scrollPreview('')}>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {TEMPLATES.map((t) => (
                       <button key={t.key} type="button" onClick={() => set('site_template', t.key)} className="group text-left">
@@ -1218,7 +1219,19 @@ export default function WebsitePage() {
                   </Row>
                   <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.button} onChange={(d, v) => setSize('button', d, v)} />
                 </Group>
-<Group title="1. Hero" hint="photos, logo and headline" onOpen={() => scrollPreview('top')}>
+
+<Group title="Text & spacing sizes" hint="phone and desktop" onOpen={() => scrollPreview('')}>
+                  
+                  
+                  <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
+                  <SizeControl device={device} label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
+                  
+                  
+                  <SizeControl device={device} label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
+                  <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
+                </Group>
+</>)}
+{tab === 'home' && (<><Group open title="1. Hero" hint="photos, logo and headline" onOpen={() => scrollPreview('top')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
@@ -1371,16 +1384,7 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 {customBlock('home')}
-<Group title="Text & spacing sizes" hint="phone and desktop" onOpen={() => scrollPreview('')}>
-                  
-                  
-                  <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
-                  <SizeControl device={device} label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
-                  
-                  
-                  <SizeControl device={device} label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
-                  <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
-                </Group></>)}
+</>)}
 {tab === 'galleries' && (<><Group open title="1. Galleries page" hint="your list of galleries" onOpen={() => setPreviewPage('galleries')}>
                   {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
                   <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
