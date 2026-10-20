@@ -1149,18 +1149,8 @@ export default function WebsitePage() {
                   </p>
                 </div>
                 {tab === 'home' && (<>
-<Group title="Template" hint="pick a look" open onOpen={() => scrollPreview('')}>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    {TEMPLATES.map((t) => (
-                      <button key={t.key} type="button" onClick={() => set('site_template', t.key)} className="group text-left">
-                        <div className={`overflow-hidden rounded-lg transition ${tpl === t.key ? 'ring-2 ring-ink ring-offset-2 ring-offset-card' : 'ring-1 ring-line group-hover:ring-ink-soft'}`}><Thumb kind={t.key} /></div>
-                        <p className="mt-2.5 font-fraunces text-base text-ink">{t.name}</p>
-                        <p className="text-xs leading-snug text-ink-soft">{t.blurb}</p>
-                      </button>
-                    ))}
-                  </div>
-                </Group>
-<Group title="Logo & menu" hint="logo and links across the top" onOpen={() => scrollPreview('')}>
+<p className="px-1 pt-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Style controls <span className="font-normal normal-case tracking-normal">· the look of every page</span></p>
+<Group open title="Logo & menu" hint="logo and links across the top" onOpen={() => scrollPreview('nav')}>
 <div className="border-t border-line pt-4">
                     <p className="mb-1 text-sm text-ink">Logo</p>
                     <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
@@ -1197,6 +1187,18 @@ export default function WebsitePage() {
                     ))}
                   </div>
                 </Group>
+<Group title="Template" hint="pick a look" onOpen={() => scrollPreview('')}>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    {TEMPLATES.map((t) => (
+                      <button key={t.key} type="button" onClick={() => set('site_template', t.key)} className="group text-left">
+                        <div className={`overflow-hidden rounded-lg transition ${tpl === t.key ? 'ring-2 ring-ink ring-offset-2 ring-offset-card' : 'ring-1 ring-line group-hover:ring-ink-soft'}`}><Thumb kind={t.key} /></div>
+                        <p className="mt-2.5 font-fraunces text-base text-ink">{t.name}</p>
+                        <p className="text-xs leading-snug text-ink-soft">{t.blurb}</p>
+                      </button>
+                    ))}
+                  </div>
+                </Group>
+
 <Group title="Color & fonts" hint="used on every page" onOpen={() => scrollPreview('')}>
                   
                   {colorRow('Background', 'bg', T.bg)}
@@ -1255,7 +1257,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 </>)}
-{tab === 'home' && (<><Group title="1. Hero" hint="photos and headline" onOpen={() => scrollPreview('top')}>
+{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group title="1. Hero" hint="photos and headline" onOpen={() => scrollPreview('top')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
