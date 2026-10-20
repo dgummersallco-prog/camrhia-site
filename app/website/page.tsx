@@ -1295,7 +1295,7 @@ export default function WebsitePage() {
                     <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
                   </Row>
                   {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
-                  {nudgeCtl('Nudge up / down', 'logoNudgeY', 40)}
+                  
                   </Group>
 <Group title="2. Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
 <Row label="Menu bar">
@@ -1305,7 +1305,7 @@ export default function WebsitePage() {
                     <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
                   </Row>
                   <SizeControl device={device} label="Menu word size" unit="px" min={9} max={22} step={1} value={T.sizes.menu} onChange={(d, v) => setSize('menu', d, v)} />
-                  {nudgeCtl('Menu words up / down', 'menuNudgeY', 40)}
+                  {nudgeCtl('Whole menu bar up / down', 'menuNudgeY', 40)}
                   <div className="space-y-2">
                     {MENU_KEYS.map((k) => (
                       <div key={k} className="flex items-center gap-3">
