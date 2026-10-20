@@ -113,21 +113,28 @@ function NumBox({ value, min, max, step, unit, onChange }: { value: number; min:
   const [txt, setTxt] = useState(String(value))
   const [focus, setFocus] = useState(false)
   useEffect(() => { if (!focus) setTxt(String(value)) }, [value, focus])
+  const clamp = (n: number) => Math.min(max, Math.max(min, Math.round(n * 100) / 100))
   return (
-    <span className="inline-flex shrink-0 items-center gap-1">
-      <input type="number" value={txt} min={min} max={max} step={step}
-        onFocus={() => setFocus(true)}
+    <span className="inline-flex shrink-0 items-center rounded-full border border-line bg-white px-3 py-1.5 transition focus-within:border-ink">
+      <input type="text" inputMode="decimal" value={txt}
+        onFocus={(e) => { setFocus(true); e.currentTarget.select() }}
         onChange={(e) => {
-          setTxt(e.target.value)
-          const n = Number(e.target.value)
-          if (e.target.value !== '' && Number.isFinite(n)) onChange(Math.min(max, Math.max(min, n)))
+          const raw = e.target.value.replace(/[^0-9.]/g, '')
+          setTxt(raw)
+          const n = Number(raw)
+          if (raw !== '' && Number.isFinite(n)) onChange(clamp(n))
         }}
-        onBlur={() => { setFocus(false); const n = Number(txt); if (txt === '' || !Number.isFinite(n)) setTxt(String(value)) }}
-        className="w-16 rounded-lg border border-line bg-white px-2 py-1 text-right text-sm text-ink" />
-      <span className="w-5 text-xs text-ink-soft">{unit}</span>
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowUp') { e.preventDefault(); const v = clamp(value + step); setTxt(String(v)); onChange(v) }
+          if (e.key === 'ArrowDown') { e.preventDefault(); const v = clamp(value - step); setTxt(String(v)); onChange(v) }
+        }}
+        onBlur={() => { setFocus(false); const n = Number(txt); if (txt === '' || !Number.isFinite(n)) setTxt(String(value)); else setTxt(String(clamp(n))) }}
+        className="w-9 bg-transparent text-right text-sm tabular-nums text-ink outline-none" />
+      <span className="ml-1 text-xs text-ink-soft">{unit}</span>
     </span>
   )
 }
+
 function SizeControl({ label, unit, min, max, step, value, onChange, device }: {
   label: string; unit: string; min: number; max: number; step: number
   value: { phone: number; desktop: number }; onChange: (d: Dev, v: number) => void; device: Dev
@@ -883,6 +890,7 @@ export default function WebsitePage() {
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
+                  <SizeControl device={device} label="Menu word size" unit="px" min={9} max={22} step={1} value={T.sizes.menu} onChange={(d, v) => setSize('menu', d, v)} />
                   <div className="space-y-2">
                     {MENU_KEYS.map((k) => (
                       <div key={k} className="flex items-center gap-3">

@@ -200,9 +200,10 @@ export function resolveTheme(r: Record<string, any>) {
     galHeading: pairNum(s.sizes?.galHeading, 24, 120, 38, 56),
     galGap: pairNum(s.sizes?.galGap ?? s.sizes?.photoGap, 0, 60, 8, 12),
     bookHeading: pairNum(s.sizes?.bookHeading, 24, 120, 34, 48),
+    menu: pairNum(s.sizes?.menu, 9, 22, 12, 11),
   }
   const vars = (d: 'phone' | 'desktop') =>
-    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;--sub:${sizes.subhead[d]}px;--btn:${sizes.button[d]}px;--gal-h:${sizes.galHeading[d]}px;--gal-gap:${sizes.galGap[d]}px;--book-h:${sizes.bookHeading[d]}px;`
+    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;--sub:${sizes.subhead[d]}px;--btn:${sizes.button[d]}px;--gal-h:${sizes.galHeading[d]}px;--gal-gap:${sizes.galGap[d]}px;--book-h:${sizes.bookHeading[d]}px;--menu:${sizes.menu[d]}px;`
   const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}`
 
   return {

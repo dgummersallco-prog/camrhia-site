@@ -138,7 +138,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             {navItems.map((n) => (
               <li key={n.key}>
                 <a href={n.href} className="text-[11px] uppercase tracking-[0.2em]"
-                  style={{ fontFamily: t.body, opacity: n.active ? 1 : 0.8, borderBottom: n.active ? '1px solid currentColor' : '1px solid transparent', paddingBottom: 3 }}>
+                  style={{ fontFamily: t.body, fontSize: 'var(--menu)', opacity: n.active ? 1 : 0.8, borderBottom: n.active ? '1px solid currentColor' : '1px solid transparent', paddingBottom: 3 }}>
                   {n.label}
                 </a>
               </li>
@@ -152,7 +152,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <ul className="flex flex-col gap-4 px-6 pb-5 md:hidden" style={{ background: overlay ? 'rgba(0,0,0,0.72)' : bg }}>
             {navItems.map((n) => (
               <li key={n.key}>
-                <a href={n.href} onClick={() => setOpen(false)} className="text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body }}>{n.label}</a>
+                <a href={n.href} onClick={() => setOpen(false)} className="text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body, fontSize: 'var(--menu)' }}>{n.label}</a>
               </li>
             ))}
           </ul>
