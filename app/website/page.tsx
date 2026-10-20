@@ -69,7 +69,13 @@ const SLIDER_CSS = `
 
 function Group({ title, hint, open, onOpen, children }: { title: string; hint?: string; open?: boolean; onOpen?: () => void; children: React.ReactNode }) {
   return (
-    <details open={open} onToggle={(e) => { if ((e.currentTarget as HTMLDetailsElement).open) onOpen?.() }} className="rounded-2xl border border-line bg-card p-5">
+    <details open={open} onToggle={(e) => {
+      const el = e.currentTarget as HTMLDetailsElement
+      if (el.open) {
+        el.parentElement?.querySelectorAll(':scope > details').forEach((d) => { if (d !== el) (d as HTMLDetailsElement).open = false })
+        onOpen?.()
+      }
+    }} className="rounded-2xl border border-line bg-card p-5">
       <summary className="cursor-pointer font-fraunces text-lg font-semibold text-ink">
         {title}
         {hint && <span className="ml-2 text-sm font-normal text-ink-soft">{hint}</span>}
@@ -1097,41 +1103,41 @@ export default function WebsitePage() {
               </div>
             </div>
 
+            {fullUrl && (
+              <div className="-mt-2 mb-5">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+                  <span className="text-ink-soft">Your link</span>
+                  <span className="font-medium text-ink">{fullUrl.replace('https://', '')}</span>
+                  <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(fullUrl); flash('Link copied') }}>Copy</button>
+                  {!slugEdit && <button className={btnGhost} onClick={() => { setSlugDraft(curSlug ?? ''); setSlugMsg(''); setSlugEdit(true) }}>Change name</button>}
+                </div>
+                {slugEdit && (
+                  <div className="mt-3 max-w-md space-y-2 rounded-2xl border border-line bg-card p-4">
+                    <div className="flex items-center gap-1 text-sm text-ink-soft">
+                      <span>camrhia.com/</span>
+                      <input value={slugDraft} onChange={(e) => setSlugDraft(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder="yourname" className={inputCls} />
+                      <span>/site</span>
+                    </div>
+                    <p className={`text-xs ${slugMsg === 'ok' ? 'text-sage' : 'text-ink-soft'}`}>
+                      {slugMsg === 'ok' ? (slugDraft.trim().toLowerCase() === (curSlug ?? '') ? 'This is your current name' : '✓ That name is free') : slugMsg}
+                    </p>
+                    <div className="flex gap-2">
+                      <button className={btn} disabled={slugSaving || slugMsg !== 'ok' || slugDraft.trim().toLowerCase() === (curSlug ?? '')} onClick={saveSlug}>
+                        {slugSaving ? 'Saving…' : 'Save name'}
+                      </button>
+                      <button className={btnGhost} onClick={() => setSlugEdit(false)}>Cancel</button>
+                    </div>
+                    <p className="text-xs text-ink-soft">Changing your name changes your link, so the old one stops working. Update it anywhere you have shared it.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="grid gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
               <div className="space-y-4">
-                {fullUrl && (
-                  <section className={card}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Your website link</p>
-                    <p className="mt-1 break-all font-fraunces text-xl font-semibold text-ink">{fullUrl.replace('https://', '')}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(fullUrl); flash('Link copied') }}>Copy link</button>
-                      {path && <a href={path} target="_blank" rel="noreferrer" className={btnGhost}>Open</a>}
-                      {!slugEdit && <button className={btnGhost} onClick={() => { setSlugDraft(curSlug ?? ''); setSlugMsg(''); setSlugEdit(true) }}>Change name</button>}
-                    </div>
-                    {slugEdit && (
-                      <div className="mt-4 space-y-2">
-                        <div className="flex items-center gap-1 text-sm text-ink-soft">
-                          <span>camrhia.com/</span>
-                          <input value={slugDraft} onChange={(e) => setSlugDraft(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder="yourname" className={inputCls} />
-                          <span>/site</span>
-                        </div>
-                        <p className={`text-xs ${slugMsg === 'ok' ? 'text-sage' : 'text-ink-soft'}`}>
-                          {slugMsg === 'ok' ? (slugDraft.trim().toLowerCase() === (curSlug ?? '') ? 'This is your current name' : '✓ That name is free') : slugMsg}
-                        </p>
-                        <div className="flex gap-2">
-                          <button className={btn} disabled={slugSaving || slugMsg !== 'ok' || slugDraft.trim().toLowerCase() === (curSlug ?? '')} onClick={saveSlug}>
-                            {slugSaving ? 'Saving…' : 'Save name'}
-                          </button>
-                          <button className={btnGhost} onClick={() => setSlugEdit(false)}>Cancel</button>
-                        </div>
-                        <p className="text-xs text-ink-soft">Changing your name changes your link, so the old one stops working. Update it anywhere you have shared it.</p>
-                      </div>
-                    )}
-                  </section>
-                )}
                 <div>
                   <div className="flex flex-wrap gap-x-7 border-b border-line">
-                    {([{ v: 'style', label: 'Style' }, { v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }] as const).map((o) => (
+                    {([{ v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }] as const).map((o) => (
                       <button key={o.v} type="button" onClick={() => pickTab(o.v)}
                         className={`-mb-px border-b-2 pb-3 font-fraunces text-lg transition ${tab === o.v ? 'border-ink text-ink' : 'border-transparent text-ink-soft hover:text-ink'}`}>
                         {o.label}
@@ -1142,7 +1148,7 @@ export default function WebsitePage() {
                     {tab === 'home' ? 'Your main page, plus the look that every page shares.' : tab === 'galleries' ? 'Your list of galleries, and the page inside each one.' : tab === 'about' ? 'Your story, your pricing and your FAQ.' : 'Where every button leads: the date check and inquiry form.'}
                   </p>
                 </div>
-                {tab === 'style' && (<>
+                {tab === 'home' && (<>
 <Group title="Template" hint="pick a look" open onOpen={() => scrollPreview('')}>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {TEMPLATES.map((t) => (
@@ -1231,7 +1237,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 </>)}
-{tab === 'home' && (<><Group open title="1. Hero" hint="photos, logo and headline" onOpen={() => scrollPreview('top')}>
+{tab === 'home' && (<><Group title="1. Hero" hint="photos, logo and headline" onOpen={() => scrollPreview('top')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
