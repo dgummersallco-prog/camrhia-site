@@ -1397,9 +1397,11 @@ export default function WebsitePage() {
                   {(S.galindex?.layout ?? T.galindex.layout) === 'checker' && (
                     <FontPicker label="Gallery name font" value={S.galindex?.font ?? 'barlowcondensed'} cats={['display', 'sans', 'serif']} onChange={(k) => setIn('galindex', { font: k })} />
                   )}
-                  <Row label="Cover shape">
+                  {(S.galindex?.layout ?? T.galindex.layout) === 'grid' && (
+                    <Row label="Cover shape">
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>
+                  )}
                 </Group>
 <Group title="2. Inside a gallery" hint="what opens when a cover is clicked" onOpen={() => setPreviewPage('gallery')}>
                   
