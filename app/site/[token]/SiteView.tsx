@@ -408,7 +408,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   return (
     <>
       <link rel="stylesheet" href={t.fontsHref} />
-      <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}html,body{background:${bg}}`}</style>
+      <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${bg}}`}</style>
       <PortfolioLightbox />
       <div style={{ background: bg, color: ink, fontFamily: t.body }}>
         {tpl === 'editorial' && (
@@ -421,7 +421,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
               <div className={`relative mx-auto flex w-full max-w-5xl flex-col px-6 text-white ${alignCls} ${vCls}`}>
                 <div className="max-w-3xl">
                   <h1 style={h1Big}>{headline}</h1>
-                  {subhead && <p className="mt-4 text-[12px] uppercase tracking-[0.28em] opacity-90">{subhead}</p>}
+                  {subhead && <p className="cr-sub mt-4 text-[12px] uppercase tracking-[0.28em] opacity-90">{subhead}</p>}
                   <div className="mt-8">{cta()}</div>
                 </div>
               </div>
@@ -433,7 +433,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             {renderNav(false, false)}
             <div className="grid md:grid-cols-2" style={{ minHeight: 'calc(var(--hero-h) - 4rem)' }}>
               <div className={`order-2 flex flex-col justify-center px-8 py-16 md:order-1 md:px-16 ${t.hero.align === 'center' ? 'items-center text-center' : t.hero.align === 'right' ? 'items-end text-right' : 'items-start text-left'}`}>
-                {subhead && <p className="mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+                {subhead && <p className="cr-sub mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
                 <h1 style={h1Mid}>{headline}</h1>
                 <p className="mt-6 max-w-md text-[15px] leading-relaxed" style={{ color: soft }}>
                   {(t.text.about ?? r.bio ?? '').toString().split(/\n+/)[0].slice(0, 220)}
@@ -452,7 +452,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             </div>
             <div className={`mx-auto flex max-w-3xl flex-col px-6 py-14 ${alignCls}`}>
               <h1 style={h1Mid}>{headline}</h1>
-              {subhead && <p className="mt-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
+              {subhead && <p className="cr-sub mt-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
               <div className="mt-8">{cta()}</div>
             </div>
           </header>
@@ -466,7 +466,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             <div className="relative mx-auto my-auto w-full max-w-xl px-6 py-28">
               <div className="p-3" style={{ background: bg, color: ink }}>
                 <div className="px-8 py-12 text-center" style={{ border: `1px solid ${line}` }}>
-                  {subhead && <p className="mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+                  {subhead && <p className="cr-sub mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
                   <h1 style={h1Mid}>{headline}</h1>
                   <div className="mt-8">{cta()}</div>
                 </div>
@@ -478,7 +478,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           <header id="top">
             {renderNav(false, false)}
             <div className="mx-auto max-w-6xl px-6 pt-14" style={{ textAlign: t.hero.align }}>
-              {subhead && <p className="mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+              {subhead && <p className="cr-sub mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
               <h1 style={{ ...headStyle, fontSize: 'calc(var(--hl) * 1.5)', lineHeight: 0.98 }}>{headline}</h1>
             </div>
             <div className="relative mt-10 w-full overflow-hidden" style={{ height: 'calc(var(--hero-h) * 0.8)' }}>
@@ -491,7 +491,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           <header id="top">
             {renderNav(false, true)}
             <div className="mx-auto max-w-3xl px-6 pb-10 pt-12 text-center">
-              {subhead && <p className="mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+              {subhead && <p className="cr-sub mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
               <h1 style={h1Mid}>{headline}</h1>
               <div className="mt-7">{cta()}</div>
             </div>
