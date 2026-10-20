@@ -1,6 +1,7 @@
 'use client'
 
 import { TestimonialCarousel } from './TestimonialCarousel'
+import { AboutCanvas } from './AboutCanvas'
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
@@ -215,6 +216,17 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       case 'about': {
         const L = t.about.layout
         const aboutSet = (r as any).site_settings?.about
+        if (aboutSet?.layout === 'canvas') {
+          return sec('about', null,
+            <AboutCanvas
+              canvas={aboutSet?.canvas} photo2={aboutSet?.photo2} aboutPhoto={aboutPhoto} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
+              title={t.titles.about} bio={(t.text.about ?? r.bio ?? '').toString()} headStyle={headStyle} ink={ink} soft={soft} tint={tint}
+              bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText}
+              renderButton={(label) => (
+                <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+              )}
+            />, false)
+        }
         if (aboutSet?.layout === 'collage') {
           const photo2 = photoUrl(aboutSet?.photo2)
           const cardBg = tint

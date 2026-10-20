@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
+import { getBoard, starter, newItem } from '@/lib/aboutCanvas'
+import type { CItem } from '@/lib/aboutCanvas'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { FONT_OPTIONS, PAIR_PRESETS, NAV_DEFAULTS, DEFAULT_TITLES, resolveTheme } from '@/lib/siteTheme'
 
@@ -427,6 +429,21 @@ export default function WebsitePage() {
   const [slugDraft, setSlugDraft] = useState('')
   const [slugMsg, setSlugMsg] = useState('')
   const [slugSaving, setSlugSaving] = useState(false)
+  const [cvSel, setCvSel] = useState<string | null>(null)
+  const cvBridge = useState(() => ({ upd: null as any }))[0]
+
+  useEffect(() => {
+    function onMsg(e: MessageEvent) {
+      const d = e.data as { type?: string; dev?: string; board?: unknown; id?: string | null } | null
+      if (!d) return
+      if (d.type === 'camrhia-canvas' && d.dev && d.board && cvBridge.upd) {
+        cvBridge.upd((st: any) => { const a = { ...(st.about ?? {}) }; a.canvas = { ...(a.canvas ?? {}), [d.dev as string]: d.board }; st.about = a })
+      }
+      if (d.type === 'camrhia-canvas-select') setCvSel(d.id ?? null)
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [cvBridge])
 
   useEffect(() => {
     if (!slugEdit) return
@@ -626,6 +643,120 @@ export default function WebsitePage() {
     }
   }
 
+  function canvasPanel() {
+    const b = getBoard(S.about?.canvas, device, S.about?.photo2)
+    const sel: CItem | null = b.items.find((i) => i.id === cvSel) ?? null
+    const setBoard = (nb: { h: number; items: CItem[] }) => upd((st: any) => { const a = { ...(st.about ?? {}) }; a.canvas = { ...(a.canvas ?? {}), [device]: nb }; st.about = a })
+    const patch = (id: string, pt: Partial<CItem>) => setBoard({ ...b, items: b.items.map((i) => (i.id === id ? { ...i, ...pt } : i)) })
+    const pick = (id: string | null) => { setCvSel(id); (document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-canvas-pick', id }, '*') }
+    const add = (type: 'photo' | 'card' | 'heading' | 'button') => {
+      const it = newItem(type, device, Math.max(0, ...b.items.map((i) => i.z)) + 1)
+      setBoard({ ...b, items: [...b.items, it] })
+      pick(it.id)
+    }
+    const names: Record<string, string> = { photo: 'Photo', card: 'Text card', heading: 'Heading', button: 'Button' }
+    async function up(id: string, file: File) {
+      const sb = supabase
+      if (!sb) return
+      const { data: sess } = await sb.auth.getSession()
+      const uid = sess.session?.user.id
+      if (!uid) return
+      try {
+        const v = await makeVersions(file)
+        const path = `${uid}/canvas_${Date.now()}.jpg`
+        const r2 = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+        if (r2.error) throw r2.error
+        patch(id, { src: path })
+      } catch (e) {
+        flash((e as { message?: string })?.message ?? 'Upload failed.')
+      }
+    }
+    return (
+      <div className="space-y-4 border-t border-line pt-4">
+        <p className="text-sm text-ink">Free layout <span className="text-xs text-ink-soft">· arranging the {device} page</span></p>
+        <p className="text-xs text-ink-soft">Drag anything in the preview to move it, and drag the small square on its corner to resize. Use the Phone / Desktop switch above the preview to arrange each size.</p>
+        <div className="flex flex-wrap gap-2">
+          {(['photo', 'card', 'heading', 'button'] as const).map((tp) => (
+            <button key={tp} type="button" className={btnGhost} onClick={() => add(tp)}>+ {names[tp]}</button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {b.items.map((i, n) => (
+            <button key={i.id} type="button" onClick={() => pick(i.id)}
+              className={`rounded-full border px-3 py-1 text-xs ${cvSel === i.id ? 'border-ink text-ink' : 'border-line text-ink-soft'}`}>
+              {names[i.type]} {n + 1}
+            </button>
+          ))}
+        </div>
+        <div>
+          <p className="mb-1 text-xs text-ink-soft">Page height</p>
+          <Slider min={40} max={260} step={2} value={b.h} onChange={(v) => setBoard({ ...b, h: v })} />
+        </div>
+        {sel && (
+          <div className="space-y-3 rounded-xl border border-line bg-white p-4">
+            <p className="text-sm font-medium text-ink">{names[sel.type]}</p>
+            {sel.type === 'photo' && (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className={btnGhost + ' cursor-pointer'}>
+                    {sel.src && sel.src !== 'about' ? 'Replace photo' : 'Upload photo'}
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) up(sel.id, f); e.target.value = '' }} />
+                  </label>
+                  <button type="button" className={btnGhost} onClick={() => patch(sel.id, { src: 'about' })}>Use my About photo</button>
+                </div>
+                <div>
+                  <p className="mb-1 text-xs text-ink-soft">Rounded corners</p>
+                  <Slider min={0} max={30} step={1} value={sel.radius ?? 0} onChange={(v) => patch(sel.id, { radius: v })} />
+                </div>
+              </>
+            )}
+            {sel.type === 'card' && (
+              <>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-ink">Heading</label>
+                  <input value={sel.title ?? ''} onChange={(e) => patch(sel.id, { title: e.target.value })} placeholder="Uses your About heading" className={inputCls} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-ink">Text</label>
+                  <textarea rows={4} value={sel.text ?? ''} onChange={(e) => patch(sel.id, { text: e.target.value })} placeholder="Leave empty to use your About text" className={inputCls} />
+                </div>
+                <div>
+                  <p className="mb-1 text-xs text-ink-soft">Text size</p>
+                  <Slider min={0.8} max={6} step={0.05} value={sel.fs ?? 1.45} onChange={(v) => patch(sel.id, { fs: v })} />
+                </div>
+                <Row label="Card background"><Switch on={sel.bg !== false} onChange={(v) => patch(sel.id, { bg: v })} /></Row>
+              </>
+            )}
+            {sel.type === 'heading' && (
+              <>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-ink">Words</label>
+                  <textarea rows={2} value={sel.text ?? ''} onChange={(e) => patch(sel.id, { text: e.target.value })} className={inputCls} />
+                </div>
+                <div>
+                  <p className="mb-1 text-xs text-ink-soft">Size</p>
+                  <Slider min={2} max={16} step={0.2} value={sel.fs ?? 4.6} onChange={(v) => patch(sel.id, { fs: v })} />
+                </div>
+              </>
+            )}
+            {sel.type === 'button' && (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
+                <input value={sel.text ?? ''} onChange={(e) => patch(sel.id, { text: e.target.value })} placeholder="Uses your site button wording" className={inputCls} />
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 border-t border-line pt-3">
+              <button type="button" className={btnGhost} onClick={() => patch(sel.id, { z: sel.z + 1 })}>Bring forward</button>
+              <button type="button" className={btnGhost} onClick={() => patch(sel.id, { z: Math.max(0, sel.z - 1) })}>Send back</button>
+              <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard({ ...b, items: b.items.filter((i) => i.id !== sel.id) }); pick(null) }}>Remove</button>
+            </div>
+          </div>
+        )}
+        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard(starter(device, S.about?.photo2)); pick(null) }}>Start over with the starter layout</button>
+      </div>
+    )
+  }
+
   async function addTm() {
     const sb = supabase
     if (!sb || !tQuote.trim() || tBusy) return
@@ -803,6 +934,7 @@ export default function WebsitePage() {
   }
 
   const token = form?.public_token ?? null
+  cvBridge.upd = upd
   const curSlug = slugOverride ?? form?.slug ?? null
   const path = curSlug ? `/${curSlug}/site` : token ? `/site/${token}` : null
   async function saveSlug() {
@@ -1170,7 +1302,7 @@ export default function WebsitePage() {
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={(S.about?.layout ?? T.about.layout) as any} onChange={(v) => setIn('about', { layout: v })}
-                      options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }, { v: 'collage', name: 'Collage', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="3" width="26" height="24" rx="2" fill="#D8D0C4" /><rect x="36" y="18" width="18" height="18" rx="3" fill="#C9BFB2" /><rect x="16" y="16" width="32" height="18" rx="3" fill="#F2EBDD" stroke="#B9AFA2" strokeWidth="0.8" /><rect x="20" y="20" width="14" height="2" fill="#9A8A74" /><rect x="20" y="25" width="24" height="1.5" fill="#B9AFA2" /><rect x="20" y="28" width="22" height="1.5" fill="#B9AFA2" /></svg> }]} />
+                      options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }, { v: 'collage', name: 'Collage', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="3" width="26" height="24" rx="2" fill="#D8D0C4" /><rect x="36" y="18" width="18" height="18" rx="3" fill="#C9BFB2" /><rect x="16" y="16" width="32" height="18" rx="3" fill="#F2EBDD" stroke="#B9AFA2" strokeWidth="0.8" /><rect x="20" y="20" width="14" height="2" fill="#9A8A74" /><rect x="20" y="25" width="24" height="1.5" fill="#B9AFA2" /><rect x="20" y="28" width="22" height="1.5" fill="#B9AFA2" /></svg> }, { v: 'canvas', name: 'Free layout', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="5" width="22" height="18" rx="2" fill="#D8D0C4" /><rect x="34" y="10" width="20" height="14" rx="2" fill="#C9BFB2" /><rect x="14" y="20" width="26" height="14" rx="2" fill="#F2EBDD" stroke="#9A8A74" strokeWidth="0.8" strokeDasharray="2 1.5" /><rect x="38" y="30" width="5" height="5" fill="#B08D57" /></svg> }]} />
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">About text</label>
@@ -1195,6 +1327,7 @@ export default function WebsitePage() {
                       </div>
                     </div>
                   )}
+                  {(S.about?.layout ?? T.about.layout) === 'canvas' && canvasPanel()}
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
 <Group title="2. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
