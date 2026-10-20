@@ -1047,8 +1047,8 @@ export default function WebsitePage() {
                   {sectionHead('testimonials')}
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
-                    <LayoutPicker value={T.testi.layout} onChange={(v) => setIn('testimonials', { layout: v })}
-                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.teGrid }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.teStacked }, { v: 'cards', name: 'Cards', thumb: THUMBS.teCards }]} />
+                    <LayoutPicker value={(S.testimonials?.layout ?? T.testi.layout) as any} onChange={(v) => setIn('testimonials', { layout: v })}
+                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.teGrid }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.teStacked }, { v: 'cards', name: 'Cards', thumb: THUMBS.teCards }, { v: 'carousel', name: 'Carousel', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g stroke="#9A8A74" strokeWidth="1" fill="none"><path d="M6 6h8M6 6l2-2M6 6l2 2" /><path d="M18 6h8M26 6l-2-2M26 6l-2 2" /></g><rect x="12" y="11" width="36" height="18" rx="4" fill="#D8D0C4" /><rect x="40" y="23" width="14" height="5" rx="2.5" fill="#B9AFA2" /><rect x="14" y="33" width="32" height="2" fill="#B9AFA2" /></svg> }]} />
                   </div>
 <div>
                     

@@ -1,5 +1,6 @@
 'use client'
 
+import { TestimonialCarousel } from './TestimonialCarousel'
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
@@ -396,10 +397,13 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </div>, tinted)
       }
       case 'testimonials': {
-        const L = t.testi.layout
+        const rawT = (r as any).site_settings?.testimonials?.layout
+        const L: string = rawT === 'carousel' ? 'carousel' : t.testi.layout
         const list = quotes.slice(0, 6)
-        return sec('words', t.titles.testimonials,
-          L === 'stacked' ? (
+        return sec('words', L === 'carousel' ? null : t.titles.testimonials,
+          L === 'carousel' ? (
+            <TestimonialCarousel list={list} heading={t.titles.testimonials ?? ''} headStyle={headStyle} bodyFont={t.body} ink={ink} soft={soft} bg={bg} tint={tint} />
+          ) : L === 'stacked' ? (
             <div className="mx-auto max-w-3xl">
               {list.map((q, i) => (
                 <figure key={i} className="py-10 text-center" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
