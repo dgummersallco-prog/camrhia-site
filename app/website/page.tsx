@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
-import { getBoard, starter, newItem } from '@/lib/aboutCanvas'
+import { getBoard, starter, blank, newItem } from '@/lib/aboutCanvas'
 import type { CItem } from '@/lib/aboutCanvas'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { FONT_OPTIONS, PAIR_PRESETS, NAV_DEFAULTS, DEFAULT_TITLES, resolveTheme } from '@/lib/siteTheme'
@@ -430,16 +430,38 @@ export default function WebsitePage() {
   const [slugMsg, setSlugMsg] = useState('')
   const [slugSaving, setSlugSaving] = useState(false)
   const [cvSel, setCvSel] = useState<string | null>(null)
-  const cvBridge = useState(() => ({ upd: null as any }))[0]
+  const [cvBoard, setCvBoard] = useState<string | null>(null)
+  const [cvNew, setCvNew] = useState<string | null>(null)
+  const cvBridge = useState(() => ({ upd: null as any, board: null as string | null }))[0]
 
   useEffect(() => {
     function onMsg(e: MessageEvent) {
-      const d = e.data as { type?: string; dev?: string; board?: unknown; id?: string | null } | null
+      const d = e.data as { type?: string; dev?: string; board?: unknown; id?: string | null; boardId?: string } | null
       if (!d) return
       if (d.type === 'camrhia-canvas' && d.dev && d.board && cvBridge.upd) {
-        cvBridge.upd((st: any) => { const a = { ...(st.about ?? {}) }; a.canvas = { ...(a.canvas ?? {}), [d.dev as string]: d.board }; st.about = a })
+        const bid = d.boardId ?? 'about'
+        cvBridge.upd((st: any) => {
+          if (bid === 'about') {
+            const a2 = { ...(st.about ?? {}) }
+            a2.canvas = { ...(a2.canvas ?? {}), [d.dev as string]: d.board }
+            st.about = a2
+          } else {
+            st.customs = ((st.customs ?? []) as any[]).map((c) => (c.id === bid ? { ...c, canvas: { ...(c.canvas ?? {}), [d.dev as string]: d.board } } : c))
+          }
+        })
       }
-      if (d.type === 'camrhia-canvas-select') setCvSel(d.id ?? null)
+      if (d.type === 'camrhia-canvas-select') {
+        if (d.id == null) {
+          if (cvBridge.board && d.boardId !== cvBridge.board) return
+          cvBridge.board = null
+          setCvSel(null)
+          setCvBoard(null)
+        } else {
+          cvBridge.board = d.boardId ?? 'about'
+          setCvSel(d.id)
+          setCvBoard(d.boardId ?? 'about')
+        }
+      }
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
@@ -643,12 +665,29 @@ export default function WebsitePage() {
     }
   }
 
-  function canvasPanel() {
-    const b = getBoard(S.about?.canvas, device, S.about?.photo2)
-    const sel: CItem | null = b.items.find((i) => i.id === cvSel) ?? null
-    const setBoard = (nb: { h: number; items: CItem[] }) => upd((st: any) => { const a = { ...(st.about ?? {}) }; a.canvas = { ...(a.canvas ?? {}), [device]: nb }; st.about = a })
+  function canvasPanel(boardId: string) {
+    const isAbout = boardId === 'about'
+    const customsList = (S.customs ?? []) as any[]
+    const canvasData = isAbout ? S.about?.canvas : customsList.find((c) => c.id === boardId)?.canvas
+    const ph2 = isAbout ? S.about?.photo2 : null
+    const b = getBoard(canvasData, device, ph2, !isAbout)
+    const sel: CItem | null = cvBoard === boardId ? (b.items.find((i) => i.id === cvSel) ?? null) : null
+    const setBoard = (nb: { h: number; items: CItem[] }) => upd((st: any) => {
+      if (isAbout) {
+        const a2 = { ...(st.about ?? {}) }
+        a2.canvas = { ...(a2.canvas ?? {}), [device]: nb }
+        st.about = a2
+      } else {
+        st.customs = ((st.customs ?? []) as any[]).map((c) => (c.id === boardId ? { ...c, canvas: { ...(c.canvas ?? {}), [device]: nb } } : c))
+      }
+    })
     const patch = (id: string, pt: Partial<CItem>) => setBoard({ ...b, items: b.items.map((i) => (i.id === id ? { ...i, ...pt } : i)) })
-    const pick = (id: string | null) => { setCvSel(id); (document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-canvas-pick', id }, '*') }
+    const pick = (id: string | null) => {
+      setCvSel(id)
+      setCvBoard(id ? boardId : null)
+      cvBridge.board = id ? boardId : null
+      ;(document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-canvas-pick', id, boardId }, '*')
+    }
     const add = (type: 'photo' | 'card' | 'heading' | 'button') => {
       const it = newItem(type, device, Math.max(0, ...b.items.map((i) => i.z)) + 1)
       setBoard({ ...b, items: [...b.items, it] })
@@ -683,14 +722,14 @@ export default function WebsitePage() {
         <div className="flex flex-wrap gap-2">
           {b.items.map((i, n) => (
             <button key={i.id} type="button" onClick={() => pick(i.id)}
-              className={`rounded-full border px-3 py-1 text-xs ${cvSel === i.id ? 'border-ink text-ink' : 'border-line text-ink-soft'}`}>
+              className={`rounded-full border px-3 py-1 text-xs ${cvBoard === boardId && cvSel === i.id ? 'border-ink text-ink' : 'border-line text-ink-soft'}`}>
               {names[i.type]} {n + 1}
             </button>
           ))}
         </div>
         <div>
-          <p className="mb-1 text-xs text-ink-soft">Page height</p>
-          <Slider min={40} max={260} step={2} value={b.h} onChange={(v) => setBoard({ ...b, h: v })} />
+          <p className="mb-1 text-xs text-ink-soft">Section height</p>
+          <Slider min={30} max={260} step={2} value={b.h} onChange={(v) => setBoard({ ...b, h: v })} />
         </div>
         {sel && (
           <div className="space-y-3 rounded-xl border border-line bg-white p-4">
@@ -714,11 +753,11 @@ export default function WebsitePage() {
               <>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-ink">Heading</label>
-                  <input value={sel.title ?? ''} onChange={(e) => patch(sel.id, { title: e.target.value })} placeholder="Uses your About heading" className={inputCls} />
+                  <input value={sel.title ?? ''} onChange={(e) => patch(sel.id, { title: e.target.value })} placeholder={isAbout ? 'Uses your About heading' : 'Card heading'} className={inputCls} />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-ink">Text</label>
-                  <textarea rows={4} value={sel.text ?? ''} onChange={(e) => patch(sel.id, { text: e.target.value })} placeholder="Leave empty to use your About text" className={inputCls} />
+                  <textarea rows={4} value={sel.text ?? ''} onChange={(e) => patch(sel.id, { text: e.target.value })} placeholder={isAbout ? 'Leave empty to use your About text' : 'Write your words'} className={inputCls} />
                 </div>
                 <div>
                   <p className="mb-1 text-xs text-ink-soft">Text size</p>
@@ -752,8 +791,27 @@ export default function WebsitePage() {
             </div>
           </div>
         )}
-        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard(starter(device, S.about?.photo2)); pick(null) }}>Start over with the starter layout</button>
+        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard(isAbout ? starter(device, ph2) : blank(device)); pick(null) }}>
+          Start over with the {isAbout ? 'starter' : 'blank'} layout
+        </button>
       </div>
+    )
+  }
+
+  function customBlock(pg: 'home' | 'about' | 'galleries') {
+    const list = ((S.customs ?? []) as any[]).filter((c) => c.page === pg)
+    return (
+      <>
+        {list.map((c, n) => (
+          <Group key={c.id} open={cvNew === c.id} title={list.length > 1 ? `Custom section ${n + 1}` : 'Custom section'} hint="free layout"
+            onOpen={() => { if (pg === 'galleries') setPreviewPage('galleries'); scrollPreview(c.id) }}>
+            {sectionHead(c.id, true, false)}
+            {canvasPanel(c.id)}
+            <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => removeCustom(c.id)}>Delete this section</button>
+          </Group>
+        ))}
+        <button type="button" className={btnGhost + ' w-full'} onClick={() => addCustom(pg)}>+ Add a custom section</button>
+      </>
     )
   }
 
@@ -841,9 +899,18 @@ export default function WebsitePage() {
     : []
 
   const ABOUT_KEYS = ['about', 'investment', 'faq']
+  function pageOfKey(k: string): 'home' | 'about' | 'galleries' {
+    const c = ((S.customs ?? []) as any[]).find((x) => x.id === k)
+    if (c) return c.page
+    return ABOUT_KEYS.includes(k) ? 'about' : 'home'
+  }
+  function orderField(pg: string) {
+    return pg === 'about' ? 'order_about' : pg === 'galleries' ? 'order_galleries' : 'order_home'
+  }
   function listFor(k: string): string[] {
     if (!T) return []
-    return ABOUT_KEYS.includes(k) ? T.orderAbout : T.orderHome
+    const pg = pageOfKey(k)
+    return pg === 'about' ? T.orderAbout : pg === 'galleries' ? T.orderGalleries : T.orderHome
   }
   function moveSection(k: string, dir: -1 | 1) {
     if (!T) return
@@ -852,8 +919,28 @@ export default function WebsitePage() {
     const j = i + dir
     if (i < 0 || j < 0 || j >= order.length) return
     const tmp = order[i]; order[i] = order[j]; order[j] = tmp
-    const field = ABOUT_KEYS.includes(k) ? 'order_about' : 'order_home'
+    const field = orderField(pageOfKey(k))
     upd((st) => { st[field] = order })
+  }
+  function addCustom(pg: 'home' | 'about' | 'galleries') {
+    if (!T) return
+    const id = 'cs_' + Date.now().toString(36)
+    const base = pg === 'home' ? T.orderHome : pg === 'about' ? T.orderAbout : T.orderGalleries
+    const order = [...base]
+    const at = pg === 'home' && order.includes('contact') ? order.indexOf('contact') : order.length
+    order.splice(at, 0, id)
+    const field = orderField(pg)
+    upd((st) => { st.customs = [...(st.customs ?? []), { id, page: pg, canvas: { desktop: blank('desktop'), phone: blank('phone') } }]; st[field] = order })
+    setCvNew(id)
+    setTimeout(() => scrollPreview(id), 600)
+  }
+  function removeCustom(id: string) {
+    if (!window.confirm('Delete this custom section?')) return
+    const field = orderField(pageOfKey(id))
+    const order = listFor(id).filter((x) => x !== id)
+    upd((st) => { st.customs = ((st.customs ?? []) as any[]).filter((c) => c.id !== id); st[field] = order })
+    setCvSel(null)
+    setCvBoard(null)
   }
   function setHero(patch: Record<string, any>) { upd((s) => { s.hero = { ...(s.hero ?? {}), ...patch } }) }
   function setIn(group: string, patch: Record<string, any>) { upd((s) => { s[group] = { ...(s[group] ?? {}), ...patch } }) }
@@ -893,7 +980,7 @@ export default function WebsitePage() {
     win()?.postMessage({ type: 'camrhia-outline', id }, '*')
     if (id) win()?.postMessage({ type: 'camrhia-scroll', id }, '*')
   }
-  function sectionHead(k: string, toggle = true) {
+  function sectionHead(k: string, toggle = true, heading = true) {
     const list = listFor(k)
     const idx = list.indexOf(k)
     const total = list.length
@@ -912,8 +999,8 @@ export default function WebsitePage() {
           </span>
         </Row>
         <div>
-          <label className="mb-1 block text-xs font-medium text-ink">Section heading</label>
-          <input value={S.titles?.[k] ?? ''} onChange={(e) => setIn('titles', { [k]: e.target.value })} placeholder={DEFAULT_TITLES[k]} className={inputCls} />
+          {heading && <label className="mb-1 block text-xs font-medium text-ink">Section heading</label>}
+          {heading && <input value={S.titles?.[k] ?? ''} onChange={(e) => setIn('titles', { [k]: e.target.value })} placeholder={DEFAULT_TITLES[k]} className={inputCls} />}
         </div>
       </>
     )
@@ -1251,6 +1338,7 @@ export default function WebsitePage() {
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
                   </div>
                 </Group>
+{customBlock('home')}
 <Group title="Text & spacing sizes" hint="phone and desktop" onOpen={() => scrollPreview('')}>
                   
                   
@@ -1296,7 +1384,8 @@ export default function WebsitePage() {
                   <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
                   <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
                   <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
-                </Group></>)}
+                </Group>{customBlock('galleries')}
+</>)}
 {tab === 'about' && (<><Group open title="1. About" hint="your story" onOpen={() => scrollPreview('about')}>
                   {sectionHead('about')}
                   <div>
@@ -1327,7 +1416,7 @@ export default function WebsitePage() {
                       </div>
                     </div>
                   )}
-                  {(S.about?.layout ?? T.about.layout) === 'canvas' && canvasPanel()}
+                  {(S.about?.layout ?? T.about.layout) === 'canvas' && canvasPanel('about')}
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
 <Group title="2. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
@@ -1372,7 +1461,8 @@ export default function WebsitePage() {
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
-                </Group></>)}
+                </Group>{customBlock('about')}
+</>)}
 {tab === 'book' && (<>
                 <Group open title="1. Layout" hint="photo and form arrangement" onOpen={() => setShowSent(false)}>
                   <LayoutPicker value={T.availability.layout === 'centered' ? 'centered' : 'side'} onChange={(v) => setIn('availability', { layout: v })}

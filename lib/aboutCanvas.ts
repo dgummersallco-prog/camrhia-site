@@ -27,10 +27,31 @@ export function starter(dev: Dev, photo2?: string | null): Board {
   }
 }
 
-export function getBoard(c: any, dev: Dev, photo2?: string | null): Board {
+export function blank(dev: Dev): Board {
+  const words = 'Add your story, a quote, or anything you like. Drag things to move them and use the corner square to resize.'
+  if (dev === 'phone') {
+    return {
+      h: 110,
+      items: [
+        { id: 'h1', type: 'heading', text: 'Your heading', x: 6, y: 6, w: 88, h: 16, z: 1, fs: 9 },
+        { id: 'c1', type: 'card', title: 'Write your words here', text: words, x: 6, y: 28, w: 88, h: 70, z: 2, fs: 3.6, bg: true },
+      ],
+    }
+  }
+  return {
+    h: 60,
+    items: [
+      { id: 'h1', type: 'heading', text: 'Your heading', x: 6, y: 6, w: 50, h: 12, z: 1, fs: 4.6 },
+      { id: 'c1', type: 'card', title: 'Write your words here', text: words, x: 6, y: 22, w: 46, h: 34, z: 2, fs: 1.45, bg: true },
+      { id: 'p1', type: 'photo', src: null, x: 56, y: 8, w: 38, h: 48, z: 1, radius: 3 },
+    ],
+  }
+}
+
+export function getBoard(c: any, dev: Dev, photo2?: string | null, custom?: boolean): Board {
   const b = c?.[dev]
   if (b && Array.isArray(b.items) && typeof b.h === 'number') return b as Board
-  return starter(dev, photo2)
+  return custom ? blank(dev) : starter(dev, photo2)
 }
 
 export function newItem(type: CType, dev: Dev, z: number): CItem {

@@ -102,7 +102,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     faq: on('faq') && faq.length > 0,
     contact: true,
   }
-  const pageOrder: string[] = page === 'home' ? t.orderHome : page === 'about' ? t.orderAbout : ['portfolio']
+  for (const c of t.customs) showMap[c.id] = on(c.id)
+  const pageOrder: string[] = page === 'home' ? t.orderHome : page === 'about' ? t.orderAbout : t.orderGalleries
   const visible = pageOrder.filter((k) => showMap[k])
 
   const navItems = (['home', 'galleries', 'about', 'book'] as const)
@@ -496,8 +497,19 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
             )}
           </div>, tinted)
-      default:
-        return null
+      default: {
+        const cs = t.customs.find((x) => x.id === k)
+        if (!cs) return null
+        return sec(k, null,
+          <AboutCanvas
+            canvas={cs.canvas} photo2={null} aboutPhoto={aboutPhoto} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
+            title={null} bio="" headStyle={headStyle} ink={ink} soft={soft} tint={tint}
+            bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId={cs.id}
+            renderButton={(label) => (
+              <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+            )}
+          />, false)
+      }
     }
   }
 

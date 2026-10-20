@@ -19,6 +19,7 @@ type Props = {
   bodyFont: string
   headWeight: number | null
   defaultButton: string
+  boardId?: string
   renderButton: (label: string) => ReactNode
 }
 
@@ -27,7 +28,7 @@ type Drag = { id: string; mode: 'move' | 'size'; sx: number; sy: number; ix: num
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi))
 
 function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: string; p: Props; sel: string | null; setSel: (id: string | null) => void }) {
-  const board = getBoard(p.canvas, dev, p.photo2)
+  const board = getBoard(p.canvas, dev, p.photo2, (p.boardId ?? 'about') !== 'about')
   const [local, setLocal] = useState<Board | null>(null)
   const ref = useRef<HTMLDivElement>(null)
   const drag = useRef<Drag | null>(null)
@@ -74,7 +75,7 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
     const d = drag.current
     drag.current = null
     if (!d || !d.moved || !latest.current) return
-    window.parent?.postMessage({ type: 'camrhia-canvas', dev, board: latest.current }, '*')
+    window.parent?.postMessage({ type: 'camrhia-canvas', dev, board: latest.current, boardId: p.boardId ?? 'about' }, '*')
   }
 
   function inner(it: CItem): ReactNode {
@@ -160,16 +161,27 @@ export function AboutCanvas(props: Props) {
   useEffect(() => {
     if (!props.editing) return
     function onMsg(e: MessageEvent) {
-      const d = e.data as { type?: string; id?: string | null } | null
-      if (d && d.type === 'camrhia-canvas-pick') setSel(d.id ?? null)
+      const d = e.data as { type?: string; id?: string | null; boardId?: string } | null
+      if (d && d.type === 'camrhia-canvas-pick' && (d.boardId ?? 'about') === (props.boardId ?? 'about')) setSel(d.id ?? null)
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
   }, [props.editing])
 
   useEffect(() => {
-    if (props.editing) window.parent?.postMessage({ type: 'camrhia-canvas-select', id: sel }, '*')
+    if (!props.editing) return
+    window.parent?.postMessage({ type: 'camrhia-canvas-select', id: sel, boardId: props.boardId ?? 'about' }, '*')
+    if (sel) window.dispatchEvent(new CustomEvent('cr-canvas-active', { detail: props.boardId ?? 'about' }))
   }, [sel, props.editing])
+
+  useEffect(() => {
+    function onActive(e: Event) {
+      const id = (e as CustomEvent).detail
+      if (id !== (props.boardId ?? 'about')) setSel(null)
+    }
+    window.addEventListener('cr-canvas-active', onActive)
+    return () => window.removeEventListener('cr-canvas-active', onActive)
+  }, [props.boardId])
 
   return (
     <>

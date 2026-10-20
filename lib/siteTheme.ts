@@ -135,8 +135,13 @@ export function resolveTheme(r: Record<string, any>) {
     const sv = Array.isArray(saved) ? (saved as string[]).filter((k) => def.includes(k)) : []
     return [...sv, ...def.filter((k) => !sv.includes(k))]
   }
-  const orderHome = orderOf(s.order_home, ['portfolio', 'testimonials', 'contact'])
-  const orderAbout = orderOf(s.order_about, ['about', 'investment', 'faq'])
+  const customs = (Array.isArray(s.customs) ? (s.customs as any[]) : [])
+    .filter((c) => c && typeof c.id === 'string' && ['home', 'about', 'galleries'].includes(c.page))
+    .map((c) => ({ id: String(c.id), page: c.page as 'home' | 'about' | 'galleries', canvas: (c.canvas ?? {}) as any }))
+  const customIds = (pg: string) => customs.filter((c) => c.page === pg).map((c) => c.id)
+  const orderHome = orderOf(s.order_home, ['portfolio', 'testimonials', 'contact', ...customIds('home')])
+  const orderAbout = orderOf(s.order_about, ['about', 'investment', 'faq', ...customIds('about')])
+  const orderGalleries = orderOf(s.order_galleries, ['portfolio', ...customIds('galleries')])
 
   const titles: Record<string, string> = { ...DEFAULT_TITLES }
   for (const k of Object.keys(DEFAULT_TITLES)) {
@@ -274,6 +279,8 @@ export function resolveTheme(r: Record<string, any>) {
     calendar,
     testi,
     headWeight,
+    customs,
+    orderGalleries,
     galFamily: galKey ? FONT_OPTIONS[galKey].family : null,
     sizes,
     cssVars,
