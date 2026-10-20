@@ -1252,7 +1252,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 </>)}
-{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group open title="1. Logo & menu" hint="logo and links across the top" onOpen={() => scrollPreview('nav')}>
+{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group open title="1. Logo" hint="upload, size and position" onOpen={() => scrollPreview('nav')}>
 <div className="border-t border-line pt-4">
                     <p className="mb-1 text-sm text-ink">Logo</p>
                     <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
@@ -1271,11 +1271,13 @@ export default function WebsitePage() {
                     </div>
                   </div>
                   <SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
-                  <Row label="Menu bar">
-                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
-                  </Row>
                   <Row label="Logo position">
                     <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
+                  </Row>
+                  </Group>
+<Group title="2. Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
+<Row label="Menu bar">
+                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
                   <Row label="Menu on desktop">
                     <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
@@ -1293,7 +1295,7 @@ export default function WebsitePage() {
                   </div>
                 {secStyleBlock('nav')}
 </Group>
-<Group title="2. Hero" hint="photos and headline" onOpen={() => scrollPreview('top')}>
+<Group title="3. Hero" hint="photos and headline" onOpen={() => scrollPreview('top')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
@@ -1333,7 +1335,7 @@ export default function WebsitePage() {
                   
                 {secStyleBlock('top')}
 </Group>
-<Group title="3. Explore" hint="links to your other pages" onOpen={() => scrollPreview('explore')}>
+<Group title="4. Explore" hint="links to your other pages" onOpen={() => scrollPreview('explore')}>
   <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
@@ -1362,7 +1364,7 @@ export default function WebsitePage() {
   <p className="text-xs text-ink-soft">Leave a title empty to use the name from your Menu step.</p>
 {secStyleBlock('explore')}
 </Group>
-<Group title="4. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
+<Group title="5. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -1383,7 +1385,7 @@ export default function WebsitePage() {
                   
 {secStyleBlock('portfolio')}
 </Group>
-<Group title="5. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="6. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -1420,7 +1422,7 @@ export default function WebsitePage() {
                   
 {secStyleBlock('words')}
 </Group>
-<Group title="6. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
+<Group title="7. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
@@ -1428,7 +1430,7 @@ export default function WebsitePage() {
                   </div>
                 {secStyleBlock('contact')}
 </Group>
-<Group title="7. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
+<Group title="8. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
