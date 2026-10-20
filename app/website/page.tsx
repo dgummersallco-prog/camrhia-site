@@ -305,7 +305,7 @@ function LayoutPicker<V extends string>({ value, options, onChange }: { value: V
     <div className="grid grid-cols-3 gap-3">
       {options.map((o) => (
         <button key={o.v} type="button" onClick={() => onChange(o.v)} className="text-left">
-          <div className={`rounded-xl p-1 ${value === o.v ? 'ring-2 ring-twilight' : 'opacity-80 hover:opacity-100'}`}>
+          <div className={`rounded-xl ${value === o.v ? 'ring-2 ring-ink ring-offset-2 ring-offset-card' : 'ring-1 ring-line hover:ring-ink-soft'}`}>
             <div className="h-20 overflow-hidden rounded-lg border border-line bg-white p-1.5">{o.thumb}</div>
           </div>
           <p className="mt-1.5 text-xs font-medium text-ink">{o.name}</p>
@@ -316,63 +316,91 @@ function LayoutPicker<V extends string>({ value, options, onChange }: { value: V
 }
 
 function Thumb({ kind }: { kind: string }) {
-  const photo = '#9A8F88'
-  const text = '#2A1F24'
-  const lines = (c: string) => (
-    <>
-      <div style={{ height: 5, width: '70%', background: c, borderRadius: 3, margin: '0 auto 4px' }} />
-      <div style={{ height: 3, width: '45%', background: c, opacity: 0.6, borderRadius: 3, margin: '0 auto' }} />
-    </>
+  const PH = 'linear-gradient(145deg,#D9C7B5 0%,#A8917C 55%,#7A6858 100%)'
+  const PH2 = 'linear-gradient(145deg,#C9D2C4 0%,#8E9C8A 100%)'
+  const PH3 = 'linear-gradient(145deg,#D6C3C6 0%,#A58A90 100%)'
+  const ink = '#2A1F24'
+  const cream = '#F6F1EA'
+  const brass = '#B08D57'
+  const bar = (w: number | string, h: number, c: string, o = 1, mb = 0) => (
+    <div style={{ width: w, height: h, background: c, opacity: o, borderRadius: 2, marginBottom: mb }} />
   )
+  const navBar = (c: string) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px' }}>
+      {bar(20, 3, c, 0.95)}
+      <div style={{ display: 'flex', gap: 4 }}>{bar(8, 2, c, 0.6)}{bar(8, 2, c, 0.6)}{bar(8, 2, c, 0.6)}</div>
+    </div>
+  )
+  const pill = (c: string, w = 30) => <div style={{ width: w, height: 8, background: c, borderRadius: 1 }} />
+  const col = { display: 'flex', flexDirection: 'column', alignItems: 'center' } as const
+
   return (
-    <div className="relative h-24 overflow-hidden rounded-lg border border-line bg-white">
+    <div style={{ position: 'relative', height: 120, background: cream, overflow: 'hidden' }}>
       {kind === 'editorial' && (
         <>
-          <div style={{ position: 'absolute', inset: 0, background: photo }} />
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 10 }}>{lines('#fff')}</div>
+          <div style={{ position: 'absolute', inset: 0, background: PH }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(0,0,0,0.04), rgba(0,0,0,0.38))' }} />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: 0 }}>{navBar('#fff')}</div>
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 16, ...col }}>
+            {bar(74, 6, '#fff', 0.95, 4)}{bar(46, 2, '#fff', 0.7, 9)}{pill('#fff', 30)}
+          </div>
         </>
       )}
       {kind === 'split' && (
         <div style={{ display: 'flex', height: '100%' }}>
-          <div style={{ flex: 1, background: '#F6F1EA', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 8 }}>
-            <div style={{ height: 5, width: '80%', background: text, borderRadius: 3, marginBottom: 4 }} />
-            <div style={{ height: 3, width: '55%', background: text, opacity: 0.5, borderRadius: 3 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {navBar(ink)}
+            <div style={{ flex: 1, padding: '0 11px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              {bar(16, 2, brass, 1, 7)}{bar('88%', 6, ink, 0.9, 3)}{bar('62%', 6, ink, 0.9, 8)}{bar('78%', 2, ink, 0.3, 3)}{bar('56%', 2, ink, 0.3, 9)}{pill(ink, 28)}
+            </div>
           </div>
-          <div style={{ flex: 1, background: photo }} />
+          <div style={{ flex: 1, background: PH }} />
         </div>
+      )}
+      {kind === 'minimal' && (
+        <>
+          <div style={{ position: 'absolute', inset: 0, background: '#fff' }} />
+          <div style={{ position: 'relative', ...col }}>
+            <div style={{ padding: '9px 0 8px', ...col, gap: 4 }}>
+              {bar(22, 3, ink, 0.9)}
+              <div style={{ display: 'flex', gap: 6 }}>{bar(10, 2, ink, 0.3)}{bar(10, 2, ink, 0.3)}{bar(10, 2, ink, 0.3)}</div>
+            </div>
+            <div style={{ width: '86%', height: 54, background: PH }} />
+            <div style={{ marginTop: 9, ...col }}>{bar(66, 5, ink, 0.9, 4)}{bar(40, 2, ink, 0.3)}</div>
+          </div>
+        </>
       )}
       {kind === 'framed' && (
         <>
-          <div style={{ position: 'absolute', inset: 0, background: photo }} />
-          <div style={{ position: 'absolute', left: '22%', right: '22%', top: '24%', bottom: '24%', background: '#FAF7F2', padding: 4 }}>
-            <div style={{ border: '1px solid #cfc6bb', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>{lines(text)}</div>
+          <div style={{ position: 'absolute', inset: 0, background: PH }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.14)' }} />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: 0 }}>{navBar('#fff')}</div>
+          <div style={{ position: 'absolute', left: '24%', right: '24%', top: '32%', bottom: '14%', background: cream, padding: 4, boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }}>
+            <div style={{ height: '100%', border: '1px solid rgba(42,31,36,0.25)', ...col, justifyContent: 'center' }}>
+              {bar(8, 2, brass, 1, 5)}{bar('70%', 5, ink, 0.9, 3)}{bar('46%', 2, ink, 0.3, 7)}{pill(ink, 24)}
+            </div>
           </div>
         </>
       )}
       {kind === 'magazine' && (
         <>
-          <div style={{ padding: 8 }}>
-            <div style={{ height: 7, width: '85%', background: text, borderRadius: 2, marginBottom: 3 }} />
-            <div style={{ height: 7, width: '55%', background: text, borderRadius: 2 }} />
+          {navBar(ink)}
+          <div style={{ padding: '2px 11px' }}>
+            {bar('92%', 10, ink, 0.92, 3)}{bar('64%', 10, ink, 0.92)}
           </div>
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '45%', background: photo }} />
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '44%', background: PH }} />
         </>
       )}
       {kind === 'mosaic' && (
         <>
-          <div style={{ padding: '8px 8px 0' }}>{lines(text)}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gridTemplateRows: '1fr 1fr', gap: 3, position: 'absolute', left: 8, right: 8, bottom: 8, height: '52%' }}>
-            <div style={{ gridRow: 'span 2', background: photo }} />
-            <div style={{ background: photo, opacity: 0.8 }} />
-            <div style={{ background: photo, opacity: 0.65 }} />
+          {navBar(ink)}
+          <div style={{ ...col, paddingBottom: 6 }}>{bar(62, 5, ink, 0.9, 4)}{pill(brass, 22)}</div>
+          <div style={{ position: 'absolute', left: 10, right: 10, bottom: 10, height: 50, display: 'grid', gridTemplateColumns: '1.4fr 1fr', gridTemplateRows: '1fr 1fr', gap: 3 }}>
+            <div style={{ gridRow: 'span 2', background: PH }} />
+            <div style={{ background: PH2 }} />
+            <div style={{ background: PH3 }} />
           </div>
         </>
-      )}
-      {kind === 'minimal' && (
-        <div style={{ padding: 8 }}>
-          <div style={{ height: 44, background: photo, borderRadius: 2, marginBottom: 8 }} />
-          {lines(text)}
-        </div>
       )}
     </div>
   )
@@ -386,7 +414,7 @@ export default function WebsitePage() {
   const [saving, setSaving] = useState(false)
   const [device, setDevice] = useState<Dev>('desktop')
   const [previewPage, setPreviewPage] = useState<'home' | 'gallery' | 'availability'>('home')
-  const [tab, setTab] = useState<'site' | 'home' | 'galleries' | 'book'>('home')
+  const [tab, setTab] = useState<'home' | 'galleries' | 'book'>('home')
   const [firstGid, setFirstGid] = useState<string | null>(null)
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
   const [stageW, setStageW] = useState(0)
@@ -671,7 +699,7 @@ export default function WebsitePage() {
     out.push({ name: 'White', hex: '#FFFFFF' }, { name: 'Cream', hex: '#FAF7F2' }, { name: 'Warm paper', hex: '#F0EAE1' }, { name: 'Ink', hex: '#2A1F24' }, { name: 'Black', hex: '#000000' })
     return out
   }
-  function pickTab(t: 'site' | 'home' | 'galleries' | 'book') {
+  function pickTab(t: 'home' | 'galleries' | 'book') {
     setTab(t)
     setPreviewPage(t === 'galleries' ? 'gallery' : t === 'book' ? 'availability' : 'home')
   }
@@ -746,26 +774,51 @@ export default function WebsitePage() {
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
               <div className="space-y-4">
-                <div className="rounded-2xl border border-line bg-card p-4">
-                  <p className="mb-2 text-[11px] uppercase tracking-widest text-ink-soft">Website pages</p>
-                  <Seg value={tab} onChange={pickTab}
-                    options={[{ v: 'home', label: 'Home page' }, { v: 'galleries', label: 'Galleries page' }, { v: 'book', label: 'Book info page' }, { v: 'site', label: 'Whole site' }]} />
-                  <p className="mt-2 text-xs text-ink-soft">
-                    {tab === 'home' ? 'Everything on your main page, top to bottom.' : tab === 'galleries' ? 'The page visitors see after clicking a gallery cover.' : tab === 'book' ? 'Where every button leads: the date check and inquiry form.' : 'Logo, colors, fonts, menu and footer, used on every page.'}
+                <div>
+                  <div className="flex flex-wrap gap-x-7 border-b border-line">
+                    {([{ v: 'home', label: 'Home page' }, { v: 'galleries', label: 'Galleries page' }, { v: 'book', label: 'Book info page' }] as const).map((o) => (
+                      <button key={o.v} type="button" onClick={() => pickTab(o.v)}
+                        className={`-mb-px border-b-2 pb-3 font-fraunces text-lg transition ${tab === o.v ? 'border-ink text-ink' : 'border-transparent text-ink-soft hover:text-ink'}`}>
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs text-ink-soft">
+                    {tab === 'home' ? 'Everything on your main page, top to bottom.' : tab === 'galleries' ? 'The page visitors see after clicking a gallery cover.' : 'Where every button leads: the date check and inquiry form.'}
                   </p>
                 </div>
                 {tab === 'home' && (<><Group title="1. Template" hint="pick a look" open>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {TEMPLATES.map((t) => (
-                      <button key={t.key} onClick={() => set('site_template', t.key)} className={`text-left ${tpl === t.key ? '' : 'opacity-80 hover:opacity-100'}`}>
-                        <div className={`rounded-xl p-1 ${tpl === t.key ? 'ring-2 ring-twilight' : ''}`}><Thumb kind={t.key} /></div>
-                        <p className="mt-2 text-sm font-medium text-ink">{t.name}</p>
-                        <p className="text-xs text-ink-soft">{t.blurb}</p>
+                      <button key={t.key} type="button" onClick={() => set('site_template', t.key)} className="group text-left">
+                        <div className={`overflow-hidden rounded-lg transition ${tpl === t.key ? 'ring-2 ring-ink ring-offset-2 ring-offset-card' : 'ring-1 ring-line group-hover:ring-ink-soft'}`}><Thumb kind={t.key} /></div>
+                        <p className="mt-2.5 font-fraunces text-base text-ink">{t.name}</p>
+                        <p className="text-xs leading-snug text-ink-soft">{t.blurb}</p>
                       </button>
                     ))}
                   </div>
                 </Group>
-<Group title="2. Hero" hint="photos, logo, headline">
+<Group title="2. Color & fonts" hint="used on every page">
+                  <ColorField label="Button & accent color" value={form.site_accent ?? brandHex()} swatches={palette()}
+                    onChange={(h) => set('site_accent', h)} onReset={() => set('site_accent', null)} />
+                  {colorRow('Background', 'bg', T.bg)}
+                  {colorRow('Text', 'text', T.ink)}
+                  {colorRow('Alternating section tint', 'tint', T.tint)}
+                  <div className="grid grid-cols-3 gap-3 pt-2">
+                    {Object.entries(PAIR_PRESETS).map(([key, p]) => {
+                      const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
+                      return (
+                        <button key={key} onClick={() => pickPair(key)} className={`rounded-xl border p-3 text-left ${sel ? 'border-twilight ring-1 ring-twilight' : 'border-line'}`}>
+                          <p style={{ fontFamily: FONT_OPTIONS[p.head].family, fontSize: 24, lineHeight: 1.1 }} className="text-ink">Aa</p>
+                          <p style={{ fontFamily: FONT_OPTIONS[p.body].family, fontSize: 11 }} className="mt-1 text-ink-soft">{p.name}</p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
+                  <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
+                </Group>
+<Group title="3. Hero" hint="photos and headline">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
@@ -806,7 +859,29 @@ export default function WebsitePage() {
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   
                 </Group>
-<Group title="3. Galleries" hint="cover photos and titles" onOpen={() => scrollPreview('portfolio')}>
+<Group title="4. Logo & buttons" hint="shows on every page"><div className="border-t border-line pt-4">
+                    <p className="mb-1 text-sm text-ink">Logo</p>
+                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {form.logo_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
+                      ) : (
+                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
+                      )}
+                      <label className={btnGhost + ' cursor-pointer'}>
+                        {form.logo_path ? 'Replace' : 'Upload logo'}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
+                      </label>
+                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
+                    </div>
+                  </div>
+                  <SizeControl label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
+                  <Row label="Button shape">
+                    <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
+                  </Row>
+                </Group>
+<Group title="5. Galleries" hint="cover photos and titles" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -826,7 +901,7 @@ export default function WebsitePage() {
                   </Row>
                   
 </Group>
-<Group title="4. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
+<Group title="6. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
 <div>
                     
@@ -864,7 +939,7 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="5. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="7. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -900,7 +975,7 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="6. About" hint="your story" onOpen={() => scrollPreview('about')}>
+<Group title="8. About" hint="your story" onOpen={() => scrollPreview('about')}>
                   {sectionHead('about')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -913,19 +988,40 @@ export default function WebsitePage() {
                   </div>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
-<Group title="7. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
+<Group title="9. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 </Group>
-<Group title="8. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
+<Group title="10. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
                 </Group>
-<Group title="9. Layout & sizes" hint="phone and desktop">
+<Group title="11. Footer" hint="the line at the bottom">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
+                    <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
+                  </div>
+                </Group>
+<Group title="12. Menu" hint="last, trim it down">
+                  <Row label="Menu bar">
+                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
+                  </Row>
+                  <div className="space-y-2">
+                    {MENU_KEYS.map((k) => (
+                      <div key={k} className="flex items-center gap-3">
+                        <input value={S.menu?.labels?.[k] ?? ''} placeholder={NAV_DEFAULTS[k]}
+                          onChange={(e) => upd((s) => { s.menu = { ...(s.menu ?? {}), labels: { ...(s.menu?.labels ?? {}), [k]: e.target.value } } })} className={inputCls} />
+                        <Switch on={!menuHidden.includes(k)}
+                          onChange={(v) => upd((s) => { const h: string[] = Array.isArray(s.menu?.hidden) ? [...s.menu.hidden] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); s.menu = { ...(s.menu ?? {}), hidden: h } })} />
+                      </div>
+                    ))}
+                  </div>
+                </Group>
+<Group title="13. Layout & sizes" hint="phone and desktop">
                   
                   <p className="text-xs text-ink-soft">Move a phone or desktop control and the preview switches to that size. You can also type an exact number.</p>
                   <SizeControl label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
@@ -982,69 +1078,7 @@ export default function WebsitePage() {
                   </div>
                   
                 </Group></>)}
-{tab === 'site' && (<><Group open title="1. Logo & buttons" hint="shows on every page"><div className="border-t border-line pt-4">
-                    <p className="mb-1 text-sm text-ink">Logo</p>
-                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {form.logo_path ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
-                      ) : (
-                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
-                      )}
-                      <label className={btnGhost + ' cursor-pointer'}>
-                        {form.logo_path ? 'Replace' : 'Upload logo'}
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
-                      </label>
-                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
-                    </div>
-                  </div>
-                  <SizeControl label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
-                  <Row label="Button shape">
-                    <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
-                  </Row>
-                </Group>
-<Group title="2. Color & fonts" hint="the mood">
-                  <ColorField label="Button & accent color" value={form.site_accent ?? brandHex()} swatches={palette()}
-                    onChange={(h) => set('site_accent', h)} onReset={() => set('site_accent', null)} />
-                  {colorRow('Background', 'bg', T.bg)}
-                  {colorRow('Text', 'text', T.ink)}
-                  {colorRow('Alternating section tint', 'tint', T.tint)}
-                  <div className="grid grid-cols-3 gap-3 pt-2">
-                    {Object.entries(PAIR_PRESETS).map(([key, p]) => {
-                      const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
-                      return (
-                        <button key={key} onClick={() => pickPair(key)} className={`rounded-xl border p-3 text-left ${sel ? 'border-twilight ring-1 ring-twilight' : 'border-line'}`}>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.head].family, fontSize: 24, lineHeight: 1.1 }} className="text-ink">Aa</p>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.body].family, fontSize: 11 }} className="mt-1 text-ink-soft">{p.name}</p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
-                  <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
-                </Group>
-<Group title="3. Menu" hint="last, trim it down">
-                  <Row label="Menu bar">
-                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
-                  </Row>
-                  <div className="space-y-2">
-                    {MENU_KEYS.map((k) => (
-                      <div key={k} className="flex items-center gap-3">
-                        <input value={S.menu?.labels?.[k] ?? ''} placeholder={NAV_DEFAULTS[k]}
-                          onChange={(e) => upd((s) => { s.menu = { ...(s.menu ?? {}), labels: { ...(s.menu?.labels ?? {}), [k]: e.target.value } } })} className={inputCls} />
-                        <Switch on={!menuHidden.includes(k)}
-                          onChange={(v) => upd((s) => { const h: string[] = Array.isArray(s.menu?.hidden) ? [...s.menu.hidden] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); s.menu = { ...(s.menu ?? {}), hidden: h } })} />
-                      </div>
-                    ))}
-                  </div>
-                </Group>
-<Group title="4. Footer" hint="the line at the bottom">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
-                    <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
-                  </div>
-                </Group></>)}
+
 
                 {fullUrl && (
                   <section className={card}>
