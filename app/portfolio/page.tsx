@@ -56,6 +56,7 @@ type Profile = {
   show_availability_public: boolean | null
   show_faq_public: boolean | null
   show_socials_public: boolean | null
+  show_testimonials_public: boolean | null
   section_order: string[] | null
   accent_color: string | null
   portfolio_bg_color: string | null
@@ -73,7 +74,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, show_testimonials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -88,7 +89,7 @@ const LABELS: Record<string, string> = {
 const TOGGLE: Record<string, keyof Profile | null> = {
   featured_photos: 'show_portfolio_public',
   about: 'show_bio_public',
-  testimonials: null,
+  testimonials: 'show_testimonials_public',
   pricing: 'show_pricing_public',
   openings: 'show_availability_public',
   faq: 'show_faq_public',
@@ -279,6 +280,7 @@ export default function PortfolioEditorPage() {
       show_availability_public: form.show_availability_public !== false,
       show_faq_public: form.show_faq_public !== false,
       show_socials_public: form.show_socials_public !== false,
+      show_testimonials_public: form.show_testimonials_public !== false,
       section_order: form.section_order,
       accent_color: t(form.accent_color),
       portfolio_bg_color: t(form.portfolio_bg_color),
