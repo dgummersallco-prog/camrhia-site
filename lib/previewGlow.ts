@@ -32,12 +32,16 @@ export function installPreviewGlow(): () => void {
       const r = target.getBoundingClientRect()
       glow.style.display = 'block'
       const vw = document.documentElement.clientWidth
-      const gl = Math.max(window.scrollX + 6, r.left + window.scrollX - 4)
-      const gr = Math.min(window.scrollX + vw - 6, r.right + window.scrollX + 4)
+      const full = target.dataset.glow === 'full'
+      const gl = full ? window.scrollX + 6 : Math.max(window.scrollX + 6, r.left + window.scrollX - 4)
+      const gr = full ? window.scrollX + vw - 6 : Math.min(window.scrollX + vw - 6, r.right + window.scrollX + 4)
       glow.style.left = gl + 'px'
-      glow.style.top = r.top + window.scrollY - 4 + 'px'
+      let topV = r.top
+      if (target.id === 'top') { const nv = document.getElementById('nav'); if (nv) topV = Math.max(topV, nv.getBoundingClientRect().bottom) }
+      const gt = Math.max(6, topV + window.scrollY - 4)
+      glow.style.top = gt + 'px'
       glow.style.width = Math.max(0, gr - gl) + 'px'
-      glow.style.height = r.height + 8 + 'px'
+      glow.style.height = Math.max(0, r.bottom + window.scrollY + 4 - gt) + 'px'
     } else {
       glow.style.display = 'none'
     }
