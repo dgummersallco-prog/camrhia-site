@@ -7,12 +7,17 @@ export function installPreviewGlow(): () => void {
 @property --cr-a { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 @keyframes cr-spin { to { --cr-a: 360deg; } }
 .cr-glow {
-  position: absolute; pointer-events: none; z-index: 2147483000; box-sizing: border-box; padding: 3px; border-radius: 10px; display: none;
-  background: conic-gradient(from var(--cr-a), rgba(176,141,87,0.35) 0deg, rgba(176,141,87,0.35) 230deg, rgba(176,141,87,0.9) 310deg, #fff2cf 350deg, rgba(176,141,87,0.35) 360deg);
+  position: absolute; pointer-events: none; z-index: 2147483000; box-sizing: border-box; border-radius: 10px; display: none;
+  border: 2px dashed #a8803f;
+  filter: drop-shadow(0 0 1.5px rgba(255,255,255,0.9));
+}
+.cr-glow::after {
+  content: ''; position: absolute; inset: -3px; box-sizing: border-box; padding: 4px; border-radius: 12px;
+  background: conic-gradient(from var(--cr-a), rgba(255,236,190,0) 0deg, rgba(255,236,190,0) 255deg, rgba(240,200,110,0.85) 318deg, #ffffff 352deg, rgba(255,236,190,0) 360deg);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
-  animation: cr-spin 2.6s linear infinite;
-  filter: drop-shadow(0 0 6px rgba(176,141,87,0.55));
+  animation: cr-spin 2.2s linear infinite;
+  filter: drop-shadow(0 0 7px rgba(240,190,90,0.95));
 }`
   document.head.appendChild(css)
 
