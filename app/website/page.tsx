@@ -1303,22 +1303,23 @@ export default function WebsitePage() {
       { v: 'cards', name: 'Cards', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="9" width="16" height="22" rx="2" /><rect x="22" y="9" width="16" height="22" rx="2" /><rect x="40" y="9" width="16" height="22" rx="2" /></g><g fill="#9A8A74"><rect x="4" y="9" width="16" height="2" /><rect x="22" y="9" width="16" height="2" /><rect x="40" y="9" width="16" height="2" /></g></svg> },
     ]} />
   <div>
-    <label className="mb-1 block text-xs font-medium text-ink">Small heading (optional)</label>
+    <label className="mb-1 block text-xs font-medium text-ink">Label above the links (optional)</label>
     <input value={S.explore?.heading ?? ''} onChange={(e) => setIn('explore', { heading: e.target.value })} placeholder="Explore" className={inputCls} />
   </div>
-  <div>
-    <label className="mb-1 block text-xs font-medium text-ink">Line under Galleries</label>
-    <input value={S.explore?.lines?.galleries ?? ''} onChange={(e) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), galleries: e.target.value } })} placeholder="See my work" className={inputCls} />
-  </div>
-  <div>
-    <label className="mb-1 block text-xs font-medium text-ink">Line under About</label>
-    <input value={S.explore?.lines?.about ?? ''} onChange={(e) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), about: e.target.value } })} placeholder="Get to know me" className={inputCls} />
-  </div>
-  <div>
-    <label className="mb-1 block text-xs font-medium text-ink">Line under Book</label>
-    <input value={S.explore?.lines?.book ?? ''} onChange={(e) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), book: e.target.value } })} placeholder="Check my dates" className={inputCls} />
-  </div>
-  <p className="text-xs text-ink-soft">The page names come from your Menu step.</p>
+  {([['galleries', 'Galleries', 'See my work'], ['about', 'About', 'Get to know me'], ['book', 'Book', 'Check my dates']] as const).map(([k, tt, ss]) => (
+    <div key={k} className="space-y-2 rounded-xl border border-line p-3">
+      <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">{tt} link</p>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-ink">Title</label>
+        <input value={(S.explore as any)?.titles?.[k] ?? ''} onChange={(e) => setIn('explore', { titles: { ...((S.explore as any)?.titles ?? {}), [k]: e.target.value } })} placeholder={tt} className={inputCls} />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-ink">Subtitle</label>
+        <input value={S.explore?.lines?.[k] ?? ''} onChange={(e) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), [k]: e.target.value } })} placeholder={ss} className={inputCls} />
+      </div>
+    </div>
+  ))}
+  <p className="text-xs text-ink-soft">Leave a title empty to use the name from your Menu step.</p>
 </Group>
 <Group title="3. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
