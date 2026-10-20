@@ -1,62 +1,48 @@
+import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { BRAND_NAME } from "@/lib/brand"
-import Link from "next/link"
-import React from "react"
-import { PortfolioView } from "./PortfolioView"
+import Wordmark from "@/app/components/Wordmark"
+import GetTheApp from "./GetTheApp"
 
-export const dynamic = 'force-dynamic' // always fetch fresh — never cache a stale portfolio
+export const dynamic = "force-dynamic"
 
-const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
-  : ''
+const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL || "https://apps.apple.com/app/id6800011162"
 
-function photoUrl(path: string | null | undefined): string | null {
-  return path ? `${STORAGE_BASE}${path}` : null
-}
+export default async function PortfolioInvitePage(props: { params: Promise<{ token: string }> }) {
+  const { token } = await props.params
 
-// Maps a title_font key (from titleFonts in theme/fonts.ts) to its Google
-// Fonts family name + weight, so the web page loads the exact same font
-// the app uses. Script fonts only ship one weight, matching the app's
-// behavior where bold/italic have no effect on those.
-export async function generateMetadata({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params
-  if (!supabase) return {}
-  const { data } = await supabase.rpc('get_public_profile', { p_token: token })
-  if (!data) return { title: 'Portfolio not available' }
-  const m = data as Record<string, any>
-  const name = m.studio_name ?? m.display_name ?? 'Photographer'
-  const place = [m.service_city, m.service_state].filter(Boolean).join(', ')
-  const title = place ? `${name} · ${place}` : name
-  const bio = typeof m.bio === 'string' ? m.bio.replace(/\s+/g, ' ').trim() : ''
-  const description = bio ? (bio.length > 155 ? bio.slice(0, 152) + '...' : bio) : `View ${name}'s photography portfolio.`
-  const first = (Array.isArray(m.cover_paths) && m.cover_paths.length > 0 ? m.cover_paths[0] : m.cover_path) as string | null
-  const image = photoUrl(first)
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: 'website', ...(image ? { images: [{ url: image }] } : {}) },
-    twitter: { card: image ? 'summary_large_image' : 'summary', title, description, ...(image ? { images: [image] } : {}) },
-  }
-}
-
-export default async function PublicPortfolioPage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params
-
-  if (!supabase) {
-    return <div style={{ padding: 40 }}>Configuration error.</div>
+  let name: string | null = null
+  if (supabase) {
+    try {
+      const { data } = await supabase.rpc("get_public_profile", { p_token: token })
+      const r: any = data
+      name = r?.studio_name ?? r?.profile?.studio_name ?? r?.display_name ?? null
+    } catch (e) {
+      console.error("get_public_profile failed:", e)
+    }
   }
 
-  const { data: result, error } = await supabase.rpc('get_public_profile', { p_token: token })
-
-  if (error || !result) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, fontFamily: 'system-ui', padding: 40, textAlign: 'center' }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600 }}>This portfolio isn&apos;t available.</h1>
-        <p style={{ color: '#666' }}>The link may be incorrect, or this portfolio may no longer be public.</p>
-        <Link href="https://camrhia.com" style={{ color: '#5B6B8C', textDecoration: 'underline' }}>Explore {BRAND_NAME}</Link>
-      </div>
-    )
-  }
-
-  return <PortfolioView initial={result as Record<string, any>} token={token} />
+  return (
+    <div className="min-h-screen bg-paper flex flex-col">
+      <header className="border-b border-line bg-paper px-6 py-4">
+        <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
+          <Wordmark className="text-3xl" />
+        </Link>
+      </header>
+      <main className="flex-1 flex items-center justify-center px-6 py-20">
+        <div className="max-w-md w-full text-center">
+          <span className="inline-block bg-brass/10 text-brass font-mono text-xs tracking-widest uppercase rounded-full px-4 py-1.5 mb-6">
+            Portfolio
+          </span>
+          <h1 className="font-fraunces text-3xl font-semibold text-ink mb-3">
+            {name ? name + " shared their portfolio with you" : "A photographer shared their portfolio with you"}
+          </h1>
+          <p className="text-ink-soft leading-relaxed">
+            See their work, check their dates and message them, all inside the {BRAND_NAME} app.
+          </p>
+          <GetTheApp token={token} appStoreUrl={APP_STORE_URL} />
+        </div>
+      </main>
+    </div>
+  )
 }

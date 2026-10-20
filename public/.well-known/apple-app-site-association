@@ -4,7 +4,7 @@
     "details": [
       {
         "appID": "LHMN5KMCSW.com.dgummersallco.camrhia",
-        "paths": ["/confirm-email", "/confirm-email?*", "/s/*"]
+        "paths": ["/confirm-email", "/confirm-email?*", "/s/*", "/p/*"]
       }
     ]
   }
