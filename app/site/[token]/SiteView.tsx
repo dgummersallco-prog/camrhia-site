@@ -88,7 +88,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const aboutPhoto = photoUrl(r.about_photo_path ?? r.avatar_path) ?? (isPreview ? PH_SCENES[1] : null)
 
   const coverFallback = ((Array.isArray(r.cover_paths) && r.cover_paths.length > 0 ? r.cover_paths[0] : r.cover_path) as string | null) ?? ''
-  const heroPaths: string[] = t.hero.photos.length > 0 ? t.hero.photos : [coverFallback].filter(Boolean)
+  const allCovers: string[] = Array.isArray(r.cover_paths) ? (r.cover_paths as string[]).filter(Boolean) : []
+  const heroPaths: string[] = t.hero.photos.length > 0 ? t.hero.photos : allCovers.length > 0 ? allCovers : [coverFallback].filter(Boolean)
   const heroUrlsReal = heroPaths.map((p) => photoUrl(p)).filter(Boolean) as string[]
   const heroUrls = isPreview && heroUrlsReal.length === 0 ? [PH_SCENES[0]] : heroUrlsReal
   const shownHero = t.hero.slideshow ? heroUrls : heroUrls.slice(0, 1)
