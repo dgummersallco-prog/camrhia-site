@@ -414,6 +414,7 @@ export default function WebsitePage() {
   const [previewPage, setPreviewPage] = useState<'home' | 'galleries' | 'gallery' | 'about' | 'availability'>('home')
   const [tab, setTab] = useState<'home' | 'galleries' | 'about' | 'book'>('home')
   const [firstGid, setFirstGid] = useState<string | null>(null)
+  const [showSent, setShowSent] = useState(false)
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
   const [stageW, setStageW] = useState(0)
   const formRef = useRef<Site | null>(null)
@@ -709,7 +710,7 @@ export default function WebsitePage() {
   }
   function previewSrc() {
     const b = `/site/${token}`
-    if (previewPage === 'availability') return `${b}/availability?preview=1`
+    if (previewPage === 'availability') return `${b}/availability?preview=1${showSent ? '&sent=1' : ''}`
     if (previewPage === 'about') return `${b}/about?preview=1`
     if (previewPage === 'galleries') return `${b}/galleries?preview=1`
     if (previewPage === 'gallery') return firstGid ? `${b}/g/${firstGid}?preview=1` : `${b}/galleries?preview=1`
@@ -1091,16 +1092,13 @@ export default function WebsitePage() {
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 </Group></>)}
-{tab === 'book' && (<><Group open title="1. Check availability screen" hint="where every button leads">
-                  <div>
-                    <p className="mb-2 text-sm text-ink">Layout</p>
-                    <LayoutPicker value={T.availability.layout} onChange={(v) => setIn('availability', { layout: v })}
-                      options={[{ v: 'centered', name: 'Centered', thumb: THUMBS.bkCentered }, { v: 'side', name: 'Photo beside', thumb: THUMBS.bkSide }, { v: 'banner', name: 'Photo banner', thumb: THUMBS.bkBanner }]} />
-                  </div>
-                  <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.bookHeading} onChange={(d, v) => setSize('bookHeading', d, v)} />
-                  <p className="text-sm text-ink-soft">Every button on your website opens this screen: a date check, then a short form. Requests land in your Camrhia inbox.</p>
-                  
-                  
+{tab === 'book' && (<>
+                <Group open title="1. Layout" hint="photo and form arrangement" onOpen={() => setShowSent(false)}>
+                  <LayoutPicker value={T.availability.layout} onChange={(v) => setIn('availability', { layout: v })}
+                    options={[{ v: 'centered', name: 'Centered', thumb: THUMBS.bkCentered }, { v: 'side', name: 'Photo beside', thumb: THUMBS.bkSide }, { v: 'banner', name: 'Photo banner', thumb: THUMBS.bkBanner }]} />
+                </Group>
+
+                <Group title="2. Title & fonts" hint="heading and intro" onOpen={() => setShowSent(false)}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Heading</label>
                     <input value={S.availability?.title ?? ''} onChange={(e) => setIn('availability', { title: e.target.value })} placeholder="Check availability" className={inputCls} />
@@ -1109,17 +1107,12 @@ export default function WebsitePage() {
                     <label className="mb-1 block text-xs font-medium text-ink">Intro</label>
                     <textarea rows={2} value={S.availability?.intro ?? ''} onChange={(e) => setIn('availability', { intro: e.target.value })} placeholder="Pick a date to see if I am free, then tell me a little about your day." className={inputCls} />
                   </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Send button wording</label>
-                    <input value={S.availability?.button ?? ''} onChange={(e) => setIn('availability', { button: e.target.value })} placeholder="Send inquiry" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Thank-you message</label>
-                    <textarea rows={2} value={S.availability?.success ?? ''} onChange={(e) => setIn('availability', { success: e.target.value })} placeholder="Thanks! I will reach out within a day." className={inputCls} />
-                  </div>
-                  
+                  <FontPicker label="Heading font" value={T.availability.font ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('availability', { font: k })} />
+                  {T.availability.font && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => setIn('availability', { font: null })}>Use my site heading font</button>}
+                  <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.bookHeading} onChange={(d, v) => setSize('bookHeading', d, v)} />
                 </Group>
-                <Group title="2. Calendar" hint="colors and on/off">
+
+                <Group title="3. Calendar" hint="colors and on/off" onOpen={() => setShowSent(false)}>
                   <Row label="Show the calendar"><Switch on={T.calendar.show} onChange={(v) => setIn('calendar', { show: v })} /></Row>
                   <p className="text-xs text-ink-soft">Dates and bookings always stay in sync with your app, whether the calendar is shown or not.</p>
                   {T.calendar.show && (
@@ -1141,7 +1134,27 @@ export default function WebsitePage() {
                     </>
                   )}
                 </Group>
-</>)}
+
+                <Group title="4. Form" hint="the inquiry form" onOpen={() => setShowSent(false)}>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Send button wording</label>
+                    <input value={S.availability?.button ?? ''} onChange={(e) => setIn('availability', { button: e.target.value })} placeholder="Send inquiry" className={inputCls} />
+                  </div>
+                  <p className="text-xs text-ink-soft">Requests go straight to your Camrhia inbox, with their date and message attached.</p>
+                </Group>
+
+                <Group title="5. After they send" hint="the message and the app" onOpen={() => setShowSent(true)}>
+                  <Row label="Preview">
+                    <Seg value={showSent ? 'sent' : 'form'} options={[{ v: 'form', label: 'Form' }, { v: 'sent', label: 'After sending' }]} onChange={(v) => setShowSent(v === 'sent')} />
+                  </Row>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Thank-you message (shown on your website)</label>
+                    <textarea rows={3} value={S.availability?.success ?? ''} onChange={(e) => setIn('availability', { success: e.target.value })} placeholder="Thanks! I will reach out within a day." className={inputCls} />
+                  </div>
+                  <Row label="Send them to the app automatically"><Switch on={T.availability.redirect} onChange={(v) => setIn('availability', { redirect: v })} /></Row>
+                  <p className="text-xs text-ink-soft">After a short countdown, new visitors are taken to the Camrhia app to finish. Their message is already waiting in your inbox.</p>
+                </Group>
+                </>)}
 
 
                 {fullUrl && (
@@ -1170,7 +1183,7 @@ export default function WebsitePage() {
                         <div style={{ width: Math.min(inner || w, w * scale), height: hCss, margin: '0 auto', overflow: 'hidden', borderRadius: 12, background: '#fff' }}>
                           <iframe
                             id="site-frame"
-                            key={previewKey + previewPage}
+                            key={`${previewKey}${previewPage}${showSent}`}
                             src={previewSrc()}
                             title="Website preview"
                             style={{ width: w, height: `calc(${hCss} / ${scale})`, border: 0, transform: `scale(${scale})`, transformOrigin: 'top left', background: '#fff' }}

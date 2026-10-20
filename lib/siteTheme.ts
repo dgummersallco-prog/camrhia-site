@@ -88,6 +88,7 @@ export function resolveTheme(r: Record<string, any>) {
   const preset = PAIR_PRESETS[r.site_font_pair as string] ?? PAIR_PRESETS.serif
   const headKey: string = FONT_OPTIONS[s.fonts?.head as string] ? (s.fonts.head as string) : preset.head
   const bodyKey: string = FONT_OPTIONS[s.fonts?.body as string] ? (s.fonts.body as string) : preset.body
+  const bookKey: string | null = FONT_OPTIONS[s.availability?.font as string] ? (s.availability.font as string) : null
   const accent = hex(r.site_accent, hex(r.accent_color, '#A9545F'))
   const bg = hex(s.colors?.bg, tpl === 'minimal' ? '#FFFFFF' : tpl === 'split' ? '#F6F1EA' : '#FAF7F2')
   const ink = hex(s.colors?.text, '#2A1F24')
@@ -140,6 +141,9 @@ export function resolveTheme(r: Record<string, any>) {
     success: str(s.availability?.success),
     float: s.availability?.float !== false,
     layout: pick(s.availability?.layout, ['centered', 'side', 'banner'] as const, 'centered'),
+    font: bookKey,
+    family: bookKey ? FONT_OPTIONS[bookKey].family : FONT_OPTIONS[headKey].family,
+    redirect: s.availability?.redirect !== false,
   }
 
   const pricing = {
@@ -209,7 +213,7 @@ export function resolveTheme(r: Record<string, any>) {
     body: FONT_OPTIONS[bodyKey].family,
     fontsHref:
       'https://fonts.googleapis.com/css2?' +
-      Array.from(new Set([headKey, bodyKey])).map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') +
+      Array.from(new Set([headKey, bodyKey, ...(bookKey ? [bookKey] : [])])).map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') +
       '&display=swap',
     accent,
     bg,

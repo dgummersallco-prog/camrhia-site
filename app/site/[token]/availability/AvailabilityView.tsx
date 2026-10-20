@@ -30,10 +30,12 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   const [website, setWebsite] = useState('')
   const [isClient, setIsClient] = useState(false)
   const [inquiryId, setInquiryId] = useState<string | null>(null)
+  const [count, setCount] = useState(5)
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('preview') !== '1') return
     setIsPreview(true)
+    if (new URLSearchParams(window.location.search).get('sent') === '1') { setSent(true); setName('Alex'); setEmail('alex@example.com') }
     function onMsg(e: MessageEvent) {
       const d = e.data as { type?: string; patch?: Record<string, any> } | null
       if (d && d.type === 'camrhia-preview' && d.patch) setR((prev) => ({ ...prev, ...d.patch }))
@@ -68,6 +70,13 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   const photoPath: string | null = t.hero.photos[0] ?? ((Array.isArray(r.cover_paths) && r.cover_paths[0]) || r.cover_path || null)
   const photo = photoPath ? STORAGE_BASE + photoPath : null
   const L = t.availability.layout
+
+  useEffect(() => {
+    if (!sent || isClient || isPreview || !t.availability.redirect) return
+    if (count <= 0) { window.location.href = APP_STORE_URL; return }
+    const id = setTimeout(() => setCount((c) => c - 1), 1000)
+    return () => clearTimeout(id)
+  }, [sent, isClient, isPreview, count, t.availability.redirect])
   const head: React.CSSProperties = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' }
   const input: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box', padding: '12px 14px', fontSize: 16, border: `1px solid ${line}`,
@@ -131,7 +140,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const content = (
     <div>
-      <h1 className="text-center" style={{ ...head, fontSize: 'var(--book-h)', lineHeight: 1.1 }}>{t.availability.title}</h1>
+      <h1 className="text-center" style={{ ...head, fontFamily: t.availability.family, fontSize: 'var(--book-h)', lineHeight: 1.1 }}>{t.availability.title}</h1>
       <p className="mx-auto mt-4 max-w-md whitespace-pre-line text-center text-[15px] leading-relaxed" style={{ color: soft }}>{t.availability.intro}</p>
 
       {sent ? (
@@ -149,6 +158,9 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
                 <li>The moment your account is ready, your message is sent to {studio} automatically.</li>
               </ol>
             </div>
+          )}
+          {!isClient && t.availability.redirect && !isPreview && count > 0 && (
+            <p className="mt-5 text-[13px]" style={{ color: soft }}>Taking you to the app in {count}…</p>
           )}
           {inquiryId && (
             <a href={`/my/inquiry/${inquiryId}?s=${encodeURIComponent(studio)}`} className="mt-6 block text-center" style={primary}>Open your conversation</a>
