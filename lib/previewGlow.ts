@@ -16,7 +16,7 @@ export function installPreviewGlow(): () => void {
   background: conic-gradient(from var(--cr-a), rgba(255,236,190,0) 0deg, rgba(255,236,190,0) 255deg, rgba(240,200,110,0.85) 318deg, #ffffff 352deg, rgba(255,236,190,0) 360deg);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
-  animation: cr-spin 2.2s linear infinite;
+  animation: cr-spin 5s linear infinite;
   filter: drop-shadow(0 0 7px rgba(240,190,90,0.95));
 }`
   document.head.appendChild(css)
@@ -31,9 +31,12 @@ export function installPreviewGlow(): () => void {
     if (target && document.body.contains(target)) {
       const r = target.getBoundingClientRect()
       glow.style.display = 'block'
-      glow.style.left = r.left + window.scrollX - 4 + 'px'
+      const vw = document.documentElement.clientWidth
+      const gl = Math.max(window.scrollX + 6, r.left + window.scrollX - 4)
+      const gr = Math.min(window.scrollX + vw - 6, r.right + window.scrollX + 4)
+      glow.style.left = gl + 'px'
       glow.style.top = r.top + window.scrollY - 4 + 'px'
-      glow.style.width = r.width + 8 + 'px'
+      glow.style.width = Math.max(0, gr - gl) + 'px'
       glow.style.height = r.height + 8 + 'px'
     } else {
       glow.style.display = 'none'

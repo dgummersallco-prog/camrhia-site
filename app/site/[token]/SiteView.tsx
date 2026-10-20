@@ -13,8 +13,32 @@ const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
   : ''
 function photoUrl(path: string | null | undefined): string | null {
+  if (path && path.startsWith('data:')) return path
   return path ? `${STORAGE_BASE}${path}` : null
 }
+
+// Shown only inside the designer preview, so every section is visible while building.
+const PH_IMG = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000"><rect width="100%" height="100%" fill="#d9d2c6"/><text x="50%" y="50%" fill="#9a8f7e" font-family="sans-serif" font-size="34" text-anchor="middle">Your photo here</text></svg>')
+const PH_GALLERIES = ['Wedding day', 'Engagement', 'Family'].map((title, gi) => ({
+  id: 'ph' + gi,
+  title,
+  cover_photo_id: null as string | null,
+  photos: [0, 1, 2, 3].map((k) => ({ id: 'ph' + gi + '-' + k, storage_path: PH_IMG, sort_order: k })) as any[],
+}))
+const PH_QUOTES = [
+  { text: 'This is where your testimonials will show. Add one in the app and it replaces this.', who: 'Client name', img: null as string | null },
+  { text: 'A kind word from a happy client goes here.', who: 'Another client', img: null as string | null },
+  { text: 'Short and sweet works best.', who: 'Third client', img: null as string | null },
+]
+const PH_PKGS = [
+  { id: 'ph1', title: 'Package one', price: '$0000', description: 'What is included\nAnother thing included' },
+  { id: 'ph2', title: 'Package two', price: '$0000', description: 'What is included\nAnother thing included' },
+  { id: 'ph3', title: 'Package three', price: '$0000', description: 'What is included\nAnother thing included' },
+]
+const PH_FAQ = [
+  { id: 'ph1', question: 'Your first question', answer: 'Your answer goes here.', q: 'Your first question', a: 'Your answer goes here.' },
+  { id: 'ph2', question: 'Your second question', answer: 'Your answer goes here.', q: 'Your second question', a: 'Your answer goes here.' },
+]
 
 type PageKey = 'home' | 'about' | 'galleries'
 
@@ -73,7 +97,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     return () => clearInterval(id)
   }, [shownHero.length])
 
-  const galleries = ((r.site_galleries ?? []) as any[])
+  const realGalleries = ((r.site_galleries ?? []) as any[])
     .map((g) => ({
       id: g.id as string,
       title: (g.title ?? '') as string,
@@ -81,12 +105,16 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       photos: [...(g.photos ?? [])].sort((x: any, y: any) => (x.sort_order ?? 0) - (y.sort_order ?? 0)) as any[],
     }))
     .filter((g) => g.photos.length > 0)
-  const sitePkgs = (r.site_packages ?? []) as { id: string; title: string; price: string | null; description: string | null }[]
+  const galleries = isPreview && realGalleries.length === 0 ? (PH_GALLERIES as typeof realGalleries) : realGalleries
+  const realPkgs = (r.site_packages ?? []) as { id: string; title: string; price: string | null; description: string | null }[]
+  const sitePkgs = isPreview && realPkgs.length === 0 ? PH_PKGS : realPkgs
   const quotes: { text: string; who: string; img: string | null }[] = [
     ...((r.testimonials ?? []) as any[]).filter((x) => x.quote).map((x) => ({ text: x.quote as string, who: (x.client_name ?? '') as string, img: photoUrl(x.storage_path) })),
     ...((r.reviews ?? []) as any[]).filter((v) => v.body).map((v) => ({ text: v.body as string, who: (v.couple_names ?? '') as string, img: null })),
   ]
-  const faq = (r.faq ?? []) as any[]
+  const realFaq = (r.faq ?? []) as any[]
+  const faq = isPreview && realFaq.length === 0 ? (PH_FAQ as any[]) : realFaq
+  const quotesShown = isPreview && quotes.length === 0 ? PH_QUOTES : quotes
   const galleryCovers = galleries
     .map((g) => photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path))
     .filter(Boolean) as string[]
@@ -97,7 +125,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     about: on('about') && !!(t.text.about || r.bio || aboutPhoto),
     portfolio: page === 'galleries' ? galleries.length > 0 : on('portfolio') && galleries.length > 0,
     investment: on('investment') && sitePkgs.length > 0,
-    testimonials: on('testimonials') && quotes.length > 0,
+    testimonials: on('testimonials') && quotesShown.length > 0,
     faq: on('faq') && faq.length > 0,
     contact: true,
   }
@@ -133,6 +161,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     return (
       <>
       <nav
+        id="nav"
         className={overlay ? 'absolute inset-x-0 top-0 z-20' : 'sticky top-0 z-20'}
         style={overlay ? { color: '#fff' } : { color: ink, background: `color-mix(in srgb, ${bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
       >
@@ -466,7 +495,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       case 'testimonials': {
         const rawT = (r as any).site_settings?.testimonials?.layout
         const L: string = rawT === 'carousel' ? 'carousel' : t.testi.layout
-        const list = quotes.slice(0, 6)
+        const list = quotesShown.slice(0, 6)
         return sec('words', L === 'carousel' ? null : t.titles.testimonials,
           L === 'carousel' ? (
             <TestimonialCarousel list={list} heading={t.titles.testimonials ?? ''} headStyle={headStyle} bodyFont={t.body} ink={ink} soft={soft} bg={bg} tint={tint} />
