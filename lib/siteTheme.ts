@@ -93,6 +93,7 @@ export function resolveTheme(r: Record<string, any>) {
   const ink = hex(s.colors?.text, '#2A1F24')
   const tint = hex(s.colors?.tint, tpl === 'minimal' ? '#F7F5F2' : '#F0EAE1')
   const shape = pick(s.button?.shape, ['square', 'rounded', 'pill'] as const, 'square')
+  const btnText = hex(s.button?.text, '#FFFFFF')
 
   const savedOrder: string[] = Array.isArray(s.order)
     ? (s.order as string[]).filter((k) => (SECTION_KEYS as readonly string[]).includes(k))
@@ -168,14 +169,15 @@ export function resolveTheme(r: Record<string, any>) {
     photoGap: pairNum(s.sizes?.photoGap, 0, 60, 8, 12),
     heroHeight: pairNum(s.sizes?.heroHeight, 40, 100, 80, 92),
     logo: pairNum(s.sizes?.logo, 16, 120, 30, 38),
+    button: pairNum(s.sizes?.button, 9, 20, 11, 12),
     subhead: pairNum(s.sizes?.subhead, 9, 28, 11, 12),
     galHeading: pairNum(s.sizes?.galHeading, 24, 120, 38, 56),
     galGap: pairNum(s.sizes?.galGap ?? s.sizes?.photoGap, 0, 60, 8, 12),
     bookHeading: pairNum(s.sizes?.bookHeading, 24, 120, 34, 48),
   }
   const vars = (d: 'phone' | 'desktop') =>
-    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;--sub:${sizes.subhead[d]}px;--gal-h:${sizes.galHeading[d]}px;--gal-gap:${sizes.galGap[d]}px;--book-h:${sizes.bookHeading[d]}px;`
-  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}`
+    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;--sub:${sizes.subhead[d]}px;--btn:${sizes.button[d]}px;--gal-h:${sizes.galHeading[d]}px;--gal-gap:${sizes.galGap[d]}px;--book-h:${sizes.bookHeading[d]}px;`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}`
 
   return {
     tpl,
@@ -195,6 +197,7 @@ export function resolveTheme(r: Record<string, any>) {
     line: `color-mix(in srgb, ${ink} 14%, transparent)`,
     radius: shape === 'pill' ? 999 : shape === 'rounded' ? 10 : 0,
     shape,
+    btnText,
     order,
     titles,
     text,

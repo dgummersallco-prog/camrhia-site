@@ -77,7 +77,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
     fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: soft, marginBottom: 6, display: 'block', fontFamily: t.body,
   }
   const stepLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.25em', textTransform: 'uppercase', color: accent, marginBottom: 14, fontFamily: t.body }
-  const primary: React.CSSProperties = { background: accent, color: '#fff', border: 'none', borderRadius: t.radius, padding: '15px 28px', fontSize: 12, letterSpacing: '0.22em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: t.body }
+  const primary: React.CSSProperties = { background: accent, color: t.btnText, border: 'none', borderRadius: t.radius, padding: '15px 28px', fontSize: 12, letterSpacing: '0.22em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: t.body }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -172,7 +172,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
             <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={(e) => setWebsite(e.target.value)}
               style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
             {error && <p style={{ margin: 0, color: '#B83232', fontSize: 14 }}>{error}</p>}
-            <button type="submit" disabled={sending} style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
+            <button type="submit" disabled={sending} className="cr-btn" style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
           </form>
         </>
       )}

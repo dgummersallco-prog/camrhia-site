@@ -105,11 +105,11 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
     .map((k) => ({ href: `#${k}`, t: t.titles[k], s: DOOR_SUB[k] }))
 
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' }
-  const btnStyle: React.CSSProperties = { background: accent, color: '#fff', fontFamily: t.body, borderRadius: t.radius }
+  const btnStyle: React.CSSProperties = { background: accent, color: t.btnText, fontFamily: t.body, borderRadius: t.radius }
 
   const cta = (force?: boolean) =>
     t.hero.ctaShow || force ? (
-      <a href={availHref} className="inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.hero.ctaText}</a>
+      <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.hero.ctaText}</a>
     ) : null
 
   const renderNav = (overlay: boolean, center: boolean) => {
@@ -248,8 +248,8 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         const panel = `color-mix(in srgb, ${bg} 40%, #fff)`
         const book = (hot: boolean, mt = 'mt-8') =>
           t.pricing.button ? (
-            <a href={availHref} className={`${mt} inline-block px-7 py-3 text-[11px] uppercase tracking-[0.22em]`}
-              style={{ borderRadius: t.radius, fontFamily: t.body, background: hot ? accent : 'transparent', color: hot ? '#fff' : accent, border: `1px solid ${accent}` }}>
+            <a href={availHref} className={`cr-btn ${mt} inline-block px-7 py-3 text-[11px] uppercase tracking-[0.22em]`}
+              style={{ borderRadius: t.radius, fontFamily: t.body, background: hot ? accent : 'transparent', color: hot ? t.btnText : accent, border: `1px solid ${accent}` }}>
               {t.hero.ctaText}
             </a>
           ) : null

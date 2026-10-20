@@ -128,21 +128,19 @@ function NumBox({ value, min, max, step, unit, onChange }: { value: number; min:
     </span>
   )
 }
-function SizeControl({ label, unit, min, max, step, value, onChange }: {
+function SizeControl({ label, unit, min, max, step, value, onChange, device }: {
   label: string; unit: string; min: number; max: number; step: number
-  value: { phone: number; desktop: number }; onChange: (d: Dev, v: number) => void
+  value: { phone: number; desktop: number }; onChange: (d: Dev, v: number) => void; device: Dev
 }) {
   return (
     <div>
-      <p className="mb-2 text-sm text-ink">{label}</p>
-      <div className="space-y-2">
-        {(['phone', 'desktop'] as const).map((d) => (
-          <div key={d} className="flex items-center gap-3">
-            <span className="w-14 shrink-0 text-[11px] uppercase tracking-widest text-ink-soft">{d}</span>
-            <div className="min-w-0 flex-1"><Slider min={min} max={max} step={step} value={value[d]} onChange={(v) => onChange(d, v)} /></div>
-            <NumBox value={value[d]} min={min} max={max} step={step} unit={unit} onChange={(v) => onChange(d, v)} />
-          </div>
-        ))}
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-sm text-ink">{label}</p>
+        <span className="text-[11px] uppercase tracking-widest text-ink-soft">{device}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1"><Slider min={min} max={max} step={step} value={value[device]} onChange={(v) => onChange(device, v)} /></div>
+        <NumBox value={value[device]} min={min} max={max} step={step} unit={unit} onChange={(v) => onChange(device, v)} />
       </div>
     </div>
   )
@@ -798,9 +796,23 @@ export default function WebsitePage() {
                     ))}
                   </div>
                 </Group>
-<Group title="2. Color & fonts" hint="used on every page">
-                  <ColorField label="Button & accent color" value={form.site_accent ?? brandHex()} swatches={palette()}
-                    onChange={(h) => set('site_accent', h)} onReset={() => set('site_accent', null)} />
+<Group title="2. Menu" hint="last, trim it down">
+                  <Row label="Menu bar">
+                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
+                  </Row>
+                  <div className="space-y-2">
+                    {MENU_KEYS.map((k) => (
+                      <div key={k} className="flex items-center gap-3">
+                        <input value={S.menu?.labels?.[k] ?? ''} placeholder={NAV_DEFAULTS[k]}
+                          onChange={(e) => upd((s) => { s.menu = { ...(s.menu ?? {}), labels: { ...(s.menu?.labels ?? {}), [k]: e.target.value } } })} className={inputCls} />
+                        <Switch on={!menuHidden.includes(k)}
+                          onChange={(v) => upd((s) => { const h: string[] = Array.isArray(s.menu?.hidden) ? [...s.menu.hidden] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); s.menu = { ...(s.menu ?? {}), hidden: h } })} />
+                      </div>
+                    ))}
+                  </div>
+                </Group>
+<Group title="3. Color & fonts" hint="used on every page">
+                  
                   {colorRow('Background', 'bg', T.bg)}
                   {colorRow('Text', 'text', T.ink)}
                   {colorRow('Alternating section tint', 'tint', T.tint)}
@@ -818,16 +830,31 @@ export default function WebsitePage() {
                   <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
                   <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
                 </Group>
-<Group title="3. Hero" hint="photos, logo and headline">
+<Group title="4. Buttons" hint="wording, color, size, shape">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (every button on the site)</label>
+                    <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
+                  </div>
+                  <ColorField label="Button & accent color" value={form.site_accent ?? brandHex()} swatches={palette()}
+                    onChange={(h) => set('site_accent', h)} onReset={() => set('site_accent', null)} />
+                  <ColorField label="Button text color" value={T.btnText} swatches={palette()}
+                    onChange={(h) => setIn('button', { text: h })}
+                    onReset={() => upd((st) => { const b = { ...(st.button ?? {}) }; delete b.text; st.button = b })} />
+                  <Row label="Button shape">
+                    <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
+                  </Row>
+                  <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.button} onChange={(d, v) => setSize('button', d, v)} />
+                </Group>
+<Group title="5. Hero" hint="photos, logo and headline">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
-                    <div className="mt-3"><SizeControl label="Headline size" unit="px" min={24} max={140} step={2} value={T.sizes.headline} onChange={(d, v) => setSize('headline', d, v)} /></div>
+                    <div className="mt-3"><SizeControl device={device} label="Headline size" unit="px" min={24} max={140} step={2} value={T.sizes.headline} onChange={(d, v) => setSize('headline', d, v)} /></div>
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Location line</label>
                     <input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Boise, Idaho" className={inputCls} />
-                    <div className="mt-3"><SizeControl label="Location line size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(d, v) => setSize('subhead', d, v)} /></div>
+                    <div className="mt-3"><SizeControl device={device} label="Location line size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(d, v) => setSize('subhead', d, v)} /></div>
                   </div>
                   <div>
                     <p className="mb-1 text-sm text-ink">Hero photos</p>
@@ -852,7 +879,7 @@ export default function WebsitePage() {
                   <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
                   
                   
-                  <SizeControl label="Hero height" unit="vh" min={40} max={100} step={5} value={T.sizes.heroHeight} onChange={(d, v) => setSize('heroHeight', d, v)} />
+                  <SizeControl device={device} label="Hero height" unit="vh" min={40} max={100} step={5} value={T.sizes.heroHeight} onChange={(d, v) => setSize('heroHeight', d, v)} />
                   <div className="border-t border-line pt-4">
                     <p className="mb-1 text-sm text-ink">Logo</p>
                     <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
@@ -870,12 +897,11 @@ export default function WebsitePage() {
                       {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
                     </div>
                   </div>
-                  <SizeControl label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
+                  <SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   
                 </Group>
-
-<Group title="4. Galleries" hint="cover photos and titles" onOpen={() => scrollPreview('portfolio')}>
+<Group title="6. Galleries" hint="cover photos and titles" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -895,7 +921,7 @@ export default function WebsitePage() {
                   </Row>
                   
 </Group>
-<Group title="5. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
+<Group title="7. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
 <div>
                     
@@ -933,7 +959,7 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="6. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="8. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -969,7 +995,7 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="7. About" hint="your story" onOpen={() => scrollPreview('about')}>
+<Group title="9. About" hint="your story" onOpen={() => scrollPreview('about')}>
                   {sectionHead('about')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -982,50 +1008,33 @@ export default function WebsitePage() {
                   </div>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
-<Group title="8. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
+<Group title="10. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 </Group>
-<Group title="9. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
+<Group title="11. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
                 </Group>
-<Group title="10. Footer" hint="the line at the bottom">
+<Group title="12. Footer" hint="the line at the bottom">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
                   </div>
                 </Group>
-<Group title="11. Menu" hint="last, trim it down">
-                  <Row label="Menu bar">
-                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
-                  </Row>
-                  <div className="space-y-2">
-                    {MENU_KEYS.map((k) => (
-                      <div key={k} className="flex items-center gap-3">
-                        <input value={S.menu?.labels?.[k] ?? ''} placeholder={NAV_DEFAULTS[k]}
-                          onChange={(e) => upd((s) => { s.menu = { ...(s.menu ?? {}), labels: { ...(s.menu?.labels ?? {}), [k]: e.target.value } } })} className={inputCls} />
-                        <Switch on={!menuHidden.includes(k)}
-                          onChange={(v) => upd((s) => { const h: string[] = Array.isArray(s.menu?.hidden) ? [...s.menu.hidden] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); s.menu = { ...(s.menu ?? {}), hidden: h } })} />
-                      </div>
-                    ))}
-                  </div>
-                </Group>
-<Group title="12. Layout & sizes" hint="phone and desktop">
-                  
-                  <Row label="Button shape">
-                    <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
-                  </Row>
-                  <p className="text-xs text-ink-soft">Move a phone or desktop control and the preview switches to that size. You can also type an exact number.</p>
-                  <SizeControl label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
+<Group title="13. Layout & sizes" hint="phone and desktop">
                   
                   
-                  <SizeControl label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
-                  <SizeControl label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
+                  <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
+                  <SizeControl device={device} label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
+                  
+                  
+                  <SizeControl device={device} label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
+                  <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group></>)}
 {tab === 'galleries' && (<><Group open title="1. Gallery page" hint="what visitors see after clicking a cover">
                   {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
@@ -1040,9 +1049,9 @@ export default function WebsitePage() {
                   <Row label="Show the book button at the bottom"><Switch on={T.galpage.showButton} onChange={(v) => setIn('galpage', { show_button: v })} /></Row>
                 </Group>
                 <Group title="2. Gallery page sizes" hint="phone and desktop">
-                  <p className="text-xs text-ink-soft">Move a phone or desktop control and the preview switches to that size. You can type an exact number too.</p>
-                  <SizeControl label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
-                  <SizeControl label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
+                  <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
+                  <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
+                  <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
                 </Group></>)}
 {tab === 'book' && (<><Group open title="1. Check availability screen" hint="where every button leads">
                   <div>
@@ -1050,13 +1059,10 @@ export default function WebsitePage() {
                     <LayoutPicker value={T.availability.layout} onChange={(v) => setIn('availability', { layout: v })}
                       options={[{ v: 'centered', name: 'Centered', thumb: THUMBS.bkCentered }, { v: 'side', name: 'Photo beside', thumb: THUMBS.bkSide }, { v: 'banner', name: 'Photo banner', thumb: THUMBS.bkBanner }]} />
                   </div>
-                  <SizeControl label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.bookHeading} onChange={(d, v) => setSize('bookHeading', d, v)} />
+                  <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.bookHeading} onChange={(d, v) => setSize('bookHeading', d, v)} />
                   <p className="text-sm text-ink-soft">Every button on your website opens this screen: a date check, then a short form. Requests land in your Camrhia inbox.</p>
                   
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (used on every button on the site)</label>
-                    <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
-                  </div>
+                  
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Heading</label>
                     <input value={S.availability?.title ?? ''} onChange={(e) => setIn('availability', { title: e.target.value })} placeholder="Check availability" className={inputCls} />

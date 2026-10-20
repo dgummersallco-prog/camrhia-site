@@ -121,7 +121,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
 
         {t.galpage.showButton && (
           <div className="mt-14 text-center">
-            <Link href={`/site/${token}/availability${qs}`} className="inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: '#fff', borderRadius: t.radius }}>
+            <Link href={`/site/${token}/availability${qs}`} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>
               {t.hero.ctaText}
             </Link>
           </div>
