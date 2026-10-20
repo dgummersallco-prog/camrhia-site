@@ -93,6 +93,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const heroUrlsReal = heroPaths.map((p) => photoUrl(p)).filter(Boolean) as string[]
   const heroUrls = isPreview && heroUrlsReal.length === 0 ? [PH_SCENES[0]] : heroUrlsReal
   const shownHero = t.hero.slideshow ? heroUrls : heroUrls.slice(0, 1)
+  const heroFocus: Record<string, { x: number; y: number }> = (r.site_settings?.hero?.focus ?? {}) as Record<string, { x: number; y: number }>
 
   useEffect(() => {
     if (shownHero.length < 2) return
@@ -233,7 +234,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       <>
         {shownHero.map((u, i) => (
           <img key={u} src={u} alt={i === 0 ? name : ''} className={cls}
-            style={{ objectFit: 'cover', opacity: i === slide % shownHero.length ? 1 : 0, transition: 'opacity 1.2s ease-in-out' }} />
+            style={{ objectFit: 'cover', objectPosition: (heroFocus[heroPaths[i]]?.x ?? 50) + '% ' + (heroFocus[heroPaths[i]]?.y ?? 50) + '%', opacity: i === slide % shownHero.length ? 1 : 0, transition: 'opacity 1.2s ease-in-out' }} />
         ))}
       </>
     )

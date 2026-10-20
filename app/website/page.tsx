@@ -443,6 +443,7 @@ export default function WebsitePage() {
   const [form, setForm] = useState<Site | null>(null)
   const [saved, setSaved] = useState<Site | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [focusIdx, setFocusIdx] = useState(0)
   const [saving, setSaving] = useState(false)
   const [device, setDevice] = useState<Dev>('desktop')
   const [previewPage, setPreviewPage] = useState<'home' | 'galleries' | 'gallery' | 'about' | 'availability'>('home')
@@ -1363,6 +1364,35 @@ export default function WebsitePage() {
                       </details>
                     )}
                   </div>
+                                    {heroSel.length > 0 && (() => {
+                    const fp = heroSel[Math.min(focusIdx, heroSel.length - 1)]
+                    const fv = S.hero?.focus?.[fp] ?? { x: 50, y: 50 }
+                    const pick = (e: { currentTarget: HTMLDivElement; clientX: number; clientY: number }) => {
+                      const b = e.currentTarget.getBoundingClientRect()
+                      const x = Math.round(Math.min(100, Math.max(0, ((e.clientX - b.left) / b.width) * 100)))
+                      const y = Math.round(Math.min(100, Math.max(0, ((e.clientY - b.top) / b.height) * 100)))
+                      setHero({ focus: { ...(S.hero?.focus ?? {}), [fp]: { x, y } } })
+                    }
+                    return (
+                      <div>
+                        <p className="mb-1 text-sm text-ink">Choose the visible area</p>
+                        <p className="mb-2 text-xs text-ink-soft">Tap or drag on the photo to mark the part that should always stay in view when your template crops it.</p>
+                        {heroSel.length > 1 && (
+                          <div className="mb-2 flex gap-2">
+                            {heroSel.map((p, i) => (
+                              <button key={p} type="button" onClick={() => setFocusIdx(i)} className={'h-7 w-7 rounded-full text-xs ' + (i === Math.min(focusIdx, heroSel.length - 1) ? 'bg-twilight text-white' : 'border border-line text-ink-soft')}>{i + 1}</button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="relative cursor-crosshair touch-none select-none overflow-hidden rounded-lg" onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); pick(e) }} onPointerMove={(e) => { if (e.buttons === 1) pick(e) }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={BASE + fp} alt="" draggable={false} className="block w-full" />
+                          <span className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow" style={{ left: fv.x + '%', top: fv.y + '%', background: 'rgba(168,128,63,0.55)' }} />
+                        </div>
+                        <button type="button" className="mt-2 text-xs text-ink-soft hover:text-ink" onClick={() => setHero({ focus: { ...(S.hero?.focus ?? {}), [fp]: { x: 50, y: 50 } } })}>Reset to center</button>
+                      </div>
+                    )
+                  })()}
                   <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
                   
                   
