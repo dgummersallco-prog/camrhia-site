@@ -1407,7 +1407,7 @@ export default function WebsitePage() {
                   </Row>
                   )}
                 </Group>
-<Group title="2. Inside a gallery" hint="what opens when a cover is clicked" onOpen={() => setPreviewPage('gallery')}>
+<Group title="2. Inside a gallery" hint="what opens when a cover is clicked" onOpen={() => { setPreviewPage('gallery'); setTimeout(() => scrollPreview('gal-main'), 700) }}>
                   
                   
                   <div>
@@ -1419,7 +1419,7 @@ export default function WebsitePage() {
                   <Row label="Show other galleries at the bottom"><Switch on={T.galpage.showMore} onChange={(v) => setIn('galpage', { show_more: v })} /></Row>
                   <Row label="Show the book button at the bottom"><Switch on={T.galpage.showButton} onChange={(v) => setIn('galpage', { show_button: v })} /></Row>
                 </Group>
-<Group title="3. Gallery photo sizes" hint="phone and desktop">
+<Group title="3. Gallery photo sizes" hint="phone and desktop" onOpen={() => { setPreviewPage('gallery'); setTimeout(() => scrollPreview('gal-main'), 700) }}>
                   <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
                   <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
                   <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />

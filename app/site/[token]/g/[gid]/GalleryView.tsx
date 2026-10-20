@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PortfolioLightbox } from '../../../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
+import { installPreviewGlow } from '@/lib/previewGlow'
 
 const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
@@ -15,6 +16,8 @@ function photoUrl(path: string | null | undefined): string | null {
 export function GalleryView({ initial, token, gid }: { initial: Record<string, any>; token: string; gid: string }) {
   const [r, setR] = useState<Record<string, any>>(initial)
   const [isPreview, setIsPreview] = useState(false)
+
+  useEffect(() => installPreviewGlow(), [])
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('preview') !== '1') return
@@ -108,7 +111,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
         {t.galpage.showCount && <p className="mt-3 text-[11px] uppercase tracking-[0.25em]" style={{ color: soft }}>{photos.length} photos</p>}
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 pb-16">
+      <main id="gal-main" className="mx-auto max-w-6xl px-6 pb-16">
         <div className="flex flex-col gap-14">
           {groups.map((grp) => (
             <div key={grp.id}>
@@ -140,7 +143,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
         )}
       </main>
 
-      <footer className="px-6 pb-12 text-center text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>
+      <footer id="gal-footer" className="px-6 pb-12 text-center text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>
         {t.text.footer && <p className="mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 13 }}>{t.text.footer}</p>}
         © {new Date().getFullYear()} {name} · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
       </footer>
