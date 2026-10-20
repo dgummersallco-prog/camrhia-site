@@ -94,10 +94,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   useEffect(() => {
     if (shownHero.length < 2) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (!isPreview && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const id = setInterval(() => setSlide((i) => i + 1), 5000)
     return () => clearInterval(id)
-  }, [shownHero.length])
+  }, [shownHero.length, isPreview])
 
   const realGalleries = ((r.site_galleries ?? []) as any[])
     .map((g) => ({
