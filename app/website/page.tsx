@@ -749,7 +749,7 @@ export default function WebsitePage() {
     return (
       <div className="space-y-4 border-t border-line pt-4">
         <p className="text-sm text-ink">Free layout <span className="text-xs text-ink-soft">· arranging the {device} page</span></p>
-        <p className="text-xs text-ink-soft">Drag anything in the preview to move it, and drag the small square on its corner to resize. Use the Phone / Desktop switch above the preview to arrange each size.</p>
+        <p className="text-xs text-ink-soft">Drag anything in the preview to move it, and drag the small square on its corner to resize. To remove something, click it, then press the small × on its corner or the Delete key. Use the Phone / Desktop switch above the preview to arrange each size.</p>
         <div className="flex flex-wrap gap-2">
           {((isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery')[]).map((tp) => (
             <button key={tp} type="button" className={btnGhost} onClick={() => add(tp)}>+ {names[tp]}</button>
@@ -844,7 +844,7 @@ export default function WebsitePage() {
             <div className="flex flex-wrap gap-2 border-t border-line pt-3">
               <button type="button" className={btnGhost} onClick={() => patch(sel.id, { z: sel.z + 1 })}>Bring forward</button>
               <button type="button" className={btnGhost} onClick={() => patch(sel.id, { z: Math.max(0, sel.z - 1) })}>Send back</button>
-              <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard({ ...b, items: b.items.filter((i) => i.id !== sel.id) }); pick(null) }}>Remove</button>
+              <button type="button" className={btnGhost} style={{ color: '#9c3b3b' }} onClick={() => { setBoard({ ...b, items: b.items.filter((i) => i.id !== sel.id) }); pick(null) }}>Remove this item</button>
             </div>
           </div>
         )}

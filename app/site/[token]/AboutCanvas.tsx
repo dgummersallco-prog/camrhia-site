@@ -44,6 +44,18 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
 
   const shown = local ?? board
 
+  useEffect(() => {
+    if (!p.editing || !sel) return
+    const onKey = (e: KeyboardEvent) => {
+      const tg = e.target as HTMLElement | null
+      if (tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA' || tg.isContentEditable)) return
+      if (!ref.current || ref.current.offsetParent === null) return
+      if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removeItem(sel) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   function start(e: RPE, it: CItem, mode: 'move' | 'size') {
     if (!p.editing || !ref.current) return
     e.preventDefault()
@@ -79,6 +91,13 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
     drag.current = null
     if (!d || !d.moved || !latest.current) return
     window.parent?.postMessage({ type: 'camrhia-canvas', dev, board: latest.current, boardId: p.boardId ?? 'about' }, '*')
+  }
+
+  function removeItem(id: string) {
+    const nb: Board = { ...shown, items: shown.items.filter((x) => x.id !== id) }
+    setLocal(nb)
+    setSel(null)
+    window.parent?.postMessage({ type: 'camrhia-canvas', dev, board: nb, boardId: p.boardId ?? 'about' }, '*')
   }
 
   function inner(it: CItem): ReactNode {
@@ -172,6 +191,13 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
               }}
             >
               {inner(it)}
+              {isSel && (
+                <div
+                  title="Remove"
+                  onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); removeItem(it.id) }}
+                  style={{ position: 'absolute', right: -11, top: -11, width: 22, height: 22, borderRadius: '50%', background: '#2A1F24', color: '#fff', fontSize: 15, lineHeight: '21px', textAlign: 'center', cursor: 'pointer', touchAction: 'none', zIndex: 5 }}
+                >×</div>
+              )}
               {isSel && (
                 <div
                   onPointerDown={(e) => start(e, it, 'size')}
