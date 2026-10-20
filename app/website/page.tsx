@@ -744,6 +744,13 @@ export default function WebsitePage() {
       </>
     )
   }
+  function calRow(label: string, key: string, current: string) {
+    return (
+      <ColorField label={label} value={/^#[0-9a-fA-F]{6}$/.test(current) ? current : '#FFFFFF'} swatches={palette()}
+        onChange={(h) => setIn('calendar', { [key]: h })}
+        onReset={() => upd((st) => { const c = { ...(st.calendar ?? {}) }; delete c[key]; st.calendar = c })} />
+    )
+  }
   function colorRow(label: string, key: string, current: string) {
     return (
       <ColorField label={label} value={/^#[0-9a-fA-F]{6}$/.test(current) ? current : '#FFFFFF'} swatches={palette()}
@@ -1111,7 +1118,30 @@ export default function WebsitePage() {
                     <textarea rows={2} value={S.availability?.success ?? ''} onChange={(e) => setIn('availability', { success: e.target.value })} placeholder="Thanks! I will reach out within a day." className={inputCls} />
                   </div>
                   
-                </Group></>)}
+                </Group>
+                <Group title="2. Calendar" hint="colors and on/off">
+                  <Row label="Show the calendar"><Switch on={T.calendar.show} onChange={(v) => setIn('calendar', { show: v })} /></Row>
+                  <p className="text-xs text-ink-soft">Dates and bookings always stay in sync with your app, whether the calendar is shown or not.</p>
+                  {T.calendar.show && (
+                    <>
+                      <Row label="Sync color scheme to my app"><Switch on={T.calendar.sync} onChange={(v) => setIn('calendar', { sync: v })} /></Row>
+                      <p className="text-xs text-ink-soft">
+                        {T.calendar.sync ? 'The calendar uses the colors from your app calendar. Turn this off to style it separately.' : 'This calendar has its own colors. Turn sync on to match your app.'}
+                      </p>
+                      {!T.calendar.sync && (
+                        <>
+                          {calRow('Background', 'bg', T.calendar.bg)}
+                          {calRow('Selected date and arrows', 'selected', T.calendar.selected)}
+                          {calRow('Date numbers', 'day', T.calendar.day)}
+                          {calRow('Month title', 'month', T.calendar.month)}
+                          {calRow('Open date message', 'available', T.calendar.available)}
+                          {calRow('Not available message', 'unavailable', T.calendar.unavailable)}
+                        </>
+                      )}
+                    </>
+                  )}
+                </Group>
+</>)}
 
 
                 {fullUrl && (

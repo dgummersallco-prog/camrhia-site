@@ -117,6 +117,18 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
     setSent(true)
   }
 
+  const cal = t.calendar.sync
+    ? {
+        dayColor: r.openings_cal_day_color, selectedColor: r.openings_cal_selected_color, monthColor: r.openings_cal_month_color,
+        availableColor: r.openings_cal_available_color, unavailableColor: r.openings_cal_unavailable_color,
+        resultTextColor: r.openings_cal_result_text_color, bgColor: r.openings_cal_bg_color ?? '#FFFFFF',
+      }
+    : {
+        dayColor: t.calendar.day, selectedColor: t.calendar.selected, monthColor: t.calendar.month,
+        availableColor: t.calendar.available, unavailableColor: t.calendar.unavailable,
+        resultTextColor: soft, bgColor: t.calendar.bg,
+      }
+
   const content = (
     <div>
       <h1 className="text-center" style={{ ...head, fontSize: 'var(--book-h)', lineHeight: 1.1 }}>{t.availability.title}</h1>
@@ -145,13 +157,15 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
         </div>
       ) : (
         <>
-          <section className="mt-10">
-            <p style={stepLabel}>1 · Pick a date</p>
-            <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} bgColor="#fff" onPick={(d) => setDate(d)} />
-          </section>
+          {t.calendar.show && (
+            <section className="mt-10">
+              <p style={stepLabel}>1 · Pick a date</p>
+              <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} {...cal} onPick={(d) => setDate(d)} />
+            </section>
+          )}
 
           <form onSubmit={submit} className="mt-12 grid gap-4">
-            <p style={stepLabel}>2 · Tell me about your day</p>
+            <p style={stepLabel}>{t.calendar.show ? 2 : 1} · Tell me about your day</p>
             <div><label style={label}>Your name *</label>
               <input style={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} autoComplete="name" /></div>
             <div><label style={label}>Email *</label>

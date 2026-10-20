@@ -173,6 +173,17 @@ export function resolveTheme(r: Record<string, any>) {
     layout: pick(s.galindex?.layout, ['grid', 'banners', 'feature'] as const, 'grid'),
   }
 
+  const calendar = {
+    show: s.calendar?.show !== false,
+    sync: s.calendar?.sync === true,
+    bg: hex(s.calendar?.bg, '#FFFFFF'),
+    selected: hex(s.calendar?.selected, accent),
+    day: hex(s.calendar?.day, ink),
+    month: hex(s.calendar?.month, ink),
+    available: hex(s.calendar?.available, '#3F9142'),
+    unavailable: hex(s.calendar?.unavailable, '#8A8A8A'),
+  }
+
   const sizes = {
     text: pairNum(s.sizes?.text, 80, 130, 100, 100),
     headline: pairNum(s.sizes?.headline, 24, 140, 44, 72),
@@ -224,6 +235,7 @@ export function resolveTheme(r: Record<string, any>) {
     about,
     galpage,
     galindex,
+    calendar,
     testi,
     sizes,
     cssVars,
