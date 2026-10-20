@@ -1242,8 +1242,13 @@ export default function WebsitePage() {
                 </Group></>)}
 {tab === 'book' && (<>
                 <Group open title="1. Layout" hint="photo and form arrangement" onOpen={() => setShowSent(false)}>
-                  <LayoutPicker value={T.availability.layout} onChange={(v) => setIn('availability', { layout: v })}
-                    options={[{ v: 'centered', name: 'Centered', thumb: THUMBS.bkCentered }, { v: 'side', name: 'Photo beside', thumb: THUMBS.bkSide }, { v: 'banner', name: 'Photo banner', thumb: THUMBS.bkBanner }]} />
+                  <LayoutPicker value={T.availability.layout === 'centered' ? 'centered' : 'side'} onChange={(v) => setIn('availability', { layout: v })}
+                    options={[
+                      { v: 'side', name: 'Side by side', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="8" width="22" height="24" rx="2" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="33" y="10" width="21" height="3" /><rect x="33" y="16" width="21" height="3" /><rect x="33" y="22" width="21" height="3" /><rect x="33" y="28" width="21" height="4" rx="1" /></g></svg> },
+                      { v: 'centered', name: 'Stacked', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="14" y="4" width="32" height="14" rx="2" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="14" y="22" width="32" height="3" /><rect x="14" y="28" width="32" height="3" /><rect x="14" y="34" width="32" height="3" /></g></svg> },
+                    ]} />
+                  <Row label="Photo above the page"><Switch on={T.availability.photo} onChange={(v) => setIn('availability', { photo: v })} /></Row>
+                  <p className="text-xs text-ink-soft">On a phone the calendar always sits above the form. Turn the calendar off in step 3 to show only the form.</p>
                 </Group>
 
                 <Group title="2. Title & fonts" hint="heading and intro" onOpen={() => setShowSent(false)}>
