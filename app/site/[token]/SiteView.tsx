@@ -701,7 +701,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
 
         {page === 'home' && doors.length > 0 && ex.show !== false && (
-          <div id="explore" data-glow="full" className="mx-auto max-w-6xl px-6 py-16">
+          <section id="explore" className="px-6 py-16">
+          <div className="mx-auto max-w-6xl">
             {ex.heading?.trim() && (
               <p className="mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
             )}
@@ -756,6 +757,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
             )}
           </div>
+          </section>
         )}
 
         {page !== 'home' && visible.length === 0 && (
