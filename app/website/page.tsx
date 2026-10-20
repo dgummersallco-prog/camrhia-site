@@ -41,9 +41,6 @@ const TEMPLATES = [
   { key: 'mosaic', name: 'Mosaic', blurb: 'A collage of your best shots.' },
 ]
 const SWATCHES = ['#A9545F', '#5B6B8C', '#7C8B6F', '#B08D57', '#8A5A83', '#2A1F24']
-const SECTION_LABELS: Record<string, string> = {
-  about: 'About', portfolio: 'Portfolio galleries', investment: 'Investment (packages)', testimonials: 'Testimonials', faq: 'FAQ', contact: 'Contact',
-}
 const MENU_KEYS = ['home', 'about', 'portfolio', 'investment', 'contact']
 
 const btn = 'rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50'
@@ -267,6 +264,7 @@ const tcard = () => (
     <div className="h-1 w-2/5" style={{ background: TB }} />
   </div>
 )
+const ln = (w = 'w-full') => <div className={`h-1 ${w}`} style={{ background: TL }} />
 const THUMBS = {
   galGrid: <div className="grid h-full grid-cols-3 gap-1">{bx()}{bx()}{bx()}</div>,
   galBanners: <div className="flex h-full flex-col gap-1">{bx('flex-1')}{bx('flex-1')}{bx('flex-1')}</div>,
@@ -293,6 +291,9 @@ const THUMBS = {
       <div className="h-1 w-3/5" style={{ background: TL }} />
     </div>
   ),
+  abLeft: <div className="flex h-full gap-1">{bx('w-2/5')}<div className="flex flex-1 flex-col justify-center gap-1 px-1">{ln()}{ln()}{ln('w-3/5')}</div></div>,
+  abRight: <div className="flex h-full gap-1"><div className="flex flex-1 flex-col justify-center gap-1 px-1">{ln()}{ln()}{ln('w-3/5')}</div>{bx('w-2/5')}</div>,
+  abStack: <div className="flex h-full flex-col gap-1">{bx('h-1/2')}<div className="flex flex-1 flex-col items-center justify-center gap-1">{ln('w-4/5')}{ln('w-3/5')}</div></div>,
   teCards: <div className="grid h-full grid-cols-3 gap-1">{tcard()}{tcard()}{tcard()}</div>,
 }
 
@@ -667,11 +668,22 @@ export default function WebsitePage() {
     const send = () => (document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-scroll', id }, '*')
     if (previewPage !== 'home') { setPreviewPage('home'); setTimeout(send, 900) } else send()
   }
-  function sectionHead(k: string) {
+  function sectionHead(k: string, toggle = true) {
+    const idx = T ? T.order.indexOf(k) : -1
+    const total = T ? T.order.length : 6
+    const small = 'rounded-full border border-line px-3 py-1 text-xs text-ink disabled:opacity-30'
     return (
       <>
-        <Row label="Show this section">
-          <Switch on={form?.site_sections?.[k] !== false} onChange={(v) => set('site_sections', { ...(form?.site_sections ?? {}), [k]: v })} />
+        {toggle && (
+          <Row label="Show this section">
+            <Switch on={form?.site_sections?.[k] !== false} onChange={(v) => set('site_sections', { ...(form?.site_sections ?? {}), [k]: v })} />
+          </Row>
+        )}
+        <Row label={`Position on page (${idx + 1} of ${total})`}>
+          <span className="flex gap-2">
+            <button type="button" disabled={idx <= 0} onClick={() => moveSection(k, -1)} className={small}>▲ Up</button>
+            <button type="button" disabled={idx < 0 || idx >= total - 1} onClick={() => moveSection(k, 1)} className={small}>▼ Down</button>
+          </span>
         </Row>
         <div>
           <label className="mb-1 block text-xs font-medium text-ink">Section heading</label>
@@ -914,23 +926,42 @@ export default function WebsitePage() {
                   
 </Group>
 
-                <Group title="7. Your words" hint="website-only text">
-                  <Link href="/portfolio" className={btnGhost + ' inline-block'}>Bio, FAQ &amp; social links</Link>
+                <Group title="7. About" hint="your story" onOpen={() => scrollPreview('about')}>
+                  {sectionHead('about')}
+                  <div>
+                    <p className="mb-2 text-sm text-ink">Layout</p>
+                    <LayoutPicker value={T.about.layout} onChange={(v) => setIn('about', { layout: v })}
+                      options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }]} />
+                  </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">About text</label>
                     <textarea rows={4} value={S.text?.about ?? ''} onChange={(e) => setIn('text', { about: e.target.value })} placeholder="Leave empty to use your bio from the app" className={inputCls} />
                   </div>
+                  <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
+                </Group>
+
+                <Group title="8. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
+                  {sectionHead('faq')}
+                  <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
+                  <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
+                </Group>
+
+                <Group title="9. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
+                  {sectionHead('contact', false)}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
+                </Group>
+
+                <Group title="10. Footer" hint="the line at the bottom">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
                   </div>
                 </Group>
 
-                <Group title="8. Check availability screen" hint="where every button leads">
+                <Group title="11. Check availability screen" hint="where every button leads">
                   <p className="text-sm text-ink-soft">Every button on your website opens this screen: a date check, then a short form. Requests land in your Camrhia inbox.</p>
                   <button className={btnGhost} onClick={() => setPreviewPage('availability')}>Preview this screen</button>
                   <div>
@@ -956,27 +987,7 @@ export default function WebsitePage() {
                   
                 </Group>
 
-                <Group title="9. Sections" hint="order, names, on/off">
-                  <div className="space-y-2">
-                    {T.order.map((k, i) => (
-                      <div key={k} className="flex items-center gap-2 rounded-xl border border-line bg-paper px-3 py-2">
-                        <div className="flex flex-col">
-                          <button type="button" disabled={i === 0} onClick={() => moveSection(k, -1)} className="text-xs leading-none text-ink-soft disabled:opacity-30" aria-label="Move up">▲</button>
-                          <button type="button" disabled={i === T.order.length - 1} onClick={() => moveSection(k, 1)} className="mt-1 text-xs leading-none text-ink-soft disabled:opacity-30" aria-label="Move down">▼</button>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] uppercase tracking-widest text-ink-soft">{SECTION_LABELS[k]}</p>
-                          <input value={S.titles?.[k] ?? ''} onChange={(e) => setIn('titles', { [k]: e.target.value })} placeholder={DEFAULT_TITLES[k]} className="w-full bg-transparent text-sm text-ink focus:outline-none" />
-                        </div>
-                        {k !== 'contact' && (
-                          <Switch on={form.site_sections?.[k] !== false} onChange={(v) => set('site_sections', { ...(form.site_sections ?? {}), [k]: v })} />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </Group>
-
-                <Group title="10. Layout & sizes" hint="phone and desktop">
+                <Group title="12. Layout & sizes" hint="phone and desktop">
                   <Row label="Button shape">
                     <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
                   </Row>
@@ -988,7 +999,7 @@ export default function WebsitePage() {
                   <SizeControl label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 
-                <Group title="11. Menu" hint="last, trim it down">
+                <Group title="13. Menu" hint="last, trim it down">
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>

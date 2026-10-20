@@ -186,18 +186,29 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
 
   const renderSection = (k: string, tinted: boolean): React.ReactNode => {
     switch (k) {
-      case 'about':
+      case 'about': {
+        const L = t.about.layout
+        const body = (
+          <div className={L === 'stacked' ? 'mx-auto max-w-2xl text-center' : ''}>
+            <p className="whitespace-pre-line text-[16px] leading-[1.85]" style={{ color: soft }}>{t.text.about ?? r.bio ?? ''}</p>
+            <div className="mt-8">{cta(true)}</div>
+          </div>
+        )
+        const photo = aboutPhoto ? (
+          <img src={aboutPhoto} alt={name} className="w-full object-cover" style={{ aspectRatio: L === 'stacked' ? '16/9' : '4/5' }} />
+        ) : null
         return sec('about', t.titles.about,
-          <div className={`mx-auto grid max-w-5xl items-center gap-12 ${aboutPhoto ? 'md:grid-cols-2' : ''}`}>
-            {aboutPhoto && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={aboutPhoto} alt={name} className="w-full" style={{ aspectRatio: '4/5', objectFit: 'cover' }} />
-            )}
-            <div>
-              <p className="whitespace-pre-line text-[16px] leading-[1.85]" style={{ color: soft }}>{t.text.about ?? r.bio ?? ''}</p>
-              <div className="mt-8">{cta(true)}</div>
+          L === 'stacked' ? (
+            <div className="mx-auto max-w-4xl">
+              {photo && <div className="mb-10">{photo}</div>}
+              {body}
             </div>
-          </div>, tinted)
+          ) : (
+            <div className={`mx-auto grid max-w-5xl items-center gap-12 ${photo ? 'md:grid-cols-2' : ''}`}>
+              {L === 'right' ? <>{body}{photo}</> : <>{photo}{body}</>}
+            </div>
+          ), tinted)
+      }
       case 'portfolio': {
         const L = t.portfolio.layout
         const card = (g: any, style: React.CSSProperties, cls = '', big = false) => {
