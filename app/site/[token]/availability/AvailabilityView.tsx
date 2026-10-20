@@ -219,7 +219,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
               <span style={{ ...head, fontSize: 24 }}>{studio}</span>
             )}
           </a>
-          <a href={`/site/${token}${qs}`} className="text-[11px] uppercase tracking-[0.2em]">← Back</a>
+          <a href={`/site/${token}${qs}`} className="text-[11px] uppercase tracking-[0.2em]" style={{ fontSize: 'var(--menu)' }}>← Back</a>
         </nav>
 
         {L === 'banner' && photo && (
