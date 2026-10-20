@@ -415,6 +415,23 @@ export default function WebsitePage() {
   const [tab, setTab] = useState<'home' | 'galleries' | 'about' | 'book'>('home')
   const [firstGid, setFirstGid] = useState<string | null>(null)
   const [showSent, setShowSent] = useState(false)
+  const [slugOverride, setSlugOverride] = useState<string | null>(null)
+  const [slugEdit, setSlugEdit] = useState(false)
+  const [slugDraft, setSlugDraft] = useState('')
+  const [slugMsg, setSlugMsg] = useState('')
+  const [slugSaving, setSlugSaving] = useState(false)
+
+  useEffect(() => {
+    if (!slugEdit) return
+    const v = slugDraft.trim().toLowerCase()
+    setSlugMsg('Checking…')
+    const id = setTimeout(async () => {
+      if (!supabase) return
+      const { data, error } = await supabase.rpc('check_slug_available', { p_slug: v })
+      setSlugMsg(error ? 'Could not check that name' : String(data))
+    }, 400)
+    return () => clearTimeout(id)
+  }, [slugDraft, slugEdit])
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
   const [stageW, setStageW] = useState(0)
   const formRef = useRef<Site | null>(null)
@@ -762,7 +779,18 @@ export default function WebsitePage() {
   }
 
   const token = form?.public_token ?? null
-  const path = form?.slug ? `/${form.slug}/site` : token ? `/site/${token}` : null
+  const curSlug = slugOverride ?? form?.slug ?? null
+  const path = curSlug ? `/${curSlug}/site` : token ? `/site/${token}` : null
+  async function saveSlug() {
+    if (!supabase) return
+    setSlugSaving(true)
+    const { data, error } = await supabase.rpc('claim_profile_slug', { p_slug: slugDraft.trim().toLowerCase() })
+    setSlugSaving(false)
+    if (error) { setSlugMsg(error.message); return }
+    setSlugOverride(String(data))
+    setSlugEdit(false)
+    flash('Link updated')
+  }
   const fullUrl = path ? `https://camrhia.com${path}` : null
   const tpl = form?.site_template ?? 'editorial'
   const accent = form?.site_accent ?? null
@@ -796,6 +824,36 @@ export default function WebsitePage() {
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
               <div className="space-y-4">
+                {fullUrl && (
+                  <section className={card}>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Your website link</p>
+                    <p className="mt-1 break-all font-fraunces text-xl font-semibold text-ink">{fullUrl.replace('https://', '')}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(fullUrl); flash('Link copied') }}>Copy link</button>
+                      {path && <a href={path} target="_blank" rel="noreferrer" className={btnGhost}>Open</a>}
+                      {!slugEdit && <button className={btnGhost} onClick={() => { setSlugDraft(curSlug ?? ''); setSlugMsg(''); setSlugEdit(true) }}>Change name</button>}
+                    </div>
+                    {slugEdit && (
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center gap-1 text-sm text-ink-soft">
+                          <span>camrhia.com/</span>
+                          <input value={slugDraft} onChange={(e) => setSlugDraft(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder="yourname" className={inputCls} />
+                          <span>/site</span>
+                        </div>
+                        <p className={`text-xs ${slugMsg === 'ok' ? 'text-sage' : 'text-ink-soft'}`}>
+                          {slugMsg === 'ok' ? (slugDraft.trim().toLowerCase() === (curSlug ?? '') ? 'This is your current name' : '✓ That name is free') : slugMsg}
+                        </p>
+                        <div className="flex gap-2">
+                          <button className={btn} disabled={slugSaving || slugMsg !== 'ok' || slugDraft.trim().toLowerCase() === (curSlug ?? '')} onClick={saveSlug}>
+                            {slugSaving ? 'Saving…' : 'Save name'}
+                          </button>
+                          <button className={btnGhost} onClick={() => setSlugEdit(false)}>Cancel</button>
+                        </div>
+                        <p className="text-xs text-ink-soft">Changing your name changes your link, so the old one stops working. Update it anywhere you have shared it.</p>
+                      </div>
+                    )}
+                  </section>
+                )}
                 <div>
                   <div className="flex flex-wrap gap-x-7 border-b border-line">
                     {([{ v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }] as const).map((o) => (
@@ -1187,13 +1245,6 @@ export default function WebsitePage() {
                 </>)}
 
 
-                {fullUrl && (
-                  <section className={card}>
-                    <h2 className="mb-1 font-fraunces text-lg font-semibold text-ink">Your link</h2>
-                    <p className="mb-3 break-all text-sm text-ink-soft">{fullUrl.replace('https://', '')}</p>
-                    <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(fullUrl); flash('Link copied') }}>Copy link</button>
-                  </section>
-                )}
               </div>
 
               <div id="site-preview" className="lg:sticky lg:top-6 lg:self-start">
