@@ -131,6 +131,7 @@ export function resolveTheme(r: Record<string, any>) {
     button: str(s.availability?.button) ?? 'Send inquiry',
     success: str(s.availability?.success),
     float: s.availability?.float !== false,
+    layout: pick(s.availability?.layout, ['centered', 'side', 'banner'] as const, 'centered'),
   }
 
   const pricing = {
@@ -153,6 +154,13 @@ export function resolveTheme(r: Record<string, any>) {
     layout: pick(s.about?.layout, ['left', 'right', 'stacked'] as const, 'left'),
   }
 
+  const galpage = {
+    layout: pick(s.galpage?.layout ?? s.gallery?.layout, ['masonry', 'grid', 'single'] as const, 'masonry'),
+    showCount: s.galpage?.show_count !== false,
+    showMore: s.galpage?.show_more !== false,
+    showButton: s.galpage?.show_button !== false,
+  }
+
   const sizes = {
     text: pairNum(s.sizes?.text, 80, 130, 100, 100),
     headline: pairNum(s.sizes?.headline, 24, 140, 44, 72),
@@ -160,9 +168,12 @@ export function resolveTheme(r: Record<string, any>) {
     photoGap: pairNum(s.sizes?.photoGap, 0, 60, 8, 12),
     heroHeight: pairNum(s.sizes?.heroHeight, 40, 100, 80, 92),
     logo: pairNum(s.sizes?.logo, 16, 120, 30, 38),
+    galHeading: pairNum(s.sizes?.galHeading, 24, 120, 38, 56),
+    galGap: pairNum(s.sizes?.galGap ?? s.sizes?.photoGap, 0, 60, 8, 12),
+    bookHeading: pairNum(s.sizes?.bookHeading, 24, 120, 34, 48),
   }
   const vars = (d: 'phone' | 'desktop') =>
-    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;`
+    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;--gal-h:${sizes.galHeading[d]}px;--gal-gap:${sizes.galGap[d]}px;--book-h:${sizes.bookHeading[d]}px;`
   const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}`
 
   return {
@@ -194,6 +205,7 @@ export function resolveTheme(r: Record<string, any>) {
     pricing,
     portfolio,
     about,
+    galpage,
     testi,
     sizes,
     cssVars,

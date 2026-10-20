@@ -294,6 +294,9 @@ const THUMBS = {
   abLeft: <div className="flex h-full gap-1">{bx('w-2/5')}<div className="flex flex-1 flex-col justify-center gap-1 px-1">{ln()}{ln()}{ln('w-3/5')}</div></div>,
   abRight: <div className="flex h-full gap-1"><div className="flex flex-1 flex-col justify-center gap-1 px-1">{ln()}{ln()}{ln('w-3/5')}</div>{bx('w-2/5')}</div>,
   abStack: <div className="flex h-full flex-col gap-1">{bx('h-1/2')}<div className="flex flex-1 flex-col items-center justify-center gap-1">{ln('w-4/5')}{ln('w-3/5')}</div></div>,
+  bkCentered: <div className="flex h-full flex-col items-center justify-center gap-1">{ln('w-3/5')}{ln('w-4/5')}{bx('h-3 w-4/5')}{bx('h-3 w-4/5')}</div>,
+  bkSide: <div className="flex h-full gap-1">{bx('w-2/5')}<div className="flex flex-1 flex-col justify-center gap-1">{ln()}{bx('h-3')}{bx('h-3')}</div></div>,
+  bkBanner: <div className="flex h-full flex-col gap-1">{bx('h-1/3')}<div className="flex flex-1 flex-col items-center justify-center gap-1">{ln('w-3/5')}{bx('h-3 w-4/5')}</div></div>,
   teCards: <div className="grid h-full grid-cols-3 gap-1">{tcard()}{tcard()}{tcard()}</div>,
 }
 
@@ -382,7 +385,9 @@ export default function WebsitePage() {
   const [message, setMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [device, setDevice] = useState<Dev>('desktop')
-  const [previewPage, setPreviewPage] = useState<'home' | 'availability'>('home')
+  const [previewPage, setPreviewPage] = useState<'home' | 'gallery' | 'availability'>('home')
+  const [tab, setTab] = useState<'site' | 'home' | 'galleries' | 'book'>('home')
+  const [firstGid, setFirstGid] = useState<string | null>(null)
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
   const [stageW, setStageW] = useState(0)
   const formRef = useRef<Site | null>(null)
@@ -456,6 +461,8 @@ export default function WebsitePage() {
     setPkgs((pk.data ?? []) as WPkg[])
     const ph = await sb.from('website_photos').select('storage_path').eq('photographer_id', id).order('created_at', { ascending: false }).limit(80)
     setCandsDb(((ph.data ?? []) as { storage_path: string }[]).map((x) => x.storage_path))
+    const gl = await sb.from('website_galleries').select('id').eq('photographer_id', id).order('sort_order', { ascending: true }).limit(1)
+    setFirstGid(((gl.data ?? []) as { id: string }[])[0]?.id ?? null)
   }, [])
   useEffect(() => { loadExtras() }, [loadExtras])
 
@@ -664,6 +671,10 @@ export default function WebsitePage() {
     out.push({ name: 'White', hex: '#FFFFFF' }, { name: 'Cream', hex: '#FAF7F2' }, { name: 'Warm paper', hex: '#F0EAE1' }, { name: 'Ink', hex: '#2A1F24' }, { name: 'Black', hex: '#000000' })
     return out
   }
+  function pickTab(t: 'site' | 'home' | 'galleries' | 'book') {
+    setTab(t)
+    setPreviewPage(t === 'galleries' ? 'gallery' : t === 'book' ? 'availability' : 'home')
+  }
   function scrollPreview(id: string) {
     const send = () => (document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-scroll', id }, '*')
     if (previewPage !== 'home') { setPreviewPage('home'); setTimeout(send, 900) } else send()
@@ -735,7 +746,15 @@ export default function WebsitePage() {
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
               <div className="space-y-4">
-                <Group title="1. Template" hint="pick a look" open>
+                <div className="rounded-2xl border border-line bg-card p-4">
+                  <p className="mb-2 text-[11px] uppercase tracking-widest text-ink-soft">Website pages</p>
+                  <Seg value={tab} onChange={pickTab}
+                    options={[{ v: 'home', label: 'Home page' }, { v: 'galleries', label: 'Galleries page' }, { v: 'book', label: 'Book info page' }, { v: 'site', label: 'Whole site' }]} />
+                  <p className="mt-2 text-xs text-ink-soft">
+                    {tab === 'home' ? 'Everything on your main page, top to bottom.' : tab === 'galleries' ? 'The page visitors see after clicking a gallery cover.' : tab === 'book' ? 'Where every button leads: the date check and inquiry form.' : 'Logo, colors, fonts, menu and footer, used on every page.'}
+                  </p>
+                </div>
+                {tab === 'home' && (<><Group title="1. Template" hint="pick a look" open>
                   <div className="grid grid-cols-3 gap-3">
                     {TEMPLATES.map((t) => (
                       <button key={t.key} onClick={() => set('site_template', t.key)} className={`text-left ${tpl === t.key ? '' : 'opacity-80 hover:opacity-100'}`}>
@@ -746,29 +765,7 @@ export default function WebsitePage() {
                     ))}
                   </div>
                 </Group>
-
-                <Group title="2. Color & fonts" hint="the mood">
-                  <ColorField label="Button & accent color" value={form.site_accent ?? brandHex()} swatches={palette()}
-                    onChange={(h) => set('site_accent', h)} onReset={() => set('site_accent', null)} />
-                  {colorRow('Background', 'bg', T.bg)}
-                  {colorRow('Text', 'text', T.ink)}
-                  {colorRow('Alternating section tint', 'tint', T.tint)}
-                  <div className="grid grid-cols-3 gap-3 pt-2">
-                    {Object.entries(PAIR_PRESETS).map(([key, p]) => {
-                      const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
-                      return (
-                        <button key={key} onClick={() => pickPair(key)} className={`rounded-xl border p-3 text-left ${sel ? 'border-twilight ring-1 ring-twilight' : 'border-line'}`}>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.head].family, fontSize: 24, lineHeight: 1.1 }} className="text-ink">Aa</p>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.body].family, fontSize: 11 }} className="mt-1 text-ink-soft">{p.name}</p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
-                  <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
-                </Group>
-
-                <Group title="3. Hero" hint="photos, logo, headline">
+<Group title="2. Hero" hint="photos, logo, headline">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
@@ -805,29 +802,11 @@ export default function WebsitePage() {
                       <NumBox value={Math.round(T.hero.overlay * 100)} min={0} max={80} step={5} unit="%" onChange={(v) => setHero({ overlay: v / 100 })} />
                     </div>
                   </div>
-                  <div className="border-t border-line pt-4">
-                    <p className="mb-1 text-sm text-ink">Logo</p>
-                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {form.logo_path ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
-                      ) : (
-                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
-                      )}
-                      <label className={btnGhost + ' cursor-pointer'}>
-                        {form.logo_path ? 'Replace' : 'Upload logo'}
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
-                      </label>
-                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
-                    </div>
-                  </div>
-                  <SizeControl label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
+                  
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   
                 </Group>
-
-                <Group title="4. Galleries" hint="your work, by category" onOpen={() => scrollPreview('portfolio')}>
+<Group title="3. Galleries" hint="cover photos and titles" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -841,17 +820,13 @@ export default function WebsitePage() {
                   </div>
 
                   
-<div>
-                    <p className="mb-2 text-sm text-ink">Photo layout inside a gallery</p>
-                    <LayoutPicker value={T.gallery.layout} onChange={(v) => setIn('gallery', { layout: v })}
-                      options={[{ v: 'masonry', name: 'Masonry', thumb: THUMBS.phMasonry }, { v: 'grid', name: 'Even grid', thumb: THUMBS.phGrid }, { v: 'single', name: 'Single column', thumb: THUMBS.phSingle }]} />
-                  </div>
+
                   <Row label="Gallery card shape">
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>
                   
 </Group>
-<Group title="5. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
+<Group title="4. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
 <div>
                     
@@ -889,7 +864,7 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="6. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="5. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -925,8 +900,7 @@ export default function WebsitePage() {
 
                   
 </Group>
-
-                <Group title="7. About" hint="your story" onOpen={() => scrollPreview('about')}>
+<Group title="6. About" hint="your story" onOpen={() => scrollPreview('about')}>
                   {sectionHead('about')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -939,31 +913,53 @@ export default function WebsitePage() {
                   </div>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
-
-                <Group title="8. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
+<Group title="7. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 </Group>
-
-                <Group title="9. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
+<Group title="8. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
                 </Group>
-
-                <Group title="10. Footer" hint="the line at the bottom">
+<Group title="9. Layout & sizes" hint="phone and desktop">
+                  
+                  <p className="text-xs text-ink-soft">Move a phone or desktop control and the preview switches to that size. You can also type an exact number.</p>
+                  <SizeControl label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
+                  <SizeControl label="Headline size" unit="px" min={24} max={140} step={2} value={T.sizes.headline} onChange={(d, v) => setSize('headline', d, v)} />
+                  <SizeControl label="Hero height" unit="vh" min={40} max={100} step={5} value={T.sizes.heroHeight} onChange={(d, v) => setSize('heroHeight', d, v)} />
+                  <SizeControl label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
+                  <SizeControl label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
+                </Group></>)}
+{tab === 'galleries' && (<><Group open title="1. Gallery page" hint="what visitors see after clicking a cover">
+                  {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
+                  <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
-                    <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
+                    <p className="mb-2 text-sm text-ink">Photo layout</p>
+                    <LayoutPicker value={T.galpage.layout} onChange={(v) => setIn('galpage', { layout: v })}
+                      options={[{ v: 'masonry', name: 'Masonry', thumb: THUMBS.phMasonry }, { v: 'grid', name: 'Even grid', thumb: THUMBS.phGrid }, { v: 'single', name: 'Single column', thumb: THUMBS.phSingle }]} />
                   </div>
+                  <Row label="Show photo count"><Switch on={T.galpage.showCount} onChange={(v) => setIn('galpage', { show_count: v })} /></Row>
+                  <Row label="Show other galleries at the bottom"><Switch on={T.galpage.showMore} onChange={(v) => setIn('galpage', { show_more: v })} /></Row>
+                  <Row label="Show the book button at the bottom"><Switch on={T.galpage.showButton} onChange={(v) => setIn('galpage', { show_button: v })} /></Row>
                 </Group>
-
-                <Group title="11. Check availability screen" hint="where every button leads">
+                <Group title="2. Gallery page sizes" hint="phone and desktop">
+                  <p className="text-xs text-ink-soft">Move a phone or desktop control and the preview switches to that size. You can type an exact number too.</p>
+                  <SizeControl label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
+                  <SizeControl label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
+                </Group></>)}
+{tab === 'book' && (<><Group open title="1. Check availability screen" hint="where every button leads">
+                  <div>
+                    <p className="mb-2 text-sm text-ink">Layout</p>
+                    <LayoutPicker value={T.availability.layout} onChange={(v) => setIn('availability', { layout: v })}
+                      options={[{ v: 'centered', name: 'Centered', thumb: THUMBS.bkCentered }, { v: 'side', name: 'Photo beside', thumb: THUMBS.bkSide }, { v: 'banner', name: 'Photo banner', thumb: THUMBS.bkBanner }]} />
+                  </div>
+                  <SizeControl label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.bookHeading} onChange={(d, v) => setSize('bookHeading', d, v)} />
                   <p className="text-sm text-ink-soft">Every button on your website opens this screen: a date check, then a short form. Requests land in your Camrhia inbox.</p>
-                  <button className={btnGhost} onClick={() => setPreviewPage('availability')}>Preview this screen</button>
+                  
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Button wording (used on every button on the site)</label>
                     <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
@@ -985,21 +981,50 @@ export default function WebsitePage() {
                     <textarea rows={2} value={S.availability?.success ?? ''} onChange={(e) => setIn('availability', { success: e.target.value })} placeholder="Thanks! I will reach out within a day." className={inputCls} />
                   </div>
                   
-                </Group>
-
-                <Group title="12. Layout & sizes" hint="phone and desktop">
+                </Group></>)}
+{tab === 'site' && (<><Group open title="1. Logo & buttons" hint="shows on every page"><div className="border-t border-line pt-4">
+                    <p className="mb-1 text-sm text-ink">Logo</p>
+                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {form.logo_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
+                      ) : (
+                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
+                      )}
+                      <label className={btnGhost + ' cursor-pointer'}>
+                        {form.logo_path ? 'Replace' : 'Upload logo'}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
+                      </label>
+                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
+                    </div>
+                  </div>
+                  <SizeControl label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
                   <Row label="Button shape">
                     <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
                   </Row>
-                  <p className="text-xs text-ink-soft">Move a phone or desktop control and the preview switches to that size. You can also type an exact number.</p>
-                  <SizeControl label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
-                  <SizeControl label="Headline size" unit="px" min={24} max={140} step={2} value={T.sizes.headline} onChange={(d, v) => setSize('headline', d, v)} />
-                  <SizeControl label="Hero height" unit="vh" min={40} max={100} step={5} value={T.sizes.heroHeight} onChange={(d, v) => setSize('heroHeight', d, v)} />
-                  <SizeControl label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
-                  <SizeControl label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
-
-                <Group title="13. Menu" hint="last, trim it down">
+<Group title="2. Color & fonts" hint="the mood">
+                  <ColorField label="Button & accent color" value={form.site_accent ?? brandHex()} swatches={palette()}
+                    onChange={(h) => set('site_accent', h)} onReset={() => set('site_accent', null)} />
+                  {colorRow('Background', 'bg', T.bg)}
+                  {colorRow('Text', 'text', T.ink)}
+                  {colorRow('Alternating section tint', 'tint', T.tint)}
+                  <div className="grid grid-cols-3 gap-3 pt-2">
+                    {Object.entries(PAIR_PRESETS).map(([key, p]) => {
+                      const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
+                      return (
+                        <button key={key} onClick={() => pickPair(key)} className={`rounded-xl border p-3 text-left ${sel ? 'border-twilight ring-1 ring-twilight' : 'border-line'}`}>
+                          <p style={{ fontFamily: FONT_OPTIONS[p.head].family, fontSize: 24, lineHeight: 1.1 }} className="text-ink">Aa</p>
+                          <p style={{ fontFamily: FONT_OPTIONS[p.body].family, fontSize: 11 }} className="mt-1 text-ink-soft">{p.name}</p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
+                  <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
+                </Group>
+<Group title="3. Menu" hint="last, trim it down">
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
@@ -1014,6 +1039,12 @@ export default function WebsitePage() {
                     ))}
                   </div>
                 </Group>
+<Group title="4. Footer" hint="the line at the bottom">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
+                    <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
+                  </div>
+                </Group></>)}
 
                 {fullUrl && (
                   <section className={card}>
@@ -1026,7 +1057,7 @@ export default function WebsitePage() {
 
               <div id="site-preview" className="lg:sticky lg:top-6 lg:self-start">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <Seg value={previewPage} options={[{ v: 'home', label: 'Website' }, { v: 'availability', label: 'Check availability' }]} onChange={setPreviewPage} />
+                  <span className="text-xs text-ink-soft">Previewing: {previewPage === 'home' ? 'Home page' : previewPage === 'gallery' ? 'Galleries page' : 'Book info page'}</span>
                   <Seg value={device} options={[{ v: 'phone', label: 'Phone' }, { v: 'desktop', label: 'Desktop' }]} onChange={setDevice} />
                 </div>
                 {token ? (
@@ -1042,7 +1073,7 @@ export default function WebsitePage() {
                           <iframe
                             id="site-frame"
                             key={previewKey + previewPage}
-                            src={`/site/${token}${previewPage === 'availability' ? '/availability' : ''}?preview=1`}
+                            src={previewPage === 'availability' ? `/site/${token}/availability?preview=1` : previewPage === 'gallery' && firstGid ? `/site/${token}/g/${firstGid}?preview=1` : `/site/${token}?preview=1`}
                             title="Website preview"
                             style={{ width: w, height: `calc(${hCss} / ${scale})`, border: 0, transform: `scale(${scale})`, transformOrigin: 'top left', background: '#fff' }}
                           />

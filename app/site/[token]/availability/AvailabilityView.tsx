@@ -10,6 +10,9 @@ const SESSION_TYPES = [
   'Headshots', 'Branding', 'Graduation', 'Sports / Team', 'Boudoir', 'Other',
 ]
 const APP_STORE_URL = 'https://apps.apple.com/app/id6800011162'
+const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
+  : ''
 
 export function AvailabilityView({ initial, token }: { initial: Record<string, any>; token: string }) {
   const [r, setR] = useState<Record<string, any>>(initial)
@@ -61,6 +64,10 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   const { accent, ink, soft, line, bg } = t
   const studio: string = r.studio_name ?? r.display_name ?? 'Studio'
   const qs = isPreview ? '?preview=1' : ''
+  const logo = r.logo_path ? STORAGE_BASE + r.logo_path : null
+  const photoPath: string | null = t.hero.photos[0] ?? ((Array.isArray(r.cover_paths) && r.cover_paths[0]) || r.cover_path || null)
+  const photo = photoPath ? STORAGE_BASE + photoPath : null
+  const L = t.availability.layout
   const head: React.CSSProperties = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' }
   const input: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box', padding: '12px 14px', fontSize: 16, border: `1px solid ${line}`,
@@ -110,75 +117,103 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
     setSent(true)
   }
 
+  const content = (
+    <div>
+      <h1 className="text-center" style={{ ...head, fontSize: 'var(--book-h)', lineHeight: 1.1 }}>{t.availability.title}</h1>
+      <p className="mx-auto mt-4 max-w-md whitespace-pre-line text-center text-[15px] leading-relaxed" style={{ color: soft }}>{t.availability.intro}</p>
+
+      {sent ? (
+        <div className="mt-10 rounded-2xl p-6" style={{ background: '#fff', border: `1px solid ${line}`, lineHeight: 1.6 }}>
+          <h2 style={{ ...head, fontSize: 28 }}>Thank you{name ? `, ${name.split(' ')[0]}` : ''}.</h2>
+          <p className="mt-3 whitespace-pre-line text-[15px]" style={{ color: soft }}>
+            {t.availability.success ?? `${studio} has your request and will reach out soon.`}
+          </p>
+          {!isClient && (
+            <div className="mt-5 text-[15px]" style={{ color: soft }}>
+              <p><strong style={{ color: ink }}>One more step</strong> to get your request to {studio}:</p>
+              <ol className="mt-3 grid gap-2 pl-5" style={{ listStyle: 'decimal' }}>
+                <li>Download the free Camrhia app and create your account.</li>
+                <li>Sign up with this exact email: <strong style={{ color: ink }}>{email}</strong></li>
+                <li>The moment your account is ready, your message is sent to {studio} automatically.</li>
+              </ol>
+            </div>
+          )}
+          {inquiryId && (
+            <a href={`/my/inquiry/${inquiryId}?s=${encodeURIComponent(studio)}`} className="mt-6 block text-center" style={primary}>Open your conversation</a>
+          )}
+          <a href={APP_STORE_URL} className="mt-4 block text-center" style={primary}>{isClient ? 'Get the Camrhia app' : 'Download the app and create your account'}</a>
+        </div>
+      ) : (
+        <>
+          <section className="mt-10">
+            <p style={stepLabel}>1 · Pick a date</p>
+            <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} bgColor="#fff" onPick={(d) => setDate(d)} />
+          </section>
+
+          <form onSubmit={submit} className="mt-12 grid gap-4">
+            <p style={stepLabel}>2 · Tell me about your day</p>
+            <div><label style={label}>Your name *</label>
+              <input style={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} autoComplete="name" /></div>
+            <div><label style={label}>Email *</label>
+              <input style={input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={200} autoComplete="email" /></div>
+            <div><label style={label}>Phone (optional)</label>
+              <input style={input} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} autoComplete="tel" /></div>
+            <div><label style={label}>What are you looking for?</label>
+              <select style={input} value={sessionType} onChange={(e) => setSessionType(e.target.value)}>
+                <option value="">Choose a session type</option>
+                {SESSION_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select></div>
+            <div><label style={label}>Date</label>
+              <input style={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+            <div><label style={label}>Location (city)</label>
+              <input style={input} value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} placeholder="Where would the session be?" /></div>
+            <div><label style={label}>Message</label>
+              <textarea style={{ ...input, minHeight: 100, resize: 'vertical' }} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} placeholder="Tell me a little about what you have in mind" /></div>
+            <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={(e) => setWebsite(e.target.value)}
+              style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
+            {error && <p style={{ margin: 0, color: '#B83232', fontSize: 14 }}>{error}</p>}
+            <button type="submit" disabled={sending} style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
+          </form>
+        </>
+      )}
+    </div>
+  )
+
   return (
     <>
       <link rel="stylesheet" href={t.fontsHref} />
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
       <div style={{ background: bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
-        <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <a href={`/site/${token}${qs}`} style={{ ...head, fontSize: 24 }}>{studio}</a>
+        <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <a href={`/site/${token}${qs}`}>
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt={studio} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
+            ) : (
+              <span style={{ ...head, fontSize: 24 }}>{studio}</span>
+            )}
+          </a>
           <a href={`/site/${token}${qs}`} className="text-[11px] uppercase tracking-[0.2em]">← Back</a>
         </nav>
 
-        <main className="mx-auto max-w-xl px-6 pb-24 pt-8">
-          <h1 className="text-center" style={{ ...head, fontSize: 'calc(var(--hl) * 0.75)', lineHeight: 1.1 }}>{t.availability.title}</h1>
-          <p className="mx-auto mt-4 max-w-md whitespace-pre-line text-center text-[15px] leading-relaxed" style={{ color: soft }}>{t.availability.intro}</p>
+        {L === 'banner' && photo && (
+          <div className="mx-auto max-w-5xl px-6 pt-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={photo} alt="" className="w-full object-cover" style={{ aspectRatio: '21/9' }} />
+          </div>
+        )}
 
-          {sent ? (
-            <div className="mt-10 rounded-2xl p-6" style={{ background: '#fff', border: `1px solid ${line}`, lineHeight: 1.6 }}>
-              <h2 style={{ ...head, fontSize: 28 }}>Thank you{name ? `, ${name.split(' ')[0]}` : ''}.</h2>
-              <p className="mt-3 whitespace-pre-line text-[15px]" style={{ color: soft }}>
-                {t.availability.success ?? `${studio} has your request and will reach out soon.`}
-              </p>
-              {!isClient && (
-                <div className="mt-5 text-[15px]" style={{ color: soft }}>
-                  <p><strong style={{ color: ink }}>One more step</strong> to get your request to {studio}:</p>
-                  <ol className="mt-3 grid gap-2 pl-5" style={{ listStyle: 'decimal' }}>
-                    <li>Download the free Camrhia app and create your account.</li>
-                    <li>Sign up with this exact email: <strong style={{ color: ink }}>{email}</strong></li>
-                    <li>The moment your account is ready, your message is sent to {studio} automatically.</li>
-                  </ol>
-                </div>
-              )}
-              {inquiryId && (
-                <a href={`/my/inquiry/${inquiryId}?s=${encodeURIComponent(studio)}`} className="mt-6 block text-center" style={primary}>Open your conversation</a>
-              )}
-              <a href={APP_STORE_URL} className="mt-4 block text-center" style={primary}>{isClient ? 'Get the Camrhia app' : 'Download the app and create your account'}</a>
+        {L === 'side' && photo ? (
+          <main className="mx-auto grid max-w-5xl gap-12 px-6 pb-24 pt-8 md:grid-cols-2">
+            <div className="md:sticky md:top-8 md:self-start">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photo} alt="" className="w-full object-cover" style={{ aspectRatio: '4/5' }} />
             </div>
-          ) : (
-            <>
-              <section className="mt-10">
-                <p style={stepLabel}>1 · Pick a date</p>
-                <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} bgColor="#fff" onPick={(d) => setDate(d)} />
-              </section>
-
-              <form onSubmit={submit} className="mt-12 grid gap-4">
-                <p style={stepLabel}>2 · Tell me about your day</p>
-                <div><label style={label}>Your name *</label>
-                  <input style={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} autoComplete="name" /></div>
-                <div><label style={label}>Email *</label>
-                  <input style={input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={200} autoComplete="email" /></div>
-                <div><label style={label}>Phone (optional)</label>
-                  <input style={input} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} autoComplete="tel" /></div>
-                <div><label style={label}>What are you looking for?</label>
-                  <select style={input} value={sessionType} onChange={(e) => setSessionType(e.target.value)}>
-                    <option value="">Choose a session type</option>
-                    {SESSION_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select></div>
-                <div><label style={label}>Date</label>
-                  <input style={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-                <div><label style={label}>Location (city)</label>
-                  <input style={input} value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} placeholder="Where would the session be?" /></div>
-                <div><label style={label}>Message</label>
-                  <textarea style={{ ...input, minHeight: 100, resize: 'vertical' }} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} placeholder="Tell me a little about what you have in mind" /></div>
-                <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={(e) => setWebsite(e.target.value)}
-                  style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
-                {error && <p style={{ margin: 0, color: '#B83232', fontSize: 14 }}>{error}</p>}
-                <button type="submit" disabled={sending} style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
-              </form>
-            </>
-          )}
-        </main>
+            {content}
+          </main>
+        ) : (
+          <main className="mx-auto max-w-xl px-6 pb-24 pt-8">{content}</main>
+        )}
       </div>
     </>
   )
