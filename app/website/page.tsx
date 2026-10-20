@@ -9,6 +9,7 @@ import { getBoard, starter, blank, newItem, hasBoard, galleryStarter } from '@/l
 import type { CItem } from '@/lib/aboutCanvas'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { FONT_OPTIONS, PAIR_PRESETS, NAV_DEFAULTS, DEFAULT_TITLES, resolveTheme } from '@/lib/siteTheme'
+import { HexColorPicker } from 'react-colorful'
 
 type Site = {
   id: string
@@ -189,11 +190,9 @@ function ColorField({ label, value, swatches, onChange, onReset }: {
               ))}
             </div>
             <p className="mb-2 text-[11px] uppercase tracking-widest text-ink-soft">Pick any color</p>
-            <div className="flex items-center gap-2">
-              <input type="color" value={ok(value) ? value : '#FFFFFF'} onChange={(e) => onChange(e.target.value)} className="h-10 w-12 cursor-pointer rounded border border-line bg-transparent" />
-              <input value={txt} maxLength={7} placeholder="#A9545F" className={inputCls + ' font-mono uppercase'}
-                onChange={(e) => { let v = e.target.value.trim(); setTxt(v); if (v && !v.startsWith('#')) v = '#' + v; if (ok(v)) onChange(v) }} />
-            </div>
+            <HexColorPicker color={ok(value) ? value : '#ffffff'} onChange={(h) => onChange(h)} style={{ width: '100%', height: 170 }} />
+            <input value={txt} maxLength={7} placeholder="#A9545F" className={inputCls + ' mt-3 font-mono uppercase'}
+              onChange={(e) => { let v = e.target.value.trim(); setTxt(v); if (v && !v.startsWith('#')) v = '#' + v; if (ok(v)) onChange(v) }} />
             <div className="mt-3 flex items-center justify-between">
               {onReset ? <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { onReset(); setOpen(false) }}>Reset</button> : <span />}
               <button type="button" className="text-xs font-medium text-twilight" onClick={() => setOpen(false)}>Done</button>
@@ -996,10 +995,7 @@ export default function WebsitePage() {
       if (v && /^#[0-9a-fA-F]{6}$/.test(v)) out.push({ name: k.replace(/_/g, ' '), hex: v })
     }
     if (out.length === 0) out.push({ name: 'My brand color', hex: brandHex() })
-    if (form?.site_accent && /^#[0-9a-fA-F]{6}$/.test(form.site_accent)) out.push({ name: 'Site accent', hex: form.site_accent })
-    for (const c of SWATCHES) out.push({ name: 'Suggested', hex: c })
-    out.push({ name: 'White', hex: '#FFFFFF' }, { name: 'Cream', hex: '#FAF7F2' }, { name: 'Warm paper', hex: '#F0EAE1' }, { name: 'Ink', hex: '#2A1F24' }, { name: 'Black', hex: '#000000' })
-    return out
+    return out.slice(0, 5)
   }
   function secStyleBlock(id: string) {
     if (!T) return null
