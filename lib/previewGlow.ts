@@ -38,7 +38,9 @@ export function installPreviewGlow(): () => void {
       glow.style.left = gl + 'px'
       let topV = r.top
       if (target.id === 'top') { const nv = document.getElementById('nav'); if (nv) topV = Math.max(topV, nv.getBoundingClientRect().bottom) }
-      const gt = Math.max(6, topV + window.scrollY - 4)
+      let dy = 0
+      if (target.id === 'nav') { dy = parseFloat(getComputedStyle(target).getPropertyValue('--menuy')) || 0 }
+      const gt = Math.max(6, topV + dy + window.scrollY - 4)
       glow.style.top = gt + 'px'
       glow.style.width = Math.max(0, gr - gl) + 'px'
       glow.style.height = Math.max(0, r.bottom + window.scrollY + 4 - gt) + 'px'
