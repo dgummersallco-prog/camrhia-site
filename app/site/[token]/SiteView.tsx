@@ -116,7 +116,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     { href: hrefs.book, t: t.menu.labels.book?.trim() || NAV_DEFAULTS.book, s: ex.lines?.book?.trim() || 'Check my dates' },
   ]
 
-  const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' }
+  const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: t.headWeight ?? 500, letterSpacing: '0.01em' }
   const btnStyle: React.CSSProperties = { background: accent, color: t.btnText, fontFamily: t.body, borderRadius: t.radius }
 
   const cta = (force?: boolean) =>
@@ -273,7 +273,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                     )
                     const textTile = (
                       <a key={g.id + 't'} href={href} className="flex aspect-square items-center justify-center p-4 text-center" style={{ background: bg }}>
-                        <span style={{ ...headStyle, fontWeight: 700, fontStretch: 'condensed', textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'clamp(1.4rem, 4.2vw, 3.6rem)' }}>{g.title}</span>
+                        <span style={{ ...headStyle, fontFamily: t.galFamily ?? t.head, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'clamp(1.4rem, 4.2vw, 3.6rem)' }}>{g.title}</span>
                       </a>
                     )
                     return i % 2 === 0 ? [photoTile, textTile] : [textTile, photoTile]

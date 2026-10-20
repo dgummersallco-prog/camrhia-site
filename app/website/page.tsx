@@ -922,6 +922,18 @@ export default function WebsitePage() {
                     })}
                   </div>
                   <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
+                  {(() => {
+                    const ws = (FONT_OPTIONS[T.headKey]?.weights ?? [400]).filter((w) => w <= 700)
+                    const nm: Record<number, string> = { 100: 'Hairline', 200: 'Thin', 300: 'Light', 400: 'Regular', 500: 'Medium', 600: 'Semi', 700: 'Bold' }
+                    const want = T.headWeight ?? 500
+                    const cur = ws.reduce((a, b) => (Math.abs(b - want) < Math.abs(a - want) ? b : a), ws[0])
+                    return ws.length > 1 ? (
+                      <div>
+                        <p className="mb-2 text-sm text-ink">Heading weight</p>
+                        <Seg value={String(cur)} options={ws.map((w) => ({ v: String(w), label: nm[w] ?? String(w) }))} onChange={(v) => setIn('fonts', { headWeight: Number(v) })} />
+                      </div>
+                    ) : <p className="text-xs text-ink-soft">This font has one weight. Pick a font with Thin or Light for a lighter look.</p>
+                  })()}
                   <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
                 </Group>
 <Group title="Buttons" hint="wording, color, size, shape" onOpen={() => scrollPreview('')}>
@@ -1114,6 +1126,9 @@ export default function WebsitePage() {
                     <LayoutPicker value={(S.galindex?.layout ?? T.galindex.layout) as any} onChange={(v) => setIn('galindex', { layout: v })}
                       options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }, { v: 'checker', name: 'Checkerboard', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="24" height="10" /><rect x="30" y="14" width="24" height="10" /><rect x="6" y="24" width="24" height="10" /></g><g fill="#B9AFA2"><rect x="34" y="8" width="16" height="2" /><rect x="10" y="18" width="16" height="2" /><rect x="34" y="28" width="16" height="2" /></g></svg> }]} />
                   </div>
+                  {(S.galindex?.layout ?? T.galindex.layout) === 'checker' && (
+                    <FontPicker label="Gallery name font" value={S.galindex?.font ?? 'barlowcondensed'} cats={['display', 'sans', 'serif']} onChange={(k) => setIn('galindex', { font: k })} />
+                  )}
                   <Row label="Cover shape">
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>

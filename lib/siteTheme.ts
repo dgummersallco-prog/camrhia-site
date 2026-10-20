@@ -1,5 +1,5 @@
 export type FontCat = 'serif' | 'sans' | 'script' | 'display'
-type FontOpt = { label: string; family: string; gf: string; cat: FontCat }
+type FontOpt = { label: string; family: string; gf: string; cat: FontCat; weights: number[] }
 
 const GENERIC: Record<FontCat, string> = {
   serif: 'Georgia, serif',
@@ -8,7 +8,10 @@ const GENERIC: Record<FontCat, string> = {
   display: 'Georgia, serif',
 }
 function mk(label: string, cat: FontCat, gf?: string): FontOpt {
-  return { label, cat, family: `'${label}', ${GENERIC[cat]}`, gf: gf ?? label.replace(/ /g, '+') }
+  const g = gf ?? label.replace(/ /g, '+')
+  const m = /wght@([0-9;]+)/.exec(g)
+  const weights = m ? m[1].split(';').map(Number) : [400]
+  return { label, cat, family: `'${label}', ${GENERIC[cat]}`, gf: g, weights }
 }
 
 const LEGACY: Record<string, FontOpt> = {
@@ -41,13 +44,36 @@ const MORE: [string, FontCat][] = [
   ['Tangerine', 'script'], ['Italianno', 'script'], ['Satisfy', 'script'], ['Mrs Saint Delafield', 'script'],
   ['La Belle Aurore', 'script'], ['Cookie', 'script'],
   ['Bebas Neue', 'display'], ['Oswald', 'display'], ['Anton', 'display'], ['Limelight', 'display'],
-  ['Julius Sans One', 'display'], ['Federo', 'display'],
+  ['Julius Sans One', 'display'], ['Federo', 'display'], ['Barlow Condensed', 'display'],
 ]
 
+const W: Record<string, string> = {
+  'Inter': '100;200;300;400;500;600;700',
+  'Poppins': '100;200;300;400;500;600;700',
+  'Jost': '100;200;300;400;500;600;700',
+  'Lato': '100;300;400;700',
+  'Open Sans': '300;400;500;600;700',
+  'Nunito Sans': '200;300;400;600;700',
+  'Manrope': '200;300;400;500;600;700',
+  'DM Sans': '100;200;300;400;500;600;700',
+  'Outfit': '100;200;300;400;500;600;700',
+  'Urbanist': '100;200;300;400;500;600;700',
+  'Oswald': '200;300;400;500;600;700',
+  'Fraunces': '100;200;300;400;500;600;700',
+  'Cormorant': '300;400;500;600;700',
+  'Barlow Condensed': '100;200;300;400;500;600;700',
+  'Archivo': '100;200;300;400;500;600;700',
+  'Mulish': '200;300;400;500;600;700',
+  'Karla': '200;300;400;500;600;700',
+  'Quicksand': '300;400;500;600;700',
+  'Spectral': '200;300;400;500;600;700',
+  'EB Garamond': '400;500;600;700',
+  'Cinzel': '400;500;600;700',
+}
 export const FONT_OPTIONS: Record<string, FontOpt> = { ...LEGACY }
 for (const [label, cat] of MORE) {
   const key = label.toLowerCase().replace(/[^a-z0-9]/g, '')
-  if (!FONT_OPTIONS[key]) FONT_OPTIONS[key] = mk(label, cat)
+  if (!FONT_OPTIONS[key]) FONT_OPTIONS[key] = mk(label, cat, W[label] ? label.replace(/ /g, '+') + ':wght@' + W[label] : undefined)
 }
 
 export const PAIR_PRESETS: Record<string, { name: string; head: string; body: string }> = {
@@ -89,6 +115,10 @@ export function resolveTheme(r: Record<string, any>) {
   const headKey: string = FONT_OPTIONS[s.fonts?.head as string] ? (s.fonts.head as string) : preset.head
   const bodyKey: string = FONT_OPTIONS[s.fonts?.body as string] ? (s.fonts.body as string) : preset.body
   const bookKey: string | null = FONT_OPTIONS[s.availability?.font as string] ? (s.availability.font as string) : null
+  const galRaw = s.galindex?.font as string
+  const galKey: string | null = FONT_OPTIONS[galRaw] ? galRaw : s.galindex?.layout === 'checker' ? 'barlowcondensed' : null
+  const hwRaw = Number(s.fonts?.headWeight)
+  const headWeight: number | null = Number.isFinite(hwRaw) && hwRaw >= 100 && hwRaw <= 900 ? hwRaw : null
   const accent = hex(r.site_accent, hex(r.accent_color, '#A9545F'))
   const bg = hex(s.colors?.bg, tpl === 'minimal' ? '#FFFFFF' : tpl === 'split' ? '#F6F1EA' : '#FAF7F2')
   const ink = hex(s.colors?.text, '#2A1F24')
@@ -214,7 +244,7 @@ export function resolveTheme(r: Record<string, any>) {
     body: FONT_OPTIONS[bodyKey].family,
     fontsHref:
       'https://fonts.googleapis.com/css2?' +
-      Array.from(new Set([headKey, bodyKey, ...(bookKey ? [bookKey] : [])])).map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') +
+      Array.from(new Set([headKey, bodyKey, ...(bookKey ? [bookKey] : []), ...(galKey ? [galKey] : [])])).map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') +
       '&display=swap',
     accent,
     bg,
@@ -242,6 +272,8 @@ export function resolveTheme(r: Record<string, any>) {
     galindex,
     calendar,
     testi,
+    headWeight,
+    galFamily: galKey ? FONT_OPTIONS[galKey].family : null,
     sizes,
     cssVars,
   }
