@@ -66,6 +66,8 @@ const SLIDER_CSS = `
 .cr-range::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#FAF7F2;border:1.5px solid #2A1F24}
 .cr-range:focus-visible{outline:none}
 .cr-range:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px rgba(42,31,36,.18)}
+.cr-cap summary,.cr-cap summary span,.cr-cap label,.cr-cap [data-rowlabel],.cr-cap .cr-seg button{text-transform:capitalize}
+.cr-cap input,.cr-cap textarea{text-transform:none}
 `
 
 function Group({ title, hint, open, onOpen, children }: { title: string; hint?: string; open?: boolean; onOpen?: () => void; children: React.ReactNode }) {
@@ -88,14 +90,14 @@ function Group({ title, hint, open, onOpen, children }: { title: string; hint?: 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <span className="text-sm text-ink">{label}</span>
+      <span data-rowlabel className="text-sm text-ink">{label}</span>
       {children}
     </div>
   )
 }
 function Seg<V extends string>({ value, options, onChange }: { value: V; options: { v: V; label: string }[]; onChange: (v: V) => void }) {
   return (
-    <div className="inline-flex flex-wrap gap-1 rounded-full border border-line bg-paper p-1">
+    <div className="cr-seg inline-flex flex-wrap gap-1 rounded-full border border-line bg-paper p-1">
       {options.map((o) => (
         <button key={o.v} type="button" onClick={() => onChange(o.v)}
           className={`rounded-full px-3 py-1 text-xs ${value === o.v ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}>{o.label}</button>
@@ -1166,7 +1168,7 @@ export default function WebsitePage() {
             )}
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
-              <div className="space-y-4">
+              <div className="cr-cap space-y-4">
                 <div>
                   <div className="flex flex-wrap gap-x-7 border-b border-line">
                     {([{ v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }] as const).map((o) => (
