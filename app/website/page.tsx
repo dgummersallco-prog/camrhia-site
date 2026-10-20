@@ -1160,7 +1160,25 @@ export default function WebsitePage() {
                     ))}
                   </div>
                 </Group>
-<Group title="Menu" hint="links across the top" onOpen={() => scrollPreview('')}>
+<Group title="Logo & menu" hint="logo and links across the top" onOpen={() => scrollPreview('')}>
+<div className="border-t border-line pt-4">
+                    <p className="mb-1 text-sm text-ink">Logo</p>
+                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {form.logo_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
+                      ) : (
+                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
+                      )}
+                      <label className={btnGhost + ' cursor-pointer'}>
+                        {form.logo_path ? 'Replace' : 'Upload logo'}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
+                      </label>
+                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
+                    </div>
+                  </div>
+                  <SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
@@ -1237,7 +1255,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 </>)}
-{tab === 'home' && (<><Group title="1. Hero" hint="photos, logo and headline" onOpen={() => scrollPreview('top')}>
+{tab === 'home' && (<><Group title="1. Hero" hint="photos and headline" onOpen={() => scrollPreview('top')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
@@ -1272,24 +1290,7 @@ export default function WebsitePage() {
                   
                   
                   <SizeControl device={device} label="Hero height" unit="vh" min={40} max={100} step={5} value={T.sizes.heroHeight} onChange={(d, v) => setSize('heroHeight', d, v)} />
-                  <div className="border-t border-line pt-4">
-                    <p className="mb-1 text-sm text-ink">Logo</p>
-                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {form.logo_path ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
-                      ) : (
-                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
-                      )}
-                      <label className={btnGhost + ' cursor-pointer'}>
-                        {form.logo_path ? 'Replace' : 'Upload logo'}
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
-                      </label>
-                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
-                    </div>
-                  </div>
-                  <SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
+                  
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   
                 </Group>
