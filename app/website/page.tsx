@@ -818,7 +818,7 @@ export default function WebsitePage() {
                   <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
                   <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
                 </Group>
-<Group title="3. Hero" hint="photos and headline">
+<Group title="3. Hero" hint="photos, logo and headline">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
@@ -848,18 +848,9 @@ export default function WebsitePage() {
                     </div>
                   </div>
                   <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
-                  <div>
-                    <p className="mb-2 text-sm text-ink">Photo darkness (editorial)</p>
-                    <div className="flex items-center gap-3">
-                      <div className="min-w-0 flex-1"><Slider min={0} max={80} step={5} value={Math.round(T.hero.overlay * 100)} onChange={(v) => setHero({ overlay: v / 100 })} /></div>
-                      <NumBox value={Math.round(T.hero.overlay * 100)} min={0} max={80} step={5} unit="%" onChange={(v) => setHero({ overlay: v / 100 })} />
-                    </div>
-                  </div>
                   
-                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   
-                </Group>
-<Group title="4. Logo & buttons" hint="shows on every page"><div className="border-t border-line pt-4">
+                  <div className="border-t border-line pt-4">
                     <p className="mb-1 text-sm text-ink">Logo</p>
                     <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
                     <div className="flex flex-wrap items-center gap-3">
@@ -877,11 +868,11 @@ export default function WebsitePage() {
                     </div>
                   </div>
                   <SizeControl label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
-                  <Row label="Button shape">
-                    <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
-                  </Row>
+                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
+                  
                 </Group>
-<Group title="5. Galleries" hint="cover photos and titles" onOpen={() => scrollPreview('portfolio')}>
+
+<Group title="4. Galleries" hint="cover photos and titles" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -901,7 +892,7 @@ export default function WebsitePage() {
                   </Row>
                   
 </Group>
-<Group title="6. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
+<Group title="5. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
 <div>
                     
@@ -939,7 +930,7 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="7. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="6. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -975,7 +966,7 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="8. About" hint="your story" onOpen={() => scrollPreview('about')}>
+<Group title="7. About" hint="your story" onOpen={() => scrollPreview('about')}>
                   {sectionHead('about')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -988,25 +979,25 @@ export default function WebsitePage() {
                   </div>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
-<Group title="9. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
+<Group title="8. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 </Group>
-<Group title="10. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
+<Group title="9. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
                 </Group>
-<Group title="11. Footer" hint="the line at the bottom">
+<Group title="10. Footer" hint="the line at the bottom">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
                   </div>
                 </Group>
-<Group title="12. Menu" hint="last, trim it down">
+<Group title="11. Menu" hint="last, trim it down">
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
@@ -1021,8 +1012,11 @@ export default function WebsitePage() {
                     ))}
                   </div>
                 </Group>
-<Group title="13. Layout & sizes" hint="phone and desktop">
+<Group title="12. Layout & sizes" hint="phone and desktop">
                   
+                  <Row label="Button shape">
+                    <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
+                  </Row>
                   <p className="text-xs text-ink-soft">Move a phone or desktop control and the preview switches to that size. You can also type an exact number.</p>
                   <SizeControl label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
                   <SizeControl label="Headline size" unit="px" min={24} max={140} step={2} value={T.sizes.headline} onChange={(d, v) => setSize('headline', d, v)} />
