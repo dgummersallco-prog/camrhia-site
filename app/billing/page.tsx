@@ -156,7 +156,7 @@ export default function BillingPage() {
     const isStudio = plan === 'studio'
     const features = isStudio ? STUDIO_FEATURES : SOLO_FEATURES
     const monthlyPrice = isStudio ? '$149' : '$59'
-    const annualPrice = isStudio ? '$1,490' : '$590'
+    const annualPrice = isStudio ? '$999.99' : '$590'
     const isCurrentPlan = subscriptionActive && planTier === plan
     const isDowngradeTarget = subscriptionActive && planTier === 'studio' && plan === 'solo'
     const isUpgradeTarget = subscriptionActive && planTier === 'solo' && plan === 'studio'
