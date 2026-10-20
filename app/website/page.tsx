@@ -167,11 +167,20 @@ function ColorField({ label, value, swatches, onChange, onReset }: {
   onChange: (hex: string) => void; onReset?: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const boxRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const down = (e: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    const blur = () => setOpen(false)
+    document.addEventListener('mousedown', down)
+    window.addEventListener('blur', blur)
+    return () => { document.removeEventListener('mousedown', down); window.removeEventListener('blur', blur) }
+  }, [open])
   const [txt, setTxt] = useState(value)
   useEffect(() => { setTxt(value) }, [value])
   const ok = (v: string) => /^#[0-9a-fA-F]{6}$/.test(v)
   return (
-    <div className="relative">
+    <div ref={boxRef} className="relative">
       <Row label={label}>
         <button type="button" onClick={() => setOpen(!open)} className="flex items-center gap-2 rounded-lg border border-line bg-white px-2 py-1.5">
           <span className="h-5 w-5 rounded border border-line" style={{ background: value }} />
@@ -180,7 +189,7 @@ function ColorField({ label, value, swatches, onChange, onReset }: {
       </Row>
       {open && (
         <>
-          <button type="button" aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
+          
           <div className="absolute right-0 z-40 mt-2 w-72 rounded-2xl border border-line bg-card p-4 shadow-lg">
             <p className="mb-2 text-[11px] uppercase tracking-widest text-ink-soft">Your colors</p>
             <div className="mb-4 flex flex-wrap gap-2">
@@ -206,11 +215,20 @@ function ColorField({ label, value, swatches, onChange, onReset }: {
 
 function FontPicker({ label, value, onChange, cats }: { label: string; value: string; onChange: (k: string) => void; cats: string[] }) {
   const [open, setOpen] = useState(false)
+  const boxRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const down = (e: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    const blur = () => setOpen(false)
+    document.addEventListener('mousedown', down)
+    window.addEventListener('blur', blur)
+    return () => { document.removeEventListener('mousedown', down); window.removeEventListener('blur', blur) }
+  }, [open])
   const [cat, setCat] = useState('all')
   const list = Object.entries(FONT_OPTIONS).filter(([, f]) => cats.includes(f.cat) && (cat === 'all' || f.cat === cat))
   const cur = FONT_OPTIONS[value]
   return (
-    <div className="relative">
+    <div ref={boxRef} className="relative">
       <Row label={label}>
         <button type="button" onClick={() => setOpen(!open)} className="rounded-lg border border-line bg-white px-3 py-1.5 text-base text-ink" style={{ fontFamily: cur?.family }}>
           {cur?.label ?? 'Choose'} ▾
@@ -218,7 +236,7 @@ function FontPicker({ label, value, onChange, cats }: { label: string; value: st
       </Row>
       {open && (
         <>
-          <button type="button" aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
+          
           <div className="absolute right-0 z-40 mt-2 w-80 rounded-2xl border border-line bg-card p-3 shadow-lg">
             <Seg value={cat} options={[{ v: 'all', label: 'All' }, ...cats.map((c) => ({ v: c, label: CAT_LABEL[c] }))]} onChange={setCat} />
             <div className="mt-3 max-h-80 overflow-y-auto">
