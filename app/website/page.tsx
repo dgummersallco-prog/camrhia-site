@@ -609,6 +609,23 @@ export default function WebsitePage() {
     }
   }
 
+  async function uploadAbout2(file: File) {
+    const sb = supabase
+    if (!sb) return
+    const { data: sess } = await sb.auth.getSession()
+    const id = sess.session?.user.id
+    if (!id) return
+    try {
+      const v = await makeVersions(file)
+      const path = `${id}/about2_${Date.now()}.jpg`
+      const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+      if (up.error) throw up.error
+      setIn('about', { photo2: path })
+    } catch (e) {
+      flash((e as { message?: string })?.message ?? 'Upload failed.')
+    }
+  }
+
   async function addTm() {
     const sb = supabase
     if (!sb || !tQuote.trim() || tBusy) return
@@ -1154,13 +1171,32 @@ export default function WebsitePage() {
                   {sectionHead('about')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
-                    <LayoutPicker value={T.about.layout} onChange={(v) => setIn('about', { layout: v })}
-                      options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }]} />
+                    <LayoutPicker value={(S.about?.layout ?? T.about.layout) as any} onChange={(v) => setIn('about', { layout: v })}
+                      options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }, { v: 'collage', name: 'Collage', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="3" width="26" height="24" rx="2" fill="#D8D0C4" /><rect x="36" y="18" width="18" height="18" rx="3" fill="#C9BFB2" /><rect x="16" y="16" width="32" height="18" rx="3" fill="#F2EBDD" stroke="#B9AFA2" strokeWidth="0.8" /><rect x="20" y="20" width="14" height="2" fill="#9A8A74" /><rect x="20" y="25" width="24" height="1.5" fill="#B9AFA2" /><rect x="20" y="28" width="22" height="1.5" fill="#B9AFA2" /></svg> }]} />
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">About text</label>
                     <textarea rows={4} value={S.text?.about ?? ''} onChange={(e) => setIn('text', { about: e.target.value })} placeholder="Leave empty to use your bio from the app" className={inputCls} />
                   </div>
+                  {(S.about?.layout ?? T.about.layout) === 'collage' && (
+                    <div className="border-t border-line pt-4">
+                      <p className="mb-1 text-sm text-ink">Second photo</p>
+                      <p className="mb-3 text-xs text-ink-soft">Sits behind the text card, lower right. Your main About photo comes from your app profile.</p>
+                      <div className="flex flex-wrap items-center gap-3">
+                        {S.about?.photo2 ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={BASE + S.about.photo2} alt="" className="h-16 w-12 rounded border border-line object-cover" />
+                        ) : (
+                          <div className="flex h-16 w-12 items-center justify-center rounded border border-dashed border-line text-[10px] text-ink-soft">None</div>
+                        )}
+                        <label className={btnGhost + ' cursor-pointer'}>
+                          {S.about?.photo2 ? 'Replace' : 'Upload photo'}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAbout2(f); e.target.value = '' }} />
+                        </label>
+                        {S.about?.photo2 && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => setIn('about', { photo2: null })}>Remove</button>}
+                      </div>
+                    </div>
+                  )}
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
 <Group title="2. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>

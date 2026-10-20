@@ -214,6 +214,27 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     switch (k) {
       case 'about': {
         const L = t.about.layout
+        const aboutSet = (r as any).site_settings?.about
+        if (aboutSet?.layout === 'collage') {
+          const photo2 = photoUrl(aboutSet?.photo2)
+          const cardBg = tint
+          return sec('about', null,
+            <div className="relative mx-auto max-w-5xl pb-20 md:pb-32">
+              <div className="relative z-0 w-[68%] overflow-hidden md:w-[52%]" style={{ borderRadius: '0 0 56px 56px', aspectRatio: '3/4', background: tint }}>
+                {aboutPhoto && <img src={aboutPhoto} alt={name} className="h-full w-full object-cover" />}
+              </div>
+              <div className="relative z-10 -mt-28 ml-[10%] w-[90%] p-7 md:-mt-44 md:ml-[34%] md:w-[62%] md:p-12" style={{ background: cardBg, borderRadius: 28, boxShadow: '0 20px 50px rgba(0,0,0,0.07)' }}>
+                {t.titles.about && (
+                  <h2 style={{ ...headStyle, fontWeight: t.headWeight ?? 200, fontSize: 'clamp(2.2rem, 6vw, 4.5rem)', lineHeight: 1.05 }}>{t.titles.about}</h2>
+                )}
+                <p className="mt-6 whitespace-pre-line text-justify text-[15px] leading-[1.9] md:text-[16px]" style={{ color: soft, fontWeight: 300 }}>{t.text.about ?? r.bio ?? ''}</p>
+                <div className="mt-8">{cta(true)}</div>
+              </div>
+              {photo2 && (
+                <img src={photo2} alt="" loading="lazy" className="absolute bottom-0 right-0 z-0 w-[40%] object-cover md:w-[30%]" style={{ aspectRatio: '4/5', borderRadius: 28 }} />
+              )}
+            </div>, false)
+        }
         const body = (
           <div className={L === 'stacked' ? 'mx-auto max-w-2xl text-center' : ''}>
             <p className="whitespace-pre-line text-[16px] leading-[1.85]" style={{ color: soft }}>{t.text.about ?? r.bio ?? ''}</p>
