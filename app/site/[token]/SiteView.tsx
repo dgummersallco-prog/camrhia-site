@@ -24,8 +24,12 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
     if (new URLSearchParams(window.location.search).get('preview') !== '1') return
     setIsPreview(true)
     function onMsg(e: MessageEvent) {
-      const d = e.data as { type?: string; patch?: Record<string, any> } | null
+      const d = e.data as { type?: string; patch?: Record<string, any>; id?: string } | null
       if (d && d.type === 'camrhia-preview' && d.patch) setR((prev) => ({ ...prev, ...d.patch }))
+      if (d && d.type === 'camrhia-scroll' && d.id) {
+        const el = document.getElementById(d.id)
+        if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })
+      }
     }
     window.addEventListener('message', onMsg)
     window.parent?.postMessage({ type: 'camrhia-preview-ready' }, '*')
@@ -194,24 +198,37 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
               <div className="mt-8">{cta(true)}</div>
             </div>
           </div>, tinted)
-      case 'portfolio':
+      case 'portfolio': {
+        const L = t.portfolio.layout
+        const card = (g: any, style: React.CSSProperties, cls = '', big = false) => {
+          const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
+          const u = photoUrl(cover?.storage_path)
+          return (
+            <a key={g.id} href={`/site/${token}/g/${g.id}${qs}`} className={`group relative block overflow-hidden ${cls}`} style={{ background: '#E5E1DB', ...style }}>
+              {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
+              <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+                <p className={big ? 'text-4xl' : 'text-3xl'} style={headStyle}>{g.title}</p>
+                <p className="mt-1 text-[11px] uppercase tracking-[0.22em] opacity-90">{g.photos.length} photos →</p>
+              </div>
+            </a>
+          )
+        }
         return sec('portfolio', t.titles.portfolio,
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
-            {galleries.map((g) => {
-              const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
-              const u = photoUrl(cover?.storage_path)
-              return (
-                <a key={g.id} href={`/site/${token}/g/${g.id}${qs}`} className="group relative block overflow-hidden" style={{ aspectRatio: t.cardRatio, background: '#E5E1DB' }}>
-                  {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
-                  <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                    <p className="text-3xl" style={headStyle}>{g.title}</p>
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.22em] opacity-90">{g.photos.length} photos →</p>
-                  </div>
-                </a>
-              )
-            })}
-          </div>, tinted)
+          L === 'banners' ? (
+            <div className="flex flex-col" style={{ gap: 'calc(var(--gap) + 8px)' }}>
+              {galleries.map((g) => card(g, { aspectRatio: '21/9', minHeight: 180 }))}
+            </div>
+          ) : L === 'feature' ? (
+            <div className="grid md:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
+              {galleries.map((g, i) => (i === 0 ? card(g, { aspectRatio: '16/10' }, 'md:col-span-2', true) : card(g, { aspectRatio: '4/5' })))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
+              {galleries.map((g) => card(g, { aspectRatio: t.cardRatio }))}
+            </div>
+          ), tinted)
+      }
       case 'investment': {
         const feats = (d: string | null) => (d ?? '').split('\n').map((x) => x.trim()).filter(Boolean)
         const L = t.pricing.layout

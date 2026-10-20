@@ -67,9 +67,9 @@ const SLIDER_CSS = `
 .cr-range:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px rgba(42,31,36,.18)}
 `
 
-function Group({ title, hint, open, children }: { title: string; hint?: string; open?: boolean; children: React.ReactNode }) {
+function Group({ title, hint, open, onOpen, children }: { title: string; hint?: string; open?: boolean; onOpen?: () => void; children: React.ReactNode }) {
   return (
-    <details open={open} className="rounded-2xl border border-line bg-card p-5">
+    <details open={open} onToggle={(e) => { if ((e.currentTarget as HTMLDetailsElement).open) onOpen?.() }} className="rounded-2xl border border-line bg-card p-5">
       <summary className="cursor-pointer font-fraunces text-lg font-semibold text-ink">
         {title}
         {hint && <span className="ml-2 text-sm font-normal text-ink-soft">{hint}</span>}
@@ -223,6 +223,89 @@ function FontPicker({ label, value, onChange, cats }: { label: string; value: st
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+const TB = '#B9AEA5'
+const TL = '#D8CFC4'
+const bx = (cls = '') => <div className={cls} style={{ background: TB }} />
+const pcard = () => (
+  <div className="flex flex-col items-center gap-1 border p-1 pt-2" style={{ borderColor: TB }}>
+    <div className="h-1 w-3/4" style={{ background: TB }} />
+    <div className="h-2 w-1/2" style={{ background: TL }} />
+    <div className="h-1 w-3/5" style={{ background: TL }} />
+  </div>
+)
+const pmenu = () => (
+  <div className="flex items-end gap-1">
+    <div className="h-1 w-6" style={{ background: TB }} />
+    <div className="flex-1 border-b border-dotted" style={{ borderColor: TB }} />
+    <div className="h-1 w-3" style={{ background: TB }} />
+  </div>
+)
+const pcol = (b: boolean) => (
+  <div className={`flex flex-col items-center gap-1 pt-2 ${b ? 'border-l' : ''}`} style={{ borderColor: TB }}>
+    <div className="h-1 w-3/4" style={{ background: TB }} />
+    <div className="h-2 w-1/2" style={{ background: TL }} />
+    <div className="h-1 w-3/5" style={{ background: TL }} />
+  </div>
+)
+const tcol = () => (
+  <div className="flex flex-col items-center gap-1">
+    {bx('w-full flex-1')}
+    <div className="h-1 w-4/5" style={{ background: TL }} />
+    <div className="h-1 w-3/5" style={{ background: TL }} />
+  </div>
+)
+const tcard = () => (
+  <div className="flex flex-col gap-1 border p-1" style={{ borderColor: TB }}>
+    <div className="h-2 w-2" style={{ background: TB }} />
+    <div className="h-1 w-full" style={{ background: TL }} />
+    <div className="h-1 w-4/5" style={{ background: TL }} />
+    <div className="h-1 w-2/5" style={{ background: TB }} />
+  </div>
+)
+const THUMBS = {
+  galGrid: <div className="grid h-full grid-cols-3 gap-1">{bx()}{bx()}{bx()}</div>,
+  galBanners: <div className="flex h-full flex-col gap-1">{bx('flex-1')}{bx('flex-1')}{bx('flex-1')}</div>,
+  galFeature: <div className="grid h-full grid-cols-3 grid-rows-2 gap-1">{bx('col-span-2 row-span-2')}{bx()}{bx()}</div>,
+  phMasonry: (
+    <div className="flex h-full gap-1">
+      <div className="flex flex-1 flex-col gap-1">{bx('flex-[3]')}{bx('flex-[2]')}</div>
+      <div className="flex flex-1 flex-col gap-1">{bx('flex-[2]')}{bx('flex-[3]')}</div>
+      <div className="flex flex-1 flex-col gap-1">{bx('flex-1')}{bx('flex-1')}{bx('flex-1')}</div>
+    </div>
+  ),
+  phGrid: <div className="grid h-full grid-cols-3 grid-rows-2 gap-1">{bx()}{bx()}{bx()}{bx()}{bx()}{bx()}</div>,
+  phSingle: <div className="mx-auto flex h-full w-3/5 flex-col gap-1">{bx('flex-1')}{bx('flex-1')}</div>,
+  prCards: <div className="grid h-full grid-cols-3 gap-1">{pcard()}{pcard()}{pcard()}</div>,
+  prMenu: <div className="flex h-full flex-col justify-center gap-2">{pmenu()}{pmenu()}{pmenu()}</div>,
+  prCols: <div className="grid h-full grid-cols-3 border" style={{ borderColor: TB }}>{pcol(false)}{pcol(true)}{pcol(true)}</div>,
+  teGrid: <div className="grid h-full grid-cols-3 gap-1">{tcol()}{tcol()}{tcol()}</div>,
+  teStacked: (
+    <div className="flex h-full flex-col items-center justify-center gap-1">
+      <div className="h-4 w-4 rounded-full" style={{ background: TB }} />
+      <div className="h-1 w-4/5" style={{ background: TL }} />
+      <div className="h-1 w-3/5" style={{ background: TL }} />
+      <div className="mt-1 h-px w-full" style={{ background: TB }} />
+      <div className="h-1 w-3/5" style={{ background: TL }} />
+    </div>
+  ),
+  teCards: <div className="grid h-full grid-cols-3 gap-1">{tcard()}{tcard()}{tcard()}</div>,
+}
+
+function LayoutPicker<V extends string>({ value, options, onChange }: { value: V; options: { v: V; name: string; thumb: React.ReactNode }[]; onChange: (v: V) => void }) {
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      {options.map((o) => (
+        <button key={o.v} type="button" onClick={() => onChange(o.v)} className="text-left">
+          <div className={`rounded-xl p-1 ${value === o.v ? 'ring-2 ring-twilight' : 'opacity-80 hover:opacity-100'}`}>
+            <div className="h-20 overflow-hidden rounded-lg border border-line bg-white p-1.5">{o.thumb}</div>
+          </div>
+          <p className="mt-1.5 text-xs font-medium text-ink">{o.name}</p>
+        </button>
+      ))}
     </div>
   )
 }
@@ -575,6 +658,23 @@ export default function WebsitePage() {
     out.push({ name: 'White', hex: '#FFFFFF' }, { name: 'Cream', hex: '#FAF7F2' }, { name: 'Warm paper', hex: '#F0EAE1' }, { name: 'Ink', hex: '#2A1F24' }, { name: 'Black', hex: '#000000' })
     return out
   }
+  function scrollPreview(id: string) {
+    const send = () => (document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-scroll', id }, '*')
+    if (previewPage !== 'home') { setPreviewPage('home'); setTimeout(send, 900) } else send()
+  }
+  function sectionHead(k: string) {
+    return (
+      <>
+        <Row label="Show this section">
+          <Switch on={form?.site_sections?.[k] !== false} onChange={(v) => set('site_sections', { ...(form?.site_sections ?? {}), [k]: v })} />
+        </Row>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-ink">Section heading</label>
+          <input value={S.titles?.[k] ?? ''} onChange={(e) => setIn('titles', { [k]: e.target.value })} placeholder={DEFAULT_TITLES[k]} className={inputCls} />
+        </div>
+      </>
+    )
+  }
   function colorRow(label: string, key: string, current: string) {
     return (
       <ColorField label={label} value={/^#[0-9a-fA-F]{6}$/.test(current) ? current : '#FFFFFF'} swatches={palette()}
@@ -710,7 +810,13 @@ export default function WebsitePage() {
                   
                 </Group>
 
-                <Group title="4. Galleries" hint="your work, by category">
+                <Group title="4. Galleries" hint="your work, by category" onOpen={() => scrollPreview('portfolio')}>
+                  {sectionHead('portfolio')}
+                  <div>
+                    <p className="mb-2 text-sm text-ink">Layout on your home page</p>
+                    <LayoutPicker value={T.portfolio.layout} onChange={(v) => setIn('portfolio', { layout: v })}
+                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }]} />
+                  </div>
 <div>
                     
                     <p className="mb-3 mt-1 text-sm text-ink-soft">One gallery per kind of work: Weddings, Seniors, Families. Each gets its own page.</p>
@@ -718,22 +824,27 @@ export default function WebsitePage() {
                   </div>
 
                   
-<Row label="Gallery photo layout">
-                    <Seg value={T.gallery.layout} options={[{ v: 'masonry', label: 'Masonry' }, { v: 'grid', label: 'Even grid' }, { v: 'single', label: 'Single column' }]} onChange={(v) => setIn('gallery', { layout: v })} />
-                  </Row>
+<div>
+                    <p className="mb-2 text-sm text-ink">Photo layout inside a gallery</p>
+                    <LayoutPicker value={T.gallery.layout} onChange={(v) => setIn('gallery', { layout: v })}
+                      options={[{ v: 'masonry', name: 'Masonry', thumb: THUMBS.phMasonry }, { v: 'grid', name: 'Even grid', thumb: THUMBS.phGrid }, { v: 'single', name: 'Single column', thumb: THUMBS.phSingle }]} />
+                  </div>
                   <Row label="Gallery card shape">
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>
                   
 </Group>
-<Group title="5. Pricing" hint="packages and price list style">
+<Group title="5. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
+                  {sectionHead('investment')}
 <div>
                     
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Your website&apos;s own price list. It&apos;s separate from the pricing in your app.</p>
                     <div className="mb-4 space-y-3">
-                      <Row label="Price list style">
-                        <Seg value={T.pricing.layout} options={[{ v: 'cards', label: 'Cards' }, { v: 'menu', label: 'Menu' }, { v: 'columns', label: 'Columns' }]} onChange={(v) => setIn('pricing', { layout: v })} />
-                      </Row>
+                      <div>
+                        <p className="mb-2 text-sm text-ink">Price list style</p>
+                        <LayoutPicker value={T.pricing.layout} onChange={(v) => setIn('pricing', { layout: v })}
+                          options={[{ v: 'cards', name: 'Cards', thumb: THUMBS.prCards }, { v: 'menu', name: 'Menu', thumb: THUMBS.prMenu }, { v: 'columns', name: 'Columns', thumb: THUMBS.prCols }]} />
+                      </div>
                       <Row label="Button on each package"><Switch on={T.pricing.button} onChange={(v) => setIn('pricing', { button: v })} /></Row>
                       <input value={S.pricing?.intro ?? ''} onChange={(e) => setIn('pricing', { intro: e.target.value })} placeholder="Line above the prices, e.g. Every collection includes a private gallery" className={inputCls} />
                       <input value={S.pricing?.note ?? ''} onChange={(e) => setIn('pricing', { note: e.target.value })} placeholder="Line below, e.g. Custom collections available. Just ask." className={inputCls} />
@@ -761,8 +872,13 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="6. Testimonials" hint="kind words with pictures">
-<Row label="Layout"><Seg value={T.testi.layout} options={[{ v: 'grid', label: 'Grid' }, { v: 'stacked', label: 'Stacked' }, { v: 'cards', label: 'Cards' }]} onChange={(v) => setIn('testimonials', { layout: v })} /></Row>
+<Group title="6. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+                  {sectionHead('testimonials')}
+<div>
+                    <p className="mb-2 text-sm text-ink">Layout</p>
+                    <LayoutPicker value={T.testi.layout} onChange={(v) => setIn('testimonials', { layout: v })}
+                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.teGrid }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.teStacked }, { v: 'cards', name: 'Cards', thumb: THUMBS.teCards }]} />
+                  </div>
 <div>
                     
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Kind words, with a picture if you have one. Shown on your website and your app profile.</p>

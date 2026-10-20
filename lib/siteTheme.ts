@@ -145,6 +145,10 @@ export function resolveTheme(r: Record<string, any>) {
     layout: pick(s.testimonials?.layout, ['grid', 'stacked', 'cards'] as const, 'grid'),
   }
 
+  const portfolio = {
+    layout: pick(s.portfolio?.layout, ['grid', 'banners', 'feature'] as const, 'grid'),
+  }
+
   const sizes = {
     text: pairNum(s.sizes?.text, 80, 130, 100, 100),
     headline: pairNum(s.sizes?.headline, 24, 140, 44, 72),
@@ -184,6 +188,7 @@ export function resolveTheme(r: Record<string, any>) {
     menu,
     availability,
     pricing,
+    portfolio,
     testi,
     sizes,
     cssVars,
