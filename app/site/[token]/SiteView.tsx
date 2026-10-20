@@ -30,6 +30,11 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const el = document.getElementById(d.id)
         if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })
       }
+      if (d && d.type === 'camrhia-outline') {
+        document.querySelectorAll('[data-cr-outline]').forEach((n) => { (n as HTMLElement).style.outline = ''; n.removeAttribute('data-cr-outline') })
+        const el = d.id ? document.getElementById(d.id) : null
+        if (el) { el.style.outline = '2px dashed #B08D57'; el.style.outlineOffset = '-6px'; el.setAttribute('data-cr-outline', '1') }
+      }
     }
     window.addEventListener('message', onMsg)
     window.parent?.postMessage({ type: 'camrhia-preview-ready' }, '*')
@@ -543,7 +548,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <div className="px-6 pb-12 pt-4 text-center">{cta(true)}</div>
         )}
 
-        <footer className="px-6 pb-12 pt-6 text-center text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>
+        <footer id="footer" className="px-6 pb-12 pt-6 text-center text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>
           {t.text.footer && <p className="mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 13 }}>{t.text.footer}</p>}
           © {new Date().getFullYear()} {name} · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
         </footer>

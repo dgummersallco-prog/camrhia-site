@@ -717,8 +717,9 @@ export default function WebsitePage() {
     return `${b}?preview=1`
   }
   function scrollPreview(id: string) {
-    const send = () => (document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-scroll', id }, '*')
-    send()
+    const win = () => (document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow
+    win()?.postMessage({ type: 'camrhia-outline', id }, '*')
+    if (id) win()?.postMessage({ type: 'camrhia-scroll', id }, '*')
   }
   function sectionHead(k: string, toggle = true) {
     const list = listFor(k)
@@ -808,7 +809,8 @@ export default function WebsitePage() {
                     {tab === 'home' ? 'Your main page, plus the look that every page shares.' : tab === 'galleries' ? 'Your list of galleries, and the page inside each one.' : tab === 'about' ? 'Your story, your pricing and your FAQ.' : 'Where every button leads: the date check and inquiry form.'}
                   </p>
                 </div>
-                {tab === 'home' && (<><Group title="1. Template" hint="pick a look" open>
+                {tab === 'home' && (<><p className="px-1 pt-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Whole site · every page</p>
+<Group title="Template" hint="pick a look" open onOpen={() => scrollPreview('')}>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {TEMPLATES.map((t) => (
                       <button key={t.key} type="button" onClick={() => set('site_template', t.key)} className="group text-left">
@@ -819,7 +821,7 @@ export default function WebsitePage() {
                     ))}
                   </div>
                 </Group>
-<Group title="2. Menu" hint="last, trim it down">
+<Group title="Menu" hint="links across the top" onOpen={() => scrollPreview('')}>
                   <Row label="Menu bar">
                     <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
                   </Row>
@@ -834,7 +836,7 @@ export default function WebsitePage() {
                     ))}
                   </div>
                 </Group>
-<Group title="3. Color & fonts" hint="used on every page">
+<Group title="Color & fonts" hint="used on every page" onOpen={() => scrollPreview('')}>
                   
                   {colorRow('Background', 'bg', T.bg)}
                   {colorRow('Text', 'text', T.ink)}
@@ -853,7 +855,7 @@ export default function WebsitePage() {
                   <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
                   <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
                 </Group>
-<Group title="4. Buttons" hint="wording, color, size, shape">
+<Group title="Buttons" hint="wording, color, size, shape" onOpen={() => scrollPreview('')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Button wording (every button on the site)</label>
                     <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
@@ -868,7 +870,8 @@ export default function WebsitePage() {
                   </Row>
                   <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.button} onChange={(d, v) => setSize('button', d, v)} />
                 </Group>
-<Group title="5. Hero" hint="photos, logo and headline">
+<p className="px-1 pt-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections · home page</p>
+<Group title="1. Hero" hint="photos, logo and headline" onOpen={() => scrollPreview('top')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
                     <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
@@ -924,7 +927,7 @@ export default function WebsitePage() {
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   
                 </Group>
-<Group title="6. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
+<Group title="2. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -944,7 +947,7 @@ export default function WebsitePage() {
                   </Row>
                   
 </Group>
-<Group title="7. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="3. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -980,20 +983,20 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="8. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
+<Group title="4. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
                 </Group>
-<Group title="9. Footer" hint="the line at the bottom">
+<Group title="5. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
                   </div>
                 </Group>
-<Group title="10. Layout & sizes" hint="phone and desktop">
+<Group title="Text & spacing sizes" hint="phone and desktop" onOpen={() => scrollPreview('')}>
                   
                   
                   <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
