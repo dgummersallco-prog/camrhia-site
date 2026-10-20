@@ -887,12 +887,11 @@ export default function WebsitePage() {
                       </button>
                     ))}
                   </div>
-                  <p className="mt-3 text-xs text-ink-soft">
+                  <p className={tab === 'home' ? 'hidden' : 'mt-3 text-xs text-ink-soft'}>
                     {tab === 'home' ? 'Your main page, plus the look that every page shares.' : tab === 'galleries' ? 'Your list of galleries, and the page inside each one.' : tab === 'about' ? 'Your story, your pricing and your FAQ.' : 'Where every button leads: the date check and inquiry form.'}
                   </p>
                 </div>
-                {tab === 'home' && (<><p className="px-1 pt-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Whole site · every page</p>
-<Group title="Template" hint="pick a look" open onOpen={() => scrollPreview('')}>
+                {tab === 'home' && (<><Group title="Template" hint="pick a look" open onOpen={() => scrollPreview('')}>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {TEMPLATES.map((t) => (
                       <button key={t.key} type="button" onClick={() => set('site_template', t.key)} className="group text-left">
@@ -968,7 +967,6 @@ export default function WebsitePage() {
                   </Row>
                   <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.button} onChange={(d, v) => setSize('button', d, v)} />
                 </Group>
-<p className="px-1 pt-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections · home page</p>
 <Group title="1. Hero" hint="photos, logo and headline" onOpen={() => scrollPreview('top')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
