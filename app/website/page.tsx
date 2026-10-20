@@ -41,7 +41,7 @@ const TEMPLATES = [
   { key: 'mosaic', name: 'Mosaic', blurb: 'A collage of your best shots.' },
 ]
 const SWATCHES = ['#A9545F', '#5B6B8C', '#7C8B6F', '#B08D57', '#8A5A83', '#2A1F24']
-const MENU_KEYS = ['home', 'about', 'portfolio', 'investment', 'contact']
+const MENU_KEYS = ['home', 'galleries', 'about', 'book']
 
 const btn = 'rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50'
 const btnGhost = 'rounded-full border border-line px-5 py-2.5 text-sm text-ink hover:bg-paper-deep'
@@ -411,8 +411,8 @@ export default function WebsitePage() {
   const [message, setMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [device, setDevice] = useState<Dev>('desktop')
-  const [previewPage, setPreviewPage] = useState<'home' | 'gallery' | 'availability'>('home')
-  const [tab, setTab] = useState<'home' | 'galleries' | 'book'>('home')
+  const [previewPage, setPreviewPage] = useState<'home' | 'galleries' | 'gallery' | 'about' | 'availability'>('home')
+  const [tab, setTab] = useState<'home' | 'galleries' | 'about' | 'book'>('home')
   const [firstGid, setFirstGid] = useState<string | null>(null)
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
   const [stageW, setStageW] = useState(0)
@@ -667,14 +667,20 @@ export default function WebsitePage() {
     ? Array.from(new Set([...heroSel, ...extraHero, ...(form.cover_paths ?? []), ...(form.cover_path ? [form.cover_path] : []), ...candsDb]))
     : []
 
+  const ABOUT_KEYS = ['about', 'investment', 'faq']
+  function listFor(k: string): string[] {
+    if (!T) return []
+    return ABOUT_KEYS.includes(k) ? T.orderAbout : T.orderHome
+  }
   function moveSection(k: string, dir: -1 | 1) {
     if (!T) return
-    const order = [...T.order]
+    const order = [...listFor(k)]
     const i = order.indexOf(k)
     const j = i + dir
     if (i < 0 || j < 0 || j >= order.length) return
     const tmp = order[i]; order[i] = order[j]; order[j] = tmp
-    upd((s) => { s.order = order })
+    const field = ABOUT_KEYS.includes(k) ? 'order_about' : 'order_home'
+    upd((st) => { st[field] = order })
   }
   function setHero(patch: Record<string, any>) { upd((s) => { s.hero = { ...(s.hero ?? {}), ...patch } }) }
   function setIn(group: string, patch: Record<string, any>) { upd((s) => { s[group] = { ...(s[group] ?? {}), ...patch } }) }
@@ -697,17 +703,26 @@ export default function WebsitePage() {
     out.push({ name: 'White', hex: '#FFFFFF' }, { name: 'Cream', hex: '#FAF7F2' }, { name: 'Warm paper', hex: '#F0EAE1' }, { name: 'Ink', hex: '#2A1F24' }, { name: 'Black', hex: '#000000' })
     return out
   }
-  function pickTab(t: 'home' | 'galleries' | 'book') {
+  function pickTab(t: 'home' | 'galleries' | 'about' | 'book') {
     setTab(t)
-    setPreviewPage(t === 'galleries' ? 'gallery' : t === 'book' ? 'availability' : 'home')
+    setPreviewPage(t === 'book' ? 'availability' : t)
+  }
+  function previewSrc() {
+    const b = `/site/${token}`
+    if (previewPage === 'availability') return `${b}/availability?preview=1`
+    if (previewPage === 'about') return `${b}/about?preview=1`
+    if (previewPage === 'galleries') return `${b}/galleries?preview=1`
+    if (previewPage === 'gallery') return firstGid ? `${b}/g/${firstGid}?preview=1` : `${b}/galleries?preview=1`
+    return `${b}?preview=1`
   }
   function scrollPreview(id: string) {
     const send = () => (document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-scroll', id }, '*')
-    if (previewPage !== 'home') { setPreviewPage('home'); setTimeout(send, 900) } else send()
+    send()
   }
   function sectionHead(k: string, toggle = true) {
-    const idx = T ? T.order.indexOf(k) : -1
-    const total = T ? T.order.length : 6
+    const list = listFor(k)
+    const idx = list.indexOf(k)
+    const total = list.length
     const small = 'rounded-full border border-line px-3 py-1 text-xs text-ink disabled:opacity-30'
     return (
       <>
@@ -774,7 +789,7 @@ export default function WebsitePage() {
               <div className="space-y-4">
                 <div>
                   <div className="flex flex-wrap gap-x-7 border-b border-line">
-                    {([{ v: 'home', label: 'Home page' }, { v: 'galleries', label: 'Galleries page' }, { v: 'book', label: 'Book info page' }] as const).map((o) => (
+                    {([{ v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }] as const).map((o) => (
                       <button key={o.v} type="button" onClick={() => pickTab(o.v)}
                         className={`-mb-px border-b-2 pb-3 font-fraunces text-lg transition ${tab === o.v ? 'border-ink text-ink' : 'border-transparent text-ink-soft hover:text-ink'}`}>
                         {o.label}
@@ -782,7 +797,7 @@ export default function WebsitePage() {
                     ))}
                   </div>
                   <p className="mt-3 text-xs text-ink-soft">
-                    {tab === 'home' ? 'Everything on your main page, top to bottom.' : tab === 'galleries' ? 'The page visitors see after clicking a gallery cover.' : 'Where every button leads: the date check and inquiry form.'}
+                    {tab === 'home' ? 'Your main page, plus the look that every page shares.' : tab === 'galleries' ? 'Your list of galleries, and the page inside each one.' : tab === 'about' ? 'Your story, your pricing and your FAQ.' : 'Where every button leads: the date check and inquiry form.'}
                   </p>
                 </div>
                 {tab === 'home' && (<><Group title="1. Template" hint="pick a look" open>
@@ -901,7 +916,7 @@ export default function WebsitePage() {
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   
                 </Group>
-<Group title="6. Galleries" hint="cover photos and titles" onOpen={() => scrollPreview('portfolio')}>
+<Group title="6. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -921,7 +936,112 @@ export default function WebsitePage() {
                   </Row>
                   
 </Group>
-<Group title="7. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
+<Group title="7. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+                  {sectionHead('testimonials')}
+<div>
+                    <p className="mb-2 text-sm text-ink">Layout</p>
+                    <LayoutPicker value={T.testi.layout} onChange={(v) => setIn('testimonials', { layout: v })}
+                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.teGrid }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.teStacked }, { v: 'cards', name: 'Cards', thumb: THUMBS.teCards }]} />
+                  </div>
+<div>
+                    
+                    <p className="mb-3 mt-1 text-sm text-ink-soft">Kind words, with a picture if you have one. Shown on your website and your app profile.</p>
+                    {tms.length === 0 && <p className="mb-3 text-sm text-ink-soft">No testimonials yet.</p>}
+                    {tms.map((t) => (
+                      <div key={t.id} className="mb-3 flex gap-3 rounded-lg border border-line bg-white p-3">
+                        {t.storage_path ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={BASE + t.storage_path} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                        ) : (
+                          <div className="h-16 w-16 shrink-0 rounded-lg bg-line/50" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 text-sm text-ink">&ldquo;{t.quote}&rdquo;</p>
+                          {t.client_name && <p className="mt-1 text-xs text-ink-soft">{t.client_name}</p>}
+                        </div>
+                        <button onClick={() => removeTm(t)} className="self-start text-xs text-ink-soft hover:text-ink">Remove</button>
+                      </div>
+                    ))}
+                    <div className="mt-3 space-y-2 border-t border-line pt-3">
+                      <input className={inputCls} value={tName} onChange={(e) => setTName(e.target.value)} placeholder="Client name, e.g. Sarah & Tom" />
+                      <textarea className={inputCls} rows={3} value={tQuote} onChange={(e) => setTQuote(e.target.value)} placeholder="What they said" />
+                      <input type="file" accept="image/*,.heic,.heif" onChange={(e) => setTFile(e.target.files?.[0] ?? null)} className="block w-full text-xs text-ink-soft" />
+                      <button className={btn} disabled={!tQuote.trim() || tBusy} onClick={addTm}>{tBusy ? 'Adding…' : 'Add testimonial'}</button>
+                    </div>
+                  </div>
+
+                  
+</Group>
+<Group title="8. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
+                  {sectionHead('contact', false)}
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
+                    <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
+                  </div>
+                </Group>
+<Group title="9. Footer" hint="the line at the bottom">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
+                    <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
+                  </div>
+                </Group>
+<Group title="10. Layout & sizes" hint="phone and desktop">
+                  
+                  
+                  <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
+                  <SizeControl device={device} label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
+                  
+                  
+                  <SizeControl device={device} label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
+                  <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
+                </Group></>)}
+{tab === 'galleries' && (<><Group open title="1. Galleries page" hint="your list of galleries" onOpen={() => setPreviewPage('galleries')}>
+                  {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
+                  <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Page heading</label>
+                    <input value={S.titles?.portfolio ?? ''} onChange={(e) => setIn('titles', { portfolio: e.target.value })} placeholder={DEFAULT_TITLES.portfolio} className={inputCls} />
+                  </div>
+                  <div>
+                    <p className="mb-2 text-sm text-ink">Layout</p>
+                    <LayoutPicker value={T.galindex.layout} onChange={(v) => setIn('galindex', { layout: v })}
+                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }]} />
+                  </div>
+                  <Row label="Cover shape">
+                    <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
+                  </Row>
+                </Group>
+<Group title="2. Inside a gallery" hint="what opens when a cover is clicked" onOpen={() => setPreviewPage('gallery')}>
+                  
+                  
+                  <div>
+                    <p className="mb-2 text-sm text-ink">Photo layout</p>
+                    <LayoutPicker value={T.galpage.layout} onChange={(v) => setIn('galpage', { layout: v })}
+                      options={[{ v: 'masonry', name: 'Masonry', thumb: THUMBS.phMasonry }, { v: 'grid', name: 'Even grid', thumb: THUMBS.phGrid }, { v: 'single', name: 'Single column', thumb: THUMBS.phSingle }]} />
+                  </div>
+                  <Row label="Show photo count"><Switch on={T.galpage.showCount} onChange={(v) => setIn('galpage', { show_count: v })} /></Row>
+                  <Row label="Show other galleries at the bottom"><Switch on={T.galpage.showMore} onChange={(v) => setIn('galpage', { show_more: v })} /></Row>
+                  <Row label="Show the book button at the bottom"><Switch on={T.galpage.showButton} onChange={(v) => setIn('galpage', { show_button: v })} /></Row>
+                </Group>
+<Group title="3. Gallery photo sizes" hint="phone and desktop">
+                  <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
+                  <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
+                  <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
+                </Group></>)}
+{tab === 'about' && (<><Group open title="1. About" hint="your story" onOpen={() => scrollPreview('about')}>
+                  {sectionHead('about')}
+                  <div>
+                    <p className="mb-2 text-sm text-ink">Layout</p>
+                    <LayoutPicker value={T.about.layout} onChange={(v) => setIn('about', { layout: v })}
+                      options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }]} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">About text</label>
+                    <textarea rows={4} value={S.text?.about ?? ''} onChange={(e) => setIn('text', { about: e.target.value })} placeholder="Leave empty to use your bio from the app" className={inputCls} />
+                  </div>
+                  <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
+                </Group>
+<Group title="2. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
 <div>
                     
@@ -959,99 +1079,10 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="8. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
-                  {sectionHead('testimonials')}
-<div>
-                    <p className="mb-2 text-sm text-ink">Layout</p>
-                    <LayoutPicker value={T.testi.layout} onChange={(v) => setIn('testimonials', { layout: v })}
-                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.teGrid }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.teStacked }, { v: 'cards', name: 'Cards', thumb: THUMBS.teCards }]} />
-                  </div>
-<div>
-                    
-                    <p className="mb-3 mt-1 text-sm text-ink-soft">Kind words, with a picture if you have one. Shown on your website and your app profile.</p>
-                    {tms.length === 0 && <p className="mb-3 text-sm text-ink-soft">No testimonials yet.</p>}
-                    {tms.map((t) => (
-                      <div key={t.id} className="mb-3 flex gap-3 rounded-lg border border-line bg-white p-3">
-                        {t.storage_path ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={BASE + t.storage_path} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
-                        ) : (
-                          <div className="h-16 w-16 shrink-0 rounded-lg bg-line/50" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-sm text-ink">&ldquo;{t.quote}&rdquo;</p>
-                          {t.client_name && <p className="mt-1 text-xs text-ink-soft">{t.client_name}</p>}
-                        </div>
-                        <button onClick={() => removeTm(t)} className="self-start text-xs text-ink-soft hover:text-ink">Remove</button>
-                      </div>
-                    ))}
-                    <div className="mt-3 space-y-2 border-t border-line pt-3">
-                      <input className={inputCls} value={tName} onChange={(e) => setTName(e.target.value)} placeholder="Client name, e.g. Sarah & Tom" />
-                      <textarea className={inputCls} rows={3} value={tQuote} onChange={(e) => setTQuote(e.target.value)} placeholder="What they said" />
-                      <input type="file" accept="image/*,.heic,.heif" onChange={(e) => setTFile(e.target.files?.[0] ?? null)} className="block w-full text-xs text-ink-soft" />
-                      <button className={btn} disabled={!tQuote.trim() || tBusy} onClick={addTm}>{tBusy ? 'Adding…' : 'Add testimonial'}</button>
-                    </div>
-                  </div>
-
-                  
-</Group>
-<Group title="9. About" hint="your story" onOpen={() => scrollPreview('about')}>
-                  {sectionHead('about')}
-                  <div>
-                    <p className="mb-2 text-sm text-ink">Layout</p>
-                    <LayoutPicker value={T.about.layout} onChange={(v) => setIn('about', { layout: v })}
-                      options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }]} />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">About text</label>
-                    <textarea rows={4} value={S.text?.about ?? ''} onChange={(e) => setIn('text', { about: e.target.value })} placeholder="Leave empty to use your bio from the app" className={inputCls} />
-                  </div>
-                  <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
-                </Group>
-<Group title="10. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
+<Group title="3. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
-                </Group>
-<Group title="11. Contact" hint="the message above your button" onOpen={() => scrollPreview('contact')}>
-                  {sectionHead('contact', false)}
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
-                    <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
-                  </div>
-                </Group>
-<Group title="12. Footer" hint="the line at the bottom">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
-                    <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
-                  </div>
-                </Group>
-<Group title="13. Layout & sizes" hint="phone and desktop">
-                  
-                  
-                  <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
-                  <SizeControl device={device} label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
-                  
-                  
-                  <SizeControl device={device} label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
-                  <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
-                </Group></>)}
-{tab === 'galleries' && (<><Group open title="1. Gallery page" hint="what visitors see after clicking a cover">
-                  {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
-                  <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
-                  <div>
-                    <p className="mb-2 text-sm text-ink">Photo layout</p>
-                    <LayoutPicker value={T.galpage.layout} onChange={(v) => setIn('galpage', { layout: v })}
-                      options={[{ v: 'masonry', name: 'Masonry', thumb: THUMBS.phMasonry }, { v: 'grid', name: 'Even grid', thumb: THUMBS.phGrid }, { v: 'single', name: 'Single column', thumb: THUMBS.phSingle }]} />
-                  </div>
-                  <Row label="Show photo count"><Switch on={T.galpage.showCount} onChange={(v) => setIn('galpage', { show_count: v })} /></Row>
-                  <Row label="Show other galleries at the bottom"><Switch on={T.galpage.showMore} onChange={(v) => setIn('galpage', { show_more: v })} /></Row>
-                  <Row label="Show the book button at the bottom"><Switch on={T.galpage.showButton} onChange={(v) => setIn('galpage', { show_button: v })} /></Row>
-                </Group>
-                <Group title="2. Gallery page sizes" hint="phone and desktop">
-                  <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
-                  <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
-                  <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
                 </Group></>)}
 {tab === 'book' && (<><Group open title="1. Check availability screen" hint="where every button leads">
                   <div>
@@ -1094,7 +1125,7 @@ export default function WebsitePage() {
 
               <div id="site-preview" className="lg:sticky lg:top-6 lg:self-start">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs text-ink-soft">Previewing: {previewPage === 'home' ? 'Home page' : previewPage === 'gallery' ? 'Galleries page' : 'Book info page'}</span>
+                  <span className="text-xs text-ink-soft">Previewing: {previewPage === 'home' ? 'Home page' : previewPage === 'galleries' ? 'Galleries page' : previewPage === 'gallery' ? 'Inside a gallery' : previewPage === 'about' ? 'About page' : 'Book page'}</span>
                   <Seg value={device} options={[{ v: 'phone', label: 'Phone' }, { v: 'desktop', label: 'Desktop' }]} onChange={setDevice} />
                 </div>
                 {token ? (
@@ -1110,7 +1141,7 @@ export default function WebsitePage() {
                           <iframe
                             id="site-frame"
                             key={previewKey + previewPage}
-                            src={previewPage === 'availability' ? `/site/${token}/availability?preview=1` : previewPage === 'gallery' && firstGid ? `/site/${token}/g/${firstGid}?preview=1` : `/site/${token}?preview=1`}
+                            src={previewSrc()}
                             title="Website preview"
                             style={{ width: w, height: `calc(${hCss} / ${scale})`, border: 0, transform: `scale(${scale})`, transformOrigin: 'top left', background: '#fff' }}
                           />

@@ -12,9 +12,9 @@ function photoUrl(path: string | null | undefined): string | null {
   return path ? `${STORAGE_BASE}${path}` : null
 }
 
-const DOOR_SUB: Record<string, string> = { about: 'Get to know me', portfolio: 'See my work', investment: 'What does it cost?' }
+type PageKey = 'home' | 'about' | 'galleries'
 
-export function SiteView({ initial, token }: { initial: Record<string, any>; token: string }) {
+export function SiteView({ initial, token, page = 'home' }: { initial: Record<string, any>; token: string; page?: PageKey }) {
   const [r, setR] = useState<Record<string, any>>(initial)
   const [open, setOpen] = useState(false)
   const [slide, setSlide] = useState(0)
@@ -39,13 +39,14 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   const t = resolveTheme(r)
   const { tpl, accent, ink, soft, line, bg, tint } = t
   const qs = isPreview ? '?preview=1' : ''
-  const availHref = `/site/${token}/availability${qs}`
-  const go = (e: React.MouseEvent, id: string) => {
-    e.preventDefault()
-    if (id === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return }
-    const el = document.getElementById(id)
-    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })
+  const base = `/site/${token}`
+  const hrefs: Record<string, string> = {
+    home: `${base}${qs}`,
+    galleries: `${base}/galleries${qs}`,
+    about: `${base}/about${qs}`,
+    book: `${base}/availability${qs}`,
   }
+  const availHref = hrefs.book
 
   const name: string = r.studio_name ?? r.display_name ?? 'Studio'
   const cityLine = [[r.service_city, r.service_state].filter(Boolean).join(', '), r.location_custom_text || null].filter(Boolean).join(' · ')
@@ -88,21 +89,24 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
   const on = (k: string) => r.site_sections?.[k] !== false
   const showMap: Record<string, boolean> = {
     about: on('about') && !!(t.text.about || r.bio || aboutPhoto),
-    portfolio: on('portfolio') && galleries.length > 0,
+    portfolio: page === 'galleries' ? galleries.length > 0 : on('portfolio') && galleries.length > 0,
     investment: on('investment') && sitePkgs.length > 0,
     testimonials: on('testimonials') && quotes.length > 0,
     faq: on('faq') && faq.length > 0,
     contact: true,
   }
-  const visible = t.order.filter((k) => showMap[k])
+  const pageOrder: string[] = page === 'home' ? t.orderHome : page === 'about' ? t.orderAbout : ['portfolio']
+  const visible = pageOrder.filter((k) => showMap[k])
 
-  const navKeys = ['home', ...visible.filter((k) => k === 'about' || k === 'portfolio' || k === 'investment'), 'contact']
-  const navItems = navKeys
-    .filter((k) => !t.menu.hidden.includes(k))
-    .map((k) => ({ id: k === 'home' ? 'top' : k, label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k] }))
-  const doors = visible
-    .filter((k) => k === 'about' || k === 'portfolio' || k === 'investment')
-    .map((k) => ({ href: `#${k}`, t: t.titles[k], s: DOOR_SUB[k] }))
+  const navItems = (['home', 'galleries', 'about', 'book'] as const)
+    .filter((k) => !t.menu.hidden.includes(k) && !(k === 'galleries' && galleries.length === 0))
+    .map((k) => ({ key: k, href: hrefs[k], label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === page }))
+
+  const doors = [
+    ...(galleries.length > 0 ? [{ href: hrefs.galleries, t: t.menu.labels.galleries?.trim() || NAV_DEFAULTS.galleries, s: 'See my work' }] : []),
+    { href: hrefs.about, t: t.menu.labels.about?.trim() || NAV_DEFAULTS.about, s: 'Get to know me' },
+    { href: hrefs.book, t: t.menu.labels.book?.trim() || NAV_DEFAULTS.book, s: 'Check my dates' },
+  ]
 
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' }
   const btnStyle: React.CSSProperties = { background: accent, color: t.btnText, fontFamily: t.body, borderRadius: t.radius }
@@ -114,8 +118,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
 
   const renderNav = (overlay: boolean, center: boolean) => {
     const brand = logo
-      ? // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
+      ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
       : <span style={{ ...headStyle, fontSize: 24 }}>{name}</span>
     return (
       <nav
@@ -123,11 +126,14 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         style={overlay ? { color: '#fff' } : { color: ink, background: `color-mix(in srgb, ${bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
       >
         <div className={center ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 py-2'}>
-          <a href="#top" onClick={(e) => go(e, 'top')}>{brand}</a>
+          <a href={hrefs.home}>{brand}</a>
           <ul className="hidden gap-8 md:flex">
             {navItems.map((n) => (
-              <li key={n.id}>
-                <a href={n.id === 'contact' ? availHref : `#${n.id}`} onClick={n.id === 'contact' ? undefined : (e) => go(e, n.id)} className="text-[11px] uppercase tracking-[0.2em] opacity-90 hover:opacity-100" style={{ fontFamily: t.body }}>{n.label}</a>
+              <li key={n.key}>
+                <a href={n.href} className="text-[11px] uppercase tracking-[0.2em]"
+                  style={{ fontFamily: t.body, opacity: n.active ? 1 : 0.8, borderBottom: n.active ? '1px solid currentColor' : '1px solid transparent', paddingBottom: 3 }}>
+                  {n.label}
+                </a>
               </li>
             ))}
           </ul>
@@ -138,8 +144,8 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
         {open && (
           <ul className="flex flex-col gap-4 px-6 pb-5 md:hidden" style={{ background: overlay ? 'rgba(0,0,0,0.72)' : bg }}>
             {navItems.map((n) => (
-              <li key={n.id}>
-                <a href={n.id === 'contact' ? availHref : `#${n.id}`} onClick={(e) => { setOpen(false); if (n.id !== 'contact') go(e, n.id) }} className="text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body }}>{n.label}</a>
+              <li key={n.key}>
+                <a href={n.href} onClick={() => setOpen(false)} className="text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body }}>{n.label}</a>
               </li>
             ))}
           </ul>
@@ -154,7 +160,6 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
     ) : (
       <>
         {shownHero.map((u, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
           <img key={u} src={u} alt={i === 0 ? name : ''} className={cls}
             style={{ objectFit: 'cover', opacity: i === slide % shownHero.length ? 1 : 0, transition: 'opacity 1.2s ease-in-out' }} />
         ))}
@@ -210,7 +215,8 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           ), tinted)
       }
       case 'portfolio': {
-        const L = t.portfolio.layout
+        const L = page === 'galleries' ? t.galindex.layout : t.portfolio.layout
+        const list = page === 'home' ? galleries.slice(0, 6) : galleries
         const card = (g: any, style: React.CSSProperties, cls = '', big = false) => {
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           const u = photoUrl(cover?.storage_path)
@@ -226,19 +232,26 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           )
         }
         return sec('portfolio', t.titles.portfolio,
-          L === 'banners' ? (
-            <div className="flex flex-col" style={{ gap: 'calc(var(--gap) + 8px)' }}>
-              {galleries.map((g) => card(g, { aspectRatio: '21/9', minHeight: 180 }))}
-            </div>
-          ) : L === 'feature' ? (
-            <div className="grid md:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
-              {galleries.map((g, i) => (i === 0 ? card(g, { aspectRatio: '16/10' }, 'md:col-span-2', true) : card(g, { aspectRatio: '4/5' })))}
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
-              {galleries.map((g) => card(g, { aspectRatio: t.cardRatio }))}
-            </div>
-          ), tinted)
+          <>
+            {L === 'banners' ? (
+              <div className="flex flex-col" style={{ gap: 'calc(var(--gap) + 8px)' }}>
+                {list.map((g) => card(g, { aspectRatio: '21/9', minHeight: 180 }))}
+              </div>
+            ) : L === 'feature' ? (
+              <div className="grid md:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
+                {list.map((g, i) => (i === 0 ? card(g, { aspectRatio: '16/10' }, 'md:col-span-2', true) : card(g, { aspectRatio: '4/5' })))}
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
+                {list.map((g) => card(g, { aspectRatio: t.cardRatio }))}
+              </div>
+            )}
+            {page === 'home' && galleries.length > 0 && (
+              <div className="mt-10 text-center">
+                <a href={hrefs.galleries} className="text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>View all galleries →</a>
+              </div>
+            )}
+          </>, tinted)
       }
       case 'investment': {
         const feats = (d: string | null) => (d ?? '').split('\n').map((x) => x.trim()).filter(Boolean)
@@ -411,7 +424,9 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
       <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${bg}}`}</style>
       <PortfolioLightbox />
       <div style={{ background: bg, color: ink, fontFamily: t.body }}>
-        {tpl === 'editorial' && (
+        {page !== 'home' && renderNav(false, false)}
+
+        {page === 'home' && tpl === 'editorial' && (
           <>
             {t.menu.solid && renderNav(false, false)}
             <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: t.menu.solid ? 'calc(var(--hero-h) - 4rem)' : 'var(--hero-h)' }}>
@@ -428,7 +443,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             </header>
           </>
         )}
-        {tpl === 'split' && (
+        {page === 'home' && tpl === 'split' && (
           <header id="top">
             {renderNav(false, false)}
             <div className="grid md:grid-cols-2" style={{ minHeight: 'calc(var(--hero-h) - 4rem)' }}>
@@ -444,7 +459,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             </div>
           </header>
         )}
-        {tpl === 'minimal' && (
+        {page === 'home' && tpl === 'minimal' && (
           <header id="top">
             {renderNav(false, true)}
             <div className="mx-auto max-w-6xl px-6 pt-6">
@@ -457,8 +472,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             </div>
           </header>
         )}
-
-        {tpl === 'framed' && (
+        {page === 'home' && tpl === 'framed' && (
           <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
             {heroImg('absolute inset-0 h-full w-full')}
             <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${(ov * 0.6).toFixed(2)})` }} />
@@ -474,7 +488,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             </div>
           </header>
         )}
-        {tpl === 'magazine' && (
+        {page === 'home' && tpl === 'magazine' && (
           <header id="top">
             {renderNav(false, false)}
             <div className="mx-auto max-w-6xl px-6 pt-14" style={{ textAlign: t.hero.align }}>
@@ -487,7 +501,7 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             </div>
           </header>
         )}
-        {tpl === 'mosaic' && (
+        {page === 'home' && tpl === 'mosaic' && (
           <header id="top">
             {renderNav(false, true)}
             <div className="mx-auto max-w-3xl px-6 pb-10 pt-12 text-center">
@@ -498,19 +512,18 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
             <div className="mx-auto max-w-6xl px-6 pb-4">
               <div className="grid" style={{ height: 'calc(var(--hero-h) * 0.75)', gap: 'var(--gap)', gridTemplateColumns: mosaicUrls.length > 1 ? '1.4fr 1fr' : '1fr', gridTemplateRows: mosaicUrls.length > 2 ? '1fr 1fr' : '1fr' }}>
                 {mosaicUrls.length === 0 && <div style={{ background: accent, opacity: 0.85 }} />}
-                {mosaicUrls.map((u, i) => {
-                  // eslint-disable-next-line @next/next/no-img-element
-                  return <img key={u} src={u} alt="" className="h-full w-full object-cover" style={{ minHeight: 0, gridRow: i === 0 && mosaicUrls.length > 2 ? 'span 2' : undefined }} />
-                })}
+                {mosaicUrls.map((u, i) => (
+                  <img key={u} src={u} alt="" className="h-full w-full object-cover" style={{ minHeight: 0, gridRow: i === 0 && mosaicUrls.length > 2 ? 'span 2' : undefined }} />
+                ))}
               </div>
             </div>
           </header>
         )}
 
-        {doors.length > 0 && (
+        {page === 'home' && doors.length > 0 && (
           <div className="mx-auto grid max-w-6xl gap-0 px-6 py-16" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
             {doors.map((b, i) => (
-              <a key={b.href} href={b.href} onClick={(e) => go(e, b.href.slice(1))} className="block px-6 py-8 text-center" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
+              <a key={b.href} href={b.href} className="block px-6 py-8 text-center" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
                 <p className="text-3xl" style={headStyle}>{b.t}</p>
                 <p className="mt-2 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>{b.s} →</p>
               </a>
@@ -518,16 +531,23 @@ export function SiteView({ initial, token }: { initial: Record<string, any>; tok
           </div>
         )}
 
+        {page !== 'home' && visible.length === 0 && (
+          <p className="px-6 py-32 text-center text-sm" style={{ color: soft }}>Nothing here yet.</p>
+        )}
+
         {visible.map((k, i) => (
           <React.Fragment key={k}>{renderSection(k, i % 2 === 1)}</React.Fragment>
         ))}
+
+        {page !== 'home' && visible.length > 0 && (
+          <div className="px-6 pb-12 pt-4 text-center">{cta(true)}</div>
+        )}
 
         <footer className="px-6 pb-12 pt-6 text-center text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>
           {t.text.footer && <p className="mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 13 }}>{t.text.footer}</p>}
           © {new Date().getFullYear()} {name} · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
         </footer>
       </div>
-
     </>
   )
 }

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PortfolioLightbox } from '../../../../p/[token]/PortfolioLightbox'
-import { resolveTheme } from '@/lib/siteTheme'
+import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 
 const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
@@ -56,9 +56,10 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
           <span style={{ ...head, fontSize: 24 }}>{name}</span>
         )}
       </Link>
-      <div className="flex gap-6 text-[11px] uppercase tracking-[0.2em]">
-        <Link href={`/site/${token}${qs}#portfolio`}>{t.menu.labels.portfolio?.trim() || 'Portfolio'}</Link>
-        <Link href={`/site/${token}/availability${qs}`}>{t.menu.labels.contact?.trim() || 'Contact'}</Link>
+      <div className="flex flex-wrap justify-end gap-x-5 gap-y-1 text-[11px] uppercase tracking-[0.2em]">
+        {([['home', `/site/${token}${qs}`], ['galleries', `/site/${token}/galleries${qs}`], ['about', `/site/${token}/about${qs}`], ['book', `/site/${token}/availability${qs}`]] as [string, string][])
+          .filter(([k]) => !t.menu.hidden.includes(k))
+          .map(([k, h]) => <Link key={k} href={h}>{t.menu.labels[k]?.trim() || NAV_DEFAULTS[k]}</Link>)}
       </div>
     </nav>
   )

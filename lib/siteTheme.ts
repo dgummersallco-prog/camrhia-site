@@ -61,7 +61,7 @@ export const DEFAULT_TITLES: Record<string, string> = {
   about: 'About', portfolio: 'Portfolio', investment: 'Investment', testimonials: 'Kind words', faq: 'FAQ', contact: "Let's connect",
 }
 export const NAV_DEFAULTS: Record<string, string> = {
-  home: 'Home', about: 'About', portfolio: 'Portfolio', investment: 'Investment', contact: 'Contact',
+  home: 'Home', galleries: 'Galleries', about: 'About', book: 'Book',
 }
 
 function hex(v: unknown, d: string): string {
@@ -99,6 +99,13 @@ export function resolveTheme(r: Record<string, any>) {
     ? (s.order as string[]).filter((k) => (SECTION_KEYS as readonly string[]).includes(k))
     : []
   const order: string[] = [...savedOrder, ...SECTION_KEYS.filter((k) => !savedOrder.includes(k))]
+
+  const orderOf = (saved: unknown, def: string[]) => {
+    const sv = Array.isArray(saved) ? (saved as string[]).filter((k) => def.includes(k)) : []
+    return [...sv, ...def.filter((k) => !sv.includes(k))]
+  }
+  const orderHome = orderOf(s.order_home, ['portfolio', 'testimonials', 'contact'])
+  const orderAbout = orderOf(s.order_about, ['about', 'investment', 'faq'])
 
   const titles: Record<string, string> = { ...DEFAULT_TITLES }
   for (const k of Object.keys(DEFAULT_TITLES)) {
@@ -162,6 +169,10 @@ export function resolveTheme(r: Record<string, any>) {
     showButton: s.galpage?.show_button !== false,
   }
 
+  const galindex = {
+    layout: pick(s.galindex?.layout, ['grid', 'banners', 'feature'] as const, 'grid'),
+  }
+
   const sizes = {
     text: pairNum(s.sizes?.text, 80, 130, 100, 100),
     headline: pairNum(s.sizes?.headline, 24, 140, 44, 72),
@@ -199,6 +210,8 @@ export function resolveTheme(r: Record<string, any>) {
     shape,
     btnText,
     order,
+    orderHome,
+    orderAbout,
     titles,
     text,
     hero,
@@ -210,6 +223,7 @@ export function resolveTheme(r: Record<string, any>) {
     portfolio,
     about,
     galpage,
+    galindex,
     testi,
     sizes,
     cssVars,
