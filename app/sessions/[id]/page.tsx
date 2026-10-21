@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { ContractPanel } from './ContractPanel'
+import { PaymentsPanel } from './PaymentsPanel'
 
 type Wedding = Record<string, any>
 type Ev = { id: string; title: string | null; event_date: string | null; event_time: string | null; location: string | null; type: string | null; notes: string | null }
@@ -390,6 +391,7 @@ export default function SessionDetailPage() {
               {/* Contract + timeline */}
               <div className="space-y-6">
                 <ContractPanel weddingId={id} w={w as unknown as Record<string, any>} onChanged={load} />
+                <PaymentsPanel weddingId={id} w={w as unknown as Record<string, any>} />
 
                 <section className={card}>
                   <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Timeline</p>

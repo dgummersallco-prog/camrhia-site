@@ -145,7 +145,7 @@ export default function PaymentsPage() {
                 return (
                   <li key={l.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                     <span className="min-w-0">
-                      <Link href={'/sessions/' + l.wedding_id} className="block truncate text-ink hover:underline">{names[l.wedding_id] ?? 'Session'} · {l.label || 'Payment'}</Link>
+                      <Link href={'/sessions/' + l.wedding_id + '#payments'} className="block truncate text-ink hover:underline">{names[l.wedding_id] ?? 'Session'} · {l.label || 'Payment'}</Link>
                       <span className={'block text-xs ' + (isOver ? 'text-red-700' : 'text-ink-soft')}>{note}</span>
                     </span>
                     <span className={l.status === 'paid' ? 'text-emerald-700' : 'text-ink'}>{money(l.amount)}</span>
