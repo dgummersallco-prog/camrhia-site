@@ -116,11 +116,12 @@ export default function ClientSessionPage() {
   }
 
   const [cardReady, setCardReady] = useState(false)
+  const [payingId, setPayingId] = useState<string | null>(null)
 
   async function payByCard(lineId: string) {
     const sb = supabase
     if (!sb) return
-    setBusy(true)
+    setPayingId(lineId)
     setError(null)
     const { data: sess } = await sb.auth.getSession()
     const token = sess.session?.access_token
@@ -130,8 +131,7 @@ export default function ClientSessionPage() {
       body: JSON.stringify({ lineId }),
     })
     const j = await res.json().catch(() => ({}))
-    setBusy(false)
-    if (!res.ok || !j.url) { setError(j.error || 'Could not start the payment.'); return }
+    if (!res.ok || !j.url) { setPayingId(null); setError(j.error || 'Could not start the payment.'); return }
     window.location.href = j.url
   }
 
@@ -345,7 +345,7 @@ export default function ClientSessionPage() {
                           <span className={p.status === 'paid' ? 'text-emerald-700' : 'text-ink'}>{money(p.amount)}</span>
                         </div>
                           {p.status !== 'paid' && cardReady && Number(p.amount) >= 0.5 && (
-                            <button type="button" disabled={busy} onClick={() => payByCard(p.id)} className="mt-2 rounded-full bg-twilight px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Pay {money(p.amount)} by card</button>
+                            <button type="button" disabled={payingId === p.id} onClick={() => payByCard(p.id)} className="mt-2 rounded-full bg-twilight px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{payingId === p.id ? "Opening checkout..." : "Pay " + money(p.amount) + " by card"}</button>
                           )}
                           {p.status !== 'paid' && !p.sent_by_couple && (
                             reporting === p.id ? (
