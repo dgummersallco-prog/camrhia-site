@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-export const stripeClient = () => new Stripe(process.env.STRIPE_SECRET_KEY!)
+export const stripeClient = () => new Stripe(process.env.STRIPE_CONNECT_SECRET_KEY!)
 
 export const adminDb = () =>
   createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
