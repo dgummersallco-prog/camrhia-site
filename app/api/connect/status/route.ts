@@ -1,4 +1,4 @@
-import { stripeClient, adminDb, userFromRequest } from '@/lib/stripeServer'
+import { stripeClient, adminDb, userFromRequest, cardPaymentsEnabled } from '@/lib/stripeServer'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,9 +7,10 @@ export async function POST(request: Request) {
     const auth = await userFromRequest(request)
     if (!auth) return Response.json({ error: 'Please sign in again.' }, { status: 401 })
     const db = adminDb()
+    const enabled = await cardPaymentsEnabled()
     const { data: prof } = await db.from('profiles').select('stripe_connect_id').eq('id', auth.user.id).single()
     const acct = (prof as any)?.stripe_connect_id as string | null
-    if (!acct) return Response.json({ connected: false, ready: false })
+    if (!acct) return Response.json({ connected: false, ready: false, enabled })
 
     const stripe = stripeClient()
     const a = await stripe.accounts.retrieve(acct)
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
         dashboardUrl = null
       }
     }
-    return Response.json({ connected: true, ready, payoutsEnabled: !!a.payouts_enabled, dashboardUrl })
+    return Response.json({ connected: true, ready, enabled, payoutsEnabled: !!a.payouts_enabled, dashboardUrl })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Could not check payment setup'
     return Response.json({ error: message }, { status: 500 })

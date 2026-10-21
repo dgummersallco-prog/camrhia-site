@@ -1,4 +1,4 @@
-import { stripeClient, adminDb, userFromRequest } from '@/lib/stripeServer'
+import { stripeClient, adminDb, userFromRequest, cardPaymentsEnabled } from '@/lib/stripeServer'
 
 export const dynamic = 'force-dynamic'
 
@@ -6,6 +6,7 @@ export async function POST(request: Request) {
   try {
     const auth = await userFromRequest(request)
     if (!auth) return Response.json({ error: 'Please sign in again.' }, { status: 401 })
+    if (!(await cardPaymentsEnabled())) return Response.json({ error: 'Card payments are not turned on yet.' }, { status: 403 })
     const db = adminDb()
     const stripe = stripeClient()
 

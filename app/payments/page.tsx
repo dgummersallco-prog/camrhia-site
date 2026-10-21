@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
-type St = { connected: boolean; ready: boolean; payoutsEnabled?: boolean; dashboardUrl?: string | null }
+type St = { connected: boolean; ready: boolean; enabled?: boolean; payoutsEnabled?: boolean; dashboardUrl?: string | null }
 
 type Line = {
   id: string; wedding_id: string; label: string | null; amount: number
@@ -104,7 +104,13 @@ export default function PaymentsPage() {
               <p className="mt-4 text-xs text-ink-soft">Stripe takes its standard processing fee (2.9% + 30 cents) from each payment. Camrhia adds nothing on top.</p>
             </>
           )}
-          {st && !st.ready && (
+          {st && !st.ready && st.enabled === false && (
+            <>
+              <p className="text-sm font-semibold text-ink">Card payments are being turned on soon</p>
+              <p className="mt-1 text-sm text-ink-soft">You will be able to connect your bank here, and your clients will be able to pay you by card. Until then, clients can keep paying you directly.</p>
+            </>
+          )}
+          {st && !st.ready && st.enabled !== false && (
             <>
               <p className="text-sm font-semibold text-ink">{st.connected ? 'Finish setting up card payments' : 'Turn on card payments'}</p>
               <p className="mt-1 text-sm text-ink-soft">It takes about five minutes. Stripe will ask for your business details and the bank account to pay you into.</p>

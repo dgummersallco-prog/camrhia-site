@@ -20,3 +20,9 @@ export const userDb = (token: string) =>
   createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     global: { headers: { Authorization: 'Bearer ' + token } },
   })
+
+// Master switch for client-to-photographer card payments (app_config row).
+export async function cardPaymentsEnabled(): Promise<boolean> {
+  const { data } = await adminDb().from('app_config').select('value').eq('key', 'card_payments_enabled').maybeSingle()
+  return (data as { value?: string } | null)?.value === 'true'
+}
