@@ -344,7 +344,7 @@ export default function ClientSessionPage() {
                           </span>
                           <span className={p.status === 'paid' ? 'text-emerald-700' : 'text-ink'}>{money(p.amount)}</span>
                         </div>
-                          {p.status !== 'paid' && cardReady && (
+                          {p.status !== 'paid' && cardReady && Number(p.amount) >= 0.5 && (
                             <button type="button" disabled={busy} onClick={() => payByCard(p.id)} className="mt-2 rounded-full bg-twilight px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Pay {money(p.amount)} by card</button>
                           )}
                           {p.status !== 'paid' && !p.sent_by_couple && (
