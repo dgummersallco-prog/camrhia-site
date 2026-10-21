@@ -95,6 +95,8 @@ export default function ClientSessionPage() {
     ])
     setD((w.data ?? null) as Detail | null)
     setPays((p.data ?? []) as Pay[])
+    const cr = await sb.rpc('session_card_ready', { p_wedding_id: id })
+    setCardReady(cr.data === true)
     setShots((s.data ?? []) as Shot[])
     setContacts((c.data ?? []) as Contact[])
     setReady(true)
@@ -111,6 +113,26 @@ export default function ClientSessionPage() {
     setBusy(false)
     if (e) { setError(e.message); return }
     load()
+  }
+
+  const [cardReady, setCardReady] = useState(false)
+
+  async function payByCard(lineId: string) {
+    const sb = supabase
+    if (!sb) return
+    setBusy(true)
+    setError(null)
+    const { data: sess } = await sb.auth.getSession()
+    const token = sess.session?.access_token
+    const res = await fetch('/api/pay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ lineId }),
+    })
+    const j = await res.json().catch(() => ({}))
+    setBusy(false)
+    if (!res.ok || !j.url) { setError(j.error || 'Could not start the payment.'); return }
+    window.location.href = j.url
   }
 
   async function reportPayment(lineId: string) {
@@ -322,6 +344,9 @@ export default function ClientSessionPage() {
                           </span>
                           <span className={p.status === 'paid' ? 'text-emerald-700' : 'text-ink'}>{money(p.amount)}</span>
                         </div>
+                          {p.status !== 'paid' && cardReady && (
+                            <button type="button" disabled={busy} onClick={() => payByCard(p.id)} className="mt-2 rounded-full bg-twilight px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Pay {money(p.amount)} by card</button>
+                          )}
                           {p.status !== 'paid' && !p.sent_by_couple && (
                             reporting === p.id ? (
                               <div className="mt-3 rounded-xl bg-paper p-3">
