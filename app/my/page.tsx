@@ -36,6 +36,7 @@ export default function MyPage() {
   const [ready, setReady] = useState(false)
   const [convos, setConvos] = useState<Convo[]>([])
   const [name, setName] = useState('')
+  const [signedAt, setSignedAt] = useState<Record<string, string>>({})
 
   useEffect(() => {
     async function load() {
@@ -52,6 +53,10 @@ export default function MyPage() {
       const m: Record<string, Mine> = {}
       ;((b.data ?? []) as Mine[]).forEach((r) => { m[r.wedding_id] = r })
       setMine(m)
+      const { data: cs } = await sb.from('contracts').select('wedding_id, signed_at').eq('status', 'signed')
+      const sm: Record<string, string> = {}
+      ;((cs ?? []) as { wedding_id: string; signed_at: string | null }[]).forEach((c) => { if (c.signed_at) sm[c.wedding_id] = c.signed_at })
+      setSignedAt(sm)
       const pr = p.data as { first_name?: string; display_name?: string; couple_names?: string } | null
       setName(pr?.first_name || pr?.display_name || pr?.couple_names || '')
       const { data: inq } = await sb
@@ -86,12 +91,16 @@ export default function MyPage() {
     if (!m) return
     const s = studioOf(r)
     if (m.has_contract && m.contract_status === 'sent') attention.push({ key: `c${r.wedding_id}`, text: `${s}: your contract is ready to sign`, href: `/my/contract/${r.wedding_id}`, cta: 'Review and sign' })
+    if (m.contract_status === 'signed' && signedAt[r.wedding_id] && Date.now() - new Date(signedAt[r.wedding_id]).getTime() < 14 * 86400000)
+      attention.push({ key: `cs${r.wedding_id}`, text: `${s}: your contract is signed and saved`, href: `/my/contract/${r.wedding_id}`, cta: 'View your copy' })
     if (m.has_questionnaire && m.questionnaire_total > 0 && m.questionnaire_answered < m.questionnaire_total)
       attention.push({ key: `q${r.wedding_id}`, text: `${s}: questionnaire ${m.questionnaire_answered} of ${m.questionnaire_total} answered`, href: `/my/questionnaire/${r.wedding_id}`, cta: 'Continue' })
     if (m.payment_status === 'due') attention.push({ key: `p${r.wedding_id}`, text: `${s}: you have a balance due`, href: `/my/session/${r.wedding_id}`, cta: 'See payments' })
     if (m.has_timeline && m.timeline_shared_at && !m.timeline_approved)
       attention.push({ key: `t${r.wedding_id}`, text: `${s}: your timeline is ready to review`, href: `/my/session/${r.wedding_id}`, cta: 'Review timeline' })
   })
+
+  const signedRows = rows.filter((r) => mine[r.wedding_id]?.contract_status === 'signed')
 
   const photos = rows.flatMap((r) => (r.galleries ?? []).map((g) => ({ g, r })))
 
@@ -130,6 +139,23 @@ export default function MyPage() {
                       <span className="h-2 w-2 shrink-0 rounded-full bg-brass" />
                       <p className="min-w-0 flex-1 text-sm text-ink">{a.text}</p>
                       <Link href={a.href} className="shrink-0 text-sm font-medium text-twilight hover:underline">{a.cta} →</Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {signedRows.length > 0 && (
+              <section className={`${card} mt-6`}>
+                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Your signed contracts</p>
+                <ul className="divide-y divide-line">
+                  {signedRows.map((r) => (
+                    <li key={r.wedding_id} className="flex flex-wrap items-center gap-3 py-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-ink">{studioOf(r)} · {label(r.session_type)}</p>
+                        <p className="text-xs text-ink-soft">{signedAt[r.wedding_id] ? 'Signed ' + new Date(signedAt[r.wedding_id]).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : 'Signed'}</p>
+                      </div>
+                      <Link href={`/my/contract/${r.wedding_id}`} className="shrink-0 text-sm font-medium text-twilight hover:underline">View or print →</Link>
                     </li>
                   ))}
                 </ul>
