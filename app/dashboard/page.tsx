@@ -133,7 +133,7 @@ export default function DashboardPage() {
 
   function copySite() {
     if (!token) return
-    navigator.clipboard?.writeText(`${window.location.origin}/p/${token}`)
+    navigator.clipboard?.writeText(`${window.location.origin}/site/${token}`)
     setCopied(true)
     setSiteShared(true)
     try { localStorage.setItem('camrhia_site_shared', '1') } catch { /* ignore */ }
@@ -285,12 +285,12 @@ export default function DashboardPage() {
                 <span className="font-fraunces text-lg font-semibold text-ink">New gallery</span>
                 <span className="text-xs text-ink-soft">Upload and deliver photos</span>
               </Link>
-              <Link href="/portfolio" className={action}>
+              <Link href="/website" className={action}>
                 <span className="font-fraunces text-lg font-semibold text-ink">Edit website</span>
                 <span className="text-xs text-ink-soft">Update your website</span>
               </Link>
               {token ? (
-                <a href={`/p/${token}`} target="_blank" rel="noreferrer" className={action}>
+                <a href={`/site/${token}`} target="_blank" rel="noreferrer" className={action}>
                   <span className="font-fraunces text-lg font-semibold text-ink">View my site</span>
                   <span className="text-xs text-ink-soft">See what clients see</span>
                 </a>
