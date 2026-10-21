@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ClientHeader } from '@/app/components/ClientHeader'
+import { ContractText } from '@/app/components/ContractText'
 
 type Contract = {
   id: string; status: string; body: string | null
@@ -82,21 +83,19 @@ export default function ClientContractPage() {
         ) : (
           <>
             <article className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-line bg-card p-6 text-sm leading-relaxed text-ink print:max-h-none print:overflow-visible">
-              {contract!.body}
+              <ContractText
+                body={contract!.body ?? ''}
+                photographer={contract!.photographer_signature_name ? { name: contract!.photographer_signature_name, style: contract!.photographer_signature_style, date: fmt(contract!.photographer_signed_at ?? contract!.sent_at) } : null}
+                client={signed ? { name: contract!.signer_name ?? '', style: contract!.signature_style, date: fmt(contract!.signed_at) } : name.trim() ? { name: name.trim(), style, date: fmt(new Date().toISOString()) } : null}
+              />
             </article>
 
-            {contract!.photographer_signature_name && (
-              <section className="mt-6 rounded-2xl border border-line bg-card p-6">
-                <p className="font-mono text-xs uppercase tracking-widest text-brass">Photographer signature</p>
-                <p className="mt-3 text-4xl text-ink" style={{ fontFamily: familyFor(contract!.photographer_signature_style) }}>{contract!.photographer_signature_name}</p>
-                <p className="mt-2 text-sm text-ink-soft">{fmt(contract!.photographer_signed_at ?? contract!.sent_at)}</p>
-              </section>
-            )}
+            
 
             {signed ? (
               <section className="mt-6 rounded-2xl border border-line bg-card p-6">
                 <p className="font-mono text-xs uppercase tracking-widest text-brass">Your signature</p>
-                <p className="mt-3 text-4xl text-ink" style={{ fontFamily: familyFor(contract!.signature_style) }}>{contract!.signer_name}</p>
+                
                 <p className="mt-2 text-sm text-ink-soft">{fmt(contract!.signed_at)}</p>
                 <button onClick={() => window.print()} className="mt-4 rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink hover:bg-paper-deep print:hidden">
                   Print or save as PDF

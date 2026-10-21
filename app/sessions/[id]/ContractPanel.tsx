@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { ContractText } from '@/app/components/ContractText'
+import { signedHtml } from '@/lib/contractSign'
 import { DEFAULT_CONTRACT_TEMPLATE, DEFAULT_CONTRACT_TEMPLATES, fillContractTemplate } from '@/lib/contractDefaults'
 
 type CRow = {
@@ -225,10 +227,8 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
     const pName = c.photographer_signature_name || prof?.signature_name || ''
     const pDate = fmtLong(c.photographer_signed_at ?? c.sent_at)
     const css = 'body{font-family:Georgia,serif;color:#222;max-width:720px;margin:40px auto;padding:0 24px;line-height:1.6;font-size:13px}pre{white-space:pre-wrap;font-family:inherit}.sig{display:flex;gap:48px;margin-top:40px;page-break-inside:avoid}.sig div{flex:1}.name{font-size:34px;margin:4px 0}.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#777}.stamp{margin-top:28px;border:2px solid #a8803f;color:#a8803f;display:inline-block;padding:6px 14px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}'
-    const html = '<!doctype html><html><head><meta charset="utf-8"><title>Signed contract</title><link rel="stylesheet" href="' + FONT_HREF + '"><style>' + css + '</style></head><body><pre>' + escHtml(c.body ?? '') +
-      '</pre><div class="sig"><div><div class="lbl">Photographer</div><div class="name" style="font-family:' + sigFamily(c.photographer_signature_style) + '">' + escHtml(pName) + '</div><div>' + escHtml(pDate) +
-      '</div></div><div><div class="lbl">Client</div><div class="name" style="font-family:' + sigFamily(c.signature_style) + '">' + escHtml(c.signer_name ?? '') + '</div><div>' + escHtml(fmtLong(c.signed_at)) +
-      '</div></div></div><div class="stamp">Fully signed ' + escHtml(fmtLong(c.signed_at)) + '</div></body></html>'
+    const html = '<!doctype html><html><head><meta charset="utf-8"><title>Signed contract</title><link rel="stylesheet" href="' + FONT_HREF + '"><style>' + css + '</style></head><body><pre>' + signedHtml(c.body ?? '', { name: pName, style: c.photographer_signature_style, date: pDate }, { name: c.signer_name ?? '', style: c.signature_style, date: fmtLong(c.signed_at) }, escHtml) + '</pre><div class="stamp">Fully signed ' + escHtml(fmtLong(c.signed_at)) + '</div></body></html>'
+
     w2.document.write(html)
     w2.document.close()
     setTimeout(() => { w2.focus(); w2.print() }, 900)
@@ -263,18 +263,6 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
               {/* eslint-disable-next-line @next/next/no-page-custom-font */}
               <link rel="stylesheet" href={FONT_HREF} />
               <p className="font-mono text-xs uppercase tracking-widest text-brass">Fully signed {fmtLong(c.signed_at)}</p>
-              <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs text-ink-soft">Photographer</p>
-                  <p className="mt-1 text-3xl text-ink" style={{ fontFamily: sigFamily(c.photographer_signature_style) }}>{c.photographer_signature_name || prof?.signature_name || ''}</p>
-                  <p className="text-xs text-ink-soft">{fmtLong(c.photographer_signed_at ?? c.sent_at)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-ink-soft">Client</p>
-                  <p className="mt-1 text-3xl text-ink" style={{ fontFamily: sigFamily(c.signature_style) }}>{c.signer_name}</p>
-                  <p className="text-xs text-ink-soft">{fmtLong(c.signed_at)}</p>
-                </div>
-              </div>
               <button type="button" onClick={printSigned} className={btn + ' mt-4'}>Print or save as PDF</button>
             </div>
           )}
@@ -287,7 +275,13 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
               className="w-full rounded-xl border border-line bg-paper px-4 py-3 font-mono text-xs text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
             />
           ) : (
-            <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-xl bg-paper p-4 text-xs leading-relaxed text-ink">{c.body}</pre>
+            <div className="max-h-80 overflow-auto whitespace-pre-wrap rounded-xl bg-paper p-4 text-xs leading-relaxed text-ink">
+              <ContractText
+                body={c.body ?? ''}
+                photographer={c.photographer_signature_name && (status === 'sent' || status === 'signed') ? { name: c.photographer_signature_name, style: c.photographer_signature_style, date: fmtLong(c.photographer_signed_at ?? c.sent_at) } : null}
+                client={status === 'signed' ? { name: c.signer_name ?? '', style: c.signature_style, date: fmtLong(c.signed_at) } : null}
+              />
+            </div>
           )}
 
           {status === 'draft' && (

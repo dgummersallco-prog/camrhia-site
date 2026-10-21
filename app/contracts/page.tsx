@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { signedHtml } from '@/lib/contractSign'
 
 type Row = {
   id: string
@@ -37,10 +38,8 @@ function printSigned(c: Row) {
   const w2 = window.open('', '_blank')
   if (!w2) { window.alert('Allow pop-ups to print the contract.'); return }
   const css = 'body{font-family:Georgia,serif;color:#222;max-width:720px;margin:40px auto;padding:0 24px;line-height:1.6;font-size:13px}pre{white-space:pre-wrap;font-family:inherit}.sig{display:flex;gap:48px;margin-top:40px;page-break-inside:avoid}.sig div{flex:1}.name{font-size:34px;margin:4px 0}.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#777}.stamp{margin-top:28px;border:2px solid #a8803f;color:#a8803f;display:inline-block;padding:6px 14px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}'
-  const html = '<!doctype html><html><head><meta charset="utf-8"><title>Signed contract</title><link rel="stylesheet" href="' + FONT_HREF + '"><style>' + css + '</style></head><body><pre>' + escHtml(c.body ?? '') +
-    '</pre><div class="sig"><div><div class="lbl">Photographer</div><div class="name" style="font-family:' + sigFamily(c.photographer_signature_style) + '">' + escHtml(c.photographer_signature_name ?? '') + '</div><div>' + escHtml(fmtLong(c.photographer_signed_at ?? c.sent_at)) +
-    '</div></div><div><div class="lbl">Client</div><div class="name" style="font-family:' + sigFamily(c.signature_style) + '">' + escHtml(c.signer_name ?? '') + '</div><div>' + escHtml(fmtLong(c.signed_at)) +
-    '</div></div></div><div class="stamp">Fully signed ' + escHtml(fmtLong(c.signed_at)) + '</div></body></html>'
+  const html = '<!doctype html><html><head><meta charset="utf-8"><title>Signed contract</title><link rel="stylesheet" href="' + FONT_HREF + '"><style>' + css + '</style></head><body><pre>' + signedHtml(c.body ?? '', { name: c.photographer_signature_name ?? '', style: c.photographer_signature_style, date: fmtLong(c.photographer_signed_at ?? c.sent_at) }, { name: c.signer_name ?? '', style: c.signature_style, date: fmtLong(c.signed_at) }, escHtml) + '</pre><div class="stamp">Fully signed ' + escHtml(fmtLong(c.signed_at)) + '</div></body></html>'
+
   w2.document.write(html)
   w2.document.close()
   setTimeout(() => { w2.focus(); w2.print() }, 900)
