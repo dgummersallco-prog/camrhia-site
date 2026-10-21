@@ -11,6 +11,9 @@ type CRow = {
   sent_at: string | null
   signed_at: string | null
   signer_name: string | null
+  signature_style: string | null
+  photographer_signature_name: string | null
+  photographer_signed_at: string | null
   reminder_sent_at: string | null
   manually_edited: boolean
   template_source: string | null
@@ -35,6 +38,17 @@ function sameDay(iso: string | null): boolean {
   const b = new Date()
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
+
+const SIG_FAMILIES: Record<string, string> = {
+  DancingScript: "'Dancing Script', cursive",
+  GreatVibes: "'Great Vibes', cursive",
+  Sacramento: "'Sacramento', cursive",
+  AlexBrush: "'Alex Brush', cursive",
+}
+const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Alex+Brush&family=Dancing+Script&family=Great+Vibes&family=Sacramento&display=swap'
+const sigFamily = (k: string | null) => SIG_FAMILIES[k ?? ''] ?? SIG_FAMILIES.DancingScript
+const fmtLong = (d: string | null) => (d ? new Date(d).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : '')
+const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; w: Record<string, any>; onChanged?: () => void }) {
   const [uid, setUid] = useState<string | null>(null)
@@ -203,6 +217,22 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
     setBusy(false)
   }
 
+  function printSigned() {
+    if (!c) return
+    const w2 = window.open('', '_blank')
+    if (!w2) { setErr('Allow pop-ups to print the contract.'); return }
+    const pName = c.photographer_signature_name || prof?.signature_name || ''
+    const pDate = fmtLong(c.photographer_signed_at ?? c.sent_at)
+    const css = 'body{font-family:Georgia,serif;color:#222;max-width:720px;margin:40px auto;padding:0 24px;line-height:1.6;font-size:13px}pre{white-space:pre-wrap;font-family:inherit}.sig{display:flex;gap:48px;margin-top:40px;page-break-inside:avoid}.sig div{flex:1}.name{font-size:34px;margin:4px 0}.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#777}.stamp{margin-top:28px;border:2px solid #a8803f;color:#a8803f;display:inline-block;padding:6px 14px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}'
+    const html = '<!doctype html><html><head><meta charset="utf-8"><title>Signed contract</title><link rel="stylesheet" href="' + FONT_HREF + '"><style>' + css + '</style></head><body><pre>' + escHtml(c.body ?? '') +
+      '</pre><div class="sig"><div><div class="lbl">Photographer</div><div class="name" style="font-family:' + SIG_FAMILIES.DancingScript + '">' + escHtml(pName) + '</div><div>' + escHtml(pDate) +
+      '</div></div><div><div class="lbl">Client</div><div class="name" style="font-family:' + sigFamily(c.signature_style) + '">' + escHtml(c.signer_name ?? '') + '</div><div>' + escHtml(fmtLong(c.signed_at)) +
+      '</div></div></div><div class="stamp">Fully signed ' + escHtml(fmtLong(c.signed_at)) + '</div></body></html>'
+    w2.document.write(html)
+    w2.document.close()
+    setTimeout(() => { w2.focus(); w2.print() }, 900)
+  }
+
   const status = c?.status ?? null
   const pill =
     status === 'signed' ? 'bg-emerald-100 text-emerald-700'
@@ -228,7 +258,24 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
         <div className="space-y-3">
           {status === 'sent' && c.sent_at && <p className="text-sm text-ink-soft">Sent {new Date(c.sent_at).toLocaleDateString()}. Waiting for your client to sign.</p>}
           {status === 'signed' && c.signed_at && (
-            <p className="text-sm text-ink-soft">Signed {new Date(c.signed_at).toLocaleDateString()}{c.signer_name ? ` by ${c.signer_name}` : ''}.</p>
+            <div className="rounded-xl border border-line bg-paper p-4">
+              {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+              <link rel="stylesheet" href={FONT_HREF} />
+              <p className="font-mono text-xs uppercase tracking-widest text-brass">Fully signed {fmtLong(c.signed_at)}</p>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-ink-soft">Photographer</p>
+                  <p className="mt-1 text-3xl text-ink" style={{ fontFamily: SIG_FAMILIES.DancingScript }}>{c.photographer_signature_name || prof?.signature_name || ''}</p>
+                  <p className="text-xs text-ink-soft">{fmtLong(c.photographer_signed_at ?? c.sent_at)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-ink-soft">Client</p>
+                  <p className="mt-1 text-3xl text-ink" style={{ fontFamily: sigFamily(c.signature_style) }}>{c.signer_name}</p>
+                  <p className="text-xs text-ink-soft">{fmtLong(c.signed_at)}</p>
+                </div>
+              </div>
+              <button type="button" onClick={printSigned} className={btn + ' mt-4'}>Print or save as PDF</button>
+            </div>
           )}
 
           {editing ? (
