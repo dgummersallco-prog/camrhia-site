@@ -9,7 +9,7 @@ type Contract = {
   id: string; status: string; body: string | null
   sent_at: string | null; signed_at: string | null
   signer_name: string | null; signature_style: string | null
-  photographer_signature_name: string | null; photographer_signed_at: string | null
+  photographer_signature_name: string | null; photographer_signed_at: string | null; photographer_signature_style: string | null
 }
 
 const STYLES: { key: string; label: string; family: string }[] = [
@@ -40,7 +40,7 @@ export default function ClientContractPage() {
       if (!sess.session) { router.replace(`/login?next=/my/contract/${id}`); return }
       const { data } = await sb
         .from('contracts')
-        .select('id, status, body, sent_at, signed_at, signer_name, signature_style, photographer_signature_name, photographer_signed_at')
+        .select('id, status, body, sent_at, signed_at, signer_name, signature_style, photographer_signature_name, photographer_signed_at, photographer_signature_style')
         .eq('wedding_id', id)
         .maybeSingle()
       setContract((data as Contract | null) ?? null)
@@ -88,7 +88,7 @@ export default function ClientContractPage() {
             {contract!.photographer_signature_name && (
               <section className="mt-6 rounded-2xl border border-line bg-card p-6">
                 <p className="font-mono text-xs uppercase tracking-widest text-brass">Photographer signature</p>
-                <p className="mt-3 text-4xl text-ink" style={{ fontFamily: familyFor('DancingScript') }}>{contract!.photographer_signature_name}</p>
+                <p className="mt-3 text-4xl text-ink" style={{ fontFamily: familyFor(contract!.photographer_signature_style) }}>{contract!.photographer_signature_name}</p>
                 <p className="mt-2 text-sm text-ink-soft">{fmt(contract!.photographer_signed_at ?? contract!.sent_at)}</p>
               </section>
             )}
