@@ -32,7 +32,7 @@ export function blank(dev: Dev): Board {
   const words = 'Add your story, a quote, or anything you like. Drag things to move them and use the corner square to resize.'
   if (dev === 'phone') {
     return {
-      h: 110,
+      h: 150,
       items: [
         { id: 'h1', type: 'heading', text: 'Your heading', x: 6, y: 6, w: 88, h: 16, z: 1, fs: 9 },
         { id: 'c1', type: 'card', title: 'Write your words here', text: words, x: 6, y: 28, w: 88, h: 70, z: 2, fs: 3.6, bg: true },
@@ -40,7 +40,7 @@ export function blank(dev: Dev): Board {
     }
   }
   return {
-    h: 60,
+    h: 88,
     items: [
       { id: 'h1', type: 'heading', text: 'Your heading', x: 6, y: 6, w: 50, h: 12, z: 1, fs: 4.6 },
       { id: 'c1', type: 'card', title: 'Write your words here', text: words, x: 6, y: 22, w: 46, h: 34, z: 2, fs: 1.45, bg: true },
@@ -83,4 +83,25 @@ export function galleryStarter(dev: Dev, ids: string[]): Board {
   }))
   const rows = Math.max(1, Math.ceil(ids.length / cols))
   return { h: rows * gy, items }
+}
+
+export function heroStarter(dev: Dev, srcs: string[]): Board {
+  const ph = dev === 'phone'
+  const list: (string | null)[] = srcs.length > 0 ? srcs.slice(0, 3) : [null]
+  const n = list.length
+  const d: number[][][] = [
+    [[2, 0, 96, 66]],
+    [[2, 0, 58, 66], [62, 0, 36, 66]],
+    [[2, 0, 56, 66], [62, 0, 36, 32], [62, 34, 36, 32]],
+  ]
+  const p: number[][][] = [
+    [[0, 0, 100, 70]],
+    [[0, 0, 100, 56], [0, 60, 100, 56]],
+    [[0, 0, 100, 66], [0, 70, 48, 46], [52, 70, 48, 46]],
+  ]
+  const rects = (ph ? p : d)[n - 1]
+  return {
+    h: ph ? 120 : 70,
+    items: list.map((src, i) => ({ id: 'p' + (i + 1), type: 'photo' as const, src, x: rects[i][0], y: rects[i][1], w: rects[i][2], h: rects[i][3], z: i + 1, radius: ph ? 6 : 3 })),
+  }
 }

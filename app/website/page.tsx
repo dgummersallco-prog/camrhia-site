@@ -41,7 +41,7 @@ const TEMPLATES = [
   { key: 'minimal', name: 'Minimal', blurb: 'Clean white, photo first, lots of air.' },
   { key: 'framed', name: 'Framed', blurb: 'Photo with your words in a centered card.' },
   { key: 'magazine', name: 'Magazine', blurb: 'Huge headline over a wide photo.' },
-  { key: 'mosaic', name: 'Mosaic', blurb: 'A collage of your best shots.' },
+  { key: 'mosaic', name: 'Freestyle', blurb: 'Place your photos anywhere you like.' },
 ]
 const SWATCHES = ['#A9545F', '#5B6B8C', '#7C8B6F', '#B08D57', '#8A5A83', '#2A1F24']
 const MENU_KEYS = ['home', 'galleries', 'about', 'book']
@@ -438,6 +438,8 @@ function Thumb({ kind }: { kind: string }) {
   )
 }
 
+import { heroStarter } from '@/lib/aboutCanvas'
+
 export default function WebsitePage() {
   const router = useRouter()
   const [form, setForm] = useState<Site | null>(null)
@@ -470,6 +472,8 @@ export default function WebsitePage() {
         cvBridge.upd((st: any) => {
           if (bid === 'galleries') {
             st.galindex = { ...(st.galindex ?? {}), canvas: { ...((st.galindex ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
+          } else if (bid === 'hero') {
+            st.hero = { ...(st.hero ?? {}), canvas: { ...((st.hero ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
           } else if (bid === 'about') {
             const a2 = { ...(st.about ?? {}) }
             a2.canvas = { ...(a2.canvas ?? {}), [d.dev as string]: d.board }
@@ -698,14 +702,19 @@ export default function WebsitePage() {
   function canvasPanel(boardId: string) {
     const isAbout = boardId === 'about'
     const isGal = boardId === 'galleries'
+    const isHero = boardId === 'hero'
     const customsList = (S.customs ?? []) as any[]
-    const canvasData = isAbout ? S.about?.canvas : isGal ? S.galindex?.canvas : customsList.find((c) => c.id === boardId)?.canvas
+    const canvasData = isHero ? S.hero?.canvas : isAbout ? S.about?.canvas : isGal ? S.galindex?.canvas : customsList.find((c) => c.id === boardId)?.canvas
     const ph2 = isAbout ? S.about?.photo2 : null
     const galIds = cvGalleries.map((g) => g.id)
-    const b = isGal && !hasBoard(canvasData, device) ? galleryStarter(device, galIds) : getBoard(canvasData, device, ph2, !isAbout)
+    const b = isHero && !hasBoard(canvasData, device) ? heroStarter(device, heroSel.slice(0, 3)) : isGal && !hasBoard(canvasData, device) ? galleryStarter(device, galIds) : getBoard(canvasData, device, ph2, !isAbout)
     const sel: CItem | null = cvBoard === boardId ? (b.items.find((i) => i.id === cvSel) ?? null) : null
     const setBoard = (nb: { h: number; items: CItem[] }) => upd((st: any) => {
-      if (isGal) {
+      if (isHero) {
+        const h2 = { ...(st.hero ?? {}) }
+        h2.canvas = { ...(h2.canvas ?? {}), [device]: nb }
+        st.hero = h2
+      } else if (isGal) {
         const g2 = { ...(st.galindex ?? {}) }
         g2.canvas = { ...(g2.canvas ?? {}), [device]: nb }
         st.galindex = g2
@@ -1393,6 +1402,7 @@ export default function WebsitePage() {
                       </div>
                     )
                   })()}
+                  {form.site_template === 'mosaic' && canvasPanel('hero')}
                   <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
                   
                   

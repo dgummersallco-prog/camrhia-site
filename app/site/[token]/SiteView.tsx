@@ -2,6 +2,7 @@
 
 import { TestimonialCarousel } from './TestimonialCarousel'
 import { AboutCanvas } from './AboutCanvas'
+import { heroStarter } from '@/lib/aboutCanvas'
 import { galleryStarter } from '@/lib/aboutCanvas'
 import { installPreviewGlow } from '@/lib/previewGlow'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
@@ -123,7 +124,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const galleryCovers = galleries
     .map((g) => photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path))
     .filter(Boolean) as string[]
-  const mosaicUrls = Array.from(new Set([...heroUrls, ...galleryCovers])).slice(0, 3)
+  const mosaicSrcs: string[] = (Array.from(new Set([...heroPaths, ...galleries.map((g: any) => (g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path)].filter(Boolean))) as string[]).slice(0, 3)
 
   const on = (k: string) => r.site_sections?.[k] !== false
   const showMap: Record<string, boolean> = {
@@ -691,12 +692,15 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <div className="mt-7">{cta()}</div>
             </div>
             <div className="mx-auto max-w-6xl px-6 pb-4">
-              <div className="grid" style={{ height: 'calc(var(--hero-h) * 0.75)', gap: 'var(--gap)', gridTemplateColumns: mosaicUrls.length > 1 ? '1.4fr 1fr' : '1fr', gridTemplateRows: mosaicUrls.length > 2 ? '1fr 1fr' : '1fr' }}>
-                {mosaicUrls.length === 0 && <div style={{ background: accent, opacity: 0.85 }} />}
-                {mosaicUrls.map((u, i) => (
-                  <img key={u} src={u} alt="" className="h-full w-full object-cover" style={{ minHeight: 0, gridRow: i === 0 && mosaicUrls.length > 2 ? 'span 2' : undefined }} />
-                ))}
-              </div>
+              <AboutCanvas
+                canvas={(r as any).site_settings?.hero?.canvas} photo2={null} aboutPhoto={null} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
+                title={null} bio="" headStyle={headStyle} ink={ink} soft={soft} tint={tint}
+                bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId="hero"
+                fallback={(dev) => heroStarter(dev, mosaicSrcs.length > 0 ? mosaicSrcs : isPreview ? PH_SCENES.slice(0, 3) : [])}
+                renderButton={(label) => (
+                  <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+                )}
+              />
             </div>
           </header>
         )}
