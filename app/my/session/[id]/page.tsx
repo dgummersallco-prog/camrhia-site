@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { ClientHeader } from '@/app/components/ClientHeader'
+import { printSignedContract, type PrintRow } from '@/lib/printContract'
 
 type Gallery = { token: string; title: string | null; has_pin: boolean }
 type Portal = {
@@ -117,6 +118,19 @@ export default function ClientSessionPage() {
 
   const [cardReady, setCardReady] = useState(false)
   const [payingId, setPayingId] = useState<string | null>(null)
+
+  async function printContract() {
+    const sb = supabase
+    if (!sb) return
+    const { data } = await sb
+      .from('contracts')
+      .select('body, sent_at, signed_at, signer_name, signature_style, photographer_signature_name, photographer_signature_style, photographer_signed_at')
+      .eq('wedding_id', id)
+      .eq('status', 'signed')
+      .maybeSingle()
+    if (!data) { setError('Could not load the signed contract.'); return }
+    printSignedContract(data as PrintRow)
+  }
 
   async function payByCard(lineId: string) {
     const sb = supabase
@@ -323,6 +337,17 @@ export default function ClientSessionPage() {
                 )}
               </section>
 
+              {mine?.contract_status === 'signed' && (
+                <section className={card}>
+                  <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Signed contract</p>
+                  <p className="text-sm text-ink-soft">Signed by you and your photographer.</p>
+                  <div className="mt-3 flex gap-3">
+                    <Link href={'/my/contract/' + id} className="rounded-full border border-line px-4 py-1.5 text-xs text-ink">View</Link>
+                    <button type="button" onClick={printContract} className="rounded-full bg-twilight px-4 py-1.5 text-xs font-semibold text-white">Print</button>
+                  </div>
+                </section>
+              )}
+
               <section className={card}>
                 <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Payments</p>
                 {pays.length === 0 ? (
@@ -345,7 +370,7 @@ export default function ClientSessionPage() {
                           <span className={p.status === 'paid' ? 'text-emerald-700' : 'text-ink'}>{money(p.amount)}</span>
                         </div>
                           {p.status !== 'paid' && cardReady && Number(p.amount) >= 0.5 && (
-                            <button type="button" disabled={payingId === p.id} onClick={() => payByCard(p.id)} className="mt-2 rounded-full bg-twilight px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{payingId === p.id ? "Opening checkout..." : "Pay " + money(p.amount) + " by card"}</button>
+                            <button type="button" disabled={payingId === p.id} onClick={() => payByCard(p.id)} className="mt-2 block rounded-full bg-twilight px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{payingId === p.id ? "Opening checkout..." : "Pay " + money(p.amount) + " by card"}</button>
                           )}
                           {p.status !== 'paid' && !p.sent_by_couple && (
                             reporting === p.id ? (
@@ -365,7 +390,7 @@ export default function ClientSessionPage() {
                                 </div>
                               </div>
                             ) : (
-                              <button type="button" onClick={() => { setReporting(p.id); setHowPaid(''); setPayNote('') }} className="mt-2 text-xs font-semibold text-twilight hover:underline">I have sent this payment</button>
+                              <button type="button" onClick={() => { setReporting(p.id); setHowPaid(''); setPayNote('') }} className="mt-3 block text-xs font-semibold text-twilight hover:underline">I have sent this payment</button>
                             )
                           )}
                           </li>
