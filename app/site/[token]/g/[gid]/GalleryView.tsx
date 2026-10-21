@@ -93,10 +93,12 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
   const layout = t.galpage.layout
 
   const imgs = (list: any[]) =>
-    list.map((p: any) => {
+    list.map((p: any, i: number) => {
       const u = photoUrl(p.storage_path)
       if (!u) return null
       // eslint-disable-next-line @next/next/no-img-element
+      if (layout === 'tall') return <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="block w-full object-cover" style={{ aspectRatio: '9/16', cursor: 'zoom-in' }} />
+      if (layout === 'editorial') return <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className={'block w-full object-cover' + (i % 3 === 0 ? ' col-span-2' : '')} style={{ aspectRatio: i % 3 === 0 ? '3/2' : '4/5', cursor: 'zoom-in' }} />
       return layout === 'grid'
         ? <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="block w-full object-cover" style={{ aspectRatio: '1/1', cursor: 'zoom-in' }} />
         : <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="block w-full" style={{ cursor: 'zoom-in', marginBottom: layout === 'masonry' ? 'var(--gal-gap)' : 0 }} />
@@ -119,6 +121,8 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
               {layout === 'masonry' && <div className="columns-1 sm:columns-2 lg:columns-3" style={{ columnGap: 'var(--gal-gap)' }}>{imgs(grp.photos)}</div>}
               {layout === 'grid' && <div className="grid grid-cols-2 lg:grid-cols-3" style={{ gap: 'var(--gal-gap)' }}>{imgs(grp.photos)}</div>}
               {layout === 'single' && <div className="mx-auto flex max-w-3xl flex-col" style={{ gap: 'var(--gal-gap)' }}>{imgs(grp.photos)}</div>}
+              {layout === 'tall' && <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" style={{ gap: 'var(--gal-gap)' }}>{imgs(grp.photos)}</div>}
+              {layout === 'editorial' && <div className="grid grid-cols-2" style={{ gap: 'var(--gal-gap)' }}>{imgs(grp.photos)}</div>}
             </div>
           ))}
         </div>

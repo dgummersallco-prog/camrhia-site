@@ -1610,7 +1610,7 @@ export default function WebsitePage() {
                   <div>
                     <p className="mb-2 text-sm text-ink">Photo layout</p>
                     <LayoutPicker value={T.galpage.layout} onChange={(v) => setIn('galpage', { layout: v })}
-                      options={[{ v: 'masonry', name: 'Masonry', thumb: THUMBS.phMasonry }, { v: 'grid', name: 'Even grid', thumb: THUMBS.phGrid }, { v: 'single', name: 'Single column', thumb: THUMBS.phSingle }]} />
+                      options={[{ v: 'masonry', name: 'Masonry', thumb: THUMBS.phMasonry }, { v: 'grid', name: 'Even grid', thumb: THUMBS.phGrid }, { v: 'single', name: 'Single column', thumb: THUMBS.phSingle }, { v: 'tall', name: 'Stories 9:16', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="10" height="32" /><rect x="19" y="4" width="10" height="32" /><rect x="32" y="4" width="10" height="32" /><rect x="45" y="4" width="10" height="32" /></g></svg> }, { v: 'editorial', name: 'Editorial', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="4" width="48" height="14" fill="#D8D0C4" /><rect x="6" y="21" width="23" height="15" fill="#C9BFB2" /><rect x="31" y="21" width="23" height="15" fill="#C9BFB2" /></svg> }]} />
                   </div>
                   <Row label="Show photo count"><Switch on={T.galpage.showCount} onChange={(v) => setIn('galpage', { show_count: v })} /></Row>
                   <Row label="Show other galleries at the bottom"><Switch on={T.galpage.showMore} onChange={(v) => setIn('galpage', { show_more: v })} /></Row>

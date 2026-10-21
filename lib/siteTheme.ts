@@ -159,7 +159,7 @@ export function resolveTheme(r: Record<string, any>) {
     ctaShow: s.hero?.cta_show !== false,
   }
   const gallery = {
-    layout: pick(s.gallery?.layout, ['masonry', 'grid', 'single'] as const, 'masonry'),
+    layout: pick(s.gallery?.layout, ['masonry', 'grid', 'single', 'tall', 'editorial'] as const, 'masonry'),
     card: pick(s.gallery?.card, ['portrait', 'square', 'landscape'] as const, 'portrait'),
   }
   const cardRatio = gallery.card === 'square' ? '1/1' : gallery.card === 'landscape' ? '3/2' : '4/5'
@@ -204,7 +204,7 @@ export function resolveTheme(r: Record<string, any>) {
   }
 
   const galpage = {
-    layout: pick(s.galpage?.layout ?? s.gallery?.layout, ['masonry', 'grid', 'single'] as const, 'masonry'),
+    layout: pick(s.galpage?.layout ?? s.gallery?.layout, ['masonry', 'grid', 'single', 'tall', 'editorial'] as const, 'masonry'),
     showCount: s.galpage?.show_count !== false,
     showMore: s.galpage?.show_more !== false,
     showButton: s.galpage?.show_button !== false,
