@@ -123,3 +123,29 @@ export function heroStarter(dev: Dev, srcs: string[]): Board {
       ]
   return { h: ph ? 172 : 88, items: [...photos, ...text] }
 }
+
+export function galleryPhotosStarter(dev: Dev, paths: string[]): Board {
+  const ph = dev === 'phone'
+  const list = paths.slice(0, 60)
+  const cols = ph ? 2 : 3
+  const w = ph ? 48 : 31
+  const gx = ph ? 50 : 33
+  const h = ph ? 60 : 38.75
+  const gy = ph ? 62 : 40.5
+  const top = ph ? 30 : 22
+  const rows = Math.max(1, Math.ceil(list.length / cols))
+  const bh = Math.max(88, top + rows * gy + (ph ? 18 : 10))
+  const items: CItem[] = list.map((src, i) => ({ id: 'g' + i, type: 'photo' as const, src, x: 2 + (i % cols) * gx, y: top + Math.floor(i / cols) * gy, w, h, z: 1, radius: ph ? 4 : 2 }))
+  const text: CItem[] = ph
+    ? [
+        { id: 'title', type: 'title', x: 4, y: 2, w: 92, h: 16, z: 5, align: 'center' },
+        { id: 'sub', type: 'subtitle', x: 4, y: 19, w: 92, h: 6, z: 5, align: 'center' },
+        { id: 'btn', type: 'button', x: 4, y: bh - 14, w: 50, h: 8, z: 5 },
+      ]
+    : [
+        { id: 'title', type: 'title', x: 2, y: 2, w: 96, h: 12, z: 5, align: 'center' },
+        { id: 'sub', type: 'subtitle', x: 2, y: 14, w: 96, h: 4, z: 5, align: 'center' },
+        { id: 'btn', type: 'button', x: 40, y: bh - 8, w: 20, h: 5, z: 5 },
+      ]
+  return { h: bh, items: [...text, ...items] }
+}

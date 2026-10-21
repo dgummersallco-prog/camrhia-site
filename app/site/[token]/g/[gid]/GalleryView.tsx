@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { PortfolioLightbox } from '../../../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { installPreviewGlow } from '@/lib/previewGlow'
+import { AboutCanvas } from '../../AboutCanvas'
+import { galleryPhotosStarter } from '@/lib/aboutCanvas'
 
 const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
@@ -40,6 +42,12 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
 
   const galleries = ((r.site_galleries ?? []) as any[]).filter((g) => (g.photos ?? []).length > 0)
   const gal = galleries.find((g) => g.id === gid)
+
+  useEffect(() => {
+    if (!isPreview) return
+    window.parent?.postMessage({ type: 'camrhia-galleries', list: galleries.map((x) => ({ id: x.id, title: x.title })) }, '*')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPreview, galleries.length])
 
   const shell = (inner: React.ReactNode) => (
     <>
@@ -108,13 +116,26 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
     <>
       <PortfolioLightbox />
       {nav}
-      <header className="px-6 pb-10 pt-8 text-center">
+      {layout !== 'custom' && (<header className="px-6 pb-10 pt-8 text-center">
         <h1 style={{ ...head, fontSize: 'var(--gal-h)', lineHeight: 1.05 }}>{gal.title}</h1>
         {t.galpage.showCount && <p className="mt-3 text-[11px] uppercase tracking-[0.25em]" style={{ color: soft }}>{photos.length} photos</p>}
-      </header>
+      </header>)}
 
       <main id="gal-main" className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="flex flex-col gap-14">
+        {layout === 'custom' ? (<AboutCanvas
+            canvas={(r.site_settings?.galpage?.canvases ?? {})[gid]} photo2={null} aboutPhoto={null} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
+            title={null} bio="" headStyle={head} ink={ink} soft={soft} tint="rgba(0,0,0,0.04)"
+            bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId={'gal:' + gid}
+            fallback={(dv) => galleryPhotosStarter(dv, photos.map((p: any) => p.storage_path))}
+            renderSpecial={(type) => {
+              if (type === 'title') return <h1 style={{ ...head, fontSize: 'var(--gal-h)', lineHeight: 1.05, margin: 0, color: 'inherit' }}>{gal.title}</h1>
+              if (type === 'subtitle') return <p className="text-[11px] uppercase tracking-[0.25em]" style={{ color: soft, margin: 0 }}>{photos.length} photos</p>
+              return null
+            }}
+            renderButton={(label) => (
+              <Link href={`/site/${token}/availability${qs}`} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>{label}</Link>
+            )}
+          />) : (<div className="flex flex-col gap-14">
           {groups.map((grp) => (
             <div key={grp.id}>
               {grp.title && <h2 className="mb-6 text-center text-3xl" style={head}>{grp.title}</h2>}
@@ -125,9 +146,9 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
               {layout === 'editorial' && <div className="grid grid-cols-2" style={{ gap: 'var(--gal-gap)' }}>{imgs(grp.photos)}</div>}
             </div>
           ))}
-        </div>
+        </div>)}
 
-        {t.galpage.showButton && (
+        {t.galpage.showButton && layout !== 'custom' && (
           <div className="mt-14 text-center">
             <Link href={`/site/${token}/availability${qs}`} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>
               {t.hero.ctaText}

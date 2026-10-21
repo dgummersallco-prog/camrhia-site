@@ -484,6 +484,13 @@ export default function WebsitePage() {
         cvBridge.upd((st: any) => {
           if (bid === 'galleries') {
             st.galindex = { ...(st.galindex ?? {}), canvas: { ...((st.galindex ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
+          } else if (bid.startsWith('gal:')) {
+            const gid2 = bid.slice(4)
+            const gpp = { ...(st.galpage ?? {}) }
+            const cvs = { ...(gpp.canvases ?? {}) }
+            cvs[gid2] = { ...(cvs[gid2] ?? {}), [d.dev as string]: d.board }
+            gpp.canvases = cvs
+            st.galpage = gpp
           } else if (bid === 'hero') {
             st.hero = { ...(st.hero ?? {}), canvas: { ...((st.hero ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
           } else if (bid === 'about') {
@@ -715,14 +722,22 @@ export default function WebsitePage() {
     const isAbout = boardId === 'about'
     const isGal = boardId === 'galleries'
     const isHero = boardId === 'hero'
+    const isGalPage = boardId.startsWith('gal:')
+    const gpid = boardId.slice(4)
     const customsList = (S.customs ?? []) as any[]
-    const canvasData = isHero ? S.hero?.canvas : isAbout ? S.about?.canvas : isGal ? S.galindex?.canvas : customsList.find((c) => c.id === boardId)?.canvas
+    const canvasData = isGalPage ? (S.galpage?.canvases ?? {})[gpid] : isHero ? S.hero?.canvas : isAbout ? S.about?.canvas : isGal ? S.galindex?.canvas : customsList.find((c) => c.id === boardId)?.canvas
     const ph2 = isAbout ? S.about?.photo2 : null
     const galIds = cvGalleries.map((g) => g.id)
-    const b = isHero && !hasBoard(canvasData, device) ? heroStarter(device, heroSel.slice(0, 3)) : isGal && !hasBoard(canvasData, device) ? galleryStarter(device, galIds) : getBoard(canvasData, device, ph2, !isAbout)
+    const b = isGalPage && !hasBoard(canvasData, device) ? { h: 88, items: [] as CItem[] } : isHero && !hasBoard(canvasData, device) ? heroStarter(device, heroSel.slice(0, 3)) : isGal && !hasBoard(canvasData, device) ? galleryStarter(device, galIds) : getBoard(canvasData, device, ph2, !isAbout)
     const sel: CItem | null = cvBoard === boardId ? (b.items.find((i) => i.id === cvSel) ?? null) : null
     const setBoard = (nb: { h: number; items: CItem[] }) => upd((st: any) => {
-      if (isHero) {
+      if (isGalPage) {
+        const gp2 = { ...(st.galpage ?? {}) }
+        const cvs2 = { ...(gp2.canvases ?? {}) }
+        cvs2[gpid] = { ...(cvs2[gpid] ?? {}), [device]: nb }
+        gp2.canvases = cvs2
+        st.galpage = gp2
+      } else if (isHero) {
         const h2 = { ...(st.hero ?? {}) }
         h2.canvas = { ...(h2.canvas ?? {}), [device]: nb }
         st.hero = h2
@@ -746,6 +761,7 @@ export default function WebsitePage() {
       ;(document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-canvas-pick', id, boardId }, '*')
     }
     const add = (type: 'photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle') => {
+      if (isGalPage && !hasBoard(canvasData, device)) { flash('Drag any photo in the preview first, then add things.'); return }
       const it = newItem(type, device, Math.max(0, ...b.items.map((i) => i.z)) + 1)
       if (type === 'gallery') it.galleryId = galIds.find((id) => !b.items.some((i) => i.galleryId === id)) ?? galIds[0]
       setBoard({ ...b, items: [...b.items, it] })
@@ -808,7 +824,7 @@ export default function WebsitePage() {
         <div>
           <p className="mb-2 text-xs font-medium text-ink">Add to your layout</p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {((isHero ? ['title', 'subtitle', 'menu', 'logo', 'button', 'photo', 'heading', 'card'] : isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle')[]).map((tp) => (
+            {((isGalPage ? ['title', 'subtitle', 'button', 'photo', 'heading', 'card'] : isHero ? ['title', 'subtitle', 'menu', 'logo', 'button', 'photo', 'heading', 'card'] : isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle')[]).map((tp) => (
               <button key={tp} type="button" onClick={() => add(tp)} className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-line bg-white px-2 py-3 text-xs text-ink-soft transition hover:border-twilight hover:bg-twilight/5 hover:text-twilight">
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d={CV_ICONS[tp]} /></svg>
                 {names[tp]}
@@ -825,7 +841,8 @@ export default function WebsitePage() {
           ))}
         </div>
         <div>
-          <p className="mb-1 text-xs text-ink-soft">Section height · {Math.round(b.h)}%</p>
+          {isGalPage && !hasBoard(canvasData, device) && <p className="mb-2 text-xs text-ink-soft">Drag any photo in the preview to start arranging. Your layout is created automatically.</p>}
+        <p className="mb-1 text-xs text-ink-soft">Section height · {Math.round(b.h)}%</p>
           <Slider min={30} max={260} step={2} value={b.h} onChange={(v) => setBoard({ ...b, h: v })} />
         </div>
         {sel && (
@@ -918,7 +935,7 @@ export default function WebsitePage() {
             </div>
           </div>
         )}
-        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard(isHero ? heroStarter(device, heroSel.slice(0, 3)) : isAbout ? starter(device, ph2) : isGal ? galleryStarter(device, galIds) : blank(device)); pick(null) }}>
+        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { isGalPage ? upd((st: any) => { const gpp = { ...(st.galpage ?? {}) }; const cvs = { ...(gpp.canvases ?? {}) }; delete cvs[gpid]; gpp.canvases = cvs; st.galpage = gpp }) : setBoard(isHero ? heroStarter(device, heroSel.slice(0, 3)) : isAbout ? starter(device, ph2) : isGal ? galleryStarter(device, galIds) : blank(device)); pick(null) }}>
           Start over with the {isHero || isAbout ? 'starter' : isGal ? 'default' : 'blank'} layout
         </button>
       </div>
@@ -1610,8 +1627,19 @@ export default function WebsitePage() {
                   <div>
                     <p className="mb-2 text-sm text-ink">Photo layout</p>
                     <LayoutPicker value={T.galpage.layout} onChange={(v) => setIn('galpage', { layout: v })}
-                      options={[{ v: 'masonry', name: 'Masonry', thumb: THUMBS.phMasonry }, { v: 'grid', name: 'Even grid', thumb: THUMBS.phGrid }, { v: 'single', name: 'Single column', thumb: THUMBS.phSingle }, { v: 'tall', name: 'Stories 9:16', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="10" height="32" /><rect x="19" y="4" width="10" height="32" /><rect x="32" y="4" width="10" height="32" /><rect x="45" y="4" width="10" height="32" /></g></svg> }, { v: 'editorial', name: 'Editorial', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="4" width="48" height="14" fill="#D8D0C4" /><rect x="6" y="21" width="23" height="15" fill="#C9BFB2" /><rect x="31" y="21" width="23" height="15" fill="#C9BFB2" /></svg> }]} />
+                      options={[{ v: 'masonry', name: 'Masonry', thumb: THUMBS.phMasonry }, { v: 'grid', name: 'Even grid', thumb: THUMBS.phGrid }, { v: 'single', name: 'Single column', thumb: THUMBS.phSingle }, { v: 'tall', name: 'Stories 9:16', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="10" height="32" /><rect x="19" y="4" width="10" height="32" /><rect x="32" y="4" width="10" height="32" /><rect x="45" y="4" width="10" height="32" /></g></svg> }, { v: 'editorial', name: 'Editorial', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="4" width="48" height="14" fill="#D8D0C4" /><rect x="6" y="21" width="23" height="15" fill="#C9BFB2" /><rect x="31" y="21" width="23" height="15" fill="#C9BFB2" /></svg> }, { v: 'custom', name: 'Freestyle', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="6" width="20" height="14" rx="1" fill="#D8D0C4" /><rect x="30" y="10" width="24" height="12" rx="1" fill="#C9BFB2" /><rect x="12" y="24" width="20" height="11" rx="1" fill="#F2EBDD" stroke="#9A8A74" strokeWidth="0.8" strokeDasharray="2 1.5" /><rect x="29" y="31" width="5" height="5" fill="#B08D57" /></svg> }]} />
                   </div>
+                  {T.galpage.layout === 'custom' && (
+                    <div className="space-y-3 border-t border-line pt-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-ink">Gallery you are arranging</label>
+                        <select value={firstGid ?? ''} onChange={(e) => setFirstGid(e.target.value)} className={inputCls}>
+                          {cvGalleries.map((x) => <option key={x.id} value={x.id}>{x.title || 'Untitled'}</option>)}
+                        </select>
+                      </div>
+                      {firstGid && canvasPanel('gal:' + firstGid)}
+                    </div>
+                  )}
                   <Row label="Show photo count"><Switch on={T.galpage.showCount} onChange={(v) => setIn('galpage', { show_count: v })} /></Row>
                   <Row label="Show other galleries at the bottom"><Switch on={T.galpage.showMore} onChange={(v) => setIn('galpage', { show_more: v })} /></Row>
                   <Row label="Show the book button at the bottom"><Switch on={T.galpage.showButton} onChange={(v) => setIn('galpage', { show_button: v })} /></Row>
