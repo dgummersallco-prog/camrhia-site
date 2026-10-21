@@ -40,6 +40,35 @@ export async function POST(request: Request) {
       // ── Subscription started ────────────────────────────────────────────────
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
+        const payLineId = session.metadata?.payment_schedule_id
+        if (payLineId) {
+          // A client paid a photographer's invoice by card (not a Camrhia subscription).
+          if (session.payment_status === 'paid') {
+            const { data: paidLine } = await supabase
+              .from('payment_schedule')
+              .update({
+                status: 'paid',
+                paid_at: new Date().toISOString(),
+                method: 'Card',
+                stripe_session_id: session.id,
+                stripe_payment_intent: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+              })
+              .eq('id', payLineId)
+              .neq('status', 'paid')
+              .select('owner_id, wedding_id, label, amount')
+              .maybeSingle()
+            if (paidLine) {
+              await supabase.from('notifications').insert({
+                user_id: paidLine.owner_id,
+                type: 'payment',
+                title: 'Payment received',
+                body: '$' + Number(paidLine.amount).toFixed(2) + ' (' + paidLine.label + ') was paid by card.',
+                wedding_id: paidLine.wedding_id,
+              })
+            }
+          }
+          break
+        }
         const userId = session.client_reference_id
         const customerId = typeof session.customer === 'string' ? session.customer : null
         const subscriptionId = typeof session.subscription === 'string' ? session.subscription : null
