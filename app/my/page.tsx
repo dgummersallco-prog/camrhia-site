@@ -47,8 +47,10 @@ export default function MyPage() {
       const [a, b, p] = await Promise.all([
         sb.rpc('client_portal_sessions'),
         sb.rpc('get_my_wedding'),
-        sb.from('profiles').select('first_name, display_name, couple_names').eq('id', sess.session.user.id).maybeSingle(),
+        sb.from('profiles').select('first_name, display_name, couple_names, account_type').eq('id', sess.session.user.id).maybeSingle(),
       ])
+      const myType = (p.data as { account_type?: string } | null)?.account_type
+      if (myType === 'photographer' && ((a.data ?? []) as Portal[]).length === 0) { router.replace('/dashboard'); return }
       setRows(((a.data ?? []) as Portal[]))
       const m: Record<string, Mine> = {}
       ;((b.data ?? []) as Mine[]).forEach((r) => { m[r.wedding_id] = r })

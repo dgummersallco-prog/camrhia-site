@@ -57,6 +57,8 @@ export default function DashboardPage() {
       if (!sb) return
       const { data: sess } = await sb.auth.getSession()
       if (!sess.session) { router.replace('/login?next=/dashboard'); return }
+      const { data: me } = await sb.from('profiles').select('account_type').eq('id', sess.session.user.id).maybeSingle()
+      if ((me as { account_type?: string } | null)?.account_type === 'couple') { router.replace('/my'); return }
       const uid = sess.session.user.id
 
       const [prof, gal, favCount, favRecent, portRes, weekFavs, wed, su] = await Promise.all([
