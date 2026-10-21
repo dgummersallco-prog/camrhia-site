@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as RPE, ReactNode } from 'react'
 import { getBoard, hasBoard } from '@/lib/aboutCanvas'
-import type { Board, CItem, Dev } from '@/lib/aboutCanvas'
+import type { Board, CItem, CType, Dev } from '@/lib/aboutCanvas'
 
 type Props = {
   canvas: any
@@ -23,6 +23,7 @@ type Props = {
   galleries?: { id: string; title: string; coverUrl?: string | null }[]
   galleryHref?: (id: string) => string
   fallback?: (dev: Dev) => Board
+  renderSpecial?: (type: CType, it: CItem, dev: Dev) => ReactNode
   renderButton: (label: string) => ReactNode
 }
 
@@ -101,6 +102,14 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
   }
 
   function inner(it: CItem): ReactNode {
+    if (it.type === 'menu' || it.type === 'logo' || it.type === 'title' || it.type === 'subtitle') {
+      const al = it.align ?? (it.type === 'menu' ? 'right' : 'left')
+      return (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: al === 'center' ? 'center' : al === 'right' ? 'flex-end' : 'flex-start', textAlign: al, color: it.light ? '#fff' : undefined, pointerEvents: p.editing ? 'none' : undefined }}>
+          {p.renderSpecial ? p.renderSpecial(it.type, it, dev) : null}
+        </div>
+      )
+    }
     if (it.type === 'photo') {
       const url = it.src === 'about' ? p.aboutPhoto : it.src ? p.toUrl(it.src) : null
       return (

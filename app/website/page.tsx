@@ -733,13 +733,13 @@ export default function WebsitePage() {
       cvBridge.board = id ? boardId : null
       ;(document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-canvas-pick', id, boardId }, '*')
     }
-    const add = (type: 'photo' | 'card' | 'heading' | 'button' | 'gallery') => {
+    const add = (type: 'photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle') => {
       const it = newItem(type, device, Math.max(0, ...b.items.map((i) => i.z)) + 1)
       if (type === 'gallery') it.galleryId = galIds.find((id) => !b.items.some((i) => i.galleryId === id)) ?? galIds[0]
       setBoard({ ...b, items: [...b.items, it] })
       pick(it.id)
     }
-    const names: Record<string, string> = { photo: 'Photo', card: 'Text card', heading: 'Heading', button: 'Button', gallery: 'Gallery tile' }
+    const names: Record<string, string> = { photo: 'Photo', card: 'Text card', heading: 'Heading', button: 'Button', gallery: 'Gallery tile', menu: 'Menu', logo: 'Logo', title: 'Title', subtitle: 'Subtitle' }
     async function up(id: string, file: File) {
       const sb = supabase
       if (!sb) return
@@ -761,7 +761,7 @@ export default function WebsitePage() {
         <p className="text-sm text-ink">Free layout <span className="text-xs text-ink-soft">· arranging the {device} page</span></p>
         <p className="text-xs text-ink-soft">Drag anything in the preview to move it, and drag the small square on its corner to resize. To remove something, click it, then press the small × on its corner or the Delete key. Use the Phone / Desktop switch above the preview to arrange each size.</p>
         <div className="flex flex-wrap gap-2">
-          {((isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery')[]).map((tp) => (
+          {((isHero ? ['title', 'subtitle', 'menu', 'logo', 'button', 'photo', 'heading', 'card'] : isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle')[]).map((tp) => (
             <button key={tp} type="button" className={btnGhost} onClick={() => add(tp)}>+ {names[tp]}</button>
           ))}
         </div>
@@ -851,6 +851,15 @@ export default function WebsitePage() {
                 <input value={sel.text ?? ''} onChange={(e) => patch(sel.id, { text: e.target.value })} placeholder="Uses your site button wording" className={inputCls} />
               </div>
             )}
+            {(sel.type === 'title' || sel.type === 'subtitle' || sel.type === 'menu' || sel.type === 'logo') && (
+              <>
+                <p className="text-xs text-ink-soft">{sel.type === 'title' ? 'Shows your headline. Edit the words and size in this Hero section.' : sel.type === 'subtitle' ? 'Shows your location line. Edit the words in this Hero section.' : sel.type === 'menu' ? 'Shows your menu links. Words and size are in the Menu section.' : 'Shows your logo. Size is in the Logo section.'}</p>
+                <Row label="Align">
+                  <Seg value={sel.align ?? (sel.type === 'menu' ? 'right' : 'left')} options={[{ v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => patch(sel.id, { align: v as 'left' | 'center' | 'right' })} />
+                </Row>
+                {sel.type !== 'logo' && <Row label="White text"><Switch on={!!sel.light} onChange={(v) => patch(sel.id, { light: v })} /></Row>}
+              </>
+            )}
             <div className="flex flex-wrap gap-2 border-t border-line pt-3">
               <button type="button" className={btnGhost} onClick={() => patch(sel.id, { z: sel.z + 1 })}>Bring forward</button>
               <button type="button" className={btnGhost} onClick={() => patch(sel.id, { z: Math.max(0, sel.z - 1) })}>Send back</button>
@@ -858,8 +867,8 @@ export default function WebsitePage() {
             </div>
           </div>
         )}
-        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard(isAbout ? starter(device, ph2) : isGal ? galleryStarter(device, galIds) : blank(device)); pick(null) }}>
-          Start over with the {isAbout ? 'starter' : isGal ? 'default' : 'blank'} layout
+        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { setBoard(isHero ? heroStarter(device, heroSel.slice(0, 3)) : isAbout ? starter(device, ph2) : isGal ? galleryStarter(device, galIds) : blank(device)); pick(null) }}>
+          Start over with the {isHero || isAbout ? 'starter' : isGal ? 'default' : 'blank'} layout
         </button>
       </div>
     )

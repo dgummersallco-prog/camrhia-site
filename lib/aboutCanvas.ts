@@ -1,9 +1,10 @@
-export type CType = 'photo' | 'card' | 'heading' | 'button' | 'gallery'
+export type CType = 'photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle'
 export type Dev = 'desktop' | 'phone'
 export type CItem = {
   id: string; type: CType; x: number; y: number; w: number; h: number; z: number
   src?: string | null; radius?: number; title?: string; text?: string; fs?: number; bg?: boolean
   galleryId?: string; titleMode?: 'overlay' | 'below' | 'none'
+  align?: 'left' | 'center' | 'right'; light?: boolean
 }
 export type Board = { h: number; items: CItem[] }
 
@@ -58,6 +59,10 @@ export function getBoard(c: any, dev: Dev, photo2?: string | null, custom?: bool
 export function newItem(type: CType, dev: Dev, z: number): CItem {
   const ph = dev === 'phone'
   const id = 'n' + Date.now().toString(36)
+  if (type === 'menu') return { id, type, x: 8, y: 8, w: 50, h: ph ? 8 : 6, z, align: 'right' }
+  if (type === 'logo') return { id, type, x: 8, y: 8, w: ph ? 40 : 16, h: ph ? 8 : 7, z, align: 'left' }
+  if (type === 'title') return { id, type, x: 8, y: 8, w: ph ? 88 : 56, h: ph ? 20 : 12, z, align: 'left' }
+  if (type === 'subtitle') return { id, type, x: 8, y: 8, w: ph ? 88 : 56, h: ph ? 4 : 3, z, align: 'left' }
   if (type === 'photo') return { id, type, src: null, x: 8, y: 8, w: ph ? 40 : 24, h: ph ? 48 : 30, z, radius: 3 }
   if (type === 'card') return { id, type, x: 8, y: 8, w: ph ? 80 : 40, h: ph ? 40 : 24, z, fs: ph ? 3.6 : 1.45, bg: true, title: '', text: '' }
   if (type === 'heading') return { id, type, x: 8, y: 8, w: ph ? 80 : 50, h: ph ? 18 : 10, z, text: 'A little more about me', fs: ph ? 9 : 4.6 }
@@ -90,18 +95,31 @@ export function heroStarter(dev: Dev, srcs: string[]): Board {
   const list: (string | null)[] = srcs.length > 0 ? srcs.slice(0, 3) : [null]
   const n = list.length
   const d: number[][][] = [
-    [[2, 0, 96, 66]],
-    [[2, 0, 58, 66], [62, 0, 36, 66]],
-    [[2, 0, 56, 66], [62, 0, 36, 32], [62, 34, 36, 32]],
+    [[2, 38, 96, 40]],
+    [[2, 38, 58, 40], [62, 38, 36, 40]],
+    [[2, 38, 56, 40], [62, 38, 36, 19], [62, 59, 36, 19]],
   ]
   const p: number[][][] = [
-    [[0, 0, 100, 70]],
-    [[0, 0, 100, 56], [0, 60, 100, 56]],
-    [[0, 0, 100, 66], [0, 70, 48, 46], [52, 70, 48, 46]],
+    [[0, 54, 100, 60]],
+    [[0, 54, 100, 56], [0, 112, 100, 56]],
+    [[0, 54, 100, 62], [0, 120, 48, 48], [52, 120, 48, 48]],
   ]
   const rects = (ph ? p : d)[n - 1]
-  return {
-    h: ph ? 120 : 70,
-    items: list.map((src, i) => ({ id: 'p' + (i + 1), type: 'photo' as const, src, x: rects[i][0], y: rects[i][1], w: rects[i][2], h: rects[i][3], z: i + 1, radius: ph ? 6 : 3 })),
-  }
+  const photos: CItem[] = list.map((src, i) => ({ id: 'p' + (i + 1), type: 'photo' as const, src, x: rects[i][0], y: rects[i][1], w: rects[i][2], h: rects[i][3], z: i + 1, radius: ph ? 6 : 3 }))
+  const text: CItem[] = ph
+    ? [
+        { id: 'logo', type: 'logo', x: 4, y: 1, w: 40, h: 7, z: 10, align: 'left' },
+        { id: 'menu', type: 'menu', x: 50, y: 1, w: 46, h: 7, z: 10, align: 'right' },
+        { id: 'sub', type: 'subtitle', x: 4, y: 14, w: 92, h: 4, z: 10, align: 'left' },
+        { id: 'title', type: 'title', x: 4, y: 19, w: 92, h: 20, z: 10, align: 'left' },
+        { id: 'btn', type: 'button', x: 4, y: 42, w: 50, h: 8, z: 10 },
+      ]
+    : [
+        { id: 'logo', type: 'logo', x: 2, y: 1, w: 16, h: 7, z: 10, align: 'left' },
+        { id: 'menu', type: 'menu', x: 36, y: 2, w: 62, h: 5, z: 10, align: 'right' },
+        { id: 'sub', type: 'subtitle', x: 2, y: 12, w: 56, h: 3, z: 10, align: 'left' },
+        { id: 'title', type: 'title', x: 2, y: 16, w: 56, h: 12, z: 10, align: 'left' },
+        { id: 'btn', type: 'button', x: 2, y: 30, w: 20, h: 5, z: 10 },
+      ]
+  return { h: ph ? 172 : 80, items: [...photos, ...text] }
 }

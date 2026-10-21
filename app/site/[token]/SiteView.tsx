@@ -685,23 +685,55 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'mosaic' && (
           <header id="top">
-            {renderNav(false, true)}
-            <div className="mx-auto max-w-3xl px-6 pb-10 pt-12 text-center">
-              {subhead && <p className="cr-sub mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
-              <h1 style={h1Mid}>{headline}</h1>
-              <div className="mt-7">{cta()}</div>
-            </div>
-            <div className="mx-auto max-w-6xl px-6 pb-4">
+            <div className="mx-auto max-w-6xl px-4 pb-4">
               <AboutCanvas
                 canvas={(r as any).site_settings?.hero?.canvas} photo2={null} aboutPhoto={null} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
                 title={null} bio="" headStyle={headStyle} ink={ink} soft={soft} tint={tint}
                 bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId="hero"
                 fallback={(dev) => heroStarter(dev, mosaicSrcs.length > 0 ? mosaicSrcs : isPreview ? PH_SCENES.slice(0, 3) : [])}
+                renderSpecial={(type, it, dev) => {
+                  if (type === 'logo') {
+                    return (
+                      <a href={hrefs.home} style={{ display: 'inline-flex' }}>
+                        {logo ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} /> : <span style={{ ...headStyle, fontSize: 24, color: 'inherit' }}>{name}</span>}
+                      </a>
+                    )
+                  }
+                  if (type === 'title') return <h1 style={{ ...h1Mid, margin: 0, color: 'inherit' }}>{headline}</h1>
+                  if (type === 'subtitle') return subhead ? <p className="cr-sub text-[11px] uppercase tracking-[0.28em]" style={{ color: it.light ? '#fff' : accent, margin: 0 }}>{subhead}</p> : null
+                  if (type === 'menu') {
+                    if (dev === 'phone' || burger) {
+                      return (
+                        <button type="button" aria-label="Menu" onClick={() => setOpen(true)} style={{ lineHeight: 1 }}>
+                          <svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="currentColor" strokeWidth="3"><path d="M0 3h30M0 11h30M0 19h30" /></svg>
+                        </button>
+                      )
+                    }
+                    return (
+                      <ul className="flex flex-wrap gap-x-8 gap-y-2">
+                        {navItems.map((n) => (
+                          <li key={n.key}>
+                            <a href={n.href} className="text-[11px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body, fontSize: 'var(--menu)', opacity: n.active ? 1 : 0.8, borderBottom: n.active ? '1px solid currentColor' : '1px solid transparent', paddingBottom: 3 }}>{n.label}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    )
+                  }
+                  return null
+                }}
                 renderButton={(label) => (
                   <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
                 )}
               />
             </div>
+            {open && (
+              <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8" style={{ background: bg, color: ink }}>
+                <button aria-label="Close menu" onClick={() => setOpen(false)} className="absolute right-6 top-5 text-3xl" style={{ lineHeight: 1 }}>✕</button>
+                {navItems.map((n) => (
+                  <a key={n.key} href={n.href} onClick={() => setOpen(false)} className="text-4xl md:text-5xl" style={{ ...headStyle, opacity: n.active ? 1 : 0.75 }}>{n.label}</a>
+                ))}
+              </div>
+            )}
           </header>
         )}
 
