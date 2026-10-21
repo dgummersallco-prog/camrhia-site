@@ -20,7 +20,7 @@ export function starter(dev: Dev, photo2?: string | null): Board {
     }
   }
   return {
-    h: 78,
+    h: 88,
     items: [
       { id: 'p1', type: 'photo', src: 'about', x: 2, y: 0, w: 42, h: 58, z: 1, radius: 4 },
       { id: 'c1', type: 'card', x: 30, y: 30, w: 62, h: 44, z: 3, fs: 1.45, bg: true },
@@ -87,7 +87,7 @@ export function galleryStarter(dev: Dev, ids: string[]): Board {
     x: 2 + (i % cols) * gx, y: Math.floor(i / cols) * gy, w, h, z: 1, radius: 0, fs: ph ? 3.4 : 1.8, titleMode: 'overlay',
   }))
   const rows = Math.max(1, Math.ceil(ids.length / cols))
-  return { h: rows * gy, items }
+  return { h: Math.max(rows * gy, 88), items }
 }
 
 export function heroStarter(dev: Dev, srcs: string[]): Board {
@@ -121,5 +121,5 @@ export function heroStarter(dev: Dev, srcs: string[]): Board {
         { id: 'title', type: 'title', x: 2, y: 16, w: 56, h: 12, z: 10, align: 'left' },
         { id: 'btn', type: 'button', x: 2, y: 30, w: 20, h: 5, z: 10 },
       ]
-  return { h: ph ? 172 : 80, items: [...photos, ...text] }
+  return { h: ph ? 172 : 88, items: [...photos, ...text] }
 }

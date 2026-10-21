@@ -440,6 +440,18 @@ function Thumb({ kind }: { kind: string }) {
 
 import { heroStarter } from '@/lib/aboutCanvas'
 
+const CV_ICONS: Record<string, string> = {
+  photo: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6',
+  card: 'M4 5h16v14H4z M8 10h8 M8 14h5',
+  heading: 'M6 5v14 M18 5v14 M6 12h12',
+  button: 'M3 8h18v8H3z M8 12h8',
+  gallery: 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z',
+  menu: 'M4 6h16 M4 12h16 M4 18h16',
+  logo: 'M12 3l2.5 5.5 6 .8-4.4 4.1 1.1 6L12 16.6l-5.2 2.8 1.1-6L3.5 9.3l6-.8z',
+  title: 'M5 7V5h14v2 M12 5v14 M9 19h6',
+  subtitle: 'M4 9h16 M4 15h10',
+}
+
 export default function WebsitePage() {
   const router = useRouter()
   const [form, setForm] = useState<Site | null>(null)
@@ -758,23 +770,29 @@ export default function WebsitePage() {
     }
     return (
       <div className="space-y-4 border-t border-line pt-4">
-        <p className="text-sm text-ink">Free layout <span className="text-xs text-ink-soft">· arranging the {device} page</span></p>
-        <p className="text-xs text-ink-soft">Drag anything in the preview to move it, and drag the small square on its corner to resize. To remove something, click it, then press the small × on its corner or the Delete key. Use the Phone / Desktop switch above the preview to arrange each size.</p>
-        <div className="flex flex-wrap gap-2">
-          {((isHero ? ['title', 'subtitle', 'menu', 'logo', 'button', 'photo', 'heading', 'card'] : isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle')[]).map((tp) => (
-            <button key={tp} type="button" className={btnGhost} onClick={() => add(tp)}>+ {names[tp]}</button>
-          ))}
+        <p className="text-sm text-ink">Freestyle <span className="text-xs text-ink-soft">· arranging the {device} layout</span></p>
+        <p className="text-xs text-ink-soft">Drag a block in the preview to move it. Drag the gold square on its corner to resize. Tap the × next to a block's name below, or press Delete, to remove it. Use the Phone / Desktop switch above the preview to arrange each size.</p>
+        <div>
+          <p className="mb-2 text-xs font-medium text-ink">Add to your layout</p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {((isHero ? ['title', 'subtitle', 'menu', 'logo', 'button', 'photo', 'heading', 'card'] : isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle')[]).map((tp) => (
+              <button key={tp} type="button" onClick={() => add(tp)} className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-line bg-white px-2 py-3 text-xs text-ink-soft transition hover:border-twilight hover:bg-twilight/5 hover:text-twilight">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d={CV_ICONS[tp]} /></svg>
+                {names[tp]}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {b.items.map((i, n) => (
-            <button key={i.id} type="button" onClick={() => pick(i.id)}
-              className={`rounded-full border px-3 py-1 text-xs ${cvBoard === boardId && cvSel === i.id ? 'border-ink text-ink' : 'border-line text-ink-soft'}`}>
-              {names[i.type]} {n + 1}
-            </button>
+            <span key={i.id} className={'inline-flex items-center overflow-hidden rounded-full border text-xs ' + (cvBoard === boardId && cvSel === i.id ? 'border-ink text-ink' : 'border-line text-ink-soft')}>
+              <button type="button" onClick={() => pick(i.id)} className="px-3 py-1">{names[i.type]} {n + 1}</button>
+              <button type="button" aria-label="Remove" title="Remove" onClick={() => { setBoard({ ...b, items: b.items.filter((x) => x.id !== i.id) }); if (cvSel === i.id) pick(null) }} className="border-l border-line px-2 py-1 text-ink-soft hover:bg-red-50 hover:text-red-700">×</button>
+            </span>
           ))}
         </div>
         <div>
-          <p className="mb-1 text-xs text-ink-soft">Section height</p>
+          <p className="mb-1 text-xs text-ink-soft">Section height · {Math.round(b.h)}%</p>
           <Slider min={30} max={260} step={2} value={b.h} onChange={(v) => setBoard({ ...b, h: v })} />
         </div>
         {sel && (
@@ -879,14 +897,14 @@ export default function WebsitePage() {
     return (
       <>
         {list.map((c, n) => (
-          <Group key={c.id} open={cvNew === c.id} title={list.length > 1 ? `Custom section ${n + 1}` : 'Custom section'} hint="free layout"
+          <Group key={c.id} open={cvNew === c.id} title={list.length > 1 ? `Freestyle section ${n + 1}` : 'Freestyle section'} hint="freestyle"
             onOpen={() => { if (pg === 'galleries') setPreviewPage('galleries'); scrollPreview(c.id) }}>
             {sectionHead(c.id, true, false)}
             {canvasPanel(c.id)}
             <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => removeCustom(c.id)}>Delete this section</button>
           </Group>
         ))}
-        <button type="button" className={btnGhost + ' w-full'} onClick={() => addCustom(pg)}>+ Add a custom section</button>
+        <button type="button" className={btnGhost + ' w-full'} onClick={() => addCustom(pg)}>+ Add a freestyle section</button>
       </>
     )
   }
