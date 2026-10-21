@@ -27,7 +27,7 @@ export default function ClientContractPage() {
   const [contract, setContract] = useState<Contract | null>(null)
   const [ready, setReady] = useState(false)
   const [name, setName] = useState('')
-  const [style, setStyle] = useState('DancingScript')
+  const [style] = useState('DancingScript')
   const [agree, setAgree] = useState(false)
   const [signing, setSigning] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -111,18 +111,8 @@ export default function ClientContractPage() {
                   onChange={(e) => setName(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
                 />
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {STYLES.map((s) => (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => setStyle(s.key)}
-                      className={`rounded-xl border px-3 py-3 text-2xl text-ink ${style === s.key ? 'border-twilight bg-twilight/5 ring-2 ring-twilight/25' : 'border-line'}`}
-                      style={{ fontFamily: s.family }}
-                    >
-                      {name.trim() || 'Your name'}
-                    </button>
-                  ))}
+                <div className="mt-4 rounded-xl border border-line px-4 py-4 text-3xl text-ink" style={{ fontFamily: familyFor(style) }}>
+                  {name.trim() || 'Your name'}
                 </div>
                 <label className="mt-4 flex items-start gap-3 text-sm text-ink">
                   <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-5 w-5" />
