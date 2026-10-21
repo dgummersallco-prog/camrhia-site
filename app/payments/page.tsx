@@ -41,7 +41,7 @@ export default function PaymentsPage() {
 
   return (
     <div className="min-h-screen bg-paper">
-      <DashboardHeader active="billing" />
+      <DashboardHeader active="payments" />
       <main className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="font-fraunces text-3xl font-semibold text-ink">Card payments</h1>
         <p className="mt-2 text-sm text-ink-soft">
