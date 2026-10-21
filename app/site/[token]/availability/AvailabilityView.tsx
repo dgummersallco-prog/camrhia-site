@@ -143,6 +143,10 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const showPhoto = t.availability.photo && !!photo
   const stacked = L === 'centered'
+  const photoPos: string = (r as any).site_settings?.availability?.photoPos ?? 'side'
+  const photoSide = showPhoto && photoPos === 'side'
+  const photoBack = showPhoto && photoPos === 'background'
+  const photoAbove = showPhoto && photoPos === 'above'
 
   const headerBlock = (
     <div id="book-head">
@@ -178,7 +182,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   )
 
   const calBlock = t.calendar.show ? (
-    <section id="book-cal">
+    <section id="book-cal" style={{ zoom: 'var(--cal, 100%)' }}>
       <p style={stepLabel}>1 · Pick a date</p>
       <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} {...cal} onPick={(d) => setDate(d)} />
     </section>
@@ -215,7 +219,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
     <>
       <link rel="stylesheet" href={t.fontsHref} />
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
-      <div style={{ background: bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
+      <div style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <nav className={'mx-auto flex max-w-6xl px-6 py-4 ' + (t.menu.logoPos === 'center' ? 'flex-col items-center gap-3' : 'items-center justify-between' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : ''))}>
           <a href={`/site/${token}${qs}`} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>
             {logo ? (
@@ -228,23 +232,31 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
           <a href={`/site/${token}${qs}`} className="text-[11px] uppercase tracking-[0.2em]" style={{ fontSize: 'var(--menu)' }}>← Back</a>
         </nav>
 
-        {showPhoto && (
+        {photoAbove && (
           <div className="mx-auto max-w-5xl px-6 pt-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photo} alt="" className="w-full object-cover" style={{ aspectRatio: '21/9' }} />
           </div>
         )}
 
-        <main id="book-main" className={`mx-auto px-6 pb-24 pt-8 ${!stacked && !sent && calBlock ? 'max-w-5xl' : 'max-w-xl'}`}>
+        <div className={photoSide ? 'mx-auto grid max-w-6xl gap-8 px-6 pt-4 md:grid-cols-[5fr_7fr] md:gap-12' : ''}>
+          {photoSide && (
+            <div className="md:sticky md:top-6 md:self-start">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photo as string} alt="" className="aspect-[16/10] w-full object-cover md:aspect-[4/5]" />
+            </div>
+          )}
+          <main id="book-main" className={photoSide ? 'mx-auto w-full max-w-xl pb-24 pt-4' : `mx-auto px-6 pb-24 pt-8 ${!stacked && !sent && calBlock ? 'max-w-5xl' : 'max-w-xl'}`}>
           {headerBlock}
           {sent ? (
             <div className="mt-10">{sentBlock}</div>
-          ) : !stacked && calBlock ? (
+          ) : !stacked && !photoSide && calBlock ? (
             <div className="mt-10 grid gap-10 md:grid-cols-2 md:items-start md:gap-14">{calBlock}{formBlock}</div>
           ) : (
             <div className="mt-10 grid gap-10">{calBlock}{formBlock}</div>
           )}
         </main>
+        </div>
       </div>
     </>
   )

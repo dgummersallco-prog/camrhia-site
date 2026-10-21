@@ -1732,6 +1732,9 @@ export default function WebsitePage() {
 </>)}
 {tab === 'book' && (<>
                 <Group title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>
+                  <Row label="Photo position">
+                    <Seg value={S.availability?.photoPos ?? 'side'} options={[{ v: 'side', label: 'Beside' }, { v: 'above', label: 'Above' }, { v: 'background', label: 'Background' }]} onChange={(v) => setIn('availability', { photoPos: v })} />
+                  </Row>
                   <LayoutPicker value={T.availability.layout === 'centered' ? 'centered' : 'side'} onChange={(v) => setIn('availability', { layout: v })}
                     options={[
                       { v: 'side', name: 'Side by side', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="8" width="22" height="24" rx="2" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="33" y="10" width="21" height="3" /><rect x="33" y="16" width="21" height="3" /><rect x="33" y="22" width="21" height="3" /><rect x="33" y="28" width="21" height="4" rx="1" /></g></svg> },
@@ -1756,6 +1759,7 @@ export default function WebsitePage() {
                 </Group>
 
                 <Group title="3. Calendar" hint="colors and on/off" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-cal'), 500) }}>
+                  <SizeControl device={device} label="Calendar size" unit="%" min={50} max={160} step={5} value={T.sizes.calScale} onChange={(d, v) => setSize('calScale', d, v)} />
                   <Row label="Show the calendar"><Switch on={T.calendar.show} onChange={(v) => setIn('calendar', { show: v })} /></Row>
                   <p className="text-xs text-ink-soft">Dates and bookings always stay in sync with your app, whether the calendar is shown or not.</p>
                   {T.calendar.show && (
