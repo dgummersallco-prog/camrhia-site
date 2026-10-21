@@ -711,7 +711,7 @@ export default function WebsitePage() {
     }
   }
 
-  function canvasPanel(boardId: string) {
+  function canvasPanel(boardId: string, part: 'layout' | 'tiles' = 'layout') {
     const isAbout = boardId === 'about'
     const isGal = boardId === 'galleries'
     const isHero = boardId === 'hero'
@@ -768,6 +768,39 @@ export default function WebsitePage() {
         flash((e as { message?: string })?.message ?? 'Upload failed.')
       }
     }
+    if (part === 'tiles') {
+      const tiles = b.items.filter((i) => i.type === 'gallery')
+      return (
+        <div className="space-y-3">
+          {tiles.length === 0 && <p className="text-sm text-ink-soft">No gallery tiles yet. Add one in the Layout step above.</p>}
+          {tiles.map((tl, n) => (
+            <div key={tl.id} className="space-y-3 rounded-xl border border-line bg-white p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-ink">Tile {n + 1}</p>
+                <button type="button" className="text-xs text-ink-soft hover:text-red-700" onClick={() => setBoard({ ...b, items: b.items.filter((x) => x.id !== tl.id) })}>Remove ×</button>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-ink">Gallery</label>
+                <select value={tl.galleryId ?? ''} onChange={(e) => patch(tl.id, { galleryId: e.target.value })} className={inputCls}>
+                  {cvGalleries.map((g) => <option key={g.id} value={g.id}>{g.title || 'Untitled'}</option>)}
+                </select>
+              </div>
+              <Row label="Title">
+                <Seg value={tl.titleMode ?? 'overlay'} options={[{ v: 'overlay', label: 'On photo' }, { v: 'below', label: 'Below' }, { v: 'none', label: 'Hidden' }]} onChange={(v) => patch(tl.id, { titleMode: v as 'overlay' | 'below' | 'none' })} />
+              </Row>
+              <div>
+                <p className="mb-1 text-xs text-ink-soft">Title size</p>
+                <Slider min={0.8} max={5} step={0.1} value={tl.fs ?? 1.8} onChange={(v) => patch(tl.id, { fs: v })} />
+              </div>
+              <div>
+                <p className="mb-1 text-xs text-ink-soft">Rounded corners</p>
+                <Slider min={0} max={20} step={1} value={tl.radius ?? 0} onChange={(v) => patch(tl.id, { radius: v })} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    }
     return (
       <div className="space-y-4 border-t border-line pt-4">
         <p className="text-sm text-ink">Freestyle <span className="text-xs text-ink-soft">· arranging the {device} layout</span></p>
@@ -813,7 +846,7 @@ export default function WebsitePage() {
                 </div>
               </>
             )}
-            {sel.type === 'gallery' && (
+            {sel.type === 'gallery' && !isGal && (
               <>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-ink">Gallery</label>
@@ -1553,7 +1586,7 @@ export default function WebsitePage() {
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={(S.galindex?.layout ?? T.galindex.layout) as any} onChange={(v) => setIn('galindex', { layout: v })}
-                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }, { v: 'checker', name: 'Checkerboard', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="24" height="10" /><rect x="30" y="14" width="24" height="10" /><rect x="6" y="24" width="24" height="10" /></g><g fill="#B9AFA2"><rect x="34" y="8" width="16" height="2" /><rect x="10" y="18" width="16" height="2" /><rect x="34" y="28" width="16" height="2" /></g></svg> }, { v: 'rows', name: 'Alternating rows', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="5" y="5" width="24" height="14" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="34" y="9" width="20" height="3" /><rect x="34" y="14" width="14" height="2" /></g><g fill="#B9AFA2"><rect x="6" y="26" width="20" height="3" /><rect x="6" y="31" width="14" height="2" /></g><rect x="31" y="22" width="24" height="14" fill="#D8D0C4" /></svg> }, { v: 'custom', name: 'Custom', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="6" width="20" height="14" rx="1" fill="#D8D0C4" /><rect x="30" y="10" width="24" height="12" rx="1" fill="#C9BFB2" /><rect x="12" y="24" width="20" height="11" rx="1" fill="#F2EBDD" stroke="#9A8A74" strokeWidth="0.8" strokeDasharray="2 1.5" /><rect x="29" y="31" width="5" height="5" fill="#B08D57" /></svg> }]} />
+                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }, { v: 'checker', name: 'Checkerboard', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="24" height="10" /><rect x="30" y="14" width="24" height="10" /><rect x="6" y="24" width="24" height="10" /></g><g fill="#B9AFA2"><rect x="34" y="8" width="16" height="2" /><rect x="10" y="18" width="16" height="2" /><rect x="34" y="28" width="16" height="2" /></g></svg> }, { v: 'rows', name: 'Alternating rows', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="5" y="5" width="24" height="14" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="34" y="9" width="20" height="3" /><rect x="34" y="14" width="14" height="2" /></g><g fill="#B9AFA2"><rect x="6" y="26" width="20" height="3" /><rect x="6" y="31" width="14" height="2" /></g><rect x="31" y="22" width="24" height="14" fill="#D8D0C4" /></svg> }, { v: 'custom', name: 'Freestyle', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="6" width="20" height="14" rx="1" fill="#D8D0C4" /><rect x="30" y="10" width="24" height="12" rx="1" fill="#C9BFB2" /><rect x="12" y="24" width="20" height="11" rx="1" fill="#F2EBDD" stroke="#9A8A74" strokeWidth="0.8" strokeDasharray="2 1.5" /><rect x="29" y="31" width="5" height="5" fill="#B08D57" /></svg> }]} />
                   </div>
                   {(S.galindex?.layout ?? T.galindex.layout) === 'custom' && canvasPanel('galleries')}
                   {(S.galindex?.layout ?? T.galindex.layout) === 'checker' && (
@@ -1566,6 +1599,11 @@ export default function WebsitePage() {
                   )}
                 {secStyleBlock('portfolio')}
 </Group>
+{(S.galindex?.layout ?? T.galindex.layout) === 'custom' && (
+  <Group title="Gallery tiles" hint="which gallery each tile shows" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
+    {canvasPanel('galleries', 'tiles')}
+  </Group>
+)}
 <Group title="2. Inside a gallery" hint="what opens when a cover is clicked" onOpen={() => { setPreviewPage('gallery'); setTimeout(() => scrollPreview('gal-main'), 700) }}>
                   
                   
