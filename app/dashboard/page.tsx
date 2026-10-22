@@ -10,7 +10,7 @@ import { fetchUnreadCount } from '@/lib/unreadMessages'
 
 type Gal = { id: string; title: string; status: 'draft' | 'published'; gallery_photos: { count: number }[] }
 type Sess = { id: string; names: string | null; wedding_date: string | null; session_type: string | null; gallery_due_date: string | null; gallery_url: string | null; balance: string | null; paid_in_full: boolean | null }
-type Notif = { id: string; title: string | null; body: string | null; wedding_id: string | null }
+type Notif = { id: string; title: string | null; body: string | null; wedding_id: string | null; type: string | null }
 type Unsigned = { wedding_id: string; sent_at: string | null }
 type Activity = { id: string; title: string; when: string; thumb: string | null }
 
@@ -50,6 +50,8 @@ export default function DashboardPage() {
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [unreadMsgs, setUnreadMsgs] = useState(0)
   const [unsigned, setUnsigned] = useState<Unsigned[]>([])
+  const [collected, setCollected] = useState(0)
+  const [paidSessions, setPaidSessions] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -113,7 +115,7 @@ export default function DashboardPage() {
       setUnreadMsgs(await fetchUnreadCount(sb, uid))
       const { data: nrows } = await sb
         .from('notifications')
-        .select('id, title, body, wedding_id')
+        .select('id, title, body, wedding_id, type')
         .eq('user_id', uid)
         .eq('read', false)
         .order('created_at', { ascending: false })
@@ -121,6 +123,10 @@ export default function DashboardPage() {
       setNotifs((nrows ?? []) as Notif[])
       const { data: crows } = await sb.from('contracts').select('wedding_id, sent_at').eq('owner_id', uid).eq('status', 'sent')
       setUnsigned((crows ?? []) as Unsigned[])
+      const { data: prows } = await sb.from('payment_schedule').select('amount, wedding_id').eq('owner_id', uid).eq('status', 'paid')
+      const paidRows = (prows ?? []) as { amount: number | string | null; wedding_id: string | null }[]
+      setCollected(paidRows.reduce((n, r) => n + Number(r.amount ?? 0), 0))
+      setPaidSessions(new Set(paidRows.map((r) => r.wedding_id).filter(Boolean)).size)
       try {
         setSiteShared(localStorage.getItem('camrhia_site_shared') === '1')
         setHideSetup(localStorage.getItem('camrhia_hide_setup') === '1')
@@ -153,7 +159,7 @@ export default function DashboardPage() {
     { label: 'Create your first gallery', hint: 'One gallery per session', done: galleries.length > 0, href: '/galleries' },
     { label: 'Upload photos to a gallery', hint: 'Drag and drop works', done: !!firstWithPhotos, href: firstGallery ? `/galleries/${firstGallery.id}` : '/galleries' },
     { label: 'Publish a gallery', hint: 'Clients are notified in the app', done: published > 0, href: (readyDrafts[0] ?? firstGallery) ? `/galleries/${(readyDrafts[0] ?? firstGallery).id}` : '/galleries' },
-    { label: 'Share your site link', hint: 'Put it in your Instagram bio', done: siteShared },
+    { label: 'Share your site link', hint: 'Put it in your Instagram bio', done: siteShared, href: '/website' },
   ]
   const doneCount = steps.filter((x) => x.done).length
   const showSetup = !hideSetup && doneCount < steps.length
@@ -161,6 +167,7 @@ export default function DashboardPage() {
   const soonStr = (() => { const d = new Date(Date.now() + 7 * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })()
   const fmtDay = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
   const typeLabel = (t: string | null) => (t ? t.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()) : 'Session')
+  const usd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
   const dueGalleries = sessions
     .filter((x) => x.gallery_due_date && !x.gallery_url && x.wedding_date && x.wedding_date <= todayStr && x.gallery_due_date <= soonStr)
     .sort((a, b) => (a.gallery_due_date! < b.gallery_due_date! ? -1 : 1))
@@ -172,19 +179,28 @@ export default function DashboardPage() {
     setNotifs((n) => n.filter((x) => x.id !== id))
     if (supabase) await supabase.from('notifications').update({ read: true }).eq('id', id)
   }
+  async function markAllRead() {
+    const ids = updates.filter((u) => u.notifId).map((u) => u.notifId as string)
+    if (ids.length === 0) return
+    setNotifs((n) => n.filter((x) => !ids.includes(x.id)))
+    if (supabase) await supabase.from('notifications').update({ read: true }).in('id', ids)
+  }
   const owed = sessions.filter((x) => {
     if (x.paid_in_full || !x.wedding_date || x.wedding_date >= todayStr || !x.balance) return false
     return parseFloat(String(x.balance).replace(/[^0-9.]/g, '')) > 0
   })
-  const attention: { key: string; text: string; href: string; cta: string; notifId?: string }[] = [
+  const isPriorityNotif = (n: Notif) => n.type === 'inquiry' || n.type === 'timeline_edited' || n.title === 'Payment disputed'
+  type Item = { key: string; text: string; href: string; cta: string; notifId?: string }
+  const notifItem = (n: Notif): Item => ({
+    key: `n${n.id}`,
+    text: [n.title, n.body].filter(Boolean).join(': '),
+    href: n.wedding_id ? `/sessions/${n.wedding_id}` : '/dashboard',
+    cta: n.wedding_id ? 'Open session' : 'Got it',
+    notifId: n.id,
+  })
+  const attention: Item[] = [
     ...(unreadMsgs > 0 ? [{ key: 'msgs', text: `${unreadMsgs} unread conversation${unreadMsgs === 1 ? '' : 's'}`, href: '/messages', cta: 'Open messages' }] : []),
-    ...notifs.map((n) => ({
-      key: `n${n.id}`,
-      text: [n.title, n.body].filter(Boolean).join(': '),
-      href: n.wedding_id ? `/sessions/${n.wedding_id}` : '/dashboard',
-      cta: n.wedding_id ? 'Open session' : 'Got it',
-      notifId: n.id,
-    })),
+    ...notifs.filter(isPriorityNotif).map(notifItem),
     ...unsigned.map((u) => {
       const sx = sessions.find((x) => x.id === u.wedding_id)
       return { key: `c${u.wedding_id}`, text: `${sx?.names || 'A session'}: contract sent, waiting for a signature`, href: `/sessions/${u.wedding_id}`, cta: 'Open contract' }
@@ -197,6 +213,9 @@ export default function DashboardPage() {
       cta: 'Open galleries',
     })),
     ...readyDrafts.map((g) => ({ key: `d${g.id}`, text: `"${g.title}" has ${photoCount(g)} photos and is still a draft`, href: `/galleries/${g.id}`, cta: 'Review and publish' })),
+  ]
+  const updates: Item[] = [
+    ...notifs.filter((n) => !isPriorityNotif(n)).map(notifItem),
     ...emptyDrafts.map((g) => ({ key: `e${g.id}`, text: `"${g.title}" has no photos yet`, href: `/galleries/${g.id}`, cta: 'Upload photos' })),
     ...(recentFavs > 0 ? [{ key: 'fav', text: `Clients hearted ${recentFavs} photo${recentFavs === 1 ? '' : 's'} in the last 7 days`, href: '/galleries', cta: 'See galleries' }] : []),
   ]
@@ -225,6 +244,33 @@ export default function DashboardPage() {
                     <li key={a.key} className="flex flex-wrap items-center gap-3 py-3">
                       <span className="h-2 w-2 shrink-0 rounded-full bg-brass" />
                       <p className="min-w-0 flex-1 text-sm text-ink">{a.text}</p>
+                      <Link
+                        href={a.href}
+                        onClick={() => { if (a.notifId) markRead(a.notifId) }}
+                        className="shrink-0 text-sm font-medium text-twilight hover:underline"
+                      >{a.cta} →</Link>
+                      {a.notifId && (
+                        <button type="button" onClick={() => markRead(a.notifId!)} className="shrink-0 text-xs text-ink-soft hover:text-ink">Dismiss</button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {updates.length > 0 && (
+              <section className={`${card} mt-6`}>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="font-fraunces text-xl font-semibold text-ink">Updates</p>
+                  {updates.some((u) => u.notifId) && (
+                    <button type="button" onClick={markAllRead} className="text-xs text-ink-soft hover:text-ink">Mark all as read</button>
+                  )}
+                </div>
+                <ul className="divide-y divide-line">
+                  {updates.slice(0, 8).map((a) => (
+                    <li key={a.key} className="flex flex-wrap items-center gap-3 py-3">
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-line" />
+                      <p className="min-w-0 flex-1 text-sm text-ink-soft">{a.text}</p>
                       <Link
                         href={a.href}
                         onClick={() => { if (a.notifId) markRead(a.notifId) }}
@@ -287,25 +333,6 @@ export default function DashboardPage() {
                 <span className="font-fraunces text-lg font-semibold text-ink">New gallery</span>
                 <span className="text-xs text-ink-soft">Upload and deliver photos</span>
               </Link>
-              <Link href="/website" className={action}>
-                <span className="font-fraunces text-lg font-semibold text-ink">Edit website</span>
-                <span className="text-xs text-ink-soft">Update your website</span>
-              </Link>
-              {token ? (
-                <a href={`/site/${token}`} target="_blank" rel="noreferrer" className={action}>
-                  <span className="font-fraunces text-lg font-semibold text-ink">View my site</span>
-                  <span className="text-xs text-ink-soft">See what clients see</span>
-                </a>
-              ) : (
-                <div className={`${action} opacity-60`}>
-                  <span className="font-fraunces text-lg font-semibold text-ink">View my site</span>
-                  <span className="text-xs text-ink-soft">Finish setup in the app</span>
-                </div>
-              )}
-              <button onClick={copySite} disabled={!token} className={`${action} disabled:opacity-60`}>
-                <span className="font-fraunces text-lg font-semibold text-ink">{copied ? 'Copied!' : 'Copy site link'}</span>
-                <span className="text-xs text-ink-soft">For your bio and emails</span>
-              </button>
             </div>
 
             {/* Stats */}
@@ -321,6 +348,24 @@ export default function DashboardPage() {
                   <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{value}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Business */}
+            <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-3">
+              <div className={card}>
+                <p className="text-xs uppercase tracking-wider text-ink-soft">Sessions</p>
+                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{sessions.length}</p>
+              </div>
+              <div className={card}>
+                <p className="text-xs uppercase tracking-wider text-ink-soft">Collected</p>
+                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{usd(collected)}</p>
+                <p className="mt-1 text-xs text-ink-soft">Payments marked paid in Camrhia</p>
+              </div>
+              <div className={card}>
+                <p className="text-xs uppercase tracking-wider text-ink-soft">Average per session</p>
+                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{paidSessions > 0 ? usd(collected / paidSessions) : '—'}</p>
+                <p className="mt-1 text-xs text-ink-soft">{paidSessions > 0 ? `Across ${paidSessions} paid session${paidSessions === 1 ? '' : 's'}` : 'Shows once a payment is marked paid'}</p>
+              </div>
             </div>
 
             <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_320px]">
