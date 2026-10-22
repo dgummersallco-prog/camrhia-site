@@ -88,6 +88,12 @@ export default function MyAccountPage() {
             </section>
 
             <section className={card}>
+              <p className="mb-1 font-fraunces text-xl font-semibold text-ink">Payments</p>
+              <p className="mb-3 text-sm text-ink-soft">See what you've paid, what's still due, and your receipts.</p>
+              <a href="/my/payments" className="inline-block rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink hover:border-twilight">View payments</a>
+            </section>
+
+            <section className={card}>
               <p className="mb-1 font-fraunces text-xl font-semibold text-ink">Camrhia app</p>
               <p className="text-sm text-ink-soft">Get notifications and manage your sessions on your phone. Sign in with the same email and password.</p>
             </section>
