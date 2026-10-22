@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     // Camrhia keeps only enough to cover Stripe's processing fee (2.9% + 30 cents).
     const fee = Math.min(cents - 1, Math.round(cents * 0.029) + 30)
     const studio = (owner as any)?.studio_name || (owner as any)?.display_name || 'Photography'
-    const origin = new URL(request.url).origin
+    const origin = 'https://camrhia.com'
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',

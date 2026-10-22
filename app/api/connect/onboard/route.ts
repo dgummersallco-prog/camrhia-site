@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       await db.from('profiles').update({ stripe_connect_id: acct }).eq('id', auth.user.id)
     }
 
-    const origin = new URL(request.url).origin
+    const origin = 'https://camrhia.com'
     const link = await stripe.accountLinks.create({
       account: acct,
       type: 'account_onboarding',
