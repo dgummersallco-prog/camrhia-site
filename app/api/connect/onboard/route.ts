@@ -26,11 +26,12 @@ export async function POST(request: Request) {
     }
 
     const origin = 'https://camrhia.com'
+    const fromApp = !/Mozilla/i.test(request.headers.get('user-agent') || '')
     const link = await stripe.accountLinks.create({
       account: acct,
       type: 'account_onboarding',
-      refresh_url: origin + '/payments?connect=refresh',
-      return_url: origin + '/payments?connect=return',
+      refresh_url: origin + (fromApp ? '/connect-done?refresh=1' : '/payments?connect=refresh'),
+      return_url: origin + (fromApp ? '/connect-done' : '/payments?connect=return'),
     })
     return Response.json({ url: link.url })
   } catch (err: unknown) {
