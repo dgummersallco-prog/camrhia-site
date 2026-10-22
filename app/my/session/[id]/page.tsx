@@ -90,7 +90,7 @@ export default function ClientSessionPage() {
     setMine(m)
     const [w, p, s, c] = await Promise.all([
       sb.from('weddings').select('package_name, coverage, deliverables, guests, session_start_time, session_length_hours, total_price, timeline_approved_at, partner1_name, partner1_role, partner2_name, partner2_role, last_name, venue, wedding_date').eq('id', id).maybeSingle(),
-      sb.from('payment_schedule').select('id, label, amount, due_date, status, paid_at, method, sent_by_couple').eq('wedding_id', id).order('sort_order', { ascending: true }),
+      sb.from('payment_schedule').select('id, label, amount, due_date, status, paid_at, method, sent_by_couple, receipt_url').eq('wedding_id', id).order('sort_order', { ascending: true }),
       sb.from('shot_list').select('id, label, done').eq('wedding_id', id).order('sort_order', { ascending: true }),
       sb.from('wedding_contacts').select('id, name, role, phone').eq('wedding_id', id).order('sort_order', { ascending: true }),
     ])
@@ -369,6 +369,9 @@ export default function ClientSessionPage() {
                           </span>
                           <span className={p.status === 'paid' ? 'text-emerald-700' : 'text-ink'}>{money(p.amount)}</span>
                         </div>
+                          {p.status === 'paid' && (p as any).receipt_url && (
+                            <a href={(p as any).receipt_url} target="_blank" rel="noreferrer" className="mt-1 block text-xs font-semibold text-twilight hover:underline">View receipt</a>
+                          )}
                           {p.status !== 'paid' && cardReady && Number(p.amount) >= 0.5 && (
                             <button type="button" disabled={payingId === p.id} onClick={() => payByCard(p.id)} className="mt-2 block rounded-full bg-twilight px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{payingId === p.id ? "Opening checkout..." : "Pay " + money(p.amount) + " by card"}</button>
                           )}
