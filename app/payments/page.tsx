@@ -218,10 +218,9 @@ export default function PaymentsPage() {
             </>
           )}
           {err && <p className="mt-3 text-sm text-red-700">{err}</p>}
-        </section>
 
-        <section className={`${card} mt-6`}>
-          <p className="font-fraunces text-xl font-semibold text-ink">Other ways to get paid</p>
+          <div className="mt-6 border-t border-line pt-6">
+          <p className="font-fraunces text-lg font-semibold text-ink">Other ways to get paid</p>
           <p className="mt-1 text-sm text-ink-soft">Add Venmo, Zelle, PayPal and more. Your clients see these in the Camrhia app next to Pay by card.</p>
           {payMethods.length > 0 && (
             <ul className="mt-4 divide-y divide-line">
@@ -247,6 +246,7 @@ export default function PaymentsPage() {
           </div>
           <input value={mNote} onChange={(e) => setMNote(e.target.value)} placeholder="Note for clients (optional)"
             className="mt-2 w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25" />
+          </div>
         </section>
 
         <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
