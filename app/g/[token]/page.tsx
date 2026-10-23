@@ -256,6 +256,7 @@ export default function GalleryViewPage() {
   if (!data) return null
   const cover = data.photos.find((p) => p.id === data.coverId) ?? data.photos[0]
   const current = openIndex !== null ? list[openIndex] : null
+  const heart = brand?.accent || '#fb7185'
 
   return (
     <div className="min-h-screen bg-paper">
@@ -331,7 +332,8 @@ export default function GalleryViewPage() {
                 <button
                   onClick={() => toggleFav(p.id)}
                   aria-label="Favorite"
-                  className={`absolute right-2 top-2 rounded-full bg-black/40 p-2 text-white transition hover:bg-black/60 ${favs.has(p.id) ? 'text-rose-400' : 'sm:opacity-0 sm:group-hover:opacity-100'}`}
+                  style={favs.has(p.id) ? { color: heart } : undefined}
+                  className={`absolute right-2 top-2 rounded-full bg-black/40 p-2 text-white transition hover:bg-black/60 ${favs.has(p.id) ? '' : 'sm:opacity-0 sm:group-hover:opacity-100'}`}
                 >
                   <Heart filled={favs.has(p.id)} className="h-4 w-4" />
                 </button>
@@ -348,7 +350,7 @@ export default function GalleryViewPage() {
           <div className="flex items-center justify-between p-4 text-white" onClick={(e) => e.stopPropagation()}>
             <span className="text-sm opacity-70">{openIndex + 1} / {list.length}</span>
             <div className="flex items-center gap-4">
-              <button onClick={() => toggleFav(current.id)} aria-label="Favorite" className={favs.has(current.id) ? 'text-rose-400' : 'text-white'}>
+              <button onClick={() => toggleFav(current.id)} aria-label="Favorite" className="text-white" style={favs.has(current.id) ? { color: heart } : undefined}>
                 <Heart filled={favs.has(current.id)} className="h-6 w-6" />
               </button>
               {data.allowDownloads && (
