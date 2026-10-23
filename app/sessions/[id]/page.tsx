@@ -468,7 +468,7 @@ export default function SessionDetailPage() {
                     </div>
                   </div>
                   <div>
-                    <label className={lblCls}>Venue</label>
+                    <label className={lblCls}>Venue / location</label>
                     <input className={inCls} value={df.venue ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, venue: v })) }} onBlur={() => saveDetail('venue', 'text')} />
                   </div>
                   <div>
