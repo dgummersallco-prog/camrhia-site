@@ -3,7 +3,6 @@
 import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -97,6 +96,26 @@ export default function PackagesEditor() {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    const sb = supabase
+    if (!sb || !uid) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const refresh = () => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => { load() }, 600)
+    }
+    const ch = sb
+      .channel('pkgs-' + uid)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'packages', filter: `owner_id=eq.${uid}` }, refresh)
+      .subscribe()
+    window.addEventListener('focus', refresh)
+    return () => {
+      if (timer) clearTimeout(timer)
+      sb.removeChannel(ch)
+      window.removeEventListener('focus', refresh)
+    }
+  }, [uid, load])
+
   function flash(t: string) {
     setMsg(t)
     setTimeout(() => setMsg((m) => (m === t ? null : m)), 2000)
@@ -172,12 +191,11 @@ export default function PackagesEditor() {
 
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
-      <DashboardHeader active="portfolio" />
+      <DashboardHeader active="packages" />
       <main className="mx-auto max-w-3xl px-6 py-8">
-        <Link href="/portfolio" className="mb-4 inline-block text-sm text-ink-soft hover:text-twilight">← Your website</Link>
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Your website</p>
+            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Work</p>
             <h1 className="font-fraunces text-3xl font-semibold text-ink">Packages</h1>
             <p className="mt-1 text-sm text-ink-soft">Use the switch to show or hide a package on your site. Drag the dots to change the order. Changes also appear in the Camrhia app.</p>
           </div>
