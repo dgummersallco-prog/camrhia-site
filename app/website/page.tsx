@@ -535,6 +535,10 @@ export default function WebsitePage() {
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
   const [stageW, setStageW] = useState(0)
   const formRef = useRef<Site | null>(null)
+  const previewPageRef = useRef<string>('home')
+  const curKeyRef = useRef<string>('home|0')
+  const previewSrcRef = useRef<(k: string) => string>(() => '')
+  const [previewGid, setPreviewGid] = useState<string | null>(null)
   const [tms, setTms] = useState<Tm[]>([])
   const [pkgs, setPkgs] = useState<WPkg[]>([])
   const [tName, setTName] = useState('')
@@ -581,7 +585,17 @@ export default function WebsitePage() {
   }, [form, sendPreview])
   useEffect(() => {
     function onMsg(e: MessageEvent) {
-      if (e.data && e.data.type === 'camrhia-preview-ready') sendPreview()
+      if (e.data && e.data.type === 'camrhia-preview-ready') {
+        sendPreview()
+        const frame = document.getElementById('site-frame') as HTMLIFrameElement | null
+        const pg = e.data.page as string | null | undefined
+        if (frame && pg && e.source === frame.contentWindow && pg !== previewPageRef.current) {
+          frame.src = previewSrcRef.current(curKeyRef.current)
+          if (pg === 'gallery') setPreviewGid((e.data.gid as string | undefined) ?? null)
+          setTab(pg === 'availability' ? 'book' : pg === 'gallery' ? 'galleries' : (pg as 'home' | 'galleries' | 'about'))
+          setPreviewPage(pg as 'home' | 'galleries' | 'gallery' | 'about' | 'availability')
+        }
+      }
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
@@ -595,6 +609,8 @@ export default function WebsitePage() {
   }, [stageEl])
 
   const curKey = `${previewPage}|${showSent ? 1 : 0}`
+  curKeyRef.current = curKey
+  previewPageRef.current = previewPage
   useEffect(() => {
     setSeen((x) => (x.includes(curKey) ? x : [...x, curKey]))
     const t = setTimeout(sendPreview, 120)
@@ -1166,9 +1182,10 @@ export default function WebsitePage() {
     if (pg === 'availability') return `${b}/availability?preview=1${sent === '1' ? '&sent=1' : ''}`
     if (pg === 'about') return `${b}/about?preview=1`
     if (pg === 'galleries') return `${b}/galleries?preview=1`
-    if (pg === 'gallery') return firstGid ? `${b}/g/${firstGid}?preview=1` : `${b}/galleries?preview=1`
+    if (pg === 'gallery') { const gid = previewGid ?? firstGid; return gid ? `${b}/g/${gid}?preview=1` : `${b}/galleries?preview=1` }
     return `${b}?preview=1`
   }
+  previewSrcRef.current = previewSrc
   function scrollPreview(id: string) {
     const win = () => (document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow
     win()?.postMessage({ type: 'camrhia-outline', id }, '*')

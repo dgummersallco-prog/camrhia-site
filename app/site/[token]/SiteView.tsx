@@ -64,7 +64,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       }
     }
     window.addEventListener('message', onMsg)
-    window.parent?.postMessage({ type: 'camrhia-preview-ready' }, '*')
+    window.parent?.postMessage({ type: 'camrhia-preview-ready', ...(() => { const seg = window.location.pathname.split('/').filter(Boolean); const base = seg[0] === 'site' ? 2 : 0; const rest = seg[base]; const page = rest === 'about' ? 'about' : rest === 'galleries' ? 'galleries' : rest === 'g' ? 'gallery' : rest === 'availability' ? 'availability' : !rest ? 'home' : null; return { page, gid: rest === 'g' ? seg[base + 1] ?? null : null } })() }, '*')
     return () => window.removeEventListener('message', onMsg)
   }, [])
 
