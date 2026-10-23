@@ -1542,6 +1542,7 @@ export default function WebsitePage() {
 </Group>
 <Group title="5. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
+                  <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
                     <LayoutPicker value={T.portfolio.layout} onChange={(v) => setIn('portfolio', { layout: v })}
@@ -1636,6 +1637,7 @@ export default function WebsitePage() {
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>
                   )}
+                <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
                 {secStyleBlock('portfolio')}
 </Group>
 {(S.galindex?.layout ?? T.galindex.layout) === 'custom' && (

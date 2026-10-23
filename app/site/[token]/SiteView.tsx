@@ -368,7 +368,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 </div>
               </div>
             ) : L === 'rows' ? (
-              <div className="mx-auto max-w-5xl">
+              <div className="mx-auto" style={{ maxWidth: 'min(64rem, var(--cover-w))' }}>
                 {list.map((g, i) => {
                   const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
                   const u = photoUrl(cover?.storage_path)
@@ -402,15 +402,15 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 )}
               />
             ) : L === 'banners' ? (
-              <div className="flex flex-col" style={{ gap: 'calc(var(--gap) + 8px)' }}>
+              <div className="flex flex-col" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: 'calc(var(--gap) + 8px)' }}>
                 {list.map((g) => card(g, { aspectRatio: '21/9', minHeight: 180 }))}
               </div>
             ) : L === 'feature' ? (
-              <div className="grid md:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
+              <div className="grid md:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: 'calc(var(--gap) + 8px)' }}>
                 {list.map((g, i) => (i === 0 ? card(g, { aspectRatio: '16/10' }, 'md:col-span-2', true) : card(g, { aspectRatio: '4/5' })))}
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ gap: 'calc(var(--gap) + 8px)' }}>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: 'calc(var(--gap) + 8px)' }}>
                 {list.map((g) => card(g, { aspectRatio: t.cardRatio }))}
               </div>
             )}
