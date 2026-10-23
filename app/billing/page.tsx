@@ -142,7 +142,7 @@ export default function BillingPage() {
             <Link
               href="/login"
               className="inline-flex items-center rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
-              style={{ backgroundColor: '#A9545F', color: '#ffffff' }}
+              style={{ backgroundColor: 'var(--color-twilight)', color: '#ffffff' }}
             >
               Sign in →
             </Link>
@@ -228,7 +228,7 @@ export default function BillingPage() {
               ? 'border border-twilight text-twilight cursor-default'
               : 'bg-twilight text-white hover:bg-twilight/90'
           }`}
-          style={isCurrentPlan ? {} : { backgroundColor: '#A9545F', color: '#ffffff' }}
+          style={isCurrentPlan ? {} : { backgroundColor: 'var(--color-twilight)', color: '#ffffff' }}
         >
           {buttonLabel}
         </button>

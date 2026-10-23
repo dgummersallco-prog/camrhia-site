@@ -639,7 +639,7 @@ export default function GalleryManagePage() {
                           <span className="absolute left-2 top-2 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Cover</span>
                         )}
                         {favCounts[p.id] > 0 && (
-                          <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-rose-300">
+                          <span style={{ color: 'color-mix(in srgb, var(--color-twilight) 55%, white)' }} className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs">
                             ♥ {favCounts[p.id]}
                           </span>
                         )}
