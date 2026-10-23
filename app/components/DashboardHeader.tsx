@@ -97,16 +97,30 @@ export function DashboardHeader({ active }: { active: Tab }) {
     )
   }
 
+  const GROUPS: { label: string | null; tabs: string[] }[] = [
+    { label: null, tabs: ['dashboard'] },
+    { label: 'Clients', tabs: ['messages', 'sessions', 'calendar'] },
+    { label: 'Work', tabs: ['galleries', 'contracts', 'payments'] },
+    { label: 'Your brand', tabs: ['website', 'portfolio'] },
+    { label: 'Account', tabs: ['billing'] },
+  ]
+  const groupedNav = GROUPS.map((g, gi) => (
+    <div key={gi} className={gi === 0 ? '' : 'mt-5'}>
+      {g.label && <p className="mb-1.5 px-3.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-soft/70">{g.label}</p>}
+      <div className="flex flex-col gap-1">
+        {g.tabs.map((t) => item(ITEMS.find((i) => i.tab === t)!))}
+        {g.label === 'Account' && item({ tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
+      </div>
+    </div>
+  ))
+
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line bg-card px-4 py-6 xl:flex">
         <Link href="/" className="mb-8 px-2"><Wordmark className="text-3xl" /></Link>
-        <nav className="flex flex-1 flex-col gap-1">
-          {ITEMS.map((it) => item(it))}
-          <div className="mt-6 border-t border-line pt-6">
-            {item({ tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
-          </div>
+        <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          {groupedNav}
         </nav>
         <button onClick={signOut} className="rounded-xl px-3.5 py-2.5 text-left text-sm text-ink-soft transition hover:bg-line/60 hover:text-ink">
           Sign out
@@ -128,9 +142,8 @@ export function DashboardHeader({ active }: { active: Tab }) {
           </button>
         </div>
         {open && (
-          <nav className="flex flex-col gap-1 border-t border-line px-4 pb-4 pt-2">
-            {ITEMS.map((it) => item(it))}
-            {item({ tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
+          <nav className="flex flex-col border-t border-line px-4 pb-4 pt-3">
+            {groupedNav}
             <button onClick={signOut} className="rounded-xl px-3.5 py-2.5 text-left text-sm text-ink-soft">Sign out</button>
           </nav>
         )}
