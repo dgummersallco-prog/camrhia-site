@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 type Line = {
@@ -46,6 +47,24 @@ export function PaymentsPanel({ weddingId, w }: { weddingId: string; w: Record<s
   }, [weddingId])
 
   useEffect(() => { load() }, [load])
+
+  const [cardOff, setCardOff] = useState(false)
+  useEffect(() => {
+    async function check() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      const sess = data.session
+      if (!sess) return
+      if (w.owner_id && w.owner_id !== sess.user.id) return
+      try {
+        const res = await fetch('/api/connect/status', { method: 'POST', headers: { Authorization: 'Bearer ' + sess.access_token } })
+        const j = await res.json().catch(() => ({}))
+        setCardOff(res.ok && j.ready !== true)
+      } catch { /* ignore */ }
+    }
+    check()
+  }, [w.owner_id])
 
   async function ownerId(): Promise<string | null> {
     const sb = supabase
@@ -226,6 +245,13 @@ export function PaymentsPanel({ weddingId, w }: { weddingId: string; w: Record<s
         <p className="font-fraunces text-xl font-semibold text-ink">Payments</p>
         {!form && <button type="button" onClick={openAdd} className="text-sm text-twilight hover:underline">+ Add payment</button>}
       </div>
+
+      {cardOff && (
+        <Link href="/payments" className="mt-3 flex items-center gap-3 rounded-xl border border-twilight/30 bg-blush-wash px-4 py-3 text-sm text-ink transition hover:border-twilight">
+          <span className="flex-1">Let clients pay by card. Connect your bank.</span>
+          <span className="text-twilight">→</span>
+        </Link>
+      )}
 
       {loaded && lines.length === 0 && !form && (
         <div className="mt-2">
