@@ -1838,7 +1838,7 @@ export default function WebsitePage() {
                     {(() => {
                       const inner = Math.max(0, stageW - 24)
                       const phone = device === 'phone'
-                      const scale = phone ? 1 : inner > 0 ? Math.min(1, inner / 1280) : 0.5
+                      const scale = inner > 0 ? Math.min(1, inner / (phone ? 390 : 1280)) : phone ? 1 : 0.5
                       const w = phone ? 390 : 1280
                       const hCss = 'max(560px, calc(100vh - 14rem))'
                       return (
