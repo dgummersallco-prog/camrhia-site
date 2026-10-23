@@ -71,8 +71,8 @@ export default function DomainPage() {
       <main className="mx-auto max-w-3xl px-6 py-10">
         <Link href="/website" className="text-sm text-ink-soft hover:text-ink">← Your website</Link>
         <p className="mb-2 mt-4 font-mono text-xs uppercase tracking-widest text-brass">Your website</p>
-        <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">Use your own domain</h1>
-        <p className="mt-2 text-sm text-ink-soft">Already own a domain for your studio? Connect it and your Camrhia website, inquiry form and booking calendar will show up there, on your own address.</p>
+        <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">Your own web address</h1>
+        <p className="mt-2 text-sm text-ink-soft">Put your studio&apos;s name on your website. Connect a domain you own, like yourstudio.com, and your website, galleries and booking page all live there, under your name.</p>
 
         {!dom && !err && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
         {err && <p className="mt-6 text-sm text-red-700">{err}</p>}
@@ -80,7 +80,7 @@ export default function DomainPage() {
         {dom && !dom.domain && (
           <section className={`${card} mt-8`}>
             <p className="font-fraunces text-xl font-semibold text-ink">Step 1. Enter your domain</p>
-            <p className="mt-1 text-sm text-ink-soft">We recommend a subdomain like <span className="font-medium text-ink">book.yourstudio.com</span> or <span className="font-medium text-ink">www.yourstudio.com</span>. It is the simplest to set up and works with every domain company. Your main address can keep pointing to wherever it does today.</p>
+            <p className="mt-1 text-sm text-ink-soft">Type the address you want clients to see, like <span className="font-medium text-ink">yourstudio.com</span> or <span className="font-medium text-ink">book.yourstudio.com</span>. Not sure which? An address that starts with <span className="font-medium text-ink">www.</span> or <span className="font-medium text-ink">book.</span> is the quickest to set up and works with every domain company.</p>
             <div className="mt-4 flex flex-wrap gap-3">
               <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="book.yourstudio.com"
                 className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25" />
@@ -91,7 +91,7 @@ export default function DomainPage() {
 
         {dom?.domain && dom.status !== 'active' && dom.record && (
           <section className={`${card} mt-8`}>
-            <p className="font-fraunces text-xl font-semibold text-ink">Step 2. Add this record at your domain company</p>
+            <p className="font-fraunces text-xl font-semibold text-ink">Step 2. Add this record where you bought your domain</p>
             <p className="mt-1 text-sm text-ink-soft">Sign in to wherever you bought <span className="font-medium text-ink">{dom.domain}</span> (GoDaddy, Namecheap, Squarespace, Google and so on), open its DNS settings, and add this record.</p>
             <div className="mt-4 overflow-hidden rounded-xl border border-line">
               {([['Type', dom.record.type], ['Name', dom.record.name], ['Value', dom.record.value]] as [string, string][]).map(([k, v]) => (
@@ -105,7 +105,7 @@ export default function DomainPage() {
             <p className="mt-4 text-sm text-ink-soft">
               {dom.status === 'ssl'
                 ? 'Step 3. We found your record and are securing your site with HTTPS. This usually takes a few minutes.'
-                : 'Step 3. Come back here. We check every 20 seconds and it switches on by itself. It can take a few minutes, and sometimes up to a day.'}
+                : 'Step 3. Come back here. We check every 20 seconds and finish setup by ourselves. It usually takes a few minutes, and can take up to a day.'}
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button type="button" className={btn} onClick={check}>Check now</button>
@@ -120,7 +120,7 @@ export default function DomainPage() {
           <section className={`${card} mt-8`}>
             <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /><p className="text-sm font-semibold text-emerald-700">Your domain is live</p></div>
             <p className="mt-2 font-fraunces text-2xl font-semibold text-ink">{dom.domain}</p>
-            <p className="mt-1 text-sm text-ink-soft">Clients who visit this address see your Camrhia website. Your camrhia.com link keeps working too.</p>
+            <p className="mt-1 text-sm text-ink-soft">Clients who visit this address see your website, your galleries and your booking page.</p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <a href={`https://${dom.domain}`} target="_blank" rel="noreferrer" className={btn}>Open {dom.domain}</a>
               {!confirmRemove
