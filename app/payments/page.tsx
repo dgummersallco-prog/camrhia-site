@@ -29,6 +29,22 @@ const methodOf = (l: Line) => {
   return m ? m.charAt(0).toUpperCase() + m.slice(1) : 'Other'
 }
 
+type PayMethod = { type: string; handle: string; note: string }
+const METHOD_TYPES = [
+  { label: 'Venmo', ph: '@yourhandle' },
+  { label: 'Zelle', ph: 'Email or phone number' },
+  { label: 'Cash App', ph: '$cashtag' },
+  { label: 'PayPal', ph: 'PayPal email or @username' },
+  { label: 'Check', ph: 'Make checks payable to…' },
+  { label: 'Cash', ph: 'Any cash instructions (optional)' },
+  { label: 'Bank transfer', ph: 'Bank name, routing info, or instructions' },
+  { label: 'Other', ph: 'Details or handle' },
+]
+const tidyBank = (n: string) => {
+  const t = n === n.toUpperCase() ? n.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : n
+  return t.replace(/\bJpmorgan\b/, 'JPMorgan').replace(/\bNa\b/, 'NA')
+}
+
 export default function PaymentsPage() {
   const [st, setSt] = useState<St | null>(null)
   const [busy, setBusy] = useState(false)
@@ -37,6 +53,12 @@ export default function PaymentsPage() {
   const [names, setNames] = useState<Record<string, string>>({})
   const [filter, setFilter] = useState<'all' | 'unpaid' | 'paid'>('all')
   const [q, setQ] = useState('')
+  const [userId, setUserId] = useState<string | null>(null)
+  const [payMethods, setPayMethods] = useState<PayMethod[]>([])
+  const [mType, setMType] = useState('Venmo')
+  const [mHandle, setMHandle] = useState('')
+  const [mNote, setMNote] = useState('')
+  const [mSaving, setMSaving] = useState(false)
 
   useEffect(() => {
     async function run() {
@@ -45,6 +67,10 @@ export default function PaymentsPage() {
       const { data: sess } = await sb.auth.getSession()
       const uid = sess.session?.user.id
       if (!uid) return
+      setUserId(uid)
+      const { data: pr } = await sb.from('profiles').select('payment_methods').eq('id', uid).maybeSingle()
+      const raw = (pr as any)?.payment_methods
+      setPayMethods(Array.isArray(raw) ? raw : [])
       const { data } = await sb
         .from('payment_schedule')
         .select('id, wedding_id, label, amount, due_date, status, paid_at, method, sent_by_couple, stripe_session_id, receipt_url')
@@ -89,6 +115,23 @@ export default function PaymentsPage() {
     const j = await res.json().catch(() => ({}))
     if (!res.ok || !j.url) { setBusy(false); setErr(j.error || 'Could not start payment setup.'); return }
     window.location.href = j.url
+  }
+
+  async function saveMethods(next: PayMethod[]) {
+    if (!supabase || !userId) return
+    setMSaving(true)
+    const { error } = await supabase.from('profiles').update({ payment_methods: next }).eq('id', userId)
+    setMSaving(false)
+    if (error) { setErr(error.message); return }
+    setErr(null)
+    setPayMethods(next)
+  }
+  function addMethod() {
+    const h = mHandle.trim()
+    if (!h && mType !== 'Cash') return
+    saveMethods([...payMethods, { type: mType, handle: h, note: mNote.trim() }])
+    setMHandle('')
+    setMNote('')
   }
 
   const today = new Date().toISOString().slice(0, 10)
@@ -140,38 +183,21 @@ export default function PaymentsPage() {
 
           {st && st.ready && (
             <>
-              <div className="mt-4 flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />
-                <p className="text-sm font-semibold text-emerald-700">Card payments are on</p>
-              </div>
-              <div className="mt-5 grid items-center gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
-                <div className="rounded-xl border border-line bg-paper px-4 py-4">
-                  <p className="text-[10px] uppercase tracking-wider text-ink-soft">Client pays on</p>
-                  <div className="mt-1"><Wordmark className="text-2xl" /></div>
-                </div>
-                <span className="hidden text-ink-soft md:block">→</span>
-                <div className="rounded-xl border border-line bg-paper px-4 py-4">
-                  <p className="text-[10px] uppercase tracking-wider text-ink-soft">Processed securely by</p>
-                  <p className="mt-1 text-sm font-semibold text-ink">Powered by Stripe</p>
-                </div>
-                <span className="hidden text-ink-soft md:block">→</span>
-                <div className="rounded-xl border border-line bg-paper px-4 py-4">
-                  <p className="text-[10px] uppercase tracking-wider text-ink-soft">Paid out to</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-ink" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M3 10 12 4l9 6 M5 10v8 M9 10v8 M15 10v8 M19 10v8 M3 20h18" /></svg>
-                    <p className="truncate text-sm font-semibold text-ink">
-                      {st.bank?.name || 'Your bank account'}{st.bank?.last4 ? ` ••${st.bank.last4}` : ''}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-4 text-sm text-ink-soft">Clients see a Pay by card button on their booking fee and balance. You get a notification when someone pays, and the session updates on its own.</p>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+                <span className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />
+                  <span className="font-semibold text-emerald-700">Card payments on</span>
+                </span>
+                <span className="text-ink-soft">·</span>
+                <span className="text-ink">
+                  Camrhia <span className="text-ink-soft">→</span> Stripe <span className="text-ink-soft">→</span>{' '}
+                  {st.bank?.name ? tidyBank(st.bank.name) : 'your bank'}{st.bank?.last4 ? ` ••${st.bank.last4}` : ''}
+                </span>
                 {st.dashboardUrl && (
-                  <a href={st.dashboardUrl} target="_blank" rel="noreferrer" className="rounded-full border border-line px-5 py-2 text-sm text-ink hover:bg-paper-deep">Open my Stripe payouts</a>
+                  <a href={st.dashboardUrl} target="_blank" rel="noreferrer" className="ml-auto rounded-full border border-line px-4 py-1.5 text-xs text-ink hover:bg-paper-deep">Open Stripe payouts</a>
                 )}
-                <p className="text-xs text-ink-soft">Stripe takes its standard processing fee (2.9% + 30 cents) from each card payment. Camrhia adds nothing on top.</p>
               </div>
+              <p className="mt-2 text-xs text-ink-soft">Clients pay by card on their booking fee and balance. Stripe takes 2.9% + 30 cents per card payment. Camrhia adds nothing on top.</p>
             </>
           )}
 
@@ -192,6 +218,35 @@ export default function PaymentsPage() {
             </>
           )}
           {err && <p className="mt-3 text-sm text-red-700">{err}</p>}
+        </section>
+
+        <section className={`${card} mt-6`}>
+          <p className="font-fraunces text-xl font-semibold text-ink">Other ways to get paid</p>
+          <p className="mt-1 text-sm text-ink-soft">Add Venmo, Zelle, PayPal and more. Your clients see these in the Camrhia app next to Pay by card.</p>
+          {payMethods.length > 0 && (
+            <ul className="mt-4 divide-y divide-line">
+              {payMethods.map((m, i) => (
+                <li key={i} className="flex flex-wrap items-center gap-3 py-2.5 text-sm">
+                  <span className="w-28 shrink-0 rounded-full bg-paper px-3 py-1 text-center text-xs font-medium text-ink">{m.type}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-ink">{m.handle || '—'}</span>
+                    {m.note && <span className="block truncate text-xs text-ink-soft">{m.note}</span>}
+                  </span>
+                  <button type="button" disabled={mSaving} onClick={() => saveMethods(payMethods.filter((_, x) => x !== i))} className="shrink-0 text-xs text-ink-soft hover:text-red-700">Remove</button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-4 grid gap-2 sm:grid-cols-[150px_1fr_auto]">
+            <select value={mType} onChange={(e) => setMType(e.target.value)} className="rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink">
+              {METHOD_TYPES.map((t) => <option key={t.label} value={t.label}>{t.label}</option>)}
+            </select>
+            <input value={mHandle} onChange={(e) => setMHandle(e.target.value)} placeholder={METHOD_TYPES.find((t) => t.label === mType)?.ph}
+              className="min-w-0 rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25" />
+            <button type="button" disabled={mSaving || (!mHandle.trim() && mType !== 'Cash')} onClick={addMethod} className="rounded-full bg-twilight px-5 py-2 text-sm font-medium text-white disabled:opacity-50">{mSaving ? 'Saving…' : 'Add'}</button>
+          </div>
+          <input value={mNote} onChange={(e) => setMNote(e.target.value)} placeholder="Note for clients (optional)"
+            className="mt-2 w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25" />
         </section>
 
         <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
