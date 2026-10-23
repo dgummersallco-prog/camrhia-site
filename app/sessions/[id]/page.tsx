@@ -30,15 +30,27 @@ const btn = 'rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white t
 const btnGhost = 'rounded-xl border border-line px-4 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50'
 
 const EDIT_GROUPS: Record<string, string[]> = {
-  names: ['names'],
-  date: ['wedding_date'],
-  place: ['city', 'state'],
-  start: ['session_start_time'],
-  length: ['session_length_hours'],
-  package: ['package_name'],
-  total: ['total_price'],
-  venue: ['venue'],
-  delivery: ['delivery_days', 'gallery_due_date'],
+  header: ['names', 'wedding_date', 'city', 'state'],
+}
+
+const inCls = 'w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25'
+const lblCls = 'mb-1 block text-xs uppercase tracking-wider text-ink-soft'
+
+// "4:00 PM" <-> "16:00" so a time picker can edit the same text the app saves.
+function to24(t: string): string {
+  const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(t.trim())
+  if (!m) return ''
+  let h = parseInt(m[1], 10) % 12
+  if (m[3].toUpperCase() === 'PM') h += 12
+  return `${String(h).padStart(2, '0')}:${m[2]}`
+}
+function to12(t: string): string {
+  const m = /^(\d{2}):(\d{2})$/.exec(t)
+  if (!m) return ''
+  let h = parseInt(m[1], 10)
+  const ap = h >= 12 ? 'PM' : 'AM'
+  h = h % 12 || 12
+  return `${h}:${m[2]} ${ap}`
 }
 
 function Pen({ onClick, label }: { onClick: () => void; label: string }) {
@@ -68,6 +80,7 @@ export default function SessionDetailPage() {
   const [contract, setContract] = useState<Contract | null>(null)
   const [editKey, setEditKey] = useState<string | null>(null)
   const [ef, setEf] = useState<Record<string, string>>({})
+  const [df, setDf] = useState<Record<string, string>>({})
   const [savingEdit, setSavingEdit] = useState(false)
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [gals, setGals] = useState<Gal[]>([])
@@ -98,6 +111,15 @@ export default function SessionDetailPage() {
     ])
     if (wr.error || !wr.data) { setError(wr.error?.message ?? 'Session not found.'); return }
     setW(wr.data as Wedding)
+    const wd = wr.data as Wedding
+    setDf({
+      session_start_time: wd.session_start_time ?? '',
+      session_length_hours: wd.session_length_hours != null ? String(wd.session_length_hours) : '',
+      package_name: wd.package_name ?? '',
+      total_price: wd.total_price != null ? String(wd.total_price) : '',
+      venue: wd.venue ?? '',
+      gallery_due_date: wd.gallery_due_date ?? '',
+    })
     setNotes(((wr.data as Wedding).private_notes as string | null) ?? '')
     setEvents((ev.data ?? []) as Ev[])
     setContract(((ct.data ?? [])[0] as Contract | undefined) ?? null)
@@ -245,7 +267,9 @@ export default function SessionDetailPage() {
   }
 
   function pickDays(n: number) {
-    setEf((f) => ({ ...f, delivery_days: String(n), gallery_due_date: f.wedding_date ? dueFrom(f.wedding_date, n) : f.gallery_due_date }))
+    const due = w?.wedding_date ? dueFrom(w.wedding_date, n) : (df.gallery_due_date || null)
+    setDf((f) => ({ ...f, gallery_due_date: due ?? '' }))
+    saveDelivery(n, due)
   }
 
   async function saveEdit() {
@@ -295,54 +319,53 @@ export default function SessionDetailPage() {
 
   const cityState = w ? [w.city, w.state].filter(Boolean).join(', ') : ''
 
-  const field = (k: string, type = 'text', cls = '', ph = '') => (
+  const field = (k: string, type = 'text', cls = '', ph = '', focus = false) => (
     <input
-      autoFocus
+      autoFocus={focus}
       type={type}
       value={ef[k] ?? ''}
       placeholder={ph}
-      onChange={(e) => {
-        const v = e.target.value
-        setEf((f) => {
-          const n = { ...f, [k]: v }
-          if (k === 'gallery_due_date' && v && f.wedding_date) {
-            const diff = Math.round((new Date(`${v}T00:00:00`).getTime() - new Date(`${f.wedding_date}T00:00:00`).getTime()) / 86400000)
-            n.delivery_days = diff > 0 ? String(diff) : ''
-          }
-          return n
-        })
-      }}
+      onChange={(e) => { const v = e.target.value; setEf((f) => ({ ...f, [k]: v })) }}
       onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditKey(null) }}
       className={`rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25 ${cls}`}
     />
   )
 
-  const editBox = (children: React.ReactNode) => (
-    <div className="flex flex-wrap items-center gap-2">
-      {children}
-      <button type="button" disabled={savingEdit} onClick={saveEdit} className="rounded-lg bg-twilight px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50">{savingEdit ? 'Saving…' : 'Save'}</button>
-      <button type="button" onClick={() => setEditKey(null)} className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink">Cancel</button>
-    </div>
-  )
+  async function saveDetail(k: string, kind: 'text' | 'num') {
+    const sb = supabase
+    if (!sb || !w) return
+    const raw = (df[k] ?? '').trim()
+    const cur = w[k] == null ? '' : String(w[k])
+    if (raw === cur) return
+    let val: string | number | null = raw === '' ? null : raw
+    if (kind === 'num') { const n = parseFloat(raw); val = Number.isFinite(n) ? n : null }
+    const { error: e } = await sb.from('weddings').update({ [k]: val }).eq('id', id)
+    if (e) { setError(e.message); return }
+    setW((prev) => (prev ? { ...prev, [k]: val } : prev))
+    setNote('Saved.')
+    setTimeout(() => setNote(null), 2000)
+  }
 
-  const dRow = (key: string, label: string, display: React.ReactNode, editor: React.ReactNode) => (
-    <div key={key} className="py-2.5 text-sm">
-      {editKey === key ? (
-        <>
-          <p className="mb-1.5 text-xs uppercase tracking-wider text-ink-soft">{label}</p>
-          {editor}
-        </>
-      ) : (
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-ink-soft">{label}</span>
-          <span className="flex items-center gap-1 text-right text-ink">
-            {display || <span className="text-ink-soft/60">Not set</span>}
-            <Pen onClick={() => startEdit(key)} label={`Edit ${label.toLowerCase()}`} />
-          </span>
-        </div>
-      )}
-    </div>
-  )
+  async function saveDelivery(days: number | null, due: string | null) {
+    const sb = supabase
+    if (!sb || !w) return
+    const { error: e } = await sb.from('weddings').update({ delivery_days: days, gallery_due_date: due }).eq('id', id)
+    if (e) { setError(e.message); return }
+    setW((prev) => (prev ? { ...prev, delivery_days: days, gallery_due_date: due } : prev))
+    setNote('Saved.')
+    setTimeout(() => setNote(null), 2000)
+  }
+
+  function saveDue() {
+    const v = (df.gallery_due_date ?? '').trim()
+    if (v === (w?.gallery_due_date ?? '')) return
+    let days: number | null = null
+    if (v && w?.wedding_date) {
+      const diff = Math.round((new Date(`${v}T00:00:00`).getTime() - new Date(`${w.wedding_date}T00:00:00`).getTime()) / 86400000)
+      days = diff > 0 ? diff : null
+    }
+    saveDelivery(days, v || null)
+  }
 
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
@@ -361,65 +384,114 @@ export default function SessionDetailPage() {
                 {w.status && <span className="rounded-full bg-twilight/10 px-3 py-1 text-twilight">{w.status}</span>}
                 {w.paid_in_full && <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Paid in full</span>}
               </div>
-              {editKey === 'names' ? (
-                <div className="mt-3">{editBox(field('names', 'text', 'w-72 max-w-full'))}</div>
+              {editKey === 'header' ? (
+                <div className="mt-3 rounded-2xl border border-line bg-card p-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <label className={lblCls}>Name</label>
+                      {field('names', 'text', 'w-full', '', true)}
+                    </div>
+                    <div>
+                      <label className={lblCls}>Date</label>
+                      {field('wedding_date', 'date', 'w-full')}
+                    </div>
+                    <div className="grid grid-cols-[1fr_90px] gap-2">
+                      <div>
+                        <label className={lblCls}>City</label>
+                        {field('city', 'text', 'w-full')}
+                      </div>
+                      <div>
+                        <label className={lblCls}>State</label>
+                        {field('state', 'text', 'w-full')}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button type="button" disabled={savingEdit} onClick={saveEdit} className="rounded-lg bg-twilight px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{savingEdit ? 'Saving…' : 'Save'}</button>
+                    <button type="button" onClick={() => setEditKey(null)} className="rounded-lg border border-line px-4 py-2 text-sm text-ink">Cancel</button>
+                  </div>
+                </div>
               ) : (
-                <h1 className="mt-3 flex items-center gap-1 font-fraunces text-3xl font-semibold text-ink md:text-4xl">
-                  {w.names || 'Untitled session'}
-                  <Pen onClick={() => startEdit('names')} label="Edit name" />
-                </h1>
+                <>
+                  <h1 className="mt-3 flex items-center gap-1 font-fraunces text-3xl font-semibold text-ink md:text-4xl">
+                    {w.names || 'Untitled session'}
+                    <Pen onClick={() => startEdit('header')} label="Edit name, date and location" />
+                  </h1>
+                  <p className="mt-1 text-ink-soft">{fmtDate(w.wedding_date)}{cityState ? ` · ${cityState}` : ''}</p>
+                </>
               )}
-              <div className="mt-1 flex flex-wrap items-center gap-x-1 text-ink-soft">
-                {editKey === 'date' ? editBox(field('wedding_date', 'date')) : (
-                  <>
-                    <span>{fmtDate(w.wedding_date)}</span>
-                    <Pen onClick={() => startEdit('date')} label="Edit date" />
-                  </>
-                )}
-                <span className="mx-1">·</span>
-                {editKey === 'place' ? editBox(<>{field('city', 'text', 'w-40', 'City')}{field('state', 'text', 'w-20', 'State')}</>) : (
-                  <>
-                    <span>{cityState || 'Add city and state'}</span>
-                    <Pen onClick={() => startEdit('place')} label="Edit city and state" />
-                  </>
-                )}
-              </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Details */}
               <section className={card}>
-                <p className="mb-1 font-fraunces text-xl font-semibold text-ink">Details</p>
-                <div className="divide-y divide-line">
-                  {dRow('start', 'Start time', w.session_start_time, editBox(field('session_start_time', 'text', 'w-40')))}
-                  {dRow('length', 'Length', w.session_length_hours ? `${w.session_length_hours} hours` : '', editBox(<>{field('session_length_hours', 'number', 'w-28')}<span className="text-sm text-ink-soft">hours</span></>))}
-                  {dRow('package', 'Package', w.package_name, editBox(field('package_name', 'text', 'w-64 max-w-full')))}
-                  {dRow('total', 'Total', w.total_price ? `$${Number(w.total_price).toLocaleString()}` : '', editBox(field('total_price', 'number', 'w-36')))}
-                  {dRow('venue', 'Venue', w.venue, editBox(field('venue', 'text', 'w-64 max-w-full')))}
-                  {dRow(
-                    'delivery',
-                    'Gallery due',
-                    (w as Record<string, any>).gallery_due_date
-                      ? `${fmtDate((w as Record<string, any>).gallery_due_date)}${w.delivery_days ? ` (${w.delivery_days} days after)` : ''}`
-                      : '',
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {[7, 14, 21, 30, 45, 60].map((n) => (
-                          <button key={n} type="button" onClick={() => pickDays(n)}
-                            className={`rounded-full border px-3.5 py-1 text-sm transition ${ef.delivery_days === String(n) ? 'border-twilight bg-blush-wash text-twilight' : 'border-line text-ink hover:border-twilight'}`}>
-                            {n} days
-                          </button>
-                        ))}
-                      </div>
-                      {editBox(field('gallery_due_date', 'date'))}
-                      <p className="text-xs text-ink-soft">Your client sees this date as their delivery date.</p>
-                    </div>,
-                  )}
+                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Details</p>
+                <div className="grid grid-cols-2 divide-x divide-line overflow-hidden rounded-xl border border-line bg-paper">
+                  <div className="p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Start time</p>
+                    <input
+                      type="time"
+                      value={to24(df.session_start_time ?? '')}
+                      onChange={(e) => { const v = to12(e.target.value); setDf((f) => ({ ...f, session_start_time: v })) }}
+                      onBlur={() => saveDetail('session_start_time', 'text')}
+                      className="mt-1 w-full bg-transparent font-fraunces text-2xl font-semibold text-ink focus:outline-none"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Length</p>
+                    <div className="mt-1 flex items-baseline gap-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={df.session_length_hours ?? ''}
+                        onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, session_length_hours: v })) }}
+                        onBlur={() => saveDetail('session_length_hours', 'num')}
+                        className="w-16 bg-transparent font-fraunces text-2xl font-semibold text-ink focus:outline-none"
+                      />
+                      <span className="text-sm text-ink-soft">hours</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className={lblCls}>Package</label>
+                    <input className={inCls} value={df.package_name ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, package_name: v })) }} onBlur={() => saveDetail('package_name', 'text')} />
+                  </div>
+                  <div>
+                    <label className={lblCls}>Total</label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-soft">$</span>
+                      <input type="number" className={`${inCls} pl-7`} value={df.total_price ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, total_price: v })) }} onBlur={() => saveDetail('total_price', 'num')} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={lblCls}>Venue</label>
+                    <input className={inCls} value={df.venue ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, venue: v })) }} onBlur={() => saveDetail('venue', 'text')} />
+                  </div>
+                  <div>
+                    <label className={lblCls}>Gallery due</label>
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      {[7, 14, 21, 30, 45, 60].map((n) => (
+                        <button key={n} type="button" onClick={() => pickDays(n)}
+                          className={`rounded-full border px-3.5 py-1 text-sm transition ${Number(w.delivery_days) === n ? 'border-twilight bg-blush-wash text-twilight' : 'border-line text-ink hover:border-twilight'}`}>
+                          {n} days
+                        </button>
+                      ))}
+                    </div>
+                    <input type="date" className={inCls} value={df.gallery_due_date ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, gallery_due_date: v })) }} onBlur={saveDue} />
+                    <p className="mt-1 text-xs text-ink-soft">Your client sees this date as their delivery date.</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 divide-y divide-line">
                   <Row label="Coverage" value={w.coverage} />
                   <Row label="Deliverables" value={w.deliverables} />
                   <Row label="Guests" value={w.guests} />
                   <Row label="Balance" value={w.balance} />
                 </div>
+
                 <div className="mt-4">
                   <p className="mb-1 text-xs uppercase tracking-wider text-ink-soft">Private notes (only you see these)</p>
                   <textarea
