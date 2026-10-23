@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useSiteBase } from '@/app/site/useSiteBase'
 import { installPreviewGlow } from '@/lib/previewGlow'
 import React, { useEffect, useState } from 'react'
@@ -201,10 +202,10 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <div><label style={label}>Phone (optional)</label>
         <input style={input} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} autoComplete="tel" /></div>
       <div><label style={label}>What are you looking for?</label>
-        <select style={input} value={sessionType} onChange={(e) => setSessionType(e.target.value)}>
+        <Select style={input} value={sessionType} onChange={(e) => setSessionType(e.target.value)}>
           <option value="">Choose a session type</option>
           {SESSION_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select></div>
+        </Select></div>
       <div><label style={label}>Date</label>
         <input style={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
       <div><label style={label}>Location (city)</label>

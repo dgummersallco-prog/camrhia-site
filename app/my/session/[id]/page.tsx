@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -272,11 +273,11 @@ export default function ClientSessionPage() {
                       <>
                         <div className="flex gap-2">
                           <input value={f.p1} onChange={(e) => setF({ ...f, p1: e.target.value })} placeholder="First name" className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-ink focus:border-twilight focus:outline-none" />
-                          <select value={f.p1r} onChange={(e) => setF({ ...f, p1r: e.target.value })} className="rounded-xl border border-line bg-paper px-2 py-2 text-ink">{ROLES.map((r) => <option key={r}>{r}</option>)}</select>
+                          <Select value={f.p1r} onChange={(e) => setF({ ...f, p1r: e.target.value })} className="rounded-xl border border-line bg-paper px-2 py-2 text-ink">{ROLES.map((r) => <option key={r}>{r}</option>)}</Select>
                         </div>
                         <div className="flex gap-2">
                           <input value={f.p2} onChange={(e) => setF({ ...f, p2: e.target.value })} placeholder="Second name" className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-ink focus:border-twilight focus:outline-none" />
-                          <select value={f.p2r} onChange={(e) => setF({ ...f, p2r: e.target.value })} className="rounded-xl border border-line bg-paper px-2 py-2 text-ink">{ROLES.map((r) => <option key={r}>{r}</option>)}</select>
+                          <Select value={f.p2r} onChange={(e) => setF({ ...f, p2r: e.target.value })} className="rounded-xl border border-line bg-paper px-2 py-2 text-ink">{ROLES.map((r) => <option key={r}>{r}</option>)}</Select>
                         </div>
                         <input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} placeholder="Last name" className="w-full rounded-xl border border-line bg-paper px-3 py-2 text-ink focus:border-twilight focus:outline-none" />
                       </>

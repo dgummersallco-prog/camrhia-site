@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useState } from 'react'
 import AffiliateShell, { type ShellAffiliate } from '../../components/AffiliateShell'
 
@@ -113,30 +114,30 @@ function MasterBreakdown({ a }: { a: ShellAffiliate }) {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <label className="text-sm text-ink space-y-1.5 block">
             <span className="block font-medium">Plan</span>
-            <select className={`${selectCls} w-full`} value={planKey} onChange={(e) => setPlanKey(e.target.value)}>
+            <Select className={`${selectCls} w-full`} value={planKey} onChange={(e) => setPlanKey(e.target.value)}>
               {PLANS.map((p) => <option key={p.key} value={p.key}>{p.label} ({usd(p.price)})</option>)}
-            </select>
+            </Select>
           </label>
           <label className="text-sm text-ink space-y-1.5 block">
             <span className="block font-medium">Affiliate rate</span>
-            <select className={`${selectCls} w-full`} value={rate} onChange={(e) => setRate(Number(e.target.value))}>
+            <Select className={`${selectCls} w-full`} value={rate} onChange={(e) => setRate(Number(e.target.value))}>
               {rateOptions.map((r) => <option key={r} value={r}>{pct(r)}</option>)}
-            </select>
+            </Select>
           </label>
           <label className="text-sm text-ink space-y-1.5 block">
             <span className="block font-medium">On a master&apos;s team?</span>
-            <select className={`${selectCls} w-full`} value={hasMaster ? 'yes' : 'no'} onChange={(e) => setHasMaster(e.target.value === 'yes')}>
+            <Select className={`${selectCls} w-full`} value={hasMaster ? 'yes' : 'no'} onChange={(e) => setHasMaster(e.target.value === 'yes')}>
               <option value="no">No</option>
               <option value="yes">Yes</option>
-            </select>
+            </Select>
           </label>
         </div>
         {hasMaster ? (
           <label className="text-sm text-ink space-y-1.5 block max-w-xs">
             <span className="block font-medium">Master bonus rate</span>
-            <select className={`${selectCls} w-full`} value={override} onChange={(e) => setOverride(Number(e.target.value))}>
+            <Select className={`${selectCls} w-full`} value={override} onChange={(e) => setOverride(Number(e.target.value))}>
               {overrideOptions.map((r) => <option key={r} value={r}>{pct(r)}</option>)}
-            </select>
+            </Select>
           </label>
         ) : null}
       </section>

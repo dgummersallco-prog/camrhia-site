@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -713,7 +714,7 @@ export default function AffiliateDashboardPage() {
                 <label className="block text-sm font-medium text-ink mb-1.5">
                   Payout method
                 </label>
-                <select
+                <Select
                   value={payoutMethod}
                   onChange={(e) => setPayoutMethod(e.target.value)}
                   className="rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition"
@@ -723,7 +724,7 @@ export default function AffiliateDashboardPage() {
                   <option value="venmo">Venmo</option>
                   <option value="bank_transfer">Bank transfer</option>
                   <option value="zelle">Zelle</option>
-                </select>
+                </Select>
               </div>
 
               <div className="flex items-center gap-3">

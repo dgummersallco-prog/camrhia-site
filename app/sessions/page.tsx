@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -189,14 +190,14 @@ export default function SessionsPage() {
           </div>
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             {types.length > 1 && (
-              <select
+              <Select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="rounded-xl border border-line bg-card px-3 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none"
               >
                 <option value="">All types</option>
                 {types.map((t) => <option key={t} value={t}>{prettyType(t)}</option>)}
-              </select>
+              </Select>
             )}
             <input
               value={q}

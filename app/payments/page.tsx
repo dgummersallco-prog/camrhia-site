@@ -1,5 +1,6 @@
 "use client"
 
+import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -237,9 +238,9 @@ export default function PaymentsPage() {
             </ul>
           )}
           <div className="mt-4 grid gap-2 sm:grid-cols-[150px_1fr_auto]">
-            <select value={mType} onChange={(e) => setMType(e.target.value)} className="rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink">
+            <Select value={mType} onChange={(e) => setMType(e.target.value)} className="rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink">
               {METHOD_TYPES.map((t) => <option key={t.label} value={t.label}>{t.label}</option>)}
-            </select>
+            </Select>
             <input value={mHandle} onChange={(e) => setMHandle(e.target.value)} placeholder={METHOD_TYPES.find((t) => t.label === mType)?.ph}
               className="min-w-0 rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25" />
             <button type="button" disabled={mSaving || (!mHandle.trim() && mType !== 'Cash')} onClick={addMethod} className="rounded-full bg-twilight px-5 py-2 text-sm font-medium text-white disabled:opacity-50">{mSaving ? 'Saving…' : 'Add'}</button>

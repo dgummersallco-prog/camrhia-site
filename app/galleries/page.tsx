@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -206,7 +207,7 @@ export default function GalleriesPage() {
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-ink">Session <span className="font-normal text-ink-soft">(optional)</span></label>
-                <select
+                <Select
                   value={sessionPick}
                   onChange={(e) => {
                     const v = e.target.value
@@ -222,7 +223,7 @@ export default function GalleriesPage() {
                       {x.names || 'Untitled'}{x.wedding_date ? ` · ${new Date(`${x.wedding_date}T00:00:00`).toLocaleDateString()}` : ''}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <p className="mt-1.5 text-xs text-ink-soft">Link this gallery to one of your sessions.</p>
               </div>
             </div>

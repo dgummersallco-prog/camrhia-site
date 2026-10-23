@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -121,10 +122,10 @@ export default function NewSessionPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className={lab}>Session type</label>
-              <select className={input} value={type} onChange={(e) => { setType(e.target.value); setPkgId('') }}>
+              <Select className={input} value={type} onChange={(e) => { setType(e.target.value); setPkgId('') }}>
                 {types.length === 0 && <option value={type}>{type.replace(/_/g, ' ')}</option>}
                 {types.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
-              </select>
+              </Select>
             </div>
             <div>
               <label className={lab}>Date</label>
@@ -138,10 +139,10 @@ export default function NewSessionPage() {
           </div>
           <div>
             <label className={lab}>Package</label>
-            <select className={input} value={pkgId} onChange={(e) => setPkgId(e.target.value)}>
+            <Select className={input} value={pkgId} onChange={(e) => setPkgId(e.target.value)}>
               <option value="">No package</option>
               {typePkgs.map((p) => <option key={p.id} value={p.id}>{p.name}{p.price ? ` · ${p.price}` : ''}</option>)}
-            </select>
+            </Select>
             {pkg && (pkg.delivery_days ?? 0) > 0 && (
               <p className="mt-1 text-xs text-ink-soft">
                 Gallery delivered {pkg.delivery_days} days after the session{date ? `, by ${new Date(`${dueFrom(date, pkg.delivery_days as number)}T00:00:00`).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}.

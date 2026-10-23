@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -759,10 +760,10 @@ export default function PortfolioEditorPage() {
           <>
             <div>
               <label className={label}>Heading font</label>
-              <select className={input} value={form.title_font ?? ''} onChange={(e) => setField('title_font', e.target.value || null)}>
+              <Select className={input} value={form.title_font ?? ''} onChange={(e) => setField('title_font', e.target.value || null)}>
                 <option value="">Default</option>
                 {FONTS.map(([k, n, c]) => <option key={k} value={k}>{n} ({c})</option>)}
-              </select>
+              </Select>
               <div className="mt-2 flex gap-5 text-sm text-ink">
                 <label className="flex items-center gap-2"><input type="checkbox" checked={form.title_bold === true} onChange={(e) => setField('title_bold', e.target.checked)} />Bold</label>
                 <label className="flex items-center gap-2"><input type="checkbox" checked={form.title_italic === true} onChange={(e) => setField('title_italic', e.target.checked)} />Italic</label>
@@ -770,10 +771,10 @@ export default function PortfolioEditorPage() {
             </div>
             <div>
               <label className={label}>Body text font</label>
-              <select className={input} value={form.paragraph_font ?? ''} onChange={(e) => setField('paragraph_font', e.target.value || null)}>
+              <Select className={input} value={form.paragraph_font ?? ''} onChange={(e) => setField('paragraph_font', e.target.value || null)}>
                 <option value="">Default</option>
                 {FONTS.map(([k, n, c]) => <option key={k} value={k}>{n} ({c})</option>)}
-              </select>
+              </Select>
             </div>
             <ColorField swatches={brandSwatches} title="Headings" value={form.title_color} fallback="#A57E60" onChange={(v) => setField('title_color', v)} />
             <ColorField swatches={brandSwatches} title="Body text" value={form.paragraph_color} fallback="#202020" onChange={(v) => setField('paragraph_color', v)} />

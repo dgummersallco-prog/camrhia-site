@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -424,14 +425,14 @@ export default function SessionDetailPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   {loose.length > 0 && (
                     <>
-                      <select
+                      <Select
                         value={pick}
                         onChange={(e) => setPick(e.target.value)}
                         className="rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink"
                       >
                         <option value="">Attach an existing gallery…</option>
                         {loose.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
-                      </select>
+                      </Select>
                       <button className={btnGhost} disabled={!pick || busy} onClick={attach}>Attach</button>
                     </>
                   )}

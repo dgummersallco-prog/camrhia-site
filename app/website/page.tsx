@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -812,9 +813,9 @@ export default function WebsitePage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-ink">Gallery</label>
-                <select value={tl.galleryId ?? ''} onChange={(e) => patch(tl.id, { galleryId: e.target.value })} className={inputCls}>
+                <Select value={tl.galleryId ?? ''} onChange={(e) => patch(tl.id, { galleryId: e.target.value })} className={inputCls}>
                   {cvGalleries.map((g) => <option key={g.id} value={g.id}>{g.title || 'Untitled'}</option>)}
-                </select>
+                </Select>
               </div>
               <Row label="Title">
                 <Seg value={tl.titleMode ?? 'overlay'} options={[{ v: 'overlay', label: 'On photo' }, { v: 'below', label: 'Below' }, { v: 'none', label: 'Hidden' }]} onChange={(v) => patch(tl.id, { titleMode: v as 'overlay' | 'below' | 'none' })} />
@@ -882,9 +883,9 @@ export default function WebsitePage() {
               <>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-ink">Gallery</label>
-                  <select value={sel.galleryId ?? ''} onChange={(e) => patch(sel.id, { galleryId: e.target.value })} className={inputCls}>
+                  <Select value={sel.galleryId ?? ''} onChange={(e) => patch(sel.id, { galleryId: e.target.value })} className={inputCls}>
                     {cvGalleries.map((g) => <option key={g.id} value={g.id}>{g.title || 'Untitled'}</option>)}
-                  </select>
+                  </Select>
                 </div>
                 <Row label="Title">
                   <Seg value={sel.titleMode ?? 'overlay'} options={[{ v: 'overlay', label: 'On photo' }, { v: 'below', label: 'Below' }, { v: 'none', label: 'Hidden' }]} onChange={(v) => patch(sel.id, { titleMode: v as 'overlay' | 'below' | 'none' })} />
@@ -1654,9 +1655,9 @@ export default function WebsitePage() {
                     <div className="space-y-3 border-t border-line pt-4">
                       <div>
                         <label className="mb-1 block text-xs font-medium text-ink">Gallery you are arranging</label>
-                        <select value={firstGid ?? ''} onChange={(e) => setFirstGid(e.target.value)} className={inputCls}>
+                        <Select value={firstGid ?? ''} onChange={(e) => setFirstGid(e.target.value)} className={inputCls}>
                           {cvGalleries.map((x) => <option key={x.id} value={x.id}>{x.title || 'Untitled'}</option>)}
-                        </select>
+                        </Select>
                       </div>
                       {firstGid && canvasPanel('gal:' + firstGid)}
                     </div>

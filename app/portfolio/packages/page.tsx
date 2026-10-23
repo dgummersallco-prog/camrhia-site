@@ -1,5 +1,6 @@
 'use client'
 
+import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -209,10 +210,10 @@ export default function PackagesEditor() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className={lab}>Session type</label>
-                <select className={input} value={draft.session_type} onChange={(e) => setDraft({ ...draft, session_type: e.target.value })}>
+                <Select className={input} value={draft.session_type} onChange={(e) => setDraft({ ...draft, session_type: e.target.value })}>
                   {types.length === 0 && <option value={draft.session_type}>{typeLabel(draft.session_type)}</option>}
                   {types.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
-                </select>
+                </Select>
               </div>
               <div>
                 <label className={lab}>Gallery delivery (days after the session)</label>
