@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
-type Thread = { key: string; kind: 'inq' | 'wed'; id: string; name: string; snippet: string; lastAt: string; unread: boolean; waiting: boolean; lastMine: boolean; convertedId: string | null }
+type Thread = { key: string; kind: 'inq' | 'wed'; id: string; name: string; snippet: string; lastAt: string; unread: boolean; waiting: boolean; lastMine: boolean; avatar: string | null; convertedId: string | null }
 type Msg = { id: string; body: string; at: string; mine: boolean; type: string | null }
 type Filter = 'all' | 'unread' | 'waiting' | 'inq'
 
@@ -43,6 +43,16 @@ function dayLabel(iso: string): string {
 function initials(name: string): string {
   const words = name.split(/\s+/).filter((w) => w && /[a-z0-9]/i.test(w[0]))
   return (words.slice(0, 2).map((w) => w[0]).join('') || '?').toUpperCase()
+}
+
+const AVATAR_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
+
+function Avatar({ name, path, size = 'h-10 w-10' }: { name: string; path: string | null; size?: string }) {
+  if (path) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={AVATAR_BASE + path} alt="" className={`${size} shrink-0 rounded-full object-cover`} />
+  }
+  return <span className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-blush-wash text-xs font-semibold text-twilight`}>{initials(name)}</span>
 }
 
 const DETAIL_FIELDS: [string, string][] = [
@@ -157,7 +167,7 @@ export default function MessagesPage() {
     if (!sb) return
     const [inqR, wedR, hidR, readR, blkR] = await Promise.all([
       sb.from('inquiries').select('id, couple_id, couple_names, converted_wedding_id, created_at').eq('photographer_id', me),
-      sb.from('weddings').select('id, names').eq('owner_id', me),
+      sb.from('weddings').select('id, names, couple_user_id').eq('owner_id', me),
       sb.from('hidden_threads').select('*').eq('user_id', me),
       sb.from('thread_reads').select('inquiry_id, wedding_id, read_at').eq('user_id', me),
       sb.from('blocked_users').select('blocker_id, blocked_id').or(`blocker_id.eq.${me},blocked_id.eq.${me}`),
@@ -176,6 +186,10 @@ export default function MessagesPage() {
     const wedName = new Map<string, string>(weds.map((w) => [w.id, w.names]))
     const converted = new Set<string>(inqs.filter((i) => i.converted_wedding_id).map((i) => i.converted_wedding_id))
     const wedsOnly = weds.filter((w) => !converted.has(w.id))
+
+    const cpIds = Array.from(new Set([...inqs.map((i) => i.couple_id), ...weds.map((w) => w.couple_user_id)].filter(Boolean)))
+    const profR = cpIds.length ? await sb.from('profiles').select('id, avatar_path').in('id', cpIds) : { data: [] as any[] }
+    const avatarOf = new Map<string, string | null>(((profR.data ?? []) as any[]).map((p) => [p.id, p.avatar_path ?? null]))
 
     const [imR, wmR] = await Promise.all([
       inqs.length ? sb.from('inquiry_messages').select('inquiry_id, body, sender_id, created_at, message_type').in('inquiry_id', inqs.map((i) => i.id)).is('deleted_at', null).order('created_at', { ascending: false }) : Promise.resolve({ data: [] as any[] }),
@@ -202,6 +216,7 @@ export default function MessagesPage() {
         lastAt: l?.created_at ?? i.created_at,
         unread: isUnread(otherI.get(i.id), readAt.get('inq:' + i.id)),
         convertedId: i.converted_wedding_id ?? null,
+        avatar: avatarOf.get(i.couple_id) ?? null,
         waiting: !!l && l.sender_id !== me,
         lastMine: !!l && l.sender_id === me,
       })
@@ -214,6 +229,7 @@ export default function MessagesPage() {
         snippet: snip(l.body, null), lastAt: l.created_at,
         unread: isUnread(otherW.get(w.id), readAt.get('wed:' + w.id)),
         convertedId: null,
+        avatar: avatarOf.get(w.couple_user_id) ?? null,
         waiting: l.sender === 'couple',
         lastMine: l.sender === 'photographer',
       })
@@ -370,7 +386,7 @@ export default function MessagesPage() {
                       className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-paper ${sel === t.key ? 'bg-paper' : ''}`}
                     >
                       <span className="relative shrink-0">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blush-wash text-xs font-semibold text-twilight">{initials(t.name)}</span>
+                        <Avatar name={t.name} path={t.avatar} />
                         {t.unread && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-card bg-brass" />}
                       </span>
                       <span className="min-w-0 flex-1">
@@ -396,7 +412,10 @@ export default function MessagesPage() {
                 <>
                   <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                     <button type="button" onClick={() => { selRef.current = null; setSel(null) }} className="text-sm text-ink-soft hover:text-ink lg:hidden">← All</button>
-                    <p className="font-fraunces text-xl font-semibold text-ink">{cur.name}</p>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar name={cur.name} path={cur.avatar} size="h-9 w-9" />
+                      <p className="truncate font-fraunces text-xl font-semibold text-ink">{cur.name}</p>
+                    </div>
                     {cur.kind === 'wed'
                       ? <Link href={`/sessions/${cur.id}`} className="text-sm text-twilight hover:underline">Open session →</Link>
                       : cur.convertedId
