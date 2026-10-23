@@ -191,41 +191,53 @@ export default function GalleriesPage() {
         </div>
 
         {showNew && (
-          <form onSubmit={createGallery} className="mb-8 flex flex-wrap items-center gap-3">
-            <select
-              value={sessionPick}
-              onChange={(e) => {
-                const v = e.target.value
-                setSessionPick(v)
-                const sel = sessions.find((x) => x.id === v)
-                if (sel?.names && !title.trim()) setTitle(sel.names)
-              }}
-              className="w-full rounded-xl border border-line bg-card px-3 py-2.5 text-sm text-ink sm:w-64"
-            >
-              <option value="">Not linked to a session</option>
-              {sessions.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.names || 'Untitled'}{x.wedding_date ? ` · ${new Date(`${x.wedding_date}T00:00:00`).toLocaleDateString()}` : ''}
-                </option>
-              ))}
-            </select>
-            <input
-              autoFocus
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Gallery name, e.g. The Cooks Wedding"
-              className="min-w-[200px] flex-1 rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
-            />
-            <button
-              type="submit"
-              disabled={creating || !title.trim()}
-              className="whitespace-nowrap rounded-xl bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
-            >
-              {creating ? 'Creating…' : 'Create'}
-            </button>
-            <button type="button" onClick={() => { setShowNew(false); setTitle('') }} className="rounded-xl border border-line px-4 py-2.5 text-sm text-ink">
-              Cancel
-            </button>
+          <form onSubmit={createGallery} className="mb-8 rounded-2xl border border-line bg-card p-5">
+            <p className="mb-4 font-fraunces text-lg font-semibold text-ink">New gallery</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-ink">Gallery name</label>
+                <input
+                  autoFocus
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. The Cooks Wedding"
+                  className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-ink">Session <span className="font-normal text-ink-soft">(optional)</span></label>
+                <select
+                  value={sessionPick}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setSessionPick(v)
+                    const picked = sessions.find((x) => x.id === v)
+                    if (picked?.names && !title.trim()) setTitle(picked.names)
+                  }}
+                  className="w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+                >
+                  <option value="">No session yet</option>
+                  {sessions.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.names || 'Untitled'}{x.wedding_date ? ` · ${new Date(`${x.wedding_date}T00:00:00`).toLocaleDateString()}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-xs text-ink-soft">Link this gallery to one of your sessions.</p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="submit"
+                disabled={creating || !title.trim()}
+                className="whitespace-nowrap rounded-xl bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+              >
+                {creating ? 'Creating…' : 'Create gallery'}
+              </button>
+              <button type="button" onClick={() => { setShowNew(false); setTitle(''); setSessionPick('') }} className="rounded-xl border border-line px-4 py-2.5 text-sm text-ink">
+                Cancel
+              </button>
+            </div>
           </form>
         )}
 
