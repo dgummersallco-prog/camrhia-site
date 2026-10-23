@@ -541,6 +541,7 @@ export default function WebsitePage() {
   const [tFile, setTFile] = useState<File | null>(null)
   const [tBusy, setTBusy] = useState(false)
   const [previewKey, setPreviewKey] = useState(0)
+  const [seen, setSeen] = useState<string[]>([])
   const [candsDb, setCandsDb] = useState<string[]>([])
   const [extraHero, setExtraHero] = useState<string[]>([])
 
@@ -591,6 +592,20 @@ export default function WebsitePage() {
     setStageW(stageEl.clientWidth)
     return () => ro.disconnect()
   }, [stageEl])
+
+  const curKey = `${previewPage}|${showSent ? 1 : 0}`
+  useEffect(() => {
+    setSeen((x) => (x.includes(curKey) ? x : [...x, curKey]))
+    const t = setTimeout(sendPreview, 120)
+    return () => clearTimeout(t)
+  }, [curKey, sendPreview])
+  useEffect(() => {
+    const t = setTimeout(() => setSeen((x) => {
+      const add = ['galleries|0', 'about|0', 'availability|0'].filter((k) => !x.includes(k))
+      return add.length ? [...x, ...add] : x
+    }), 2500)
+    return () => clearTimeout(t)
+  }, [])
 
   const loadExtras = useCallback(async () => {
     const sb = supabase
@@ -1144,12 +1159,13 @@ export default function WebsitePage() {
     setTab(t)
     setPreviewPage(t === 'book' ? 'availability' : t === 'style' ? 'home' : t)
   }
-  function previewSrc() {
+  function previewSrc(k: string) {
+    const [pg, sent] = k.split('|')
     const b = `/site/${token}`
-    if (previewPage === 'availability') return `${b}/availability?preview=1${showSent ? '&sent=1' : ''}`
-    if (previewPage === 'about') return `${b}/about?preview=1`
-    if (previewPage === 'galleries') return `${b}/galleries?preview=1`
-    if (previewPage === 'gallery') return firstGid ? `${b}/g/${firstGid}?preview=1` : `${b}/galleries?preview=1`
+    if (pg === 'availability') return `${b}/availability?preview=1${sent === '1' ? '&sent=1' : ''}`
+    if (pg === 'about') return `${b}/about?preview=1`
+    if (pg === 'galleries') return `${b}/galleries?preview=1`
+    if (pg === 'gallery') return firstGid ? `${b}/g/${firstGid}?preview=1` : `${b}/galleries?preview=1`
     return `${b}?preview=1`
   }
   function scrollPreview(id: string) {
@@ -1835,13 +1851,15 @@ export default function WebsitePage() {
                       const hCss = 'max(560px, calc(100vh - 14rem))'
                       return (
                         <div style={{ width: Math.min(inner || w, w * scale), height: hCss, margin: '0 auto', overflow: 'hidden', borderRadius: 12, background: '#fff' }}>
-                          <iframe
-                            id="site-frame"
-                            key={`${previewKey}${previewPage}${showSent}`}
-                            src={previewSrc()}
-                            title="Website preview"
-                            style={{ width: w, height: `calc(${hCss} / ${scale})`, border: 0, transform: `scale(${scale})`, transformOrigin: 'top left', background: '#fff' }}
-                          />
+                          {seen.map((k) => (
+                            <iframe
+                              id={k === curKey ? 'site-frame' : undefined}
+                              key={`${previewKey}${k}`}
+                              src={previewSrc(k)}
+                              title="Website preview"
+                              style={{ display: k === curKey ? 'block' : 'none', width: w, height: `calc(${hCss} / ${scale})`, border: 0, transform: `scale(${scale})`, transformOrigin: 'top left', background: '#fff' }}
+                            />
+                          ))}
                         </div>
                       )
                     })()}
