@@ -33,6 +33,8 @@ const btn = 'rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white
 const btnGhost = 'rounded-full border border-line px-5 py-2.5 text-sm text-ink hover:bg-paper-deep'
 const tile = 'flex flex-col gap-1 rounded-2xl border border-line bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md'
 
+import InfoTip from '@/app/components/InfoTip'
+
 export default function DashboardPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
@@ -527,7 +529,7 @@ export default function DashboardPage() {
                 <p className="mt-1 text-xs text-ink-soft">Booked this year</p>
               </div>
               <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Booking rate</p>
+                <div className="flex items-center gap-1.5"><p className="text-xs uppercase tracking-wider text-ink-soft">Booking rate</p><InfoTip text="Out of everyone who inquired in the last 12 months, how many became a booked session. An inquiry counts as booked once you turn it into a session. Inquiries you have hidden are not counted." /></div>
                 <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{bookingRate === null ? '—' : `${bookingRate}%`}</p>
                 <p className="mt-1 text-xs text-ink-soft">{bookingRate === null ? 'Shows once you get inquiries' : `${inq.booked} of ${inq.total} inquiries in the last 12 months`}</p>
               </div>
