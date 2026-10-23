@@ -146,9 +146,17 @@ export default function SessionsPage() {
     </button>
   )
 
-  const stat = (label: string, value: number, warn?: boolean) => (
+  const stat = (label: string, value: number, warn?: boolean, info?: string) => (
     <div className="rounded-2xl border border-line bg-card px-5 py-4">
-      <p className="text-xs uppercase tracking-wider text-ink-soft">{label}</p>
+      <p className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-ink-soft">
+        {label}
+        {info && (
+          <span tabIndex={0} className="group relative inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line text-[10px] font-semibold normal-case text-ink-soft outline-none">
+            i
+            <span className="pointer-events-none absolute left-1/2 top-6 z-10 hidden w-64 -translate-x-1/2 rounded-xl border border-line bg-card p-3 text-left text-xs font-normal normal-case leading-relaxed tracking-normal text-ink shadow-lg group-hover:block group-focus:block">{info}</span>
+          </span>
+        )}
+      </p>
       <p className={`mt-1 font-fraunces text-2xl font-semibold ${warn && value > 0 ? 'text-amber-700' : 'text-ink'}`}>{value}</p>
     </div>
   )
@@ -169,7 +177,7 @@ export default function SessionsPage() {
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {stat('Next 30 days', stats.next30)}
             {stat('Shoots this month', stats.thisMonth)}
-            {stat('Needs attention', stats.attention, true)}
+            {stat('Needs attention', stats.attention, true, 'Sessions with a loose end: a contract you sent that is still waiting for a signature, or a past session that has no gallery delivered yet or an open balance.')}
           </div>
         )}
 
