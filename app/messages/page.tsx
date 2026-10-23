@@ -6,9 +6,9 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
-type Thread = { key: string; kind: 'inq' | 'wed'; id: string; name: string; snippet: string; lastAt: string; unread: boolean; convertedId: string | null }
+type Thread = { key: string; kind: 'inq' | 'wed'; id: string; name: string; snippet: string; lastAt: string; unread: boolean; waiting: boolean; lastMine: boolean; convertedId: string | null }
 type Msg = { id: string; body: string; at: string; mine: boolean; type: string | null }
-type Filter = 'all' | 'unread' | 'inq'
+type Filter = 'all' | 'unread' | 'waiting' | 'inq'
 
 function isUnread(otherAt: string | undefined, readAt: string | undefined): boolean {
   if (!otherAt) return false
@@ -106,6 +106,13 @@ function Body({ m }: { m: Msg }) {
   return <>{m.body}</>
 }
 
+const QUICK: { label: string; text: string }[] = [
+  { label: 'Thanks for reaching out', text: "Thank you so much for reaching out! I'd love to hear more about what you have in mind. What date and location are you thinking?" },
+  { label: 'Availability', text: "I'd love to work with you. Let me check my calendar and get back to you with my availability shortly." },
+  { label: 'Next steps', text: "The next step is to pick a package and lock in your date. Let me know which one feels right and I'll send over the contract." },
+  { label: 'Follow up', text: "Just following up to see if you had any questions. I'd love to get your date on the calendar!" },
+]
+
 export default function MessagesPage() {
   const router = useRouter()
   const [uid, setUid] = useState<string | null>(null)
@@ -121,6 +128,7 @@ export default function MessagesPage() {
   const [detail, setDetail] = useState<Record<string, any> | null>(null)
   const selRef = useRef<string | null>(null)
   const endRef = useRef<HTMLDivElement | null>(null)
+  const autoRef = useRef(false)
 
   const markRead = useCallback(async (me: string, t: { kind: 'inq' | 'wed'; id: string }) => {
     const sb = supabase
@@ -190,10 +198,12 @@ export default function MessagesPage() {
       out.push({
         key: 'inq:' + i.id, kind: 'inq', id: i.id,
         name: (i.converted_wedding_id && wedName.get(i.converted_wedding_id)) || i.couple_names || 'Client',
-        snippet: l ? snip(l.body, l.message_type) : 'No messages yet',
+        snippet: l ? (snip(l.body, l.message_type) === 'Attachment' ? 'Sent their details' : snip(l.body, l.message_type)) : 'No messages yet',
         lastAt: l?.created_at ?? i.created_at,
         unread: isUnread(otherI.get(i.id), readAt.get('inq:' + i.id)),
         convertedId: i.converted_wedding_id ?? null,
+        waiting: !!l && l.sender_id !== me,
+        lastMine: !!l && l.sender_id === me,
       })
     })
     wedsOnly.forEach((w) => {
@@ -204,6 +214,8 @@ export default function MessagesPage() {
         snippet: snip(l.body, null), lastAt: l.created_at,
         unread: isUnread(otherW.get(w.id), readAt.get('wed:' + w.id)),
         convertedId: null,
+        waiting: l.sender === 'couple',
+        lastMine: l.sender === 'photographer',
       })
     })
     out.sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1))
@@ -292,11 +304,20 @@ export default function MessagesPage() {
     setThreads((list) => list.map((x) => (x.key === sel ? { ...x, unread: false } : x)))
   }
 
+  useEffect(() => {
+    if (autoRef.current || !ready || sel || threads.length === 0) return
+    if (typeof window === 'undefined' || window.innerWidth < 1024) return
+    autoRef.current = true
+    open(threads[0])
+  }, [ready, threads, sel])
+
   const cur = threads.find((t) => t.key === sel) ?? null
   const unreadCount = threads.filter((t) => t.unread).length
+  const waitingCount = threads.filter((t) => t.waiting).length
   const needle = q.trim().toLowerCase()
   const shown = threads.filter((t) => {
     if (filter === 'unread' && !t.unread) return false
+    if (filter === 'waiting' && !t.waiting) return false
     if (filter === 'inq' && t.kind !== 'inq') return false
     if (needle && !(t.name.toLowerCase().includes(needle) || t.snippet.toLowerCase().includes(needle))) return false
     return true
@@ -334,9 +355,9 @@ export default function MessagesPage() {
                 className="w-full rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
               />
               <div className="flex gap-1 rounded-full border border-line bg-card p-1">
-                {([['all', 'All'], ['unread', `Unread${unreadCount ? ` (${unreadCount})` : ''}`], ['inq', 'Inquiries']] as [Filter, string][]).map(([v, label]) => (
+                {([['all', 'All'], ['unread', `Unread${unreadCount ? ` (${unreadCount})` : ''}`], ['waiting', `To reply${waitingCount ? ` (${waitingCount})` : ''}`], ['inq', 'Inquiries']] as [Filter, string][]).map(([v, label]) => (
                   <button key={v} type="button" onClick={() => setFilter(v)}
-                    className={`flex-1 rounded-full px-3 py-1.5 text-xs transition ${filter === v ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}>{label}</button>
+                    className={`flex-1 rounded-full px-2 py-1.5 text-xs transition ${filter === v ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}>{label}</button>
                 ))}
               </div>
               <ul className="min-h-0 flex-1 divide-y divide-line overflow-y-auto rounded-2xl border border-line bg-card">
@@ -357,7 +378,10 @@ export default function MessagesPage() {
                           <span className={`truncate text-sm ${t.unread ? 'font-semibold text-ink' : 'text-ink'}`}>{t.name}</span>
                           <span className="shrink-0 text-xs text-ink-soft">{when(t.lastAt)}</span>
                         </span>
-                        <span className="block truncate text-xs text-ink-soft">{t.kind === 'inq' ? 'Inquiry · ' : ''}{t.snippet}</span>
+                        <span className="flex items-center justify-between gap-2 text-xs text-ink-soft">
+                          <span className="truncate">{t.kind === 'inq' ? 'Inquiry · ' : ''}{t.lastMine ? 'You: ' : ''}{t.snippet}</span>
+                          {t.waiting && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">Reply</span>}
+                        </span>
                       </span>
                     </button>
                   </li>
@@ -413,7 +437,13 @@ export default function MessagesPage() {
                     <div ref={endRef} />
                   </div>
                   {error && <p className="mt-2 shrink-0 text-sm text-red-600">{error}</p>}
-                  <div className="mt-3 flex shrink-0 gap-2">
+                  <div className="mt-3 flex shrink-0 gap-2 overflow-x-auto">
+                    {QUICK.map((qr) => (
+                      <button key={qr.label} type="button" onClick={() => setReply((r) => (r.trim() ? r.trimEnd() + '\n' + qr.text : qr.text))}
+                        className="whitespace-nowrap rounded-full border border-line px-3 py-1 text-xs text-ink-soft transition hover:border-twilight hover:text-ink">{qr.label}</button>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex shrink-0 gap-2">
                     <textarea
                       rows={2}
                       value={reply}
