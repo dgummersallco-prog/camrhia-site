@@ -26,7 +26,9 @@ export async function POST(request: Request) {
         dashboardUrl = null
       }
     }
-    return Response.json({ connected: true, ready, enabled, payoutsEnabled: !!a.payouts_enabled, dashboardUrl })
+    const ext: any = (a as any).external_accounts?.data?.[0]
+    const bank = ext ? { name: (ext.bank_name ?? ext.brand ?? null) as string | null, last4: (ext.last4 ?? null) as string | null } : null
+    return Response.json({ connected: true, ready, enabled, payoutsEnabled: !!a.payouts_enabled, dashboardUrl, bank })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Could not check payment setup'
     return Response.json({ error: message }, { status: 500 })
