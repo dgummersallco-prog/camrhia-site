@@ -1235,7 +1235,6 @@ export default function WebsitePage() {
               </div>
               <div className="flex items-center gap-3">
                 {message && <span className="text-sm text-twilight">{message}</span>}
-                {path && <a href={path} target="_blank" rel="noreferrer" className={btnGhost}>View live site</a>}
                 <button className={btn} disabled={!dirty || saving} onClick={save}>
                   {saving ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
                 </button>
@@ -1243,12 +1242,27 @@ export default function WebsitePage() {
             </div>
 
             {fullUrl && (
-              <div className="-mt-2 mb-5">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-                  <span className="text-ink-soft">Your link</span>
-                  <span className="font-medium text-ink">{fullUrl.replace('https://', '')}</span>
-                  <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(fullUrl); flash('Link copied') }}>Copy</button>
-                  {!slugEdit && <button className={btnGhost} onClick={() => { setSlugDraft(curSlug ?? ''); setSlugMsg(''); setSlugEdit(true) }}>Change name</button>}
+              <div className="mb-6">
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                  <div className={card}>
+                    <p className="text-xs uppercase tracking-wider text-ink-soft">Your link</p>
+                    <p className="mt-1 truncate font-fraunces text-xl font-semibold text-ink">{fullUrl.replace('https://', '')}</p>
+                  </div>
+                  <button type="button" onClick={() => { navigator.clipboard?.writeText(fullUrl); flash('Link copied') }}
+                    className="flex flex-col gap-1 rounded-2xl border border-line bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md">
+                    <span className="text-xs uppercase tracking-wider text-ink-soft">Copy</span>
+                    <span className="font-fraunces text-xl font-semibold text-ink">Copy link</span>
+                  </button>
+                  <button type="button" onClick={() => { setSlugDraft(curSlug ?? ''); setSlugMsg(''); setSlugEdit(true) }}
+                    className="flex flex-col gap-1 rounded-2xl border border-line bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md">
+                    <span className="text-xs uppercase tracking-wider text-ink-soft">Name</span>
+                    <span className="font-fraunces text-xl font-semibold text-ink">Change name</span>
+                  </button>
+                  <a href={path ?? '#'} target="_blank" rel="noreferrer"
+                    className="flex flex-col gap-1 rounded-2xl border border-line bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md">
+                    <span className="text-xs uppercase tracking-wider text-ink-soft">View</span>
+                    <span className="font-fraunces text-xl font-semibold text-ink">View live site</span>
+                  </a>
                 </div>
                 {slugEdit && (
                   <div className="mt-3 max-w-md space-y-2 rounded-2xl border border-line bg-card p-4">
