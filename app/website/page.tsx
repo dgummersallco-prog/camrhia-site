@@ -1416,6 +1416,7 @@ export default function WebsitePage() {
                   
                   <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
                   <SizeControl device={device} label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
+                  <SizeControl device={device} label="Section heading size" unit="px" min={20} max={100} step={2} value={T.sizes.secHead} onChange={(dv, v) => setSize('secHead', dv, v)} />
                   
                   
                   <SizeControl device={device} label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
@@ -1583,6 +1584,7 @@ export default function WebsitePage() {
 </Group>
 <Group title="5. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
+                  <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
                   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -1605,6 +1607,7 @@ export default function WebsitePage() {
 </Group>
 <Group title="6. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
+                  <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={(S.testimonials?.layout ?? T.testi.layout) as any} onChange={(v) => setIn('testimonials', { layout: v })}
@@ -1642,6 +1645,7 @@ export default function WebsitePage() {
 </Group>
 <Group title="7. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
+                  <SizeControl device={device} label="Message text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsContact} onChange={(dv, v) => setSize('fsContact', dv, v)} />
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
@@ -1649,6 +1653,7 @@ export default function WebsitePage() {
                 {secStyleBlock('contact')}
 </Group>
 <Group title="8. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
+                  <SizeControl device={device} label="Footer text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFoot} onChange={(dv, v) => setSize('fsFoot', dv, v)} />
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
@@ -1717,6 +1722,7 @@ export default function WebsitePage() {
 </>)}
 {tab === 'about' && (<><Group title="1. About" hint="your story" onOpen={() => scrollPreview('about')}>
                   {sectionHead('about')}
+                  <SizeControl device={device} label="Story text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsAbout} onChange={(dv, v) => setSize('fsAbout', dv, v)} />
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={(S.about?.layout ?? T.about.layout) as any} onChange={(v) => setIn('about', { layout: v })}
@@ -1751,6 +1757,9 @@ export default function WebsitePage() {
 </Group>
 <Group title="2. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
+                  <SizeControl device={device} label="Package name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgName} onChange={(dv, v) => setSize('fsPkgName', dv, v)} />
+                  <SizeControl device={device} label="Price size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgPrice} onChange={(dv, v) => setSize('fsPkgPrice', dv, v)} />
+                  <SizeControl device={device} label="What's included size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgList} onChange={(dv, v) => setSize('fsPkgList', dv, v)} />
 <div>
                     
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Your website&apos;s own price list. It&apos;s separate from the pricing in your app.</p>
@@ -1806,6 +1815,8 @@ export default function WebsitePage() {
 </Group>
 <Group title="3. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
+                  <SizeControl device={device} label="Question size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqQ} onChange={(dv, v) => setSize('fsFaqQ', dv, v)} />
+                  <SizeControl device={device} label="Answer size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqA} onChange={(dv, v) => setSize('fsFaqA', dv, v)} />
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 {secStyleBlock('faq')}
