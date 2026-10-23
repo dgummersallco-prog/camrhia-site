@@ -93,7 +93,7 @@ export default function RemindersPage() {
   const fill = (text: string) => text.replace(/\{studio\}/g, studio).replace(/\{date\}/g, 'June 14')
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="dashboard" />
       <main className="mx-auto max-w-3xl px-6 py-10">
         <Link href="/dashboard" className="mb-4 inline-block text-sm text-ink-soft hover:text-twilight">← Home</Link>

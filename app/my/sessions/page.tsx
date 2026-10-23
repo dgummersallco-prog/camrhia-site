@@ -58,7 +58,7 @@ export default function MySessionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <ClientHeader active="sessions" />
       <main className="mx-auto max-w-4xl px-6 py-10">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">My sessions</p>

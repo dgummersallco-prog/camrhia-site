@@ -100,7 +100,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line bg-card px-4 py-6 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line bg-card px-4 py-6 xl:flex">
         <Link href="/" className="mb-8 px-2"><Wordmark className="text-3xl" /></Link>
         <nav className="flex flex-1 flex-col gap-1">
           {ITEMS.map((it) => item(it))}
@@ -114,7 +114,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper lg:hidden">
+      <header className="sticky top-0 z-40 border-b border-line bg-paper xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
           <Link href="/"><Wordmark className="text-3xl" /></Link>
           <button

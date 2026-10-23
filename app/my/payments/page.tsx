@@ -86,7 +86,7 @@ export default function MyPaymentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <ClientHeader active="account" />
       <main className="mx-auto max-w-2xl px-6 py-10">
         <Link href="/my/account" className="text-sm text-ink-soft hover:text-ink">← Account</Link>

@@ -223,7 +223,7 @@ export default function DashboardPage() {
   const action = 'flex flex-col gap-1 rounded-2xl border border-line bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md'
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="dashboard" />
       <main className="mx-auto max-w-5xl px-6 py-10">
         {!ready ? (

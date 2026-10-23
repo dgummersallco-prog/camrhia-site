@@ -450,7 +450,7 @@ export default function GalleryManagePage() {
   })
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="galleries" />
 
       <main className="mx-auto max-w-7xl px-6 py-8">

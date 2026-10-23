@@ -61,7 +61,7 @@ export default function MyAccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <ClientHeader active="account" />
       <main className="mx-auto max-w-2xl px-6 py-10">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Account</p>

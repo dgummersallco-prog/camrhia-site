@@ -59,7 +59,7 @@ export default function ClientQuestionnairePage() {
   })
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <div className="print:hidden"><ClientHeader active="sessions" /></div>
       <header className="border-b border-line bg-card">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-6 py-4">

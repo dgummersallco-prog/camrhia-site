@@ -1234,7 +1234,7 @@ export default function WebsitePage() {
   const menuHidden: string[] = Array.isArray(S.menu?.hidden) ? S.menu.hidden : []
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <style>{SLIDER_CSS}</style>
       <link rel="stylesheet" href={ALL_FONTS_HREF} />
       <DashboardHeader active="website" />

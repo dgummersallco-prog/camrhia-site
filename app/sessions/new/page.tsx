@@ -107,7 +107,7 @@ export default function NewSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="sessions" />
       <main className="mx-auto max-w-2xl px-6 py-10">
         <Link href="/sessions" className="text-sm text-ink-soft hover:text-ink">← All sessions</Link>

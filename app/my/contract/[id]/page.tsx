@@ -65,7 +65,7 @@ export default function ClientContractPage() {
   const signed = contract?.status === 'signed'
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60 print:pl-0">
+    <div className="min-h-screen bg-paper xl:pl-60 print:pl-0">
       <div className="print:hidden"><ClientHeader active="sessions" /></div>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Dancing+Script&family=Great+Vibes&family=Sacramento&display=swap" />
       <header className="border-b border-line bg-card print:hidden">

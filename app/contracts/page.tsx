@@ -101,7 +101,7 @@ export default function ContractsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="contracts" />
       <main className="mx-auto max-w-4xl px-6 py-8">
         <h1 className="font-fraunces text-3xl font-semibold text-ink">Contracts</h1>

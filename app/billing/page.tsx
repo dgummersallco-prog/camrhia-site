@@ -118,7 +118,7 @@ export default function BillingPage() {
 
   if (pageState === 'loading') {
     return (
-      <div className="min-h-screen bg-paper lg:pl-60">
+      <div className="min-h-screen bg-paper xl:pl-60">
         <DashboardHeader active="billing" />
         <main className="mx-auto max-w-3xl px-6 py-10">
           <p className="text-ink-soft text-sm animate-pulse">Loading…</p>
@@ -250,7 +250,7 @@ export default function BillingPage() {
 
   if (status === 'comped') {
     return (
-      <div className="min-h-screen bg-paper lg:pl-60">
+      <div className="min-h-screen bg-paper xl:pl-60">
         <DashboardHeader active="billing" />
         <main className="mx-auto max-w-3xl px-6 py-10">
           <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Billing</p>
@@ -292,7 +292,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col lg:pl-60">
+    <div className="min-h-screen bg-paper flex flex-col xl:pl-60">
       <DashboardHeader active="billing" />
       <header className="hidden">
         <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">

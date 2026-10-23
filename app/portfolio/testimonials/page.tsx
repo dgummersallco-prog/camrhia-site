@@ -133,7 +133,7 @@ export default function TestimonialsEditor() {
   }
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="portfolio" />
       <main className="mx-auto max-w-3xl px-6 py-8">
         <a href="/portfolio" className="text-sm text-ink-soft underline hover:text-ink">Back to portfolio</a>

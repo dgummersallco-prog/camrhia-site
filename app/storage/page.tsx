@@ -155,7 +155,7 @@ export default function StoragePage() {
   const barColor = used >= limit ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-twilight'
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="galleries" />
       <main className="mx-auto max-w-4xl px-6 py-10">
         <GalleryTabs active="storage" />

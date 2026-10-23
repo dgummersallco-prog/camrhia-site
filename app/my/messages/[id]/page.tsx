@@ -69,7 +69,7 @@ export default function ClientThreadPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper lg:pl-60">
+    <div className="flex min-h-screen flex-col bg-paper xl:pl-60">
       <div className="print:hidden"><ClientHeader active="messages" /></div>
       <header className="border-b border-line bg-card">
         <div className="mx-auto flex max-w-2xl items-center gap-4 px-6 py-4">

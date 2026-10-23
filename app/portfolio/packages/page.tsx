@@ -170,7 +170,7 @@ export default function PackagesEditor() {
   }
 
   return (
-    <div className="min-h-screen bg-paper lg:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="portfolio" />
       <main className="mx-auto max-w-3xl px-6 py-8">
         <Link href="/portfolio" className="mb-4 inline-block text-sm text-ink-soft hover:text-twilight">← Your website</Link>
