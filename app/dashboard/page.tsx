@@ -154,7 +154,11 @@ export default function DashboardPage() {
 
       try {
         setSiteShared(localStorage.getItem('camrhia_site_shared') === '1')
-        setHideSetup(localStorage.getItem('camrhia_hide_setup') === '1')
+        const lsHide = localStorage.getItem('camrhia_hide_setup') === '1'
+        const { data: hp } = await sb.from('profiles').select('dashboard_setup_hidden').eq('id', uid).maybeSingle()
+        const dbHide = (hp as { dashboard_setup_hidden?: boolean | null } | null)?.dashboard_setup_hidden === true
+        setHideSetup(lsHide || dbHide)
+        if (lsHide && !dbHide) await sb.from('profiles').update({ dashboard_setup_hidden: true }).eq('id', uid)
       } catch { /* ignore */ }
       setReady(true)
     }
@@ -356,7 +360,17 @@ export default function DashboardPage() {
                     <p className="text-xs text-ink-soft">{doneCount} of {steps.length} done</p>
                   </div>
                   <button
-                    onClick={() => { setHideSetup(true); try { localStorage.setItem('camrhia_hide_setup', '1') } catch { /* ignore */ } }}
+                    onClick={() => {
+                      setHideSetup(true)
+                      try { localStorage.setItem('camrhia_hide_setup', '1') } catch { /* ignore */ }
+                      void (async () => {
+                        const sb = supabase
+                        if (!sb) return
+                        const { data } = await sb.auth.getSession()
+                        const id = data.session?.user.id
+                        if (id) await sb.from('profiles').update({ dashboard_setup_hidden: true }).eq('id', id)
+                      })()
+                    }}
                     className="text-xs text-ink-soft hover:text-ink"
                   >
                     Dismiss
