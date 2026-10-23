@@ -51,6 +51,7 @@ export default function ContractsPage() {
   const [sessions, setSessions] = useState<Record<string, Sess>>({})
   const [filter, setFilter] = useState<'all' | 'signed' | 'waiting' | 'draft'>('all')
   const [error, setError] = useState<string | null>(null)
+  const [q, setQ] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -85,9 +86,18 @@ export default function ContractsPage() {
       if (filter === 'draft') return r.status !== 'signed' && r.status !== 'sent'
       return true
     })
-    const rank = (r: Row) => (r.status === 'signed' ? 0 : r.status === 'sent' ? 1 : 2)
-    return [...list].sort((a, b) => rank(a) - rank(b) || (b.signed_at ?? b.sent_at ?? '').localeCompare(a.signed_at ?? a.sent_at ?? ''))
-  }, [rows, filter])
+    const rank = (r: Row) => (r.status === 'sent' ? 0 : r.status === 'signed' ? 2 : 1)
+    const needle = q.trim().toLowerCase()
+    const found = needle ? list.filter((r) => (sessions[r.wedding_id]?.names ?? '').toLowerCase().includes(needle)) : list
+    return [...found].sort((a, b) => rank(a) - rank(b) || (b.signed_at ?? b.sent_at ?? '').localeCompare(a.signed_at ?? a.sent_at ?? ''))
+  }, [rows, filter, q, sessions])
+
+  const all = rows ?? []
+  const nSigned = all.filter((r) => r.status === 'signed').length
+  const nWaiting = all.filter((r) => r.status === 'sent').length
+  const nDraft = all.length - nSigned - nWaiting
+  const waitingDays = all.filter((r) => r.status === 'sent' && r.sent_at).map((r) => Math.floor((Date.now() - new Date(r.sent_at as string).getTime()) / 86400000))
+  const longest = waitingDays.length > 0 ? Math.max(...waitingDays) : 0
 
   const tab = (key: typeof filter, label: string) => (
     <button
@@ -107,11 +117,36 @@ export default function ContractsPage() {
         <h1 className="font-fraunces text-3xl font-semibold text-ink">Contracts</h1>
         <p className="mt-1 text-sm text-ink-soft">Every contract in one place. Signed copies include both signatures and the date.</p>
 
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <p className="text-xs uppercase tracking-wider text-ink-soft">Signed</p>
+            <p className="mt-1 font-fraunces text-3xl font-semibold text-emerald-700">{nSigned}</p>
+          </div>
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <p className="text-xs uppercase tracking-wider text-ink-soft">Waiting for signature</p>
+            <p className={'mt-1 font-fraunces text-3xl font-semibold ' + (nWaiting > 0 ? 'text-brass' : 'text-ink')}>{nWaiting}</p>
+          </div>
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <p className="text-xs uppercase tracking-wider text-ink-soft">Drafts</p>
+            <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{nDraft}</p>
+          </div>
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <p className="text-xs uppercase tracking-wider text-ink-soft">Longest waiting</p>
+            <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{nWaiting > 0 ? longest + (longest === 1 ? ' day' : ' days') : '—'}</p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center gap-2">
           {tab('all', 'All')}
           {tab('signed', 'Signed')}
           {tab('waiting', 'Waiting for signature')}
           {tab('draft', 'Drafts')}
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by client"
+            className="ml-auto w-full rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25 sm:w-56"
+          />
         </div>
 
         {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
@@ -119,27 +154,41 @@ export default function ContractsPage() {
         {rows === null && !error ? (
           <p className="mt-8 text-sm text-ink-soft">Loading…</p>
         ) : shown.length === 0 ? (
-          <p className="mt-8 rounded-2xl border border-line bg-card p-6 text-ink-soft">No contracts here yet. Open a session and tap Create contract to start one.</p>
+          <p className="mt-8 rounded-2xl border border-line bg-card p-6 text-ink-soft">{q.trim() ? 'No contracts match that search.' : filter === 'waiting' ? 'No contracts waiting. Everyone has signed.' : filter === 'signed' ? 'No signed contracts yet.' : filter === 'draft' ? 'No drafts.' : 'No contracts here yet. Open a session and tap Create contract to start one.'}</p>
         ) : (
           <ul className="mt-6 space-y-3">
             {shown.map((c) => {
               const w = sessions[c.wedding_id]
               const signed = c.status === 'signed'
-              const pill = signed ? 'bg-emerald-100 text-emerald-700' : c.status === 'sent' ? 'bg-twilight/10 text-twilight' : 'bg-line text-ink-soft'
-              const line = signed ? 'Signed ' + fmtLong(c.signed_at) + (c.signer_name ? ' by ' + c.signer_name : '') : c.status === 'sent' ? 'Sent ' + fmtLong(c.sent_at) + ', waiting for signature' : 'Draft'
+              const waiting = c.status === 'sent'
+              const days = waiting && c.sent_at ? Math.floor((Date.now() - new Date(c.sent_at).getTime()) / 86400000) : 0
+              const pill = signed ? 'bg-emerald-50 text-emerald-700' : waiting ? 'bg-amber-50 text-amber-700' : 'bg-paper text-ink-soft'
+              const label = signed ? 'Signed' : waiting ? 'Waiting' : 'Draft'
+              const line = signed
+                ? 'Signed ' + fmtLong(c.signed_at) + (c.signer_name ? ' by ' + c.signer_name : '')
+                : waiting
+                  ? 'Sent ' + fmtLong(c.sent_at) + (days > 0 ? ' · waiting ' + days + ' day' + (days === 1 ? '' : 's') : ' · waiting for signature')
+                  : 'Not sent yet'
               return (
                 <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-card p-5">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-fraunces text-lg font-semibold text-ink">{w?.names || 'Session'}</p>
-                      <span className={'rounded-full px-3 py-0.5 text-xs capitalize ' + pill}>{c.status ?? 'draft'}</span>
+                      <span className={'rounded-full px-3 py-0.5 text-xs font-medium ' + pill}>{label}</span>
                     </div>
-                    <p className="mt-1 text-sm text-ink-soft">{prettyType(w?.session_type ?? null)} · {line}</p>
+                    <p className="mt-1 text-sm text-ink-soft">{prettyType(w?.session_type ?? null)}{w?.wedding_date ? ' · ' + fmtLong(w.wedding_date + 'T00:00:00') : ''}</p>
+                    <p className="text-xs text-ink-soft">{line}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Link href={'/sessions/' + c.wedding_id} className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-twilight">Open session</Link>
-                    {signed && (
-                      <button type="button" onClick={() => printSigned(c)} className="rounded-full bg-twilight px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Print signed copy</button>
+                    {signed ? (
+                      <>
+                        <Link href={'/sessions/' + c.wedding_id} className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-twilight">Open session</Link>
+                        <button type="button" onClick={() => printSigned(c)} className="rounded-full bg-twilight px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Print signed copy</button>
+                      </>
+                    ) : waiting ? (
+                      <Link href={'/sessions/' + c.wedding_id} className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-twilight">Open session</Link>
+                    ) : (
+                      <Link href={'/sessions/' + c.wedding_id} className="rounded-full bg-twilight px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Review and send</Link>
                     )}
                   </div>
                 </li>
