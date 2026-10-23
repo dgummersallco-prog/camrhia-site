@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
 
-type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'packages'
+type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'packages' | 'questionnaires'
 
 const ICONS: Record<string, string> = {
   dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
@@ -23,6 +23,7 @@ const ICONS: Record<string, string> = {
   storage: 'M22 12H2 M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z M6 16h.01 M10 16h.01',
   billing: 'M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M1 10h22',
   packages: 'M21 8l-9-5-9 5v8l9 5 9-5z M3.3 7.5L12 12l8.7-4.5 M12 21v-9',
+  questionnaires: 'M9 2h6a1 1 0 0 1 1 1v2H8V3a1 1 0 0 1 1-1z M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2 M9 12h6 M9 16h4',
   affiliate: 'M20 12v10H4V12 M2 7h20v5H2z M12 22V7 M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z',
 }
 
@@ -30,6 +31,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'dashboard', href: '/dashboard', label: 'Home' },
   { tab: 'galleries', href: '/galleries', label: 'Galleries' },
   { tab: 'packages', href: '/portfolio/packages', label: 'Packages' },
+  { tab: 'questionnaires', href: '/questionnaires', label: 'Questionnaires' },
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
   { tab: 'contracts', href: '/contracts', label: 'Contracts' },
   { tab: 'payments', href: '/payments', label: 'Payments' },
@@ -147,7 +149,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
   const GROUPS: { label: string | null; tabs: string[] }[] = [
     { label: null, tabs: ['dashboard'] },
     { label: 'Clients', tabs: ['messages', 'sessions', 'calendar'] },
-    { label: 'Work', tabs: ['galleries', 'packages', 'contracts', 'payments'] },
+    { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments'] },
     { label: 'Your brand', tabs: ['website', 'portfolio'] },
     { label: 'Account', tabs: ['billing'] },
   ]
