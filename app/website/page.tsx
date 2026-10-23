@@ -193,7 +193,7 @@ function ColorField({ label, value, swatches, onChange, onReset }: {
       {open && (
         <>
           
-          <div className="absolute right-0 z-40 mt-2 w-72 rounded-2xl border border-line bg-card p-4 shadow-lg">
+          <div className="absolute right-0 z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-line bg-card p-4 shadow-lg">
             <p className="mb-2 text-[11px] uppercase tracking-widest text-ink-soft">Your colors</p>
             <div className="mb-4 flex flex-wrap gap-2">
               {swatches.map((sw) => (
@@ -240,7 +240,7 @@ function FontPicker({ label, value, onChange, cats }: { label: string; value: st
       {open && (
         <>
           
-          <div className="absolute right-0 z-40 mt-2 w-80 rounded-2xl border border-line bg-card p-3 shadow-lg">
+          <div className="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-3rem)] rounded-2xl border border-line bg-card p-3 shadow-lg">
             <Seg value={cat} options={[{ v: 'all', label: 'All' }, ...cats.map((c) => ({ v: c, label: CAT_LABEL[c] }))]} onChange={setCat} />
             <div className="mt-3 max-h-80 overflow-y-auto">
               {list.map(([k, f]) => (
@@ -1294,8 +1294,8 @@ export default function WebsitePage() {
               </div>
             )}
 
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
-              <div className="cr-cap space-y-4">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
+              <div className="cr-cap min-w-0 space-y-4">
                 <div>
                   <div className="flex flex-wrap gap-x-7 border-b border-line">
                     {([{ v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }] as const).map((o) => (
@@ -1828,7 +1828,7 @@ export default function WebsitePage() {
 
               </div>
 
-              <div id="site-preview" className="lg:sticky lg:top-6 lg:self-start">
+              <div id="site-preview" className="min-w-0 lg:sticky lg:top-6 lg:self-start">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs text-ink-soft">Previewing: {previewPage === 'home' ? 'Home page' : previewPage === 'galleries' ? 'Galleries page' : previewPage === 'gallery' ? 'Inside a gallery' : previewPage === 'about' ? 'About page' : 'Book page'}</span>
                   <Seg value={device} options={[{ v: 'phone', label: 'Phone' }, { v: 'desktop', label: 'Desktop' }]} onChange={setDevice} />
