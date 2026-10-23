@@ -1263,6 +1263,7 @@ export default function WebsitePage() {
                   <div className={card}>
                     <p className="text-xs uppercase tracking-wider text-ink-soft">Your link</p>
                     <p className="mt-1 truncate font-fraunces text-xl font-semibold text-ink">{fullUrl.replace('https://', '')}</p>
+                    <Link href="/website/domain" className="mt-1 inline-block text-xs text-twilight hover:underline">Use your own domain →</Link>
                   </div>
                   <button type="button" onClick={() => { navigator.clipboard?.writeText(fullUrl); flash('Link copied') }}
                     className="flex flex-col gap-1 rounded-2xl border border-line bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md">
