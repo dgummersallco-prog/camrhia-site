@@ -1,5 +1,6 @@
 'use client'
 
+import { useSiteBase } from '@/app/site/useSiteBase'
 import { installPreviewGlow } from '@/lib/previewGlow'
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -67,6 +68,8 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   const { accent, ink, soft, line, bg } = t
   const studio: string = r.studio_name ?? r.display_name ?? 'Studio'
   const qs = isPreview ? '?preview=1' : ''
+  const base = useSiteBase(token)
+  const homeHref = base || '/'
   const logo = r.logo_path ? STORAGE_BASE + r.logo_path : null
   const photoPath: string | null = t.hero.photos[0] ?? ((Array.isArray(r.cover_paths) && r.cover_paths[0]) || r.cover_path || null)
   const photo = photoPath ? STORAGE_BASE + photoPath : null
@@ -221,7 +224,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
       <div style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <nav className={'mx-auto flex max-w-6xl px-6 py-4 ' + (t.menu.logoPos === 'center' ? 'flex-col items-center gap-3' : 'items-center justify-between' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : ''))}>
-          <a href={`/site/${token}${qs}`} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>
+          <a href={`${homeHref}${qs}`} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logo} alt={studio} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
@@ -229,7 +232,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
               <span style={{ ...head, fontSize: 24 }}>{studio}</span>
             )}
           </a>
-          <a href={`/site/${token}${qs}`} className="text-[11px] uppercase tracking-[0.2em]" style={{ fontSize: 'var(--menu)' }}>← Back</a>
+          <a href={`${homeHref}${qs}`} className="text-[11px] uppercase tracking-[0.2em]" style={{ fontSize: 'var(--menu)' }}>← Back</a>
         </nav>
 
         {photoAbove && (

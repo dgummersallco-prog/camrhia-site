@@ -1,5 +1,6 @@
 'use client'
 
+import { useSiteBase } from '@/app/site/useSiteBase'
 import { TestimonialCarousel } from './TestimonialCarousel'
 import { AboutCanvas } from './AboutCanvas'
 import { heroStarter } from '@/lib/aboutCanvas'
@@ -72,9 +73,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const t = resolveTheme(r)
   const { tpl, accent, ink, soft, line, bg, tint } = t
   const qs = isPreview ? '?preview=1' : ''
-  const base = `/site/${token}`
+  const base = useSiteBase(token)
+  const homeHref = base || '/'
   const hrefs: Record<string, string> = {
-    home: `${base}${qs}`,
+    home: `${homeHref}${qs}`,
     galleries: `${base}/galleries${qs}`,
     about: `${base}/about${qs}`,
     book: `${base}/availability${qs}`,
@@ -328,7 +330,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           const u = photoUrl(cover?.storage_path)
           return (
-            <a key={g.id} href={`/site/${token}/g/${g.id}${qs}`} className={`group relative block overflow-hidden ${cls}`} style={{ background: '#E5E1DB', ...style }}>
+            <a key={g.id} href={`${base}/g/${g.id}${qs}`} className={`group relative block overflow-hidden ${cls}`} style={{ background: '#E5E1DB', ...style }}>
               {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
               <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
               <div className="absolute inset-x-0 bottom-0 p-6 text-white">
@@ -350,7 +352,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   {list.map((g, i) => {
                     const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
                     const u = photoUrl(cover?.storage_path)
-                    const href = `/site/${token}/g/${g.id}${qs}`
+                    const href = `${base}/g/${g.id}${qs}`
                     const photoTile = (
                       <a key={g.id + 'p'} href={href} className="relative block aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>
                         {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 hover:scale-105" />}
@@ -370,7 +372,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 {list.map((g, i) => {
                   const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
                   const u = photoUrl(cover?.storage_path)
-                  const href = `/site/${token}/g/${g.id}${qs}`
+                  const href = `${base}/g/${g.id}${qs}`
                   const odd = i % 2 === 1
                   return (
                     <div key={g.id} className="grid items-center md:grid-cols-2" style={{ marginTop: i > 0 ? 'calc(var(--gap) + 24px)' : 0 }}>
@@ -393,7 +395,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 title={null} bio="" headStyle={headStyle} ink={ink} soft={soft} tint={tint}
                 bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId="galleries"
                 galleries={galleries.map((g) => ({ id: g.id, title: g.title, coverUrl: photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path) }))}
-                galleryHref={(id) => `/site/${token}/g/${id}${qs}`}
+                galleryHref={(id) => `${base}/g/${id}${qs}`}
                 fallback={(dv) => galleryStarter(dv, galleries.map((g) => g.id))}
                 renderButton={(label) => (
                   <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>

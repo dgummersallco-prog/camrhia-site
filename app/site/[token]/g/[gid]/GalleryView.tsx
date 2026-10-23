@@ -1,5 +1,6 @@
 'use client'
 
+import { useSiteBase } from '@/app/site/useSiteBase'
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PortfolioLightbox } from '../../../../p/[token]/PortfolioLightbox'
@@ -34,6 +35,8 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
   }, [])
 
   const qs = isPreview ? '?preview=1' : ''
+  const base = useSiteBase(token)
+  const homeHref = base || '/'
   const t = resolveTheme(r)
   const { accent, bg, ink, soft, line } = t
   const name: string = r.studio_name ?? r.display_name ?? 'Studio'
@@ -59,7 +62,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
 
   const nav = (
     <nav className={'mx-auto flex max-w-6xl px-6 py-4 ' + (t.menu.logoPos === 'center' ? 'flex-col items-center gap-3' : 'items-center justify-between' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : ''))}>
-      <Link href={`/site/${token}${qs}`} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>
+      <Link href={`${homeHref}${qs}`} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
@@ -68,7 +71,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
         )}
       </Link>
       <div className={'flex flex-wrap gap-x-5 gap-y-1 text-[11px] uppercase tracking-[0.2em] ' + (t.menu.logoPos === 'center' ? 'justify-center' : t.menu.logoPos === 'right' ? 'justify-start' : 'justify-end')} style={{ fontSize: 'var(--menu)', transform: 'translateY(var(--menuy, 0px))' }}>
-        {([['home', `/site/${token}${qs}`], ['galleries', `/site/${token}/galleries${qs}`], ['about', `/site/${token}/about${qs}`], ['book', `/site/${token}/availability${qs}`]] as [string, string][])
+        {([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`]] as [string, string][])
           .filter(([k]) => !t.menu.hidden.includes(k))
           .map(([k, h]) => <Link key={k} href={h}>{t.menu.labels[k]?.trim() || NAV_DEFAULTS[k]}</Link>)}
       </div>
@@ -133,7 +136,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
               return null
             }}
             renderButton={(label) => (
-              <Link href={`/site/${token}/availability${qs}`} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>{label}</Link>
+              <Link href={`${base}/availability${qs}`} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>{label}</Link>
             )}
           />) : (<div className="flex flex-col gap-14">
           {groups.map((grp) => (
@@ -150,7 +153,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
 
         {t.galpage.showButton && layout !== 'custom' && (
           <div className="mt-14 text-center">
-            <Link href={`/site/${token}/availability${qs}`} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>
+            <Link href={`${base}/availability${qs}`} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>
               {t.hero.ctaText}
             </Link>
           </div>
@@ -161,7 +164,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
             <p className="mb-5 text-[11px] uppercase tracking-[0.25em]" style={{ color: soft }}>More galleries</p>
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
               {others.map((g) => (
-                <Link key={g.id} href={`/site/${token}/g/${g.id}${qs}`} className="text-2xl" style={{ ...head, color: accent }}>{g.title}</Link>
+                <Link key={g.id} href={`${base}/g/${g.id}${qs}`} className="text-2xl" style={{ ...head, color: accent }}>{g.title}</Link>
               ))}
             </div>
           </div>

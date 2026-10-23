@@ -1216,7 +1216,7 @@ export default function WebsitePage() {
   const token = form?.public_token ?? null
   cvBridge.upd = upd
   const curSlug = slugOverride ?? form?.slug ?? null
-  const path = curSlug ? `/${curSlug}/site` : token ? `/site/${token}` : null
+  const path = curSlug ? `/${curSlug}` : token ? `/site/${token}` : null
   async function saveSlug() {
     if (!supabase) return
     setSlugSaving(true)
@@ -1286,7 +1286,7 @@ export default function WebsitePage() {
                     <div className="flex items-center gap-1 text-sm text-ink-soft">
                       <span>camrhia.com/</span>
                       <input value={slugDraft} onChange={(e) => setSlugDraft(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder="yourname" className={inputCls} />
-                      <span>/site</span>
+                      
                     </div>
                     <p className={`text-xs ${slugMsg === 'ok' ? 'text-sage' : 'text-ink-soft'}`}>
                       {slugMsg === 'ok' ? (slugDraft.trim().toLowerCase() === (curSlug ?? '') ? 'This is your current name' : '✓ That name is free') : slugMsg}
