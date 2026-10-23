@@ -30,7 +30,8 @@ type Site = {
   site_settings: Record<string, any> | null
 }
 type Tm = { id: string; storage_path: string | null; quote: string | null; client_name: string | null; sort_order: number }
-type WPkg = { id: string; title: string; price: string | null; description: string | null; sort_order: number }
+type WPkg = { id: string; title: string; price: string | null; description: string | null; sort_order: number; source_package_id: string | null }
+type OwnPkg = { id: string; name: string; price: string | null; covers: string | null; detail: string | null }
 type Dev = 'phone' | 'desktop'
 
 const COLUMNS = 'id, public_token, slug, accent_color, cover_path, cover_paths, logo_path, brand_colors_named, site_template, site_accent, site_font_pair, site_headline, site_subhead, site_sections, site_settings'
@@ -541,6 +542,7 @@ export default function WebsitePage() {
   const [previewGid, setPreviewGid] = useState<string | null>(null)
   const [tms, setTms] = useState<Tm[]>([])
   const [pkgs, setPkgs] = useState<WPkg[]>([])
+  const [ownPkgs, setOwnPkgs] = useState<OwnPkg[]>([])
   const [tName, setTName] = useState('')
   const [tQuote, setTQuote] = useState('')
   const [tFile, setTFile] = useState<File | null>(null)
@@ -632,14 +634,29 @@ export default function WebsitePage() {
     if (!id) return
     const { data } = await sb.from('testimonials').select('id, storage_path, quote, client_name, sort_order').eq('owner_id', id).order('sort_order', { ascending: true })
     setTms((data ?? []) as Tm[])
-    const pk = await sb.from('website_packages').select('id, title, price, description, sort_order').eq('photographer_id', id).order('sort_order', { ascending: true })
+    const pk = await sb.from('website_packages').select('id, title, price, description, sort_order, source_package_id').eq('photographer_id', id).order('sort_order', { ascending: true })
     setPkgs((pk.data ?? []) as WPkg[])
+    const op = await sb.from('packages').select('id, name, price, covers, detail').eq('owner_id', id).order('sort_order', { ascending: true })
+    setOwnPkgs((op.data ?? []) as OwnPkg[])
     const ph = await sb.from('website_photos').select('storage_path').eq('photographer_id', id).order('created_at', { ascending: false }).limit(80)
     setCandsDb(((ph.data ?? []) as { storage_path: string }[]).map((x) => x.storage_path))
     const gl = await sb.from('website_galleries').select('id').eq('photographer_id', id).order('sort_order', { ascending: true }).limit(1)
     setFirstGid(((gl.data ?? []) as { id: string }[])[0]?.id ?? null)
   }, [])
   useEffect(() => { loadExtras() }, [loadExtras])
+  useEffect(() => {
+    const sb = supabase
+    if (!sb) return
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const refresh = () => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => { loadExtras(); setPreviewKey((k) => k + 1) }, 400)
+    }
+    const ch = sb.channel('site-pkgs').on('postgres_changes', { event: '*', schema: 'public', table: 'packages' }, refresh).subscribe()
+    const onFocus = () => { loadExtras() }
+    window.addEventListener('focus', onFocus)
+    return () => { if (timer) clearTimeout(timer); sb.removeChannel(ch); window.removeEventListener('focus', onFocus) }
+  }, [loadExtras])
 
   function flash(text: string) {
     setMessage(text)
@@ -1038,6 +1055,13 @@ export default function WebsitePage() {
     if (error) { flash(error.message); return }
     await loadExtras()
     setPreviewKey((k) => k + 1)
+  }
+  async function linkPkg(p: WPkg, srcId: string) {
+    if (!srcId) { await updatePkg(p, { source_package_id: null }); return }
+    const src = ownPkgs.find((x) => x.id === srcId)
+    if (!src) return
+    const desc = [src.covers, src.detail].map((x) => (x ?? '').trim()).filter(Boolean).join('\n')
+    await updatePkg(p, { source_package_id: src.id, title: src.name, price: src.price, description: desc || null })
   }
   async function updatePkg(p: WPkg, patch: Partial<WPkg>) {
     const sb = supabase
@@ -1742,11 +1766,27 @@ export default function WebsitePage() {
                     </div>
                     {pkgs.map((p, i) => (
                       <div key={p.id} className="mb-3 rounded-lg border border-line bg-white p-3">
+                        <div className="mb-2">
+                          <Select className={inputCls} value={p.source_package_id ?? ''} onChange={(e) => linkPkg(p, e.target.value)}>
+                            <option value="">Custom package</option>
+                            {ownPkgs.map((x) => <option key={x.id} value={x.id}>{x.name}{x.price ? ' · ' + x.price : ''}</option>)}
+                          </Select>
+                        </div>
+                        {p.source_package_id && ownPkgs.some((x) => x.id === p.source_package_id) ? (
+                          <div className="rounded-lg bg-paper px-3 py-2 text-sm text-ink">
+                            <div className="flex justify-between gap-3"><span className="font-medium">{p.title}</span><span>{p.price}</span></div>
+                            {p.description && <p className="mt-1 whitespace-pre-line text-xs text-ink-soft">{p.description}</p>}
+                            <p className="mt-2 text-xs text-twilight">Updates automatically when you change this package.</p>
+                          </div>
+                        ) : (
+                          <>
                         <div className="mb-2 flex gap-2">
                           <input defaultValue={p.title} onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== p.title) updatePkg(p, { title: v }) }} className={inputCls} placeholder="Package name" />
                           <input defaultValue={p.price ?? ''} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (p.price ?? '')) updatePkg(p, { price: v || null }) }} className={inputCls + ' max-w-[110px]'} placeholder="$2,400" />
                         </div>
                         <textarea defaultValue={p.description ?? ''} rows={5} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (p.description ?? '')) updatePkg(p, { description: v || null }) }} className={inputCls} placeholder={"What is included, one per line:\n8 hours of coverage\nOnline gallery\nPrint release"} />
+                          </>
+                        )}
                         <div className="mt-2 flex gap-3 text-xs text-ink-soft">
                           <button type="button" disabled={i === 0} onClick={() => movePkg(p, -1)} className="disabled:opacity-30">↑ Up</button>
                           <button type="button" disabled={i === pkgs.length - 1} onClick={() => movePkg(p, 1)} className="disabled:opacity-30">↓ Down</button>
