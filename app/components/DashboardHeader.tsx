@@ -38,6 +38,16 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'billing', href: '/billing', label: 'Billing' },
 ]
 
+// Returns the color only if white text stays readable on it.
+function usableAccent(c: string | null | undefined): string | null {
+  if (!c) return null
+  const m = /^#?([0-9a-f]{6})$/i.exec(c.trim())
+  if (!m) return null
+  const n = parseInt(m[1], 16)
+  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+  return lum > 0.8 ? null : '#' + m[1]
+}
+
 function Icon({ name }: { name: string }) {
   return (
     <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -67,7 +77,42 @@ export function DashboardHeader({ active }: { active: Tab }) {
     return () => { off = true; clearInterval(t); window.removeEventListener('camrhia-unread', run) }
   }, [])
 
+  useEffect(() => {
+    const root = document.documentElement
+    const apply = (c: string) => {
+      root.style.setProperty('--color-twilight', c)
+      root.style.setProperty('--color-blush-wash', `color-mix(in srgb, ${c} 12%, white)`)
+    }
+    const clear = () => {
+      root.style.removeProperty('--color-twilight')
+      root.style.removeProperty('--color-blush-wash')
+    }
+    try {
+      const cached = usableAccent(localStorage.getItem('camrhia_accent'))
+      if (cached) apply(cached)
+    } catch {}
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const { data: pr } = await sb.from('profiles').select('accent_color').eq('id', data.session.user.id).maybeSingle()
+      const a = usableAccent((pr as { accent_color?: string | null } | null)?.accent_color)
+      if (a) {
+        apply(a)
+        try { localStorage.setItem('camrhia_accent', a) } catch {}
+      } else {
+        clear()
+        try { localStorage.removeItem('camrhia_accent') } catch {}
+      }
+    }
+    run()
+  }, [])
+
   async function signOut() {
+    try { localStorage.removeItem('camrhia_accent') } catch {}
+    document.documentElement.style.removeProperty('--color-twilight')
+    document.documentElement.style.removeProperty('--color-blush-wash')
     if (supabase) await supabase.auth.signOut()
     router.push('/login')
   }
