@@ -30,7 +30,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
       if (d && d.type === 'camrhia-preview' && d.patch) setR((prev) => ({ ...prev, ...d.patch }))
     }
     window.addEventListener('message', onMsg)
-    window.parent?.postMessage({ type: 'camrhia-preview-ready' }, '*')
+    window.parent?.postMessage({ type: 'camrhia-preview-ready', ...(() => { const seg = window.location.pathname.split('/').filter(Boolean); const base = seg[0] === 'site' ? 2 : 0; const rest = seg[base]; const page = rest === 'about' ? 'about' : rest === 'galleries' ? 'galleries' : rest === 'g' ? 'gallery' : rest === 'availability' ? 'availability' : !rest ? 'home' : null; return { page, gid: rest === 'g' ? seg[base + 1] ?? null : null } })() }, '*')
     return () => window.removeEventListener('message', onMsg)
   }, [])
 
