@@ -511,28 +511,6 @@ export default function SessionDetailPage() {
                 <ContractPanel weddingId={id} w={w as unknown as Record<string, any>} onChanged={load} />
                 <PaymentsPanel weddingId={id} w={w as unknown as Record<string, any>} />
                 <QuestionnairePanel weddingId={id} />
-
-                <section className={card}>
-                  <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Timeline</p>
-                  {events.length === 0 ? (
-                    <p className="text-sm text-ink-soft">No timeline events yet.</p>
-                  ) : (
-                    <ul className="space-y-3">
-                      {events.map((e) => (
-                        <li key={e.id} className="flex gap-3 text-sm">
-                          <span className="w-24 shrink-0 text-ink-soft">
-                            {e.event_date ? new Date(`${e.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
-                            {e.event_time ? ` ${e.event_time}` : ''}
-                          </span>
-                          <span className="text-ink">
-                            {e.title}
-                            {e.location && <span className="block text-xs text-ink-soft">{e.location}</span>}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
               </div>
             </div>
 
