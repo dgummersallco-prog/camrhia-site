@@ -29,6 +29,26 @@ const card = 'rounded-2xl border border-line bg-card p-5'
 const btn = 'rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50'
 const btnGhost = 'rounded-xl border border-line px-4 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50'
 
+const EDIT_GROUPS: Record<string, string[]> = {
+  names: ['names'],
+  date: ['wedding_date'],
+  place: ['city', 'state'],
+  start: ['session_start_time'],
+  length: ['session_length_hours'],
+  package: ['package_name'],
+  total: ['total_price'],
+  venue: ['venue'],
+  delivery: ['delivery_days', 'gallery_due_date'],
+}
+
+function Pen({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button type="button" onClick={onClick} aria-label={label} title={label} className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-soft transition hover:bg-blush-wash hover:text-twilight">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+    </button>
+  )
+}
+
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   if (value === null || value === undefined || value === '') return null
   return (
@@ -46,7 +66,7 @@ export default function SessionDetailPage() {
   const [w, setW] = useState<Wedding | null>(null)
   const [events, setEvents] = useState<Ev[]>([])
   const [contract, setContract] = useState<Contract | null>(null)
-  const [editing, setEditing] = useState(false)
+  const [editKey, setEditKey] = useState<string | null>(null)
   const [ef, setEf] = useState<Record<string, string>>({})
   const [savingEdit, setSavingEdit] = useState(false)
   const [msgs, setMsgs] = useState<Msg[]>([])
@@ -200,7 +220,7 @@ export default function SessionDetailPage() {
     load()
   }
 
-  function startEdit() {
+  function startEdit(key: string) {
     const x = (w ?? {}) as Record<string, any>
     setEf({
       names: x.names ?? '',
@@ -215,7 +235,7 @@ export default function SessionDetailPage() {
       delivery_days: x.delivery_days != null ? String(x.delivery_days) : '',
       gallery_due_date: x.gallery_due_date ?? '',
     })
-    setEditing(true)
+    setEditKey(key)
   }
 
   function dueFrom(ds: string, n: number): string {
@@ -236,9 +256,7 @@ export default function SessionDetailPage() {
     const t = (v: string) => (v.trim() ? v.trim() : null)
     setSavingEdit(true)
     setError(null)
-    const { error: e } = await sb
-      .from('weddings')
-      .update({
+    const full: Record<string, any> = {
         names: ef.names.trim() || x.names,
         wedding_date: ef.wedding_date || null,
         session_start_time: t(ef.session_start_time),
@@ -250,11 +268,14 @@ export default function SessionDetailPage() {
         venue: t(ef.venue),
         delivery_days: ef.delivery_days ? parseInt(ef.delivery_days, 10) : null,
         gallery_due_date: ef.gallery_due_date || null,
-      })
-      .eq('id', id)
+    }
+    const keys = EDIT_GROUPS[editKey ?? ''] ?? []
+    const patch = Object.fromEntries(Object.entries(full).filter(([k]) => keys.includes(k)))
+    if (keys.length === 0) { setSavingEdit(false); return }
+    const { error: e } = await sb.from('weddings').update(patch).eq('id', id)
     setSavingEdit(false)
     if (e) { setError(e.message); return }
-    setEditing(false)
+    setEditKey(null)
     setNote('Saved.')
     setTimeout(() => setNote(null), 3000)
     load()
@@ -272,7 +293,56 @@ export default function SessionDetailPage() {
     setTimeout(() => setNote(null), 2000)
   }
 
-  const place = w ? [w.venue, [w.city, w.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ') : ''
+  const cityState = w ? [w.city, w.state].filter(Boolean).join(', ') : ''
+
+  const field = (k: string, type = 'text', cls = '', ph = '') => (
+    <input
+      autoFocus
+      type={type}
+      value={ef[k] ?? ''}
+      placeholder={ph}
+      onChange={(e) => {
+        const v = e.target.value
+        setEf((f) => {
+          const n = { ...f, [k]: v }
+          if (k === 'gallery_due_date' && v && f.wedding_date) {
+            const diff = Math.round((new Date(`${v}T00:00:00`).getTime() - new Date(`${f.wedding_date}T00:00:00`).getTime()) / 86400000)
+            n.delivery_days = diff > 0 ? String(diff) : ''
+          }
+          return n
+        })
+      }}
+      onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditKey(null) }}
+      className={`rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25 ${cls}`}
+    />
+  )
+
+  const editBox = (children: React.ReactNode) => (
+    <div className="flex flex-wrap items-center gap-2">
+      {children}
+      <button type="button" disabled={savingEdit} onClick={saveEdit} className="rounded-lg bg-twilight px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50">{savingEdit ? 'Saving…' : 'Save'}</button>
+      <button type="button" onClick={() => setEditKey(null)} className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink">Cancel</button>
+    </div>
+  )
+
+  const dRow = (key: string, label: string, display: React.ReactNode, editor: React.ReactNode) => (
+    <div key={key} className="py-2.5 text-sm">
+      {editKey === key ? (
+        <>
+          <p className="mb-1.5 text-xs uppercase tracking-wider text-ink-soft">{label}</p>
+          {editor}
+        </>
+      ) : (
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-ink-soft">{label}</span>
+          <span className="flex items-center gap-1 text-right text-ink">
+            {display || <span className="text-ink-soft/60">Not set</span>}
+            <Pen onClick={() => startEdit(key)} label={`Edit ${label.toLowerCase()}`} />
+          </span>
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
@@ -291,43 +361,49 @@ export default function SessionDetailPage() {
                 {w.status && <span className="rounded-full bg-twilight/10 px-3 py-1 text-twilight">{w.status}</span>}
                 {w.paid_in_full && <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Paid in full</span>}
               </div>
-              <h1 className="mt-3 font-fraunces text-3xl font-semibold text-ink md:text-4xl">{w.names || 'Untitled session'}</h1>
-              <p className="mt-1 text-ink-soft">{fmtDate(w.wedding_date)}{place ? ` · ${place}` : ''}</p>
+              {editKey === 'names' ? (
+                <div className="mt-3">{editBox(field('names', 'text', 'w-72 max-w-full'))}</div>
+              ) : (
+                <h1 className="mt-3 flex items-center gap-1 font-fraunces text-3xl font-semibold text-ink md:text-4xl">
+                  {w.names || 'Untitled session'}
+                  <Pen onClick={() => startEdit('names')} label="Edit name" />
+                </h1>
+              )}
+              <div className="mt-1 flex flex-wrap items-center gap-x-1 text-ink-soft">
+                {editKey === 'date' ? editBox(field('wedding_date', 'date')) : (
+                  <>
+                    <span>{fmtDate(w.wedding_date)}</span>
+                    <Pen onClick={() => startEdit('date')} label="Edit date" />
+                  </>
+                )}
+                <span className="mx-1">·</span>
+                {editKey === 'place' ? editBox(<>{field('city', 'text', 'w-40', 'City')}{field('state', 'text', 'w-20', 'State')}</>) : (
+                  <>
+                    <span>{cityState || 'Add city and state'}</span>
+                    <Pen onClick={() => startEdit('place')} label="Edit city and state" />
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Details */}
               <section className={card}>
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="font-fraunces text-xl font-semibold text-ink">Details</p>
-                  {!editing && <button type="button" onClick={startEdit} className="text-sm font-medium text-twilight hover:underline">Edit details</button>}
-                </div>
-                {editing ? (
-                  <div className="space-y-3">
-                    {([
-                      ['names', 'Session name', 'text'],
-                      ['wedding_date', 'Session date', 'date'],
-                      ['session_start_time', 'Start time', 'text'],
-                      ['session_length_hours', 'Length (hours)', 'number'],
-                      ['package_name', 'Package', 'text'],
-                      ['total_price', 'Total price ($)', 'number'],
-                      ['city', 'City', 'text'],
-                      ['state', 'State', 'text'],
-                      ['venue', 'Venue', 'text'],
-                    ] as const).map(([k, lab, type]) => (
-                      <div key={k}>
-                        <label className="mb-1 block text-xs uppercase tracking-wider text-ink-soft">{lab}</label>
-                        <input
-                          type={type}
-                          value={ef[k] ?? ''}
-                          onChange={(e) => setEf((f) => ({ ...f, [k]: e.target.value }))}
-                          className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
-                        />
-                      </div>
-                    ))}
-                    <div>
-                      <label className="mb-1 block text-xs uppercase tracking-wider text-ink-soft">Gallery delivery (days after the session)</label>
-                      <div className="mb-2 flex flex-wrap gap-2">
+                <p className="mb-1 font-fraunces text-xl font-semibold text-ink">Details</p>
+                <div className="divide-y divide-line">
+                  {dRow('start', 'Start time', w.session_start_time, editBox(field('session_start_time', 'text', 'w-40')))}
+                  {dRow('length', 'Length', w.session_length_hours ? `${w.session_length_hours} hours` : '', editBox(<>{field('session_length_hours', 'number', 'w-28')}<span className="text-sm text-ink-soft">hours</span></>))}
+                  {dRow('package', 'Package', w.package_name, editBox(field('package_name', 'text', 'w-64 max-w-full')))}
+                  {dRow('total', 'Total', w.total_price ? `$${Number(w.total_price).toLocaleString()}` : '', editBox(field('total_price', 'number', 'w-36')))}
+                  {dRow('venue', 'Venue', w.venue, editBox(field('venue', 'text', 'w-64 max-w-full')))}
+                  {dRow(
+                    'delivery',
+                    'Gallery due',
+                    (w as Record<string, any>).gallery_due_date
+                      ? `${fmtDate((w as Record<string, any>).gallery_due_date)}${w.delivery_days ? ` (${w.delivery_days} days after)` : ''}`
+                      : '',
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
                         {[7, 14, 21, 30, 45, 60].map((n) => (
                           <button key={n} type="button" onClick={() => pickDays(n)}
                             className={`rounded-full border px-3.5 py-1 text-sm transition ${ef.delivery_days === String(n) ? 'border-twilight bg-blush-wash text-twilight' : 'border-line text-ink hover:border-twilight'}`}>
@@ -335,47 +411,15 @@ export default function SessionDetailPage() {
                           </button>
                         ))}
                       </div>
-                      <input
-                        inputMode="numeric"
-                        value={ef.delivery_days ?? ''}
-                        onChange={(e) => {
-                          const v = e.target.value.replace(/[^0-9]/g, '')
-                          setEf((f) => ({ ...f, delivery_days: v, gallery_due_date: v && f.wedding_date ? dueFrom(f.wedding_date, parseInt(v, 10)) : f.gallery_due_date }))
-                        }}
-                        placeholder="Custom number of days"
-                        className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs uppercase tracking-wider text-ink-soft">Gallery due date</label>
-                      <input
-                        type="date"
-                        value={ef.gallery_due_date ?? ''}
-                        onChange={(e) => setEf((f) => ({ ...f, gallery_due_date: e.target.value }))}
-                        className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
-                      />
-                      <p className="mt-1 text-xs text-ink-soft">Your client sees this date as their delivery date.</p>
-                    </div>
-                    <div className="flex gap-3 pt-1">
-                      <button type="button" disabled={savingEdit} onClick={saveEdit} className="rounded-xl bg-twilight px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">
-                        {savingEdit ? 'Saving…' : 'Save'}
-                      </button>
-                      <button type="button" onClick={() => setEditing(false)} className="rounded-xl border border-line px-5 py-2.5 text-sm text-ink hover:border-twilight">Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                <div className="divide-y divide-line">
-                  <Row label="Package" value={w.package_name} />
+                      {editBox(field('gallery_due_date', 'date'))}
+                      <p className="text-xs text-ink-soft">Your client sees this date as their delivery date.</p>
+                    </div>,
+                  )}
                   <Row label="Coverage" value={w.coverage} />
                   <Row label="Deliverables" value={w.deliverables} />
-                  <Row label="Start time" value={w.session_start_time} />
-                  <Row label="Length" value={w.session_length_hours ? `${w.session_length_hours} hours` : null} />
                   <Row label="Guests" value={w.guests} />
-                  <Row label="Total" value={w.total_price ? `$${Number(w.total_price).toLocaleString()}` : null} />
-                  <Row label="Gallery due" value={(w as Record<string, any>).gallery_due_date ? fmtDate((w as Record<string, any>).gallery_due_date) : null} />
                   <Row label="Balance" value={w.balance} />
                 </div>
-                )}
                 <div className="mt-4">
                   <p className="mb-1 text-xs uppercase tracking-wider text-ink-soft">Private notes (only you see these)</p>
                   <textarea
