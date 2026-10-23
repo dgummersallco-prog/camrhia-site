@@ -1,7 +1,6 @@
 'use client'
 
 import { useSiteBase } from '@/app/site/useSiteBase'
-import { TestimonialCarousel } from './TestimonialCarousel'
 import { AboutCanvas } from './AboutCanvas'
 import { heroStarter } from '@/lib/aboutCanvas'
 import { galleryStarter } from '@/lib/aboutCanvas'
@@ -363,7 +362,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                     )
                     const textTile = (
                       <a key={g.id + 't'} href={href} className="flex aspect-square items-center justify-center p-4 text-center" style={{ background: bg }}>
-                        <span style={{ ...headStyle, fontFamily: t.galFamily ?? t.head, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'clamp(1.4rem, 4.2vw, 3.6rem)' }}>{g.title}</span>
+                        <span style={{ ...headStyle, fontFamily: t.galFamily ?? t.head, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'calc(clamp(1.4rem, 4.2vw, 3.6rem) * var(--fs-cover, 1))' }}>{g.title}</span>
                       </a>
                     )
                     return i % 2 === 0 ? [photoTile, textTile] : [textTile, photoTile]
@@ -384,7 +383,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                       </a>
                       <div className={`flex flex-col items-center justify-center px-6 py-10 text-center ${odd ? 'md:order-1' : ''}`}>
                         <span className="text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
-                        <a href={href} className="mt-3 text-4xl md:text-5xl" style={headStyle}>{g.title}</a>
+                        <a href={href} className="mt-3" style={{ ...headStyle, fontSize: 'calc(clamp(2.25rem, 4vw, 3rem) * var(--fs-cover, 1))', lineHeight: 1.15 }}>{g.title}</a>
                         <p className="mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{g.photos.length} photos</p>
                         <a href={href} className="mt-6 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>View gallery →</a>
                       </div>
@@ -521,13 +520,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </div>, tinted)
       }
       case 'testimonials': {
-        const rawT = (r as any).site_settings?.testimonials?.layout
-        const L: string = rawT === 'carousel' ? 'carousel' : t.testi.layout
+        const L: string = t.testi.layout
         const list = quotesShown.slice(0, 6)
-        return sec('words', L === 'carousel' ? null : t.titles.testimonials,
-          L === 'carousel' ? (
-            <TestimonialCarousel list={list} heading={t.titles.testimonials ?? ''} headStyle={headStyle} bodyFont={t.body} ink={ink} soft={soft} bg={bg} tint={tint} />
-          ) : L === 'stacked' ? (
+        return sec('words', t.titles.testimonials,
+          L === 'stacked' ? (
             <div className="mx-auto max-w-3xl">
               {list.map((q, i) => (
                 <figure key={i} className="py-10 text-center" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
@@ -582,7 +578,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
                 {socials.map((s) => (
                   <a key={s.label} href={String(s.url).startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
-                    className="text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>{s.label}</a>
+                    className="uppercase tracking-[0.22em]" style={{ color: accent, fontSize: fsp('fs-social', 11) }}>{s.label}</a>
                 ))}
               </div>
             )}

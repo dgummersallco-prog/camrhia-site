@@ -1610,8 +1610,8 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
-                    <LayoutPicker value={(S.testimonials?.layout ?? T.testi.layout) as any} onChange={(v) => setIn('testimonials', { layout: v })}
-                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.teGrid }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.teStacked }, { v: 'cards', name: 'Cards', thumb: THUMBS.teCards }, { v: 'carousel', name: 'Carousel', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g stroke="#9A8A74" strokeWidth="1" fill="none"><path d="M6 6h8M6 6l2-2M6 6l2 2" /><path d="M18 6h8M26 6l-2-2M26 6l-2 2" /></g><rect x="12" y="11" width="36" height="18" rx="4" fill="#D8D0C4" /><rect x="40" y="23" width="14" height="5" rx="2.5" fill="#B9AFA2" /><rect x="14" y="33" width="32" height="2" fill="#B9AFA2" /></svg> }]} />
+                    <LayoutPicker value={T.testi.layout as any} onChange={(v) => setIn('testimonials', { layout: v })}
+                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.teGrid }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.teStacked }, { v: 'cards', name: 'Cards', thumb: THUMBS.teCards }]} />
                   </div>
 <div>
                     
@@ -1646,6 +1646,7 @@ export default function WebsitePage() {
 <Group title="7. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <SizeControl device={device} label="Message text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsContact} onChange={(dv, v) => setSize('fsContact', dv, v)} />
+                  <SizeControl device={device} label="Social links size" unit="%" min={60} max={200} step={5} value={T.sizes.fsSocial} onChange={(dv, v) => setSize('fsSocial', dv, v)} />
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
@@ -1663,6 +1664,7 @@ export default function WebsitePage() {
 {customBlock('home')}
 </>)}
 {tab === 'galleries' && (<><Group title="1. Galleries page" hint="your list of galleries" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
+                  <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
                   {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
                   <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
                   <div>
