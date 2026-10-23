@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
+import { APP_STORE_URL } from '@/lib/appStore'
 
 type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'packages' | 'questionnaires'
 
@@ -64,6 +65,34 @@ export function DashboardHeader({ active }: { active: Tab }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [unread, setUnread] = useState(0)
+  const [blocked, setBlocked] = useState(false)
+
+  useEffect(() => {
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const uid = data.session.user.id
+      const [pr, mem] = await Promise.all([
+        sb.from('profiles').select('account_type, subscription_status, trial_ends_at').eq('id', uid).maybeSingle(),
+        sb.from('studio_members').select('studio_owner_id, status').eq('member_id', uid).limit(1),
+      ])
+      const p = pr.data as { account_type?: string | null; subscription_status?: string | null; trial_ends_at?: string | null } | null
+      if (!p || p.account_type === 'couple') return
+      const row = ((mem.data ?? []) as { studio_owner_id: string; status: string }[]).find((m) => m.status === 'active')
+      let access: boolean
+      if (row) {
+        const { data: os } = await sb.rpc('get_studio_owner_status', { p_owner_id: row.studio_owner_id })
+        access = os === 'active' || os === 'comped'
+      } else {
+        const trialActive = !!p.trial_ends_at && new Date(p.trial_ends_at) > new Date()
+        access = p.subscription_status === 'active' || p.subscription_status === 'comped' || trialActive
+      }
+      setBlocked(!access)
+    }
+    run().catch(() => {})
+  }, [])
 
   useEffect(() => {
     let off = false
@@ -197,6 +226,23 @@ export function DashboardHeader({ active }: { active: Tab }) {
           </nav>
         )}
       </header>
+
+      {blocked && active !== 'billing' && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-paper px-6 py-10">
+          <div className="w-full max-w-md text-center">
+            <Wordmark className="text-4xl" />
+            <h1 className="mt-8 font-fraunces text-3xl font-semibold text-ink">Subscribe to keep going</h1>
+            <p className="mt-3 text-sm text-ink-soft">
+              Your free trial or subscription is no longer active. Subscribe in the Camrhia app and everything here will be right where you left it.
+            </p>
+            <p className="mt-2 text-xs text-ink-soft">On a studio team? Ask your studio owner to renew.</p>
+            <a href={APP_STORE_URL} className="mt-6 inline-block rounded-full bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90">Open the App Store</a>
+            <div className="mt-4">
+              <button type="button" onClick={signOut} className="text-sm text-ink-soft underline hover:text-ink">Sign out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
