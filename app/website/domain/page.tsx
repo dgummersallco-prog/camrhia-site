@@ -71,16 +71,16 @@ export default function DomainPage() {
       <main className="mx-auto max-w-3xl px-6 py-10">
         <Link href="/website" className="text-sm text-ink-soft hover:text-ink">← Your website</Link>
         <p className="mb-2 mt-4 font-mono text-xs uppercase tracking-widest text-brass">Your website</p>
-        <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">Your own web address</h1>
-        <p className="mt-2 text-sm text-ink-soft">Put your studio&apos;s name on your website. Connect a domain you own, like yourstudio.com, and your website, galleries and booking page all live there, under your name.</p>
+        <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">Your professional web address</h1>
+        <p className="mt-2 text-sm text-ink-soft">Look like the established studio you are. Connect your own domain and your website, galleries, booking page and client tools all live under your name, powered by Camrhia. Every inquiry, session and payment still flows straight into your Camrhia app.</p>
 
         {!dom && !err && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
         {err && <p className="mt-6 text-sm text-red-700">{err}</p>}
 
         {dom && !dom.domain && (
           <section className={`${card} mt-8`}>
-            <p className="font-fraunces text-xl font-semibold text-ink">Step 1. Enter your domain</p>
-            <p className="mt-1 text-sm text-ink-soft">Type the address you want clients to see, like <span className="font-medium text-ink">yourstudio.com</span> or <span className="font-medium text-ink">book.yourstudio.com</span>. Not sure which? An address that starts with <span className="font-medium text-ink">www.</span> or <span className="font-medium text-ink">book.</span> is the quickest to set up and works with every domain company.</p>
+            <p className="font-fraunces text-xl font-semibold text-ink">Step 1. Enter your professional domain</p>
+            <p className="mt-1 text-sm text-ink-soft">Pick the address you want clients to remember, like <span className="font-medium text-ink">yourstudio.com</span> or <span className="font-medium text-ink">book.yourstudio.com</span>. Your clients see your name, and Camrhia runs everything behind it: inquiries, bookings, contracts, galleries and payments. Tip: an address that starts with <span className="font-medium text-ink">book.</span> or <span className="font-medium text-ink">www.</span> is the quickest to set up.</p>
             <div className="mt-4 flex flex-wrap gap-3">
               <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="book.yourstudio.com"
                 className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25" />
@@ -118,9 +118,9 @@ export default function DomainPage() {
 
         {dom?.domain && dom.status === 'active' && (
           <section className={`${card} mt-8`}>
-            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /><p className="text-sm font-semibold text-emerald-700">Your domain is live</p></div>
+            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /><p className="text-sm font-semibold text-emerald-700">Your professional address is live</p></div>
             <p className="mt-2 font-fraunces text-2xl font-semibold text-ink">{dom.domain}</p>
-            <p className="mt-1 text-sm text-ink-soft">Clients who visit this address see your website, your galleries and your booking page.</p>
+            <p className="mt-1 text-sm text-ink-soft">Clients now find you, book, message, sign and pay through your own name, powered by Camrhia.</p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <a href={`https://${dom.domain}`} target="_blank" rel="noreferrer" className={btn}>Open {dom.domain}</a>
               {!confirmRemove
