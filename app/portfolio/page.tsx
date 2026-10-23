@@ -1033,8 +1033,11 @@ export default function PortfolioEditorPage() {
               <div className="space-y-5">
                 {open === null ? (
                   <div>
+                    {groupHeading('Portfolio', 'What clients see first.')}
+                    <div className="space-y-2.5">{['cover', 'name', 'location'].map((k) => hubRow(k))}</div>
+
                     {groupHeading('Portfolio style', 'The look and feel of your site.')}
-                    <div className="space-y-2.5">{STYLE_KEYS.map((k) => hubRow(k))}</div>
+                    <div className="space-y-2.5">{['brand', 'master', 'background', 'spacing', 'message'].map((k) => hubRow(k))}</div>
 
                     {groupHeading('Sections', 'Use the switch to show or hide a section on your site. Drag the dots up or down to change the order. Your changes apply to your website and to the Camrhia app.')}
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
