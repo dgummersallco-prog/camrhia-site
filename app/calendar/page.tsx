@@ -233,8 +233,16 @@ export default function CalendarPage() {
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Studio</p>
         <h1 className="mb-6 font-fraunces text-3xl font-semibold text-ink">Calendar</h1>
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="font-fraunces text-xl font-semibold text-ink">{monthLabel}</p>
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="font-fraunces text-3xl font-semibold text-ink">{monthLabel}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+              <span className="flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1 text-ink"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.booked }} />Booked</span>
+              <span className="flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1 text-ink"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.hold }} />Hold</span>
+              <span className="flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1 text-ink"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.blocked }} />Blocked</span>
+              <span className="text-ink-soft">Click a day to block it or put a hold on it.</span>
+            </div>
+          </div>
           <div className="flex gap-2">
             <button onClick={() => shift(-1)} className={btn} aria-label="Previous month">←</button>
             <button onClick={today} className={btn}>Today</button>
@@ -325,13 +333,6 @@ export default function CalendarPage() {
           </div>
         </details>
 
-        <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-ink-soft">
-          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.booked }} />Booked</span>
-          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.hold }} />Hold</span>
-          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.blocked }} />Blocked</span>
-          <span>Click a day to block it or put a hold on it.</span>
-        </div>
-
         {rows === null ? (
           <p className="text-sm text-ink-soft">Loading…</p>
         ) : (
@@ -347,31 +348,45 @@ export default function CalendarPage() {
                   const isToday = k === todayKey
                   const blk = d ? blockByDate[k] : undefined
                   const isBooked = d ? !!bookedByDate[k] : false
+                  const hold = !!blk && !isBooked && blk.type === 'hold'
+                  const blocked = !!blk && !isBooked && blk.type !== 'hold'
                   return (
                     <div
                       key={i}
                       onClick={() => { if (d) setSelDay(k) }}
-                      style={blk && !isBooked ? { backgroundColor: `${blk.type === 'hold' ? colors.hold : colors.blocked}33` } : undefined}
-                      className={`min-h-[64px] border-b border-r border-line p-1.5 sm:min-h-[96px] ${d ? 'cursor-pointer hover:bg-paper-deep/40' : 'bg-paper-deep/50'} ${d && selDay === k ? 'ring-2 ring-inset ring-twilight' : ''}`}
+                      style={
+                        hold
+                          ? { backgroundImage: `repeating-linear-gradient(45deg, ${colors.hold}33, ${colors.hold}33 6px, ${colors.hold}14 6px, ${colors.hold}14 12px)` }
+                          : blocked
+                            ? { backgroundColor: `${colors.blocked}26` }
+                            : undefined
+                      }
+                      className={`min-h-[72px] border-b border-r border-line p-1.5 sm:min-h-[112px] ${d ? 'cursor-pointer hover:bg-paper-deep/40' : 'bg-paper-deep/50'} ${d && isToday && !hold && !blocked ? 'bg-twilight/5' : ''} ${d && selDay === k ? 'ring-2 ring-inset ring-twilight' : ''}`}
                     >
                       {d && (
                         <>
-                          <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${isToday ? 'bg-twilight text-white' : 'text-ink-soft'}`}>{d}</span>
+                          <div className="flex items-center justify-between">
+                            <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-sm ${isToday ? 'bg-twilight font-semibold text-white' : 'font-medium text-ink'}`}>{d}</span>
+                            {hold && <span className="hidden rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide sm:inline" style={{ backgroundColor: colors.hold, color: '#2A1F24' }}>Hold</span>}
+                            {blocked && <span className="hidden rounded border border-line bg-card px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-soft sm:inline">Blocked</span>}
+                          </div>
                           <div className="mt-1 space-y-1">
-                            {isBooked && list.length === 0 && <p className="px-1 text-[11px]" style={{ color: colors.booked }}>Booked</p>}
-                            {blk && !isBooked && <p className="px-1 text-[11px] text-ink-soft">{blk.type === 'hold' ? 'Hold' : 'Blocked'}</p>}
+                            {isBooked && list.length === 0 && (
+                              <p className="hidden rounded px-1.5 py-0.5 text-xs font-semibold text-white sm:block" style={{ backgroundColor: colors.booked }}>Booked</p>
+                            )}
                             {list.slice(0, 2).map((r) => (
                               <Link
                                 key={r.id}
                                 href={`/sessions/${r.id}`}
-                                style={{ backgroundColor: `${colors.booked}22`, color: colors.booked }}
-                                className="block truncate rounded px-1.5 py-0.5 text-[11px] hover:opacity-80"
+                                style={{ backgroundColor: colors.booked, color: '#ffffff' }}
+                                className="hidden truncate rounded-md px-1.5 py-1 text-xs font-semibold shadow-sm hover:opacity-90 sm:block"
                               >
-                                <span className="hidden sm:inline">{r.names || pretty(r.session_type)}</span>
-                                <span className="sm:hidden">●</span>
+                                {r.names || pretty(r.session_type)}
                               </Link>
                             ))}
-                            {list.length > 2 && <p className="px-1 text-[11px] text-ink-soft">+{list.length - 2} more</p>}
+                            {isBooked && <span className="block h-2.5 w-2.5 rounded-full sm:hidden" style={{ backgroundColor: colors.booked }} />}
+                            {(hold || blocked) && <span className="block h-2.5 w-2.5 rounded-full sm:hidden" style={{ backgroundColor: hold ? colors.hold : colors.blocked }} />}
+                            {list.length > 2 && <p className="hidden px-1 text-[11px] text-ink-soft sm:block">+{list.length - 2} more</p>}
                           </div>
                         </>
                       )}
