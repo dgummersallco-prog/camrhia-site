@@ -378,6 +378,9 @@ export default function GalleryManagePage() {
   const shareUrl = gallery ? `${origin}/g/${gallery.token}` : ''
   const shown = filter === 'fav' ? photos.filter((p) => favCounts[p.id]) : photos
   const isPublished = gallery?.status === 'published'
+  const coverId = gallery?.cover_photo_id ?? null
+  const coverPhoto = coverId ? photos.find((p) => p.id === coverId) : undefined
+  const coverThumb = coverPhoto?.thumb_path ? thumbs[coverPhoto.thumb_path] : undefined
 
   function toggleSel(id: string) {
     setSelected((prev) => {
@@ -459,7 +462,11 @@ export default function GalleryManagePage() {
         ) : (
           <>
             {/* Title row */}
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="mb-6 flex flex-wrap items-center gap-4">
+              {coverThumb && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={coverThumb} alt="Cover" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
+              )}
               <div className="min-w-0 flex-1">
                 <input
                   value={title}
@@ -468,9 +475,9 @@ export default function GalleryManagePage() {
                   className="w-full bg-transparent font-fraunces text-3xl font-semibold text-ink focus:outline-none focus:ring-0"
                   aria-label="Gallery name"
                 />
-                <p className="mt-1 text-sm text-ink-soft">
-                  <span className={`mr-2 inline-block h-2 w-2 rounded-full ${isPublished ? 'bg-emerald-500' : 'bg-ink-soft/40'}`} />
-                  {isPublished ? 'Published. Clients can open the link.' : 'Draft. Not visible to clients yet.'}
+                <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+                  <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-emerald-100 text-emerald-700' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
+                  {isPublished ? 'Clients can open the link.' : photos.length === 0 ? 'Add photos, then publish when you are ready to share.' : 'Publish when you are ready to share.'}
                 </p>
               </div>
               <button
@@ -482,6 +489,7 @@ export default function GalleryManagePage() {
                     router.push('/galleries')
                   }
                 }}
+                disabled={!isPublished && photos.length === 0}
                 className={isPublished ? btnGhost : btn}
               >
                 {isPublished ? 'Unpublish' : 'Publish gallery'}
@@ -497,11 +505,11 @@ export default function GalleryManagePage() {
                 <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{photos.length}</p>
               </div>
               <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Favorites</p>
+                <p className="text-xs uppercase tracking-wider text-ink-soft">Total favorites</p>
                 <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{totalFavs}</p>
               </div>
               <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Photos hearted</p>
+                <p className="text-xs uppercase tracking-wider text-ink-soft">Favorited photos</p>
                 <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{favPhotoCount}</p>
               </div>
             </div>
@@ -510,7 +518,7 @@ export default function GalleryManagePage() {
               {/* Left: upload + photos */}
               <div className="min-w-0">
                 <section
-                  className={`mb-4 rounded-2xl border-2 border-dashed p-8 text-center transition ${dragging ? 'border-twilight bg-twilight/5' : 'border-line bg-card'}`}
+                  className={`mb-4 rounded-2xl border-2 border-dashed ${photos.length > 0 ? 'p-4' : 'p-8'} text-center transition ${dragging ? 'border-twilight bg-twilight/5' : 'border-line bg-card'}`}
                   onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
                   onDragLeave={() => setDragging(false)}
                   onDrop={onDrop}
@@ -595,7 +603,7 @@ export default function GalleryManagePage() {
                   ) : (
                     <>
                       <button className={btnGhost} onClick={() => setSelected(new Set(shown.map((p) => p.id)))}>Select all ({shown.length})</button>
-                      <button className={`${btnGhost} text-red-600`} disabled={selected.size === 0} onClick={bulkDelete}>Delete {selected.size || ''}</button>
+                      <button className={`${btnGhost} text-red-600`} disabled={selected.size === 0} onClick={bulkDelete}>Delete{selected.size ? ` (${selected.size})` : ''}</button>
                       <button className={btnGhost} onClick={() => { setSelecting(false); setSelected(new Set()) }}>Cancel</button>
                     </>
                   )}
@@ -648,7 +656,7 @@ export default function GalleryManagePage() {
               {/* Right: share + access */}
               <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
                 <div className={card}>
-                  <p className={label}>Share with your client</p>
+                  <p className="mb-3 text-xs font-medium uppercase tracking-wider text-ink-soft">Share with your client</p>
                   <input readOnly value={shareUrl} className={input} onFocus={(e) => e.currentTarget.select()} />
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }}>
@@ -675,49 +683,57 @@ export default function GalleryManagePage() {
                 </div>
 
                 <div className={card}>
-                  <label className={label}>
-                    PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(off)</span>}
-                  </label>
-                  <div className="flex gap-2">
-                    <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="Set a new PIN" className={input} />
-                    <button className={btnGhost} onClick={() => savePin(false)}>Save</button>
+                  <p className="mb-4 text-xs font-medium uppercase tracking-wider text-ink-soft">Access</p>
+
+                  <div>
+                    <label className={label}>
+                      PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(off)</span>}
+                    </label>
+                    <div className="flex gap-2">
+                      <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="Set a new PIN" className={input} />
+                      <button className={btnGhost} onClick={() => savePin(false)}>Save</button>
+                    </div>
+                    {gallery.pin_hash && (
+                      <button className="mt-2 text-xs text-ink-soft underline" onClick={() => savePin(true)}>Remove PIN</button>
+                    )}
+                    <p className="mt-2 text-xs text-ink-soft">Clients enter this to open the gallery. Leave it off for an open link.</p>
                   </div>
-                  {gallery.pin_hash && (
-                    <button className="mt-2 text-xs text-ink-soft underline" onClick={() => savePin(true)}>Remove PIN</button>
-                  )}
-                  <p className="mt-2 text-xs text-ink-soft">Clients enter this to open the gallery. Leave it off for an open link.</p>
-                </div>
 
-                <div className={card}>
-                  <label className={label}>Expires on</label>
-                  <div className="flex gap-2">
-                    <input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} className={input} />
-                    <button
-                      className={btnGhost}
-                      onClick={() => saveSettings({ expires_at: expiry ? new Date(`${expiry}T23:59:59`).toISOString() : null })}
-                    >
-                      Save
-                    </button>
+                  <div className="mt-5 border-t border-line pt-5">
+                    <label className={label}>Expires on</label>
+                    <div className="flex gap-2">
+                      <input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} className={input} />
+                      <button
+                        className={btnGhost}
+                        onClick={() => saveSettings({ expires_at: expiry ? new Date(`${expiry}T23:59:59`).toISOString() : null })}
+                      >
+                        Save
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-ink-soft">After this date the link stops working. Leave blank for no expiry.</p>
                   </div>
-                  <p className="mt-2 text-xs text-ink-soft">After this date the link stops working. Leave blank for no expiry.</p>
+
+                  <div className="mt-5 border-t border-line pt-5">
+                    <label className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink">
+                      Allow downloads
+                      <input
+                        type="checkbox"
+                        checked={gallery.allow_downloads}
+                        onChange={(e) => saveSettings({ allow_downloads: e.target.checked })}
+                        className="h-5 w-5"
+                      />
+                    </label>
+                    <p className="mt-2 text-xs text-ink-soft">When off, clients can view and favorite but not download.</p>
+                  </div>
                 </div>
 
-                <div className={card}>
-                  <label className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink">
-                    Allow downloads
-                    <input
-                      type="checkbox"
-                      checked={gallery.allow_downloads}
-                      onChange={(e) => saveSettings({ allow_downloads: e.target.checked })}
-                      className="h-5 w-5"
-                    />
-                  </label>
-                  <p className="mt-2 text-xs text-ink-soft">When off, clients can view and favorite but not download.</p>
+                <div className="rounded-2xl border border-red-200 p-5">
+                  <p className="text-sm font-medium text-ink">Delete gallery</p>
+                  <p className="mb-3 mt-1 text-xs text-ink-soft">Removes the gallery and every photo in it. This cannot be undone.</p>
+                  <button onClick={deleteGallery} className="rounded-xl border border-red-300 px-4 py-2 text-sm text-red-600 transition hover:bg-red-50">
+                    Delete this gallery
+                  </button>
                 </div>
-
-                <button onClick={deleteGallery} className="w-full text-center text-sm text-red-600 hover:underline">
-                  Delete this gallery
-                </button>
               </aside>
             </div>
           </>

@@ -355,9 +355,9 @@ export default function MessagesPage() {
                 className="w-full rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
               />
               <div className="flex gap-1 rounded-full border border-line bg-card p-1">
-                {([['all', 'All'], ['unread', `Unread${unreadCount ? ` (${unreadCount})` : ''}`], ['waiting', `To reply${waitingCount ? ` (${waitingCount})` : ''}`], ['inq', 'Inquiries']] as [Filter, string][]).map(([v, label]) => (
+                {([['all', 'All'], ['unread', `Unread${unreadCount ? ` (${unreadCount})` : ''}`], ['waiting', `Needs reply${waitingCount ? ` (${waitingCount})` : ''}`], ['inq', 'Inquiries']] as [Filter, string][]).map(([v, label]) => (
                   <button key={v} type="button" onClick={() => setFilter(v)}
-                    className={`flex-1 rounded-full px-2 py-1.5 text-xs transition ${filter === v ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}>{label}</button>
+                    className={`flex-1 rounded-full whitespace-nowrap px-2 py-1.5 text-xs transition ${filter === v ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink'}`}>{label}</button>
                 ))}
               </div>
               <ul className="min-h-0 flex-1 divide-y divide-line overflow-y-auto rounded-2xl border border-line bg-card">
@@ -380,7 +380,7 @@ export default function MessagesPage() {
                         </span>
                         <span className="flex items-center justify-between gap-2 text-xs text-ink-soft">
                           <span className="truncate">{t.kind === 'inq' ? 'Inquiry · ' : ''}{t.lastMine ? 'You: ' : ''}{t.snippet}</span>
-                          {t.waiting && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">Reply</span>}
+                          {t.waiting && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">Needs reply</span>}
                         </span>
                       </span>
                     </button>
