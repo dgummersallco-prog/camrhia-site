@@ -162,8 +162,8 @@ select:not([style]) {
 
 select:not([style]):focus {
   outline: none;
-  border-color: #A9545F;
-  box-shadow: 0 0 0 3px rgba(226, 155, 155, 0.35);
+  border-color: var(--color-twilight);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-twilight) 30%, transparent);
 }
 
 select option {
