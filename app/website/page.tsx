@@ -1848,9 +1848,8 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
                 </Group>{customBlock('galleries')}
 </>)}
-{tab === 'about' && (<><Group title="1. About" hint="your story" onOpen={() => scrollPreview('about')}>
+{tab === 'about' && (<><Group title="1. About layout" hint="layout, story and photos" onOpen={() => scrollPreview('about')}>
                   {sectionHead('about')}
-                  <SizeControl device={device} label="Story text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsAbout} onChange={(dv, v) => setSize('fsAbout', dv, v)} />
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={(S.about?.layout ?? T.about.layout) as any} onChange={(v) => setIn('about', { layout: v })}
@@ -1881,7 +1880,10 @@ export default function WebsitePage() {
                   )}
                   {(S.about?.layout ?? T.about.layout) === 'canvas' && canvasPanel('about')}
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
-                {secStyleBlock('about')}
+                </Group>
+<Group title="About colors & text" hint="background, colors, fonts and story size" onOpen={() => scrollPreview('about')}>
+                  <SizeControl device={device} label="Story text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsAbout} onChange={(dv, v) => setSize('fsAbout', dv, v)} />
+{secStyleBlock('about')}
 </Group>
 <Group title="2. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
