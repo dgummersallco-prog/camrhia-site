@@ -1436,6 +1436,52 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
+<Group title="Logo" hint="upload, size and position" onOpen={() => scrollPreview('nav')}>
+<div className="border-t border-line pt-4">
+                    <p className="mb-1 text-sm text-ink">Logo</p>
+                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {form.logo_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
+                      ) : (
+                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
+                      )}
+                      <label className={btnGhost + ' cursor-pointer'}>
+                        {form.logo_path ? 'Replace' : 'Upload logo'}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
+                      </label>
+                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
+                    </div>
+                  </div>
+                  <SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
+                  <Row label="Logo position">
+                    <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
+                  </Row>
+                  {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
+                  
+                  </Group>
+<Group title="Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
+<Row label="Menu bar">
+                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
+                  </Row>
+                  <Row label="Menu on desktop">
+                    <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
+                  </Row>
+                  <SizeControl device={device} label="Menu word size" unit="px" min={9} max={22} step={1} value={T.sizes.menu} onChange={(d, v) => setSize('menu', d, v)} />
+                  {nudgeCtl('Whole menu bar up / down', 'menuNudgeY', 40)}
+                  <div className="space-y-2">
+                    {MENU_KEYS.map((k) => (
+                      <div key={k} className="flex items-center gap-3">
+                        <input value={S.menu?.labels?.[k] ?? ''} placeholder={NAV_DEFAULTS[k]}
+                          onChange={(e) => upd((s) => { s.menu = { ...(s.menu ?? {}), labels: { ...(s.menu?.labels ?? {}), [k]: e.target.value } } })} className={inputCls} />
+                        <Switch on={!menuHidden.includes(k)}
+                          onChange={(v) => upd((s) => { const h: string[] = Array.isArray(s.menu?.hidden) ? [...s.menu.hidden] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); s.menu = { ...(s.menu ?? {}), hidden: h } })} />
+                      </div>
+                    ))}
+                  </div>
+                {secStyleBlock('nav')}
+</Group>
 <Group title="Hero text" hint="headline, location line and paragraph" onOpen={() => scrollPreview('top')}>
 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Headline</p>
 <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Camrhia Photographer" className={inputCls} />
@@ -1575,53 +1621,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 </>)}
-{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group title="1. Logo" hint="upload, size and position" onOpen={() => scrollPreview('nav')}>
-<div className="border-t border-line pt-4">
-                    <p className="mb-1 text-sm text-ink">Logo</p>
-                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {form.logo_path ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
-                      ) : (
-                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
-                      )}
-                      <label className={btnGhost + ' cursor-pointer'}>
-                        {form.logo_path ? 'Replace' : 'Upload logo'}
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
-                      </label>
-                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
-                    </div>
-                  </div>
-                  <SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
-                  <Row label="Logo position">
-                    <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
-                  </Row>
-                  {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
-                  
-                  </Group>
-<Group title="2. Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
-<Row label="Menu bar">
-                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
-                  </Row>
-                  <Row label="Menu on desktop">
-                    <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
-                  </Row>
-                  <SizeControl device={device} label="Menu word size" unit="px" min={9} max={22} step={1} value={T.sizes.menu} onChange={(d, v) => setSize('menu', d, v)} />
-                  {nudgeCtl('Whole menu bar up / down', 'menuNudgeY', 40)}
-                  <div className="space-y-2">
-                    {MENU_KEYS.map((k) => (
-                      <div key={k} className="flex items-center gap-3">
-                        <input value={S.menu?.labels?.[k] ?? ''} placeholder={NAV_DEFAULTS[k]}
-                          onChange={(e) => upd((s) => { s.menu = { ...(s.menu ?? {}), labels: { ...(s.menu?.labels ?? {}), [k]: e.target.value } } })} className={inputCls} />
-                        <Switch on={!menuHidden.includes(k)}
-                          onChange={(v) => upd((s) => { const h: string[] = Array.isArray(s.menu?.hidden) ? [...s.menu.hidden] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); s.menu = { ...(s.menu ?? {}), hidden: h } })} />
-                      </div>
-                    ))}
-                  </div>
-                {secStyleBlock('nav')}
-</Group>
-<Group title="3. Explore" hint="links to your other pages" onOpen={() => scrollPreview('explore')}>
+{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group title="1. Explore" hint="links to your other pages" onOpen={() => scrollPreview('explore')}>
   <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
@@ -1650,7 +1650,7 @@ export default function WebsitePage() {
   <p className="text-xs text-ink-soft">Leave a title empty to use the name from your Menu step.</p>
 {secStyleBlock('explore')}
 </Group>
-<Group title="4. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
+<Group title="2. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
                   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
@@ -1673,7 +1673,7 @@ export default function WebsitePage() {
                   
 {secStyleBlock('portfolio')}
 </Group>
-<Group title="5. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="3. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
                   <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
 <div>
@@ -1711,7 +1711,7 @@ export default function WebsitePage() {
                   
 {secStyleBlock('words')}
 </Group>
-<Group title="6. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
+<Group title="4. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <SizeControl device={device} label="Message text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsContact} onChange={(dv, v) => setSize('fsContact', dv, v)} />
                   <SizeControl device={device} label="Social links size" unit="%" min={60} max={200} step={5} value={T.sizes.fsSocial} onChange={(dv, v) => setSize('fsSocial', dv, v)} />
@@ -1721,7 +1721,7 @@ export default function WebsitePage() {
                   </div>
                 {secStyleBlock('contact')}
 </Group>
-<Group title="7. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
+<Group title="5. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <SizeControl device={device} label="Footer text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFoot} onChange={(dv, v) => setSize('fsFoot', dv, v)} />
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
