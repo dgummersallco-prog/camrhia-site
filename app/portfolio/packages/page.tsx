@@ -123,8 +123,9 @@ export default function PackagesEditor() {
 
   const typeLabel = (k: string) => types.find((x) => x.key === k)?.label ?? k.replace(/_/g, ' ')
 
-  function startNew() {
-    setDraft({ id: null, name: '', price: '', covers: '', detail: '', session_type: types.find((x) => x.key === 'wedding')?.key ?? types[0]?.key ?? 'wedding', delivery_days: '', show_public: true })
+  function startNew(tk?: string) {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setDraft({ id: null, name: '', price: '', covers: '', detail: '', session_type: tk ?? types.find((x) => x.key === 'wedding')?.key ?? types[0]?.key ?? 'wedding', delivery_days: '', show_public: true })
   }
   function startEdit(p: Pkg) {
     setDraft({ id: p.id, name: p.name, price: p.price ?? '', covers: p.covers ?? '', detail: p.detail ?? '', session_type: p.session_type, delivery_days: p.delivery_days ? String(p.delivery_days) : '', show_public: p.show_public })
@@ -177,17 +178,26 @@ export default function PackagesEditor() {
     if (error) setMsg(error.message)
   }
 
-  async function onDragEnd(e: DragEndEvent) {
+  async function onDragEndGroup(items: Pkg[], e: DragEndEvent) {
     const sb = supabase
     const { active, over } = e
     if (!sb || !over || active.id === over.id || !pkgs) return
-    const from = pkgs.findIndex((x) => x.id === active.id)
-    const to = pkgs.findIndex((x) => x.id === over.id)
+    const from = items.findIndex((x) => x.id === active.id)
+    const to = items.findIndex((x) => x.id === over.id)
     if (from < 0 || to < 0) return
-    const next = arrayMove(pkgs, from, to).map((x, i) => ({ ...x, sort_order: i + 1 }))
-    setPkgs(next)
-    await Promise.all(next.map((x) => sb.from('packages').update({ sort_order: x.sort_order }).eq('id', x.id)))
+    const sorted = items.map((x) => x.sort_order ?? 0).sort((x, y) => x - y)
+    const slots = new Set(sorted).size === items.length ? sorted : items.map((_, i) => i + 1)
+    const moved = arrayMove(items, from, to).map((x, i) => ({ ...x, sort_order: slots[i] }))
+    const byId = new Map<string, Pkg>(moved.map((x) => [x.id, x] as [string, Pkg]))
+    setPkgs(pkgs.map((x) => byId.get(x.id) ?? x).sort((x, y) => (x.sort_order ?? 0) - (y.sort_order ?? 0)))
+    await Promise.all(moved.map((x) => sb.from('packages').update({ sort_order: x.sort_order }).eq('id', x.id)))
   }
+
+  const TYPE_ORDER = ['wedding', 'engagement', 'proposal', 'maternity', 'newborn', 'family', 'senior', 'graduation', 'headshots', 'branding', 'boudoir', 'dance', 'sports_team']
+  const rankOf = (k: string) => { const i = TYPE_ORDER.indexOf(k); return i === -1 ? 999 : i }
+  const groups = Array.from(new Set<string>([...types.map((t) => t.key), ...(pkgs ?? []).map((x) => x.session_type)]))
+    .sort((x, y) => rankOf(x) - rankOf(y) || typeLabel(x).localeCompare(typeLabel(y)))
+    .map((k) => ({ key: k, items: (pkgs ?? []).filter((x) => x.session_type === k) }))
 
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
@@ -199,7 +209,7 @@ export default function PackagesEditor() {
             <h1 className="font-fraunces text-3xl font-semibold text-ink">Packages</h1>
             <p className="mt-1 text-sm text-ink-soft">Use the switch to show or hide a package on your site. Drag the dots to change the order. Changes also appear in the Camrhia app.</p>
           </div>
-          {!draft && <button className={btn} onClick={startNew}>+ New package</button>}
+          {!draft && <button className={btn} onClick={() => startNew()}>+ New package</button>}
         </div>
 
         {msg && <p className="mb-4 rounded-xl bg-blush-wash px-4 py-2 text-sm text-twilight">{msg}</p>}
@@ -254,15 +264,29 @@ export default function PackagesEditor() {
         ) : pkgs.length === 0 ? (
           <p className="text-sm text-ink-soft">No packages yet. Add your first one.</p>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext items={pkgs.map((x) => x.id)} strategy={verticalListSortingStrategy}>
-              <ul className="space-y-2">
-                {pkgs.map((p) => (
-                  <Row key={p.id} pkg={p} typeLabel={typeLabel(p.session_type)} onEdit={() => startEdit(p)} onDelete={() => remove(p)} onToggle={(v) => toggle(p, v)} />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
+<div className="space-y-10">
+            {groups.map((g) => (
+              <section key={g.key}>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h2 className="font-fraunces text-xl font-semibold text-ink">{typeLabel(g.key)} <span className="text-sm font-normal text-ink-soft">· {g.items.length}</span></h2>
+                  <button type="button" className="text-sm text-twilight hover:underline" onClick={() => startNew(g.key)}>+ Add package</button>
+                </div>
+                {g.items.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-line px-4 py-3 text-sm text-ink-soft">No packages yet.</p>
+                ) : (
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEndGroup(g.items, e)}>
+                    <SortableContext items={g.items.map((x) => x.id)} strategy={verticalListSortingStrategy}>
+                      <ul className="space-y-2">
+                        {g.items.map((p) => (
+                          <Row key={p.id} pkg={p} typeLabel="" onEdit={() => startEdit(p)} onDelete={() => remove(p)} onToggle={(v) => toggle(p, v)} />
+                        ))}
+                      </ul>
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </section>
+            ))}
+          </div>
         )}
       </main>
     </div>
