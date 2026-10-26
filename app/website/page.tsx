@@ -1780,13 +1780,15 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Button size (closing only)" unit="px" min={9} max={20} step={1} value={T.sizes.ctBtn} onChange={(d, v) => setSize('ct_btn' as any, d, v)} />
                 </Group>
 
-<Group title="5. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
-                  <SizeControl device={device} label="Footer text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFoot} onChange={(dv, v) => setSize('fsFoot', dv, v)} />
+<Group title="5. Footer layout" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
                   </div>
-                {secStyleBlock('footer')}
+                </Group>
+<Group title="Footer colors & text" hint="background, colors, fonts and size" onOpen={() => scrollPreview('footer')}>
+                  <SizeControl device={device} label="Footer text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFoot} onChange={(dv, v) => setSize('fsFoot', dv, v)} />
+{secStyleBlock('footer')}
 </Group>
 {customBlock('home')}
 </>)}
