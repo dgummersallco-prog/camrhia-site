@@ -33,6 +33,49 @@ type Tm = { id: string; storage_path: string | null; quote: string | null; clien
 type WPkg = { id: string; title: string; price: string | null; description: string | null; sort_order: number; source_package_id: string | null }
 type OwnPkg = { id: string; name: string; price: string | null; covers: string | null; detail: string | null; session_type: string | null }
 
+function heroAspect(tpl: string, dev: 'phone' | 'desktop', vh: number): number | null {
+  const W = dev === 'phone' ? 390 : 1280
+  const H = dev === 'phone' ? 844 : 800
+  if (tpl === 'editorial' || tpl === 'framed') return W / ((vh / 100) * H)
+  if (tpl === 'magazine') return W / (0.8 * (vh / 100) * H)
+  if (tpl === 'minimal') return dev === 'phone' ? 16 / 10 : 21 / 9
+  if (tpl === 'split') return dev === 'phone' ? W / (0.6 * H) : (W / 2) / Math.max(0.6 * H, (vh / 100) * H - 64)
+  return null
+}
+
+function HeroFrame({ src, aspect, x, y, onChange }: { src: string; aspect: number | null; x: number; y: number; onChange: (x: number, y: number) => void }) {
+  const box = useRef<HTMLDivElement>(null)
+  const [ia, setIa] = useState(1.5)
+  const drag = useRef<{ sx: number; sy: number; x: number; y: number } | null>(null)
+  const a = aspect ?? ia
+  const fw = ia > a ? a / ia : 1
+  const fh = ia > a ? 1 : ia / a
+  const left = (x / 100) * (1 - fw) * 100
+  const top = (y / 100) * (1 - fh) * 100
+  const clamp = (v: number) => Math.round(Math.min(100, Math.max(0, v)))
+  return (
+    <div ref={box} className="relative mx-auto select-none overflow-hidden rounded-lg" style={{ aspectRatio: String(ia), width: 'min(100%, ' + Math.round(340 * ia) + 'px)' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" draggable={false} onLoad={(e) => { const im = e.currentTarget; if (im.naturalWidth && im.naturalHeight) setIa(im.naturalWidth / im.naturalHeight) }} className="absolute inset-0 h-full w-full object-fill" />
+      <div
+        className="absolute cursor-grab touch-none active:cursor-grabbing"
+        style={{ left: left + '%', top: top + '%', width: fw * 100 + '%', height: fh * 100 + '%', boxShadow: '0 0 0 999px rgba(0,0,0,0.55)', border: '2px solid #fff' }}
+        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); drag.current = { sx: e.clientX, sy: e.clientY, x, y } }}
+        onPointerMove={(e) => {
+          const d = drag.current
+          if (!d || !box.current) return
+          const r = box.current.getBoundingClientRect()
+          const nx = fw < 1 ? clamp(d.x + (((e.clientX - d.sx) / r.width) / (1 - fw)) * 100) : x
+          const ny = fh < 1 ? clamp(d.y + (((e.clientY - d.sy) / r.height) / (1 - fh)) * 100) : y
+          onChange(nx, ny)
+        }}
+        onPointerUp={() => { drag.current = null }}
+        onPointerCancel={() => { drag.current = null }}
+      />
+    </div>
+  )
+}
+
 const PKG_TYPE_ORDER = ['wedding', 'engagement', 'proposal', 'maternity', 'newborn', 'family', 'senior', 'graduation', 'headshots', 'branding', 'boudoir', 'dance', 'sports_team']
 function groupOwnPkgs(list: OwnPkg[]) {
   const map = new Map<string, OwnPkg[]>()
@@ -1391,6 +1434,84 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
+<Group title="Hero text" hint="headline and location line" onOpen={() => scrollPreview('top')}>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
+                    <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
+                    <div className="mt-3"><SizeControl device={device} label="Headline size" unit="px" min={24} max={140} step={2} value={T.sizes.headline} onChange={(d, v) => setSize('headline', d, v)} /></div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Location line</label>
+                    <input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Boise, Idaho" className={inputCls} />
+                    <div className="mt-3"><SizeControl device={device} label="Location line size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(d, v) => setSize('subhead', d, v)} /></div>
+                  </div>
+                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
+                  
+                {secStyleBlock('top')}
+</Group>
+<Group title="Hero photos" hint="photos, slideshow and position" onOpen={() => scrollPreview('top')}>
+<div>
+                    <p className="mb-1 text-sm text-ink">Hero photos</p>
+                    <p className="mb-2 text-xs text-ink-soft">Up to 6 photos. The first one leads. With none, your app cover photos are used.</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {heroSel.map((p, idx) => (
+                        <div key={p} className="relative aspect-square overflow-hidden rounded-lg ring-1 ring-line">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={BASE + p} alt="" className="h-full w-full object-cover" loading="lazy" />
+                          <span className="absolute left-1 top-1 rounded bg-twilight px-1.5 text-[10px] text-white">{idx + 1}</span>
+                          <button type="button" aria-label="Remove photo" onClick={() => toggleHero(p)} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-sm leading-none text-white">×</button>
+                        </div>
+                      ))}
+                      {heroSel.length < 6 && (
+                        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line text-center text-xs text-ink-soft hover:border-twilight">
+                          <span className="text-xl text-ink">+</span>Upload
+                          <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadHero(f); e.target.value = '' }} />
+                        </label>
+                      )}
+                    </div>
+                    {heroSel.length < 6 && cands.filter((p) => !heroSel.includes(p)).length > 0 && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-xs text-ink-soft">Add from my other photos</summary>
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          {cands.filter((p) => !heroSel.includes(p)).map((p) => (
+                            <button key={p} type="button" onClick={() => toggleHero(p)} className="relative aspect-square overflow-hidden rounded-lg ring-1 ring-line">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={BASE + p} alt="" className="h-full w-full object-cover" loading="lazy" />
+                              <span className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-twilight text-sm leading-none text-white">+</span>
+                            </button>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                                    {heroSel.length > 0 && tpl !== 'mosaic' && (() => {
+                    const fp = heroSel[Math.min(focusIdx, heroSel.length - 1)]
+                    const fv = S.hero?.focus?.[fp] ?? { x: 50, y: 50 }
+                    const asp = heroAspect(tpl, device, T.sizes.heroHeight[device])
+                    return (
+                      <div>
+                        <p className="mb-1 text-sm text-ink">Position your photo</p>
+                        <p className="mb-2 text-xs text-ink-soft">The bright box is exactly what visitors see on a {device === 'phone' ? 'phone' : 'computer'} with this template. Drag it over the part of the photo you want.</p>
+                        {heroSel.length > 1 && (
+                          <div className="mb-2 flex gap-2">
+                            {heroSel.map((p, i) => (
+                              <button key={p} type="button" onClick={() => setFocusIdx(i)} className={'h-7 w-7 rounded-full text-xs ' + (i === Math.min(focusIdx, heroSel.length - 1) ? 'bg-twilight text-white' : 'border border-line text-ink-soft')}>{i + 1}</button>
+                            ))}
+                          </div>
+                        )}
+                        <HeroFrame src={BASE + fp} aspect={asp} x={fv.x} y={fv.y} onChange={(nx, ny) => setHero({ focus: { ...(S.hero?.focus ?? {}), [fp]: { x: nx, y: ny } } })} />
+                        <button type="button" className="mt-2 text-xs text-ink-soft hover:text-ink" onClick={() => setHero({ focus: { ...(S.hero?.focus ?? {}), [fp]: { x: 50, y: 50 } } })}>Reset to center</button>
+                      </div>
+                    )
+                  })()}
+                  {form.site_template === 'mosaic' && canvasPanel('hero')}
+                  <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
+                  
+                  
+                  <SizeControl device={device} label="Hero height" unit="vh" min={40} max={100} step={5} value={T.sizes.heroHeight} onChange={(d, v) => setSize('heroHeight', d, v)} />
+                  
+                  </Group>
+
 <Group title="Color & fonts" hint="used on every page" onOpen={() => scrollPreview('')}>
                   
                   {colorRow('Background', 'bg', T.bg)}
@@ -1495,91 +1616,7 @@ export default function WebsitePage() {
                   </div>
                 {secStyleBlock('nav')}
 </Group>
-<Group title="3. Hero" hint="photos and headline" onOpen={() => scrollPreview('top')}>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
-                    <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
-                    <div className="mt-3"><SizeControl device={device} label="Headline size" unit="px" min={24} max={140} step={2} value={T.sizes.headline} onChange={(d, v) => setSize('headline', d, v)} /></div>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Location line</label>
-                    <input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Boise, Idaho" className={inputCls} />
-                    <div className="mt-3"><SizeControl device={device} label="Location line size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(d, v) => setSize('subhead', d, v)} /></div>
-                  </div>
-                  <div>
-                    <p className="mb-1 text-sm text-ink">Hero photos</p>
-                    <p className="mb-2 text-xs text-ink-soft">Up to 6 photos. The first one leads. With none, your app cover photos are used.</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {heroSel.map((p, idx) => (
-                        <div key={p} className="relative aspect-square overflow-hidden rounded-lg ring-1 ring-line">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={BASE + p} alt="" className="h-full w-full object-cover" loading="lazy" />
-                          <span className="absolute left-1 top-1 rounded bg-twilight px-1.5 text-[10px] text-white">{idx + 1}</span>
-                          <button type="button" aria-label="Remove photo" onClick={() => toggleHero(p)} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-sm leading-none text-white">×</button>
-                        </div>
-                      ))}
-                      {heroSel.length < 6 && (
-                        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line text-center text-xs text-ink-soft hover:border-twilight">
-                          <span className="text-xl text-ink">+</span>Upload
-                          <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadHero(f); e.target.value = '' }} />
-                        </label>
-                      )}
-                    </div>
-                    {heroSel.length < 6 && cands.filter((p) => !heroSel.includes(p)).length > 0 && (
-                      <details className="mt-3">
-                        <summary className="cursor-pointer text-xs text-ink-soft">Add from my other photos</summary>
-                        <div className="mt-2 grid grid-cols-3 gap-2">
-                          {cands.filter((p) => !heroSel.includes(p)).map((p) => (
-                            <button key={p} type="button" onClick={() => toggleHero(p)} className="relative aspect-square overflow-hidden rounded-lg ring-1 ring-line">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={BASE + p} alt="" className="h-full w-full object-cover" loading="lazy" />
-                              <span className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-twilight text-sm leading-none text-white">+</span>
-                            </button>
-                          ))}
-                        </div>
-                      </details>
-                    )}
-                  </div>
-                                    {heroSel.length > 0 && (() => {
-                    const fp = heroSel[Math.min(focusIdx, heroSel.length - 1)]
-                    const fv = S.hero?.focus?.[fp] ?? { x: 50, y: 50 }
-                    const pick = (e: { currentTarget: HTMLDivElement; clientX: number; clientY: number }) => {
-                      const b = e.currentTarget.getBoundingClientRect()
-                      const x = Math.round(Math.min(100, Math.max(0, ((e.clientX - b.left) / b.width) * 100)))
-                      const y = Math.round(Math.min(100, Math.max(0, ((e.clientY - b.top) / b.height) * 100)))
-                      setHero({ focus: { ...(S.hero?.focus ?? {}), [fp]: { x, y } } })
-                    }
-                    return (
-                      <div>
-                        <p className="mb-1 text-sm text-ink">Choose the visible area</p>
-                        <p className="mb-2 text-xs text-ink-soft">Tap or drag on the photo to mark the part that should always stay in view when your template crops it.</p>
-                        {heroSel.length > 1 && (
-                          <div className="mb-2 flex gap-2">
-                            {heroSel.map((p, i) => (
-                              <button key={p} type="button" onClick={() => setFocusIdx(i)} className={'h-7 w-7 rounded-full text-xs ' + (i === Math.min(focusIdx, heroSel.length - 1) ? 'bg-twilight text-white' : 'border border-line text-ink-soft')}>{i + 1}</button>
-                            ))}
-                          </div>
-                        )}
-                        <div className="relative cursor-crosshair touch-none select-none overflow-hidden rounded-lg" onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); pick(e) }} onPointerMove={(e) => { if (e.buttons === 1) pick(e) }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={BASE + fp} alt="" draggable={false} className="block w-full" />
-                          <span className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow" style={{ left: fv.x + '%', top: fv.y + '%', background: 'rgba(168,128,63,0.55)' }} />
-                        </div>
-                        <button type="button" className="mt-2 text-xs text-ink-soft hover:text-ink" onClick={() => setHero({ focus: { ...(S.hero?.focus ?? {}), [fp]: { x: 50, y: 50 } } })}>Reset to center</button>
-                      </div>
-                    )
-                  })()}
-                  {form.site_template === 'mosaic' && canvasPanel('hero')}
-                  <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
-                  
-                  
-                  <SizeControl device={device} label="Hero height" unit="vh" min={40} max={100} step={5} value={T.sizes.heroHeight} onChange={(d, v) => setSize('heroHeight', d, v)} />
-                  
-                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
-                  
-                {secStyleBlock('top')}
-</Group>
-<Group title="4. Explore" hint="links to your other pages" onOpen={() => scrollPreview('explore')}>
+<Group title="3. Explore" hint="links to your other pages" onOpen={() => scrollPreview('explore')}>
   <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
@@ -1608,7 +1645,7 @@ export default function WebsitePage() {
   <p className="text-xs text-ink-soft">Leave a title empty to use the name from your Menu step.</p>
 {secStyleBlock('explore')}
 </Group>
-<Group title="5. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
+<Group title="4. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
                   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
@@ -1631,7 +1668,7 @@ export default function WebsitePage() {
                   
 {secStyleBlock('portfolio')}
 </Group>
-<Group title="6. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="5. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
                   <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
 <div>
@@ -1669,7 +1706,7 @@ export default function WebsitePage() {
                   
 {secStyleBlock('words')}
 </Group>
-<Group title="7. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
+<Group title="6. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <SizeControl device={device} label="Message text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsContact} onChange={(dv, v) => setSize('fsContact', dv, v)} />
                   <SizeControl device={device} label="Social links size" unit="%" min={60} max={200} step={5} value={T.sizes.fsSocial} onChange={(dv, v) => setSize('fsSocial', dv, v)} />
@@ -1679,7 +1716,7 @@ export default function WebsitePage() {
                   </div>
                 {secStyleBlock('contact')}
 </Group>
-<Group title="8. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
+<Group title="7. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <SizeControl device={device} label="Footer text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFoot} onChange={(dv, v) => setSize('fsFoot', dv, v)} />
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
