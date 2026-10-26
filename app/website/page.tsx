@@ -518,6 +518,7 @@ export default function WebsitePage() {
   const [message, setMessage] = useState<string | null>(null)
   const [focusIdx, setFocusIdx] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [saveErr, setSaveErr] = useState(false)
   const [device, setDevice] = useState<Dev>('desktop')
   const [previewPage, setPreviewPage] = useState<'home' | 'galleries' | 'gallery' | 'about' | 'availability'>('home')
   const [heroBox, setHeroBox] = useState<{ w: number; h: number } | null>(null)
@@ -753,6 +754,13 @@ export default function WebsitePage() {
     })
   }
   const dirty = JSON.stringify(form) !== JSON.stringify(saved)
+  useEffect(() => { setSaveErr(false) }, [form])
+  useEffect(() => {
+    if (!dirty || saving || saveErr) return
+    const id = setTimeout(() => { save() }, 1500)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, dirty, saving, saveErr])
 
   async function save() {
     const sb = supabase
@@ -769,9 +777,9 @@ export default function WebsitePage() {
       site_settings: form.site_settings ?? {},
     }).eq('id', form.id)
     setSaving(false)
-    if (error) { flash(error.message); return }
+    if (error) { setSaveErr(true); flash(error.message); return }
+    setSaveErr(false)
     setSaved(form)
-    flash('Saved')
   }
 
   function toggleHero(path: string) {
@@ -1365,7 +1373,7 @@ export default function WebsitePage() {
               <div className="flex items-center gap-3">
                 {message && <span className="text-sm text-twilight">{message}</span>}
                 <button className={btn} disabled={!dirty || saving} onClick={save}>
-                  {saving ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
+                  {saving ? 'Saving…' : saveErr ? 'Retry save' : dirty ? 'Save now' : 'All changes saved'}
                 </button>
               </div>
             </div>
