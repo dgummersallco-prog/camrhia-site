@@ -1589,64 +1589,6 @@ export default function WebsitePage() {
                   {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
                   
                   </Group>
-<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Site styles <span className="font-normal normal-case tracking-normal">· colors, fonts, buttons and sizes</span></p>
-<Group title="Color & fonts" hint="used on every page" onOpen={() => scrollPreview('')}>
-                  
-                  {colorRow('Background', 'bg', T.bg)}
-                  {colorRow('Text', 'text', T.ink)}
-                  <div className="grid grid-cols-3 gap-3 pt-2">
-                    {Object.entries(PAIR_PRESETS).map(([key, p]) => {
-                      const sel = (form.site_font_pair ?? 'serif') === key && !S.fonts?.head && !S.fonts?.body
-                      return (
-                        <button key={key} onClick={() => pickPair(key)} className={`rounded-xl border p-3 text-left ${sel ? 'border-twilight ring-1 ring-twilight' : 'border-line'}`}>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.head].family, fontSize: 24, lineHeight: 1.1 }} className="text-ink">Aa</p>
-                          <p style={{ fontFamily: FONT_OPTIONS[p.body].family, fontSize: 11 }} className="mt-1 text-ink-soft">{p.name}</p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <FontPicker label="Heading font" value={T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setIn('fonts', { head: k })} />
-                  {(() => {
-                    const ws = (FONT_OPTIONS[T.headKey]?.weights ?? [400]).filter((w) => w <= 700)
-                    const nm: Record<number, string> = { 100: 'Hairline', 200: 'Thin', 300: 'Light', 400: 'Regular', 500: 'Medium', 600: 'Semi', 700: 'Bold' }
-                    const want = T.headWeight ?? 500
-                    const cur = ws.reduce((a, b) => (Math.abs(b - want) < Math.abs(a - want) ? b : a), ws[0])
-                    return ws.length > 1 ? (
-                      <div>
-                        <p className="mb-2 text-sm text-ink">Heading weight</p>
-                        <Seg value={String(cur)} options={ws.map((w) => ({ v: String(w), label: nm[w] ?? String(w) }))} onChange={(v) => setIn('fonts', { headWeight: Number(v) })} />
-                      </div>
-                    ) : <p className="text-xs text-ink-soft">This font has one weight. Pick a font with Thin or Light for a lighter look.</p>
-                  })()}
-                  <FontPicker label="Body font" value={T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setIn('fonts', { body: k })} />
-                </Group>
-<Group title="Buttons" hint="wording, color, size, shape" onOpen={() => scrollPreview('')}>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (every button on the site)</label>
-                    <input value={S.hero?.cta_text ?? ''} onChange={(e) => setHero({ cta_text: e.target.value })} placeholder="Check availability" className={inputCls} />
-                  </div>
-                  <ColorField label="Button & accent color" value={form.site_accent ?? brandHex()} swatches={palette()}
-                    onChange={(h) => set('site_accent', h)} onReset={() => set('site_accent', null)} />
-                  <ColorField label="Button text color" value={T.btnText} swatches={palette()}
-                    onChange={(h) => setIn('button', { text: h })}
-                    onReset={() => upd((st) => { const b = { ...(st.button ?? {}) }; delete b.text; st.button = b })} />
-                  <Row label="Button shape">
-                    <Seg value={T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('button', { shape: v })} />
-                  </Row>
-                  <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.button} onChange={(d, v) => setSize('button', d, v)} />
-                </Group>
-
-<Group title="Text & spacing sizes" hint="phone and desktop" onOpen={() => scrollPreview('')}>
-                  
-                  
-                  <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
-                  <SizeControl device={device} label="Text size" unit="%" min={80} max={130} step={5} value={T.sizes.text} onChange={(d, v) => setSize('text', d, v)} />
-                  <SizeControl device={device} label="Section heading size" unit="px" min={20} max={100} step={2} value={T.sizes.secHead} onChange={(dv, v) => setSize('secHead', dv, v)} />
-                  
-                  
-                  <SizeControl device={device} label="Space between sections" unit="px" min={16} max={220} step={4} value={T.sizes.sectionSpace} onChange={(d, v) => setSize('sectionSpace', d, v)} />
-                  <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
-                </Group>
 </>)}
 {tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group title="1. Explore layout" hint="layout, titles and subtitles" onOpen={() => scrollPreview('explore')}>
   <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
