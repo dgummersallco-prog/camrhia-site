@@ -54,7 +54,7 @@ function HeroFrame({ src, aspect, x, y, onChange }: { src: string; aspect: numbe
   const top = (y / 100) * (1 - fh) * 100
   const clamp = (v: number) => Math.round(Math.min(100, Math.max(0, v)))
   return (
-    <div ref={box} className="relative mx-auto select-none overflow-hidden rounded-lg" style={{ aspectRatio: String(ia), width: 'min(100%, ' + Math.round(340 * ia) + 'px)' }}>
+    <div ref={box} className="relative mx-auto select-none overflow-hidden rounded-lg" style={{ aspectRatio: String(ia), width: 'min(100%, ' + Math.round(460 * ia) + 'px)' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt="" draggable={false} onLoad={(e) => { const im = e.currentTarget; if (im.naturalWidth && im.naturalHeight) setIa(im.naturalWidth / im.naturalHeight) }} className="absolute inset-0 h-full w-full object-fill" />
       <div
@@ -520,6 +520,7 @@ export default function WebsitePage() {
   const [saving, setSaving] = useState(false)
   const [device, setDevice] = useState<Dev>('desktop')
   const [previewPage, setPreviewPage] = useState<'home' | 'galleries' | 'gallery' | 'about' | 'availability'>('home')
+  const [heroBox, setHeroBox] = useState<{ w: number; h: number } | null>(null)
   const [tab, setTab] = useState<'style' | 'home' | 'galleries' | 'about' | 'book'>('home')
   useEffect(() => {
     try {
@@ -574,6 +575,7 @@ export default function WebsitePage() {
         })
       }
       if (d.type === 'camrhia-galleries' && Array.isArray(d.list)) setCvGalleries(d.list as { id: string; title: string }[])
+      if (d.type === 'camrhia-hero-box') { const hb = d as unknown as { w?: unknown; h?: unknown }; if (typeof hb.w === 'number' && typeof hb.h === 'number' && hb.h > 0) setHeroBox({ w: hb.w, h: hb.h }) }
       if (d.type === 'camrhia-canvas-select') {
         if (d.id == null) {
           if (cvBridge.board && d.boardId !== cvBridge.board) return
@@ -1490,7 +1492,7 @@ export default function WebsitePage() {
                                     {heroSel.length > 0 && tpl !== 'mosaic' && (() => {
                     const fp = heroSel[Math.min(focusIdx, heroSel.length - 1)]
                     const fv = S.hero?.focus?.[fp] ?? { x: 50, y: 50 }
-                    const asp = heroAspect(tpl, device, T.sizes.heroHeight[device])
+                    const asp = heroBox && heroBox.h > 0 ? heroBox.w / heroBox.h : heroAspect(tpl, device, T.sizes.heroHeight[device])
                     return (
                       <div>
                         <p className="mb-1 text-sm text-ink">Position your photo</p>
