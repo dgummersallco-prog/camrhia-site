@@ -1424,6 +1424,7 @@ export default function WebsitePage() {
                 {tab === 'home' && (<>
 <p className="px-1 pt-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Style controls <span className="font-normal normal-case tracking-normal">· the look of every page</span></p>
 
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Hero style <span className="font-normal normal-case tracking-normal">· template, logo, menu, text, photos and button</span></p>
 <Group title="Template" hint="pick a look" onOpen={() => scrollPreview('')}>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {TEMPLATES.map((t) => (
@@ -1498,7 +1499,6 @@ export default function WebsitePage() {
 <ColorField label="Paragraph color" value={T.hero.paraColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ para_color: h })} onReset={() => setHero({ para_color: undefined })} />
 <FontPicker label="Paragraph font" value={S.hero?.para_font ?? T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setHero({ para_font: k })} />
 <SizeControl device={device} label="Paragraph size" unit="px" min={10} max={40} step={1} value={T.sizes.paraSize} onChange={(dv, v) => setSize('paraSize', dv, v)} />
-<Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
 </Group>
 <Group title="Hero photos" hint="photos, slideshow and position" onOpen={() => scrollPreview('top')}>
 <div>
@@ -1563,6 +1563,11 @@ export default function WebsitePage() {
                   
                   </Group>
 
+<Group title="Hero button" hint="show or hide it" onOpen={() => scrollPreview('top')}>
+                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
+</Group>
+
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Whole site <span className="font-normal normal-case tracking-normal">· colors, fonts, buttons and sizes</span></p>
 <Group title="Color & fonts" hint="used on every page" onOpen={() => scrollPreview('')}>
                   
                   {colorRow('Background', 'bg', T.bg)}
