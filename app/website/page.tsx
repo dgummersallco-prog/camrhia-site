@@ -1263,19 +1263,38 @@ export default function WebsitePage() {
     )
   }
 
-  function secStyleBlock(id: string) {
+  function secStyleBlock(id: string, opts?: { title?: boolean; extra?: React.ReactNode }) {
     if (!T) return null
-    const sv = ((S as any).secStyle?.[id] ?? {}) as { bg?: string; text?: string; head?: string; body?: string }
+    const sv = ((S as any).secStyle?.[id] ?? {}) as { bg?: string; text?: string; head?: string; body?: string; title?: string }
     const put = (patch: Record<string, string | undefined>) => setIn('secStyle', { [id]: { ...sv, ...patch } })
+    const lab = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
+    const touched = sv.bg || sv.text || sv.head || sv.body || sv.title || (S as any).sizes?.['sec_' + id]
     return (
-      <div className="space-y-4 border-t border-line pt-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Colors and fonts for this section</p>
-        <ColorField label="Background" value={sv.bg ?? T.bg} swatches={palette()} onChange={(h) => put({ bg: h })} onReset={() => put({ bg: undefined })} />
-        <ColorField label="Text color" value={sv.text ?? T.ink} swatches={palette()} onChange={(h) => put({ text: h })} onReset={() => put({ text: undefined })} />
-        <FontPicker label="Heading font" value={sv.head ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => put({ head: k })} />
+      <div className="space-y-4">
+        <p className={lab}>Section</p>
+        <ColorField label="Section background" value={sv.bg ?? T.bg} swatches={palette()} onChange={(h) => put({ bg: h })} onReset={() => put({ bg: undefined })} />
+        {opts?.title && (
+          <>
+            <p className={lab}>Section title</p>
+            <ColorField label="Section title color" value={sv.title ?? sv.text ?? T.ink} swatches={palette()} onChange={(h) => put({ title: h })} onReset={() => put({ title: undefined })} />
+            <SizeControl device={device} label="Section title size" unit="px" min={20} max={100} step={2} value={T.sizes.secTitles[id]} onChange={(d, v) => setSize(('sec_' + id) as any, d, v)} />
+          </>
+        )}
+        {opts?.extra && (
+          <>
+            <p className={lab}>Items in this section</p>
+            {opts.extra}
+          </>
+        )}
+        <p className={lab}>Text and fonts</p>
+        <ColorField label="Body text color" value={sv.text ?? T.ink} swatches={palette()} onChange={(h) => put({ text: h })} onReset={() => put({ text: undefined })} />
+        <FontPicker label="Title font (section title and item titles)" value={sv.head ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => put({ head: k })} />
         <FontPicker label="Body font" value={sv.body ?? T.bodyKey} cats={['serif', 'sans']} onChange={(k) => put({ body: k })} />
-        {(sv.bg || sv.text || sv.head || sv.body) && (
-          <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => setIn('secStyle', { [id]: undefined })}>Use the site-wide look for this section</button>
+        {touched && (
+          <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => upd((st) => {
+            const ss = { ...(st.secStyle ?? {}) }; delete ss[id]; st.secStyle = ss
+            if (st.sizes) { const z = { ...st.sizes }; delete z['sec_' + id]; st.sizes = z }
+          })}>Reset this section</button>
         )}
       </div>
     )
@@ -1629,12 +1648,13 @@ export default function WebsitePage() {
   <p className="text-xs text-ink-soft">Leave a title empty to use the name from your Menu step.</p>
 </Group>
 <Group title="Explore colors & text" hint="background, card color, title and subtitle" onOpen={() => scrollPreview('explore')}>
-{secStyleBlock('explore')}
-<ColorField label="Card / tile color" value={S.explore?.tile_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('explore', { tile_bg: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.tile_bg; st.explore = b })} />
-<ColorField label="Title color" value={S.explore?.title_color ?? T.ink} swatches={palette()} onChange={(h) => setIn('explore', { title_color: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.title_color; st.explore = b })} />
-<ColorField label="Subtitle color" value={S.explore?.sub_color ?? T.ink} swatches={palette()} onChange={(h) => setIn('explore', { sub_color: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.sub_color; st.explore = b })} />
-<SizeControl device={device} label="Title font size" unit="px" min={14} max={90} step={1} value={T.sizes.exTitle} onChange={(d, v) => setSize('ex_title' as any, d, v)} />
-<SizeControl device={device} label="Subtitle font size" unit="px" min={9} max={28} step={1} value={T.sizes.exSub} onChange={(d, v) => setSize('ex_sub' as any, d, v)} />
+{secStyleBlock('explore', { extra: (<>
+<ColorField label="Card color" value={S.explore?.tile_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('explore', { tile_bg: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.tile_bg; st.explore = b })} />
+<ColorField label="Explore titles color" value={S.explore?.title_color ?? T.ink} swatches={palette()} onChange={(h) => setIn('explore', { title_color: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.title_color; st.explore = b })} />
+<SizeControl device={device} label="Explore titles size" unit="px" min={14} max={90} step={1} value={T.sizes.exTitle} onChange={(d, v) => setSize('ex_title' as any, d, v)} />
+<ColorField label="Explore subtitles color" value={S.explore?.sub_color ?? T.ink} swatches={palette()} onChange={(h) => setIn('explore', { sub_color: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.sub_color; st.explore = b })} />
+<SizeControl device={device} label="Explore subtitles size" unit="px" min={9} max={28} step={1} value={T.sizes.exSub} onChange={(d, v) => setSize('ex_sub' as any, d, v)} />
+</>) })}
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Gallery style <span className="font-normal normal-case tracking-normal">· layout, covers, colors and sizes</span></p>
 <Group title="Gallery layout" hint="pick a look" onOpen={() => scrollPreview('portfolio')}>
@@ -1662,8 +1682,9 @@ export default function WebsitePage() {
                   
 </Group>
 <Group title="Gallery colors & text" hint="background, colors, fonts and name size" onOpen={() => scrollPreview('portfolio')}>
+{secStyleBlock('portfolio', { title: true, extra: (<>
                   <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
-{secStyleBlock('portfolio')}
+</>) })}
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Testimonials style <span className="font-normal normal-case tracking-normal">· layout, kind words, colors and sizes</span></p>
 <Group title="Testimonials layout" hint="pick a look" onOpen={() => scrollPreview('words')}>
@@ -1706,8 +1727,9 @@ export default function WebsitePage() {
                   
 </Group>
 <Group title="Testimonials colors & text" hint="background, colors, fonts and quote size" onOpen={() => scrollPreview('words')}>
+{secStyleBlock('words', { title: true, extra: (<>
                   <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
-{secStyleBlock('words')}
+</>) })}
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Closing style <span className="font-normal normal-case tracking-normal">· message, colors, sizes and button</span></p>
 <Group title="Closing message" hint="heading and message" onOpen={() => scrollPreview('contact')}>
@@ -1718,9 +1740,10 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 <Group title="Closing colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('contact')}>
+{secStyleBlock('contact', { title: true, extra: (<>
                   <SizeControl device={device} label="Message text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsContact} onChange={(dv, v) => setSize('fsContact', dv, v)} />
                   <SizeControl device={device} label="Social links size" unit="%" min={60} max={200} step={5} value={T.sizes.fsSocial} onChange={(dv, v) => setSize('fsSocial', dv, v)} />
-{secStyleBlock('contact')}
+</>) })}
 </Group>
 <Group title="Closing button" hint="wording, color, shape, size" onOpen={() => scrollPreview('contact')}>
                   <div>
@@ -1747,8 +1770,9 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 <Group title="Footer colors & text" hint="background, colors, fonts and size" onOpen={() => scrollPreview('footer')}>
+{secStyleBlock('footer', { title: false, extra: (<>
                   <SizeControl device={device} label="Footer text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFoot} onChange={(dv, v) => setSize('fsFoot', dv, v)} />
-{secStyleBlock('footer')}
+</>) })}
 </Group>
 {customBlock('home')}
 </>)}
@@ -1846,8 +1870,9 @@ export default function WebsitePage() {
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
 <Group title="About colors & text" hint="background, colors, fonts and story size" onOpen={() => scrollPreview('about')}>
+{secStyleBlock('about', { title: true, extra: (<>
                   <SizeControl device={device} label="Story text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsAbout} onChange={(dv, v) => setSize('fsAbout', dv, v)} />
-{secStyleBlock('about')}
+</>) })}
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Pricing style <span className="font-normal normal-case tracking-normal">· price list, colors and sizes</span></p>
 <Group title="Pricing layout" hint="pick a look" onOpen={() => scrollPreview('investment')}>
@@ -1911,10 +1936,11 @@ export default function WebsitePage() {
                   
 </Group>
 <Group title="Pricing colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('investment')}>
+{secStyleBlock('investment', { title: true, extra: (<>
                   <SizeControl device={device} label="Package name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgName} onChange={(dv, v) => setSize('fsPkgName', dv, v)} />
                   <SizeControl device={device} label="Price size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgPrice} onChange={(dv, v) => setSize('fsPkgPrice', dv, v)} />
                   <SizeControl device={device} label="What's included size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgList} onChange={(dv, v) => setSize('fsPkgList', dv, v)} />
-{secStyleBlock('investment')}
+</>) })}
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">FAQ style <span className="font-normal normal-case tracking-normal">· questions, colors and sizes</span></p>
 <Group title="FAQ questions" hint="heading and your questions" onOpen={() => scrollPreview('faq')}>
@@ -1923,9 +1949,10 @@ export default function WebsitePage() {
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 </Group>
 <Group title="FAQ colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('faq')}>
+{secStyleBlock('faq', { title: true, extra: (<>
                   <SizeControl device={device} label="Question size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqQ} onChange={(dv, v) => setSize('fsFaqQ', dv, v)} />
                   <SizeControl device={device} label="Answer size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqA} onChange={(dv, v) => setSize('fsFaqA', dv, v)} />
-{secStyleBlock('faq')}
+</>) })}
 </Group>{customBlock('about')}
 </>)}
 {tab === 'book' && (<>

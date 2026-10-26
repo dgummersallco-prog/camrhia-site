@@ -258,6 +258,7 @@ export function resolveTheme(r: Record<string, any>) {
     subhead: pairNum(s.sizes?.subhead, 9, 28, 11, 12),
     galHeading: pairNum(s.sizes?.galHeading, 24, 120, 38, 56),
     secHead: pairNum(s.sizes?.secHead, 20, 100, 36, 48),
+    secTitles: Object.fromEntries(['about', 'portfolio', 'investment', 'words', 'faq', 'contact'].map((k) => [k, pairNum((s.sizes as any)?.['sec_' + k] ?? s.sizes?.secHead, 20, 100, 36, 48)])) as Record<string, ReturnType<typeof pairNum>>,
     paraSize: pairNum(s.sizes?.paraSize, 10, 40, 15, 15),
     fsAbout: pairNum(s.sizes?.fsAbout, 60, 200, 100, 100),
     fsPkgName: pairNum(s.sizes?.fsPkgName, 60, 200, 100, 100),
@@ -324,11 +325,16 @@ export function resolveTheme(r: Record<string, any>) {
     }
     return out
   })()
+  const secTitleCss = ['about', 'portfolio', 'investment', 'words', 'faq', 'contact'].map((id) => {
+    if (!(s.sizes as any)?.['sec_' + id]) return ''
+    const z = sizes.secTitles[id]
+    return `#${id} .cr-sech{font-size:${z.phone}px!important}@media (min-width:768px){#${id} .cr-sech{font-size:${z.desktop}px!important}}`
+  }).join('')
   const heroCss =
     (hero.headFont || hero.headColor ? `#top h1{${hero.headFont ? `font-family:${hero.headFont}!important;` : ''}${hero.headColor ? `color:${hero.headColor}!important;` : ''}}` : '') +
     (hero.subFont || hero.subColor ? `#top .cr-sub{${hero.subFont ? `font-family:${hero.subFont}!important;` : ''}${hero.subColor ? `color:${hero.subColor}!important;` : ''}}` : '') +
     `#top .cr-hpara{font-size:var(--hpara)!important;${hero.paraFont ? `font-family:${hero.paraFont}!important;` : ''}${hero.paraColor ? `color:${hero.paraColor}!important;` : ''}}`
-  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}${secTitleCss}`
 
   return {
     tpl,

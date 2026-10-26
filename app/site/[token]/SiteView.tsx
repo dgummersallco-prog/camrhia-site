@@ -155,7 +155,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: t.headWeight ?? 500, letterSpacing: '0.01em' }
 
   // Per-section look: background, text color and fonts chosen in the designer.
-  const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string }>)
+  const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string; title?: string }>)
   const famOf = (k?: string) => (k && FONT_OPTIONS[k] ? FONT_OPTIONS[k].family : null)
   const hexOk = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
   const secCss = Object.entries(secStyles).map(([id, v]) => {
@@ -165,6 +165,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     if (hexOk(v.text)) rules.push('color:' + hexOk(v.text) + ' !important')
     if (famOf(v.body)) rules.push('font-family:' + famOf(v.body) + ' !important')
     let css = rules.length ? '#' + id + ' {' + rules.join(';') + '}' : ''
+    if (hexOk(v.title)) css += '#' + id + ' .cr-sech {color:' + hexOk(v.title) + ' !important}'
     if (famOf(v.head)) css += '#' + id + ' [style*="letter-spacing: 0.01em"], #' + id + ' .cr-h {font-family:' + famOf(v.head) + ' !important}'
     return css
   }).join('\n')
@@ -266,7 +267,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const sec = (id: string, title: string | null, children: React.ReactNode, tinted: boolean) => (
     <section id={id} className="scroll-mt-16 px-6" style={{ background: tinted ? tint : undefined, paddingTop: 'var(--space)', paddingBottom: 'var(--space)' }}>
       <div className="mx-auto max-w-6xl">
-        {title && <h2 className="mb-12 text-center" style={{ ...headStyle, fontSize: 'var(--sec-h)', lineHeight: 1.15 }}>{title}</h2>}
+        {title && <h2 className="cr-sech mb-12 text-center" style={{ ...headStyle, fontSize: 'var(--sec-h)', lineHeight: 1.15 }}>{title}</h2>}
         {children}
       </div>
     </section>
