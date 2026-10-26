@@ -115,8 +115,7 @@ export function resolveTheme(r: Record<string, any>) {
   const headKey: string = FONT_OPTIONS[s.fonts?.head as string] ? (s.fonts.head as string) : preset.head
   const bodyKey: string = FONT_OPTIONS[s.fonts?.body as string] ? (s.fonts.body as string) : preset.body
   const bookKey: string | null = FONT_OPTIONS[s.availability?.font as string] ? (s.availability.font as string) : null
-  const galRaw = s.galindex?.font as string
-  const galKey: string | null = FONT_OPTIONS[galRaw] ? galRaw : s.galindex?.layout === 'checker' ? 'barlowcondensed' : null
+  const galKey: string | null = null
   const hwRaw = Number(s.fonts?.headWeight)
   const headWeight: number | null = Number.isFinite(hwRaw) && hwRaw >= 100 && hwRaw <= 900 ? hwRaw : null
   const accent = hex(r.site_accent, hex(r.accent_color, '#A9545F'))

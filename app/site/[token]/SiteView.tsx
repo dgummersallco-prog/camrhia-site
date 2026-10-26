@@ -362,7 +362,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                     )
                     const textTile = (
                       <a key={g.id + 't'} href={href} className="flex aspect-square items-center justify-center p-4 text-center" style={{ background: bg }}>
-                        <span style={{ ...headStyle, fontFamily: t.galFamily ?? t.head, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'calc(clamp(1.4rem, 4.2vw, 3.6rem) * var(--fs-cover, 1))' }}>{g.title}</span>
+                        <span style={{ ...headStyle, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'calc(clamp(1.4rem, 4.2vw, 3.6rem) * var(--fs-cover, 1))' }}>{g.title}</span>
                       </a>
                     )
                     return i % 2 === 0 ? [photoTile, textTile] : [textTile, photoTile]
