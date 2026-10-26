@@ -1711,9 +1711,8 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
 {secStyleBlock('portfolio')}
 </Group>
-<Group title="3. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
+<Group title="3. Testimonials layout" hint="layout and the kind words" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
-                  <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={T.testi.layout as any} onChange={(v) => setIn('testimonials', { layout: v })}
@@ -1747,18 +1746,40 @@ export default function WebsitePage() {
                   </div>
 
                   
+</Group>
+<Group title="Testimonials colors & text" hint="background, colors, fonts and quote size" onOpen={() => scrollPreview('words')}>
+                  <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
 {secStyleBlock('words')}
 </Group>
-<Group title="4. Closing section" hint="last thing before the footer" onOpen={() => scrollPreview('contact')}>
+<Group title="4. Closing layout" hint="the message before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
-                  <SizeControl device={device} label="Message text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsContact} onChange={(dv, v) => setSize('fsContact', dv, v)} />
-                  <SizeControl device={device} label="Social links size" unit="%" min={60} max={200} step={5} value={T.sizes.fsSocial} onChange={(dv, v) => setSize('fsSocial', dv, v)} />
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
-                {secStyleBlock('contact')}
+                </Group>
+<Group title="Closing colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('contact')}>
+                  <SizeControl device={device} label="Message text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsContact} onChange={(dv, v) => setSize('fsContact', dv, v)} />
+                  <SizeControl device={device} label="Social links size" unit="%" min={60} max={200} step={5} value={T.sizes.fsSocial} onChange={(dv, v) => setSize('fsSocial', dv, v)} />
+{secStyleBlock('contact')}
 </Group>
+<Group title="Closing button" hint="wording, color, shape, size" onOpen={() => scrollPreview('contact')}>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (closing section only)</label>
+                    <input value={S.contactBtn?.text ?? ''} onChange={(e) => setIn('contactBtn', { text: e.target.value })} placeholder={S.hero?.cta_text || 'Check availability'} className={inputCls} />
+                  </div>
+                  <ColorField label="Button color (closing only)" value={S.contactBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
+                    onChange={(h) => setIn('contactBtn', { bg: h })}
+                    onReset={() => upd((st) => { const b = { ...(st.contactBtn ?? {}) }; delete b.bg; st.contactBtn = b })} />
+                  <ColorField label="Button text color (closing only)" value={S.contactBtn?.color ?? T.btnText} swatches={palette()}
+                    onChange={(h) => setIn('contactBtn', { color: h })}
+                    onReset={() => upd((st) => { const b = { ...(st.contactBtn ?? {}) }; delete b.color; st.contactBtn = b })} />
+                  <Row label="Button shape (closing only)">
+                    <Seg value={S.contactBtn?.shape ?? T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('contactBtn', { shape: v })} />
+                  </Row>
+                  <SizeControl device={device} label="Button size (closing only)" unit="px" min={9} max={20} step={1} value={T.sizes.ctBtn} onChange={(d, v) => setSize('ct_btn' as any, d, v)} />
+                </Group>
+
 <Group title="5. Footer" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <SizeControl device={device} label="Footer text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFoot} onChange={(dv, v) => setSize('fsFoot', dv, v)} />
                   <div>
