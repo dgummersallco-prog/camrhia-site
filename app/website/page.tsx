@@ -1885,11 +1885,8 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Story text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsAbout} onChange={(dv, v) => setSize('fsAbout', dv, v)} />
 {secStyleBlock('about')}
 </Group>
-<Group title="2. Pricing" hint="packages and price list style" onOpen={() => scrollPreview('investment')}>
+<Group title="2. Pricing layout" hint="price list style and packages" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
-                  <SizeControl device={device} label="Package name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgName} onChange={(dv, v) => setSize('fsPkgName', dv, v)} />
-                  <SizeControl device={device} label="Price size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgPrice} onChange={(dv, v) => setSize('fsPkgPrice', dv, v)} />
-                  <SizeControl device={device} label="What's included size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgList} onChange={(dv, v) => setSize('fsPkgList', dv, v)} />
 <div>
                     
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Your website&apos;s own price list. It&apos;s separate from the pricing in your app.</p>
@@ -1944,15 +1941,22 @@ export default function WebsitePage() {
                   </div>
 
                   
+</Group>
+<Group title="Pricing colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('investment')}>
+                  <SizeControl device={device} label="Package name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgName} onChange={(dv, v) => setSize('fsPkgName', dv, v)} />
+                  <SizeControl device={device} label="Price size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgPrice} onChange={(dv, v) => setSize('fsPkgPrice', dv, v)} />
+                  <SizeControl device={device} label="What's included size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgList} onChange={(dv, v) => setSize('fsPkgList', dv, v)} />
 {secStyleBlock('investment')}
 </Group>
-<Group title="3. FAQ" hint="common questions" onOpen={() => scrollPreview('faq')}>
+<Group title="3. FAQ layout" hint="your questions and answers" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
-                  <SizeControl device={device} label="Question size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqQ} onChange={(dv, v) => setSize('fsFaqQ', dv, v)} />
-                  <SizeControl device={device} label="Answer size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqA} onChange={(dv, v) => setSize('fsFaqA', dv, v)} />
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
-                {secStyleBlock('faq')}
+                </Group>
+<Group title="FAQ colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('faq')}>
+                  <SizeControl device={device} label="Question size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqQ} onChange={(dv, v) => setSize('fsFaqQ', dv, v)} />
+                  <SizeControl device={device} label="Answer size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqA} onChange={(dv, v) => setSize('fsFaqA', dv, v)} />
+{secStyleBlock('faq')}
 </Group>{customBlock('about')}
 </>)}
 {tab === 'book' && (<>
