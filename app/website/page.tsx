@@ -1430,7 +1430,6 @@ export default function WebsitePage() {
                   </p>
                 </div>
                 {tab === 'home' && (<>
-<p className="px-1 pt-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Style controls <span className="font-normal normal-case tracking-normal">· the look of every page</span></p>
 
 <p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Hero style <span className="font-normal normal-case tracking-normal">· template, logo, menu, text, photos and button</span></p>
 <Group title="Template" hint="pick a look" onOpen={() => scrollPreview('')}>
