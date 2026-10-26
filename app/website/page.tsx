@@ -136,8 +136,9 @@ function Group({ title, hint, open, onOpen, children }: { title: string; hint?: 
       if (el.open) {
         el.parentElement?.querySelectorAll(':scope > details').forEach((d) => { if (d !== el) (d as HTMLDetailsElement).open = false })
         onOpen?.()
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
       }
-    }} className="rounded-2xl border border-line bg-card p-5">
+    }} className="scroll-mt-4 rounded-2xl border border-line bg-card p-5">
       <summary className="cursor-pointer font-fraunces text-lg font-semibold text-ink">
         {title}
         {hint && <span className="ml-2 text-sm font-normal text-ink-soft">{hint}</span>}
