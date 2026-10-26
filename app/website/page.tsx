@@ -1595,8 +1595,7 @@ export default function WebsitePage() {
                   
                   </Group>
 </>)}
-{tab === 'home' && (<><p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Explore style <span className="font-normal normal-case tracking-normal">· layout, titles, colors and sizes</span></p><Group title="1. Explore layout" hint="layout, titles and subtitles" onOpen={() => scrollPreview('explore')}>
-  <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
+{tab === 'home' && (<><p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Explore style <span className="font-normal normal-case tracking-normal">· layout, titles, colors and sizes</span></p><Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
       { v: 'lines', name: 'Lines', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="5" y="14" width="12" height="3" /><rect x="24" y="14" width="12" height="3" /><rect x="43" y="14" width="12" height="3" /></g><g fill="#D8D0C4"><rect x="5" y="21" width="12" height="2" /><rect x="24" y="21" width="12" height="2" /><rect x="43" y="21" width="12" height="2" /></g></svg> },
@@ -1606,6 +1605,10 @@ export default function WebsitePage() {
       { v: 'stack', name: 'Centered stack', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="16" y="7" width="28" height="5" /><rect x="22" y="14" width="16" height="2" /><rect x="16" y="21" width="28" height="5" /><rect x="22" y="28" width="16" height="2" /></g></svg> },
       { v: 'outline', name: 'Outline boxes', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="none" stroke="#B9AFA2" strokeWidth="1.5"><rect x="4" y="9" width="16" height="22" rx="1" /><rect x="22" y="9" width="16" height="22" rx="1" /><rect x="40" y="9" width="16" height="22" rx="1" /></g></svg> },
     ]} />
+
+</Group>
+<Group title="Explore words" hint="show or hide, label, titles and subtitles" onOpen={() => scrollPreview('explore')}>
+  <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
   <div>
     <label className="mb-1 block text-xs font-medium text-ink">Label above the links (optional)</label>
     <input value={S.explore?.heading ?? ''} onChange={(e) => setIn('explore', { heading: e.target.value })} placeholder="Explore" className={inputCls} />
@@ -1634,15 +1637,18 @@ export default function WebsitePage() {
 <SizeControl device={device} label="Subtitle font size" unit="px" min={9} max={28} step={1} value={T.sizes.exSub} onChange={(d, v) => setSize('ex_sub' as any, d, v)} />
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Gallery style <span className="font-normal normal-case tracking-normal">· layout, covers, colors and sizes</span></p>
-<Group title="2. Gallery layout" hint="layout, cover size and shape" onOpen={() => scrollPreview('portfolio')}>
-                  {sectionHead('portfolio')}
-                  <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
-                  <div>
+<Group title="Gallery layout" hint="pick a look" onOpen={() => scrollPreview('portfolio')}>
+<div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
                     <LayoutPicker value={T.portfolio.layout} onChange={(v) => setIn('portfolio', { layout: v })}
                       options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }]} />
                   </div>
-<div>
+
+</Group>
+<Group title="Gallery details" hint="heading, cover size, card shape and galleries" onOpen={() => scrollPreview('portfolio')}>
+                  {sectionHead('portfolio')}
+                  <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
+                  <div>
                     
                     <p className="mb-3 mt-1 text-sm text-ink-soft">One gallery per kind of work: Weddings, Seniors, Families. Each gets its own page.</p>
                     <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
@@ -1660,13 +1666,16 @@ export default function WebsitePage() {
 {secStyleBlock('portfolio')}
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Testimonials style <span className="font-normal normal-case tracking-normal">· layout, kind words, colors and sizes</span></p>
-<Group title="3. Testimonials layout" hint="layout and the kind words" onOpen={() => scrollPreview('words')}>
-                  {sectionHead('testimonials')}
+<Group title="Testimonials layout" hint="pick a look" onOpen={() => scrollPreview('words')}>
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={T.testi.layout as any} onChange={(v) => setIn('testimonials', { layout: v })}
                       options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.teGrid }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.teStacked }, { v: 'cards', name: 'Cards', thumb: THUMBS.teCards }]} />
                   </div>
+</Group>
+<Group title="Kind words" hint="heading and testimonials" onOpen={() => scrollPreview('words')}>
+                  {sectionHead('testimonials')}
+
 <div>
                     
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Kind words, with a picture if you have one. Shown on your website and your app profile.</p>
@@ -1701,7 +1710,7 @@ export default function WebsitePage() {
 {secStyleBlock('words')}
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Closing style <span className="font-normal normal-case tracking-normal">· message, colors, sizes and button</span></p>
-<Group title="4. Closing layout" hint="the message before the footer" onOpen={() => scrollPreview('contact')}>
+<Group title="Closing message" hint="heading and message" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
@@ -1731,7 +1740,7 @@ export default function WebsitePage() {
                 </Group>
 
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Footer style <span className="font-normal normal-case tracking-normal">· footer line, colors and size</span></p>
-<Group title="5. Footer layout" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
+<Group title="Footer line" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
@@ -1800,13 +1809,17 @@ export default function WebsitePage() {
                 </Group>{customBlock('galleries')}
 </>)}
 {tab === 'about' && (<><p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">About style <span className="font-normal normal-case tracking-normal">· layout, story, colors and size</span></p>
-<Group title="1. About layout" hint="layout, story and photos" onOpen={() => scrollPreview('about')}>
-                  {sectionHead('about')}
-                  <div>
+<Group title="About layout" hint="pick a look" onOpen={() => scrollPreview('about')}>
+<div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={(S.about?.layout ?? T.about.layout) as any} onChange={(v) => setIn('about', { layout: v })}
                       options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }, { v: 'collage', name: 'Collage', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="3" width="26" height="24" rx="2" fill="#D8D0C4" /><rect x="36" y="18" width="18" height="18" rx="3" fill="#C9BFB2" /><rect x="16" y="16" width="32" height="18" rx="3" fill="#F2EBDD" stroke="#B9AFA2" strokeWidth="0.8" /><rect x="20" y="20" width="14" height="2" fill="#9A8A74" /><rect x="20" y="25" width="24" height="1.5" fill="#B9AFA2" /><rect x="20" y="28" width="22" height="1.5" fill="#B9AFA2" /></svg> }, { v: 'canvas', name: 'Free layout', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="5" width="22" height="18" rx="2" fill="#D8D0C4" /><rect x="34" y="10" width="20" height="14" rx="2" fill="#C9BFB2" /><rect x="14" y="20" width="26" height="14" rx="2" fill="#F2EBDD" stroke="#9A8A74" strokeWidth="0.8" strokeDasharray="2 1.5" /><rect x="38" y="30" width="5" height="5" fill="#B08D57" /></svg> }]} />
                   </div>
+                  {(S.about?.layout ?? T.about.layout) === 'canvas' && canvasPanel('about')}
+</Group>
+<Group title="About story" hint="heading, text and photos" onOpen={() => scrollPreview('about')}>
+                  {sectionHead('about')}
+                  
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">About text</label>
                     <textarea rows={4} value={S.text?.about ?? ''} onChange={(e) => setIn('text', { about: e.target.value })} placeholder="Leave empty to use your bio from the app" className={inputCls} />
@@ -1830,7 +1843,6 @@ export default function WebsitePage() {
                       </div>
                     </div>
                   )}
-                  {(S.about?.layout ?? T.about.layout) === 'canvas' && canvasPanel('about')}
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
 <Group title="About colors & text" hint="background, colors, fonts and story size" onOpen={() => scrollPreview('about')}>
@@ -1838,17 +1850,20 @@ export default function WebsitePage() {
 {secStyleBlock('about')}
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Pricing style <span className="font-normal normal-case tracking-normal">· price list, colors and sizes</span></p>
-<Group title="2. Pricing layout" hint="price list style and packages" onOpen={() => scrollPreview('investment')}>
+<Group title="Pricing layout" hint="pick a look" onOpen={() => scrollPreview('investment')}>
+<div>
+                        <p className="mb-2 text-sm text-ink">Price list style</p>
+                        <LayoutPicker value={T.pricing.layout} onChange={(v) => setIn('pricing', { layout: v })}
+                          options={[{ v: 'cards', name: 'Cards', thumb: THUMBS.prCards }, { v: 'menu', name: 'Menu', thumb: THUMBS.prMenu }, { v: 'columns', name: 'Columns', thumb: THUMBS.prCols }]} />
+                      </div>
+</Group>
+<Group title="Pricing details" hint="heading, intro, packages and buttons" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
 <div>
                     
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Your website&apos;s own price list. It&apos;s separate from the pricing in your app.</p>
                     <div className="mb-4 space-y-3">
-                      <div>
-                        <p className="mb-2 text-sm text-ink">Price list style</p>
-                        <LayoutPicker value={T.pricing.layout} onChange={(v) => setIn('pricing', { layout: v })}
-                          options={[{ v: 'cards', name: 'Cards', thumb: THUMBS.prCards }, { v: 'menu', name: 'Menu', thumb: THUMBS.prMenu }, { v: 'columns', name: 'Columns', thumb: THUMBS.prCols }]} />
-                      </div>
+                      
                       <Row label="Button on each package"><Switch on={T.pricing.button} onChange={(v) => setIn('pricing', { button: v })} /></Row>
                       <input value={S.pricing?.intro ?? ''} onChange={(e) => setIn('pricing', { intro: e.target.value })} placeholder="Line above the prices, e.g. Every collection includes a private gallery" className={inputCls} />
                       <input value={S.pricing?.note ?? ''} onChange={(e) => setIn('pricing', { note: e.target.value })} placeholder="Line below, e.g. Custom collections available. Just ask." className={inputCls} />
@@ -1902,7 +1917,7 @@ export default function WebsitePage() {
 {secStyleBlock('investment')}
 </Group>
 <p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">FAQ style <span className="font-normal normal-case tracking-normal">· questions, colors and sizes</span></p>
-<Group title="3. FAQ layout" hint="your questions and answers" onOpen={() => scrollPreview('faq')}>
+<Group title="FAQ questions" hint="heading and your questions" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
