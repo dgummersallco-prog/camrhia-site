@@ -464,6 +464,18 @@ export default function WebsitePage() {
   const [device, setDevice] = useState<Dev>('desktop')
   const [previewPage, setPreviewPage] = useState<'home' | 'galleries' | 'gallery' | 'about' | 'availability'>('home')
   const [tab, setTab] = useState<'style' | 'home' | 'galleries' | 'about' | 'book'>('home')
+  useEffect(() => {
+    try {
+      const t = sessionStorage.getItem('camrhia-design-tab')
+      if (t === 'style' || t === 'home' || t === 'galleries' || t === 'about' || t === 'book') {
+        setTab(t)
+        setPreviewPage(t === 'book' ? 'availability' : t === 'style' ? 'home' : t)
+      }
+    } catch { /* ignore */ }
+  }, [])
+  useEffect(() => {
+    try { sessionStorage.setItem('camrhia-design-tab', tab) } catch { /* ignore */ }
+  }, [tab])
   const [firstGid, setFirstGid] = useState<string | null>(null)
   const [showSent, setShowSent] = useState(false)
   const [slugOverride, setSlugOverride] = useState<string | null>(null)
