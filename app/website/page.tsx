@@ -1686,9 +1686,8 @@ export default function WebsitePage() {
 <SizeControl device={device} label="Title font size" unit="px" min={14} max={90} step={1} value={T.sizes.exTitle} onChange={(d, v) => setSize('ex_title' as any, d, v)} />
 <SizeControl device={device} label="Subtitle font size" unit="px" min={9} max={28} step={1} value={T.sizes.exSub} onChange={(d, v) => setSize('ex_sub' as any, d, v)} />
 </Group>
-<Group title="2. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
+<Group title="2. Gallery layout" hint="layout, cover size and shape" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
-                  <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
                   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -1707,6 +1706,9 @@ export default function WebsitePage() {
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>
                   
+</Group>
+<Group title="Gallery colors & text" hint="background, colors, fonts and name size" onOpen={() => scrollPreview('portfolio')}>
+                  <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
 {secStyleBlock('portfolio')}
 </Group>
 <Group title="3. Testimonials" hint="kind words with pictures" onOpen={() => scrollPreview('words')}>
