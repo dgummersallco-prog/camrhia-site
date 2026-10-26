@@ -174,7 +174,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   const cta = (force?: boolean) =>
     t.hero.ctaShow || force ? (
-      <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.hero.ctaText}</a>
+      <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.hero.heroCtaText}</a>
     ) : null
 
   const burger = (r as any).site_settings?.menu?.icon === 'burger'

@@ -1431,7 +1431,7 @@ export default function WebsitePage() {
                 </div>
                 {tab === 'home' && (<>
 
-<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Hero style <span className="font-normal normal-case tracking-normal">· template, logo, menu, text, photos and button</span></p>
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Hero style <span className="font-normal normal-case tracking-normal">· template, photos, text, button, menu and logo</span></p>
 <Group title="Template" hint="pick a look" onOpen={() => scrollPreview('')}>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {TEMPLATES.map((t) => (
@@ -1444,69 +1444,6 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
-<Group title="Logo" hint="upload, size and position" onOpen={() => scrollPreview('nav')}>
-<div className="border-t border-line pt-4">
-                    <p className="mb-1 text-sm text-ink">Logo</p>
-                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {form.logo_path ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
-                      ) : (
-                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
-                      )}
-                      <label className={btnGhost + ' cursor-pointer'}>
-                        {form.logo_path ? 'Replace' : 'Upload logo'}
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
-                      </label>
-                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
-                    </div>
-                  </div>
-                  <SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
-                  <Row label="Logo position">
-                    <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
-                  </Row>
-                  {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
-                  
-                  </Group>
-<Group title="Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
-<Row label="Menu bar">
-                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
-                  </Row>
-                  <Row label="Menu on desktop">
-                    <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
-                  </Row>
-                  <SizeControl device={device} label="Menu word size" unit="px" min={9} max={22} step={1} value={T.sizes.menu} onChange={(d, v) => setSize('menu', d, v)} />
-                  {nudgeCtl('Whole menu bar up / down', 'menuNudgeY', 40)}
-                  <div className="space-y-2">
-                    {MENU_KEYS.map((k) => (
-                      <div key={k} className="flex items-center gap-3">
-                        <input value={S.menu?.labels?.[k] ?? ''} placeholder={NAV_DEFAULTS[k]}
-                          onChange={(e) => upd((s) => { s.menu = { ...(s.menu ?? {}), labels: { ...(s.menu?.labels ?? {}), [k]: e.target.value } } })} className={inputCls} />
-                        <Switch on={!menuHidden.includes(k)}
-                          onChange={(v) => upd((s) => { const h: string[] = Array.isArray(s.menu?.hidden) ? [...s.menu.hidden] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); s.menu = { ...(s.menu ?? {}), hidden: h } })} />
-                      </div>
-                    ))}
-                  </div>
-                {secStyleBlock('nav')}
-</Group>
-<Group title="Hero text" hint="headline, location line and paragraph" onOpen={() => scrollPreview('top')}>
-<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Headline</p>
-<input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Camrhia Photographer" className={inputCls} />
-<ColorField label="Headline color" value={T.hero.headColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ headline_color: h })} onReset={() => setHero({ headline_color: undefined })} />
-<FontPicker label="Headline font" value={S.hero?.headline_font ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ headline_font: k })} />
-<SizeControl device={device} label="Headline size" unit="px" min={24} max={140} step={1} value={T.sizes.headline} onChange={(dv, v) => setSize('headline', dv, v)} />
-<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Location line</p>
-<input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Boise, Idaho" className={inputCls} />
-<ColorField label="Location line color" value={T.hero.subColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ subhead_color: h })} onReset={() => setHero({ subhead_color: undefined })} />
-<FontPicker label="Location line font" value={S.hero?.subhead_font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ subhead_font: k })} />
-<SizeControl device={device} label="Location line size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(dv, v) => setSize('subhead', dv, v)} />
-<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Paragraph</p>
-<textarea rows={3} value={S.hero?.para_text ?? ''} onChange={(e) => setHero({ para_text: e.target.value })} placeholder="A short line about you (optional)" className={inputCls} />
-<ColorField label="Paragraph color" value={T.hero.paraColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ para_color: h })} onReset={() => setHero({ para_color: undefined })} />
-<FontPicker label="Paragraph font" value={S.hero?.para_font ?? T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setHero({ para_font: k })} />
-<SizeControl device={device} label="Paragraph size" unit="px" min={10} max={40} step={1} value={T.sizes.paraSize} onChange={(dv, v) => setSize('paraSize', dv, v)} />
-</Group>
 <Group title="Hero photos" hint="photos, slideshow and position" onOpen={() => scrollPreview('top')}>
 <div>
                     <p className="mb-1 text-sm text-ink">Hero photos</p>
@@ -1570,11 +1507,88 @@ export default function WebsitePage() {
                   
                   </Group>
 
-<Group title="Hero button" hint="show or hide it" onOpen={() => scrollPreview('top')}>
-                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
+<Group title="Hero text" hint="headline, location line and paragraph" onOpen={() => scrollPreview('top')}>
+<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Headline</p>
+<input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Camrhia Photographer" className={inputCls} />
+<ColorField label="Headline color" value={T.hero.headColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ headline_color: h })} onReset={() => setHero({ headline_color: undefined })} />
+<FontPicker label="Headline font" value={S.hero?.headline_font ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ headline_font: k })} />
+<SizeControl device={device} label="Headline size" unit="px" min={24} max={140} step={1} value={T.sizes.headline} onChange={(dv, v) => setSize('headline', dv, v)} />
+<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Location line</p>
+<input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Boise, Idaho" className={inputCls} />
+<ColorField label="Location line color" value={T.hero.subColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ subhead_color: h })} onReset={() => setHero({ subhead_color: undefined })} />
+<FontPicker label="Location line font" value={S.hero?.subhead_font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ subhead_font: k })} />
+<SizeControl device={device} label="Location line size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(dv, v) => setSize('subhead', dv, v)} />
+<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Paragraph</p>
+<textarea rows={3} value={S.hero?.para_text ?? ''} onChange={(e) => setHero({ para_text: e.target.value })} placeholder="A short line about you (optional)" className={inputCls} />
+<ColorField label="Paragraph color" value={T.hero.paraColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ para_color: h })} onReset={() => setHero({ para_color: undefined })} />
+<FontPicker label="Paragraph font" value={S.hero?.para_font ?? T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setHero({ para_font: k })} />
+<SizeControl device={device} label="Paragraph size" unit="px" min={10} max={40} step={1} value={T.sizes.paraSize} onChange={(dv, v) => setSize('paraSize', dv, v)} />
 </Group>
+<Group title="Hero button" hint="wording, color, shape, size" onOpen={() => scrollPreview('top')}>
+                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (hero only)</label>
+                    <input value={S.hero?.btn_text ?? ''} onChange={(e) => setHero({ btn_text: e.target.value })} placeholder={S.hero?.cta_text || 'Check availability'} className={inputCls} />
+                  </div>
+                  <ColorField label="Button color (hero only)" value={S.hero?.btn_bg ?? form.site_accent ?? brandHex()} swatches={palette()}
+                    onChange={(h) => setHero({ btn_bg: h })}
+                    onReset={() => upd((st) => { const b = { ...(st.hero ?? {}) }; delete b.btn_bg; st.hero = b })} />
+                  <ColorField label="Button text color (hero only)" value={S.hero?.btn_color ?? T.btnText} swatches={palette()}
+                    onChange={(h) => setHero({ btn_color: h })}
+                    onReset={() => upd((st) => { const b = { ...(st.hero ?? {}) }; delete b.btn_color; st.hero = b })} />
+                  <Row label="Button shape (hero only)">
+                    <Seg value={S.hero?.btn_shape ?? T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setHero({ btn_shape: v })} />
+                  </Row>
+                  <SizeControl device={device} label="Button size (hero only)" unit="px" min={9} max={20} step={1} value={T.sizes.heroBtn} onChange={(d, v) => setSize('hero_btn' as any, d, v)} />
+                </Group>
 
-<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Whole site <span className="font-normal normal-case tracking-normal">· colors, fonts, buttons and sizes</span></p>
+<Group title="Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
+<Row label="Menu bar">
+                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
+                  </Row>
+                  <Row label="Menu on desktop">
+                    <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
+                  </Row>
+                  <SizeControl device={device} label="Menu word size" unit="px" min={9} max={22} step={1} value={T.sizes.menu} onChange={(d, v) => setSize('menu', d, v)} />
+                  {nudgeCtl('Whole menu bar up / down', 'menuNudgeY', 40)}
+                  <div className="space-y-2">
+                    {MENU_KEYS.map((k) => (
+                      <div key={k} className="flex items-center gap-3">
+                        <input value={S.menu?.labels?.[k] ?? ''} placeholder={NAV_DEFAULTS[k]}
+                          onChange={(e) => upd((s) => { s.menu = { ...(s.menu ?? {}), labels: { ...(s.menu?.labels ?? {}), [k]: e.target.value } } })} className={inputCls} />
+                        <Switch on={!menuHidden.includes(k)}
+                          onChange={(v) => upd((s) => { const h: string[] = Array.isArray(s.menu?.hidden) ? [...s.menu.hidden] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); s.menu = { ...(s.menu ?? {}), hidden: h } })} />
+                      </div>
+                    ))}
+                  </div>
+                {secStyleBlock('nav')}
+</Group>
+<Group title="Logo" hint="upload, size and position" onOpen={() => scrollPreview('nav')}>
+<div className="border-t border-line pt-4">
+                    <p className="mb-1 text-sm text-ink">Logo</p>
+                    <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {form.logo_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={BASE + form.logo_path} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
+                      ) : (
+                        <div className="flex h-12 w-24 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No logo</div>
+                      )}
+                      <label className={btnGhost + ' cursor-pointer'}>
+                        {form.logo_path ? 'Replace' : 'Upload logo'}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = '' }} />
+                      </label>
+                      {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
+                    </div>
+                  </div>
+                  <SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
+                  <Row label="Logo position">
+                    <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
+                  </Row>
+                  {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
+                  
+                  </Group>
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Site styles <span className="font-normal normal-case tracking-normal">· colors, fonts, buttons and sizes</span></p>
 <Group title="Color & fonts" hint="used on every page" onOpen={() => scrollPreview('')}>
                   
                   {colorRow('Background', 'bg', T.bg)}

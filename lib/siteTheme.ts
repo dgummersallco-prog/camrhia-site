@@ -161,6 +161,7 @@ export function resolveTheme(r: Record<string, any>) {
     align: pick(s.hero?.align, ['left', 'center', 'right'] as const, 'center'),
     valign: pick(s.hero?.valign, ['top', 'center', 'bottom'] as const, 'bottom'),
     ctaText: str(s.hero?.cta_text) ?? 'Check availability',
+    heroCtaText: str(s.hero?.btn_text) ?? str(s.hero?.cta_text) ?? 'Check availability',
     ctaShow: s.hero?.cta_show !== false,
     headColor: heroColor(s.hero?.headline_color),
     headFont: hfHead ? FONT_OPTIONS[hfHead].family : null,
@@ -250,6 +251,7 @@ export function resolveTheme(r: Record<string, any>) {
     menuNudgeY: pairNum(s.sizes?.menuNudgeY, -40, 40, 0, 0),
     calScale: pairNum(s.sizes?.calScale, 50, 160, 100, 100),
     button: pairNum(s.sizes?.button, 9, 20, 11, 12),
+    heroBtn: pairNum(s.sizes?.hero_btn ?? s.sizes?.button, 9, 20, 11, 12),
     subhead: pairNum(s.sizes?.subhead, 9, 28, 11, 12),
     galHeading: pairNum(s.sizes?.galHeading, 24, 120, 38, 56),
     secHead: pairNum(s.sizes?.secHead, 20, 100, 36, 48),
@@ -271,11 +273,28 @@ export function resolveTheme(r: Record<string, any>) {
   }
   const vars = (d: 'phone' | 'desktop') =>
     `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--cover-w:${sizes.coverSize[d]}%;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;--nudge:${sizes.logoNudge[d]}px;--nudgey:${sizes.menuNudgeY[d]}px;--menuy:${sizes.menuNudgeY[d]}px;--cal:${sizes.calScale[d]}%;--sub:${sizes.subhead[d]}px;--btn:${sizes.button[d]}px;--gal-h:${sizes.galHeading[d]}px;--gal-gap:${sizes.galGap[d]}px;--book-h:${sizes.bookHeading[d]}px;--menu:${sizes.menu[d]}px;--sec-h:${sizes.secHead[d]}px;--hpara:${sizes.paraSize[d]}px;--fs-about:${sizes.fsAbout[d] / 100};--fs-pname:${sizes.fsPkgName[d] / 100};--fs-pprice:${sizes.fsPkgPrice[d] / 100};--fs-plist:${sizes.fsPkgList[d] / 100};--fs-testi:${sizes.fsTesti[d] / 100};--fs-faqq:${sizes.fsFaqQ[d] / 100};--fs-faqa:${sizes.fsFaqA[d] / 100};--fs-contact:${sizes.fsContact[d] / 100};--fs-foot:${sizes.fsFoot[d] / 100};--fs-cover:${sizes.fsCover[d] / 100};--fs-social:${sizes.fsSocial[d] / 100};`
+  const heroBtnCss = (() => {
+    const hb: any = s.hero ?? {}
+    const okHex = (v: any) => (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null)
+    const bg = okHex(hb.btn_bg)
+    const fg = okHex(hb.btn_color)
+    const rad = hb.btn_shape === 'pill' ? 999 : hb.btn_shape === 'rounded' ? 10 : hb.btn_shape === 'square' ? 0 : null
+    const r: string[] = []
+    if (bg) r.push(`background:${bg}!important`)
+    if (fg) r.push(`color:${fg}!important`)
+    if (rad !== null) r.push(`border-radius:${rad}px!important`)
+    let out = r.length ? `#top .cr-btn{${r.join(';')}}` : ''
+    if (s.sizes?.hero_btn) {
+      const sz = (n: number) => `font-size:${n}px!important;padding:${(n * 1.15).toFixed(1)}px ${(n * 2.7).toFixed(1)}px!important`
+      out += `#top .cr-btn{${sz(sizes.heroBtn.phone)}}@media (min-width:768px){#top .cr-btn{${sz(sizes.heroBtn.desktop)}}}`
+    }
+    return out
+  })()
   const heroCss =
     (hero.headFont || hero.headColor ? `#top h1{${hero.headFont ? `font-family:${hero.headFont}!important;` : ''}${hero.headColor ? `color:${hero.headColor}!important;` : ''}}` : '') +
     (hero.subFont || hero.subColor ? `#top .cr-sub{${hero.subFont ? `font-family:${hero.subFont}!important;` : ''}${hero.subColor ? `color:${hero.subColor}!important;` : ''}}` : '') +
     `#top .cr-hpara{font-size:var(--hpara)!important;${hero.paraFont ? `font-family:${hero.paraFont}!important;` : ''}${hero.paraColor ? `color:${hero.paraColor}!important;` : ''}}`
-  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}`
 
   return {
     tpl,
