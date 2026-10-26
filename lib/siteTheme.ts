@@ -148,6 +148,12 @@ export function resolveTheme(r: Record<string, any>) {
     if (v) titles[k] = v
   }
 
+  const heroFont = (k: unknown): string | null => (typeof k === 'string' && FONT_OPTIONS[k] ? k : null)
+  const heroColor = (v: unknown): string | null => (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null)
+  const hfHead = heroFont(s.hero?.headline_font)
+  const hfSub = heroFont(s.hero?.subhead_font)
+  const hfPara = heroFont(s.hero?.para_font)
+  const heroFontKeys: string[] = [hfHead, hfSub, hfPara].filter((k): k is string => !!k)
   const hero = {
     photos: Array.isArray(s.hero?.photos) ? (s.hero.photos as unknown[]).filter((x): x is string => typeof x === 'string' && !!x).slice(0, 6) : [],
     slideshow: !!s.hero?.slideshow,
@@ -156,6 +162,13 @@ export function resolveTheme(r: Record<string, any>) {
     valign: pick(s.hero?.valign, ['top', 'center', 'bottom'] as const, 'bottom'),
     ctaText: str(s.hero?.cta_text) ?? 'Check availability',
     ctaShow: s.hero?.cta_show !== false,
+    headColor: heroColor(s.hero?.headline_color),
+    headFont: hfHead ? FONT_OPTIONS[hfHead].family : null,
+    subColor: heroColor(s.hero?.subhead_color),
+    subFont: hfSub ? FONT_OPTIONS[hfSub].family : null,
+    paraText: str(s.hero?.para_text),
+    paraColor: heroColor(s.hero?.para_color),
+    paraFont: hfPara ? FONT_OPTIONS[hfPara].family : null,
   }
   const gallery = {
     layout: pick(s.gallery?.layout, ['masonry', 'grid', 'single', 'tall', 'editorial', 'custom'] as const, 'masonry'),
@@ -240,6 +253,7 @@ export function resolveTheme(r: Record<string, any>) {
     subhead: pairNum(s.sizes?.subhead, 9, 28, 11, 12),
     galHeading: pairNum(s.sizes?.galHeading, 24, 120, 38, 56),
     secHead: pairNum(s.sizes?.secHead, 20, 100, 36, 48),
+    paraSize: pairNum(s.sizes?.paraSize, 10, 40, 15, 15),
     fsAbout: pairNum(s.sizes?.fsAbout, 60, 200, 100, 100),
     fsPkgName: pairNum(s.sizes?.fsPkgName, 60, 200, 100, 100),
     fsPkgPrice: pairNum(s.sizes?.fsPkgPrice, 60, 200, 100, 100),
@@ -256,8 +270,12 @@ export function resolveTheme(r: Record<string, any>) {
     menu: pairNum(s.sizes?.menu, 9, 22, 12, 11),
   }
   const vars = (d: 'phone' | 'desktop') =>
-    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--cover-w:${sizes.coverSize[d]}%;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;--nudge:${sizes.logoNudge[d]}px;--nudgey:${sizes.menuNudgeY[d]}px;--menuy:${sizes.menuNudgeY[d]}px;--cal:${sizes.calScale[d]}%;--sub:${sizes.subhead[d]}px;--btn:${sizes.button[d]}px;--gal-h:${sizes.galHeading[d]}px;--gal-gap:${sizes.galGap[d]}px;--book-h:${sizes.bookHeading[d]}px;--menu:${sizes.menu[d]}px;--sec-h:${sizes.secHead[d]}px;--fs-about:${sizes.fsAbout[d] / 100};--fs-pname:${sizes.fsPkgName[d] / 100};--fs-pprice:${sizes.fsPkgPrice[d] / 100};--fs-plist:${sizes.fsPkgList[d] / 100};--fs-testi:${sizes.fsTesti[d] / 100};--fs-faqq:${sizes.fsFaqQ[d] / 100};--fs-faqa:${sizes.fsFaqA[d] / 100};--fs-contact:${sizes.fsContact[d] / 100};--fs-foot:${sizes.fsFoot[d] / 100};--fs-cover:${sizes.fsCover[d] / 100};--fs-social:${sizes.fsSocial[d] / 100};`
-  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}`
+    `--text:${sizes.text[d]}%;--hl:${sizes.headline[d]}px;--space:${sizes.sectionSpace[d]}px;--gap:${sizes.photoGap[d]}px;--cover-w:${sizes.coverSize[d]}%;--hero-h:${sizes.heroHeight[d]}vh;--logo:${sizes.logo[d]}px;--nudge:${sizes.logoNudge[d]}px;--nudgey:${sizes.menuNudgeY[d]}px;--menuy:${sizes.menuNudgeY[d]}px;--cal:${sizes.calScale[d]}%;--sub:${sizes.subhead[d]}px;--btn:${sizes.button[d]}px;--gal-h:${sizes.galHeading[d]}px;--gal-gap:${sizes.galGap[d]}px;--book-h:${sizes.bookHeading[d]}px;--menu:${sizes.menu[d]}px;--sec-h:${sizes.secHead[d]}px;--hpara:${sizes.paraSize[d]}px;--fs-about:${sizes.fsAbout[d] / 100};--fs-pname:${sizes.fsPkgName[d] / 100};--fs-pprice:${sizes.fsPkgPrice[d] / 100};--fs-plist:${sizes.fsPkgList[d] / 100};--fs-testi:${sizes.fsTesti[d] / 100};--fs-faqq:${sizes.fsFaqQ[d] / 100};--fs-faqa:${sizes.fsFaqA[d] / 100};--fs-contact:${sizes.fsContact[d] / 100};--fs-foot:${sizes.fsFoot[d] / 100};--fs-cover:${sizes.fsCover[d] / 100};--fs-social:${sizes.fsSocial[d] / 100};`
+  const heroCss =
+    (hero.headFont || hero.headColor ? `#top h1{${hero.headFont ? `font-family:${hero.headFont}!important;` : ''}${hero.headColor ? `color:${hero.headColor}!important;` : ''}}` : '') +
+    (hero.subFont || hero.subColor ? `#top .cr-sub{${hero.subFont ? `font-family:${hero.subFont}!important;` : ''}${hero.subColor ? `color:${hero.subColor}!important;` : ''}}` : '') +
+    `#top .cr-hpara{font-size:var(--hpara)!important;${hero.paraFont ? `font-family:${hero.paraFont}!important;` : ''}${hero.paraColor ? `color:${hero.paraColor}!important;` : ''}}`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}`
 
   return {
     tpl,
@@ -267,7 +285,7 @@ export function resolveTheme(r: Record<string, any>) {
     body: FONT_OPTIONS[bodyKey].family,
     fontsHref:
       'https://fonts.googleapis.com/css2?' +
-      Array.from(new Set([headKey, bodyKey, ...(bookKey ? [bookKey] : []), ...(galKey ? [galKey] : [])])).map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') +
+      Array.from(new Set([headKey, bodyKey, ...(bookKey ? [bookKey] : []), ...(galKey ? [galKey] : []), ...heroFontKeys])).map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') +
       '&display=swap',
     accent,
     bg,

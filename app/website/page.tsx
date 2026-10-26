@@ -1434,20 +1434,23 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
-<Group title="Hero text" hint="headline and location line" onOpen={() => scrollPreview('top')}>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Headline</label>
-                    <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Boise Wedding Photographer" className={inputCls} />
-                    <div className="mt-3"><SizeControl device={device} label="Headline size" unit="px" min={24} max={140} step={2} value={T.sizes.headline} onChange={(d, v) => setSize('headline', d, v)} /></div>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Location line</label>
-                    <input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Boise, Idaho" className={inputCls} />
-                    <div className="mt-3"><SizeControl device={device} label="Location line size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(d, v) => setSize('subhead', d, v)} /></div>
-                  </div>
-                  <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
-                  
-                {secStyleBlock('top')}
+<Group title="Hero text" hint="headline, location line and paragraph" onOpen={() => scrollPreview('top')}>
+<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Headline</p>
+<input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Camrhia Photographer" className={inputCls} />
+<ColorField label="Headline color" value={T.hero.headColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ headline_color: h })} onReset={() => setHero({ headline_color: undefined })} />
+<FontPicker label="Headline font" value={S.hero?.headline_font ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ headline_font: k })} />
+<SizeControl device={device} label="Headline size" unit="px" min={24} max={140} step={1} value={T.sizes.headline} onChange={(dv, v) => setSize('headline', dv, v)} />
+<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Location line</p>
+<input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Boise, Idaho" className={inputCls} />
+<ColorField label="Location line color" value={T.hero.subColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ subhead_color: h })} onReset={() => setHero({ subhead_color: undefined })} />
+<FontPicker label="Location line font" value={S.hero?.subhead_font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ subhead_font: k })} />
+<SizeControl device={device} label="Location line size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(dv, v) => setSize('subhead', dv, v)} />
+<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Paragraph</p>
+<textarea rows={3} value={S.hero?.para_text ?? ''} onChange={(e) => setHero({ para_text: e.target.value })} placeholder="A short line about you (optional)" className={inputCls} />
+<ColorField label="Paragraph color" value={T.hero.paraColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ para_color: h })} onReset={() => setHero({ para_color: undefined })} />
+<FontPicker label="Paragraph font" value={S.hero?.para_font ?? T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setHero({ para_font: k })} />
+<SizeControl device={device} label="Paragraph size" unit="px" min={10} max={40} step={1} value={T.sizes.paraSize} onChange={(dv, v) => setSize('paraSize', dv, v)} />
+<Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
 </Group>
 <Group title="Hero photos" hint="photos, slideshow and position" onOpen={() => scrollPreview('top')}>
 <div>

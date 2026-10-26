@@ -246,6 +246,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const ov = t.hero.overlay
   const h1Big: React.CSSProperties = { ...headStyle, fontSize: 'var(--hl)', lineHeight: 1.05 }
   const h1Mid: React.CSSProperties = { ...headStyle, fontSize: 'calc(var(--hl) * 0.85)', lineHeight: 1.05 }
+  const heroPara = (color?: string) =>
+    t.hero.paraText ? (
+      <p className="cr-hpara mt-5 max-w-xl whitespace-pre-line leading-relaxed" style={{ color, marginLeft: t.hero.align === 'left' ? 0 : 'auto', marginRight: t.hero.align === 'right' ? 0 : 'auto' }}>{t.hero.paraText}</p>
+    ) : null
 
   const fsr = (v: string, rem: number) => `calc(${rem}rem * var(--${v}, 1))`
   const fsp = (v: string, px: number) => `calc(${px}px * var(--${v}, 1))`
@@ -636,6 +640,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 <div className="max-w-3xl">
                   <h1 style={h1Big}>{headline}</h1>
                   {subhead && <p className="cr-sub mt-4 text-[12px] uppercase tracking-[0.28em] opacity-90">{subhead}</p>}
+                  {heroPara()}
                   <div className="mt-8">{cta()}</div>
                 </div>
               </div>
@@ -649,8 +654,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <div className={`order-2 flex flex-col justify-center px-8 py-16 md:order-1 md:px-16 ${t.hero.align === 'center' ? 'items-center text-center' : t.hero.align === 'right' ? 'items-end text-right' : 'items-start text-left'}`}>
                 {subhead && <p className="cr-sub mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
                 <h1 style={h1Mid}>{headline}</h1>
-                <p className="mt-6 max-w-md text-[15px] leading-relaxed" style={{ color: soft }}>
-                  {(t.text.about ?? r.bio ?? '').toString().split(/\n+/)[0].slice(0, 220)}
+                <p className="cr-hpara mt-6 max-w-md whitespace-pre-line text-[15px] leading-relaxed" style={{ color: soft }}>
+                  {t.hero.paraText ?? (t.text.about ?? r.bio ?? '').toString().split(/\n+/)[0].slice(0, 220)}
                 </p>
                 <div className="mt-8">{cta()}</div>
               </div>
@@ -667,6 +672,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             <div className={`mx-auto flex max-w-3xl flex-col px-6 py-14 ${alignCls}`}>
               <h1 style={h1Mid}>{headline}</h1>
               {subhead && <p className="cr-sub mt-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
+              {heroPara(soft)}
               <div className="mt-8">{cta()}</div>
             </div>
           </header>
@@ -681,6 +687,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 <div className="px-8 py-12 text-center" style={{ border: `1px solid ${line}` }}>
                   {subhead && <p className="cr-sub mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
                   <h1 style={h1Mid}>{headline}</h1>
+                  {heroPara(soft)}
                   <div className="mt-8">{cta()}</div>
                 </div>
               </div>
@@ -693,6 +700,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             <div className="mx-auto max-w-6xl px-6 pt-14" style={{ textAlign: t.hero.align }}>
               {subhead && <p className="cr-sub mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
               <h1 style={{ ...headStyle, fontSize: 'calc(var(--hl) * 1.5)', lineHeight: 0.98 }}>{headline}</h1>
+              {heroPara(soft)}
             </div>
             <div className="relative mt-10 w-full overflow-hidden" style={{ height: 'calc(var(--hero-h) * 0.8)' }}>
               {heroImg('absolute inset-0 h-full w-full')}
