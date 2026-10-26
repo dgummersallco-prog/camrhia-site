@@ -31,7 +31,21 @@ type Site = {
 }
 type Tm = { id: string; storage_path: string | null; quote: string | null; client_name: string | null; sort_order: number }
 type WPkg = { id: string; title: string; price: string | null; description: string | null; sort_order: number; source_package_id: string | null }
-type OwnPkg = { id: string; name: string; price: string | null; covers: string | null; detail: string | null }
+type OwnPkg = { id: string; name: string; price: string | null; covers: string | null; detail: string | null; session_type: string | null }
+
+const PKG_TYPE_ORDER = ['wedding', 'engagement', 'proposal', 'maternity', 'newborn', 'family', 'senior', 'graduation', 'headshots', 'branding', 'boudoir', 'dance', 'sports_team']
+function groupOwnPkgs(list: OwnPkg[]) {
+  const map = new Map<string, OwnPkg[]>()
+  for (const x of list) {
+    const k = x.session_type ?? ''
+    if (!map.has(k)) map.set(k, [])
+    map.get(k)!.push(x)
+  }
+  const rank = (k: string) => { const i = PKG_TYPE_ORDER.indexOf(k); return i === -1 ? 999 : i }
+  return Array.from(map.entries())
+    .sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0]))
+    .map(([key, items]) => ({ key, items, label: key ? key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()) : 'Other' }))
+}
 type Dev = 'phone' | 'desktop'
 
 const COLUMNS = 'id, public_token, slug, accent_color, cover_path, cover_paths, logo_path, brand_colors_named, site_template, site_accent, site_font_pair, site_headline, site_subhead, site_sections, site_settings'
@@ -648,7 +662,7 @@ export default function WebsitePage() {
     setTms((data ?? []) as Tm[])
     const pk = await sb.from('website_packages').select('id, title, price, description, sort_order, source_package_id').eq('photographer_id', id).order('sort_order', { ascending: true })
     setPkgs((pk.data ?? []) as WPkg[])
-    const op = await sb.from('packages').select('id, name, price, covers, detail').eq('owner_id', id).order('sort_order', { ascending: true })
+    const op = await sb.from('packages').select('id, name, price, covers, detail, session_type').eq('owner_id', id).order('sort_order', { ascending: true })
     setOwnPkgs((op.data ?? []) as OwnPkg[])
     const ph = await sb.from('website_photos').select('storage_path').eq('photographer_id', id).order('created_at', { ascending: false }).limit(80)
     setCandsDb(((ph.data ?? []) as { storage_path: string }[]).map((x) => x.storage_path))
@@ -1789,7 +1803,10 @@ export default function WebsitePage() {
                         <div className="mb-2">
                           <Select className={inputCls} value={p.source_package_id ?? ''} onChange={(e) => linkPkg(p, e.target.value)}>
                             <option value="">Custom package</option>
-                            {ownPkgs.map((x) => <option key={x.id} value={x.id}>{x.name}{x.price ? ' · ' + x.price : ''}</option>)}
+                            {groupOwnPkgs(ownPkgs).map((g) => [
+                              <option key={'h-' + g.key} value={'__h_' + g.key} disabled>{'── ' + g.label + ' ──'}</option>,
+                              ...g.items.map((x) => <option key={x.id} value={x.id}>{x.name}{x.price ? ' · ' + x.price : ''}</option>),
+                            ])}
                           </Select>
                         </div>
                         {p.source_package_id && ownPkgs.some((x) => x.id === p.source_package_id) ? (
