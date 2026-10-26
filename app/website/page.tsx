@@ -1648,7 +1648,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between gallery covers" unit="px" min={0} max={60} step={2} value={T.sizes.photoGap} onChange={(d, v) => setSize('photoGap', d, v)} />
                 </Group>
 </>)}
-{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group title="1. Explore" hint="links to your other pages" onOpen={() => scrollPreview('explore')}>
+{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group title="1. Explore layout" hint="layout, titles and subtitles" onOpen={() => scrollPreview('explore')}>
   <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
@@ -1656,6 +1656,8 @@ export default function WebsitePage() {
       { v: 'tiles', name: 'Big tiles', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="8" width="16" height="24" rx="2" /><rect x="22" y="8" width="16" height="24" rx="2" /><rect x="40" y="8" width="16" height="24" rx="2" /></g><g fill="#B9AFA2"><rect x="7" y="25" width="10" height="3" /><rect x="25" y="25" width="10" height="3" /><rect x="43" y="25" width="10" height="3" /></g></svg> },
       { v: 'list', name: 'Numbered list', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="6" y="9" width="30" height="4" /><rect x="6" y="19" width="30" height="4" /><rect x="6" y="29" width="30" height="4" /></g><g fill="#D8D0C4"><rect x="42" y="10" width="12" height="2" /><rect x="42" y="20" width="12" height="2" /><rect x="42" y="30" width="12" height="2" /></g></svg> },
       { v: 'cards', name: 'Cards', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="9" width="16" height="22" rx="2" /><rect x="22" y="9" width="16" height="22" rx="2" /><rect x="40" y="9" width="16" height="22" rx="2" /></g><g fill="#9A8A74"><rect x="4" y="9" width="16" height="2" /><rect x="22" y="9" width="16" height="2" /><rect x="40" y="9" width="16" height="2" /></g></svg> },
+      { v: 'stack', name: 'Centered stack', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="16" y="7" width="28" height="5" /><rect x="22" y="14" width="16" height="2" /><rect x="16" y="21" width="28" height="5" /><rect x="22" y="28" width="16" height="2" /></g></svg> },
+      { v: 'outline', name: 'Outline boxes', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="none" stroke="#B9AFA2" strokeWidth="1.5"><rect x="4" y="9" width="16" height="22" rx="1" /><rect x="22" y="9" width="16" height="22" rx="1" /><rect x="40" y="9" width="16" height="22" rx="1" /></g></svg> },
     ]} />
   <div>
     <label className="mb-1 block text-xs font-medium text-ink">Label above the links (optional)</label>
@@ -1675,7 +1677,14 @@ export default function WebsitePage() {
     </div>
   ))}
   <p className="text-xs text-ink-soft">Leave a title empty to use the name from your Menu step.</p>
+</Group>
+<Group title="Explore colors & text" hint="background, card color, title and subtitle" onOpen={() => scrollPreview('explore')}>
 {secStyleBlock('explore')}
+<ColorField label="Card / tile color" value={S.explore?.tile_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('explore', { tile_bg: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.tile_bg; st.explore = b })} />
+<ColorField label="Title color" value={S.explore?.title_color ?? T.ink} swatches={palette()} onChange={(h) => setIn('explore', { title_color: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.title_color; st.explore = b })} />
+<ColorField label="Subtitle color" value={S.explore?.sub_color ?? T.ink} swatches={palette()} onChange={(h) => setIn('explore', { sub_color: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.sub_color; st.explore = b })} />
+<SizeControl device={device} label="Title font size" unit="px" min={14} max={90} step={1} value={T.sizes.exTitle} onChange={(d, v) => setSize('ex_title' as any, d, v)} />
+<SizeControl device={device} label="Subtitle font size" unit="px" min={9} max={28} step={1} value={T.sizes.exSub} onChange={(d, v) => setSize('ex_sub' as any, d, v)} />
 </Group>
 <Group title="2. Gallery covers" hint="covers on your home page" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
