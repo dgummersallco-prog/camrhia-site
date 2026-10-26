@@ -113,7 +113,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     }))
     .filter((g) => g.photos.length > 0)
   const galleries = isPreview && realGalleries.length === 0 ? (PH_GALLERIES as typeof realGalleries) : realGalleries
-  const realPkgs = (r.site_packages ?? []) as { id: string; title: string; price: string | null; description: string | null }[]
+  const realPkgs = (r.site_packages ?? []) as { id: string; title: string; price: string | null; description: string | null; session_type?: string | null }[]
   const sitePkgs = isPreview && realPkgs.length === 0 ? PH_PKGS : realPkgs
   const quotes: { text: string; who: string; img: string | null }[] = [
     ...((r.testimonials ?? []) as any[]).filter((x) => x.quote).map((x) => ({ text: x.quote as string, who: (x.client_name ?? '') as string, img: photoUrl(x.storage_path) })),
@@ -448,15 +448,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               {feats(d).map((f, j) => <li key={j}>{f}</li>)}
             </ul>
           )
-        return sec('investment', t.titles.investment,
-          <div className="mx-auto max-w-5xl">
-            {t.pricing.intro && (
-              <p className="mx-auto mb-12 max-w-xl whitespace-pre-line text-center leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 15) }}>{t.pricing.intro}</p>
-            )}
-
+        const layoutBlocks = (pkgs: any[]) => (<>
             {L === 'cards' && (
               <div className="grid items-stretch" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24 }}>
-                {sitePkgs.map((p) => {
+                {pkgs.map((p) => {
                   const hot = p.id === fid
                   return (
                     <div key={p.id} className="flex flex-col items-center px-8 py-10 text-center"
@@ -475,7 +470,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
             {L === 'menu' && (
               <div className="mx-auto max-w-3xl">
-                {sitePkgs.map((p, i) => {
+                {pkgs.map((p, i) => {
                   const hot = p.id === fid
                   return (
                     <div key={p.id} className="py-8" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
@@ -497,7 +492,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
             {L === 'columns' && (
               <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 1, background: line, border: `1px solid ${line}` }}>
-                {sitePkgs.map((p) => {
+                {pkgs.map((p) => {
                   const hot = p.id === fid
                   return (
                     <div key={p.id} className="flex flex-col items-center px-8 py-12 text-center" style={{ background: hot ? tint : bg }}>
@@ -513,6 +508,27 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
             )}
 
+            </>)
+        const typeLabel = (k: string) => (k ? k.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()) : 'Other')
+        const pkgGroups: { key: string; items: any[] }[] = []
+        for (const pk of sitePkgs) {
+          const k = String((pk as any).session_type ?? '')
+          let g = pkgGroups.find((x) => x.key === k)
+          if (!g) { g = { key: k, items: [] }; pkgGroups.push(g) }
+          g.items.push(pk)
+        }
+        return sec('investment', t.titles.investment,
+          <div className="mx-auto max-w-5xl">
+            {t.pricing.intro && (
+              <p className="mx-auto mb-12 max-w-xl whitespace-pre-line text-center leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 15) }}>{t.pricing.intro}</p>
+            )}
+
+            {pkgGroups.length > 1 ? pkgGroups.map((gp) => (
+              <div key={gp.key} className="mt-14 first:mt-0">
+                <p className="mb-8 text-center uppercase tracking-[0.28em]" style={{ color: accent, fontSize: fsp('fs-plist', 12) }}>{typeLabel(gp.key)}</p>
+                {layoutBlocks(gp.items)}
+              </div>
+            )) : layoutBlocks(sitePkgs)}
             {t.pricing.note && (
               <p className="mx-auto mt-10 max-w-xl whitespace-pre-line text-center italic leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>{t.pricing.note}</p>
             )}
