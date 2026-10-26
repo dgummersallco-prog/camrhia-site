@@ -165,7 +165,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     if (hexOk(v.text)) rules.push('color:' + hexOk(v.text) + ' !important')
     if (famOf(v.body)) rules.push('font-family:' + famOf(v.body) + ' !important')
     let css = rules.length ? '#' + id + ' {' + rules.join(';') + '}' : ''
-    if (famOf(v.head)) css += '#' + id + ' [style*="letter-spacing: 0.01em"] {font-family:' + famOf(v.head) + ' !important}'
+    if (famOf(v.head)) css += '#' + id + ' [style*="letter-spacing: 0.01em"], #' + id + ' .cr-h {font-family:' + famOf(v.head) + ' !important}'
     return css
   }).join('\n')
   const extraFontKeys = Array.from(new Set(Object.values(secStyles).flatMap((v) => [v?.head, v?.body]).filter((k): k is string => !!k && !!FONT_OPTIONS[k])))
@@ -375,7 +375,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                     )
                     const textTile = (
                       <a key={g.id + 't'} href={href} className="flex aspect-square items-center justify-center p-4 text-center" style={{ background: bg }}>
-                        <span style={{ ...headStyle, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'calc(clamp(1.4rem, 4.2vw, 3.6rem) * var(--fs-cover, 1))' }}>{g.title}</span>
+                        <span className="cr-h" style={{ ...headStyle, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'calc(clamp(1.4rem, 4.2vw, 3.6rem) * var(--fs-cover, 1))' }}>{g.title}</span>
                       </a>
                     )
                     return i % 2 === 0 ? [photoTile, textTile] : [textTile, photoTile]
