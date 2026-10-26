@@ -1590,7 +1590,7 @@ export default function WebsitePage() {
                   
                   </Group>
 </>)}
-{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Sections <span className="font-normal normal-case tracking-normal">· build your home page top to bottom</span></p><Group title="1. Explore layout" hint="layout, titles and subtitles" onOpen={() => scrollPreview('explore')}>
+{tab === 'home' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Explore style <span className="font-normal normal-case tracking-normal">· layout, titles, colors and sizes</span></p><Group title="1. Explore layout" hint="layout, titles and subtitles" onOpen={() => scrollPreview('explore')}>
   <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
@@ -1628,6 +1628,7 @@ export default function WebsitePage() {
 <SizeControl device={device} label="Title font size" unit="px" min={14} max={90} step={1} value={T.sizes.exTitle} onChange={(d, v) => setSize('ex_title' as any, d, v)} />
 <SizeControl device={device} label="Subtitle font size" unit="px" min={9} max={28} step={1} value={T.sizes.exSub} onChange={(d, v) => setSize('ex_sub' as any, d, v)} />
 </Group>
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Gallery style <span className="font-normal normal-case tracking-normal">· layout, covers, colors and sizes</span></p>
 <Group title="2. Gallery layout" hint="layout, cover size and shape" onOpen={() => scrollPreview('portfolio')}>
                   {sectionHead('portfolio')}
                   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
@@ -1653,6 +1654,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
 {secStyleBlock('portfolio')}
 </Group>
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Testimonials style <span className="font-normal normal-case tracking-normal">· layout, kind words, colors and sizes</span></p>
 <Group title="3. Testimonials layout" hint="layout and the kind words" onOpen={() => scrollPreview('words')}>
                   {sectionHead('testimonials')}
 <div>
@@ -1693,6 +1695,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
 {secStyleBlock('words')}
 </Group>
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Closing style <span className="font-normal normal-case tracking-normal">· message, colors, sizes and button</span></p>
 <Group title="4. Closing layout" hint="the message before the footer" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
@@ -1722,6 +1725,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Button size (closing only)" unit="px" min={9} max={20} step={1} value={T.sizes.ctBtn} onChange={(d, v) => setSize('ct_btn' as any, d, v)} />
                 </Group>
 
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Footer style <span className="font-normal normal-case tracking-normal">· footer line, colors and size</span></p>
 <Group title="5. Footer layout" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
@@ -1790,7 +1794,8 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
                 </Group>{customBlock('galleries')}
 </>)}
-{tab === 'about' && (<><Group title="1. About layout" hint="layout, story and photos" onOpen={() => scrollPreview('about')}>
+{tab === 'about' && (<><p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">About style <span className="font-normal normal-case tracking-normal">· layout, story, colors and size</span></p>
+<Group title="1. About layout" hint="layout, story and photos" onOpen={() => scrollPreview('about')}>
                   {sectionHead('about')}
                   <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -1827,6 +1832,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Story text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsAbout} onChange={(dv, v) => setSize('fsAbout', dv, v)} />
 {secStyleBlock('about')}
 </Group>
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Pricing style <span className="font-normal normal-case tracking-normal">· price list, colors and sizes</span></p>
 <Group title="2. Pricing layout" hint="price list style and packages" onOpen={() => scrollPreview('investment')}>
                   {sectionHead('investment')}
 <div>
@@ -1890,6 +1896,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="What's included size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgList} onChange={(dv, v) => setSize('fsPkgList', dv, v)} />
 {secStyleBlock('investment')}
 </Group>
+<p className="px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">FAQ style <span className="font-normal normal-case tracking-normal">· questions, colors and sizes</span></p>
 <Group title="3. FAQ layout" hint="your questions and answers" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
