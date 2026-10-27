@@ -329,7 +329,7 @@ function FontPicker({ label, value, onChange, cats }: { label: string; value: st
 
 const TB = '#B9AEA5'
 const TL = '#D8CFC4'
-const bx = (cls = '') => <div className={cls} style={{ background: TB }} />
+const bx = (cls = '') => <div className={cls} style={{ background: 'linear-gradient(145deg,#D9C7B5 0%,#A8917C 55%,#7A6858 100%)', borderRadius: 2 }} />
 const pcard = () => (
   <div className="flex flex-col items-center gap-1 border p-1 pt-2" style={{ borderColor: TB }}>
     <div className="h-1 w-3/4" style={{ background: TB }} />
@@ -406,13 +406,13 @@ const THUMBS = {
 
 function LayoutPicker<V extends string>({ value, options, onChange }: { value: V; options: { v: V; name: string; thumb: React.ReactNode }[]; onChange: (v: V) => void }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
       {options.map((o) => (
-        <button key={o.v} type="button" onClick={() => onChange(o.v)} className="text-left">
-          <div className={`rounded-xl ${value === o.v ? 'ring-2 ring-ink ring-offset-2 ring-offset-card' : 'ring-1 ring-line hover:ring-ink-soft'}`}>
-            <div className="h-20 overflow-hidden rounded-lg border border-line bg-white p-1.5">{o.thumb}</div>
+        <button key={o.v} type="button" onClick={() => onChange(o.v)} className="group text-left">
+          <div className={`overflow-hidden rounded-lg transition ${value === o.v ? 'ring-2 ring-ink ring-offset-2 ring-offset-card' : 'ring-1 ring-line group-hover:ring-ink-soft'}`}>
+            <div className="h-[104px] p-2.5" style={{ background: '#F6F1EA' }}>{o.thumb}</div>
           </div>
-          <p className="mt-1.5 text-xs font-medium text-ink">{o.name}</p>
+          <p className="mt-2 font-fraunces text-sm text-ink">{o.name}</p>
         </button>
       ))}
     </div>

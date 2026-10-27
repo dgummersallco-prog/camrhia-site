@@ -851,7 +851,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                     )
                   }
                   if (type === 'title') return <h1 style={{ ...h1Mid, margin: 0, color: 'inherit' }}>{headline}</h1>
-                  if (type === 'subtitle') return subhead ? <p className="cr-sub text-[11px] uppercase tracking-[0.28em]" style={{ color: it.light ? '#fff' : accent, margin: 0 }}>{subhead}</p> : null
+                  if (type === 'subtitle') return subhead ? <p className="cr-sub text-[11px] uppercase tracking-[0.28em]" style={{ color: it.color ?? (it.light ? '#fff' : accent), margin: 0 }}>{subhead}</p> : null
                   if (type === 'menu') {
                     if (dev === 'phone' || burger) {
                       return (
