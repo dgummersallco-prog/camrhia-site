@@ -1774,7 +1774,7 @@ export default function WebsitePage() {
 <Group title="Featured work text" onOpen={() => scrollPreview('portfolio')}>
 {titleBlock('portfolio')}
 {elBlock('Gallery names', 'gal_name', { min: 14, max: 90 })}
-{elBlock('Photo count', 'gal_count', { min: 9, max: 28 })}
+
 </Group>
 <Group title="Featured work button" onOpen={() => scrollPreview('portfolio')}>
   <div>
