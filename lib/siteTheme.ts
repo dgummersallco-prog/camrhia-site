@@ -82,7 +82,7 @@ export const PAIR_PRESETS: Record<string, { name: string; head: string; body: st
   romantic: { name: 'Romantic', head: 'playfair', body: 'lora' },
 }
 
-const EL_DEF: Record<string, [number, number]> = { ex_label: [11, 11], ex_title: [24, 30], ex_sub: [10, 11], con_msg: [15, 15], con_social: [11, 11], ft_line: [13, 13], ft_copy: [11, 11] }
+const EL_DEF: Record<string, [number, number]> = { ex_label: [11, 11], ex_title: [24, 30], ex_sub: [10, 11], con_msg: [15, 15], con_social: [11, 11], ft_line: [13, 13], ft_copy: [11, 11], gal_name: [30, 30], gal_count: [11, 11], gal_link: [11, 11], tes_quote: [18, 18], tes_name: [11, 11] }
 export const EL_KEYS = Object.keys(EL_DEF)
 export const SECTION_KEYS = ['about', 'portfolio', 'investment', 'testimonials', 'faq', 'contact'] as const
 export const DEFAULT_TITLES: Record<string, string> = {

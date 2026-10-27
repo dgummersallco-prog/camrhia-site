@@ -1725,10 +1725,11 @@ export default function WebsitePage() {
                   </Row>
                   
 </Group>
-<Group title="Gallery colors & text" hint="background, colors, fonts and name size" onOpen={() => scrollPreview('portfolio')}>
-{secStyleBlock('portfolio', { title: true, extra: (<>
-                  <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
-</>) })}
+<Group title="Gallery text" onOpen={() => scrollPreview('portfolio')}>
+{titleBlock('portfolio')}
+{elBlock('Gallery names', 'gal_name', { min: 14, max: 90 })}
+{elBlock('Photo count', 'gal_count', { min: 9, max: 28 })}
+{elBlock('View all link', 'gal_link', { min: 9, max: 28 })}
 </Group>
 {styleHead('Testimonials style', 'layout, kind words, colors and sizes', 'testimonials')}
 <Group title="Testimonials layout" hint="pick a look" onOpen={() => scrollPreview('words')}>
@@ -1771,10 +1772,10 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="Testimonials colors & text" hint="background, colors, fonts and quote size" onOpen={() => scrollPreview('words')}>
-{secStyleBlock('words', { title: true, extra: (<>
-                  <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
-</>) })}
+<Group title="Testimonials text" onOpen={() => scrollPreview('words')}>
+{titleBlock('words')}
+{elBlock('Quotes', 'tes_quote', { min: 12, max: 60 })}
+{elBlock('Client names', 'tes_name', { min: 9, max: 28 })}
 </Group>
 {styleHead('Closing style', 'message, colors, sizes and button', 'contact', { toggle: false })}
 {secBg('Closing background', 'contact', 'contact')}
@@ -1808,34 +1809,38 @@ export default function WebsitePage() {
 </Group>
 {customBlock('home')}
 </>)}
-{tab === 'galleries' && (<><Group title="1. Galleries page" hint="your list of galleries" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
-                  <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
-                  {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
-                  <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Page heading</label>
-                    <input value={S.titles?.portfolio ?? ''} onChange={(e) => setIn('titles', { portfolio: e.target.value })} placeholder={DEFAULT_TITLES.portfolio} className={inputCls} />
-                  </div>
-                  <div>
+{tab === 'galleries' && (<>{styleHead('Galleries page', '')}
+<Group title="Galleries layout" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
+<div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={(S.galindex?.layout ?? T.galindex.layout) as any} onChange={(v) => setIn('galindex', { layout: v })}
                       options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }, { v: 'checker', name: 'Checkerboard', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="6" y="4" width="24" height="10" /><rect x="30" y="14" width="24" height="10" /><rect x="6" y="24" width="24" height="10" /></g><g fill="#B9AFA2"><rect x="34" y="8" width="16" height="2" /><rect x="10" y="18" width="16" height="2" /><rect x="34" y="28" width="16" height="2" /></g></svg> }, { v: 'rows', name: 'Alternating rows', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="5" y="5" width="24" height="14" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="34" y="9" width="20" height="3" /><rect x="34" y="14" width="14" height="2" /></g><g fill="#B9AFA2"><rect x="6" y="26" width="20" height="3" /><rect x="6" y="31" width="14" height="2" /></g><rect x="31" y="22" width="24" height="14" fill="#D8D0C4" /></svg> }, { v: 'custom', name: 'Freestyle', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="6" width="20" height="14" rx="1" fill="#D8D0C4" /><rect x="30" y="10" width="24" height="12" rx="1" fill="#C9BFB2" /><rect x="12" y="24" width="20" height="11" rx="1" fill="#F2EBDD" stroke="#9A8A74" strokeWidth="0.8" strokeDasharray="2 1.5" /><rect x="29" y="31" width="5" height="5" fill="#B08D57" /></svg> }]} />
                   </div>
-                  {(S.galindex?.layout ?? T.galindex.layout) === 'custom' && canvasPanel('galleries')}
-                                    {(S.galindex?.layout ?? T.galindex.layout) === 'grid' && (
+{(S.galindex?.layout ?? T.galindex.layout) === 'custom' && canvasPanel('galleries')}
+</Group>
+{secBg('Galleries background', 'portfolio', 'portfolio')}
+<Group title="Galleries details" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
+{!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
+<Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
+{(S.galindex?.layout ?? T.galindex.layout) === 'grid' && (
                     <Row label="Cover shape">
                     <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
                   </Row>
                   )}
-                <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
-                {secStyleBlock('portfolio')}
+<SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
+</Group>
+<Group title="Galleries text" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
+{titleBlock('portfolio')}
+{elBlock('Gallery names', 'gal_name', { min: 14, max: 90 })}
+{elBlock('Photo count', 'gal_count', { min: 9, max: 28 })}
 </Group>
 {(S.galindex?.layout ?? T.galindex.layout) === 'custom' && (
   <Group title="Gallery tiles" hint="which gallery each tile shows" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
     {canvasPanel('galleries', 'tiles')}
   </Group>
 )}
-<Group title="2. Inside a gallery" hint="what opens when a cover is clicked" onOpen={() => { setPreviewPage('gallery'); setTimeout(() => scrollPreview('gal-main'), 700) }}>
+{styleHead('Inside a gallery', '')}
+<Group title="Photo layout" hint="" onOpen={() => { setPreviewPage('gallery'); setTimeout(() => scrollPreview('gal-main'), 700) }}>
                   
                   
                   <div>
@@ -1854,11 +1859,13 @@ export default function WebsitePage() {
                       {firstGid && canvasPanel('gal:' + firstGid)}
                     </div>
                   )}
-                  <Row label="Show photo count"><Switch on={T.galpage.showCount} onChange={(v) => setIn('galpage', { show_count: v })} /></Row>
+                  </Group>
+<Group title="Gallery options" onOpen={() => { setPreviewPage('gallery'); setTimeout(() => scrollPreview('gal-main'), 700) }}>
+<Row label="Show photo count"><Switch on={T.galpage.showCount} onChange={(v) => setIn('galpage', { show_count: v })} /></Row>
                   <Row label="Show other galleries at the bottom"><Switch on={T.galpage.showMore} onChange={(v) => setIn('galpage', { show_more: v })} /></Row>
                   <Row label="Show the book button at the bottom"><Switch on={T.galpage.showButton} onChange={(v) => setIn('galpage', { show_button: v })} /></Row>
                 </Group>
-<Group title="3. Gallery photo sizes" hint="phone and desktop" onOpen={() => { setPreviewPage('gallery'); setTimeout(() => scrollPreview('gal-main'), 700) }}>
+<Group title="Photo sizes" hint="" onOpen={() => { setPreviewPage('gallery'); setTimeout(() => scrollPreview('gal-main'), 700) }}>
                   <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
                   <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
                   <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
