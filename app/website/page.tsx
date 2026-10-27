@@ -368,6 +368,11 @@ const tcard = () => (
 )
 const xbar = (w: string, h: number, c = '#2A1F24', o = 1) => <div style={{ width: w, height: h, background: c, opacity: o, borderRadius: 1 }} />
 const exw = (inner: React.ReactNode) => <div className="flex h-full flex-col gap-2"><div className="flex justify-center">{xbar('26%', 3, '#2A1F24', 0.45)}</div><div className="min-h-0 flex-1">{inner}</div></div>
+const fld = () => <div style={{ height: 7, background: '#fff', border: '1px solid #D8CDBF', borderRadius: 1 }} />
+const cal = () => <div className="grid grid-cols-7 gap-[2px]">{Array.from({ length: 21 }, (_, i) => <div key={i} style={{ height: 4, background: i === 9 ? '#B08D57' : '#D8CDBF', borderRadius: 1, opacity: i === 9 ? 1 : 0.7 }} />)}</div>
+const bkBtn = () => <div style={{ height: 7, background: '#B08D57', borderRadius: 1 }} />
+const dvd = (w = '70%') => <div style={{ width: w, height: 1, background: '#CFC4B8' }} />
+const pavatar = (sz: number) => <div style={{ width: sz, height: sz, borderRadius: 999, background: 'linear-gradient(145deg,#D9C7B5,#7A6858)' }} />
 const ln = (w = 'w-full') => <div className={`h-1 ${w}`} style={{ background: TL }} />
 const THUMBS = {
   galGrid: <div className="grid h-full grid-cols-3 gap-1">{bx()}{bx()}{bx()}</div>,
@@ -384,26 +389,18 @@ const THUMBS = {
   ),
   phGrid: <div className="grid h-full grid-cols-3 grid-rows-2 gap-1">{bx()}{bx()}{bx()}{bx()}{bx()}{bx()}</div>,
   phSingle: <div className="mx-auto flex h-full w-3/5 flex-col gap-1">{bx('flex-1')}{bx('flex-1')}</div>,
-  prCards: <div className="grid h-full grid-cols-3 gap-1">{pcard()}{pcard()}{pcard()}</div>,
-  prMenu: <div className="flex h-full flex-col justify-center gap-2">{pmenu()}{pmenu()}{pmenu()}</div>,
-  prCols: <div className="grid h-full grid-cols-3 border" style={{ borderColor: TB }}>{pcol(false)}{pcol(true)}{pcol(true)}</div>,
-  teGrid: <div className="grid h-full grid-cols-3 gap-1">{tcol()}{tcol()}{tcol()}</div>,
-  teStacked: (
-    <div className="flex h-full flex-col items-center justify-center gap-1">
-      <div className="h-4 w-4 rounded-full" style={{ background: TB }} />
-      <div className="h-1 w-4/5" style={{ background: TL }} />
-      <div className="h-1 w-3/5" style={{ background: TL }} />
-      <div className="mt-1 h-px w-full" style={{ background: TB }} />
-      <div className="h-1 w-3/5" style={{ background: TL }} />
-    </div>
-  ),
-  abLeft: <div className="flex h-full gap-1">{bx('w-2/5')}<div className="flex flex-1 flex-col justify-center gap-1 px-1">{ln()}{ln()}{ln('w-3/5')}</div></div>,
-  abRight: <div className="flex h-full gap-1"><div className="flex flex-1 flex-col justify-center gap-1 px-1">{ln()}{ln()}{ln('w-3/5')}</div>{bx('w-2/5')}</div>,
-  abStack: <div className="flex h-full flex-col gap-1">{bx('h-1/2')}<div className="flex flex-1 flex-col items-center justify-center gap-1">{ln('w-4/5')}{ln('w-3/5')}</div></div>,
+  prCards: <div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col items-center gap-1" style={{ background: '#fff', border: '1px solid #D8CDBF', padding: 5 }}>{xbar('70%', 5)}{xbar('55%', 6, '#B08D57')}{dvd('40%')}{xbar('80%', 2, '#2A1F24', 0.3)}{xbar('70%', 2, '#2A1F24', 0.3)}<div className="mt-auto" style={{ width: '70%', height: 5, background: '#B08D57', borderRadius: 1 }} /></div>)}</div>,
+  prMenu: <div className="flex h-full flex-col justify-around">{[0, 1, 2].map((i) => <div key={i} style={{ borderTop: i > 0 ? '1px solid #D8CDBF' : undefined, paddingTop: i > 0 ? 4 : 0 }}><div className="flex items-end gap-1.5">{xbar('26%', 5)}<div className="flex-1" style={{ borderBottom: '1px dotted #A89C8E', marginBottom: 2 }} />{xbar('14%', 5, '#B08D57')}</div><div style={{ height: 3 }} />{xbar('70%', 2, '#2A1F24', 0.3)}</div>)}</div>,
+  prCols: <div className="grid h-full grid-cols-3" style={{ gap: 1, background: '#D8CDBF', border: '1px solid #D8CDBF' }}>{[0, 1, 2].map((i) => <div key={i} className="flex flex-col items-center gap-1 pt-2" style={{ background: i === 1 ? '#EBE3D8' : '#F6F1EA' }}>{xbar('65%', 5)}{xbar('50%', 6, '#B08D57')}{xbar('30%', 1, '#B08D57', 0.6)}{xbar('80%', 2, '#2A1F24', 0.3)}{xbar('70%', 2, '#2A1F24', 0.3)}</div>)}</div>,
+  teGrid: <div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col items-center gap-1">{bx('w-full flex-1')}{xbar('85%', 3, '#2A1F24', 0.45)}{xbar('65%', 3, '#2A1F24', 0.3)}{xbar('40%', 2, '#B08D57')}</div>)}</div>,
+  teStacked: <div className="flex h-full flex-col items-center justify-around"><div className="flex flex-col items-center gap-1">{pavatar(16)}{xbar('70%', 3, '#2A1F24', 0.45)}{xbar('50%', 3, '#2A1F24', 0.3)}{xbar('25%', 2, '#B08D57')}</div>{dvd('80%')}<div className="flex flex-col items-center gap-1">{xbar('70%', 3, '#2A1F24', 0.45)}{xbar('25%', 2, '#B08D57')}</div></div>,
+  abLeft: <div className="flex h-full gap-2">{bx('w-2/5')}<div className="flex flex-1 flex-col justify-center gap-1.5">{xbar('60%', 6)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('55%', 2, '#2A1F24', 0.35)}</div></div>,
+  abRight: <div className="flex h-full gap-2"><div className="flex flex-1 flex-col justify-center gap-1.5">{xbar('60%', 6)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('55%', 2, '#2A1F24', 0.35)}</div>{bx('w-2/5')}</div>,
+  abStack: <div className="flex h-full flex-col gap-2">{bx('h-[48%]')}<div className="flex flex-1 flex-col items-center justify-center gap-1.5">{xbar('45%', 6)}{xbar('85%', 2, '#2A1F24', 0.35)}{xbar('70%', 2, '#2A1F24', 0.35)}</div></div>,
   bkCentered: <div className="flex h-full flex-col items-center justify-center gap-1">{ln('w-3/5')}{ln('w-4/5')}{bx('h-3 w-4/5')}{bx('h-3 w-4/5')}</div>,
   bkSide: <div className="flex h-full gap-1">{bx('w-2/5')}<div className="flex flex-1 flex-col justify-center gap-1">{ln()}{bx('h-3')}{bx('h-3')}</div></div>,
   bkBanner: <div className="flex h-full flex-col gap-1">{bx('h-1/3')}<div className="flex flex-1 flex-col items-center justify-center gap-1">{ln('w-3/5')}{bx('h-3 w-4/5')}</div></div>,
-  teCards: <div className="grid h-full grid-cols-3 gap-1">{tcard()}{tcard()}{tcard()}</div>,
+  teCards: <div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col gap-1" style={{ background: '#EBE3D8', border: '1px solid #D8CDBF', padding: 4 }}>{xbar('18%', 6, '#B08D57')}{xbar('95%', 2, '#2A1F24', 0.4)}{xbar('85%', 2, '#2A1F24', 0.4)}{xbar('60%', 2, '#2A1F24', 0.4)}<div className="mt-auto flex items-center gap-1">{pavatar(8)}{xbar('40%', 2, '#2A1F24', 0.45)}</div></div>)}</div>,
 }
 
 function LayoutPicker<V extends string>({ value, options, onChange }: { value: V; options: { v: V; name: string; thumb: React.ReactNode }[]; onChange: (v: V) => void }) {
@@ -2205,9 +2202,9 @@ export default function WebsitePage() {
                       <p className="mb-2 text-sm text-ink">Calendar and form</p>
                       <LayoutPicker value={T.availability.layout === 'centered' || T.availability.layout === 'between' ? T.availability.layout : 'side'} onChange={(v) => setIn('availability', { layout: v })}
                     options={[
-                      { v: 'side', name: 'Side by side', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="8" width="22" height="24" rx="2" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="33" y="10" width="21" height="3" /><rect x="33" y="16" width="21" height="3" /><rect x="33" y="22" width="21" height="3" /><rect x="33" y="28" width="21" height="4" rx="1" /></g></svg> },
-                      { v: 'centered', name: 'Stacked', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="14" y="4" width="32" height="14" rx="2" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="14" y="22" width="32" height="3" /><rect x="14" y="28" width="32" height="3" /><rect x="14" y="34" width="32" height="3" /></g></svg> },
-                      { v: 'between', name: 'Calendar above button', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="14" y="3" width="32" height="3" /><rect x="14" y="8" width="32" height="3" /></g><rect x="14" y="14" width="32" height="14" rx="2" fill="#D8D0C4" /><rect x="14" y="32" width="32" height="5" rx="2" fill="#B9AFA2" /></svg> },
+                      { v: 'side', name: 'Side by side', thumb: <div className="flex h-full flex-col gap-1.5"><div className="flex justify-center">{xbar('40%', 4)}</div><div className="flex min-h-0 flex-1 gap-2"><div className="flex-1">{cal()}</div><div className="flex flex-1 flex-col justify-center gap-1.5">{fld()}{fld()}{fld()}{bkBtn()}</div></div></div> },
+                      { v: 'centered', name: 'Stacked', thumb: <div className="flex h-full flex-col justify-between"><div className="flex justify-center">{xbar('40%', 4)}</div>{cal()}<div className="flex flex-col gap-1">{fld()}{fld()}{bkBtn()}</div></div> },
+                      { v: 'between', name: 'Calendar above button', thumb: <div className="flex h-full flex-col justify-between"><div className="flex justify-center">{xbar('40%', 4)}</div><div className="flex flex-col gap-1">{fld()}{fld()}</div>{cal()}{bkBtn()}</div> },
                     ]} />
                     </div>
                   )}
