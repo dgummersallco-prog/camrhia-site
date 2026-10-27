@@ -367,6 +367,7 @@ const tcard = () => (
   </div>
 )
 const xbar = (w: string, h: number, c = '#2A1F24', o = 1) => <div style={{ width: w, height: h, background: c, opacity: o, borderRadius: 1 }} />
+const exw = (inner: React.ReactNode) => <div className="flex h-full flex-col gap-2"><div className="flex justify-center">{xbar('26%', 3, '#2A1F24', 0.45)}</div><div className="min-h-0 flex-1">{inner}</div></div>
 const ln = (w = 'w-full') => <div className={`h-1 ${w}`} style={{ background: TL }} />
 const THUMBS = {
   galGrid: <div className="grid h-full grid-cols-3 gap-1">{bx()}{bx()}{bx()}</div>,
@@ -411,7 +412,7 @@ function LayoutPicker<V extends string>({ value, options, onChange }: { value: V
       {options.map((o) => (
         <button key={o.v} type="button" onClick={() => onChange(o.v)} className="group text-left">
           <div className={`overflow-hidden rounded-lg transition ${value === o.v ? 'ring-2 ring-ink ring-offset-2 ring-offset-card' : 'ring-1 ring-line group-hover:ring-ink-soft'}`}>
-            <div className="h-[104px] p-2.5" style={{ background: '#F6F1EA' }}>{o.thumb}</div>
+            <div className="h-[120px] p-3" style={{ background: '#F6F1EA' }}>{o.thumb}</div>
           </div>
           <p className="mt-2 font-fraunces text-sm text-ink">{o.name}</p>
         </button>
@@ -1775,12 +1776,12 @@ export default function WebsitePage() {
 {tab === 'home' && (<>{styleHead('Explore style', 'layout, titles, colors and sizes', 'explore', { explore: true })}<Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
-      { v: 'lines', name: 'Lines', thumb: <div className="flex h-full items-center"><div className="grid w-full grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col items-center py-3" style={{ borderTop: '1px solid #CBBFB0', borderLeft: i > 0 ? '1px solid #CBBFB0' : undefined }}>{xbar('70%', 6)}<div style={{ height: 5 }} />{xbar('50%', 3, '#B08D57')}</div>)}</div></div> },
-      { v: 'tiles', name: 'Big tiles', thumb: <div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col justify-between" style={{ background: '#EBE3D8', border: '1px solid #D8CDBF', borderRadius: 2, padding: 5 }}>{xbar('22%', 3, '#B08D57')}<div>{xbar('75%', 6)}<div style={{ height: 3 }} />{xbar('55%', 3, '#2A1F24', 0.35)}</div></div>)}</div> },
-      { v: 'list', name: 'Numbered list', thumb: <div className="flex h-full flex-col" style={{ borderTop: '1px solid #CBBFB0' }}>{[0, 1, 2].map((i) => <div key={i} className="flex flex-1 items-center gap-2" style={{ borderBottom: '1px solid #CBBFB0' }}>{xbar('8%', 3, '#B08D57')}<div className="flex-1">{xbar('55%', 7)}</div>{xbar('16%', 3, '#2A1F24', 0.35)}{xbar('8px', 3, '#B08D57')}</div>)}</div> },
-      { v: 'cards', name: 'Cards', thumb: <div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col items-center justify-center gap-1.5" style={{ background: '#EBE3D8', borderTop: '2px solid #B08D57', borderRadius: 2, padding: 4 }}>{xbar('70%', 6)}{xbar('85%', 3, '#2A1F24', 0.35)}{xbar('45%', 3, '#B08D57')}</div>)}</div> },
-      { v: 'stack', name: 'Centered stack', thumb: <div className="flex h-full flex-col items-center justify-around">{[0, 1, 2].map((i) => <div key={i} className="flex w-full flex-col items-center gap-1">{xbar('62%', 8)}{xbar('30%', 3, '#B08D57')}</div>)}</div> },
-      { v: 'outline', name: 'Outline boxes', thumb: <div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col justify-between" style={{ border: '1px solid #B08D57', borderRadius: 2, padding: 5 }}>{xbar('65%', 6)}<div className="flex items-end justify-between">{xbar('50%', 3, '#2A1F24', 0.35)}{xbar('7px', 3, '#B08D57')}</div></div>)}</div> },
+      { v: 'lines', name: 'Lines', thumb: exw(<div className="flex h-full items-center"><div className="grid w-full grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col items-center py-3" style={{ borderTop: '1px solid #CBBFB0', borderLeft: i > 0 ? '1px solid #CBBFB0' : undefined }}>{xbar('70%', 6)}<div style={{ height: 5 }} />{xbar('50%', 3, '#B08D57')}</div>)}</div></div>) },
+      { v: 'tiles', name: 'Big tiles', thumb: exw(<div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col justify-between" style={{ background: '#EBE3D8', border: '1px solid #D8CDBF', borderRadius: 2, padding: 5 }}>{xbar('22%', 3, '#B08D57')}<div>{xbar('75%', 6)}<div style={{ height: 3 }} />{xbar('55%', 3, '#2A1F24', 0.35)}</div></div>)}</div>) },
+      { v: 'list', name: 'Numbered list', thumb: exw(<div className="flex h-full flex-col" style={{ borderTop: '1px solid #CBBFB0' }}>{[0, 1, 2].map((i) => <div key={i} className="flex flex-1 items-center gap-2" style={{ borderBottom: '1px solid #CBBFB0' }}>{xbar('8%', 3, '#B08D57')}<div className="flex-1">{xbar('55%', 7)}</div>{xbar('16%', 3, '#2A1F24', 0.35)}{xbar('8px', 3, '#B08D57')}</div>)}</div>) },
+      { v: 'cards', name: 'Cards', thumb: exw(<div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col items-center justify-center gap-1.5" style={{ background: '#EBE3D8', borderTop: '2px solid #B08D57', borderRadius: 2, padding: 4 }}>{xbar('70%', 6)}{xbar('85%', 3, '#2A1F24', 0.35)}{xbar('45%', 3, '#B08D57')}</div>)}</div>) },
+      { v: 'stack', name: 'Centered stack', thumb: exw(<div className="flex h-full flex-col items-center justify-around">{[0, 1, 2].map((i) => <div key={i} className="flex w-full flex-col items-center gap-1">{xbar('62%', 8)}{xbar('30%', 3, '#B08D57')}</div>)}</div>) },
+      { v: 'outline', name: 'Outline boxes', thumb: exw(<div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col justify-between" style={{ border: '1px solid #B08D57', borderRadius: 2, padding: 5 }}>{xbar('65%', 6)}<div className="flex items-end justify-between">{xbar('50%', 3, '#2A1F24', 0.35)}{xbar('7px', 3, '#B08D57')}</div></div>)}</div>) },
     ]} />
 
 </Group>
