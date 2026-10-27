@@ -1591,6 +1591,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Button size (hero only)" unit="px" min={9} max={20} step={1} value={T.sizes.heroBtn} onChange={(d, v) => setSize('hero_btn' as any, d, v)} />
                 </Group>
 
+{secBg('Hero background', 'top', 'top')}
 {styleHead('Menu', 'words, logo and background')}
 <Group title="Menu words" hint="words, size and fonts" onOpen={() => scrollPreview('nav')}>
                   <Row label="Menu on desktop">
