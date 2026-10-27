@@ -281,8 +281,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     { label: 'Facebook', url: r.facebook_url },
     { label: 'Pinterest', url: r.pinterest_url },
     { label: 'TikTok', url: r.tiktok_url },
-    { label: 'Website', url: r.website_url },
-  ].filter((s) => !!s.url)
+  ].filter((s) => !!s.url).map((s) => ({ ...s, url: /^https?:\/\//i.test(String(s.url).trim()) ? String(s.url).trim() : 'https://' + String(s.url).trim() }))
 
   const renderSection = (k: string, tinted: boolean): React.ReactNode => {
     switch (k) {

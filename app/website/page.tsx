@@ -20,6 +20,10 @@ type Site = {
   cover_path: string | null
   cover_paths: string[] | null
   logo_path: string | null
+  instagram_url: string | null
+  facebook_url: string | null
+  pinterest_url: string | null
+  tiktok_url: string | null
   brand_colors_named: Record<string, string | null> | null
   site_template: string | null
   site_accent: string | null
@@ -91,7 +95,7 @@ function groupOwnPkgs(list: OwnPkg[]) {
 }
 type Dev = 'phone' | 'desktop'
 
-const COLUMNS = 'id, public_token, slug, accent_color, cover_path, cover_paths, logo_path, brand_colors_named, site_template, site_accent, site_font_pair, site_headline, site_subhead, site_sections, site_settings'
+const COLUMNS = 'id, public_token, slug, accent_color, cover_path, cover_paths, logo_path, instagram_url, facebook_url, pinterest_url, tiktok_url, brand_colors_named, site_template, site_accent, site_font_pair, site_headline, site_subhead, site_sections, site_settings'
 const BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 
 const TEMPLATES = [
@@ -652,6 +656,10 @@ export default function WebsitePage() {
     if (!f) return
     const patch = {
       logo_path: f.logo_path,
+      instagram_url: f.instagram_url,
+      facebook_url: f.facebook_url,
+      pinterest_url: f.pinterest_url,
+      tiktok_url: f.tiktok_url,
       site_template: f.site_template ?? 'editorial',
       site_accent: f.site_accent,
       site_font_pair: f.site_font_pair ?? 'serif',
@@ -779,6 +787,10 @@ export default function WebsitePage() {
     setSaving(true)
     const { error } = await sb.from('profiles').update({
       logo_path: form.logo_path,
+      instagram_url: form.instagram_url?.trim() || null,
+      facebook_url: form.facebook_url?.trim() || null,
+      pinterest_url: form.pinterest_url?.trim() || null,
+      tiktok_url: form.tiktok_url?.trim() || null,
       site_template: form.site_template ?? 'editorial',
       site_accent: form.site_accent,
       site_font_pair: form.site_font_pair ?? 'serif',
@@ -1878,6 +1890,14 @@ export default function WebsitePage() {
 {titleBlock('contact')}
 {elBlock('Message', 'con_msg', { min: 9, max: 40, texts: [{ value: S.text?.contact ?? '', onChange: (val) => setIn('text', { contact: val }), placeholder: 'Tell me about your day. Check a date and send me a message.', rows: 3 }] })}
 {elBlock('Social links', 'con_social', { min: 9, max: 28 })}
+</Group>
+<Group title="Social links" onOpen={() => scrollPreview('contact')}>
+{([['instagram_url', 'Instagram'], ['facebook_url', 'Facebook'], ['pinterest_url', 'Pinterest'], ['tiktok_url', 'TikTok']] as const).map(([k, label]) => (
+  <div key={k}>
+    <label className="mb-1 block text-xs font-medium text-ink">{label}</label>
+    <input className={inputCls} value={form[k] ?? ''} onChange={(e) => set(k, e.target.value)} placeholder={'https://' + label.toLowerCase() + '.com/yourname'} />
+  </div>
+))}
 </Group>
 <Group title="Closing button" hint="wording, color, shape, size" onOpen={() => scrollPreview('contact')}>
 <p className="text-xs text-ink-soft">This button takes visitors to your booking page.</p>
