@@ -134,14 +134,15 @@ function Group({ title, hint, open, onOpen, children }: { title: string; hint?: 
     <details open={open} onToggle={(e) => {
       const el = e.currentTarget as HTMLDetailsElement
       if (el.open) {
+        const topBefore = el.getBoundingClientRect().top
         el.parentElement?.querySelectorAll(':scope > details').forEach((d) => { if (d !== el) (d as HTMLDetailsElement).open = false })
+        const shift = el.getBoundingClientRect().top - topBefore
+        if (shift) {
+          let sp: HTMLElement | null = el.parentElement
+          while (sp) { const o = getComputedStyle(sp).overflowY; if ((o === 'auto' || o === 'scroll') && sp.scrollHeight > sp.clientHeight) break; sp = sp.parentElement }
+          if (sp) sp.scrollTop += shift; else window.scrollBy(0, shift)
+        }
         onOpen?.()
-        setTimeout(() => {
-          let target: Element = el
-          let prev = el.previousElementSibling
-          while (prev) { if (prev.hasAttribute('data-sh')) { target = prev; break } prev = prev.previousElementSibling }
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 60)
       }
     }} className="scroll-mt-4 rounded-2xl border border-line bg-card p-5">
       <summary className="cursor-pointer font-fraunces text-lg font-semibold text-ink">
