@@ -1692,16 +1692,28 @@ export default function WebsitePage() {
 {secBg('Featured work background', 'portfolio', 'portfolio')}
 <Group title="Featured work details" onOpen={() => scrollPreview('portfolio')}>
   <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
-  <Row label="Gallery card shape">
-    <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
-  </Row>
   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
 </Group>
 <Group title="Featured work text" onOpen={() => scrollPreview('portfolio')}>
 {titleBlock('portfolio')}
 {elBlock('Gallery names', 'gal_name', { min: 14, max: 90 })}
 {elBlock('Photo count', 'gal_count', { min: 9, max: 28 })}
-{elBlock('View all button', 'gal_link', { min: 9, max: 28 })}
+</Group>
+<Group title="Featured work button" onOpen={() => scrollPreview('portfolio')}>
+  <div>
+    <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
+    <input value={S.portfolioBtn?.text ?? ''} onChange={(e) => setIn('portfolioBtn', { text: e.target.value })} placeholder="View all galleries" className={inputCls} />
+  </div>
+  <ColorField label="Button color" value={S.portfolioBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
+    onChange={(h) => setIn('portfolioBtn', { bg: h })}
+    onReset={() => upd((st) => { const b = { ...(st.portfolioBtn ?? {}) }; delete b.bg; st.portfolioBtn = b })} />
+  <ColorField label="Button text color" value={S.portfolioBtn?.color ?? T.btnText} swatches={palette()}
+    onChange={(h) => setIn('portfolioBtn', { color: h })}
+    onReset={() => upd((st) => { const b = { ...(st.portfolioBtn ?? {}) }; delete b.color; st.portfolioBtn = b })} />
+  <Row label="Button shape">
+    <Seg value={S.portfolioBtn?.shape ?? T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('portfolioBtn', { shape: v })} />
+  </Row>
+  <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.pfBtn} onChange={(d, v) => setSize('pf_btn' as any, d, v)} />
 </Group>
 {styleHead('Testimonials style', 'layout, kind words, colors and sizes', 'testimonials')}
 <Group title="Testimonials layout" hint="pick a look" onOpen={() => scrollPreview('words')}>

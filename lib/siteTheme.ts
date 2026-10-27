@@ -195,7 +195,7 @@ export function resolveTheme(r: Record<string, any>) {
     labels: (s.menu?.labels ?? {}) as Record<string, string>,
     hidden: Array.isArray(s.menu?.hidden) ? (s.menu.hidden as string[]) : [],
   }
-  const text = { about: str(s.text?.about), contact: str(s.text?.contact), contactBtn: str(s.contactBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability', footer: str(s.text?.footer), copyright: str(s.text?.copyright) }
+  const text = { about: str(s.text?.about), contact: str(s.text?.contact), contactBtn: str(s.contactBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability', footer: str(s.text?.footer), copyright: str(s.text?.copyright), portfolioBtn: str(s.portfolioBtn?.text) ?? 'View all galleries' }
   const availability = {
     title: str(s.availability?.title) ?? 'Check availability',
     intro: str(s.availability?.intro) ?? 'Pick a date to see if I am free, then tell me a little about your day.',
@@ -265,6 +265,7 @@ export function resolveTheme(r: Record<string, any>) {
     calScale: pairNum(s.sizes?.calScale, 50, 160, 100, 100),
     button: pairNum(s.sizes?.button, 9, 20, 11, 12),
     heroBtn: pairNum(s.sizes?.hero_btn ?? s.sizes?.button, 9, 20, 11, 12),
+    pfBtn: pairNum(s.sizes?.pf_btn ?? s.sizes?.button, 9, 20, 11, 12),
     ctBtn: pairNum(s.sizes?.ct_btn ?? s.sizes?.button, 9, 20, 11, 12),
     exTitle: pairNum(s.sizes?.ex_title, 14, 90, 26, 32),
     exSub: pairNum(s.sizes?.ex_sub, 9, 28, 11, 11),
@@ -351,11 +352,28 @@ export function resolveTheme(r: Record<string, any>) {
     }
     return out
   }).join('')
+  const portfolioBtnCss = (() => {
+    const cb: any = s.portfolioBtn ?? {}
+    const okHex = (v: any) => (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null)
+    const bg = okHex(cb.bg)
+    const fg = okHex(cb.color)
+    const rad = cb.shape === 'pill' ? 999 : cb.shape === 'rounded' ? 10 : cb.shape === 'square' ? 0 : null
+    const r: string[] = []
+    if (bg) r.push(`background:${bg}!important`)
+    if (fg) r.push(`color:${fg}!important`)
+    if (rad !== null) r.push(`border-radius:${rad}px!important`)
+    let out = r.length ? `.cr-btn.pf-btn{${r.join(';')}}` : ''
+    if (s.sizes?.pf_btn) {
+      const sz = (n: number) => `font-size:${n}px!important;padding:${(n * 1.15).toFixed(1)}px ${(n * 2.7).toFixed(1)}px!important`
+      out += `.cr-btn.pf-btn{${sz(sizes.pfBtn.phone)}}@media (min-width:768px){.cr-btn.pf-btn{${sz(sizes.pfBtn.desktop)}}}`
+    }
+    return out
+  })()
   const heroCss =
     (hero.headFont || hero.headColor ? `#top h1{${hero.headFont ? `font-family:${hero.headFont}!important;` : ''}${hero.headColor ? `color:${hero.headColor}!important;` : ''}}` : '') +
     (hero.subFont || hero.subColor ? `#top .cr-sub{${hero.subFont ? `font-family:${hero.subFont}!important;` : ''}${hero.subColor ? `color:${hero.subColor}!important;` : ''}}` : '') +
     `#top .cr-hpara{font-size:var(--hpara)!important;${hero.paraFont ? `font-family:${hero.paraFont}!important;` : ''}${hero.paraColor ? `color:${hero.paraColor}!important;` : ''}}`
-  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}${secTitleCss}${elCss}`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}${secTitleCss}${elCss}${portfolioBtnCss}`
 
   return {
     tpl,

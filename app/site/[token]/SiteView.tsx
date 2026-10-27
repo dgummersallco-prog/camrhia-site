@@ -440,7 +440,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
             {page === 'home' && galleries.length > 0 && (
               <div className="mt-10 text-center">
-                <a href={hrefs.galleries} className="cr-btn el-gal_link inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>View all galleries</a>
+                <a href={hrefs.galleries} className="cr-btn pf-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.text.portfolioBtn}</a>
               </div>
             )}
           </>, tinted)
