@@ -2113,9 +2113,7 @@ export default function WebsitePage() {
 </>)}
 {tab === 'book' && (<>
                 <Group title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>
-                  <Row label="Photo position">
-                    <Seg value={S.availability?.photoPos ?? 'side'} options={[{ v: 'side', label: 'Beside' }, { v: 'above', label: 'Above' }, { v: 'background', label: 'Background' }]} onChange={(v) => setIn('availability', { photoPos: v })} />
-                  </Row>
+                  
                   {!(T.availability.photo && (S.availability?.photoPos ?? 'side') === 'side') && (
                     <div>
                       <p className="mb-2 text-sm text-ink">Calendar and form</p>
@@ -2126,11 +2124,18 @@ export default function WebsitePage() {
                     ]} />
                     </div>
                   )}
-                  <Row label="Photo above the page"><Switch on={T.availability.photo} onChange={(v) => setIn('availability', { photo: v })} /></Row>
+                  
                   <p className="text-xs text-ink-soft">On a phone the calendar always sits above the form. Turn the calendar off in step 3 to show only the form.</p>
                 </Group>
 
-                <Group title="2. Title & fonts" hint="heading and intro" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-head'), 500) }}>
+                <Group title="2. Photo" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>
+<Row label="Photo position">
+                    <Seg value={S.availability?.photoPos ?? 'side'} options={[{ v: 'side', label: 'Beside' }, { v: 'above', label: 'Above' }, { v: 'background', label: 'Background' }]} onChange={(v) => setIn('availability', { photoPos: v })} />
+                  </Row>
+<Row label="Photo above the page"><Switch on={T.availability.photo} onChange={(v) => setIn('availability', { photo: v })} /></Row>
+</Group>
+
+<Group title="3. Title & fonts" hint="heading and intro" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-head'), 500) }}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Heading</label>
                     <input value={S.availability?.title ?? ''} onChange={(e) => setIn('availability', { title: e.target.value })} placeholder="Check availability" className={inputCls} />
@@ -2144,7 +2149,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.bookHeading} onChange={(d, v) => setSize('bookHeading', d, v)} />
                 </Group>
 
-                <Group title="3. Calendar" hint="colors and on/off" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-cal'), 500) }}>
+                <Group title="4. Calendar" hint="colors and on/off" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-cal'), 500) }}>
                   <SizeControl device={device} label="Calendar size" unit="%" min={50} max={160} step={5} value={T.sizes.calScale} onChange={(d, v) => setSize('calScale', d, v)} />
                   <Row label="Show the calendar"><Switch on={T.calendar.show} onChange={(v) => setIn('calendar', { show: v })} /></Row>
                   <p className="text-xs text-ink-soft">Dates and bookings always stay in sync with your app, whether the calendar is shown or not.</p>
@@ -2168,15 +2173,25 @@ export default function WebsitePage() {
                   )}
                 </Group>
 
-                <Group title="4. Form" hint="the inquiry form" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-form'), 500) }}>
+                <Group title="5. Button" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-form'), 500) }}>
+<p className="text-xs text-ink-soft">This button sends their request to your Camrhia inbox, with their date and message attached.</p>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Send button wording</label>
+                    <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
                     <input value={S.availability?.button ?? ''} onChange={(e) => setIn('availability', { button: e.target.value })} placeholder="Send inquiry" className={inputCls} />
                   </div>
-                  <p className="text-xs text-ink-soft">Requests go straight to your Camrhia inbox, with their date and message attached.</p>
+                  <ColorField label="Button color" value={S.bookBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
+                    onChange={(h) => setIn('bookBtn', { bg: h })}
+                    onReset={() => upd((st) => { const b = { ...(st.bookBtn ?? {}) }; delete b.bg; st.bookBtn = b })} />
+                  <ColorField label="Button text color" value={S.bookBtn?.color ?? T.btnText} swatches={palette()}
+                    onChange={(h) => setIn('bookBtn', { color: h })}
+                    onReset={() => upd((st) => { const b = { ...(st.bookBtn ?? {}) }; delete b.color; st.bookBtn = b })} />
+                  <Row label="Button shape">
+                    <Seg value={S.bookBtn?.shape ?? T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('bookBtn', { shape: v })} />
+                  </Row>
+                  <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.bkBtn} onChange={(d, v) => setSize('bk_btn' as any, d, v)} />
                 </Group>
 
-                <Group title="5. After they send" hint="the message and the app" onOpen={() => { setShowSent(true); setTimeout(() => scrollPreview('book-sent'), 900) }}>
+                <Group title="6. After they send" hint="the message and the app" onOpen={() => { setShowSent(true); setTimeout(() => scrollPreview('book-sent'), 900) }}>
                   <Row label="Preview">
                     <Seg value={showSent ? 'sent' : 'form'} options={[{ v: 'form', label: 'Form' }, { v: 'sent', label: 'After sending' }]} onChange={(v) => setShowSent(v === 'sent')} />
                   </Row>

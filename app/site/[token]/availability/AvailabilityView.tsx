@@ -215,7 +215,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={(e) => setWebsite(e.target.value)}
         style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
       {error && <p style={{ margin: 0, color: '#B83232', fontSize: 14 }}>{error}</p>}
-      <button type="submit" disabled={sending} className="cr-btn" style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
+      <button type="submit" disabled={sending} className="cr-btn bk-btn" style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
     </form>
   )
 

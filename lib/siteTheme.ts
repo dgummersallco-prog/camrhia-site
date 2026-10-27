@@ -266,6 +266,7 @@ export function resolveTheme(r: Record<string, any>) {
     heroBtn: pairNum(s.sizes?.hero_btn ?? s.sizes?.button, 9, 20, 11, 12),
     pfBtn: pairNum(s.sizes?.pf_btn ?? s.sizes?.button, 9, 20, 11, 12),
     ctBtn: pairNum(s.sizes?.ct_btn ?? s.sizes?.button, 9, 20, 11, 12),
+    bkBtn: pairNum(s.sizes?.bk_btn ?? s.sizes?.button, 9, 20, 11, 12),
     exTitle: pairNum(s.sizes?.ex_title, 14, 90, 26, 32),
     exSub: pairNum(s.sizes?.ex_sub, 9, 28, 11, 11),
     subhead: pairNum(s.sizes?.subhead, 9, 28, 11, 12),
@@ -333,6 +334,23 @@ export function resolveTheme(r: Record<string, any>) {
     }
     return out
   })()
+  const bookBtnCss = (() => {
+    const cb: any = s.bookBtn ?? {}
+    const okHex = (v: any) => (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null)
+    const bg = okHex(cb.bg)
+    const fg = okHex(cb.color)
+    const rad = cb.shape === 'pill' ? 999 : cb.shape === 'rounded' ? 10 : cb.shape === 'square' ? 0 : null
+    const r: string[] = []
+    if (bg) r.push(`background:${bg}!important`)
+    if (fg) r.push(`color:${fg}!important`)
+    if (rad !== null) r.push(`border-radius:${rad}px!important`)
+    let out = r.length ? `.cr-btn.bk-btn{${r.join(';')}}` : ''
+    if (s.sizes?.bk_btn) {
+      const sz = (n: number) => `font-size:${n}px!important;padding:${(n * 1.15).toFixed(1)}px ${(n * 2.7).toFixed(1)}px!important`
+      out += `.cr-btn.bk-btn{${sz(sizes.bkBtn.phone)}}@media (min-width:768px){.cr-btn.bk-btn{${sz(sizes.bkBtn.desktop)}}}`
+    }
+    return out
+  })()
   const secTitleCss = ['about', 'portfolio', 'investment', 'words', 'faq', 'contact'].map((id) => {
     if (!(s.sizes as any)?.['sec_' + id]) return ''
     const z = sizes.secTitles[id]
@@ -372,7 +390,7 @@ export function resolveTheme(r: Record<string, any>) {
     (hero.headFont || hero.headColor ? `#top h1{${hero.headFont ? `font-family:${hero.headFont}!important;` : ''}${hero.headColor ? `color:${hero.headColor}!important;` : ''}}` : '') +
     (hero.subFont || hero.subColor ? `#top .cr-sub{${hero.subFont ? `font-family:${hero.subFont}!important;` : ''}${hero.subColor ? `color:${hero.subColor}!important;` : ''}}` : '') +
     `#top .cr-hpara{font-size:var(--hpara)!important;${hero.paraFont ? `font-family:${hero.paraFont}!important;` : ''}${hero.paraColor ? `color:${hero.paraColor}!important;` : ''}}`
-  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}${secTitleCss}${elCss}${portfolioBtnCss}`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}${bookBtnCss}${secTitleCss}${elCss}${portfolioBtnCss}`
 
   return {
     tpl,
