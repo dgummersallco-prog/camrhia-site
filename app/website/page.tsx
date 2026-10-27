@@ -372,7 +372,7 @@ const THUMBS = {
   galGrid: <div className="grid h-full grid-cols-3 gap-1">{bx()}{bx()}{bx()}</div>,
   galBanners: <div className="flex h-full flex-col gap-1">{bx('flex-1')}{bx('flex-1')}{bx('flex-1')}</div>,
   galFeature: <div className="grid h-full grid-cols-3 grid-rows-2 gap-1">{bx('col-span-2 row-span-2')}{bx()}{bx()}</div>,
-  galCarousel: <div className="flex h-full gap-1 overflow-hidden">{bx('w-2/5 shrink-0')}{bx('w-2/5 shrink-0')}{bx('w-2/5 shrink-0')}</div>,
+  galCarousel: <div className="flex h-full flex-col gap-1.5"><div className="flex flex-1 gap-1.5">{bx('flex-1')}{bx('flex-1')}{bx('flex-1')}</div><div className="flex justify-center gap-1"><div style={{ width: 10, height: 3, borderRadius: 2, background: '#2A1F24' }} /><div style={{ width: 3, height: 3, borderRadius: 2, background: '#2A1F24', opacity: 0.3 }} /><div style={{ width: 3, height: 3, borderRadius: 2, background: '#2A1F24', opacity: 0.3 }} /></div></div>,
   galRows: <div className="flex h-full flex-col gap-1"><div className="flex flex-1 gap-1">{bx('flex-[3]')}<div className="flex flex-[2] flex-col justify-center gap-1"><div className="h-1" style={{ background: TB }} /><div className="h-1 w-2/3" style={{ background: TB }} /></div></div><div className="flex flex-1 gap-1"><div className="flex flex-[2] flex-col justify-center gap-1"><div className="h-1" style={{ background: TB }} /><div className="h-1 w-2/3" style={{ background: TB }} /></div>{bx('flex-[3]')}</div></div>,
   phMasonry: (
     <div className="flex h-full gap-1">
