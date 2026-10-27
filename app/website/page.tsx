@@ -1268,12 +1268,17 @@ export default function WebsitePage() {
     const sv = ((S as any).secStyle?.[id] ?? {}) as { bg?: string; text?: string; head?: string; body?: string; title?: string }
     const put = (patch: Record<string, string | undefined>) => setIn('secStyle', { [id]: { ...sv, ...patch } })
     const lab = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
+    const tk = id === 'words' ? 'testimonials' : id
     const touched = sv.bg || sv.text || sv.head || sv.body || sv.title || (S as any).sizes?.['sec_' + id]
     return (
       <div className="space-y-4">
         {opts?.title && (
           <>
             <p className={lab}>Section title</p>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-ink">Title text</label>
+              <input value={S.titles?.[tk] ?? ''} onChange={(e) => setIn('titles', { [tk]: e.target.value })} placeholder={DEFAULT_TITLES[tk]} className={inputCls} />
+            </div>
             <ColorField label="Section title color" value={sv.title ?? sv.text ?? T.ink} swatches={palette()} onChange={(h) => put({ title: h })} onReset={() => put({ title: undefined })} />
             <SizeControl device={device} label="Section title size" unit="px" min={20} max={100} step={2} value={T.sizes.secTitles[id]} onChange={(d, v) => setSize(('sec_' + id) as any, d, v)} />
           </>
@@ -1700,7 +1705,7 @@ export default function WebsitePage() {
 </Group>
 {secBg('Gallery background', 'portfolio', 'portfolio')}
 <Group title="Gallery details" hint="heading, cover size, card shape and galleries" onOpen={() => scrollPreview('portfolio')}>
-                  {sectionHead('portfolio')}
+                  
                   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
                   <div>
                     
@@ -1730,7 +1735,7 @@ export default function WebsitePage() {
 </Group>
 {secBg('Testimonials background', 'words', 'words')}
 <Group title="Kind words" hint="heading and testimonials" onOpen={() => scrollPreview('words')}>
-                  {sectionHead('testimonials')}
+                  
 
 <div>
                     
@@ -1769,7 +1774,7 @@ export default function WebsitePage() {
 {styleHead('Closing style', 'message, colors, sizes and button', 'contact', { toggle: false })}
 {secBg('Closing background', 'contact', 'contact')}
 <Group title="Closing message" hint="heading and message" onOpen={() => scrollPreview('contact')}>
-                  {sectionHead('contact', false)}
+                  
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
@@ -1880,7 +1885,7 @@ export default function WebsitePage() {
 </Group>
 {secBg('About background', 'about', 'about')}
 <Group title="About story" hint="heading, text and photos" onOpen={() => scrollPreview('about')}>
-                  {sectionHead('about')}
+                  
                   
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">About text</label>
@@ -1922,7 +1927,7 @@ export default function WebsitePage() {
 </Group>
 {secBg('Pricing background', 'investment', 'investment')}
 <Group title="Pricing details" hint="heading, intro, packages and buttons" onOpen={() => scrollPreview('investment')}>
-                  {sectionHead('investment')}
+                  
 <div>
                     
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Your website&apos;s own price list. It&apos;s separate from the pricing in your app.</p>
@@ -1984,7 +1989,7 @@ export default function WebsitePage() {
 {styleHead('FAQ style', 'questions, colors and sizes', 'faq')}
 {secBg('FAQ background', 'faq', 'faq')}
 <Group title="FAQ questions" hint="heading and your questions" onOpen={() => scrollPreview('faq')}>
-                  {sectionHead('faq')}
+                  
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 </Group>
