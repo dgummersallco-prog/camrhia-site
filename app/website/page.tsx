@@ -1568,11 +1568,11 @@ export default function WebsitePage() {
 <ColorField label="Headline color" value={T.hero.headColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ headline_color: h })} onReset={() => setHero({ headline_color: undefined })} />
 <FontPicker label="Headline font" value={S.hero?.headline_font ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ headline_font: k })} />
 <SizeControl device={device} label="Headline size" unit="px" min={24} max={140} step={1} value={T.sizes.headline} onChange={(dv, v) => setSize('headline', dv, v)} />
-<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Location line</p>
+<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Subheadline</p>
 <input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Boise, Idaho" className={inputCls} />
-<ColorField label="Location line color" value={T.hero.subColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ subhead_color: h })} onReset={() => setHero({ subhead_color: undefined })} />
-<FontPicker label="Location line font" value={S.hero?.subhead_font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ subhead_font: k })} />
-<SizeControl device={device} label="Location line size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(dv, v) => setSize('subhead', dv, v)} />
+<ColorField label="Subheadline color" value={T.hero.subColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ subhead_color: h })} onReset={() => setHero({ subhead_color: undefined })} />
+<FontPicker label="Subheadline font" value={S.hero?.subhead_font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ subhead_font: k })} />
+<SizeControl device={device} label="Subheadline size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(dv, v) => setSize('subhead', dv, v)} />
 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Paragraph</p>
 <textarea rows={3} value={S.hero?.para_text ?? ''} onChange={(e) => setHero({ para_text: e.target.value })} placeholder="A short line about you (optional)" className={inputCls} />
 <ColorField label="Paragraph color" value={T.hero.paraColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ para_color: h })} onReset={() => setHero({ para_color: undefined })} />
