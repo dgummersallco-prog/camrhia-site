@@ -460,13 +460,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const fid = t.pricing.featured
         const anyHot = sitePkgs.some((p) => p.id === fid)
         const panel = `color-mix(in srgb, ${bg} 40%, #fff)`
-        const book = (hot: boolean, mt = 'mt-8') =>
-          t.pricing.button ? (
-            <a href={availHref} className={`cr-btn ${mt} inline-block px-7 py-3 text-[11px] uppercase tracking-[0.22em]`}
-              style={{ borderRadius: t.radius, fontFamily: t.body, background: hot ? accent : 'transparent', color: hot ? t.btnText : accent, border: `1px solid ${accent}` }}>
-              {t.hero.ctaText}
-            </a>
-          ) : null
+        const book = (_hot: boolean, _mt = 'mt-8'): React.ReactNode => null
         const tag = (hot: boolean) =>
           hot ? (
             <p className="mb-3 text-[10px] uppercase tracking-[0.28em]" style={{ color: accent }}>Most popular</p>
@@ -563,7 +557,6 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             {t.pricing.note && (
               <p className="el-pr_note mx-auto mt-10 max-w-xl whitespace-pre-line text-center italic leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>{t.pricing.note}</p>
             )}
-            {!t.pricing.button && <div className="mt-10 text-center">{cta(true)}</div>}
           </div>, tinted)
       }
       case 'testimonials': {

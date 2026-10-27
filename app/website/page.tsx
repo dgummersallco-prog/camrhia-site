@@ -2093,7 +2093,6 @@ export default function WebsitePage() {
                     <p className="mb-3 mt-1 text-sm text-ink-soft">Your website&apos;s own price list. It&apos;s separate from the pricing in your app.</p>
                     <div className="mb-4 space-y-3">
                       
-                      <Row label="Button on each package"><Switch on={T.pricing.button} onChange={(v) => setIn('pricing', { button: v })} /></Row>
                     </div>
                     {pkgs.length > 0 && (
                       <div className="mb-3 flex flex-wrap gap-2">
