@@ -135,6 +135,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     testimonials: on('testimonials') && quotesShown.length > 0,
     faq: on('faq') && faq.length > 0,
     contact: true,
+    explore: true,
   }
   for (const c of t.customs) showMap[c.id] = on(c.id)
   const pageOrder: string[] = page === 'home' ? t.orderHome : page === 'about' ? t.orderAbout : t.orderGalleries
@@ -284,6 +285,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   const renderSection = (k: string, tinted: boolean): React.ReactNode => {
     switch (k) {
+      case 'explore':
+        return exploreEl
       case 'about': {
         const L = t.about.layout
         const aboutSet = (r as any).site_settings?.about
@@ -632,6 +635,91 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     }
   }
 
+  const exploreEl = page === 'home' && doors.length > 0 && ex.show !== false ? (
+          <section id="explore" className="px-6 py-16">
+          <div className="mx-auto max-w-6xl">
+            {ex.heading?.trim() && (
+              <p className="el-ex_label mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
+            )}
+
+            {exLayout === 'lines' && (
+              <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="block px-3 py-8 text-center sm:px-6" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
+                    <p className="ex-t el-ex_title text-2xl sm:text-3xl" style={headStyle}>{b.t}</p>
+                    <p className="ex-s el-ex_sub mt-2 text-[10px] uppercase tracking-[0.2em] sm:text-[11px] sm:tracking-[0.22em]" style={{ color: accent }}>{b.s} →</p>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'tiles' && (
+              <div className="grid gap-4 sm:grid-cols-3">
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="ex-tile group flex min-h-[200px] flex-col justify-between p-7 transition hover:-translate-y-1" style={{ background: tint, border: `1px solid ${line}`, borderRadius: t.radius }}>
+                    <span className="text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
+                    <div>
+                      <p className="ex-t el-ex_title text-4xl" style={headStyle}>{b.t}</p>
+                      <p className="ex-s el-ex_sub mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{b.s} →</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'list' && (
+              <div style={{ borderTop: `1px solid ${line}` }}>
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="flex items-baseline gap-5 py-7 transition hover:opacity-70" style={{ borderBottom: `1px solid ${line}` }}>
+                    <span className="w-8 text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
+                    <span className="ex-t el-ex_title flex-1 text-3xl sm:text-5xl" style={headStyle}>{b.t}</span>
+                    <span className="ex-s el-ex_sub hidden text-[11px] uppercase tracking-[0.22em] sm:block" style={{ color: soft }}>{b.s}</span>
+                    <span className="text-xl" style={{ color: accent }}>→</span>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'cards' && (
+              <div className="grid gap-5 sm:grid-cols-3">
+                {doors.map((b) => (
+                  <a key={b.href} href={b.href} className="ex-tile block px-6 py-9 text-center transition hover:-translate-y-1" style={{ background: tint, borderTop: `3px solid ${accent}`, borderRadius: t.radius }}>
+                    <p className="ex-t el-ex_title text-3xl" style={headStyle}>{b.t}</p>
+                    <p className="ex-s el-ex_sub mx-auto mt-3 max-w-[16rem] text-sm" style={{ color: soft }}>{b.s}</p>
+                    <p className="mt-5 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>Visit →</p>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'stack' && (
+              <div className="space-y-2">
+                {doors.map((b) => (
+                  <a key={b.href} href={b.href} className="block py-6 text-center transition hover:opacity-70">
+                    <p className="ex-t el-ex_title text-4xl sm:text-6xl" style={headStyle}>{b.t}</p>
+                    <p className="ex-s el-ex_sub mt-3 text-[11px] uppercase tracking-[0.25em]" style={{ color: accent }}>{b.s}</p>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'outline' && (
+              <div className="grid gap-4 sm:grid-cols-3">
+                {doors.map((b) => (
+                  <a key={b.href} href={b.href} className="ex-tile flex min-h-[180px] flex-col justify-between p-7 transition hover:-translate-y-1" style={{ border: `1px solid ${accent}`, borderRadius: t.radius }}>
+                    <p className="ex-t el-ex_title text-3xl" style={headStyle}>{b.t}</p>
+                    <div className="mt-6 flex items-end justify-between gap-3">
+                      <p className="ex-s el-ex_sub text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{b.s}</p>
+                      <span className="text-xl" style={{ color: accent }}>→</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+          </section>
+        ) : null
+
   return (
     <>
       <link rel="stylesheet" href={t.fontsHref} />
@@ -773,91 +861,6 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
             )}
           </header>
-        )}
-
-        {page === 'home' && doors.length > 0 && ex.show !== false && (
-          <section id="explore" className="px-6 py-16">
-          <div className="mx-auto max-w-6xl">
-            {ex.heading?.trim() && (
-              <p className="el-ex_label mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
-            )}
-
-            {exLayout === 'lines' && (
-              <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
-                {doors.map((b, i) => (
-                  <a key={b.href} href={b.href} className="block px-3 py-8 text-center sm:px-6" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
-                    <p className="ex-t el-ex_title text-2xl sm:text-3xl" style={headStyle}>{b.t}</p>
-                    <p className="ex-s el-ex_sub mt-2 text-[10px] uppercase tracking-[0.2em] sm:text-[11px] sm:tracking-[0.22em]" style={{ color: accent }}>{b.s} →</p>
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {exLayout === 'tiles' && (
-              <div className="grid gap-4 sm:grid-cols-3">
-                {doors.map((b, i) => (
-                  <a key={b.href} href={b.href} className="ex-tile group flex min-h-[200px] flex-col justify-between p-7 transition hover:-translate-y-1" style={{ background: tint, border: `1px solid ${line}`, borderRadius: t.radius }}>
-                    <span className="text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
-                    <div>
-                      <p className="ex-t el-ex_title text-4xl" style={headStyle}>{b.t}</p>
-                      <p className="ex-s el-ex_sub mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{b.s} →</p>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {exLayout === 'list' && (
-              <div style={{ borderTop: `1px solid ${line}` }}>
-                {doors.map((b, i) => (
-                  <a key={b.href} href={b.href} className="flex items-baseline gap-5 py-7 transition hover:opacity-70" style={{ borderBottom: `1px solid ${line}` }}>
-                    <span className="w-8 text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
-                    <span className="ex-t el-ex_title flex-1 text-3xl sm:text-5xl" style={headStyle}>{b.t}</span>
-                    <span className="ex-s el-ex_sub hidden text-[11px] uppercase tracking-[0.22em] sm:block" style={{ color: soft }}>{b.s}</span>
-                    <span className="text-xl" style={{ color: accent }}>→</span>
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {exLayout === 'cards' && (
-              <div className="grid gap-5 sm:grid-cols-3">
-                {doors.map((b) => (
-                  <a key={b.href} href={b.href} className="ex-tile block px-6 py-9 text-center transition hover:-translate-y-1" style={{ background: tint, borderTop: `3px solid ${accent}`, borderRadius: t.radius }}>
-                    <p className="ex-t el-ex_title text-3xl" style={headStyle}>{b.t}</p>
-                    <p className="ex-s el-ex_sub mx-auto mt-3 max-w-[16rem] text-sm" style={{ color: soft }}>{b.s}</p>
-                    <p className="mt-5 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>Visit →</p>
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {exLayout === 'stack' && (
-              <div className="space-y-2">
-                {doors.map((b) => (
-                  <a key={b.href} href={b.href} className="block py-6 text-center transition hover:opacity-70">
-                    <p className="ex-t el-ex_title text-4xl sm:text-6xl" style={headStyle}>{b.t}</p>
-                    <p className="ex-s el-ex_sub mt-3 text-[11px] uppercase tracking-[0.25em]" style={{ color: accent }}>{b.s}</p>
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {exLayout === 'outline' && (
-              <div className="grid gap-4 sm:grid-cols-3">
-                {doors.map((b) => (
-                  <a key={b.href} href={b.href} className="ex-tile flex min-h-[180px] flex-col justify-between p-7 transition hover:-translate-y-1" style={{ border: `1px solid ${accent}`, borderRadius: t.radius }}>
-                    <p className="ex-t el-ex_title text-3xl" style={headStyle}>{b.t}</p>
-                    <div className="mt-6 flex items-end justify-between gap-3">
-                      <p className="ex-s el-ex_sub text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{b.s}</p>
-                      <span className="text-xl" style={{ color: accent }}>→</span>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-          </section>
         )}
 
         {page !== 'home' && visible.length === 0 && (

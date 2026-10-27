@@ -1195,6 +1195,7 @@ export default function WebsitePage() {
   }
   function listFor(k: string): string[] {
     if (!T) return []
+    if (k === 'explore') return T.orderHome
     const pg = pageOfKey(k)
     return pg === 'about' ? T.orderAbout : pg === 'galleries' ? T.orderGalleries : T.orderHome
   }
@@ -1205,7 +1206,7 @@ export default function WebsitePage() {
     const j = i + dir
     if (i < 0 || j < 0 || j >= order.length) return
     const tmp = order[i]; order[i] = order[j]; order[j] = tmp
-    const field = orderField(pageOfKey(k))
+    const field = orderField(k === 'explore' ? 'home' : pageOfKey(k))
     upd((st) => { st[field] = order })
   }
   function addCustom(pg: 'home' | 'about' | 'galleries') {
@@ -1681,7 +1682,7 @@ export default function WebsitePage() {
                   
                   </Group>
 </>)}
-{tab === 'home' && (<>{styleHead('Explore style', 'layout, titles, colors and sizes', undefined, { explore: true })}<Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
+{tab === 'home' && (<>{styleHead('Explore style', 'layout, titles, colors and sizes', 'explore', { explore: true })}<Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
       { v: 'lines', name: 'Lines', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="5" y="14" width="12" height="3" /><rect x="24" y="14" width="12" height="3" /><rect x="43" y="14" width="12" height="3" /></g><g fill="#D8D0C4"><rect x="5" y="21" width="12" height="2" /><rect x="24" y="21" width="12" height="2" /><rect x="43" y="21" width="12" height="2" /></g></svg> },

@@ -140,7 +140,10 @@ export function resolveTheme(r: Record<string, any>) {
     .filter((c) => c && typeof c.id === 'string' && ['home', 'about', 'galleries'].includes(c.page))
     .map((c) => ({ id: String(c.id), page: c.page as 'home' | 'about' | 'galleries', canvas: (c.canvas ?? {}) as any }))
   const customIds = (pg: string) => customs.filter((c) => c.page === pg).map((c) => c.id)
-  const orderHome = orderOf(s.order_home, ['portfolio', 'testimonials', 'contact', ...customIds('home')])
+  const hasEx = Array.isArray(s.order_home) && s.order_home.includes('explore')
+  const orderHome: string[] = hasEx
+    ? orderOf(s.order_home, ['explore', 'portfolio', 'testimonials', 'contact', ...customIds('home')])
+    : ['explore', ...orderOf(s.order_home, ['portfolio', 'testimonials', 'contact', ...customIds('home')])]
   const orderAbout = orderOf(s.order_about, ['about', 'investment', 'faq', ...customIds('about')])
   const orderGalleries = orderOf(s.order_galleries, ['portfolio', ...customIds('galleries')])
 
