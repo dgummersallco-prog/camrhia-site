@@ -155,7 +155,7 @@ function Group({ title, hint, open, onOpen, children }: { title: string; hint?: 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <span data-rowlabel className="text-sm text-ink">{label}</span>
+      <span data-rowlabel className="text-sm capitalize text-ink">{label}</span>
       {children}
     </div>
   )
@@ -218,7 +218,7 @@ function SizeControl({ label, unit, min, max, step, value, onChange, device }: {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm text-ink">{label}</p>
+        <p className="text-sm capitalize text-ink">{label}</p>
         <span className="text-[11px] uppercase tracking-widest text-ink-soft">{device}</span>
       </div>
       <div className="flex items-center gap-3">
