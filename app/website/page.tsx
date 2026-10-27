@@ -1750,6 +1750,7 @@ export default function WebsitePage() {
     <>
       <ColorField label="Menu words color (home page)" value={e.color ?? T.ink} swatches={palette()} onChange={(h) => put({ color: h })} onReset={() => put({ color: undefined })} />
       <FontPicker label="Menu words font" value={e.font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => put({ font: k })} />
+      <ColorField label="Back button color" value={S.menu?.backColor ?? T.ink} swatches={palette()} onChange={(h) => setIn('menu', { backColor: h })} onReset={() => upd((st) => { const b = { ...(st.menu ?? {}) }; delete b.backColor; st.menu = b })} />
     </>
   )
 })()}

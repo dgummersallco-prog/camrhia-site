@@ -23,7 +23,7 @@ export function SiteNav({ t, logo, name, items, homeHref, headStyle, back }: { b
       >
         <div className={'mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 py-2' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : '')}>
           <a href={homeHref} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>{brand}</a>
-          <a href={back.href} className="el-menu_links text-[11px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body, fontSize: 'var(--menu)', transform: 'translateY(var(--menuy, 0px))' }}>{back.label}</a>
+          <a href={back.href} className="el-menu_links text-[11px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body, color: t.menu.backColor ?? undefined, fontSize: 'var(--menu)', transform: 'translateY(var(--menuy, 0px))' }}>{back.label}</a>
         </div>
       </nav>
     )

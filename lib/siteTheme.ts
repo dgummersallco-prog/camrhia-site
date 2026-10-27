@@ -194,6 +194,7 @@ export function resolveTheme(r: Record<string, any>) {
     logoPos: (['left', 'center', 'right'].includes(s.menu?.logoPos) ? s.menu.logoPos : '') as '' | 'left' | 'center' | 'right',
     brand: (typeof s.menu?.brand === 'string' ? s.menu.brand : null) as string | null,
     linkColor: (/^#[0-9a-fA-F]{6}$/.test(String(s.el?.menu_links?.color ?? '')) ? s.el.menu_links.color : null) as string | null,
+    backColor: (/^#[0-9a-fA-F]{6}$/.test(String(s.menu?.backColor ?? '')) ? s.menu.backColor : null) as string | null,
     icon: (s.menu?.icon === 'burger' ? 'burger' : '') as '' | 'burger',
     show: (s.menu?.show === 'name' ? 'name' : s.menu?.show === 'logo' ? 'logo' : '') as '' | 'logo' | 'name',
     labels: (s.menu?.labels ?? {}) as Record<string, string>,
