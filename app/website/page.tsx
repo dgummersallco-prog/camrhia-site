@@ -2161,15 +2161,16 @@ export default function WebsitePage() {
                   </div>
 
                   
+<div className="mt-5 space-y-4 border-t border-line pt-5">
+{elBlock('Package names', 'pr_name', { min: 14, max: 60 })}
+{elBlock('Prices', 'pr_price', { min: 14, max: 80 })}
+{elBlock('What is included', 'pr_list', { min: 9, max: 28 })}
+</div>
 </Group>
 <Group title="Pricing text" onOpen={() => scrollPreview('investment')}>
 {titleBlock('investment')}
 {elBlock('Intro line', 'pr_intro', { min: 9, max: 40, texts: [{ value: S.pricing?.intro ?? '', onChange: (val) => setIn('pricing', { intro: val }), placeholder: 'Line above the prices, e.g. Every collection includes a private gallery', rows: 2 }] })}
 {elBlock('Package type label', 'pr_group', { min: 9, max: 28 })}
-{elBlock('Package names', 'pr_name', { min: 14, max: 60 })}
-{elBlock('Prices', 'pr_price', { min: 14, max: 80 })}
-{elBlock('What is included', 'pr_list', { min: 9, max: 28 })}
-{elBlock('Note below', 'pr_note', { min: 9, max: 28, texts: [{ value: S.pricing?.note ?? '', onChange: (val) => setIn('pricing', { note: val }), placeholder: 'Line below, e.g. Custom collections available. Just ask.', rows: 2 }] })}
 </Group>
 {styleHead('FAQ style', 'questions, colors and sizes', 'faq')}
 {secBg('FAQ background', 'faq', 'faq')}

@@ -554,9 +554,6 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 {layoutBlocks(gp.items)}
               </div>
             )) : layoutBlocks(sitePkgs)}
-            {t.pricing.note && (
-              <p className="el-pr_note mx-auto mt-10 max-w-xl whitespace-pre-line text-center italic leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>{t.pricing.note}</p>
-            )}
           </div>, tinted)
       }
       case 'testimonials': {
