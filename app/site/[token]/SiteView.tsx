@@ -473,6 +473,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               {feats(d).map((f, j) => <li key={j}>{f}</li>)}
             </ul>
           )
+        const pin = (p: any): React.ReactNode => t.pricing.pkgIntro[p.id] ? (
+          <p className="el-pr_intro mt-2 max-w-xs whitespace-pre-line italic leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 15) }}>{t.pricing.pkgIntro[p.id]}</p>
+        ) : null
         const layoutBlocks = (pkgs: any[]) => (<>
             {L === 'cards' && (
               <div className="grid items-stretch" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24 }}>
@@ -483,6 +486,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                       style={{ background: panel, border: `1px solid ${hot ? accent : line}`, boxShadow: hot ? '0 10px 30px rgba(0,0,0,0.08)' : undefined }}>
                       {tag(hot)}
                       <h3 className="el-pr_name" style={{ ...headStyle, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
+                      {pin(p)}
                       {p.price && <p className="el-pr_price mt-3" style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 2.25), lineHeight: 1.15 }}>{p.price}</p>}
                       <div className="my-6 h-px w-10" style={{ background: line }} />
                       {list(p.description)}
@@ -505,6 +509,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                         <span className="flex-1" style={{ borderBottom: `1px dotted ${soft}`, opacity: 0.5, transform: 'translateY(-4px)' }} />
                         {p.price && <span className="el-pr_price" style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 1.5) }}>{p.price}</span>}
                       </div>
+                      {pin(p)}
                       {feats(p.description).length > 0 && (
                         <p className="el-pr_list mt-3 leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>{feats(p.description).join('   ·   ')}</p>
                       )}
@@ -523,6 +528,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                     <div key={p.id} id={'pk-' + p.id} className="flex flex-col items-center px-8 py-12 text-center" style={{ background: hot ? tint : bg }}>
                       {tag(hot)}
                       <h3 className="el-pr_name" style={{ ...headStyle, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
+                      {pin(p)}
                       {p.price && <p className="el-pr_price mt-3" style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 1.875), lineHeight: 1.15 }}>{p.price}</p>}
                       <div className="my-6 h-px w-10" style={{ background: accent, opacity: 0.6 }} />
                       {list(p.description)}
@@ -534,26 +540,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
 
             </>)
-        const typeLabel = (k: string) => (k ? k.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()) : 'Other')
-        const pkgGroups: { key: string; items: any[] }[] = []
-        for (const pk of sitePkgs) {
-          const k = String((pk as any).session_type ?? '')
-          let g = pkgGroups.find((x) => x.key === k)
-          if (!g) { g = { key: k, items: [] }; pkgGroups.push(g) }
-          g.items.push(pk)
-        }
         return sec('investment', t.titles.investment,
           <div className="mx-auto max-w-5xl">
-            {t.pricing.intro && (
-              <p className="el-pr_intro mx-auto mb-12 max-w-xl whitespace-pre-line text-center leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 15) }}>{t.pricing.intro}</p>
-            )}
 
-            {pkgGroups.length > 1 ? pkgGroups.map((gp) => (
-              <div key={gp.key} className="mt-14 first:mt-0">
-                <p className="el-pr_group mb-8 text-center uppercase tracking-[0.28em]" style={{ color: accent, fontSize: fsp('fs-plist', 12) }}>{typeLabel(gp.key)}</p>
-                {layoutBlocks(gp.items)}
-              </div>
-            )) : layoutBlocks(sitePkgs)}
+            {layoutBlocks(sitePkgs)}
           </div>, tinted)
       }
       case 'testimonials': {

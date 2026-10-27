@@ -2146,6 +2146,7 @@ export default function WebsitePage() {
                         <textarea defaultValue={p.description ?? ''} rows={5} onBlur={(e) => { const v = e.target.value.trim(); if (v !== (p.description ?? '')) updatePkg(p, { description: v || null }) }} className={inputCls} placeholder={"What is included, one per line:\n8 hours of coverage\nOnline gallery\nPrint release"} />
                           </>
                         )}
+                        <textarea key={'pi-' + p.id} defaultValue={S.pricing?.pkgIntro?.[p.id] ?? ''} rows={2} onBlur={(e) => { const v = e.target.value.trim(); const all = { ...(S.pricing?.pkgIntro ?? {}) }; if (v) all[p.id] = v; else delete all[p.id]; setIn('pricing', { pkgIntro: all }) }} className={inputCls + ' mt-2'} placeholder="Intro line for this package" />
                         <div className="mt-2 flex gap-3 text-xs text-ink-soft">
                           <button type="button" disabled={i === 0} onClick={() => movePkg(p, -1)} className="disabled:opacity-30">↑ Up</button>
                           <button type="button" disabled={i === pkgs.length - 1} onClick={() => movePkg(p, 1)} className="disabled:opacity-30">↓ Down</button>
@@ -2162,6 +2163,7 @@ export default function WebsitePage() {
 
                   
 <div className="mt-5 space-y-4 border-t border-line pt-5">
+{elBlock('Intro line', 'pr_intro', { min: 9, max: 40 })}
 {elBlock('Package names', 'pr_name', { min: 14, max: 60 })}
 {elBlock('Prices', 'pr_price', { min: 14, max: 80 })}
 {elBlock('What is included', 'pr_list', { min: 9, max: 28 })}
@@ -2169,8 +2171,6 @@ export default function WebsitePage() {
 </Group>
 <Group title="Pricing text" onOpen={() => scrollPreview('investment')}>
 {titleBlock('investment')}
-{elBlock('Intro line', 'pr_intro', { min: 9, max: 40, texts: [{ value: S.pricing?.intro ?? '', onChange: (val) => setIn('pricing', { intro: val }), placeholder: 'Line above the prices, e.g. Every collection includes a private gallery', rows: 2 }] })}
-{elBlock('Package type label', 'pr_group', { min: 9, max: 28 })}
 </Group>
 {styleHead('FAQ style', 'questions, colors and sizes', 'faq')}
 {secBg('FAQ background', 'faq', 'faq')}

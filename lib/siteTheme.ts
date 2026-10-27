@@ -214,6 +214,7 @@ export function resolveTheme(r: Record<string, any>) {
     featured: str(s.pricing?.featured),
     intro: str(s.pricing?.intro),
     note: str(s.pricing?.note),
+    pkgIntro: (((s as any).pricing?.pkgIntro) ?? {}) as Record<string, string>,
     button: s.pricing?.button !== false,
   }
 
