@@ -184,7 +184,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const renderNav = (overlay: boolean, center: boolean) => {
     const brand = logo
       ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
-      : <span style={{ ...headStyle, fontSize: 24 }}>{name}</span>
+      : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24 }}>{name}</span>
     return (
       <>
       <nav

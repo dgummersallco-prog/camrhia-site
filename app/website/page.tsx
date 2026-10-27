@@ -1705,6 +1705,9 @@ export default function WebsitePage() {
                     <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
                   </Row>
                   {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
+</Group>
+<Group title="Studio name" onOpen={() => scrollPreview('nav')}>
+{elBlock('Studio name', 'menu_brand', { min: 14, max: 60 })}
                   
                   </Group>
 </>)}
