@@ -8,8 +8,8 @@ export function installPreviewGlow(): () => void {
 @keyframes cr-spin { to { --cr-a: 360deg; } }
 .cr-glow {
   position: absolute; pointer-events: none; z-index: 2147483000; box-sizing: border-box; border-radius: 10px; display: none;
-  border: 2px dashed #a8803f;
-  filter: drop-shadow(0 0 1.5px rgba(255,255,255,0.9));
+  border: 3px dashed #d9a21b;
+  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 2px rgba(0,0,0,0.55));
 }
 .cr-glow::after {
   content: ''; position: absolute; inset: -3px; box-sizing: border-box; padding: 4px; border-radius: 12px;
