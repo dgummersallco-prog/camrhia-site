@@ -175,7 +175,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
           </ol>
         </div>
       )}
-      {!isClient && t.availability.redirect && !isPreview && count > 0 && (
+      {!isClient && t.availability.redirect && count > 0 && (
         <p className="mt-5 text-[13px]" style={{ color: soft }}>Taking you to the app in {count}…</p>
       )}
       {inquiryId && (

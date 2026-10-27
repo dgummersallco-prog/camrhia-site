@@ -2191,10 +2191,9 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.bkBtn} onChange={(d, v) => setSize('bk_btn' as any, d, v)} />
                 </Group>
 
-                <Group title="6. After they send" hint="the message and the app" onOpen={() => { setShowSent(true); setTimeout(() => scrollPreview('book-sent'), 900) }}>
-                  <Row label="Preview">
-                    <Seg value={showSent ? 'sent' : 'form'} options={[{ v: 'form', label: 'Form' }, { v: 'sent', label: 'After sending' }]} onChange={(v) => setShowSent(v === 'sent')} />
-                  </Row>
+                <Group title="6. Thank you message" onOpen={() => { setShowSent(true); setTimeout(() => scrollPreview('book-sent'), 900) }}>
+<p className="text-xs text-ink-soft">This is what visitors see after they send their booking info.</p>
+                  
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Thank-you message (shown on your website)</label>
                     <textarea rows={3} value={S.availability?.success ?? ''} onChange={(e) => setIn('availability', { success: e.target.value })} placeholder="Thanks! I will reach out within a day." className={inputCls} />
