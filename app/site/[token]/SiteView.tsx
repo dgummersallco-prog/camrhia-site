@@ -130,7 +130,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const on = (k: string) => r.site_sections?.[k] !== false
   const showMap: Record<string, boolean> = {
     about: on('about') && !!(t.text.about || r.bio || aboutPhoto),
-    portfolio: page === 'galleries' ? galleries.length > 0 : on('portfolio') && galleries.length > 0,
+    portfolio: page === 'galleries' ? galleries.length > 0 : false,
     investment: on('investment') && sitePkgs.length > 0,
     testimonials: on('testimonials') && quotesShown.length > 0,
     faq: on('faq') && faq.length > 0,

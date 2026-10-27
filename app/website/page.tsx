@@ -149,7 +149,7 @@ function Group({ title, hint, open, onOpen, children }: { title: string; hint?: 
         {title}
         
       </summary>
-      <div className="mt-4 space-y-4">{children}</div>
+      <div className="mt-4 space-y-4 [&>p:first-child]:border-t-0 [&>p:first-child]:pt-0">{children}</div>
     </details>
   )
 }
@@ -1301,7 +1301,7 @@ export default function WebsitePage() {
     const put = (patch: Record<string, string | undefined>) => setIn('el', { [k]: { ...e, ...patch } })
     return (
       <>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">{heading}</p>
+        <p className="border-t border-line pt-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">{heading}</p>
         {o?.texts?.map((x, i) => (
           <div key={i}>
             {x.label && <label className="mb-1 block text-xs font-medium text-ink">{x.label}</label>}
@@ -1323,7 +1323,7 @@ export default function WebsitePage() {
     const put = (patch: Record<string, string | undefined>) => setIn('secStyle', { [id]: { ...sv, ...patch } })
     return (
       <>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Section title</p>
+        <p className="border-t border-line pt-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Section title</p>
         <input value={S.titles?.[tk] ?? ''} onChange={(ev) => setIn('titles', { [tk]: ev.target.value })} placeholder={DEFAULT_TITLES[tk]} className={inputCls} />
         <ColorField label="Section title color" value={sv.title ?? T.ink} swatches={palette()} onChange={(h) => put({ title: h })} onReset={() => put({ title: undefined })} />
         <FontPicker label="Section title font" value={sv.titleFont ?? sv.head ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(f) => put({ titleFont: f })} />
@@ -1593,17 +1593,17 @@ export default function WebsitePage() {
                   </Group>
 
 <Group title="Hero text" hint="headline, location line and paragraph" onOpen={() => scrollPreview('top')}>
-<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Headline</p>
+<p className="border-t border-line pt-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Headline</p>
 <input value={form.site_headline ?? ''} onChange={(e) => set('site_headline', e.target.value)} placeholder="e.g. Camrhia Photographer" className={inputCls} />
 <ColorField label="Headline color" value={T.hero.headColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ headline_color: h })} onReset={() => setHero({ headline_color: undefined })} />
 <FontPicker label="Headline font" value={S.hero?.headline_font ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ headline_font: k })} />
 <SizeControl device={device} label="Headline size" unit="px" min={24} max={140} step={1} value={T.sizes.headline} onChange={(dv, v) => setSize('headline', dv, v)} />
-<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Subheadline</p>
+<p className="border-t border-line pt-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Subheadline</p>
 <input value={form.site_subhead ?? ''} onChange={(e) => set('site_subhead', e.target.value)} placeholder="e.g. Boise, Idaho" className={inputCls} />
 <ColorField label="Subheadline color" value={T.hero.subColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ subhead_color: h })} onReset={() => setHero({ subhead_color: undefined })} />
 <FontPicker label="Subheadline font" value={S.hero?.subhead_font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => setHero({ subhead_font: k })} />
 <SizeControl device={device} label="Subheadline size" unit="px" min={9} max={28} step={1} value={T.sizes.subhead} onChange={(dv, v) => setSize('subhead', dv, v)} />
-<p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Paragraph</p>
+<p className="border-t border-line pt-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Paragraph</p>
 <textarea rows={3} value={S.hero?.para_text ?? ''} onChange={(e) => setHero({ para_text: e.target.value })} placeholder="A short line about you (optional)" className={inputCls} />
 <ColorField label="Paragraph color" value={T.hero.paraColor ?? T.ink} swatches={palette()} onChange={(h) => setHero({ para_color: h })} onReset={() => setHero({ para_color: undefined })} />
 <FontPicker label="Paragraph font" value={S.hero?.para_font ?? T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setHero({ para_font: k })} />
@@ -1699,38 +1699,6 @@ export default function WebsitePage() {
 {elBlock('Label', 'ex_label', { texts: [{ value: S.explore?.heading ?? '', onChange: (val) => setIn('explore', { heading: val }), placeholder: 'Explore' }], min: 9, max: 28 })}
 {elBlock('Link titles', 'ex_title', { min: 14, max: 90, texts: ([['galleries', 'Galleries'], ['about', 'About'], ['book', 'Book']] as const).map(([k, tt]) => ({ label: tt, value: (S.explore as any)?.titles?.[k] ?? '', onChange: (val: string) => setIn('explore', { titles: { ...((S.explore as any)?.titles ?? {}), [k]: val } }), placeholder: tt })) })}
 {elBlock('Link subtitles', 'ex_sub', { min: 9, max: 28, texts: ([['galleries', 'Galleries'], ['about', 'About'], ['book', 'Book']] as const).map(([k, tt]) => ({ label: tt, value: S.explore?.lines?.[k] ?? '', onChange: (val: string) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), [k]: val } }), placeholder: ({ galleries: 'See my work', about: 'Get to know me', book: 'Check my dates' } as Record<string, string>)[k] })) })}
-</Group>
-{styleHead('Gallery style', 'layout, covers, colors and sizes', 'portfolio')}
-<Group title="Gallery layout" hint="pick a look" onOpen={() => scrollPreview('portfolio')}>
-<div>
-                    <p className="mb-2 text-sm text-ink">Layout on your home page</p>
-                    <LayoutPicker value={T.portfolio.layout} onChange={(v) => setIn('portfolio', { layout: v })}
-                      options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }]} />
-                  </div>
-
-</Group>
-{secBg('Gallery background', 'portfolio', 'portfolio')}
-<Group title="Gallery details" hint="heading, cover size, card shape and galleries" onOpen={() => scrollPreview('portfolio')}>
-                  
-                  <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
-                  <div>
-                    
-                    <p className="mb-3 mt-1 text-sm text-ink-soft">One gallery per kind of work: Weddings, Seniors, Families. Each gets its own page.</p>
-                    <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
-                  </div>
-
-                  
-
-                  <Row label="Gallery card shape">
-                    <Seg value={T.gallery.card} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'square', label: 'Square' }, { v: 'landscape', label: 'Landscape' }]} onChange={(v) => setIn('gallery', { card: v })} />
-                  </Row>
-                  
-</Group>
-<Group title="Gallery text" onOpen={() => scrollPreview('portfolio')}>
-{titleBlock('portfolio')}
-{elBlock('Gallery names', 'gal_name', { min: 14, max: 90 })}
-{elBlock('Photo count', 'gal_count', { min: 9, max: 28 })}
-{elBlock('View all link', 'gal_link', { min: 9, max: 28 })}
 </Group>
 {styleHead('Testimonials style', 'layout, kind words, colors and sizes', 'testimonials')}
 <Group title="Testimonials layout" hint="pick a look" onOpen={() => scrollPreview('words')}>
