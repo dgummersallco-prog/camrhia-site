@@ -238,7 +238,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
               <span className="el-menu_brand" style={{ ...head, fontSize: 24 }}>{t.menu.brand ?? studio}</span>
             )}
           </a>
-          <a href={`${homeHref}${qs}`} className="text-[11px] uppercase tracking-[0.2em]" style={{ fontSize: 'var(--menu)' }}>← Back</a>
+          <a href={`${homeHref}${qs}`} className="el-menu_links text-[11px] uppercase tracking-[0.2em]" style={{ fontSize: 'var(--menu)' }}>← Back</a>
         </nav>
 
         {photoAbove && (

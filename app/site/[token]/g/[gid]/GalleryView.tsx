@@ -70,7 +70,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
           <span className="el-menu_brand" style={{ ...head, fontSize: 24 }}>{t.menu.brand ?? name}</span>
         )}
       </Link>
-      <div className={'flex flex-wrap gap-x-5 gap-y-1 text-[11px] uppercase tracking-[0.2em] ' + (t.menu.logoPos === 'center' ? 'justify-center' : t.menu.logoPos === 'right' ? 'justify-start' : 'justify-end')} style={{ fontSize: 'var(--menu)', transform: 'translateY(var(--menuy, 0px))' }}>
+      <div className={'el-menu_links flex flex-wrap gap-x-5 gap-y-1 text-[11px] uppercase tracking-[0.2em] ' + (t.menu.logoPos === 'center' ? 'justify-center' : t.menu.logoPos === 'right' ? 'justify-start' : 'justify-end')} style={{ fontSize: 'var(--menu)', transform: 'translateY(var(--menuy, 0px))' }}>
         {([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`]] as [string, string][])
           .filter(([k]) => !t.menu.hidden.includes(k))
           .map(([k, h]) => <Link key={k} href={h}>{t.menu.labels[k]?.trim() || NAV_DEFAULTS[k]}</Link>)}
