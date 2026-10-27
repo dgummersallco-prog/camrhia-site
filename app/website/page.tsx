@@ -366,6 +366,7 @@ const tcard = () => (
     <div className="h-1 w-2/5" style={{ background: TB }} />
   </div>
 )
+const xbar = (w: string, h: number, c = '#2A1F24', o = 1) => <div style={{ width: w, height: h, background: c, opacity: o, borderRadius: 1 }} />
 const ln = (w = 'w-full') => <div className={`h-1 ${w}`} style={{ background: TL }} />
 const THUMBS = {
   galGrid: <div className="grid h-full grid-cols-3 gap-1">{bx()}{bx()}{bx()}</div>,
@@ -1774,12 +1775,12 @@ export default function WebsitePage() {
 {tab === 'home' && (<>{styleHead('Explore style', 'layout, titles, colors and sizes', 'explore', { explore: true })}<Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
-      { v: 'lines', name: 'Lines', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="5" y="14" width="12" height="3" /><rect x="24" y="14" width="12" height="3" /><rect x="43" y="14" width="12" height="3" /></g><g fill="#D8D0C4"><rect x="5" y="21" width="12" height="2" /><rect x="24" y="21" width="12" height="2" /><rect x="43" y="21" width="12" height="2" /></g></svg> },
-      { v: 'tiles', name: 'Big tiles', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="8" width="16" height="24" rx="2" /><rect x="22" y="8" width="16" height="24" rx="2" /><rect x="40" y="8" width="16" height="24" rx="2" /></g><g fill="#B9AFA2"><rect x="7" y="25" width="10" height="3" /><rect x="25" y="25" width="10" height="3" /><rect x="43" y="25" width="10" height="3" /></g></svg> },
-      { v: 'list', name: 'Numbered list', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="6" y="9" width="30" height="4" /><rect x="6" y="19" width="30" height="4" /><rect x="6" y="29" width="30" height="4" /></g><g fill="#D8D0C4"><rect x="42" y="10" width="12" height="2" /><rect x="42" y="20" width="12" height="2" /><rect x="42" y="30" width="12" height="2" /></g></svg> },
-      { v: 'cards', name: 'Cards', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="9" width="16" height="22" rx="2" /><rect x="22" y="9" width="16" height="22" rx="2" /><rect x="40" y="9" width="16" height="22" rx="2" /></g><g fill="#9A8A74"><rect x="4" y="9" width="16" height="2" /><rect x="22" y="9" width="16" height="2" /><rect x="40" y="9" width="16" height="2" /></g></svg> },
-      { v: 'stack', name: 'Centered stack', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="16" y="7" width="28" height="5" /><rect x="22" y="14" width="16" height="2" /><rect x="16" y="21" width="28" height="5" /><rect x="22" y="28" width="16" height="2" /></g></svg> },
-      { v: 'outline', name: 'Outline boxes', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="none" stroke="#B9AFA2" strokeWidth="1.5"><rect x="4" y="9" width="16" height="22" rx="1" /><rect x="22" y="9" width="16" height="22" rx="1" /><rect x="40" y="9" width="16" height="22" rx="1" /></g></svg> },
+      { v: 'lines', name: 'Lines', thumb: <div className="flex h-full items-center gap-2">{[0, 1, 2].map((i) => <div key={i} className="flex-1" style={{ borderTop: '1.5px solid #2A1F24', paddingTop: 6 }}>{xbar('80%', 5)}<div style={{ height: 4 }} />{xbar('55%', 3, '#2A1F24', 0.35)}</div>)}</div> },
+      { v: 'tiles', name: 'Big tiles', thumb: <div className="flex h-full gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="relative flex-1">{bx('absolute inset-0')}<div className="absolute inset-x-1.5 bottom-1.5">{xbar('70%', 4, '#fff', 0.95)}</div></div>)}</div> },
+      { v: 'list', name: 'Numbered list', thumb: <div className="flex h-full flex-col justify-center">{[0, 1, 2].map((i) => <div key={i} className="flex flex-1 items-center gap-2" style={{ borderBottom: i < 2 ? '1px solid #CFC4B8' : undefined }}>{xbar('10%', 3, '#B08D57')}{xbar('50%', 5)}<div className="ml-auto">{xbar('12px', 3, '#B08D57')}</div></div>)}</div> },
+      { v: 'cards', name: 'Cards', thumb: <div className="flex h-full gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-1 flex-col" style={{ background: '#fff', border: '1px solid #E4DACD', borderRadius: 3, padding: 4, gap: 3 }}><div className="flex-1">{bx('h-full')}</div>{xbar('75%', 4)}{xbar('50%', 3, '#2A1F24', 0.35)}</div>)}</div> },
+      { v: 'stack', name: 'Centered stack', thumb: <div className="flex h-full flex-col items-center justify-center gap-1.5">{xbar('60%', 6)}{xbar('34%', 3, '#2A1F24', 0.35)}<div style={{ width: '70%', height: 1, background: '#CFC4B8', margin: '3px 0' }} />{xbar('60%', 6)}{xbar('34%', 3, '#2A1F24', 0.35)}</div> },
+      { v: 'outline', name: 'Outline boxes', thumb: <div className="flex h-full gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-1 flex-col justify-end" style={{ border: '1.5px solid #2A1F24', borderRadius: 2, padding: 5, gap: 3 }}>{xbar('75%', 4)}<div className="flex justify-between">{xbar('45%', 3, '#2A1F24', 0.35)}{xbar('10px', 3, '#B08D57')}</div></div>)}</div> },
     ]} />
 
 </Group>
