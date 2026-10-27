@@ -193,6 +193,7 @@ export function resolveTheme(r: Record<string, any>) {
     bg: (typeof s.menu?.bg === 'string' && /^#[0-9a-fA-F]{6}$/.test(s.menu.bg) ? s.menu.bg : null) as string | null,
     logoPos: (['left', 'center', 'right'].includes(s.menu?.logoPos) ? s.menu.logoPos : '') as '' | 'left' | 'center' | 'right',
     brand: (typeof s.menu?.brand === 'string' ? s.menu.brand : null) as string | null,
+    linkColor: (/^#[0-9a-fA-F]{6}$/.test(String(s.el?.menu_links?.color ?? '')) ? s.el.menu_links.color : null) as string | null,
     icon: (s.menu?.icon === 'burger' ? 'burger' : '') as '' | 'burger',
     show: (s.menu?.show === 'name' ? 'name' : s.menu?.show === 'logo' ? 'logo' : '') as '' | 'logo' | 'name',
     labels: (s.menu?.labels ?? {}) as Record<string, string>,
@@ -383,7 +384,7 @@ export function resolveTheme(r: Record<string, any>) {
   const elCss = EL_KEYS.map((k) => {
     const e: any = (s.el as any)?.[k] ?? {}
     const r: string[] = []
-    if (typeof e.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(e.color)) r.push(`color:${e.color}!important`)
+    if (k !== 'menu_links' && typeof e.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(e.color)) r.push(`color:${e.color}!important`)
     if (typeof e.font === 'string' && FONT_OPTIONS[e.font]) r.push(`font-family:${FONT_OPTIONS[e.font].family}!important`)
     let out = r.length ? `.el-${k}{${r.join(';')}}` : ''
     if (typeof e.font === 'string' && FONT_OPTIONS[e.font]) out += `:is(#nav,#top,#explore,#about,#portfolio,#investment,#words,#faq,#contact) .el-${k}.el-${k}{font-family:${FONT_OPTIONS[e.font].family}!important}`

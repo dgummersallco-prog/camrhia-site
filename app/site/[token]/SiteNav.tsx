@@ -6,7 +6,7 @@ import type { resolveTheme } from '@/lib/siteTheme'
 type Theme = ReturnType<typeof resolveTheme>
 export type NavItem = { key: string; href: string; label: string; active: boolean }
 
-export function SiteNav({ t, logo, name, items, homeHref, headStyle }: { t: Theme; logo: string | null; name: string; items: NavItem[]; homeHref: string; headStyle: React.CSSProperties }) {
+export function SiteNav({ t, logo, name, items, homeHref, headStyle, back }: { back?: { href: string; label: string }; t: Theme; logo: string | null; name: string; items: NavItem[]; homeHref: string; headStyle: React.CSSProperties }) {
   const [open, setOpen] = useState(false)
   const burger = t.menu.icon === 'burger'
   const { ink, bg, line } = t
@@ -14,6 +14,20 @@ export function SiteNav({ t, logo, name, items, homeHref, headStyle }: { t: Them
     // eslint-disable-next-line @next/next/no-img-element
     ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
     : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24 }}>{t.menu.brand ?? name}</span>
+  if (back) {
+    return (
+      <nav
+        id="nav"
+        className={t.menu.none ? 'relative z-20' : 'sticky top-0 z-20'}
+        style={t.menu.none ? { color: ink } : { color: ink, background: `color-mix(in srgb, ${t.menu.bg ?? bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
+      >
+        <div className={'mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 py-2' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : '')}>
+          <a href={homeHref} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>{brand}</a>
+          <a href={back.href} className="el-menu_links text-[11px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body, fontSize: 'var(--menu)', transform: 'translateY(var(--menuy, 0px))' }}>{back.label}</a>
+        </div>
+      </nav>
+    )
+  }
   return (
     <>
       <nav

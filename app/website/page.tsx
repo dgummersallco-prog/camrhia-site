@@ -1748,7 +1748,7 @@ export default function WebsitePage() {
   const put = (patch: Record<string, string | undefined>) => setIn('el', { menu_links: { ...e, ...patch } })
   return (
     <>
-      <ColorField label="Menu words color" value={e.color ?? T.ink} swatches={palette()} onChange={(h) => put({ color: h })} onReset={() => put({ color: undefined })} />
+      <ColorField label="Menu words color (home page)" value={e.color ?? T.ink} swatches={palette()} onChange={(h) => put({ color: h })} onReset={() => put({ color: undefined })} />
       <FontPicker label="Menu words font" value={e.font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => put({ font: k })} />
     </>
   )
