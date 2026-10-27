@@ -37,6 +37,7 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
   const ref = useRef<HTMLDivElement>(null)
   const drag = useRef<Drag | null>(null)
   const latest = useRef<Board | null>(null)
+  const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null })
   const sig = JSON.stringify(p.canvas ?? null)
 
   useEffect(() => {
@@ -68,6 +69,17 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }
 
+  function snapTo(vals: number[], targets: number[]) {
+    let best = 1.2
+    let delta = 0
+    let hit: number | null = null
+    for (const v of vals) for (const t of targets) {
+      const df = t - v
+      if (Math.abs(df) <= best) { best = Math.abs(df); delta = df; hit = t }
+    }
+    return { delta, hit }
+  }
+
   function move(e: RPE) {
     const d = drag.current
     if (!d) return
@@ -75,19 +87,40 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
     const dy = ((e.clientY - d.sy) / d.cw) * 100
     if (Math.abs(dx) + Math.abs(dy) > 0.2) d.moved = true
     const base = latest.current ?? board
+    let gx: number | null = null
+    let gy: number | null = null
+    const others = base.items.filter((o) => o.id !== d.id)
+    const tx = [0, 50, 100, ...others.flatMap((o) => [o.x, o.x + o.w / 2, o.x + o.w])]
+    const ty = [0, base.h / 2, base.h, ...others.flatMap((o) => [o.y, o.y + o.h / 2, o.y + o.h])]
     const nb: Board = {
       ...base,
       items: base.items.map((it) => {
         if (it.id !== d.id) return it
-        if (d.mode === 'move') return { ...it, x: clamp(d.ix + dx, 0, 100 - it.w), y: clamp(d.iy + dy, 0, base.h - it.h) }
-        return { ...it, w: clamp(d.iw + dx, 4, 100 - it.x), h: clamp(d.ih + dy, 2, base.h - it.y) }
+        if (d.mode === 'move') {
+          const nx = clamp(d.ix + dx, 0, 100 - it.w)
+          const ny = clamp(d.iy + dy, 0, base.h - it.h)
+          const sx = snapTo([nx, nx + it.w / 2, nx + it.w], tx)
+          const sy = snapTo([ny, ny + it.h / 2, ny + it.h], ty)
+          gx = sx.hit
+          gy = sy.hit
+          return { ...it, x: clamp(nx + sx.delta, 0, 100 - it.w), y: clamp(ny + sy.delta, 0, base.h - it.h) }
+        }
+        const nw = clamp(d.iw + dx, 4, 100 - it.x)
+        const nh = clamp(d.ih + dy, 2, base.h - it.y)
+        const sx = snapTo([it.x + nw], tx)
+        const sy = snapTo([it.y + nh], ty)
+        gx = sx.hit
+        gy = sy.hit
+        return { ...it, w: clamp(nw + sx.delta, 4, 100 - it.x), h: clamp(nh + sy.delta, 2, base.h - it.y) }
       }),
     }
     latest.current = nb
     setLocal(nb)
+    setGuides({ x: gx, y: gy })
   }
 
   function end() {
+    setGuides({ x: null, y: null })
     const d = drag.current
     drag.current = null
     if (!d || !d.moved || !latest.current) return
@@ -185,6 +218,8 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
         onPointerDown={(e) => { if (p.editing && e.target === e.currentTarget) setSel(null) }}
         style={{ position: 'relative', width: '100%', paddingTop: `${shown.h}%`, containerType: 'inline-size' } as CSSProperties}
       >
+        {p.editing && guides.x !== null && <div style={{ position: 'absolute', left: `${guides.x}%`, top: 0, bottom: 0, width: 0, borderLeft: '1px solid #B08D57', zIndex: 999, pointerEvents: 'none' }} />}
+        {p.editing && guides.y !== null && <div style={{ position: 'absolute', top: `${(guides.y / shown.h) * 100}%`, left: 0, right: 0, height: 0, borderTop: '1px solid #B08D57', zIndex: 999, pointerEvents: 'none' }} />}
         {[...shown.items].sort((a, b) => a.z - b.z).map((it) => {
           const isSel = p.editing && sel === it.id
           return (
