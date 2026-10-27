@@ -1603,6 +1603,11 @@ export default function WebsitePage() {
                   </div>
                 </Group>
 
+{form.site_template === 'mosaic' && (
+<Group title="Freestyle layout" onOpen={() => scrollPreview('top')}>
+{canvasPanel('hero')}
+</Group>
+)}
 {secBg('Hero background', 'top', 'top')}
 <Group title="Hero photos" hint="photos, slideshow and position" onOpen={() => scrollPreview('top')}>
 <div>
@@ -1659,7 +1664,6 @@ export default function WebsitePage() {
                       </div>
                     )
                   })()}
-                  {form.site_template === 'mosaic' && canvasPanel('hero')}
                   <Row label="Slideshow (when 2+ photos)"><Switch on={T.hero.slideshow} onChange={(v) => setHero({ slideshow: v })} /></Row>
                   
                   
