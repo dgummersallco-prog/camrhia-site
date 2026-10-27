@@ -1897,7 +1897,10 @@ export default function WebsitePage() {
 <Group title="Social links" onOpen={() => scrollPreview('contact')}>
 {([['instagram_url', 'Instagram'], ['facebook_url', 'Facebook'], ['pinterest_url', 'Pinterest'], ['tiktok_url', 'TikTok']] as const).map(([k, label]) => (
   <div key={k}>
-    <label className="mb-1 block text-xs font-medium text-ink">{label}</label>
+    <div className="mb-1 flex items-center justify-between">
+      <label className="text-xs font-medium text-ink">{label}</label>
+      <Switch on={!(Array.isArray(S.socials_off) ? S.socials_off : []).includes(k)} onChange={(v) => upd((st) => { const h: string[] = Array.isArray(st.socials_off) ? [...st.socials_off] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); st.socials_off = h })} />
+    </div>
     <input className={inputCls} value={form[k] ?? ''} onChange={(e) => set(k, e.target.value)} placeholder={'https://' + label.toLowerCase() + '.com/yourname'} />
   </div>
 ))}

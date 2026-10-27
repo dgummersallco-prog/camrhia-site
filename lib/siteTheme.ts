@@ -413,6 +413,7 @@ export function resolveTheme(r: Record<string, any>) {
     btnText,
     order,
     orderHome,
+    socialHidden: (Array.isArray(s.socials_off) ? s.socials_off : []) as string[],
     galText: (s.galtext && typeof s.galtext === 'object' ? s.galtext : {}) as Record<string, { name?: string; line?: string }>,
     orderAbout,
     titles,

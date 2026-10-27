@@ -277,11 +277,11 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   )
 
   const socials = [
-    { label: 'Instagram', url: r.instagram_url },
-    { label: 'Facebook', url: r.facebook_url },
-    { label: 'Pinterest', url: r.pinterest_url },
-    { label: 'TikTok', url: r.tiktok_url },
-  ].filter((s) => !!s.url).map((s) => ({ ...s, url: /^https?:\/\//i.test(String(s.url).trim()) ? String(s.url).trim() : 'https://' + String(s.url).trim() }))
+    { key: 'instagram_url', label: 'Instagram', url: r.instagram_url },
+    { key: 'facebook_url', label: 'Facebook', url: r.facebook_url },
+    { key: 'pinterest_url', label: 'Pinterest', url: r.pinterest_url },
+    { key: 'tiktok_url', label: 'TikTok', url: r.tiktok_url },
+  ].filter((s) => !!s.url && !t.socialHidden.includes(s.key)).map((s) => ({ ...s, url: /^https?:\/\//i.test(String(s.url).trim()) ? String(s.url).trim() : 'https://' + String(s.url).trim() }))
 
   const renderSection = (k: string, tinted: boolean): React.ReactNode => {
     switch (k) {
