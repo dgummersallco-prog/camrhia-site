@@ -1864,20 +1864,21 @@ export default function WebsitePage() {
 {elBlock('Social links', 'con_social', { min: 9, max: 28 })}
 </Group>
 <Group title="Closing button" hint="wording, color, shape, size" onOpen={() => scrollPreview('contact')}>
+<p className="text-xs text-ink-soft">This button takes visitors to your booking page.</p>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (closing section only)</label>
+                    <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
                     <input value={S.contactBtn?.text ?? ''} onChange={(e) => setIn('contactBtn', { text: e.target.value })} placeholder={S.hero?.cta_text || 'Check availability'} className={inputCls} />
                   </div>
-                  <ColorField label="Button color (closing only)" value={S.contactBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
+                  <ColorField label="Button color" value={S.contactBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
                     onChange={(h) => setIn('contactBtn', { bg: h })}
                     onReset={() => upd((st) => { const b = { ...(st.contactBtn ?? {}) }; delete b.bg; st.contactBtn = b })} />
-                  <ColorField label="Button text color (closing only)" value={S.contactBtn?.color ?? T.btnText} swatches={palette()}
+                  <ColorField label="Button text color" value={S.contactBtn?.color ?? T.btnText} swatches={palette()}
                     onChange={(h) => setIn('contactBtn', { color: h })}
                     onReset={() => upd((st) => { const b = { ...(st.contactBtn ?? {}) }; delete b.color; st.contactBtn = b })} />
-                  <Row label="Button shape (closing only)">
+                  <Row label="Button shape">
                     <Seg value={S.contactBtn?.shape ?? T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('contactBtn', { shape: v })} />
                   </Row>
-                  <SizeControl device={device} label="Button size (closing only)" unit="px" min={9} max={20} step={1} value={T.sizes.ctBtn} onChange={(d, v) => setSize('ct_btn' as any, d, v)} />
+                  <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.ctBtn} onChange={(d, v) => setSize('ct_btn' as any, d, v)} />
                 </Group>
 
 {styleHead('Footer style', 'footer line, colors and size')}
