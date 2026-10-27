@@ -2075,7 +2075,7 @@ export default function WebsitePage() {
                       </div>
 </Group>
 {secBg('Pricing background', 'investment', 'investment')}
-<Group title="Pricing details" hint="heading, intro, packages and buttons" onOpen={() => scrollPreview('investment')}>
+<Group title="Pricing details" hint="heading, intro, packages and buttons" onOpen={() => scrollPreview(pkgs.length ? 'pk-' + pkgs[Math.min(pSlot, pkgs.length - 1)].id : 'investment')}>
                   
 <div>
                     
@@ -2087,7 +2087,7 @@ export default function WebsitePage() {
                     {pkgs.length > 0 && (
                       <div className="mb-3 flex flex-wrap gap-2">
                         {pkgs.map((p, i) => (
-                          <button key={p.id} type="button" onClick={() => setPSlot(i)} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (i === Math.min(pSlot, pkgs.length - 1) ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
+                          <button key={p.id} type="button" onClick={() => { setPSlot(i); scrollPreview('pk-' + p.id) }} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (i === Math.min(pSlot, pkgs.length - 1) ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
                         ))}
                       </div>
                     )}

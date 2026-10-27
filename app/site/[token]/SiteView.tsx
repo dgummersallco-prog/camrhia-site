@@ -485,7 +485,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 {pkgs.map((p) => {
                   const hot = p.id === fid
                   return (
-                    <div key={p.id} className="flex flex-col items-center px-8 py-10 text-center"
+                    <div key={p.id} id={'pk-' + p.id} className="flex flex-col items-center px-8 py-10 text-center"
                       style={{ background: panel, border: `1px solid ${hot ? accent : line}`, boxShadow: hot ? '0 10px 30px rgba(0,0,0,0.08)' : undefined }}>
                       {tag(hot)}
                       <h3 className="el-pr_name" style={{ ...headStyle, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
@@ -504,7 +504,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 {pkgs.map((p, i) => {
                   const hot = p.id === fid
                   return (
-                    <div key={p.id} className="py-8" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
+                    <div key={p.id} id={'pk-' + p.id} className="py-8" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
                       {hot && <p className="mb-2 text-[10px] uppercase tracking-[0.28em]" style={{ color: accent }}>Most popular</p>}
                       <div className="flex items-baseline gap-3">
                         <h3 className="el-pr_name" style={{ ...headStyle, color: hot ? accent : ink, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
@@ -526,7 +526,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 {pkgs.map((p) => {
                   const hot = p.id === fid
                   return (
-                    <div key={p.id} className="flex flex-col items-center px-8 py-12 text-center" style={{ background: hot ? tint : bg }}>
+                    <div key={p.id} id={'pk-' + p.id} className="flex flex-col items-center px-8 py-12 text-center" style={{ background: hot ? tint : bg }}>
                       {tag(hot)}
                       <h3 className="el-pr_name" style={{ ...headStyle, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
                       {p.price && <p className="el-pr_price mt-3" style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 1.875), lineHeight: 1.15 }}>{p.price}</p>}
