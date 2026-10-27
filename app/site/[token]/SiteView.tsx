@@ -826,7 +826,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   if (type === 'logo') {
                     return (
                       <a href={hrefs.home} style={{ display: 'inline-flex' }}>
-                        {logo ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} /> : <span style={{ ...headStyle, fontSize: 24, color: 'inherit' }}>{name}</span>}
+                        {logo ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} /> : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24, color: 'inherit', ...(it.font === 'body' ? { fontFamily: t.body } : {}) }}>{t.menu.brand ?? name}</span>}
                       </a>
                     )
                   }
