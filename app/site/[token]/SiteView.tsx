@@ -130,7 +130,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const on = (k: string) => r.site_sections?.[k] !== false
   const showMap: Record<string, boolean> = {
     about: on('about') && !!(t.text.about || r.bio || aboutPhoto),
-    portfolio: page === 'galleries' ? galleries.length > 0 : false,
+    portfolio: page === 'galleries' ? galleries.length > 0 : on('portfolio') && galleries.length > 0,
     investment: on('investment') && sitePkgs.length > 0,
     testimonials: on('testimonials') && quotesShown.length > 0,
     faq: on('faq') && faq.length > 0,
@@ -436,7 +436,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
             {page === 'home' && galleries.length > 0 && (
               <div className="mt-10 text-center">
-                <a href={hrefs.galleries} className="el-gal_link text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>View all galleries →</a>
+                <a href={hrefs.galleries} className="cr-btn el-gal_link inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>View all galleries</a>
               </div>
             )}
           </>, tinted)
