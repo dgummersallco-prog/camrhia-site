@@ -178,7 +178,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   const cta = (force?: boolean) =>
     t.hero.ctaShow || force ? (
-      <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{force ? t.hero.ctaText : t.hero.heroCtaText}</a>
+      <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="hero-btn">{force ? t.hero.ctaText : t.hero.heroCtaText}</a>
     ) : null
 
   const burger = (r as any).site_settings?.menu?.icon === 'burger'
@@ -442,7 +442,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
             {page === 'home' && galleries.length > 0 && (
               <div className="mt-10 text-center">
-                <a href={hrefs.galleries} className="cr-btn pf-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.text.portfolioBtn}</a>
+                <a href={hrefs.galleries} className="cr-btn pf-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="featured-btn">{t.text.portfolioBtn}</a>
               </div>
             )}
           </>, tinted)
@@ -615,7 +615,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             <p className="el-con_msg mb-8 whitespace-pre-line leading-relaxed" style={{ color: soft, fontSize: fsp('fs-contact', 15) }}>
               {t.text.contact ?? 'Tell me about your day. Check a date and send me a message.'}
             </p>
-            <div className="mb-10"><a href={availHref} className="cr-btn ct-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.text.contactBtn}</a></div>
+            <div className="mb-10"><a href={availHref} className="cr-btn ct-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="closing-btn">{t.text.contactBtn}</a></div>
             {socials.length > 0 && (
               <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
                 {socials.map((s) => (

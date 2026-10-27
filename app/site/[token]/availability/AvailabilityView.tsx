@@ -215,7 +215,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={(e) => setWebsite(e.target.value)}
         style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
       {error && <p style={{ margin: 0, color: '#B83232', fontSize: 14 }}>{error}</p>}
-      <button type="submit" disabled={sending} className="cr-btn bk-btn" style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
+      <button id="book-btn" type="submit" disabled={sending} className="cr-btn bk-btn" style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
     </form>
   )
 
@@ -223,7 +223,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
     <>
       <link rel="stylesheet" href={t.fontsHref} />
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
-      <div style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
+      <div id={photoBack ? 'book-photo' : undefined} style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <nav className={'mx-auto flex max-w-6xl px-6 py-4 ' + (t.menu.logoPos === 'center' ? 'flex-col items-center gap-3' : 'items-center justify-between' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : ''))}>
           <a href={`${homeHref}${qs}`} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>
             {logo ? (
@@ -237,7 +237,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
         </nav>
 
         {photoAbove && (
-          <div className="mx-auto max-w-5xl px-6 pt-4">
+          <div id="book-photo" className="mx-auto max-w-5xl px-6 pt-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photo} alt="" className="w-full object-cover" style={{ aspectRatio: '21/9' }} />
           </div>
@@ -245,7 +245,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
         <div className={photoSide ? 'mx-auto grid max-w-6xl gap-8 px-6 pt-4 md:grid-cols-[5fr_7fr] md:gap-12' : ''}>
           {photoSide && (
-            <div className="md:sticky md:top-6 md:self-start">
+            <div id="book-photo" className="md:sticky md:top-6 md:self-start">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={photo as string} alt="" className="aspect-[16/10] w-full object-cover md:aspect-[4/5]" />
             </div>

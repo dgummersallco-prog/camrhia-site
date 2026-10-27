@@ -1661,7 +1661,7 @@ export default function WebsitePage() {
 <FontPicker label="Paragraph font" value={S.hero?.para_font ?? T.bodyKey} cats={['serif', 'sans']} onChange={(k) => setHero({ para_font: k })} />
 <SizeControl device={device} label="Paragraph size" unit="px" min={10} max={40} step={1} value={T.sizes.paraSize} onChange={(dv, v) => setSize('paraSize', dv, v)} />
 </Group>
-<Group title="Hero button" hint="wording, color, shape, size" onOpen={() => scrollPreview('top')}>
+<Group title="Hero button" hint="wording, color, shape, size" onOpen={() => scrollPreview('hero-btn')}>
 <p className="text-xs text-ink-soft">This button takes visitors to your booking page.</p>
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   <div>
@@ -1806,7 +1806,7 @@ export default function WebsitePage() {
 {elBlock('Extra line', 'gal_count', { min: 9, max: 28 })}
 
 </Group>
-<Group title="Featured work button" onOpen={() => scrollPreview('portfolio')}>
+<Group title="Featured work button" onOpen={() => scrollPreview('featured-btn')}>
 <p className="text-xs text-ink-soft">This button takes visitors to your galleries page.</p>
   <div>
     <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
@@ -1902,7 +1902,7 @@ export default function WebsitePage() {
   </div>
 ))}
 </Group>
-<Group title="Closing button" hint="wording, color, shape, size" onOpen={() => scrollPreview('contact')}>
+<Group title="Closing button" hint="wording, color, shape, size" onOpen={() => scrollPreview('closing-btn')}>
 <p className="text-xs text-ink-soft">This button takes visitors to your booking page.</p>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
@@ -2128,7 +2128,7 @@ export default function WebsitePage() {
                   <p className="text-xs text-ink-soft">On a phone the calendar always sits above the form. Turn the calendar off in step 3 to show only the form.</p>
                 </Group>
 
-                <Group title="2. Photo" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>
+                <Group title="2. Photo" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-photo'), 500) }}>
 <Row label="Photo position">
                     <Seg value={S.availability?.photoPos ?? 'side'} options={[{ v: 'side', label: 'Beside' }, { v: 'above', label: 'Above' }, { v: 'background', label: 'Background' }]} onChange={(v) => setIn('availability', { photoPos: v })} />
                   </Row>
@@ -2173,7 +2173,7 @@ export default function WebsitePage() {
                   )}
                 </Group>
 
-                <Group title="5. Button" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-form'), 500) }}>
+                <Group title="5. Button" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-btn'), 500) }}>
 <p className="text-xs text-ink-soft">This button sends their request to your Camrhia inbox, with their date and message attached.</p>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
