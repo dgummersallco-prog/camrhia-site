@@ -235,7 +235,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logo} alt={studio} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
             ) : (
-              <span style={{ ...head, fontSize: 24 }}>{studio}</span>
+              <span className="el-menu_brand" style={{ ...head, fontSize: 24 }}>{t.menu.brand ?? studio}</span>
             )}
           </a>
           <a href={`${homeHref}${qs}`} className="text-[11px] uppercase tracking-[0.2em]" style={{ fontSize: 'var(--menu)' }}>← Back</a>

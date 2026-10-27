@@ -191,6 +191,7 @@ export function resolveTheme(r: Record<string, any>) {
     none: s.menu?.style === 'none',
     bg: (typeof s.menu?.bg === 'string' && /^#[0-9a-fA-F]{6}$/.test(s.menu.bg) ? s.menu.bg : null) as string | null,
     logoPos: (['left', 'center', 'right'].includes(s.menu?.logoPos) ? s.menu.logoPos : '') as '' | 'left' | 'center' | 'right',
+    brand: (typeof s.menu?.brand === 'string' ? s.menu.brand : null) as string | null,
     labels: (s.menu?.labels ?? {}) as Record<string, string>,
     hidden: Array.isArray(s.menu?.hidden) ? (s.menu.hidden as string[]) : [],
   }

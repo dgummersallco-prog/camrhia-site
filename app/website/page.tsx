@@ -636,6 +636,12 @@ export default function WebsitePage() {
   const [tBusy, setTBusy] = useState(false)
   const [tSlot, setTSlot] = useState(0)
   const [gSlot, setGSlot] = useState(0)
+  const [studioName, setStudioName] = useState('')
+  useEffect(() => {
+    const h = (e: MessageEvent) => { const d = e.data; if (d && d.type === 'camrhia-studio' && typeof d.name === 'string') setStudioName(d.name) }
+    window.addEventListener('message', h)
+    return () => window.removeEventListener('message', h)
+  }, [])
   const [previewKey, setPreviewKey] = useState(0)
   const [seen, setSeen] = useState<string[]>([])
   const [candsDb, setCandsDb] = useState<string[]>([])
@@ -1734,6 +1740,12 @@ export default function WebsitePage() {
                   {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
 </Group>
 <Group title="Studio name" onOpen={() => scrollPreview('nav')}>
+<p className="text-xs text-ink-soft">Shows in your menu when you have no logo.</p>
+<div>
+  <label className="mb-1 block text-xs font-medium text-ink">Menu name</label>
+  <input className={inputCls} value={S.menu?.brand ?? studioName} onChange={(e) => setIn('menu', { brand: e.target.value })} />
+  {S.menu?.brand !== undefined && <button type="button" className="mt-1 text-xs text-ink-soft hover:text-ink" onClick={() => upd((st) => { const b = { ...(st.menu ?? {}) }; delete b.brand; st.menu = b })}>Use my studio name</button>}
+</div>
 {elBlock('Studio name', 'menu_brand', { min: 14, max: 60 })}
                   
                   </Group>

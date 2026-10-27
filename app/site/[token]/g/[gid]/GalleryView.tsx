@@ -67,7 +67,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
         ) : (
-          <span style={{ ...head, fontSize: 24 }}>{name}</span>
+          <span className="el-menu_brand" style={{ ...head, fontSize: 24 }}>{t.menu.brand ?? name}</span>
         )}
       </Link>
       <div className={'flex flex-wrap gap-x-5 gap-y-1 text-[11px] uppercase tracking-[0.2em] ' + (t.menu.logoPos === 'center' ? 'justify-center' : t.menu.logoPos === 'right' ? 'justify-start' : 'justify-end')} style={{ fontSize: 'var(--menu)', transform: 'translateY(var(--menuy, 0px))' }}>

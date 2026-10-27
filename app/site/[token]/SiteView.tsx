@@ -123,6 +123,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const realFaq = (r.faq ?? []) as any[]
   const faq = isPreview && realFaq.length === 0 ? (PH_FAQ as any[]) : realFaq
   const quotesShown = quotes.length >= 3 ? quotes : [...quotes, ...PH_QUOTES.slice(quotes.length)]
+  React.useEffect(() => {
+    if (isPreview && typeof window !== 'undefined') window.parent?.postMessage({ type: 'camrhia-studio', name }, '*')
+  }, [isPreview, name])
   const galleryCovers = galleries
     .map((g) => photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path))
     .filter(Boolean) as string[]
@@ -185,7 +188,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const renderNav = (overlay: boolean, center: boolean) => {
     const brand = logo
       ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
-      : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24 }}>{name}</span>
+      : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24 }}>{t.menu.brand ?? name}</span>
     return (
       <>
       <nav
