@@ -5,6 +5,7 @@ export type CItem = {
   src?: string | null; radius?: number; title?: string; text?: string; fs?: number; bg?: boolean
   galleryId?: string; titleMode?: 'overlay' | 'below' | 'none'
   align?: 'left' | 'center' | 'right'; light?: boolean
+  color?: string; font?: 'head' | 'body'
 }
 export type Board = { h: number; items: CItem[] }
 

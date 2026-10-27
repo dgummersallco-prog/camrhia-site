@@ -102,10 +102,11 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
   }
 
   function inner(it: CItem): ReactNode {
+    const ff = it.font === 'body' ? p.bodyFont : it.font === 'head' ? (p.headStyle as CSSProperties).fontFamily : undefined
     if (it.type === 'menu' || it.type === 'logo' || it.type === 'title' || it.type === 'subtitle') {
       const al = it.align ?? (it.type === 'menu' ? 'right' : 'left')
       return (
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: al === 'center' ? 'center' : al === 'right' ? 'flex-end' : 'flex-start', textAlign: al, color: it.light ? '#fff' : undefined, pointerEvents: p.editing ? 'none' : undefined }}>
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: al === 'center' ? 'center' : al === 'right' ? 'flex-end' : 'flex-start', textAlign: al, color: it.color ?? (it.light ? '#fff' : undefined), fontFamily: ff, zoom: it.fs ?? undefined, pointerEvents: p.editing ? 'none' : undefined }}>
           {p.renderSpecial ? p.renderSpecial(it.type, it, dev) : null}
         </div>
       )
@@ -131,9 +132,9 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
       return (
         <div style={{ width: '100%', height: '100%', overflow: 'hidden', boxSizing: 'border-box', background: solid ? p.tint : 'transparent', borderRadius: '2.2cqw', padding: '3cqw', boxShadow: solid ? '0 2cqw 5cqw rgba(0,0,0,0.07)' : undefined }}>
           {title && (
-            <div style={{ ...p.headStyle, fontWeight: p.headWeight ?? 200, fontSize: `${fs * 3.4}cqw`, lineHeight: 1.05, marginBottom: `${fs * 1.2}cqw`, color: p.ink }}>{title}</div>
+            <div style={{ ...p.headStyle, fontWeight: p.headWeight ?? 200, fontSize: `${fs * 3.4}cqw`, lineHeight: 1.05, marginBottom: `${fs * 1.2}cqw`, color: it.color ?? p.ink, ...(ff ? { fontFamily: ff } : {}) }}>{title}</div>
           )}
-          <div style={{ fontFamily: p.bodyFont, fontWeight: 300, fontSize: `${fs}cqw`, lineHeight: 1.85, textAlign: 'justify', whiteSpace: 'pre-line', color: p.soft }}>{text}</div>
+          <div style={{ fontFamily: ff ?? p.bodyFont, fontWeight: 300, fontSize: `${fs}cqw`, lineHeight: 1.85, textAlign: 'justify', whiteSpace: 'pre-line', color: it.color ?? p.soft }}>{text}</div>
         </div>
       )
     }
@@ -167,11 +168,11 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
     }
     if (it.type === 'heading') {
       return (
-        <div style={{ ...p.headStyle, fontWeight: p.headWeight ?? 200, fontSize: `${it.fs ?? 4.6}cqw`, lineHeight: 1.05, whiteSpace: 'pre-line', color: p.ink }}>{it.text}</div>
+        <div style={{ ...p.headStyle, fontWeight: p.headWeight ?? 200, fontSize: `${it.fs ?? 4.6}cqw`, lineHeight: 1.05, whiteSpace: 'pre-line', color: it.color ?? p.ink, ...(ff ? { fontFamily: ff } : {}) }}>{it.text}</div>
       )
     }
     return (
-      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', pointerEvents: p.editing ? 'none' : undefined }}>
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', zoom: it.fs ?? undefined, pointerEvents: p.editing ? 'none' : undefined }}>
         {p.renderButton(it.text && it.text.trim() ? it.text : p.defaultButton)}
       </div>
     )

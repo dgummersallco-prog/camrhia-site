@@ -991,13 +991,13 @@ export default function WebsitePage() {
             ))}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {b.items.map((i, n) => (
-            <span key={i.id} className={'inline-flex items-center overflow-hidden rounded-full border text-xs ' + (cvBoard === boardId && cvSel === i.id ? 'border-ink text-ink' : 'border-line text-ink-soft')}>
-              <button type="button" onClick={() => pick(i.id)} className="px-3 py-1">{names[i.type]} {n + 1}</button>
-              <button type="button" aria-label="Remove" title="Remove" onClick={() => { setBoard({ ...b, items: b.items.filter((x) => x.id !== i.id) }); if (cvSel === i.id) pick(null) }} className="border-l border-line px-2 py-1 text-ink-soft hover:bg-red-50 hover:text-red-700">×</button>
-            </span>
-          ))}
+        <div>
+          <p className="mb-2 text-xs font-medium text-ink">Your blocks</p>
+          <div className="flex flex-wrap gap-2">
+            {b.items.map((i, n) => (
+              <button key={i.id} type="button" title={names[i.type]} onClick={() => pick(i.id)} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (cvBoard === boardId && cvSel === i.id ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{n + 1}</button>
+            ))}
+          </div>
         </div>
         <div>
           {isGalPage && !hasBoard(canvasData, device) && <p className="mb-2 text-xs text-ink-soft">Drag any photo in the preview to start arranging. Your layout is created automatically.</p>}
@@ -1086,6 +1086,21 @@ export default function WebsitePage() {
                 </Row>
                 {sel.type !== 'logo' && <Row label="White text"><Switch on={!!sel.light} onChange={(v) => patch(sel.id, { light: v })} /></Row>}
               </>
+            )}
+            {['title', 'subtitle', 'menu', 'heading', 'card'].includes(sel.type) && (
+              <div className="space-y-3 border-t border-line pt-3">
+                <p className="text-xs font-medium text-ink">Style</p>
+                <ColorField label="Text color" value={sel.color ?? '#2B2B2B'} swatches={palette()} onChange={(h) => patch(sel.id, { color: h })} onReset={() => patch(sel.id, { color: undefined })} />
+                <Row label="Font">
+                  <Seg value={sel.font ?? 'auto'} options={[{ v: 'auto', label: 'Default' }, { v: 'head', label: 'Heading' }, { v: 'body', label: 'Body' }]} onChange={(v) => patch(sel.id, { font: v === 'auto' ? undefined : (v as 'head' | 'body') })} />
+                </Row>
+              </div>
+            )}
+            {['title', 'subtitle', 'menu', 'logo', 'button'].includes(sel.type) && (
+              <div className="space-y-3 border-t border-line pt-3">
+                <p className="mb-1 text-xs text-ink-soft">Size</p>
+                <Slider min={0.5} max={2.5} step={0.05} value={sel.fs ?? 1} onChange={(v) => patch(sel.id, { fs: v })} />
+              </div>
             )}
             <div className="flex flex-wrap gap-2 border-t border-line pt-3">
               <button type="button" className={btnGhost} onClick={() => patch(sel.id, { z: sel.z + 1 })}>Bring forward</button>
