@@ -161,7 +161,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const secCss = Object.entries(secStyles).map(([id, v]) => {
     if (!v || !/^[A-Za-z0-9_-]+$/.test(id)) return ''
     const rules: string[] = []
-    if (hexOk(v.bg)) rules.push('background:' + hexOk(v.bg) + ' !important')
+    if (hexOk(v.bg) && id !== 'nav') rules.push('background:' + hexOk(v.bg) + ' !important')
     if (hexOk(v.text)) rules.push('color:' + hexOk(v.text) + ' !important')
     if (famOf(v.body)) rules.push('font-family:' + famOf(v.body) + ' !important')
     let css = rules.length ? '#' + id + ' {' + rules.join(';') + '}' : ''
