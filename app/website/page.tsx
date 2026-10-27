@@ -1319,29 +1319,44 @@ export default function WebsitePage() {
     win()?.postMessage({ type: 'camrhia-outline', id }, '*')
     if (id) win()?.postMessage({ type: 'camrhia-scroll', id }, '*')
   }
-  function sectionHead(k: string, toggle = true, heading = true) {
-    const list = listFor(k)
-    const idx = list.indexOf(k)
-    const total = list.length
-    const small = 'rounded-full border border-line px-3 py-1 text-xs text-ink disabled:opacity-30'
+  function sectionHead(k: string, _toggle = true, heading = true) {
     return (
-      <>
-        {toggle && (
-          <Row label="Show this section">
-            <Switch on={form?.site_sections?.[k] !== false} onChange={(v) => set('site_sections', { ...(form?.site_sections ?? {}), [k]: v })} />
-          </Row>
+      <div>
+        {heading && <label className="mb-1 block text-xs font-medium text-ink">Section heading</label>}
+        {heading && <input value={S.titles?.[k] ?? ''} onChange={(e) => setIn('titles', { [k]: e.target.value })} placeholder={DEFAULT_TITLES[k]} className={inputCls} />}
+      </div>
+    )
+  }
+  function styleHead(name: string, hint: string, k?: string, o?: { toggle?: boolean; explore?: boolean }) {
+    const list = k ? listFor(k) : []
+    const idx = k ? list.indexOf(k) : -1
+    const total = list.length
+    const showToggle = o?.explore || (k && o?.toggle !== false)
+    const on = o?.explore ? S.explore?.show !== false : k ? form?.site_sections?.[k] !== false : true
+    const arrow = 'flex h-7 w-7 items-center justify-center rounded-full border border-line bg-card text-[11px] text-ink transition hover:bg-paper disabled:opacity-30'
+    return (
+      <div data-sh="1" className="scroll-mt-2 flex flex-wrap items-center justify-between gap-3 border-b border-line px-1 pb-2 pt-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
+          {name} <span className="font-normal normal-case tracking-normal">· {hint}</span>
+        </p>
+        {(showToggle || (k && total > 0)) && (
+          <div className="flex items-center gap-3">
+            {showToggle && (
+              <span className="flex items-center gap-2 text-xs text-ink-soft">
+                {on ? 'Showing' : 'Hidden'}
+                <Switch on={on} onChange={(v) => (o?.explore ? setIn('explore', { show: v }) : set('site_sections', { ...(form?.site_sections ?? {}), [k as string]: v }))} />
+              </span>
+            )}
+            {k && total > 0 && (
+              <span className="flex items-center gap-1.5">
+                <button type="button" aria-label="Move section up" disabled={idx <= 0} onClick={() => moveSection(k, -1)} className={arrow}>▲</button>
+                <span className="min-w-[2.2rem] text-center text-[11px] text-ink-soft">{idx + 1} of {total}</span>
+                <button type="button" aria-label="Move section down" disabled={idx < 0 || idx >= total - 1} onClick={() => moveSection(k, 1)} className={arrow}>▼</button>
+              </span>
+            )}
+          </div>
         )}
-        <Row label={`Position on page (${idx + 1} of ${total})`}>
-          <span className="flex gap-2">
-            <button type="button" disabled={idx <= 0} onClick={() => moveSection(k, -1)} className={small}>▲ Up</button>
-            <button type="button" disabled={idx < 0 || idx >= total - 1} onClick={() => moveSection(k, 1)} className={small}>▼ Down</button>
-          </span>
-        </Row>
-        <div>
-          {heading && <label className="mb-1 block text-xs font-medium text-ink">Section heading</label>}
-          {heading && <input value={S.titles?.[k] ?? ''} onChange={(e) => setIn('titles', { [k]: e.target.value })} placeholder={DEFAULT_TITLES[k]} className={inputCls} />}
-        </div>
-      </>
+      </div>
     )
   }
   function calRow(label: string, key: string, current: string) {
@@ -1456,7 +1471,7 @@ export default function WebsitePage() {
                 </div>
                 {tab === 'home' && (<>
 
-<p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Hero style <span className="font-normal normal-case tracking-normal">· template, photos, text, button, menu and logo</span></p>
+{styleHead('Hero style', 'template, photos, text, button, menu and logo')}
 <Group title="Template" hint="pick a look" onOpen={() => scrollPreview('')}>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {TEMPLATES.map((t) => (
@@ -1614,7 +1629,7 @@ export default function WebsitePage() {
                   
                   </Group>
 </>)}
-{tab === 'home' && (<><p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Explore style <span className="font-normal normal-case tracking-normal">· layout, titles, colors and sizes</span></p><Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
+{tab === 'home' && (<>{styleHead('Explore style', 'layout, titles, colors and sizes', undefined, { explore: true })}<Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
     options={[
       { v: 'lines', name: 'Lines', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="5" y="14" width="12" height="3" /><rect x="24" y="14" width="12" height="3" /><rect x="43" y="14" width="12" height="3" /></g><g fill="#D8D0C4"><rect x="5" y="21" width="12" height="2" /><rect x="24" y="21" width="12" height="2" /><rect x="43" y="21" width="12" height="2" /></g></svg> },
@@ -1627,7 +1642,6 @@ export default function WebsitePage() {
 
 </Group>
 <Group title="Explore words" hint="show or hide, label, titles and subtitles" onOpen={() => scrollPreview('explore')}>
-  <Row label="Show this section"><Switch on={S.explore?.show !== false} onChange={(v) => setIn('explore', { show: v })} /></Row>
   <div>
     <label className="mb-1 block text-xs font-medium text-ink">Label above the links (optional)</label>
     <input value={S.explore?.heading ?? ''} onChange={(e) => setIn('explore', { heading: e.target.value })} placeholder="Explore" className={inputCls} />
@@ -1656,7 +1670,7 @@ export default function WebsitePage() {
 <SizeControl device={device} label="Explore subtitles size" unit="px" min={9} max={28} step={1} value={T.sizes.exSub} onChange={(d, v) => setSize('ex_sub' as any, d, v)} />
 </>) })}
 </Group>
-<p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Gallery style <span className="font-normal normal-case tracking-normal">· layout, covers, colors and sizes</span></p>
+{styleHead('Gallery style', 'layout, covers, colors and sizes', 'portfolio')}
 <Group title="Gallery layout" hint="pick a look" onOpen={() => scrollPreview('portfolio')}>
 <div>
                     <p className="mb-2 text-sm text-ink">Layout on your home page</p>
@@ -1686,7 +1700,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
 </>) })}
 </Group>
-<p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Testimonials style <span className="font-normal normal-case tracking-normal">· layout, kind words, colors and sizes</span></p>
+{styleHead('Testimonials style', 'layout, kind words, colors and sizes', 'testimonials')}
 <Group title="Testimonials layout" hint="pick a look" onOpen={() => scrollPreview('words')}>
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -1731,7 +1745,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
 </>) })}
 </Group>
-<p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Closing style <span className="font-normal normal-case tracking-normal">· message, colors, sizes and button</span></p>
+{styleHead('Closing style', 'message, colors, sizes and button', 'contact', { toggle: false })}
 <Group title="Closing message" hint="heading and message" onOpen={() => scrollPreview('contact')}>
                   {sectionHead('contact', false)}
                   <div>
@@ -1762,7 +1776,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Button size (closing only)" unit="px" min={9} max={20} step={1} value={T.sizes.ctBtn} onChange={(d, v) => setSize('ct_btn' as any, d, v)} />
                 </Group>
 
-<p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Footer style <span className="font-normal normal-case tracking-normal">· footer line, colors and size</span></p>
+{styleHead('Footer style', 'footer line, colors and size')}
 <Group title="Footer line" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
@@ -1832,7 +1846,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
                 </Group>{customBlock('galleries')}
 </>)}
-{tab === 'about' && (<><p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">About style <span className="font-normal normal-case tracking-normal">· layout, story, colors and size</span></p>
+{tab === 'about' && (<>{styleHead('About style', 'layout, story, colors and size', 'about')}
 <Group title="About layout" hint="pick a look" onOpen={() => scrollPreview('about')}>
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
@@ -1874,7 +1888,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Story text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsAbout} onChange={(dv, v) => setSize('fsAbout', dv, v)} />
 </>) })}
 </Group>
-<p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Pricing style <span className="font-normal normal-case tracking-normal">· price list, colors and sizes</span></p>
+{styleHead('Pricing style', 'price list, colors and sizes', 'investment')}
 <Group title="Pricing layout" hint="pick a look" onOpen={() => scrollPreview('investment')}>
 <div>
                         <p className="mb-2 text-sm text-ink">Price list style</p>
@@ -1942,7 +1956,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="What's included size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgList} onChange={(dv, v) => setSize('fsPkgList', dv, v)} />
 </>) })}
 </Group>
-<p data-sh="1" className="scroll-mt-2 px-1 pt-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">FAQ style <span className="font-normal normal-case tracking-normal">· questions, colors and sizes</span></p>
+{styleHead('FAQ style', 'questions, colors and sizes', 'faq')}
 <Group title="FAQ questions" hint="heading and your questions" onOpen={() => scrollPreview('faq')}>
                   {sectionHead('faq')}
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
