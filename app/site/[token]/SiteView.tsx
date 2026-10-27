@@ -876,7 +876,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <React.Fragment key={k}>{renderSection(k, i % 2 === 1)}</React.Fragment>
         ))}
 
-        {page !== 'home' && visible.length > 0 && (
+        {page !== 'home' && page !== 'about' && visible.length > 0 && (
           <div className="px-6 pb-12 pt-4 text-center">{cta(true)}</div>
         )}
 
