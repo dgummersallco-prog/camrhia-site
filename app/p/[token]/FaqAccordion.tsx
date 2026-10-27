@@ -1,10 +1,12 @@
 "use client"
 import { useState } from "react"
 
-export function FaqAccordion({ items, questionStyle, answerStyle }: {
+export function FaqAccordion({ items, questionStyle, answerStyle, questionClassName, answerClassName }: {
   items: { question: string; answer: string }[]
   questionStyle: React.CSSProperties
   answerStyle: React.CSSProperties
+  questionClassName?: string
+  answerClassName?: string
 }) {
   const [expanded, setExpanded] = useState<number | null>(null)
   return (
@@ -15,10 +17,10 @@ export function FaqAccordion({ items, questionStyle, answerStyle }: {
             onClick={() => setExpanded(expanded === i ? null : i)}
             style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
           >
-            <span style={questionStyle}>{item.question}</span>
+            <span className={questionClassName} style={questionStyle}>{item.question}</span>
             <span style={{ marginLeft: 12, flexShrink: 0 }}>{expanded === i ? '−' : '+'}</span>
           </button>
-          {expanded === i && <p style={{ ...answerStyle, marginTop: 10 }}>{item.answer}</p>}
+          {expanded === i && <p className={answerClassName} style={{ ...answerStyle, marginTop: 10 }}>{item.answer}</p>}
         </div>
       ))}
     </div>

@@ -594,6 +594,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <div className="mx-auto max-w-2xl">
             <FaqAccordion
               items={faq}
+              questionClassName="el-faq_q"
+              answerClassName="el-faq_a"
               questionStyle={{ fontFamily: t.head, fontSize: fsp('fs-faqq', 20), color: ink }}
               answerStyle={{ fontFamily: t.body, fontSize: fsp('fs-faqa', 15), color: soft, lineHeight: 1.7 }}
             />

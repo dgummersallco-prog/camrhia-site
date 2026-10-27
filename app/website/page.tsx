@@ -1986,11 +1986,10 @@ export default function WebsitePage() {
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 </Group>
-<Group title="FAQ colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('faq')}>
-{secStyleBlock('faq', { title: true, extra: (<>
-                  <SizeControl device={device} label="Question size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqQ} onChange={(dv, v) => setSize('fsFaqQ', dv, v)} />
-                  <SizeControl device={device} label="Answer size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqA} onChange={(dv, v) => setSize('fsFaqA', dv, v)} />
-</>) })}
+<Group title="FAQ text" onOpen={() => scrollPreview('faq')}>
+{titleBlock('faq')}
+{elBlock('Questions', 'faq_q', { min: 10, max: 50 })}
+{elBlock('Answers', 'faq_a', { min: 10, max: 40, fontCats: ['serif', 'sans'] })}
 </Group>{customBlock('about')}
 </>)}
 {tab === 'book' && (<>
