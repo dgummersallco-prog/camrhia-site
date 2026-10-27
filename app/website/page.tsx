@@ -1273,17 +1273,7 @@ export default function WebsitePage() {
     const touched = sv.bg || sv.text || sv.head || sv.body || sv.title || (S as any).sizes?.['sec_' + id]
     return (
       <div className="space-y-4">
-        {opts?.title && (
-          <>
-            <p className={lab}>Section title</p>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-ink">Title text</label>
-              <input value={S.titles?.[tk] ?? ''} onChange={(e) => setIn('titles', { [tk]: e.target.value })} placeholder={DEFAULT_TITLES[tk]} className={inputCls} />
-            </div>
-            <ColorField label="Section title color" value={sv.title ?? sv.text ?? T.ink} swatches={palette()} onChange={(h) => put({ title: h })} onReset={() => put({ title: undefined })} />
-            <SizeControl device={device} label="Section title size" unit="px" min={20} max={100} step={2} value={T.sizes.secTitles[id]} onChange={(d, v) => setSize(('sec_' + id) as any, d, v)} />
-          </>
-        )}
+        {opts?.title && titleBlock(id)}
         {opts?.extra && (
           <>
             <p className={lab}>Items in this section</p>
@@ -1304,13 +1294,51 @@ export default function WebsitePage() {
     )
   }
 
-  function secBg(title: string, id: string, scrollKey: string) {
+  function elBlock(heading: string, k: string, o?: { texts?: { label?: string; value: string; onChange: (v: string) => void; placeholder?: string; rows?: number }[]; min?: number; max?: number; fontCats?: string[] }) {
+    if (!T) return null
+    const e = ((S as any).el?.[k] ?? {}) as { color?: string; font?: string }
+    const put = (patch: Record<string, string | undefined>) => setIn('el', { [k]: { ...e, ...patch } })
+    return (
+      <>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">{heading}</p>
+        {o?.texts?.map((x, i) => (
+          <div key={i}>
+            {x.label && <label className="mb-1 block text-xs font-medium text-ink">{x.label}</label>}
+            {x.rows
+              ? <textarea rows={x.rows} value={x.value} onChange={(ev) => x.onChange(ev.target.value)} placeholder={x.placeholder} className={inputCls} />
+              : <input value={x.value} onChange={(ev) => x.onChange(ev.target.value)} placeholder={x.placeholder} className={inputCls} />}
+          </div>
+        ))}
+        <ColorField label={`${heading} color`} value={e.color ?? T.ink} swatches={palette()} onChange={(h) => put({ color: h })} onReset={() => put({ color: undefined })} />
+        <FontPicker label={`${heading} font`} value={e.font ?? T.bodyKey} cats={o?.fontCats ?? ['serif', 'sans', 'script', 'display']} onChange={(f) => put({ font: f })} />
+        <SizeControl device={device} label={`${heading} size`} unit="px" min={o?.min ?? 9} max={o?.max ?? 40} step={1} value={T.sizes.el[k]} onChange={(d, val) => setSize(('el_' + k) as any, d, val)} />
+      </>
+    )
+  }
+  function titleBlock(id: string) {
+    if (!T) return null
+    const tk = id === 'words' ? 'testimonials' : id
+    const sv = ((S as any).secStyle?.[id] ?? {}) as { title?: string; titleFont?: string; head?: string }
+    const put = (patch: Record<string, string | undefined>) => setIn('secStyle', { [id]: { ...sv, ...patch } })
+    return (
+      <>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">Section title</p>
+        <input value={S.titles?.[tk] ?? ''} onChange={(ev) => setIn('titles', { [tk]: ev.target.value })} placeholder={DEFAULT_TITLES[tk]} className={inputCls} />
+        <ColorField label="Section title color" value={sv.title ?? T.ink} swatches={palette()} onChange={(h) => put({ title: h })} onReset={() => put({ title: undefined })} />
+        <FontPicker label="Section title font" value={sv.titleFont ?? sv.head ?? T.headKey} cats={['serif', 'sans', 'script', 'display']} onChange={(f) => put({ titleFont: f })} />
+        <SizeControl device={device} label="Section title size" unit="px" min={20} max={100} step={2} value={T.sizes.secTitles[id]} onChange={(d, val) => setSize(('sec_' + id) as any, d, val)} />
+      </>
+    )
+  }
+
+  function secBg(title: string, id: string, scrollKey: string, extra?: React.ReactNode) {
     if (!T) return null
     const sv = ((S as any).secStyle?.[id] ?? {}) as { bg?: string }
     const put = (bg?: string) => setIn('secStyle', { [id]: { ...sv, bg } })
     return (
       <Group title={title} hint="color behind this section" onOpen={() => scrollPreview(scrollKey)}>
         <ColorField label="Background color" value={sv.bg ?? T.bg} swatches={palette()} onChange={(h) => put(h)} onReset={() => put(undefined)} />
+        {extra}
       </Group>
     )
   }
@@ -1665,35 +1693,11 @@ export default function WebsitePage() {
     ]} />
 
 </Group>
-{secBg('Explore background', 'explore', 'explore')}
-<Group title="Explore words" hint="show or hide, label, titles and subtitles" onOpen={() => scrollPreview('explore')}>
-  <div>
-    <label className="mb-1 block text-xs font-medium text-ink">Label above the links (optional)</label>
-    <input value={S.explore?.heading ?? ''} onChange={(e) => setIn('explore', { heading: e.target.value })} placeholder="Explore" className={inputCls} />
-  </div>
-  {([['galleries', 'Galleries', 'See my work'], ['about', 'About', 'Get to know me'], ['book', 'Book', 'Check my dates']] as const).map(([k, tt, ss]) => (
-    <div key={k} className="space-y-2 rounded-xl border border-line p-3">
-      <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">{tt} link</p>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-ink">Title</label>
-        <input value={(S.explore as any)?.titles?.[k] ?? ''} onChange={(e) => setIn('explore', { titles: { ...((S.explore as any)?.titles ?? {}), [k]: e.target.value } })} placeholder={tt} className={inputCls} />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-ink">Subtitle</label>
-        <input value={S.explore?.lines?.[k] ?? ''} onChange={(e) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), [k]: e.target.value } })} placeholder={ss} className={inputCls} />
-      </div>
-    </div>
-  ))}
-  <p className="text-xs text-ink-soft">Leave a title empty to use the name from your Menu step.</p>
-</Group>
-<Group title="Explore colors & text" hint="background, card color, title and subtitle" onOpen={() => scrollPreview('explore')}>
-{secStyleBlock('explore', { extra: (<>
-<ColorField label="Card color" value={S.explore?.tile_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('explore', { tile_bg: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.tile_bg; st.explore = b })} />
-<ColorField label="Explore titles color" value={S.explore?.title_color ?? T.ink} swatches={palette()} onChange={(h) => setIn('explore', { title_color: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.title_color; st.explore = b })} />
-<SizeControl device={device} label="Explore titles size" unit="px" min={14} max={90} step={1} value={T.sizes.exTitle} onChange={(d, v) => setSize('ex_title' as any, d, v)} />
-<ColorField label="Explore subtitles color" value={S.explore?.sub_color ?? T.ink} swatches={palette()} onChange={(h) => setIn('explore', { sub_color: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.sub_color; st.explore = b })} />
-<SizeControl device={device} label="Explore subtitles size" unit="px" min={9} max={28} step={1} value={T.sizes.exSub} onChange={(d, v) => setSize('ex_sub' as any, d, v)} />
-</>) })}
+{secBg('Explore background', 'explore', 'explore', <ColorField label="Card color" value={S.explore?.tile_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('explore', { tile_bg: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.tile_bg; st.explore = b })} />)}
+<Group title="Explore text" onOpen={() => scrollPreview('explore')}>
+{elBlock('Label', 'ex_label', { texts: [{ value: S.explore?.heading ?? '', onChange: (val) => setIn('explore', { heading: val }), placeholder: 'Explore' }], min: 9, max: 28 })}
+{elBlock('Link titles', 'ex_title', { min: 14, max: 90, texts: ([['galleries', 'Galleries'], ['about', 'About'], ['book', 'Book']] as const).map(([k, tt]) => ({ label: tt, value: (S.explore as any)?.titles?.[k] ?? '', onChange: (val: string) => setIn('explore', { titles: { ...((S.explore as any)?.titles ?? {}), [k]: val } }), placeholder: tt })) })}
+{elBlock('Link subtitles', 'ex_sub', { min: 9, max: 28, texts: ([['galleries', 'Galleries'], ['about', 'About'], ['book', 'Book']] as const).map(([k, tt]) => ({ label: tt, value: S.explore?.lines?.[k] ?? '', onChange: (val: string) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), [k]: val } }), placeholder: ({ galleries: 'See my work', about: 'Get to know me', book: 'Check my dates' } as Record<string, string>)[k] })) })}
 </Group>
 {styleHead('Gallery style', 'layout, covers, colors and sizes', 'portfolio')}
 <Group title="Gallery layout" hint="pick a look" onOpen={() => scrollPreview('portfolio')}>
@@ -1774,18 +1778,10 @@ export default function WebsitePage() {
 </Group>
 {styleHead('Closing style', 'message, colors, sizes and button', 'contact', { toggle: false })}
 {secBg('Closing background', 'contact', 'contact')}
-<Group title="Closing message" hint="heading and message" onOpen={() => scrollPreview('contact')}>
-                  
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Contact message</label>
-                    <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
-                  </div>
-                </Group>
-<Group title="Closing colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('contact')}>
-{secStyleBlock('contact', { title: true, extra: (<>
-                  <SizeControl device={device} label="Message text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsContact} onChange={(dv, v) => setSize('fsContact', dv, v)} />
-                  <SizeControl device={device} label="Social links size" unit="%" min={60} max={200} step={5} value={T.sizes.fsSocial} onChange={(dv, v) => setSize('fsSocial', dv, v)} />
-</>) })}
+<Group title="Closing text" onOpen={() => scrollPreview('contact')}>
+{titleBlock('contact')}
+{elBlock('Message', 'con_msg', { min: 9, max: 40, texts: [{ value: S.text?.contact ?? '', onChange: (val) => setIn('text', { contact: val }), placeholder: 'Tell me about your day. Check a date and send me a message.', rows: 3 }] })}
+{elBlock('Social links', 'con_social', { min: 9, max: 28 })}
 </Group>
 <Group title="Closing button" hint="wording, color, shape, size" onOpen={() => scrollPreview('contact')}>
                   <div>
@@ -1806,16 +1802,9 @@ export default function WebsitePage() {
 
 {styleHead('Footer style', 'footer line, colors and size')}
 {secBg('Footer background', 'footer', 'footer')}
-<Group title="Footer line" hint="the line at the bottom" onOpen={() => scrollPreview('footer')}>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Footer line</label>
-                    <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
-                  </div>
-                </Group>
-<Group title="Footer colors & text" hint="background, colors, fonts and size" onOpen={() => scrollPreview('footer')}>
-{secStyleBlock('footer', { title: false, extra: (<>
-                  <SizeControl device={device} label="Footer text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFoot} onChange={(dv, v) => setSize('fsFoot', dv, v)} />
-</>) })}
+<Group title="Footer text" onOpen={() => scrollPreview('footer')}>
+{elBlock('Footer line', 'ft_line', { min: 9, max: 40, fontCats: ['serif', 'sans'], texts: [{ value: S.text?.footer ?? '', onChange: (val) => setIn('text', { footer: val }), placeholder: 'e.g. Serving Boise, Sun Valley and beyond' }] })}
+{elBlock('Copyright line', 'ft_copy', { min: 9, max: 28, fontCats: ['serif', 'sans'], texts: [{ value: S.text?.copyright ?? '', onChange: (val) => setIn('text', { copyright: val }), placeholder: '© {year} Your Studio Name' }] })}
 </Group>
 {customBlock('home')}
 </>)}

@@ -82,6 +82,8 @@ export const PAIR_PRESETS: Record<string, { name: string; head: string; body: st
   romantic: { name: 'Romantic', head: 'playfair', body: 'lora' },
 }
 
+const EL_DEF: Record<string, [number, number]> = { ex_label: [11, 11], ex_title: [24, 30], ex_sub: [10, 11], con_msg: [15, 15], con_social: [11, 11], ft_line: [13, 13], ft_copy: [11, 11] }
+export const EL_KEYS = Object.keys(EL_DEF)
 export const SECTION_KEYS = ['about', 'portfolio', 'investment', 'testimonials', 'faq', 'contact'] as const
 export const DEFAULT_TITLES: Record<string, string> = {
   about: 'About', portfolio: 'Portfolio', investment: 'Investment', testimonials: 'Kind words', faq: 'FAQ', contact: "Let's connect",
@@ -184,7 +186,7 @@ export function resolveTheme(r: Record<string, any>) {
     labels: (s.menu?.labels ?? {}) as Record<string, string>,
     hidden: Array.isArray(s.menu?.hidden) ? (s.menu.hidden as string[]) : [],
   }
-  const text = { about: str(s.text?.about), contact: str(s.text?.contact), contactBtn: str(s.contactBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability', footer: str(s.text?.footer) }
+  const text = { about: str(s.text?.about), contact: str(s.text?.contact), contactBtn: str(s.contactBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability', footer: str(s.text?.footer), copyright: str(s.text?.copyright) }
   const availability = {
     title: str(s.availability?.title) ?? 'Check availability',
     intro: str(s.availability?.intro) ?? 'Pick a date to see if I am free, then tell me a little about your day.',
@@ -261,6 +263,7 @@ export function resolveTheme(r: Record<string, any>) {
     galHeading: pairNum(s.sizes?.galHeading, 24, 120, 38, 56),
     secHead: pairNum(s.sizes?.secHead, 20, 100, 36, 48),
     secTitles: Object.fromEntries(['about', 'portfolio', 'investment', 'words', 'faq', 'contact'].map((k) => [k, pairNum((s.sizes as any)?.['sec_' + k] ?? s.sizes?.secHead, 20, 100, 36, 48)])) as Record<string, ReturnType<typeof pairNum>>,
+    el: Object.fromEntries(EL_KEYS.map((k) => [k, pairNum((s.sizes as any)?.['el_' + k], 8, 90, EL_DEF[k][0], EL_DEF[k][1])])) as Record<string, ReturnType<typeof pairNum>>,
     paraSize: pairNum(s.sizes?.paraSize, 10, 40, 15, 15),
     fsAbout: pairNum(s.sizes?.fsAbout, 60, 200, 100, 100),
     fsPkgName: pairNum(s.sizes?.fsPkgName, 60, 200, 100, 100),
@@ -300,14 +303,8 @@ export function resolveTheme(r: Record<string, any>) {
     const ex: any = s.explore ?? {}
     const okHex = (v: any) => (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null)
     const tile = okHex(ex.tile_bg)
-    const tc = okHex(ex.title_color)
-    const sc = okHex(ex.sub_color)
     let out = ''
     if (tile) out += `#explore .ex-tile{background:${tile}!important}`
-    if (tc) out += `#explore .ex-t{color:${tc}!important}`
-    if (sc) out += `#explore .ex-s{color:${sc}!important}`
-    if (s.sizes?.ex_title) out += `#explore .ex-t{font-size:${sizes.exTitle.phone}px!important;line-height:1.1}@media (min-width:768px){#explore .ex-t{font-size:${sizes.exTitle.desktop}px!important}}`
-    if (s.sizes?.ex_sub) out += `#explore .ex-s{font-size:${sizes.exSub.phone}px!important}@media (min-width:768px){#explore .ex-s{font-size:${sizes.exSub.desktop}px!important}}`
     return out
   })()
   const contactBtnCss = (() => {
@@ -332,11 +329,24 @@ export function resolveTheme(r: Record<string, any>) {
     const z = sizes.secTitles[id]
     return `#${id} .cr-sech{font-size:${z.phone}px!important}@media (min-width:768px){#${id} .cr-sech{font-size:${z.desktop}px!important}}`
   }).join('')
+  const elFontKeys = Array.from(new Set(EL_KEYS.map((k) => (s.el as any)?.[k]?.font).filter((k: any) => typeof k === 'string' && FONT_OPTIONS[k]))) as string[]
+  const elCss = EL_KEYS.map((k) => {
+    const e: any = (s.el as any)?.[k] ?? {}
+    const r: string[] = []
+    if (typeof e.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(e.color)) r.push(`color:${e.color}!important`)
+    if (typeof e.font === 'string' && FONT_OPTIONS[e.font]) r.push(`font-family:${FONT_OPTIONS[e.font].family}!important`)
+    let out = r.length ? `.el-${k}{${r.join(';')}}` : ''
+    if ((s.sizes as any)?.['el_' + k]) {
+      const z = sizes.el[k]
+      out += `.el-${k}{font-size:${z.phone}px!important}@media (min-width:768px){.el-${k}{font-size:${z.desktop}px!important}}`
+    }
+    return out
+  }).join('')
   const heroCss =
     (hero.headFont || hero.headColor ? `#top h1{${hero.headFont ? `font-family:${hero.headFont}!important;` : ''}${hero.headColor ? `color:${hero.headColor}!important;` : ''}}` : '') +
     (hero.subFont || hero.subColor ? `#top .cr-sub{${hero.subFont ? `font-family:${hero.subFont}!important;` : ''}${hero.subColor ? `color:${hero.subColor}!important;` : ''}}` : '') +
     `#top .cr-hpara{font-size:var(--hpara)!important;${hero.paraFont ? `font-family:${hero.paraFont}!important;` : ''}${hero.paraColor ? `color:${hero.paraColor}!important;` : ''}}`
-  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}${secTitleCss}`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}${secTitleCss}${elCss}`
 
   return {
     tpl,
@@ -346,7 +356,7 @@ export function resolveTheme(r: Record<string, any>) {
     body: FONT_OPTIONS[bodyKey].family,
     fontsHref:
       'https://fonts.googleapis.com/css2?' +
-      Array.from(new Set([headKey, bodyKey, ...(bookKey ? [bookKey] : []), ...(galKey ? [galKey] : []), ...heroFontKeys])).map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') +
+      Array.from(new Set([headKey, bodyKey, ...(bookKey ? [bookKey] : []), ...(galKey ? [galKey] : []), ...heroFontKeys, ...elFontKeys])).map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') +
       '&display=swap',
     accent,
     bg,

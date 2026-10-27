@@ -155,7 +155,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: t.headWeight ?? 500, letterSpacing: '0.01em' }
 
   // Per-section look: background, text color and fonts chosen in the designer.
-  const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string; title?: string }>)
+  const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string; title?: string; titleFont?: string }>)
   const famOf = (k?: string) => (k && FONT_OPTIONS[k] ? FONT_OPTIONS[k].family : null)
   const hexOk = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
   const secCss = Object.entries(secStyles).map(([id, v]) => {
@@ -165,11 +165,12 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     if (hexOk(v.text)) rules.push('color:' + hexOk(v.text) + ' !important')
     if (famOf(v.body)) rules.push('font-family:' + famOf(v.body) + ' !important')
     let css = rules.length ? '#' + id + ' {' + rules.join(';') + '}' : ''
+    if (famOf(v.titleFont)) css += '#' + id + ' .cr-sech {font-family:' + famOf(v.titleFont) + ' !important}'
     if (hexOk(v.title)) css += '#' + id + ' .cr-sech {color:' + hexOk(v.title) + ' !important}'
     if (famOf(v.head)) css += '#' + id + ' [style*="letter-spacing: 0.01em"], #' + id + ' .cr-h {font-family:' + famOf(v.head) + ' !important}'
     return css
   }).join('\n')
-  const extraFontKeys = Array.from(new Set(Object.values(secStyles).flatMap((v) => [v?.head, v?.body]).filter((k): k is string => !!k && !!FONT_OPTIONS[k])))
+  const extraFontKeys = Array.from(new Set(Object.values(secStyles).flatMap((v) => [v?.head, v?.body, v?.titleFont]).filter((k): k is string => !!k && !!FONT_OPTIONS[k])))
   const extraFontsHref = extraFontKeys.length ? 'https://fonts.googleapis.com/css2?' + extraFontKeys.map((k) => 'family=' + FONT_OPTIONS[k].gf).join('&') + '&display=swap' : null
   const btnStyle: React.CSSProperties = { background: accent, color: t.btnText, fontFamily: t.body, borderRadius: t.radius }
 
@@ -600,7 +601,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       case 'contact':
         return sec('contact', t.titles.contact,
           <div className="mx-auto max-w-xl text-center">
-            <p className="mb-8 whitespace-pre-line leading-relaxed" style={{ color: soft, fontSize: fsp('fs-contact', 15) }}>
+            <p className="el-con_msg mb-8 whitespace-pre-line leading-relaxed" style={{ color: soft, fontSize: fsp('fs-contact', 15) }}>
               {t.text.contact ?? 'Tell me about your day. Check a date and send me a message.'}
             </p>
             <div className="mb-10"><a href={availHref} className="cr-btn ct-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.text.contactBtn}</a></div>
@@ -608,7 +609,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
                 {socials.map((s) => (
                   <a key={s.label} href={String(s.url).startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
-                    className="uppercase tracking-[0.22em]" style={{ color: accent, fontSize: fsp('fs-social', 11) }}>{s.label}</a>
+                    className="el-con_social uppercase tracking-[0.22em]" style={{ color: accent, fontSize: fsp('fs-social', 11) }}>{s.label}</a>
                 ))}
               </div>
             )}
@@ -776,15 +777,15 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <section id="explore" className="px-6 py-16">
           <div className="mx-auto max-w-6xl">
             {ex.heading?.trim() && (
-              <p className="mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
+              <p className="el-ex_label mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
             )}
 
             {exLayout === 'lines' && (
               <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
                 {doors.map((b, i) => (
                   <a key={b.href} href={b.href} className="block px-3 py-8 text-center sm:px-6" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
-                    <p className="ex-t text-2xl sm:text-3xl" style={headStyle}>{b.t}</p>
-                    <p className="ex-s mt-2 text-[10px] uppercase tracking-[0.2em] sm:text-[11px] sm:tracking-[0.22em]" style={{ color: accent }}>{b.s} →</p>
+                    <p className="ex-t el-ex_title text-2xl sm:text-3xl" style={headStyle}>{b.t}</p>
+                    <p className="ex-s el-ex_sub mt-2 text-[10px] uppercase tracking-[0.2em] sm:text-[11px] sm:tracking-[0.22em]" style={{ color: accent }}>{b.s} →</p>
                   </a>
                 ))}
               </div>
@@ -796,8 +797,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   <a key={b.href} href={b.href} className="ex-tile group flex min-h-[200px] flex-col justify-between p-7 transition hover:-translate-y-1" style={{ background: tint, border: `1px solid ${line}`, borderRadius: t.radius }}>
                     <span className="text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
                     <div>
-                      <p className="ex-t text-4xl" style={headStyle}>{b.t}</p>
-                      <p className="ex-s mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{b.s} →</p>
+                      <p className="ex-t el-ex_title text-4xl" style={headStyle}>{b.t}</p>
+                      <p className="ex-s el-ex_sub mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{b.s} →</p>
                     </div>
                   </a>
                 ))}
@@ -809,8 +810,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 {doors.map((b, i) => (
                   <a key={b.href} href={b.href} className="flex items-baseline gap-5 py-7 transition hover:opacity-70" style={{ borderBottom: `1px solid ${line}` }}>
                     <span className="w-8 text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
-                    <span className="ex-t flex-1 text-3xl sm:text-5xl" style={headStyle}>{b.t}</span>
-                    <span className="ex-s hidden text-[11px] uppercase tracking-[0.22em] sm:block" style={{ color: soft }}>{b.s}</span>
+                    <span className="ex-t el-ex_title flex-1 text-3xl sm:text-5xl" style={headStyle}>{b.t}</span>
+                    <span className="ex-s el-ex_sub hidden text-[11px] uppercase tracking-[0.22em] sm:block" style={{ color: soft }}>{b.s}</span>
                     <span className="text-xl" style={{ color: accent }}>→</span>
                   </a>
                 ))}
@@ -821,8 +822,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <div className="grid gap-5 sm:grid-cols-3">
                 {doors.map((b) => (
                   <a key={b.href} href={b.href} className="ex-tile block px-6 py-9 text-center transition hover:-translate-y-1" style={{ background: tint, borderTop: `3px solid ${accent}`, borderRadius: t.radius }}>
-                    <p className="ex-t text-3xl" style={headStyle}>{b.t}</p>
-                    <p className="ex-s mx-auto mt-3 max-w-[16rem] text-sm" style={{ color: soft }}>{b.s}</p>
+                    <p className="ex-t el-ex_title text-3xl" style={headStyle}>{b.t}</p>
+                    <p className="ex-s el-ex_sub mx-auto mt-3 max-w-[16rem] text-sm" style={{ color: soft }}>{b.s}</p>
                     <p className="mt-5 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>Visit →</p>
                   </a>
                 ))}
@@ -833,8 +834,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <div className="space-y-2">
                 {doors.map((b) => (
                   <a key={b.href} href={b.href} className="block py-6 text-center transition hover:opacity-70">
-                    <p className="ex-t text-4xl sm:text-6xl" style={headStyle}>{b.t}</p>
-                    <p className="ex-s mt-3 text-[11px] uppercase tracking-[0.25em]" style={{ color: accent }}>{b.s}</p>
+                    <p className="ex-t el-ex_title text-4xl sm:text-6xl" style={headStyle}>{b.t}</p>
+                    <p className="ex-s el-ex_sub mt-3 text-[11px] uppercase tracking-[0.25em]" style={{ color: accent }}>{b.s}</p>
                   </a>
                 ))}
               </div>
@@ -844,9 +845,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <div className="grid gap-4 sm:grid-cols-3">
                 {doors.map((b) => (
                   <a key={b.href} href={b.href} className="ex-tile flex min-h-[180px] flex-col justify-between p-7 transition hover:-translate-y-1" style={{ border: `1px solid ${accent}`, borderRadius: t.radius }}>
-                    <p className="ex-t text-3xl" style={headStyle}>{b.t}</p>
+                    <p className="ex-t el-ex_title text-3xl" style={headStyle}>{b.t}</p>
                     <div className="mt-6 flex items-end justify-between gap-3">
-                      <p className="ex-s text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{b.s}</p>
+                      <p className="ex-s el-ex_sub text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{b.s}</p>
                       <span className="text-xl" style={{ color: accent }}>→</span>
                     </div>
                   </a>
@@ -870,8 +871,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
 
         <footer id="footer" className="px-6 pb-12 pt-6 text-center uppercase tracking-[0.2em]" style={{ color: soft, fontSize: 'calc(11px * var(--fs-foot, 1))' }}>
-          {t.text.footer && <p className="mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 'calc(13px * var(--fs-foot, 1))' }}>{t.text.footer}</p>}
-          © {new Date().getFullYear()} {name} · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
+          {t.text.footer && <p className="el-ft_line mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 'calc(13px * var(--fs-foot, 1))' }}>{t.text.footer}</p>}
+          <span className="el-ft_copy">{t.text.copyright ? t.text.copyright.replace(/\{year\}/g, String(new Date().getFullYear())) : `© ${new Date().getFullYear()} ${name}`}</span> · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
         </footer>
       </div>
     </>
