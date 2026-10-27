@@ -1711,7 +1711,25 @@ export default function WebsitePage() {
                   
                   </Group>
 </>)}
-{tab === 'home' && (<>{styleHead('Featured work style', '', 'portfolio')}
+{tab === 'home' && (<>{styleHead('Explore style', 'layout, titles, colors and sizes', 'explore', { explore: true })}<Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
+  <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
+    options={[
+      { v: 'lines', name: 'Lines', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="5" y="14" width="12" height="3" /><rect x="24" y="14" width="12" height="3" /><rect x="43" y="14" width="12" height="3" /></g><g fill="#D8D0C4"><rect x="5" y="21" width="12" height="2" /><rect x="24" y="21" width="12" height="2" /><rect x="43" y="21" width="12" height="2" /></g></svg> },
+      { v: 'tiles', name: 'Big tiles', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="8" width="16" height="24" rx="2" /><rect x="22" y="8" width="16" height="24" rx="2" /><rect x="40" y="8" width="16" height="24" rx="2" /></g><g fill="#B9AFA2"><rect x="7" y="25" width="10" height="3" /><rect x="25" y="25" width="10" height="3" /><rect x="43" y="25" width="10" height="3" /></g></svg> },
+      { v: 'list', name: 'Numbered list', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="6" y="9" width="30" height="4" /><rect x="6" y="19" width="30" height="4" /><rect x="6" y="29" width="30" height="4" /></g><g fill="#D8D0C4"><rect x="42" y="10" width="12" height="2" /><rect x="42" y="20" width="12" height="2" /><rect x="42" y="30" width="12" height="2" /></g></svg> },
+      { v: 'cards', name: 'Cards', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="9" width="16" height="22" rx="2" /><rect x="22" y="9" width="16" height="22" rx="2" /><rect x="40" y="9" width="16" height="22" rx="2" /></g><g fill="#9A8A74"><rect x="4" y="9" width="16" height="2" /><rect x="22" y="9" width="16" height="2" /><rect x="40" y="9" width="16" height="2" /></g></svg> },
+      { v: 'stack', name: 'Centered stack', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="16" y="7" width="28" height="5" /><rect x="22" y="14" width="16" height="2" /><rect x="16" y="21" width="28" height="5" /><rect x="22" y="28" width="16" height="2" /></g></svg> },
+      { v: 'outline', name: 'Outline boxes', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="none" stroke="#B9AFA2" strokeWidth="1.5"><rect x="4" y="9" width="16" height="22" rx="1" /><rect x="22" y="9" width="16" height="22" rx="1" /><rect x="40" y="9" width="16" height="22" rx="1" /></g></svg> },
+    ]} />
+
+</Group>
+{secBg('Explore background', 'explore', 'explore', <ColorField label="Card color" value={S.explore?.tile_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('explore', { tile_bg: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.tile_bg; st.explore = b })} />)}
+<Group title="Explore text" onOpen={() => scrollPreview('explore')}>
+{elBlock('Label', 'ex_label', { texts: [{ value: S.explore?.heading ?? '', onChange: (val) => setIn('explore', { heading: val }), placeholder: 'Explore' }], min: 9, max: 28 })}
+{elBlock('Link titles', 'ex_title', { min: 14, max: 90, texts: ([['galleries', 'Galleries'], ['about', 'About'], ['book', 'Book']] as const).map(([k, tt]) => ({ label: tt, value: (S.explore as any)?.titles?.[k] ?? '', onChange: (val: string) => setIn('explore', { titles: { ...((S.explore as any)?.titles ?? {}), [k]: val } }), placeholder: tt })) })}
+{elBlock('Link subtitles', 'ex_sub', { min: 9, max: 28, texts: ([['galleries', 'Galleries'], ['about', 'About'], ['book', 'Book']] as const).map(([k, tt]) => ({ label: tt, value: S.explore?.lines?.[k] ?? '', onChange: (val: string) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), [k]: val } }), placeholder: ({ galleries: 'See my work', about: 'Get to know me', book: 'Check my dates' } as Record<string, string>)[k] })) })}
+</Group>
+{styleHead('Featured work style', '', 'portfolio')}
 <Group title="Featured work layout" onOpen={() => scrollPreview('portfolio')}>
   <LayoutPicker value={T.portfolio.layout} onChange={(v) => setIn('portfolio', { layout: v })}
     options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature },
@@ -1817,24 +1835,6 @@ export default function WebsitePage() {
 {titleBlock('words')}
 {elBlock('Quotes', 'tes_quote', { min: 12, max: 60 })}
 {elBlock('Client names', 'tes_name', { min: 9, max: 28 })}
-</Group>
-{styleHead('Explore style', 'layout, titles, colors and sizes', 'explore', { explore: true })}<Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
-  <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
-    options={[
-      { v: 'lines', name: 'Lines', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="5" y="14" width="12" height="3" /><rect x="24" y="14" width="12" height="3" /><rect x="43" y="14" width="12" height="3" /></g><g fill="#D8D0C4"><rect x="5" y="21" width="12" height="2" /><rect x="24" y="21" width="12" height="2" /><rect x="43" y="21" width="12" height="2" /></g></svg> },
-      { v: 'tiles', name: 'Big tiles', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="8" width="16" height="24" rx="2" /><rect x="22" y="8" width="16" height="24" rx="2" /><rect x="40" y="8" width="16" height="24" rx="2" /></g><g fill="#B9AFA2"><rect x="7" y="25" width="10" height="3" /><rect x="25" y="25" width="10" height="3" /><rect x="43" y="25" width="10" height="3" /></g></svg> },
-      { v: 'list', name: 'Numbered list', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="6" y="9" width="30" height="4" /><rect x="6" y="19" width="30" height="4" /><rect x="6" y="29" width="30" height="4" /></g><g fill="#D8D0C4"><rect x="42" y="10" width="12" height="2" /><rect x="42" y="20" width="12" height="2" /><rect x="42" y="30" width="12" height="2" /></g></svg> },
-      { v: 'cards', name: 'Cards', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="9" width="16" height="22" rx="2" /><rect x="22" y="9" width="16" height="22" rx="2" /><rect x="40" y="9" width="16" height="22" rx="2" /></g><g fill="#9A8A74"><rect x="4" y="9" width="16" height="2" /><rect x="22" y="9" width="16" height="2" /><rect x="40" y="9" width="16" height="2" /></g></svg> },
-      { v: 'stack', name: 'Centered stack', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="16" y="7" width="28" height="5" /><rect x="22" y="14" width="16" height="2" /><rect x="16" y="21" width="28" height="5" /><rect x="22" y="28" width="16" height="2" /></g></svg> },
-      { v: 'outline', name: 'Outline boxes', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="none" stroke="#B9AFA2" strokeWidth="1.5"><rect x="4" y="9" width="16" height="22" rx="1" /><rect x="22" y="9" width="16" height="22" rx="1" /><rect x="40" y="9" width="16" height="22" rx="1" /></g></svg> },
-    ]} />
-
-</Group>
-{secBg('Explore background', 'explore', 'explore', <ColorField label="Card color" value={S.explore?.tile_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('explore', { tile_bg: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.tile_bg; st.explore = b })} />)}
-<Group title="Explore text" onOpen={() => scrollPreview('explore')}>
-{elBlock('Label', 'ex_label', { texts: [{ value: S.explore?.heading ?? '', onChange: (val) => setIn('explore', { heading: val }), placeholder: 'Explore' }], min: 9, max: 28 })}
-{elBlock('Link titles', 'ex_title', { min: 14, max: 90, texts: ([['galleries', 'Galleries'], ['about', 'About'], ['book', 'Book']] as const).map(([k, tt]) => ({ label: tt, value: (S.explore as any)?.titles?.[k] ?? '', onChange: (val: string) => setIn('explore', { titles: { ...((S.explore as any)?.titles ?? {}), [k]: val } }), placeholder: tt })) })}
-{elBlock('Link subtitles', 'ex_sub', { min: 9, max: 28, texts: ([['galleries', 'Galleries'], ['about', 'About'], ['book', 'Book']] as const).map(([k, tt]) => ({ label: tt, value: S.explore?.lines?.[k] ?? '', onChange: (val: string) => setIn('explore', { lines: { ...(S.explore?.lines ?? {}), [k]: val } }), placeholder: ({ galleries: 'See my work', about: 'Get to know me', book: 'Check my dates' } as Record<string, string>)[k] })) })}
 </Group>
 {styleHead('Closing style', 'message, colors, sizes and button', 'contact', { toggle: false })}
 {secBg('Closing background', 'contact', 'contact')}
