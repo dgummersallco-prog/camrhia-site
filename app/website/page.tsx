@@ -553,6 +553,7 @@ export default function WebsitePage() {
   const [cvBoard, setCvBoard] = useState<string | null>(null)
   const [cvNew, setCvNew] = useState<string | null>(null)
   const [cvGalleries, setCvGalleries] = useState<{ id: string; title: string }[]>([])
+  const [featured, setFeatured] = useState<{ id: string; title: string; cover: string | null }[]>([])
   const cvBridge = useState(() => ({ upd: null as any, board: null as string | null }))[0]
 
   useEffect(() => {
@@ -583,6 +584,7 @@ export default function WebsitePage() {
         })
       }
       if (d.type === 'camrhia-galleries' && Array.isArray(d.list)) setCvGalleries(d.list as { id: string; title: string }[])
+      if (d.type === 'camrhia-featured' && Array.isArray(d.list)) setFeatured(d.list as { id: string; title: string; cover: string | null }[])
       if (d.type === 'camrhia-hero-box') { const hb = d as unknown as { w?: unknown; h?: unknown }; if (typeof hb.w === 'number' && typeof hb.h === 'number' && hb.h > 0) setHeroBox({ w: hb.w, h: hb.h }) }
       if (d.type === 'camrhia-canvas-select') {
         if (d.id == null) {
@@ -1691,6 +1693,24 @@ export default function WebsitePage() {
 </Group>
 {secBg('Featured work background', 'portfolio', 'portfolio')}
 <Group title="Featured work details" onOpen={() => scrollPreview('portfolio')}>
+  <div>
+    <p className="mb-2 text-sm text-ink">Cover photos on your home page</p>
+    {featured.length === 0 ? (
+      <p className="text-xs text-ink-soft">Add a gallery with photos and it shows here.</p>
+    ) : (
+      <div className="grid grid-cols-3 gap-3">
+        {featured.slice(0, 6).map((g) => (
+          <div key={g.id}>
+            <div className="aspect-[4/5] overflow-hidden rounded-lg bg-line/50 ring-1 ring-line">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {g.cover && <img src={g.cover} alt="" className="h-full w-full object-cover" />}
+            </div>
+            <p className="mt-1 truncate text-xs text-ink">{g.title || 'Untitled'}</p>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
   <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
 </Group>

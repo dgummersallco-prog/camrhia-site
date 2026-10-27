@@ -639,6 +639,15 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     }
   }
 
+  React.useEffect(() => {
+    if (!isPreview) return
+    const list = galleries.map((g: any) => {
+      const c = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
+      return { id: g.id, title: g.title, cover: photoUrl(c?.storage_path) }
+    })
+    window.parent?.postMessage({ type: 'camrhia-featured', list }, '*')
+  }, [isPreview, galleries])
+
   const exploreEl = page === 'home' && doors.length > 0 && ex.show !== false ? (
           <section id="explore" className="px-6 py-16">
           <div className="mx-auto max-w-6xl">
