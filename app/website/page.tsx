@@ -628,6 +628,7 @@ export default function WebsitePage() {
   const [tQuote, setTQuote] = useState('')
   const [tFile, setTFile] = useState<File | null>(null)
   const [tBusy, setTBusy] = useState(false)
+  const [tSlot, setTSlot] = useState(0)
   const [previewKey, setPreviewKey] = useState(0)
   const [seen, setSeen] = useState<string[]>([])
   const [candsDb, setCandsDb] = useState<string[]>([])
@@ -1096,7 +1097,8 @@ export default function WebsitePage() {
     )
   }
 
-  async function addTm() {
+  async function addTm(fileOverride?: File | null) {
+    const f = fileOverride ?? tFile
     const sb = supabase
     if (!sb || !tQuote.trim() || tBusy) return
     const { data: sess } = await sb.auth.getSession()
@@ -1105,15 +1107,15 @@ export default function WebsitePage() {
     setTBusy(true)
     try {
       let path: string | null = null
-      if (tFile) {
-        const v = await makeVersions(tFile)
+      if (f) {
+        const v = await makeVersions(f)
         path = `${id}/testimonial_${Date.now()}.jpg`
         const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
         if (up.error) throw up.error
       }
       const { error } = await sb.from('testimonials').insert({ owner_id: id, quote: tQuote.trim(), client_name: tName.trim() || null, storage_path: path, sort_order: tms.length })
       if (error) throw error
-      setTName(''); setTQuote(''); setTFile(null)
+      setTName(''); setTQuote(''); setTFile(null); setTSlot(tms.length)
       await loadExtras()
       setPreviewKey((k) => k + 1)
       flash('Testimonial added')
@@ -1122,6 +1124,15 @@ export default function WebsitePage() {
     } finally {
       setTBusy(false)
     }
+  }
+  async function saveTm(t: Tm, patch: { quote?: string; client_name?: string | null }) {
+    const sb = supabase
+    if (!sb) return
+    if (patch.quote !== undefined && !patch.quote.trim()) return
+    const { error } = await sb.from('testimonials').update(patch).eq('id', t.id)
+    if (error) { flash(error.message); return }
+    await loadExtras()
+    setPreviewKey((k) => k + 1)
   }
   async function setTmPhoto(t: Tm, file: File) {
     const sb = supabase
@@ -1790,47 +1801,55 @@ export default function WebsitePage() {
                   </div>
 </Group>
 {secBg('Testimonials background', 'words', 'words')}
-<Group title="Kind words" hint="heading and testimonials" onOpen={() => scrollPreview('words')}>
-                  
-
-<div>
-                    
-                    <p className="mb-3 mt-1 text-sm text-ink-soft">Kind words, with a picture if you have one. Shown on your website and your app profile.</p>
-                    {tms.length === 0 && <p className="mb-3 text-sm text-ink-soft">No testimonials yet.</p>}
-                    {tms.map((t) => (
-                      <div key={t.id} className="mb-3 flex gap-3 rounded-lg border border-line bg-white p-3">
-                        {t.storage_path ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={BASE + t.storage_path} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
-                        ) : (
-                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#E6E3DE]"><svg viewBox="0 0 200 200" className="h-full w-full"><circle cx="100" cy="80" r="34" fill="#BDB8B0" /><path d="M32 200c0-42 30-68 68-68s68 26 68 68z" fill="#BDB8B0" /></svg></div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-sm text-ink">&ldquo;{t.quote}&rdquo;</p>
-                          {t.client_name && <p className="mt-1 text-xs text-ink-soft">{t.client_name}</p>}
-                        </div>
-                        <div className="flex flex-col items-end gap-2 self-start">
-                          <label className="cursor-pointer rounded-md border border-line px-2.5 py-1 text-xs font-medium text-ink hover:border-ink">
-                            {t.storage_path ? 'Change photo' : 'Add photo'}
-                            <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setTmPhoto(t, f) }} />
-                          </label>
-                          <button onClick={() => removeTm(t)} className="text-xs text-ink-soft hover:text-ink">Remove</button>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="mt-3 space-y-2 border-t border-line pt-3">
-                      <input className={inputCls} value={tName} onChange={(e) => setTName(e.target.value)} placeholder="Client name, e.g. Sarah & Tom" />
-                      <textarea className={inputCls} rows={3} value={tQuote} onChange={(e) => setTQuote(e.target.value)} placeholder="What they said" />
-                      <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-line bg-white px-3 py-3 text-sm text-ink-soft hover:border-ink">
-                        <span className="shrink-0 rounded-md bg-line/60 px-3 py-1.5 text-xs font-medium text-ink">{tFile ? 'Change photo' : 'Upload photo'}</span>
-                        <span className="min-w-0 truncate">{tFile ? tFile.name : 'Client photo'}</span>
-                        <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => setTFile(e.target.files?.[0] ?? null)} />
-                      </label>
-                      <button className={btn} disabled={!tQuote.trim() || tBusy} onClick={addTm}>{tBusy ? 'Adding…' : 'Add testimonial'}</button>
-                    </div>
-                  </div>
-
-                  
+<Group title="Your testimonials" onOpen={() => scrollPreview('words')}>
+{(() => {
+  const n = Math.min(6, Math.max(3, tms.length + 1))
+  const cur = Math.min(tSlot, tms.length)
+  const t = tms[cur]
+  const silhouette = <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-[#E6E3DE]"><svg viewBox="0 0 200 200" className="h-full w-full"><circle cx="100" cy="80" r="34" fill="#BDB8B0" /><path d="M32 200c0-42 30-68 68-68s68 26 68 68z" fill="#BDB8B0" /></svg></div>
+  const photoBtn = 'cursor-pointer rounded-md border border-line px-2.5 py-1 text-xs font-medium text-ink hover:border-ink'
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: n }, (_, i) => (
+          <button key={i} type="button" disabled={i > tms.length} onClick={() => setTSlot(i)} className={'h-9 w-9 rounded-full border text-sm font-medium disabled:opacity-30 ' + (i === cur ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
+        ))}
+      </div>
+      {t ? (
+        <div key={t.id} className="space-y-3">
+          <div className="flex items-center gap-3">
+            {t.storage_path ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={BASE + t.storage_path} alt="" className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+            ) : silhouette}
+            <label className={photoBtn}>
+              {t.storage_path ? 'Change photo' : 'Add photo'}
+              <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setTmPhoto(t, f) }} />
+            </label>
+            <button type="button" onClick={() => removeTm(t)} className="ml-auto text-xs text-ink-soft hover:text-ink">Remove</button>
+          </div>
+          <input className={inputCls} defaultValue={t.client_name ?? ''} placeholder="Name, e.g. Sarah & Tom" onBlur={(e) => { const v = e.target.value.trim(); if (v !== (t.client_name ?? '')) saveTm(t, { client_name: v || null }) }} />
+          <textarea className={inputCls} rows={4} defaultValue={t.quote ?? ''} placeholder="What they said" onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== (t.quote ?? '')) saveTm(t, { quote: v }) }} />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            {tFile ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={URL.createObjectURL(tFile)} alt="" className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+            ) : silhouette}
+            <label className={photoBtn}>
+              {tFile ? 'Change photo' : 'Add photo'}
+              <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0] ?? null; e.target.value = ''; setTFile(f); if (f && tQuote.trim() && !tBusy) addTm(f) }} />
+            </label>
+          </div>
+          <input className={inputCls} value={tName} onChange={(e) => setTName(e.target.value)} placeholder="Name, e.g. Sarah & Tom" />
+          <textarea className={inputCls} rows={4} value={tQuote} onChange={(e) => setTQuote(e.target.value)} onBlur={() => { if (tQuote.trim() && !tBusy) addTm() }} placeholder="What they said" />
+        </div>
+      )}
+    </div>
+  )
+})()}
 </Group>
 <Group title="Testimonials text" onOpen={() => scrollPreview('words')}>
 {titleBlock('words')}
