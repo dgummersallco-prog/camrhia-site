@@ -433,7 +433,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
             ) : L === 'feature' ? (
               <div className="grid md:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: 'calc(var(--gap) + 8px)' }}>
-                {list.map((g, i) => (i === 0 ? card(g, { aspectRatio: '16/10' }, 'md:col-span-2', true) : card(g, { aspectRatio: '4/5' })))}
+                {list.map((g, i) => (i === 0 ? card(g, { minHeight: 300 }, 'md:col-span-2 md:row-span-2', true) : card(g, { aspectRatio: '16/10' })))}
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: 'calc(var(--gap) + 8px)' }}>

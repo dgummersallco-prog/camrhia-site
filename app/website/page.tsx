@@ -371,6 +371,8 @@ const THUMBS = {
   galGrid: <div className="grid h-full grid-cols-3 gap-1">{bx()}{bx()}{bx()}</div>,
   galBanners: <div className="flex h-full flex-col gap-1">{bx('flex-1')}{bx('flex-1')}{bx('flex-1')}</div>,
   galFeature: <div className="grid h-full grid-cols-3 grid-rows-2 gap-1">{bx('col-span-2 row-span-2')}{bx()}{bx()}</div>,
+  galCarousel: <div className="flex h-full gap-1 overflow-hidden">{bx('w-2/5 shrink-0')}{bx('w-2/5 shrink-0')}{bx('w-2/5 shrink-0')}</div>,
+  galRows: <div className="flex h-full flex-col gap-1"><div className="flex flex-1 gap-1">{bx('flex-[3]')}<div className="flex flex-[2] flex-col justify-center gap-1"><div className="h-1" style={{ background: TB }} /><div className="h-1 w-2/3" style={{ background: TB }} /></div></div><div className="flex flex-1 gap-1"><div className="flex flex-[2] flex-col justify-center gap-1"><div className="h-1" style={{ background: TB }} /><div className="h-1 w-2/3" style={{ background: TB }} /></div>{bx('flex-[3]')}</div></div>,
   phMasonry: (
     <div className="flex h-full gap-1">
       <div className="flex flex-1 flex-col gap-1">{bx('flex-[3]')}{bx('flex-[2]')}</div>
@@ -1758,8 +1760,8 @@ export default function WebsitePage() {
 <Group title="Featured work layout" onOpen={() => scrollPreview('portfolio')}>
   <LayoutPicker value={T.portfolio.layout} onChange={(v) => setIn('portfolio', { layout: v })}
     options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature },
-      { v: 'carousel', name: 'Carousel', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="3" y="8" width="20" height="24" rx="2" /><rect x="26" y="8" width="20" height="24" rx="2" /><rect x="49" y="8" width="20" height="24" rx="2" /></g></svg> },
-      { v: 'rows', name: 'Rows', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="6" width="26" height="12" rx="1" /><rect x="30" y="22" width="26" height="12" rx="1" /></g><g fill="#B9AFA2"><rect x="34" y="9" width="18" height="2" /><rect x="34" y="13" width="12" height="2" /><rect x="8" y="25" width="18" height="2" /><rect x="8" y="29" width="12" height="2" /></g></svg> }]} />
+      { v: 'carousel', name: 'Carousel', thumb: THUMBS.galCarousel },
+      { v: 'rows', name: 'Rows', thumb: THUMBS.galRows }]} />
 </Group>
 {secBg('Featured work background', 'portfolio', 'portfolio')}
 <Group title="Featured work details" onOpen={() => scrollPreview('portfolio')}>
