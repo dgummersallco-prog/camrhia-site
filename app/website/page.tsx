@@ -1743,7 +1743,16 @@ export default function WebsitePage() {
                       </div>
                     ))}
                   </div>
-                {secStyleBlock('nav')}
+                {(() => {
+  const e = ((S as any).el?.menu_links ?? {}) as { color?: string; font?: string }
+  const put = (patch: Record<string, string | undefined>) => setIn('el', { menu_links: { ...e, ...patch } })
+  return (
+    <>
+      <ColorField label="Menu words color" value={e.color ?? T.ink} swatches={palette()} onChange={(h) => put({ color: h })} onReset={() => put({ color: undefined })} />
+      <FontPicker label="Menu words font" value={e.font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => put({ font: k })} />
+    </>
+  )
+})()}
 </Group>
 <Group title="Logo or studio name" hint="what shows in your menu" onOpen={() => scrollPreview('nav')}>
 {(() => {

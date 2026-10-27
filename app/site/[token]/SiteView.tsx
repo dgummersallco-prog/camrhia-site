@@ -205,7 +205,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <ul className={burger ? 'hidden' : 'hidden gap-8 md:flex'} style={{ transform: 'translateY(var(--menuy, 0px))' }}>
             {navItems.map((n) => (
               <li key={n.key}>
-                <a href={n.href} className="text-[11px] uppercase tracking-[0.2em]"
+                <a href={n.href} className="el-menu_links text-[11px] uppercase tracking-[0.2em]"
                   style={{ fontFamily: t.body, fontSize: 'var(--menu)', opacity: n.active ? 1 : 0.8, borderBottom: n.active ? '1px solid currentColor' : '1px solid transparent', paddingBottom: 3 }}>
                   {n.label}
                 </a>
@@ -222,7 +222,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <ul className="flex flex-col gap-4 px-6 pb-5 md:hidden" style={{ background: overlay ? 'rgba(0,0,0,0.72)' : bg }}>
             {navItems.map((n) => (
               <li key={n.key}>
-                <a href={n.href} onClick={() => setOpen(false)} className="text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body, fontSize: 'var(--menu)' }}>{n.label}</a>
+                <a href={n.href} onClick={() => setOpen(false)} className="el-menu_links text-[12px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body, fontSize: 'var(--menu)' }}>{n.label}</a>
               </li>
             ))}
           </ul>
@@ -844,7 +844,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                       <ul className="flex flex-wrap gap-x-8 gap-y-2">
                         {navItems.map((n) => (
                           <li key={n.key}>
-                            <a href={n.href} className="text-[11px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body, fontSize: 'var(--menu)', opacity: n.active ? 1 : 0.8, borderBottom: n.active ? '1px solid currentColor' : '1px solid transparent', paddingBottom: 3 }}>{n.label}</a>
+                            <a href={n.href} className="el-menu_links text-[11px] uppercase tracking-[0.2em]" style={{ fontFamily: t.body, fontSize: 'var(--menu)', opacity: n.active ? 1 : 0.8, borderBottom: n.active ? '1px solid currentColor' : '1px solid transparent', paddingBottom: 3 }}>{n.label}</a>
                           </li>
                         ))}
                       </ul>
