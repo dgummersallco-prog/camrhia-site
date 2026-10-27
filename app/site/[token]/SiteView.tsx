@@ -121,7 +121,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   ]
   const realFaq = (r.faq ?? []) as any[]
   const faq = isPreview && realFaq.length === 0 ? (PH_FAQ as any[]) : realFaq
-  const quotesShown = isPreview && quotes.length === 0 ? PH_QUOTES : quotes
+  const quotesShown = quotes.length === 0 ? PH_QUOTES : quotes
   const galleryCovers = galleries
     .map((g) => photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path))
     .filter(Boolean) as string[]
