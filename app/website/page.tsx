@@ -1271,8 +1271,6 @@ export default function WebsitePage() {
     const touched = sv.bg || sv.text || sv.head || sv.body || sv.title || (S as any).sizes?.['sec_' + id]
     return (
       <div className="space-y-4">
-        <p className={lab}>Section</p>
-        <ColorField label="Section background" value={sv.bg ?? T.bg} swatches={palette()} onChange={(h) => put({ bg: h })} onReset={() => put({ bg: undefined })} />
         {opts?.title && (
           <>
             <p className={lab}>Section title</p>
@@ -1297,6 +1295,17 @@ export default function WebsitePage() {
           })}>Reset this section</button>
         )}
       </div>
+    )
+  }
+
+  function secBg(title: string, id: string, scrollKey: string) {
+    if (!T) return null
+    const sv = ((S as any).secStyle?.[id] ?? {}) as { bg?: string }
+    const put = (bg?: string) => setIn('secStyle', { [id]: { ...sv, bg } })
+    return (
+      <Group title={title} hint="color behind this section" onOpen={() => scrollPreview(scrollKey)}>
+        <ColorField label="Background color" value={sv.bg ?? T.bg} swatches={palette()} onChange={(h) => put(h)} onReset={() => put(undefined)} />
+      </Group>
     )
   }
 
@@ -1471,7 +1480,7 @@ export default function WebsitePage() {
                 </div>
                 {tab === 'home' && (<>
 
-{styleHead('Hero style', 'template, photos, text, button, menu and logo')}
+{styleHead('Hero style', 'template, photos, text and button')}
 <Group title="Template" hint="pick a look" onOpen={() => scrollPreview('')}>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     {TEMPLATES.map((t) => (
@@ -1582,10 +1591,8 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Button size (hero only)" unit="px" min={9} max={20} step={1} value={T.sizes.heroBtn} onChange={(d, v) => setSize('hero_btn' as any, d, v)} />
                 </Group>
 
-<Group title="Menu" hint="style, words and fonts" onOpen={() => scrollPreview('nav')}>
-<Row label="Menu bar">
-                    <Seg value={T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }]} onChange={(v) => setIn('menu', { style: v })} />
-                  </Row>
+{styleHead('Menu', 'words, logo and background')}
+<Group title="Menu words" hint="words, size and fonts" onOpen={() => scrollPreview('nav')}>
                   <Row label="Menu on desktop">
                     <Seg value={S.menu?.icon === 'burger' ? 'burger' : 'links'} options={[{ v: 'links', label: 'Words' }, { v: 'burger', label: 'Hamburger' }]} onChange={(v) => setIn('menu', { icon: v })} />
                   </Row>
@@ -1628,6 +1635,16 @@ export default function WebsitePage() {
                   {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
                   
                   </Group>
+<Group title="Menu background" hint="bar color, or none on top of the photo" onOpen={() => scrollPreview('nav')}>
+  <Row label="Menu background">
+    <Seg value={T.menu.none ? 'none' : T.menu.solid ? 'solid' : 'auto'} options={[{ v: 'auto', label: 'Match template' }, { v: 'solid', label: 'Solid bar' }, { v: 'none', label: 'No background' }]} onChange={(v) => setIn('menu', { style: v })} />
+  </Row>
+  {T.menu.none ? (
+    <p className="text-xs text-ink-soft">The menu has no bar. With Editorial and Framed it sits on top of your hero photo. With the other templates it is plain text on your page background.</p>
+  ) : (
+    <ColorField label="Bar color" value={S.menu?.bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('menu', { bg: h })} onReset={() => upd((st) => { const b = { ...(st.menu ?? {}) }; delete b.bg; st.menu = b })} />
+  )}
+</Group>
 </>)}
 {tab === 'home' && (<>{styleHead('Explore style', 'layout, titles, colors and sizes', undefined, { explore: true })}<Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}
@@ -1661,6 +1678,7 @@ export default function WebsitePage() {
   ))}
   <p className="text-xs text-ink-soft">Leave a title empty to use the name from your Menu step.</p>
 </Group>
+{secBg('Explore background', 'explore', 'explore')}
 <Group title="Explore colors & text" hint="background, card color, title and subtitle" onOpen={() => scrollPreview('explore')}>
 {secStyleBlock('explore', { extra: (<>
 <ColorField label="Card color" value={S.explore?.tile_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('explore', { tile_bg: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.tile_bg; st.explore = b })} />
@@ -1695,6 +1713,7 @@ export default function WebsitePage() {
                   </Row>
                   
 </Group>
+{secBg('Gallery background', 'portfolio', 'portfolio')}
 <Group title="Gallery colors & text" hint="background, colors, fonts and name size" onOpen={() => scrollPreview('portfolio')}>
 {secStyleBlock('portfolio', { title: true, extra: (<>
                   <SizeControl device={device} label="Gallery name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsCover} onChange={(dv, v) => setSize('fsCover', dv, v)} />
@@ -1740,6 +1759,7 @@ export default function WebsitePage() {
 
                   
 </Group>
+{secBg('Testimonials background', 'words', 'words')}
 <Group title="Testimonials colors & text" hint="background, colors, fonts and quote size" onOpen={() => scrollPreview('words')}>
 {secStyleBlock('words', { title: true, extra: (<>
                   <SizeControl device={device} label="Quote text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsTesti} onChange={(dv, v) => setSize('fsTesti', dv, v)} />
@@ -1753,6 +1773,7 @@ export default function WebsitePage() {
                     <textarea rows={3} value={S.text?.contact ?? ''} onChange={(e) => setIn('text', { contact: e.target.value })} placeholder="Tell me about your day. Check a date and send me a message." className={inputCls} />
                   </div>
                 </Group>
+{secBg('Closing background', 'contact', 'contact')}
 <Group title="Closing colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('contact')}>
 {secStyleBlock('contact', { title: true, extra: (<>
                   <SizeControl device={device} label="Message text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsContact} onChange={(dv, v) => setSize('fsContact', dv, v)} />
@@ -1783,6 +1804,7 @@ export default function WebsitePage() {
                     <input value={S.text?.footer ?? ''} onChange={(e) => setIn('text', { footer: e.target.value })} placeholder="e.g. Serving Boise, Sun Valley and beyond" className={inputCls} />
                   </div>
                 </Group>
+{secBg('Footer background', 'footer', 'footer')}
 <Group title="Footer colors & text" hint="background, colors, fonts and size" onOpen={() => scrollPreview('footer')}>
 {secStyleBlock('footer', { title: false, extra: (<>
                   <SizeControl device={device} label="Footer text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFoot} onChange={(dv, v) => setSize('fsFoot', dv, v)} />
@@ -1883,6 +1905,7 @@ export default function WebsitePage() {
                   )}
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
+{secBg('About background', 'about', 'about')}
 <Group title="About colors & text" hint="background, colors, fonts and story size" onOpen={() => scrollPreview('about')}>
 {secStyleBlock('about', { title: true, extra: (<>
                   <SizeControl device={device} label="Story text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsAbout} onChange={(dv, v) => setSize('fsAbout', dv, v)} />
@@ -1949,6 +1972,7 @@ export default function WebsitePage() {
 
                   
 </Group>
+{secBg('Pricing background', 'investment', 'investment')}
 <Group title="Pricing colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('investment')}>
 {secStyleBlock('investment', { title: true, extra: (<>
                   <SizeControl device={device} label="Package name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgName} onChange={(dv, v) => setSize('fsPkgName', dv, v)} />
@@ -1962,6 +1986,7 @@ export default function WebsitePage() {
                   <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
                 </Group>
+{secBg('FAQ background', 'faq', 'faq')}
 <Group title="FAQ colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('faq')}>
 {secStyleBlock('faq', { title: true, extra: (<>
                   <SizeControl device={device} label="Question size" unit="%" min={60} max={200} step={5} value={T.sizes.fsFaqQ} onChange={(dv, v) => setSize('fsFaqQ', dv, v)} />

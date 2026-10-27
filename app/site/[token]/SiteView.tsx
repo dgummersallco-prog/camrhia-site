@@ -187,8 +187,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       <>
       <nav
         id="nav"
-        className={overlay ? 'absolute inset-x-0 top-0 z-20' : 'sticky top-0 z-20'}
-        style={overlay ? { color: '#fff' } : { color: ink, background: `color-mix(in srgb, ${bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
+        className={overlay ? 'absolute inset-x-0 top-0 z-20' : t.menu.none ? 'relative z-20' : 'sticky top-0 z-20'}
+        style={overlay ? { color: '#fff' } : t.menu.none ? { color: ink } : { color: ink, background: `color-mix(in srgb, ${t.menu.bg ?? bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
       >
         <div className={(t.menu.logoPos ? t.menu.logoPos === 'center' : center) ? 'mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-4' : 'mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 py-2' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : '')}>
           <a href={hrefs.home} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>{brand}</a>
