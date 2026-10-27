@@ -1804,7 +1804,7 @@ export default function WebsitePage() {
 <Group title="Your testimonials" onOpen={() => scrollPreview('words')}>
 {(() => {
   const n = Math.min(6, Math.max(3, tms.length + 1))
-  const cur = Math.min(tSlot, tms.length)
+  const cur = Math.min(tSlot, n - 1)
   const t = tms[cur]
   const silhouette = <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-[#E6E3DE]"><svg viewBox="0 0 200 200" className="h-full w-full"><circle cx="100" cy="80" r="34" fill="#BDB8B0" /><path d="M32 200c0-42 30-68 68-68s68 26 68 68z" fill="#BDB8B0" /></svg></div>
   const photoBtn = 'cursor-pointer rounded-md border border-line px-2.5 py-1 text-xs font-medium text-ink hover:border-ink'
@@ -1812,7 +1812,7 @@ export default function WebsitePage() {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         {Array.from({ length: n }, (_, i) => (
-          <button key={i} type="button" disabled={i > tms.length} onClick={() => setTSlot(i)} className={'h-9 w-9 rounded-full border text-sm font-medium disabled:opacity-30 ' + (i === cur ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
+          <button key={i} type="button" onClick={() => setTSlot(i)} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (i === cur ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
         ))}
       </div>
       {t ? (
