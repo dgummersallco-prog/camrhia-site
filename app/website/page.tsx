@@ -637,6 +637,7 @@ export default function WebsitePage() {
   const [tSlot, setTSlot] = useState(0)
   const [gSlot, setGSlot] = useState(0)
   const [studioName, setStudioName] = useState('')
+  const [pSlot, setPSlot] = useState(0)
   useEffect(() => {
     const h = (e: MessageEvent) => { const d = e.data; if (d && d.type === 'camrhia-studio' && typeof d.name === 'string') setStudioName(d.name) }
     window.addEventListener('message', h)
@@ -1213,6 +1214,7 @@ export default function WebsitePage() {
     const { error } = await sb.from('website_packages').insert({ photographer_id: id, title: 'New package', price: null, description: null, sort_order: pkgs.length })
     if (error) { flash(error.message); return }
     await loadExtras()
+    setPSlot(pkgs.length)
     setPreviewKey((k) => k + 1)
   }
   async function linkPkg(p: WPkg, srcId: string) {
@@ -2077,7 +2079,14 @@ export default function WebsitePage() {
                       
                       <Row label="Button on each package"><Switch on={T.pricing.button} onChange={(v) => setIn('pricing', { button: v })} /></Row>
                     </div>
-                    {pkgs.map((p, i) => (
+                    {pkgs.length > 0 && (
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        {pkgs.map((p, i) => (
+                          <button key={p.id} type="button" onClick={() => setPSlot(i)} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (i === Math.min(pSlot, pkgs.length - 1) ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
+                        ))}
+                      </div>
+                    )}
+                    {pkgs.map((p, i) => i !== Math.min(pSlot, pkgs.length - 1) ? null : (
                       <div key={p.id} className="mb-3 rounded-lg border border-line bg-white p-3">
                         <div className="mb-2">
                           <Select className={inputCls} value={p.source_package_id ?? ''} onChange={(e) => linkPkg(p, e.target.value)}>
@@ -2089,11 +2098,30 @@ export default function WebsitePage() {
                           </Select>
                         </div>
                         {p.source_package_id && ownPkgs.some((x) => x.id === p.source_package_id) ? (
-                          <div className="rounded-lg bg-paper px-3 py-2 text-sm text-ink">
-                            <div className="flex justify-between gap-3"><span className="font-medium">{p.title}</span><span>{p.price}</span></div>
-                            {p.description && <p className="mt-1 whitespace-pre-line text-xs text-ink-soft">{p.description}</p>}
-                            <p className="mt-2 text-xs text-twilight">Updates automatically when you change this package.</p>
-                          </div>
+                          (() => {
+                            const ov = ((S.pkgOver ?? {})[p.id] ?? {}) as Record<string, string>
+                            const setOv = (k: 'title' | 'price' | 'description', v: string, base: string) => upd((st) => {
+                              const all = { ...(st.pkgOver ?? {}) }
+                              const row = { ...(all[p.id] ?? {}) }
+                              if (v === base) delete row[k]; else row[k] = v
+                              if (Object.keys(row).length) all[p.id] = row; else delete all[p.id]
+                              st.pkgOver = all
+                            })
+                            return (
+                              <div key={p.id + JSON.stringify(ov)} className="space-y-2">
+                                <div className="flex gap-2">
+                                  <input defaultValue={ov.title ?? p.title} onBlur={(e) => { const v = e.target.value.trim(); if (v) setOv('title', v, p.title) }} className={inputCls} placeholder="Package name" />
+                                  <input defaultValue={ov.price ?? p.price ?? ''} onBlur={(e) => setOv('price', e.target.value.trim(), p.price ?? '')} className={inputCls + ' max-w-[110px]'} placeholder="Price" />
+                                </div>
+                                <textarea defaultValue={ov.description ?? p.description ?? ''} rows={5} onBlur={(e) => setOv('description', e.target.value.trim(), p.description ?? '')} className={inputCls} placeholder="What is included" />
+                                {Object.keys(ov).length > 0 ? (
+                                  <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => upd((st) => { const all = { ...(st.pkgOver ?? {}) }; delete all[p.id]; st.pkgOver = all })}>Match my app package</button>
+                                ) : (
+                                  <p className="text-xs text-twilight">Matches your app package. Edit here to change only your website.</p>
+                                )}
+                              </div>
+                            )
+                          })()
                         ) : (
                           <>
                         <div className="mb-2 flex gap-2">

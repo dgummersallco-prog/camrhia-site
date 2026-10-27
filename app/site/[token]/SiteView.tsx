@@ -114,7 +114,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     }))
     .filter((g) => g.photos.length > 0)
   const galleries = isPreview && realGalleries.length === 0 ? (PH_GALLERIES as typeof realGalleries) : realGalleries
-  const realPkgs = (r.site_packages ?? []) as { id: string; title: string; price: string | null; description: string | null; session_type?: string | null }[]
+  const realPkgs = ((r.site_packages ?? []) as { id: string; title: string; price: string | null; description: string | null; session_type?: string | null }[]).map((pk) => {
+    const o = (r.site_settings?.pkgOver ?? {})[pk.id] ?? {}
+    return { ...pk, ...(o.title !== undefined ? { title: o.title } : {}), ...(o.price !== undefined ? { price: o.price } : {}), ...(o.description !== undefined ? { description: o.description } : {}) }
+  })
   const sitePkgs = isPreview && realPkgs.length === 0 ? PH_PKGS : realPkgs
   const quotes: { text: string; who: string; img: string | null }[] = [
     ...((r.testimonials ?? []) as any[]).filter((x) => x.quote).map((x) => ({ text: x.quote as string, who: (x.client_name ?? '') as string, img: photoUrl(x.storage_path) })),
