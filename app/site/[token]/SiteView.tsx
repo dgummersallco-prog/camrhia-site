@@ -789,7 +789,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${(ov * 0.6).toFixed(2)})` }} />
             {renderNav(true, false)}
             <div className="relative mx-auto my-auto w-full max-w-xl px-6 py-28">
-              <div className="p-3" style={{ background: bg, color: ink }}>
+              <div className="p-3" style={{ background: t.hero.cardBg ?? bg, color: ink }}>
                 <div className="px-8 py-12 text-center" style={{ border: `1px solid ${line}` }}>
                   {subhead && <p className="cr-sub mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
                   <h1 style={h1Mid}>{headline}</h1>

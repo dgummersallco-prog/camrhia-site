@@ -165,6 +165,7 @@ export function resolveTheme(r: Record<string, any>) {
   const hfPara = heroFont(s.hero?.para_font)
   const heroFontKeys: string[] = [hfHead, hfSub, hfPara].filter((k): k is string => !!k)
   const hero = {
+    cardBg: (typeof s.hero?.card_bg === 'string' && /^#[0-9a-fA-F]{6}$/.test(s.hero.card_bg) ? s.hero.card_bg : null) as string | null,
     photos: Array.isArray(s.hero?.photos) ? (s.hero.photos as unknown[]).filter((x): x is string => typeof x === 'string' && !!x).slice(0, 6) : [],
     slideshow: !!s.hero?.slideshow,
     overlay: num(s.hero?.overlay, 0, 0.8, 0.35),

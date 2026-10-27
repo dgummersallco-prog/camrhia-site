@@ -1617,7 +1617,7 @@ export default function WebsitePage() {
 {canvasPanel('hero')}
 </Group>
 )}
-{secBg('Hero background', 'top', 'top')}
+{secBg('Hero background', 'top', 'top', form.site_template === 'framed' ? <ColorField label="Framed card color" value={S.hero?.card_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('hero', { card_bg: h })} onReset={() => upd((st) => { const b = { ...(st.hero ?? {}) }; delete b.card_bg; st.hero = b })} /> : null)}
 <Group title="Hero photos" hint="photos, slideshow and position" onOpen={() => scrollPreview('top')}>
 <div>
                     <p className="mb-1 text-sm text-ink">Hero photos</p>
