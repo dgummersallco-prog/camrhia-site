@@ -368,9 +368,9 @@ const tcard = () => (
 )
 const xbar = (w: string, h: number, c = '#2A1F24', o = 1) => <div style={{ width: w, height: h, background: c, opacity: o, borderRadius: 1 }} />
 const exw = (inner: React.ReactNode) => <div className="flex h-full flex-col gap-2"><div className="flex justify-center">{xbar('26%', 3, '#2A1F24', 0.45)}</div><div className="min-h-0 flex-1">{inner}</div></div>
-const fld = () => <div style={{ height: 7, background: '#fff', border: '1px solid #D8CDBF', borderRadius: 1 }} />
-const cal = () => <div className="grid grid-cols-7 gap-[2px]">{Array.from({ length: 21 }, (_, i) => <div key={i} style={{ height: 4, background: i === 9 ? '#B08D57' : '#D8CDBF', borderRadius: 1, opacity: i === 9 ? 1 : 0.7 }} />)}</div>
-const bkBtn = () => <div style={{ height: 7, background: '#B08D57', borderRadius: 1 }} />
+const fld = () => <div className="flex flex-col gap-[2px]">{xbar('30%', 2, '#2A1F24', 0.4)}<div style={{ height: 7, background: '#fff', border: '1px solid #D8CDBF', borderRadius: 2 }} /></div>
+const cal = (cell = 4) => <div className="flex flex-col gap-[3px]"><div className="flex items-center justify-between">{xbar('6px', 3, '#B08D57')}{xbar('36%', 3, '#2A1F24', 0.7)}{xbar('6px', 3, '#B08D57')}</div><div className="grid grid-cols-7 gap-[2px]">{Array.from({ length: 7 }, (_, i) => <div key={i} style={{ height: 2, background: '#2A1F24', opacity: 0.3, borderRadius: 1 }} />)}</div><div className="grid grid-cols-7 gap-[2px]">{Array.from({ length: 28 }, (_, i) => <div key={i} style={{ height: cell, background: i === 12 ? '#B08D57' : i % 5 === 2 ? '#EBE3D8' : '#fff', border: '1px solid #D8CDBF', borderRadius: 1 }} />)}</div></div>
+const bkBtn = () => <div style={{ height: 8, background: '#B08D57', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{xbar('30%', 2, '#F6F1EA')}</div>
 const dvd = (w = '70%') => <div style={{ width: w, height: 1, background: '#CFC4B8' }} />
 const pavatar = (sz: number) => <div style={{ width: sz, height: sz, borderRadius: 999, background: 'linear-gradient(145deg,#D9C7B5,#7A6858)' }} />
 const ln = (w = 'w-full') => <div className={`h-1 ${w}`} style={{ background: TL }} />
@@ -2235,9 +2235,9 @@ export default function WebsitePage() {
                       <p className="mb-2 text-sm text-ink">Calendar and form</p>
                       <LayoutPicker value={T.availability.layout === 'centered' || T.availability.layout === 'between' ? T.availability.layout : 'side'} onChange={(v) => setIn('availability', { layout: v })}
                     options={[
-                      { v: 'side', name: 'Side by side', thumb: <div className="flex h-full flex-col gap-1.5"><div className="flex justify-center">{xbar('40%', 4)}</div><div className="flex min-h-0 flex-1 gap-2"><div className="flex-1">{cal()}</div><div className="flex flex-1 flex-col justify-center gap-1.5">{fld()}{fld()}{fld()}{bkBtn()}</div></div></div> },
-                      { v: 'centered', name: 'Stacked', thumb: <div className="flex h-full flex-col justify-between"><div className="flex justify-center">{xbar('40%', 4)}</div>{cal()}<div className="flex flex-col gap-1">{fld()}{fld()}{bkBtn()}</div></div> },
-                      { v: 'between', name: 'Calendar above button', thumb: <div className="flex h-full flex-col justify-between"><div className="flex justify-center">{xbar('40%', 4)}</div><div className="flex flex-col gap-1">{fld()}{fld()}</div>{cal()}{bkBtn()}</div> },
+                      { v: 'side', name: 'Side by side', thumb: <div className="flex h-full flex-col gap-2"><div className="flex flex-col items-center gap-[3px]">{xbar('42%', 4)}{xbar('62%', 2, '#2A1F24', 0.35)}</div><div className="flex min-h-0 flex-1 items-center gap-3"><div className="flex-1">{cal(5)}</div><div className="flex flex-1 flex-col gap-[5px]">{fld()}{fld()}{fld()}{bkBtn()}</div></div></div> },
+                      { v: 'centered', name: 'Stacked', thumb: <div className="flex h-full flex-col justify-between"><div className="flex flex-col items-center gap-[3px]">{xbar('42%', 4)}{xbar('62%', 2, '#2A1F24', 0.35)}</div>{cal(4)}<div className="flex flex-col gap-[4px]">{fld()}{fld()}{bkBtn()}</div></div> },
+                      { v: 'between', name: 'Calendar above button', thumb: <div className="flex h-full flex-col justify-between"><div className="flex flex-col items-center gap-[3px]">{xbar('42%', 4)}{xbar('62%', 2, '#2A1F24', 0.35)}</div><div className="flex flex-col gap-[4px]">{fld()}{fld()}</div>{cal(4)}{bkBtn()}</div> },
                     ]} />
                     </div>
                   )}
