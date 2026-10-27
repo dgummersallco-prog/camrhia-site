@@ -1745,7 +1745,16 @@ export default function WebsitePage() {
                   </div>
                 {secStyleBlock('nav')}
 </Group>
-<Group title="Logo" hint="upload, size and position" onOpen={() => scrollPreview('nav')}>
+<Group title="Logo or studio name" hint="what shows in your menu" onOpen={() => scrollPreview('nav')}>
+{(() => {
+  const mode = (S.menu?.show === 'name' ? 'name' : S.menu?.show === 'logo' ? 'logo' : form.logo_path ? 'logo' : 'name') as 'logo' | 'name'
+  return (
+    <>
+      <Row label="Show in menu">
+        <Seg value={mode} options={[{ v: 'logo', label: 'Logo' }, { v: 'name', label: 'Studio name' }]} onChange={(v) => setIn('menu', { show: v })} />
+      </Row>
+      {mode === 'logo' ? (
+        <>
 <div className="border-t border-line pt-4">
                     <p className="mb-1 text-sm text-ink">Logo</p>
                     <p className="mb-3 text-xs text-ink-soft">Shows in your menu bar. It is the same logo as your app profile. Without one, your studio name is used.</p>
@@ -1763,22 +1772,27 @@ export default function WebsitePage() {
                       {form.logo_path && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => set('logo_path', null)}>Remove</button>}
                     </div>
                   </div>
-                  <SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
-                  <Row label="Logo position">
-                    <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
-                  </Row>
-                  {nudgeCtl('Nudge left / right', 'logoNudge', 80)}
-</Group>
-<Group title="Studio name" onOpen={() => scrollPreview('nav')}>
-<p className="text-xs text-ink-soft">Shows in your menu when you have no logo.</p>
+                  
+<SizeControl device={device} label="Logo size" unit="px" min={16} max={120} step={2} value={T.sizes.logo} onChange={(d, v) => setSize('logo', d, v)} />
+        </>
+      ) : (
+        <>
 <div>
   <label className="mb-1 block text-xs font-medium text-ink">Menu name</label>
   <input className={inputCls} value={S.menu?.brand ?? studioName} onChange={(e) => setIn('menu', { brand: e.target.value })} />
   {S.menu?.brand !== undefined && <button type="button" className="mt-1 text-xs text-ink-soft hover:text-ink" onClick={() => upd((st) => { const b = { ...(st.menu ?? {}) }; delete b.brand; st.menu = b })}>Use my studio name</button>}
 </div>
 {elBlock('Studio name', 'menu_brand', { min: 14, max: 60 })}
-                  
-                  </Group>
+        </>
+      )}
+<Row label="Position">
+                    <Seg value={T.menu.logoPos || 'default'} options={[{ v: 'default', label: 'Match template' }, { v: 'left', label: 'Left' }, { v: 'center', label: 'Center' }, { v: 'right', label: 'Right' }]} onChange={(v) => setIn('menu', { logoPos: v === 'default' ? '' : v })} />
+                  </Row>
+{nudgeCtl('Nudge left / right', 'logoNudge', 80)}
+    </>
+  )
+})()}
+</Group>
 </>)}
 {tab === 'home' && (<>{styleHead('Explore style', 'layout, titles, colors and sizes', 'explore', { explore: true })}<Group title="Explore layout" hint="pick a look" onOpen={() => scrollPreview('explore')}>
   <LayoutPicker value={S.explore?.layout ?? 'lines'} onChange={(v) => setIn('explore', { layout: v })}

@@ -190,7 +190,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   const burger = (r as any).site_settings?.menu?.icon === 'burger'
   const renderNav = (overlay: boolean, center: boolean) => {
-    const brand = logo
+    const brand = logo && t.menu.show !== 'name'
       ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
       : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24 }}>{t.menu.brand ?? name}</span>
     return (
@@ -826,7 +826,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   if (type === 'logo') {
                     return (
                       <a href={hrefs.home} style={{ display: 'inline-flex' }}>
-                        {logo ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} /> : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24, color: 'inherit', ...(it.font === 'body' ? { fontFamily: t.body } : {}) }}>{t.menu.brand ?? name}</span>}
+                        {logo && t.menu.show !== 'name' ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} /> : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24, color: 'inherit', ...(it.font === 'body' ? { fontFamily: t.body } : {}) }}>{t.menu.brand ?? name}</span>}
                       </a>
                     )
                   }

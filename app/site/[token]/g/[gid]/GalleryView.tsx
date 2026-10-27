@@ -63,7 +63,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
   const nav = (
     <nav className={'mx-auto flex max-w-6xl px-6 py-4 ' + (t.menu.logoPos === 'center' ? 'flex-col items-center gap-3' : 'items-center justify-between' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : ''))}>
       <Link href={`${homeHref}${qs}`} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>
-        {logo ? (
+        {logo && t.menu.show !== 'name' ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
         ) : (
