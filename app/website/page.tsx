@@ -1798,7 +1798,7 @@ export default function WebsitePage() {
       { v: 'rows', name: 'Rows', thumb: THUMBS.galRows }]} />
 </Group>
 {secBg('Featured work background', 'portfolio', 'portfolio')}
-<Group title="Featured work details" onOpen={() => scrollPreview('portfolio')}>
+<Group title="Featured work details" onOpen={() => scrollPreview(featured.length ? 'fw-' + featured[Math.min(gSlot, Math.min(featured.length, 6) - 1)].id : 'portfolio')}>
 {featured.length === 0 ? (
   <p className="text-xs text-ink-soft">Add a gallery with photos and it shows here.</p>
 ) : (() => {
@@ -1819,7 +1819,7 @@ export default function WebsitePage() {
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {list.map((x, i) => (
-          <button key={x.id} type="button" onClick={() => setGSlot(i)} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (i === cur ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
+          <button key={x.id} type="button" onClick={() => { setGSlot(i); scrollPreview('fw-' + x.id) }} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (i === cur ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
         ))}
       </div>
       <div className="h-28 w-24 overflow-hidden rounded-lg bg-line/50 ring-1 ring-line">
@@ -1866,7 +1866,7 @@ export default function WebsitePage() {
                   </div>
 </Group>
 {secBg('Testimonials background', 'words', 'words')}
-<Group title="Your testimonials" onOpen={() => scrollPreview('words')}>
+<Group title="Your testimonials" onOpen={() => scrollPreview('tm-' + Math.min(tSlot, 5))}>
 {(() => {
   const n = Math.min(6, Math.max(3, tms.length + 1))
   const cur = Math.min(tSlot, n - 1)
@@ -1877,7 +1877,7 @@ export default function WebsitePage() {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         {Array.from({ length: n }, (_, i) => (
-          <button key={i} type="button" onClick={() => setTSlot(i)} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (i === cur ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
+          <button key={i} type="button" onClick={() => { setTSlot(i); scrollPreview('tm-' + i) }} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (i === cur ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
         ))}
       </div>
       {t ? (
@@ -1935,7 +1935,7 @@ export default function WebsitePage() {
       <label className="text-xs font-medium text-ink">{label}</label>
       <Switch on={!(Array.isArray(S.socials_off) ? S.socials_off : []).includes(k)} onChange={(v) => upd((st) => { const h: string[] = Array.isArray(st.socials_off) ? [...st.socials_off] : []; const i = h.indexOf(k); if (v && i >= 0) h.splice(i, 1); if (!v && i < 0) h.push(k); st.socials_off = h })} />
     </div>
-    <input className={inputCls} value={form[k] ?? ''} onChange={(e) => set(k, e.target.value)} placeholder={'https://' + label.toLowerCase() + '.com/yourname'} />
+    <input className={inputCls} value={form[k] ?? ''} onFocus={() => scrollPreview('soc-' + k)} onChange={(e) => set(k, e.target.value)} placeholder={'https://' + label.toLowerCase() + '.com/yourname'} />
   </div>
 ))}
 </Group>

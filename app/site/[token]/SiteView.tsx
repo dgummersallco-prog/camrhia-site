@@ -357,7 +357,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           const u = photoUrl(cover?.storage_path)
           return (
-            <a key={g.id} href={`${base}/g/${g.id}${qs}`} className={`group relative block overflow-hidden ${cls}`} style={{ background: '#E5E1DB', ...style }}>
+            <a key={g.id} id={'fw-' + g.id} href={`${base}/g/${g.id}${qs}`} className={`group relative block overflow-hidden ${cls}`} style={{ background: '#E5E1DB', ...style }}>
               {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
               <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
               <div className="absolute inset-x-0 bottom-0 p-6 text-white">
@@ -404,7 +404,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   const odd = i % 2 === 1
                   return (
                     <div key={g.id} className="grid items-center md:grid-cols-2" style={{ marginTop: i > 0 ? 'calc(var(--gap) + 24px)' : 0 }}>
-                      <a href={href} className={`group relative block overflow-hidden ${odd ? 'md:order-2' : ''}`} style={{ aspectRatio: '4/3', background: '#E5E1DB' }}>
+                      <a href={href} id={'fw-' + g.id} className={`group relative block overflow-hidden ${odd ? 'md:order-2' : ''}`} style={{ aspectRatio: '4/3', background: '#E5E1DB' }}>
                         {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
                       </a>
                       <div className={`flex flex-col items-center justify-center px-6 py-10 text-center ${odd ? 'md:order-1' : ''}`}>
@@ -573,7 +573,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           L === 'stacked' ? (
             <div className="mx-auto max-w-3xl">
               {list.map((q, i) => (
-                <figure key={i} className="py-10 text-center" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
+                <figure key={i} id={'tm-' + i} className="py-10 text-center" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
                   {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 h-24 w-24 rounded-full object-cover" />}
                   <blockquote className="el-tes_quote italic leading-relaxed" style={{ fontFamily: t.head, fontSize: fsr('fs-testi', 1.5) }}>&ldquo;{q.text}&rdquo;</blockquote>
                   {q.who && <figcaption className="el-tes_name mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
@@ -583,7 +583,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           ) : L === 'cards' ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {list.map((q, i) => (
-                <figure key={i} className="flex flex-col p-8" style={{ background: `color-mix(in srgb, ${bg} 40%, #fff)`, border: `1px solid ${line}` }}>
+                <figure key={i} id={'tm-' + i} className="flex flex-col p-8" style={{ background: `color-mix(in srgb, ${bg} 40%, #fff)`, border: `1px solid ${line}` }}>
                   <span style={{ ...headStyle, color: accent, fontSize: 48, lineHeight: 1 }}>&ldquo;</span>
                   <blockquote className="el-tes_quote mt-2 flex-1 leading-relaxed" style={{ fontSize: fsp('fs-testi', 15) }}>{q.text}</blockquote>
                   <figcaption className="mt-6 flex items-center gap-3">
@@ -596,7 +596,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           ) : (
             <div className="grid gap-10 md:grid-cols-3">
               {list.map((q, i) => (
-                <figure key={i} className="text-center">
+                <figure key={i} id={'tm-' + i} className="text-center">
                   {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 w-full object-cover" style={{ aspectRatio: '4/5' }} />}
                   <blockquote className="el-tes_quote italic leading-relaxed" style={{ fontFamily: t.head, fontSize: fsr('fs-testi', 1.25) }}>&ldquo;{q.text}&rdquo;</blockquote>
                   {q.who && <figcaption className="el-tes_name mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
@@ -626,7 +626,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             {socials.length > 0 && (
               <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
                 {socials.map((s) => (
-                  <a key={s.label} href={String(s.url).startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
+                  <a key={s.label} id={'soc-' + s.key} href={String(s.url).startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
                     className="el-con_social uppercase tracking-[0.22em]" style={{ color: accent, fontSize: fsp('fs-social', 11) }}>{s.label}</a>
                 ))}
               </div>
