@@ -993,10 +993,20 @@ export default function WebsitePage() {
         </div>
         <div>
           <p className="mb-2 text-xs font-medium text-ink">Your blocks</p>
-          <div className="flex flex-wrap gap-2">
-            {b.items.map((i, n) => (
-              <button key={i.id} type="button" title={names[i.type]} onClick={() => pick(i.id)} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (cvBoard === boardId && cvSel === i.id ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{n + 1}</button>
-            ))}
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+            {b.items.map((i, n) => {
+              const on = cvBoard === boardId && cvSel === i.id
+              const hint = (i.title || i.text || '').toString().slice(0, 24)
+              return (
+                <button key={i.id} type="button" onClick={() => pick(i.id)} className={'flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition ' + (on ? 'border-ink bg-ink text-white' : 'border-line bg-card text-ink hover:border-ink')}>
+                  <span className={'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-medium ' + (on ? 'bg-white/20' : 'bg-tint')}>{n + 1}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm leading-tight">{names[i.type]}</span>
+                    {hint && <span className={'block truncate text-xs ' + (on ? 'text-white/70' : 'text-ink-soft')}>{hint}</span>}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
         <div>
@@ -1102,11 +1112,11 @@ export default function WebsitePage() {
                 <Slider min={0.5} max={2.5} step={0.05} value={sel.fs ?? 1} onChange={(v) => patch(sel.id, { fs: v })} />
               </div>
             )}
-            <div className="flex flex-wrap gap-2 border-t border-line pt-3">
-              <button type="button" className={btnGhost} onClick={() => patch(sel.id, { z: sel.z + 1 })}>Bring forward</button>
-              <button type="button" className={btnGhost} onClick={() => patch(sel.id, { z: Math.max(0, sel.z - 1) })}>Send back</button>
-              <button type="button" className={btnGhost} style={{ color: '#9c3b3b' }} onClick={() => { setBoard({ ...b, items: b.items.filter((i) => i.id !== sel.id) }); pick(null) }}>Remove this item</button>
-            </div>
+            <div className="grid grid-cols-3 gap-2 border-t border-line pt-3">
+          <button type="button" className="flex h-10 w-full items-center justify-center rounded-lg border border-line text-sm text-ink transition hover:border-ink" onClick={() => patch(sel.id, { z: sel.z + 1 })}>Bring forward</button>
+          <button type="button" className="flex h-10 w-full items-center justify-center rounded-lg border border-line text-sm text-ink transition hover:border-ink" onClick={() => patch(sel.id, { z: Math.max(0, sel.z - 1) })}>Send back</button>
+          <button type="button" className="flex h-10 w-full items-center justify-center rounded-lg border border-line text-sm text-ink transition hover:border-ink hover:!border-[#9c3b3b]" style={{ color: '#9c3b3b' }} onClick={() => { setBoard({ ...b, items: b.items.filter((i) => i.id !== sel.id) }); pick(null) }}>Remove item</button>
+        </div>
           </div>
         )}
         <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { isGalPage ? upd((st: any) => { const gpp = { ...(st.galpage ?? {}) }; const cvs = { ...(gpp.canvases ?? {}) }; delete cvs[gpid]; gpp.canvases = cvs; st.galpage = gpp }) : setBoard(isHero ? heroStarter(device, heroSel.slice(0, 3)) : isAbout ? starter(device, ph2) : isGal ? galleryStarter(device, galIds) : blank(device)); pick(null) }}>
