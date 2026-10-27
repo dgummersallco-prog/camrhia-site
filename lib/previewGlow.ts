@@ -25,10 +25,12 @@ export function installPreviewGlow(): () => void {
   glow.className = 'cr-glow'
   document.body.appendChild(glow)
 
+  let targetId: string | null = null
   let target: HTMLElement | null = null
   let raf = 0
   const tick = () => {
-    if (target && document.body.contains(target)) {
+    target = targetId ? document.getElementById(targetId) : null
+    if (target) {
       const r = target.getBoundingClientRect()
       glow.style.display = 'block'
       const vw = document.documentElement.clientWidth
@@ -53,7 +55,7 @@ export function installPreviewGlow(): () => void {
   function onMsg(e: MessageEvent) {
     const d = e.data as { type?: string; id?: string } | null
     if (!d) return
-    if (d.type === 'camrhia-outline') target = d.id ? document.getElementById(d.id) : null
+    if (d.type === 'camrhia-outline') targetId = d.id || null
     if (d.type === 'camrhia-scroll' && d.id) {
       const el = document.getElementById(d.id)
       if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })
