@@ -146,7 +146,7 @@ function Group({ title, hint, open, onOpen, children }: { title: string; hint?: 
     }} className="scroll-mt-4 rounded-2xl border border-line bg-card p-5">
       <summary className="cursor-pointer font-fraunces text-lg font-semibold text-ink">
         {title}
-        {hint && <span className="ml-2 text-sm font-normal text-ink-soft">{hint}</span>}
+        
       </summary>
       <div className="mt-4 space-y-4">{children}</div>
     </details>
@@ -1344,22 +1344,22 @@ export default function WebsitePage() {
     const on = o?.explore ? S.explore?.show !== false : k ? form?.site_sections?.[k] !== false : true
     const arrow = 'flex h-7 w-7 items-center justify-center rounded-full border border-line bg-card text-[11px] text-ink transition hover:bg-paper disabled:opacity-30'
     return (
-      <div data-sh="1" className="scroll-mt-2 flex flex-wrap items-center justify-between gap-3 border-b border-line px-1 pb-2 pt-5">
+      <div data-sh="1" className="scroll-mt-2 flex items-center justify-between gap-3 border-b border-line px-1 pb-2 pt-5">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
-          {name} <span className="font-normal normal-case tracking-normal">· {hint}</span>
+          {name}
         </p>
         {(showToggle || (k && total > 0)) && (
           <div className="flex items-center gap-3">
             {showToggle && (
               <span className="flex items-center gap-2 text-xs text-ink-soft">
-                {on ? 'Showing' : 'Hidden'}
+                
                 <Switch on={on} onChange={(v) => (o?.explore ? setIn('explore', { show: v }) : set('site_sections', { ...(form?.site_sections ?? {}), [k as string]: v }))} />
               </span>
             )}
             {k && total > 0 && (
               <span className="flex items-center gap-1.5">
                 <button type="button" aria-label="Move section up" disabled={idx <= 0} onClick={() => moveSection(k, -1)} className={arrow}>▲</button>
-                <span className="min-w-[2.2rem] text-center text-[11px] text-ink-soft">{idx + 1} of {total}</span>
+                
                 <button type="button" aria-label="Move section down" disabled={idx < 0 || idx >= total - 1} onClick={() => moveSection(k, 1)} className={arrow}>▼</button>
               </span>
             )}
