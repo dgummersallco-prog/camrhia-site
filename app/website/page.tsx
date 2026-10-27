@@ -1636,21 +1636,22 @@ export default function WebsitePage() {
 <SizeControl device={device} label="Paragraph size" unit="px" min={10} max={40} step={1} value={T.sizes.paraSize} onChange={(dv, v) => setSize('paraSize', dv, v)} />
 </Group>
 <Group title="Hero button" hint="wording, color, shape, size" onOpen={() => scrollPreview('top')}>
+<p className="text-xs text-ink-soft">This button takes visitors to your booking page.</p>
                   <Row label="Show button in hero"><Switch on={T.hero.ctaShow} onChange={(v) => setHero({ cta_show: v })} /></Row>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">Button wording (hero only)</label>
+                    <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
                     <input value={S.hero?.btn_text ?? ''} onChange={(e) => setHero({ btn_text: e.target.value })} placeholder={S.hero?.cta_text || 'Check availability'} className={inputCls} />
                   </div>
-                  <ColorField label="Button color (hero only)" value={S.hero?.btn_bg ?? form.site_accent ?? brandHex()} swatches={palette()}
+                  <ColorField label="Button color" value={S.hero?.btn_bg ?? form.site_accent ?? brandHex()} swatches={palette()}
                     onChange={(h) => setHero({ btn_bg: h })}
                     onReset={() => upd((st) => { const b = { ...(st.hero ?? {}) }; delete b.btn_bg; st.hero = b })} />
-                  <ColorField label="Button text color (hero only)" value={S.hero?.btn_color ?? T.btnText} swatches={palette()}
+                  <ColorField label="Button text color" value={S.hero?.btn_color ?? T.btnText} swatches={palette()}
                     onChange={(h) => setHero({ btn_color: h })}
                     onReset={() => upd((st) => { const b = { ...(st.hero ?? {}) }; delete b.btn_color; st.hero = b })} />
-                  <Row label="Button shape (hero only)">
+                  <Row label="Button shape">
                     <Seg value={S.hero?.btn_shape ?? T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setHero({ btn_shape: v })} />
                   </Row>
-                  <SizeControl device={device} label="Button size (hero only)" unit="px" min={9} max={20} step={1} value={T.sizes.heroBtn} onChange={(d, v) => setSize('hero_btn' as any, d, v)} />
+                  <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.heroBtn} onChange={(d, v) => setSize('hero_btn' as any, d, v)} />
                 </Group>
 
 {styleHead('Menu', 'words, logo and background')}
