@@ -395,6 +395,7 @@ export function resolveTheme(r: Record<string, any>) {
     btnText,
     order,
     orderHome,
+    galText: (s.galtext && typeof s.galtext === 'object' ? s.galtext : {}) as Record<string, { name?: string; line?: string }>,
     orderAbout,
     titles,
     text,

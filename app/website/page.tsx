@@ -629,6 +629,7 @@ export default function WebsitePage() {
   const [tFile, setTFile] = useState<File | null>(null)
   const [tBusy, setTBusy] = useState(false)
   const [tSlot, setTSlot] = useState(0)
+  const [gSlot, setGSlot] = useState(0)
   const [previewKey, setPreviewKey] = useState(0)
   const [seen, setSeen] = useState<string[]>([])
   const [candsDb, setCandsDb] = useState<string[]>([])
@@ -1750,30 +1751,45 @@ export default function WebsitePage() {
 </Group>
 {secBg('Featured work background', 'portfolio', 'portfolio')}
 <Group title="Featured work details" onOpen={() => scrollPreview('portfolio')}>
-  <div>
-    <p className="mb-2 text-sm text-ink">Cover photos on your home page</p>
-    {featured.length === 0 ? (
-      <p className="text-xs text-ink-soft">Add a gallery with photos and it shows here.</p>
-    ) : (
-      <div className="grid grid-cols-3 gap-3">
-        {featured.slice(0, 6).map((g) => (
-          <div key={g.id}>
-            <div className="aspect-[4/5] overflow-hidden rounded-lg bg-line/50 ring-1 ring-line">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {g.cover && <img src={g.cover} alt="" className="h-full w-full object-cover" />}
-            </div>
-            <p className="mt-1 truncate text-xs text-ink">{g.title || 'Untitled'}</p>
-          </div>
+{featured.length === 0 ? (
+  <p className="text-xs text-ink-soft">Add a gallery with photos and it shows here.</p>
+) : (() => {
+  const list = featured.slice(0, 6)
+  const cur = Math.min(gSlot, list.length - 1)
+  const g = list[cur]
+  const gt = (S.galtext ?? {})[g.id] ?? {}
+  const setGt = (patch: Record<string, string>) => upd((st) => {
+    const all = { ...(st.galtext ?? {}) }
+    const row: Record<string, string> = { ...(all[g.id] ?? {}), ...patch }
+    if (!row.name) delete row.name
+    if (!row.line) delete row.line
+    if (Object.keys(row).length) all[g.id] = row
+    else delete all[g.id]
+    st.galtext = all
+  })
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {list.map((x, i) => (
+          <button key={x.id} type="button" onClick={() => setGSlot(i)} className={'h-9 w-9 rounded-full border text-sm font-medium ' + (i === cur ? 'border-ink bg-ink text-white' : 'border-line text-ink hover:border-ink')}>{i + 1}</button>
         ))}
       </div>
-    )}
-  </div>
+      <div className="h-28 w-24 overflow-hidden rounded-lg bg-line/50 ring-1 ring-line">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {g.cover && <img src={g.cover} alt="" className="h-full w-full object-cover" />}
+      </div>
+      <input className={inputCls} value={gt.name ?? ''} onChange={(e) => setGt({ name: e.target.value })} placeholder={g.title || 'Gallery name'} />
+      <input className={inputCls} value={gt.line ?? ''} onChange={(e) => setGt({ line: e.target.value })} placeholder="Extra line, e.g. Sun Valley, June 2025" />
+    </div>
+  )
+})()}
   <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
 </Group>
 <Group title="Featured work text" onOpen={() => scrollPreview('portfolio')}>
 {titleBlock('portfolio')}
 {elBlock('Gallery names', 'gal_name', { min: 14, max: 90 })}
+{elBlock('Extra line', 'gal_count', { min: 9, max: 28 })}
 
 </Group>
 <Group title="Featured work button" onOpen={() => scrollPreview('portfolio')}>

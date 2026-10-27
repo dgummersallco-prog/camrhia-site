@@ -107,7 +107,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const realGalleries = ((r.site_galleries ?? []) as any[])
     .map((g) => ({
       id: g.id as string,
-      title: (g.title ?? '') as string,
+      title: (t.galText[g.id]?.name?.trim() || g.title || '') as string,
+      line: (t.galText[g.id]?.line ?? '').trim(),
       cover_photo_id: (g.cover_photo_id ?? null) as string | null,
       photos: [...(g.photos ?? [])].sort((x: any, y: any) => (x.sort_order ?? 0) - (y.sort_order ?? 0)) as any[],
     }))
@@ -355,6 +356,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
               <div className="absolute inset-x-0 bottom-0 p-6 text-white">
                 <p className="el-gal_name" style={{ ...headStyle, fontSize: fsr('fs-cover', big ? 2.25 : 1.875), lineHeight: 1.15 }}>{g.title}</p>
+                {g.line && <p className="el-gal_count mt-1 text-[11px] uppercase tracking-[0.22em] opacity-90">{g.line}</p>}
                 
               </div>
             </a>
@@ -402,6 +404,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                       <div className={`flex flex-col items-center justify-center px-6 py-10 text-center ${odd ? 'md:order-1' : ''}`}>
                         <span className="text-sm tracking-[0.2em]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
                         <a href={href} className="el-gal_name mt-3" style={{ ...headStyle, fontSize: 'calc(clamp(2.25rem, 4vw, 3rem) * var(--fs-cover, 1))', lineHeight: 1.15 }}>{g.title}</a>
+                        {g.line && <p className="el-gal_count mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{g.line}</p>}
                         
                         <a href={href} className="mt-6 text-[11px] uppercase tracking-[0.22em]" style={{ color: accent }}>View gallery →</a>
                       </div>
