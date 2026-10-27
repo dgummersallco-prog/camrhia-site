@@ -1259,7 +1259,7 @@ export default function WebsitePage() {
     ? Array.from(new Set([...heroSel, ...extraHero, ...(form.cover_paths ?? []), ...(form.cover_path ? [form.cover_path] : []), ...candsDb]))
     : []
 
-  const ABOUT_KEYS = ['about', 'investment', 'faq']
+  const ABOUT_KEYS = ['about', 'investment', 'faq', 'aboutcta']
   function pageOfKey(k: string): 'home' | 'about' | 'galleries' {
     const c = ((S.customs ?? []) as any[]).find((x) => x.id === k)
     if (c) return c.page
@@ -2168,6 +2168,25 @@ export default function WebsitePage() {
 {elBlock('Questions', 'faq_q', { min: 10, max: 50 })}
 {elBlock('Answers', 'faq_a', { min: 10, max: 40, fontCats: ['serif', 'sans'] })}
 </Group>{customBlock('about')}
+{styleHead('Booking button style', '', 'aboutcta')}
+{secBg('Booking button background', 'aboutcta', 'aboutcta')}
+<Group title="Booking button" onOpen={() => scrollPreview('about-btn')}>
+<p className="text-xs text-ink-soft">This button takes visitors to your booking page.</p>
+<div>
+  <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
+  <input value={S.aboutBtn?.text ?? ''} onChange={(e) => setIn('aboutBtn', { text: e.target.value })} placeholder={S.hero?.cta_text || 'Check availability'} className={inputCls} />
+</div>
+<ColorField label="Button color" value={S.aboutBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
+  onChange={(h) => setIn('aboutBtn', { bg: h })}
+  onReset={() => upd((st) => { const b = { ...(st.aboutBtn ?? {}) }; delete b.bg; st.aboutBtn = b })} />
+<ColorField label="Button text color" value={S.aboutBtn?.color ?? T.btnText} swatches={palette()}
+  onChange={(h) => setIn('aboutBtn', { color: h })}
+  onReset={() => upd((st) => { const b = { ...(st.aboutBtn ?? {}) }; delete b.color; st.aboutBtn = b })} />
+<Row label="Button shape">
+  <Seg value={S.aboutBtn?.shape ?? T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('aboutBtn', { shape: v })} />
+</Row>
+<SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.abBtn} onChange={(d, v) => setSize('ab_btn' as any, d, v)} />
+</Group>
 </>)}
 {tab === 'book' && (<>
                 <Group title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>

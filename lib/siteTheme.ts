@@ -149,7 +149,7 @@ export function resolveTheme(r: Record<string, any>) {
         o.splice(0, 0, 'explore')
         return o
       })().filter((k) => k !== 'portfolio')
-  const orderAbout = orderOf(s.order_about, ['about', 'investment', 'faq', ...customIds('about')])
+  const orderAbout = orderOf(s.order_about, ['about', 'investment', 'faq', 'aboutcta', ...customIds('about')])
   const orderGalleries = orderOf(s.order_galleries, ['portfolio', ...customIds('galleries')])
 
   const titles: Record<string, string> = { ...DEFAULT_TITLES }
@@ -268,6 +268,7 @@ export function resolveTheme(r: Record<string, any>) {
     pfBtn: pairNum(s.sizes?.pf_btn ?? s.sizes?.button, 9, 20, 11, 12),
     ctBtn: pairNum(s.sizes?.ct_btn ?? s.sizes?.button, 9, 20, 11, 12),
     bkBtn: pairNum(s.sizes?.bk_btn ?? s.sizes?.button, 9, 20, 11, 12),
+    abBtn: pairNum(s.sizes?.ab_btn ?? s.sizes?.button, 9, 20, 11, 12),
     exTitle: pairNum(s.sizes?.ex_title, 14, 90, 26, 32),
     exSub: pairNum(s.sizes?.ex_sub, 9, 28, 11, 11),
     subhead: pairNum(s.sizes?.subhead, 9, 28, 11, 12),
@@ -352,6 +353,23 @@ export function resolveTheme(r: Record<string, any>) {
     }
     return out
   })()
+  const aboutBtnCss = (() => {
+    const cb: any = s.aboutBtn ?? {}
+    const okHex = (v: any) => (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null)
+    const bg = okHex(cb.bg)
+    const fg = okHex(cb.color)
+    const rad = cb.shape === 'pill' ? 999 : cb.shape === 'rounded' ? 10 : cb.shape === 'square' ? 0 : null
+    const r: string[] = []
+    if (bg) r.push(`background:${bg}!important`)
+    if (fg) r.push(`color:${fg}!important`)
+    if (rad !== null) r.push(`border-radius:${rad}px!important`)
+    let out = r.length ? `.cr-btn.ab-btn{${r.join(';')}}` : ''
+    if (s.sizes?.ab_btn) {
+      const sz = (n: number) => `font-size:${n}px!important;padding:${(n * 1.15).toFixed(1)}px ${(n * 2.7).toFixed(1)}px!important`
+      out += `.cr-btn.ab-btn{${sz(sizes.abBtn.phone)}}@media (min-width:768px){.cr-btn.ab-btn{${sz(sizes.abBtn.desktop)}}}`
+    }
+    return out
+  })()
   const secTitleCss = ['about', 'portfolio', 'investment', 'words', 'faq', 'contact'].map((id) => {
     if (!(s.sizes as any)?.['sec_' + id]) return ''
     const z = sizes.secTitles[id]
@@ -391,7 +409,7 @@ export function resolveTheme(r: Record<string, any>) {
     (hero.headFont || hero.headColor ? `#top h1{${hero.headFont ? `font-family:${hero.headFont}!important;` : ''}${hero.headColor ? `color:${hero.headColor}!important;` : ''}}` : '') +
     (hero.subFont || hero.subColor ? `#top .cr-sub{${hero.subFont ? `font-family:${hero.subFont}!important;` : ''}${hero.subColor ? `color:${hero.subColor}!important;` : ''}}` : '') +
     `#top .cr-hpara{font-size:var(--hpara)!important;${hero.paraFont ? `font-family:${hero.paraFont}!important;` : ''}${hero.paraColor ? `color:${hero.paraColor}!important;` : ''}}`
-  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}${bookBtnCss}${secTitleCss}${elCss}${portfolioBtnCss}`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${exploreCss}${contactBtnCss}${bookBtnCss}${aboutBtnCss}${secTitleCss}${elCss}${portfolioBtnCss}`
 
   return {
     tpl,
@@ -414,6 +432,7 @@ export function resolveTheme(r: Record<string, any>) {
     btnText,
     order,
     orderHome,
+    aboutBtnText: (str(s.aboutBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability') as string,
     socialHidden: (Array.isArray(s.socials_off) ? s.socials_off : []) as string[],
     galText: (s.galtext && typeof s.galtext === 'object' ? s.galtext : {}) as Record<string, { name?: string; line?: string }>,
     orderAbout,

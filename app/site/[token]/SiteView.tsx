@@ -143,6 +143,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     faq: on('faq') && faq.length > 0,
     contact: true,
     explore: true,
+    aboutcta: on('aboutcta'),
   }
   for (const c of t.customs) showMap[c.id] = on(c.id)
   const pageOrder: string[] = page === 'home' ? t.orderHome : page === 'about' ? t.orderAbout : t.orderGalleries
@@ -631,6 +632,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
             )}
           </div>, tinted)
+      case 'aboutcta':
+        return sec('aboutcta', null,
+          <div className="text-center"><a href={availHref} id="about-btn" className="cr-btn ab-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.aboutBtnText}</a></div>, tinted)
       default: {
         const cs = t.customs.find((x) => x.id === k)
         if (!cs) return null
