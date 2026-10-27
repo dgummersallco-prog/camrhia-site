@@ -1685,7 +1685,9 @@ export default function WebsitePage() {
 {tab === 'home' && (<>{styleHead('Featured work style', '', 'portfolio')}
 <Group title="Featured work layout" onOpen={() => scrollPreview('portfolio')}>
   <LayoutPicker value={T.portfolio.layout} onChange={(v) => setIn('portfolio', { layout: v })}
-    options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature }]} />
+    options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature },
+      { v: 'carousel', name: 'Carousel', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="3" y="8" width="20" height="24" rx="2" /><rect x="26" y="8" width="20" height="24" rx="2" /><rect x="49" y="8" width="20" height="24" rx="2" /></g></svg> },
+      { v: 'rows', name: 'Rows', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#D8D0C4"><rect x="4" y="6" width="26" height="12" rx="1" /><rect x="30" y="22" width="26" height="12" rx="1" /></g><g fill="#B9AFA2"><rect x="34" y="9" width="18" height="2" /><rect x="34" y="13" width="12" height="2" /><rect x="8" y="25" width="18" height="2" /><rect x="8" y="29" width="12" height="2" /></g></svg> }]} />
 </Group>
 {secBg('Featured work background', 'portfolio', 'portfolio')}
 <Group title="Featured work details" onOpen={() => scrollPreview('portfolio')}>

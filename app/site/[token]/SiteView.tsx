@@ -421,6 +421,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
                 )}
               />
+            ) : L === 'carousel' ? (
+              <div className="-mx-6 flex snap-x snap-mandatory overflow-x-auto px-6 pb-4" style={{ gap: 'calc(var(--gap) + 8px)', scrollbarWidth: 'thin' }}>
+                {list.map((g) => card(g, { aspectRatio: '4/5', flex: '0 0 auto', width: 'min(78vw, 340px)' }, 'snap-start'))}
+              </div>
             ) : L === 'banners' ? (
               <div className="flex flex-col" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: 'calc(var(--gap) + 8px)' }}>
                 {list.map((g) => card(g, { aspectRatio: '21/9', minHeight: 180 }))}

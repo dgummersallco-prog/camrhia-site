@@ -222,7 +222,7 @@ export function resolveTheme(r: Record<string, any>) {
   }
 
   const portfolio = {
-    layout: pick(s.portfolio?.layout, ['grid', 'banners', 'feature'] as const, 'grid'),
+    layout: pick(s.portfolio?.layout, ['grid', 'banners', 'feature', 'carousel', 'rows'] as const, 'grid'),
   }
 
   const about = {
