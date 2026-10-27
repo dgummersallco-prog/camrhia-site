@@ -147,6 +147,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const showPhoto = t.availability.photo && !!photo
   const stacked = L === 'centered'
+  const between = L === 'between' && t.calendar.show
   const photoPos: string = (r as any).site_settings?.availability?.photoPos ?? 'side'
   const photoSide = showPhoto && photoPos === 'side'
   const photoBack = showPhoto && photoPos === 'background'
@@ -187,14 +188,18 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const calBlock = t.calendar.show ? (
     <section id="book-cal" style={{ zoom: 'var(--cal, 100%)' }}>
-      <p style={stepLabel}>1 · Pick a date</p>
+      <p style={stepLabel}>{between ? 2 : 1} · Pick a date</p>
       <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} {...cal} onPick={(d) => setDate(d)} />
     </section>
   ) : null
 
+  const sendBtn = (
+    <button id="book-btn" form="book-form" type="submit" disabled={sending} className="cr-btn bk-btn" style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
+  )
+
   const formBlock = (
     <form id="book-form" onSubmit={submit} className="grid gap-4">
-      <p style={stepLabel}>{t.calendar.show ? 2 : 1} · Tell me about your day</p>
+      <p style={stepLabel}>{t.calendar.show && !between ? 2 : 1} · Tell me about your day</p>
       <div><label style={label}>Your name *</label>
         <input style={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} autoComplete="name" /></div>
       <div><label style={label}>Email *</label>
@@ -215,7 +220,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={(e) => setWebsite(e.target.value)}
         style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
       {error && <p style={{ margin: 0, color: '#B83232', fontSize: 14 }}>{error}</p>}
-      <button id="book-btn" type="submit" disabled={sending} className="cr-btn bk-btn" style={{ ...primary, opacity: sending ? 0.6 : 1 }}>{sending ? 'Sending…' : t.availability.button}</button>
+      {!between && sendBtn}
     </form>
   )
 
@@ -254,6 +259,8 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
           {headerBlock}
           {sent ? (
             <div className="mt-10">{sentBlock}</div>
+          ) : between ? (
+            <div className="mt-10 grid gap-10">{formBlock}{calBlock}{sendBtn}</div>
           ) : !stacked && !photoSide && calBlock ? (
             <div className="mt-10 grid gap-10 md:grid-cols-2 md:items-start md:gap-14">{calBlock}{formBlock}</div>
           ) : (

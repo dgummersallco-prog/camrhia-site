@@ -2117,10 +2117,11 @@ export default function WebsitePage() {
                   {!(T.availability.photo && (S.availability?.photoPos ?? 'side') === 'side') && (
                     <div>
                       <p className="mb-2 text-sm text-ink">Calendar and form</p>
-                      <LayoutPicker value={T.availability.layout === 'centered' ? 'centered' : 'side'} onChange={(v) => setIn('availability', { layout: v })}
+                      <LayoutPicker value={T.availability.layout === 'centered' || T.availability.layout === 'between' ? T.availability.layout : 'side'} onChange={(v) => setIn('availability', { layout: v })}
                     options={[
                       { v: 'side', name: 'Side by side', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="8" width="22" height="24" rx="2" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="33" y="10" width="21" height="3" /><rect x="33" y="16" width="21" height="3" /><rect x="33" y="22" width="21" height="3" /><rect x="33" y="28" width="21" height="4" rx="1" /></g></svg> },
                       { v: 'centered', name: 'Stacked', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="14" y="4" width="32" height="14" rx="2" fill="#D8D0C4" /><g fill="#B9AFA2"><rect x="14" y="22" width="32" height="3" /><rect x="14" y="28" width="32" height="3" /><rect x="14" y="34" width="32" height="3" /></g></svg> },
+                      { v: 'between', name: 'Calendar above button', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><g fill="#B9AFA2"><rect x="14" y="3" width="32" height="3" /><rect x="14" y="8" width="32" height="3" /></g><rect x="14" y="14" width="32" height="14" rx="2" fill="#D8D0C4" /><rect x="14" y="32" width="32" height="5" rx="2" fill="#B9AFA2" /></svg> },
                     ]} />
                     </div>
                   )}

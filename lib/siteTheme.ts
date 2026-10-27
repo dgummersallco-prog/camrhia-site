@@ -201,7 +201,7 @@ export function resolveTheme(r: Record<string, any>) {
     button: str(s.availability?.button) ?? 'Send inquiry',
     success: str(s.availability?.success),
     float: s.availability?.float !== false,
-    layout: pick(s.availability?.layout, ['centered', 'side', 'banner'] as const, 'side'),
+    layout: pick(s.availability?.layout, ['centered', 'side', 'banner', 'between'] as const, 'side'),
     photo: s.availability?.photo === true,
     font: bookKey,
     family: bookKey ? FONT_OPTIONS[bookKey].family : FONT_OPTIONS[headKey].family,
