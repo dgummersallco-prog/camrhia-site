@@ -21,7 +21,7 @@ function photoUrl(path: string | null | undefined): string | null {
 
 // Shown only inside the designer preview, so every section is visible while building.
 const PH_SCENES = [1, 2, 3, 4, 5, 6].map((n) => 'https://picsum.photos/seed/camrhia' + n + '/800/1000')
-const PH_AVATAR = 'https://i.pravatar.cc/200?img=47'
+const PH_AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#E6E3DE"/><circle cx="100" cy="80" r="34" fill="#BDB8B0"/><path d="M32 200c0-42 30-68 68-68s68 26 68 68z" fill="#BDB8B0"/></svg>')
 const PH_GALLERIES = ['Wedding day', 'Engagement', 'Family'].map((title, gi) => ({
   id: 'ph' + gi,
   title,
@@ -30,8 +30,8 @@ const PH_GALLERIES = ['Wedding day', 'Engagement', 'Family'].map((title, gi) => 
 }))
 const PH_QUOTES = [
   { text: 'This is where your testimonials will show. Add one in the app and it replaces this.', who: 'Client name', img: PH_AVATAR as string | null },
-  { text: 'A kind word from a happy client goes here.', who: 'Another client', img: 'https://i.pravatar.cc/200?img=12' as string | null },
-  { text: 'Short and sweet works best.', who: 'Third client', img: 'https://i.pravatar.cc/200?img=32' as string | null },
+  { text: 'A kind word from a happy client goes here.', who: 'Another client', img: PH_AVATAR as string | null },
+  { text: 'Short and sweet works best.', who: 'Third client', img: PH_AVATAR as string | null },
 ]
 const PH_PKGS = [
   { id: 'ph1', title: 'Package one', price: '$0000', description: 'What is included\nAnother thing included' },

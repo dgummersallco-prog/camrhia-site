@@ -1123,6 +1123,30 @@ export default function WebsitePage() {
       setTBusy(false)
     }
   }
+  async function setTmPhoto(t: Tm, file: File) {
+    const sb = supabase
+    if (!sb || tBusy) return
+    const { data: sess } = await sb.auth.getSession()
+    const id = sess.session?.user.id
+    if (!id) return
+    setTBusy(true)
+    try {
+      const v = await makeVersions(file)
+      const path = `${id}/testimonial_${Date.now()}.jpg`
+      const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+      if (up.error) throw up.error
+      const { error } = await sb.from('testimonials').update({ storage_path: path }).eq('id', t.id)
+      if (error) throw error
+      if (t.storage_path) await sb.storage.from('portfolio').remove([t.storage_path])
+      await loadExtras()
+      setPreviewKey((k) => k + 1)
+      flash('Photo saved')
+    } catch (e) {
+      flash((e as { message?: string })?.message ?? 'Could not save the photo.')
+    } finally {
+      setTBusy(false)
+    }
+  }
   async function removeTm(t: Tm) {
     const sb = supabase
     if (!sb || !window.confirm('Remove this testimonial?')) return
@@ -1757,19 +1781,29 @@ export default function WebsitePage() {
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={BASE + t.storage_path} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
                         ) : (
-                          <div className="h-16 w-16 shrink-0 rounded-lg bg-line/50" />
+                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#E6E3DE]"><svg viewBox="0 0 200 200" className="h-full w-full"><circle cx="100" cy="80" r="34" fill="#BDB8B0" /><path d="M32 200c0-42 30-68 68-68s68 26 68 68z" fill="#BDB8B0" /></svg></div>
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="line-clamp-2 text-sm text-ink">&ldquo;{t.quote}&rdquo;</p>
                           {t.client_name && <p className="mt-1 text-xs text-ink-soft">{t.client_name}</p>}
                         </div>
-                        <button onClick={() => removeTm(t)} className="self-start text-xs text-ink-soft hover:text-ink">Remove</button>
+                        <div className="flex flex-col items-end gap-2 self-start">
+                          <label className="cursor-pointer rounded-md border border-line px-2.5 py-1 text-xs font-medium text-ink hover:border-ink">
+                            {t.storage_path ? 'Change photo' : 'Add photo'}
+                            <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setTmPhoto(t, f) }} />
+                          </label>
+                          <button onClick={() => removeTm(t)} className="text-xs text-ink-soft hover:text-ink">Remove</button>
+                        </div>
                       </div>
                     ))}
                     <div className="mt-3 space-y-2 border-t border-line pt-3">
                       <input className={inputCls} value={tName} onChange={(e) => setTName(e.target.value)} placeholder="Client name, e.g. Sarah & Tom" />
                       <textarea className={inputCls} rows={3} value={tQuote} onChange={(e) => setTQuote(e.target.value)} placeholder="What they said" />
-                      <input type="file" accept="image/*,.heic,.heif" onChange={(e) => setTFile(e.target.files?.[0] ?? null)} className="block w-full text-xs text-ink-soft" />
+                      <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-line bg-white px-3 py-3 text-sm text-ink-soft hover:border-ink">
+                        <span className="shrink-0 rounded-md bg-line/60 px-3 py-1.5 text-xs font-medium text-ink">{tFile ? 'Change photo' : 'Upload photo'}</span>
+                        <span className="min-w-0 truncate">{tFile ? tFile.name : 'Client photo'}</span>
+                        <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => setTFile(e.target.files?.[0] ?? null)} />
+                      </label>
                       <button className={btn} disabled={!tQuote.trim() || tBusy} onClick={addTm}>{tBusy ? 'Adding…' : 'Add testimonial'}</button>
                     </div>
                   </div>
