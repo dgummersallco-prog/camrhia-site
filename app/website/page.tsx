@@ -1807,6 +1807,7 @@ export default function WebsitePage() {
 
 </Group>
 <Group title="Featured work button" onOpen={() => scrollPreview('portfolio')}>
+<p className="text-xs text-ink-soft">This button takes visitors to your galleries page.</p>
   <div>
     <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
     <input value={S.portfolioBtn?.text ?? ''} onChange={(e) => setIn('portfolioBtn', { text: e.target.value })} placeholder="View all galleries" className={inputCls} />
