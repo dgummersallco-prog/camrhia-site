@@ -6,7 +6,8 @@ import { installPreviewGlow } from '@/lib/previewGlow'
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DateCheckWidget } from '../../../p/[token]/DateCheckWidget'
-import { resolveTheme } from '@/lib/siteTheme'
+import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
+import { SiteNav } from '../SiteNav'
 
 const SESSION_TYPES = [
   'Wedding', 'Engagement', 'Proposal', 'Family', 'Maternity', 'Newborn', 'Senior',
@@ -229,17 +230,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <link rel="stylesheet" href={t.fontsHref} />
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
       <div id={photoBack ? 'book-photo' : undefined} style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
-        <nav className={'mx-auto flex max-w-6xl px-6 py-4 ' + (t.menu.logoPos === 'center' ? 'flex-col items-center gap-3' : 'items-center justify-between' + (t.menu.logoPos === 'right' ? ' flex-row-reverse' : ''))}>
-          <a href={`${homeHref}${qs}`} style={{ display: 'inline-flex', transform: 'translate(var(--nudge, 0px), var(--nudgey, 0px))', transition: 'transform 0.12s ease-out' }}>
-            {logo && t.menu.show !== 'name' ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt={studio} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
-            ) : (
-              <span className="el-menu_brand" style={{ ...head, fontSize: 24 }}>{t.menu.brand ?? studio}</span>
-            )}
-          </a>
-          <a href={`${homeHref}${qs}`} className="el-menu_links text-[11px] uppercase tracking-[0.2em]" style={{ fontSize: 'var(--menu)' }}>← Back</a>
-        </nav>
+        <SiteNav t={t} logo={logo} name={studio} homeHref={`${homeHref}${qs}`} headStyle={head} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`]] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k)).map(([k, h]) => ({ key: k, href: h, label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === 'book' }))} />
 
         {photoAbove && (
           <div id="book-photo" className="mx-auto max-w-5xl px-6 pt-4">
