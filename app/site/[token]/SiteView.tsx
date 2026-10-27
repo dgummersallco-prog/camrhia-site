@@ -308,9 +308,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
               <div className="relative z-10 -mt-28 ml-[10%] w-[90%] p-7 md:-mt-44 md:ml-[34%] md:w-[62%] md:p-12" style={{ background: cardBg, borderRadius: 28, boxShadow: '0 20px 50px rgba(0,0,0,0.07)' }}>
                 {t.titles.about && (
-                  <h2 style={{ ...headStyle, fontWeight: t.headWeight ?? 200, fontSize: 'clamp(2.2rem, 6vw, 4.5rem)', lineHeight: 1.05 }}>{t.titles.about}</h2>
+                  <h2 className="cr-sech" style={{ ...headStyle, fontWeight: t.headWeight ?? 200, fontSize: 'clamp(2.2rem, 6vw, 4.5rem)', lineHeight: 1.05 }}>{t.titles.about}</h2>
                 )}
-                <p className="mt-6 whitespace-pre-line text-justify leading-[1.9]" style={{ color: soft, fontWeight: 300, fontSize: fsp('fs-about', 16) }}>{t.text.about ?? r.bio ?? ''}</p>
+                <p className="el-about_text mt-6 whitespace-pre-line text-justify leading-[1.9]" style={{ color: soft, fontWeight: 300, fontSize: fsp('fs-about', 16) }}>{t.text.about ?? r.bio ?? ''}</p>
                 <div className="mt-8">{cta(true)}</div>
               </div>
               {photo2 && (
@@ -320,7 +320,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         }
         const body = (
           <div className={L === 'stacked' ? 'mx-auto max-w-2xl text-center' : ''}>
-            <p className="whitespace-pre-line leading-[1.85]" style={{ color: soft, fontSize: fsp('fs-about', 16) }}>{t.text.about ?? r.bio ?? ''}</p>
+            <p className="el-about_text whitespace-pre-line leading-[1.85]" style={{ color: soft, fontSize: fsp('fs-about', 16) }}>{t.text.about ?? r.bio ?? ''}</p>
             <div className="mt-8">{cta(true)}</div>
           </div>
         )
@@ -459,7 +459,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           ) : null
         const list = (d: string | null) =>
           feats(d).length > 0 && (
-            <ul className="grid gap-2.5 text-center leading-snug" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>
+            <ul className="el-pr_list grid gap-2.5 text-center leading-snug" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>
               {feats(d).map((f, j) => <li key={j}>{f}</li>)}
             </ul>
           )
@@ -472,8 +472,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                     <div key={p.id} className="flex flex-col items-center px-8 py-10 text-center"
                       style={{ background: panel, border: `1px solid ${hot ? accent : line}`, boxShadow: hot ? '0 10px 30px rgba(0,0,0,0.08)' : undefined }}>
                       {tag(hot)}
-                      <h3 style={{ ...headStyle, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
-                      {p.price && <p className="mt-3" style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 2.25), lineHeight: 1.15 }}>{p.price}</p>}
+                      <h3 className="el-pr_name" style={{ ...headStyle, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
+                      {p.price && <p className="el-pr_price mt-3" style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 2.25), lineHeight: 1.15 }}>{p.price}</p>}
                       <div className="my-6 h-px w-10" style={{ background: line }} />
                       {list(p.description)}
                       <div className="mt-auto">{book(hot)}</div>
@@ -491,12 +491,12 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                     <div key={p.id} className="py-8" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
                       {hot && <p className="mb-2 text-[10px] uppercase tracking-[0.28em]" style={{ color: accent }}>Most popular</p>}
                       <div className="flex items-baseline gap-3">
-                        <h3 style={{ ...headStyle, color: hot ? accent : ink, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
+                        <h3 className="el-pr_name" style={{ ...headStyle, color: hot ? accent : ink, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
                         <span className="flex-1" style={{ borderBottom: `1px dotted ${soft}`, opacity: 0.5, transform: 'translateY(-4px)' }} />
-                        {p.price && <span style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 1.5) }}>{p.price}</span>}
+                        {p.price && <span className="el-pr_price" style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 1.5) }}>{p.price}</span>}
                       </div>
                       {feats(p.description).length > 0 && (
-                        <p className="mt-3 leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>{feats(p.description).join('   ·   ')}</p>
+                        <p className="el-pr_list mt-3 leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>{feats(p.description).join('   ·   ')}</p>
                       )}
                       {book(hot, 'mt-5')}
                     </div>
@@ -512,8 +512,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   return (
                     <div key={p.id} className="flex flex-col items-center px-8 py-12 text-center" style={{ background: hot ? tint : bg }}>
                       {tag(hot)}
-                      <h3 style={{ ...headStyle, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
-                      {p.price && <p className="mt-3" style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 1.875), lineHeight: 1.15 }}>{p.price}</p>}
+                      <h3 className="el-pr_name" style={{ ...headStyle, fontSize: fsr('fs-pname', 1.5), lineHeight: 1.25 }}>{p.title}</h3>
+                      {p.price && <p className="el-pr_price mt-3" style={{ ...headStyle, color: accent, fontSize: fsr('fs-pprice', 1.875), lineHeight: 1.15 }}>{p.price}</p>}
                       <div className="my-6 h-px w-10" style={{ background: accent, opacity: 0.6 }} />
                       {list(p.description)}
                       <div className="mt-auto">{book(hot)}</div>
@@ -535,17 +535,17 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         return sec('investment', t.titles.investment,
           <div className="mx-auto max-w-5xl">
             {t.pricing.intro && (
-              <p className="mx-auto mb-12 max-w-xl whitespace-pre-line text-center leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 15) }}>{t.pricing.intro}</p>
+              <p className="el-pr_intro mx-auto mb-12 max-w-xl whitespace-pre-line text-center leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 15) }}>{t.pricing.intro}</p>
             )}
 
             {pkgGroups.length > 1 ? pkgGroups.map((gp) => (
               <div key={gp.key} className="mt-14 first:mt-0">
-                <p className="mb-8 text-center uppercase tracking-[0.28em]" style={{ color: accent, fontSize: fsp('fs-plist', 12) }}>{typeLabel(gp.key)}</p>
+                <p className="el-pr_group mb-8 text-center uppercase tracking-[0.28em]" style={{ color: accent, fontSize: fsp('fs-plist', 12) }}>{typeLabel(gp.key)}</p>
                 {layoutBlocks(gp.items)}
               </div>
             )) : layoutBlocks(sitePkgs)}
             {t.pricing.note && (
-              <p className="mx-auto mt-10 max-w-xl whitespace-pre-line text-center italic leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>{t.pricing.note}</p>
+              <p className="el-pr_note mx-auto mt-10 max-w-xl whitespace-pre-line text-center italic leading-relaxed" style={{ color: soft, fontSize: fsp('fs-plist', 14) }}>{t.pricing.note}</p>
             )}
             {!t.pricing.button && <div className="mt-10 text-center">{cta(true)}</div>}
           </div>, tinted)

@@ -1881,13 +1881,10 @@ export default function WebsitePage() {
                   {(S.about?.layout ?? T.about.layout) === 'canvas' && canvasPanel('about')}
 </Group>
 {secBg('About background', 'about', 'about')}
-<Group title="About story" hint="heading, text and photos" onOpen={() => scrollPreview('about')}>
+<Group title="About photos" hint="heading, text and photos" onOpen={() => scrollPreview('about')}>
                   
                   
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-ink">About text</label>
-                    <textarea rows={4} value={S.text?.about ?? ''} onChange={(e) => setIn('text', { about: e.target.value })} placeholder="Leave empty to use your bio from the app" className={inputCls} />
-                  </div>
+                  
                   {(S.about?.layout ?? T.about.layout) === 'collage' && (
                     <div className="border-t border-line pt-4">
                       <p className="mb-1 text-sm text-ink">Second photo</p>
@@ -1909,10 +1906,9 @@ export default function WebsitePage() {
                   )}
                   <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
                 </Group>
-<Group title="About colors & text" hint="background, colors, fonts and story size" onOpen={() => scrollPreview('about')}>
-{secStyleBlock('about', { title: true, extra: (<>
-                  <SizeControl device={device} label="Story text size" unit="%" min={60} max={200} step={5} value={T.sizes.fsAbout} onChange={(dv, v) => setSize('fsAbout', dv, v)} />
-</>) })}
+<Group title="About text" onOpen={() => scrollPreview('about')}>
+{titleBlock('about')}
+{elBlock('Story', 'about_text', { min: 10, max: 40, fontCats: ['serif', 'sans'], texts: [{ value: S.text?.about ?? '', onChange: (val) => setIn('text', { about: val }), placeholder: 'Leave empty to use your bio from the app', rows: 5 }] })}
 </Group>
 {styleHead('Pricing style', 'price list, colors and sizes', 'investment')}
 <Group title="Pricing layout" hint="pick a look" onOpen={() => scrollPreview('investment')}>
@@ -1931,8 +1927,6 @@ export default function WebsitePage() {
                     <div className="mb-4 space-y-3">
                       
                       <Row label="Button on each package"><Switch on={T.pricing.button} onChange={(v) => setIn('pricing', { button: v })} /></Row>
-                      <input value={S.pricing?.intro ?? ''} onChange={(e) => setIn('pricing', { intro: e.target.value })} placeholder="Line above the prices, e.g. Every collection includes a private gallery" className={inputCls} />
-                      <input value={S.pricing?.note ?? ''} onChange={(e) => setIn('pricing', { note: e.target.value })} placeholder="Line below, e.g. Custom collections available. Just ask." className={inputCls} />
                     </div>
                     {pkgs.map((p, i) => (
                       <div key={p.id} className="mb-3 rounded-lg border border-line bg-white p-3">
@@ -1976,12 +1970,14 @@ export default function WebsitePage() {
 
                   
 </Group>
-<Group title="Pricing colors & text" hint="background, colors, fonts and sizes" onOpen={() => scrollPreview('investment')}>
-{secStyleBlock('investment', { title: true, extra: (<>
-                  <SizeControl device={device} label="Package name size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgName} onChange={(dv, v) => setSize('fsPkgName', dv, v)} />
-                  <SizeControl device={device} label="Price size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgPrice} onChange={(dv, v) => setSize('fsPkgPrice', dv, v)} />
-                  <SizeControl device={device} label="What's included size" unit="%" min={60} max={200} step={5} value={T.sizes.fsPkgList} onChange={(dv, v) => setSize('fsPkgList', dv, v)} />
-</>) })}
+<Group title="Pricing text" onOpen={() => scrollPreview('investment')}>
+{titleBlock('investment')}
+{elBlock('Intro line', 'pr_intro', { min: 9, max: 40, texts: [{ value: S.pricing?.intro ?? '', onChange: (val) => setIn('pricing', { intro: val }), placeholder: 'Line above the prices, e.g. Every collection includes a private gallery', rows: 2 }] })}
+{elBlock('Package type label', 'pr_group', { min: 9, max: 28 })}
+{elBlock('Package names', 'pr_name', { min: 14, max: 60 })}
+{elBlock('Prices', 'pr_price', { min: 14, max: 80 })}
+{elBlock('What is included', 'pr_list', { min: 9, max: 28 })}
+{elBlock('Note below', 'pr_note', { min: 9, max: 28, texts: [{ value: S.pricing?.note ?? '', onChange: (val) => setIn('pricing', { note: val }), placeholder: 'Line below, e.g. Custom collections available. Just ask.', rows: 2 }] })}
 </Group>
 {styleHead('FAQ style', 'questions, colors and sizes', 'faq')}
 {secBg('FAQ background', 'faq', 'faq')}
