@@ -384,6 +384,7 @@ export function resolveTheme(r: Record<string, any>) {
     if (typeof e.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(e.color)) r.push(`color:${e.color}!important`)
     if (typeof e.font === 'string' && FONT_OPTIONS[e.font]) r.push(`font-family:${FONT_OPTIONS[e.font].family}!important`)
     let out = r.length ? `.el-${k}{${r.join(';')}}` : ''
+    if (typeof e.font === 'string' && FONT_OPTIONS[e.font]) out += `:is(#nav,#top,#explore,#about,#portfolio,#investment,#words,#faq,#contact) .el-${k}.el-${k}{font-family:${FONT_OPTIONS[e.font].family}!important}`
     if ((s.sizes as any)?.['el_' + k]) {
       const z = sizes.el[k]
       out += `.el-${k}{font-size:${z.phone}px!important}@media (min-width:768px){.el-${k}{font-size:${z.desktop}px!important}}`
