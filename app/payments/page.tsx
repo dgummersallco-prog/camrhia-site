@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { SubTabs } from '@/app/components/SubTabs'
 import Wordmark from '@/app/components/Wordmark'
 
 type St = {
@@ -173,6 +174,7 @@ export default function PaymentsPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="payments" />
+      <SubTabs group="money" active="payments" />
       <main className="mx-auto max-w-5xl px-6 py-10">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Payments</p>
         <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">Payments</h1>

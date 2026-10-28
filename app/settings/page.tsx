@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { SubTabs } from '@/app/components/SubTabs'
 
 type St = { connected: boolean; ready: boolean; enabled?: boolean; payoutsEnabled?: boolean; dashboardUrl?: string | null; bank?: { name: string | null; last4: string | null } | null }
 
@@ -100,6 +101,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="settings" />
+      <SubTabs group="account" active="settings" />
       <main className="mx-auto max-w-3xl px-6 py-10">
         <h1 className="font-fraunces text-3xl font-semibold text-ink">Settings</h1>
         {!ready ? (

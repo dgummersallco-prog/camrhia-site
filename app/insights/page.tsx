@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { SubTabs } from '@/app/components/SubTabs'
 
 type S = { id: string; names: string | null; session_type: string | null }
 type Pay = { wedding_id: string; amount: number | null; status: string | null; paid_at: string | null }
@@ -88,6 +89,7 @@ export default function InsightsPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="insights" />
+      <SubTabs group="money" active="insights" />
       <main className="mx-auto max-w-4xl px-6 py-10">
         <h1 className="font-fraunces text-3xl font-semibold text-ink">Insights</h1>
         <p className="mt-1 text-sm text-ink-soft">How your business is doing.</p>

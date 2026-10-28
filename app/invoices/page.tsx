@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { SubTabs } from '@/app/components/SubTabs'
 
 type Pay = { id: string; wedding_id: string; label: string | null; amount: number | null; due_date: string | null; status: string | null; paid_at: string | null; receipt_url: string | null }
 type Filter = 'all' | 'outstanding' | 'overdue' | 'paid'
@@ -81,6 +82,7 @@ export default function InvoicesPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="invoices" />
+      <SubTabs group="money" active="invoices" />
       <main className="mx-auto max-w-4xl px-6 py-10">
         <h1 className="font-fraunces text-3xl font-semibold text-ink">Invoices</h1>
         <p className="mt-1 text-sm text-ink-soft">Every payment across your sessions in one place.</p>

@@ -8,6 +8,7 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { SubTabs } from '@/app/components/SubTabs'
 
 type Pkg = {
   id: string
@@ -202,6 +203,7 @@ export default function PackagesEditor() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="packages" />
+      <SubTabs group="packages" active="packages" />
       <main className="mx-auto max-w-3xl px-6 py-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { BRAND_NAME } from '@/lib/brand'
 import Wordmark from "@/app/components/Wordmark"
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { SubTabs } from '@/app/components/SubTabs'
 
 const SOLO_FEATURES = [
   'Shared session timeline — built with your client',
@@ -120,6 +121,7 @@ export default function BillingPage() {
     return (
       <div className="min-h-screen bg-paper xl:pl-60">
         <DashboardHeader active="billing" />
+        <SubTabs group="account" active="billing" />
         <main className="mx-auto max-w-3xl px-6 py-10">
           <p className="text-ink-soft text-sm animate-pulse">Loading…</p>
         </main>
@@ -252,6 +254,7 @@ export default function BillingPage() {
     return (
       <div className="min-h-screen bg-paper xl:pl-60">
         <DashboardHeader active="billing" />
+        <SubTabs group="account" active="billing" />
         <main className="mx-auto max-w-3xl px-6 py-10">
           <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Billing</p>
           <h1 className="mb-6 font-fraunces text-3xl font-medium text-ink">A thank you from Camrhia</h1>
@@ -294,6 +297,7 @@ export default function BillingPage() {
   return (
     <div className="min-h-screen bg-paper flex flex-col xl:pl-60">
       <DashboardHeader active="billing" />
+      <SubTabs group="account" active="billing" />
       <header className="hidden">
         <Link href="/" className="font-fraunces text-xl font-semibold text-ink hover:text-twilight transition-colors">
           <Wordmark className="text-3xl" />

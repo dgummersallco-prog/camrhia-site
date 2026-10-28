@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { SubTabs } from '@/app/components/SubTabs'
 
 type Mini = { id: string; title: string; description: string | null; location: string | null; price: number; duration_min: number | null; tz: string; active: boolean }
 type Slot = { id: string; mini_id: string; starts_at: string; status: 'open' | 'held' | 'booked'; hold_expires_at: string | null; client_name: string | null; client_email: string | null; client_phone: string | null }
@@ -117,6 +118,7 @@ export default function MinisPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="minis" />
+      <SubTabs group="packages" active="minis" />
       <main className="mx-auto max-w-3xl px-6 py-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>

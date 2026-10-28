@@ -35,6 +35,12 @@ const ICONS: Record<string, string> = {
   affiliate: 'M20 12v10H4V12 M2 7h20v5H2z M12 22V7 M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z',
 }
 
+const COVERS: Record<string, string[]> = {
+  payments: ['payments', 'invoices', 'insights'],
+  packages: ['packages', 'minis'],
+  settings: ['settings', 'billing'],
+}
+
 const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'dashboard', href: '/dashboard', label: 'Home' },
   { tab: 'clients', href: '/clients', label: 'Clients' },
@@ -43,7 +49,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'questionnaires', href: '/questionnaires', label: 'Questionnaires' },
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
   { tab: 'contracts', href: '/contracts', label: 'Contracts' },
-  { tab: 'payments', href: '/payments', label: 'Payments' },
+  { tab: 'payments', href: '/payments', label: 'Money' },
   { tab: 'invoices', href: '/invoices', label: 'Invoices' },
   { tab: 'insights', href: '/insights', label: 'Insights' },
   { tab: 'minis', href: '/minis', label: 'Mini-sessions' },
@@ -165,7 +171,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
   }
 
   const item = (it: { tab: Tab | 'affiliate'; href: string; label: string }, accent = false) => {
-    const isActive = active === it.tab
+    const isActive = (COVERS[it.tab] ?? [it.tab]).includes(active)
     return (
       <Link
         key={it.href}
@@ -192,9 +198,9 @@ export function DashboardHeader({ active }: { active: Tab }) {
   const GROUPS: { label: string | null; tabs: string[] }[] = [
     { label: null, tabs: ['dashboard'] },
     { label: 'Clients', tabs: ['clients', 'messages', 'sessions', 'calendar'] },
-    { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments', 'invoices', 'insights', 'minis', 'team'] },
+    { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments', 'team'] },
     { label: 'Your brand', tabs: ['website', 'portfolio'] },
-    { label: 'Account', tabs: ['billing', 'settings', 'help'] },
+    { label: 'Account', tabs: ['settings', 'help'] },
   ]
   const groupedNav = GROUPS.map((g, gi) => (
     <div key={gi} className={gi === 0 ? '' : 'mt-5'}>
