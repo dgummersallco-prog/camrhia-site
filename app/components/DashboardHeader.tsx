@@ -86,6 +86,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
   const [open, setOpen] = useState(false)
   const [unread, setUnread] = useState(0)
   const [blocked, setBlocked] = useState(false)
+  const [showTeam, setShowTeam] = useState(false)
 
   useEffect(() => {
     async function run() {
@@ -110,6 +111,24 @@ export function DashboardHeader({ active }: { active: Tab }) {
         access = p.subscription_status === 'active' || p.subscription_status === 'comped' || trialActive
       }
       setBlocked(!access)
+    }
+    run().catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const uid = data.session.user.id
+      const [pr, mem] = await Promise.all([
+        sb.from('profiles').select('plan_tier').eq('id', uid).maybeSingle(),
+        sb.from('studio_members').select('role').eq('member_id', uid).eq('status', 'active').maybeSingle(),
+      ])
+      const tier = (pr.data as { plan_tier?: string | null } | null)?.plan_tier
+      const role = (mem.data as { role?: string | null } | null)?.role
+      setShowTeam(tier === 'studio' || role === 'admin')
     }
     run().catch(() => {})
   }, [])
@@ -206,7 +225,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
     <div key={gi} className={gi === 0 ? '' : 'mt-5'}>
       {g.label && <p className="mb-1.5 px-3.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-soft/70">{g.label}</p>}
       <div className="flex flex-col gap-1">
-        {g.tabs.map((t) => item(ITEMS.find((i) => i.tab === t)!))}
+        {g.tabs.filter((t) => t !== 'team' || showTeam || active === 'team').map((t) => item(ITEMS.find((i) => i.tab === t)!))}
         {g.label === 'Account' && item({ tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
       </div>
     </div>
