@@ -2046,7 +2046,7 @@ export default function WebsitePage() {
 {secBg('Footer background', 'footer', 'footer')}
 <Group title="Footer text" onOpen={() => scrollPreview('footer')}>
 {elBlock('Footer line', 'ft_line', { min: 9, max: 40, fontCats: ['serif', 'sans'], texts: [{ value: S.text?.footer ?? '', onChange: (val) => setIn('text', { footer: val }), placeholder: 'e.g. Serving Boise, Sun Valley and beyond' }] })}
-{elBlock('Copyright line', 'ft_copy', { min: 9, max: 28, fontCats: ['serif', 'sans'], texts: [{ value: S.text?.copyright ?? '', onChange: (val) => setIn('text', { copyright: val }), placeholder: '© {year} Your Studio Name' }] })}
+{elBlock('Copyright line', 'ft_copy', { min: 9, max: 28, fontCats: ['serif', 'sans'], texts: [{ value: S.text?.copyright ?? '', onChange: (val) => setIn('text', { copyright: val }), placeholder: '{year} Your Studio Name  (the © is added for you)' }] })}
 </Group>
 {customBlock('home')}
 </>)}

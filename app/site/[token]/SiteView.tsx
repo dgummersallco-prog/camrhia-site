@@ -904,7 +904,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
         <footer id="footer" className="px-6 pb-12 pt-6 text-center uppercase tracking-[0.2em]" style={{ color: soft, fontSize: 'calc(11px * var(--fs-foot, 1))' }}>
           {t.text.footer && <p className="el-ft_line mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 'calc(13px * var(--fs-foot, 1))' }}>{t.text.footer}</p>}
-          <span className="el-ft_copy">{t.text.copyright ? t.text.copyright.replace(/\{year\}/g, String(new Date().getFullYear())) : `© ${new Date().getFullYear()} ${name}`}</span> · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
+          <span className="el-ft_copy">{'© ' + (t.text.copyright ? t.text.copyright.replace(/\{year\}/g, String(new Date().getFullYear())) : `${new Date().getFullYear()} ${name}`).replace(/^\s*©\s*/, '')}</span> · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
         </footer>
       </div>
     </>
