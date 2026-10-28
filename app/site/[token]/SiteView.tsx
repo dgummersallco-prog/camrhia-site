@@ -477,8 +477,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 )}
               />
             ) : L === 'carousel' ? (
-              <div className="-mx-6 flex snap-x snap-mandatory overflow-x-auto px-6 pb-4" style={{ gap: gapX, scrollbarWidth: 'thin' }}>
-                {list.map((g) => card(g, { aspectRatio: shapeFor('4/5', 'grid'), flex: '0 0 auto', width: 'calc(min(78vw, 340px) * var(--cover-n, 1))' }, 'snap-start'))}
+              <div className="-mx-6 flex snap-x snap-mandatory overflow-x-auto px-6 pb-4 [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto" style={{ gap: gapX, scrollbarWidth: 'thin' }}>
+                {list.map((g) => card(g, { aspectRatio: shapeFor('4/5', 'grid'), flex: '0 0 auto', width: 'calc(min(78vw, 340px) * var(--cover-n, 1))' }, 'snap-center'))}
               </div>
             ) : L === 'banners' ? (
               <div className="flex flex-col" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: gapX }}>
