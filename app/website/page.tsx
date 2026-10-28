@@ -1138,7 +1138,7 @@ export default function WebsitePage() {
             <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => removeCustom(c.id)}>Delete this section</button>
           </Group>
         ))}
-        <button type="button" className={btnGhost + ' w-full'} onClick={() => addCustom(pg)}>+ Add a freestyle section</button>
+        <button type="button" className="w-full rounded-lg border-2 border-dashed py-4 text-sm font-medium text-ink transition hover:bg-black/5" style={{ borderColor: '#B08D57' }} onClick={() => addCustom(pg)}>+ Add a freestyle section</button>
       </>
     )
   }
@@ -2075,7 +2075,7 @@ export default function WebsitePage() {
                   <p className="text-xs text-ink-soft">Sizes follow the Phone / Desktop switch above the preview. You can also type an exact number.</p>
                   <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
                   <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
-                </Group>{customBlock('galleries')}
+                </Group>
 <Group title="Gallery button" hint="button on each gallery page" onOpen={() => scrollPreview('gal-btn')}>
 <p className="text-xs text-ink-soft">This button takes visitors to your booking page.</p>
 <div>
@@ -2094,6 +2094,7 @@ export default function WebsitePage() {
 <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.gbBtn} onChange={(d, v) => setSize('gb_btn' as any, d, v)} />
 </Group>
 {backCard('galleries')}
+{customBlock('galleries')}
 </>)}
 {tab === 'about' && (<>{styleHead('About style', 'layout, story, colors and size', 'about')}
 <Group title="About layout" hint="pick a look" onOpen={() => scrollPreview('about')}>
@@ -2240,7 +2241,7 @@ export default function WebsitePage() {
 {titleBlock('faq')}
 {elBlock('Questions', 'faq_q', { min: 10, max: 50 })}
 {elBlock('Answers', 'faq_a', { min: 10, max: 40, fontCats: ['serif', 'sans'] })}
-</Group>{customBlock('about')}
+</Group>
 {styleHead('Booking button style', '', 'aboutcta')}
 {secBg('Booking button background', 'aboutcta', 'aboutcta')}
 <Group title="Booking button" onOpen={() => scrollPreview('about-btn')}>
@@ -2261,6 +2262,7 @@ export default function WebsitePage() {
 <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.abBtn} onChange={(d, v) => setSize('ab_btn' as any, d, v)} />
 </Group>
 {backCard('about')}
+{customBlock('about')}
 </>)}
 {tab === 'book' && (<>
                 <Group title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>
