@@ -10,6 +10,7 @@ import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
+import { SiteNav } from './SiteNav'
 
 const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
@@ -733,7 +734,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${bg}}`}</style>
       <PortfolioLightbox />
       <div style={{ background: bg, color: ink, fontFamily: t.body }}>
-        {page !== 'home' && renderNav(false, false)}
+        {page === 'galleries' ? <SiteNav t={t} logo={logo} name={name} homeHref={hrefs.home} headStyle={headStyle} back={{ href: hrefs.home, label: '← Home' }} items={navItems} /> : page !== 'home' && renderNav(false, false)}
 
         {page === 'home' && tpl === 'editorial' && (
           <>
