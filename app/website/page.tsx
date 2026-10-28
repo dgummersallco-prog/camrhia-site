@@ -327,6 +327,7 @@ function FontPicker({ label, value, onChange, cats }: { label: string; value: st
   )
 }
 
+import { AboutCropper } from './AboutCropper'
 const TB = '#B9AEA5'
 const TL = '#D8CFC4'
 const bx = (cls = '') => <div className={cls} style={{ background: 'linear-gradient(145deg,#D9C7B5 0%,#A8917C 55%,#7A6858 100%)', borderRadius: 2 }} />
@@ -857,6 +858,23 @@ export default function WebsitePage() {
       set('logo_path', path)
     } catch (e) {
       flash((e as { message?: string })?.message ?? 'Logo upload failed.')
+    }
+  }
+
+  async function uploadAbout(file: File) {
+    const sb = supabase
+    if (!sb) return
+    const { data: sess } = await sb.auth.getSession()
+    const id = sess.session?.user.id
+    if (!id) return
+    try {
+      const v = await makeVersions(file)
+      const path = `${id}/about_site_${Date.now()}.jpg`
+      const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+      if (up.error) throw up.error
+      setIn('about', { photo: path })
+    } catch (e) {
+      flash((e as { message?: string })?.message ?? 'Upload failed.')
     }
   }
 
@@ -2107,13 +2125,36 @@ export default function WebsitePage() {
 </Group>
 {secBg('About background', 'about', 'about')}
 <Group title="About photos" hint="heading, text and photos" onOpen={() => scrollPreview('about')}>
+{(() => {
+  const lay = (S.about?.layout ?? T.about.layout) as string
+  const key = lay === 'stacked' ? 'stacked' : lay === 'collage' ? 'collage' : 'side'
+  const aspect = key === 'stacked' ? 16 / 9 : key === 'collage' ? 3 / 4 : 4 / 5
+  const crop = { x: 50, y: 50, z: 1, ...(((S.about?.crop ?? {}) as Record<string, any>)[key] ?? {}) }
+  return (
+    <div>
+      <p className="mb-2 text-sm text-ink">Main About photo</p>
+      {S.about?.photo ? (
+        <AboutCropper key={key + S.about.photo} src={BASE + S.about.photo} aspect={aspect} crop={crop} onChange={(c) => setIn('about', { crop: { ...(S.about?.crop ?? {}), [key]: c } })} />
+      ) : (
+        <div className="flex h-24 w-full max-w-[280px] items-center justify-center rounded-lg border border-dashed border-line text-xs text-ink-soft">No photo yet</div>
+      )}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <label className={btnGhost + ' cursor-pointer'}>
+          {S.about?.photo ? 'Replace photo' : 'Upload photo'}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAbout(f); e.target.value = '' }} />
+        </label>
+        {S.about?.photo && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => setIn('about', { photo: null })}>Remove</button>}
+      </div>
+    </div>
+  )
+})()}
                   
                   
                   
                   {(S.about?.layout ?? T.about.layout) === 'collage' && (
                     <div className="border-t border-line pt-4">
                       <p className="mb-1 text-sm text-ink">Second photo</p>
-                      <p className="mb-3 text-xs text-ink-soft">Sits behind the text card, lower right. Your main About photo comes from your app profile.</p>
+                      <p className="mb-3 text-xs text-ink-soft">Sits behind the text card, lower right.</p>
                       <div className="flex flex-wrap items-center gap-3">
                         {S.about?.photo2 ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -2129,7 +2170,7 @@ export default function WebsitePage() {
                       </div>
                     </div>
                   )}
-                  <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your photo or bio in the app profile</Link>
+                  <Link href="/portfolio" className={btnGhost + ' inline-block'}>Change your bio in the app profile</Link>
                 </Group>
 <Group title="About text" onOpen={() => scrollPreview('about')}>
 {titleBlock('about')}

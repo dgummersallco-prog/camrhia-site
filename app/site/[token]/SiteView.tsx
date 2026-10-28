@@ -88,7 +88,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const headline: string = (r.site_headline || '').trim() || (r.service_city ? `${r.service_city} Photographer` : 'Photographer')
   const subhead: string = (r.site_subhead || '').trim() || cityLine
   const logo = photoUrl(r.logo_path)
-  const aboutPhoto = photoUrl(r.about_photo_path ?? r.avatar_path) ?? (isPreview ? PH_SCENES[1] : null)
+  const aboutPhoto = photoUrl((r as any).site_settings?.about?.photo ?? null) ?? (isPreview ? PH_SCENES[1] : null)
 
   const coverFallback = ((Array.isArray(r.cover_paths) && r.cover_paths.length > 0 ? r.cover_paths[0] : r.cover_path) as string | null) ?? ''
   const allCovers: string[] = Array.isArray(r.cover_paths) ? (r.cover_paths as string[]).filter(Boolean) : []
@@ -299,6 +299,13 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       case 'about': {
         const L = t.about.layout
         const aboutSet = (r as any).site_settings?.about
+        const aboutCrop = (key: 'side' | 'stacked' | 'collage'): React.CSSProperties => {
+          const c = aboutSet?.crop?.[key]
+          const x = typeof c?.x === 'number' ? c.x : 50
+          const y = typeof c?.y === 'number' ? c.y : 50
+          const z = typeof c?.z === 'number' ? c.z : 1
+          return { objectPosition: `${x}% ${y}%`, transformOrigin: `${x}% ${y}%`, transform: z !== 1 ? `scale(${z})` : undefined }
+        }
         if (aboutSet?.layout === 'canvas') {
           return sec('about', null,
             <AboutCanvas
@@ -316,7 +323,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           return sec('about', null,
             <div className="relative mx-auto max-w-5xl pb-20 md:pb-32">
               <div className="relative z-0 w-[68%] overflow-hidden md:w-[52%]" style={{ borderRadius: '0 0 56px 56px', aspectRatio: '3/4', background: tint }}>
-                {aboutPhoto && <img src={aboutPhoto} alt={name} className="h-full w-full object-cover" />}
+                {aboutPhoto && <img src={aboutPhoto} alt={name} className="h-full w-full object-cover" style={aboutCrop('collage')} />}
               </div>
               <div className="relative z-10 -mt-28 ml-[10%] w-[90%] p-7 md:-mt-44 md:ml-[34%] md:w-[62%] md:p-12" style={{ background: cardBg, borderRadius: 28, boxShadow: '0 20px 50px rgba(0,0,0,0.07)' }}>
                 {t.titles.about && (
@@ -337,7 +344,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </div>
         )
         const photo = aboutPhoto ? (
-          <img src={aboutPhoto} alt={name} className="w-full object-cover" style={{ aspectRatio: L === 'stacked' ? '16/9' : '4/5' }} />
+          <div className="w-full overflow-hidden" style={{ aspectRatio: L === 'stacked' ? '16/9' : '4/5' }}><img src={aboutPhoto} alt={name} className="h-full w-full object-cover" style={aboutCrop(L === 'stacked' ? 'stacked' : 'side')} /></div>
         ) : null
         return sec('about', t.titles.about,
           L === 'stacked' ? (
