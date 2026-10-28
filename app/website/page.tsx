@@ -2088,7 +2088,7 @@ export default function WebsitePage() {
 <Group title="Galleries text" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
 {titleBlock('portfolio')}
 {elBlock('Gallery names', 'gal_name', { min: 14, max: 90 })}
-{elBlock('Photo count', 'gal_count', { min: 9, max: 28 })}
+{elBlock('Extra line', 'gal_count', { min: 9, max: 28 })}
 </Group>
 {(S.galindex?.layout ?? T.galindex.layout) === 'custom' && (
   <Group title="Gallery tiles" hint="which gallery each tile shows" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
