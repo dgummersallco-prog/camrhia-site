@@ -422,7 +422,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   <h1 className="text-[13px] uppercase tracking-[0.35em]" style={{ fontFamily: t.body }}>{t.titles.portfolio}</h1>
                   <div className="mx-auto mt-4 h-[2px] w-12" style={{ background: line }} />
                 </div>
-                <div className="grid grid-cols-2">
+                <div className="mx-auto grid grid-cols-2" style={{ maxWidth: 'var(--cover-w)' }}>
                   {list.map((g, i) => {
                     const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
                     const u = photoUrl(cover?.storage_path)
@@ -478,7 +478,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               />
             ) : L === 'carousel' ? (
               <div className="-mx-6 flex snap-x snap-mandatory overflow-x-auto px-6 pb-4" style={{ gap: gapX, scrollbarWidth: 'thin' }}>
-                {list.map((g) => card(g, { aspectRatio: shapeFor('4/5', 'grid'), flex: '0 0 auto', width: 'min(78vw, 340px)' }, 'snap-start'))}
+                {list.map((g) => card(g, { aspectRatio: shapeFor('4/5', 'grid'), flex: '0 0 auto', width: 'calc(min(78vw, 340px) * var(--cover-n, 1))' }, 'snap-start'))}
               </div>
             ) : L === 'banners' ? (
               <div className="flex flex-col" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: gapX }}>
