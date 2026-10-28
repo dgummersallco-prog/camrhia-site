@@ -123,7 +123,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
               return null
             }}
             renderButton={(label) => (
-              <Link href={`${base}/availability${qs}`} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>{label}</Link>
+              <Link href={`${base}/availability${qs}`} className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>{label}</Link>
             )}
           />) : (<div className="flex flex-col gap-14">
           {groups.map((grp) => (
@@ -140,8 +140,8 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
 
         {t.galpage.showButton && layout !== 'custom' && (
           <div className="mt-14 text-center">
-            <Link href={`${base}/availability${qs}`} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>
-              {t.hero.ctaText}
+            <Link href={`${base}/availability${qs}`} id="gal-btn" className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>
+              {t.galBtnText}
             </Link>
           </div>
         )}

@@ -2061,6 +2061,23 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.galHeading} onChange={(d, v) => setSize('galHeading', d, v)} />
                   <SizeControl device={device} label="Space between photos" unit="px" min={0} max={60} step={2} value={T.sizes.galGap} onChange={(d, v) => setSize('galGap', d, v)} />
                 </Group>{customBlock('galleries')}
+<Group title="Gallery button" hint="button on each gallery page" onOpen={() => scrollPreview('gal-btn')}>
+<p className="text-xs text-ink-soft">This button takes visitors to your booking page.</p>
+<div>
+  <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
+  <input value={S.galBtn?.text ?? ''} onChange={(e) => setIn('galBtn', { text: e.target.value })} placeholder={S.hero?.cta_text || 'Check availability'} className={inputCls} />
+</div>
+<ColorField label="Button color" value={S.galBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
+  onChange={(h) => setIn('galBtn', { bg: h })}
+  onReset={() => upd((st) => { const b = { ...(st.galBtn ?? {}) }; delete b.bg; st.galBtn = b })} />
+<ColorField label="Button text color" value={S.galBtn?.color ?? T.btnText} swatches={palette()}
+  onChange={(h) => setIn('galBtn', { color: h })}
+  onReset={() => upd((st) => { const b = { ...(st.galBtn ?? {}) }; delete b.color; st.galBtn = b })} />
+<Row label="Button shape">
+  <Seg value={S.galBtn?.shape ?? T.shape} options={[{ v: 'square', label: 'Square' }, { v: 'rounded', label: 'Rounded' }, { v: 'pill', label: 'Pill' }]} onChange={(v) => setIn('galBtn', { shape: v })} />
+</Row>
+<SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.gbBtn} onChange={(d, v) => setSize('gb_btn' as any, d, v)} />
+</Group>
 </>)}
 {tab === 'about' && (<>{styleHead('About style', 'layout, story, colors and size', 'about')}
 <Group title="About layout" hint="pick a look" onOpen={() => scrollPreview('about')}>
