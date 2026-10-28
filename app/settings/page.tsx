@@ -33,6 +33,12 @@ export default function SettingsPage() {
   const [pw2, setPw2] = useState('')
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [pwBusy, setPwBusy] = useState(false)
+  const [uid, setUid] = useState('')
+  const [reviewUrl, setReviewUrl] = useState('')
+  const [autoPay, setAutoPay] = useState(true)
+  const [autoReview, setAutoReview] = useState(true)
+  const [autoMsg, setAutoMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [autoBusy, setAutoBusy] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -40,6 +46,14 @@ export default function SettingsPage() {
       const { data } = await supabase.auth.getSession()
       if (!data.session) { router.push('/login'); return }
       setEmail(data.session.user.email ?? '')
+      setUid(data.session.user.id)
+      const { data: prof } = await supabase.from('profiles').select('google_review_url, automation_settings').eq('id', data.session.user.id).maybeSingle()
+      if (prof) {
+        setReviewUrl(prof.google_review_url ?? '')
+        const a = (prof.automation_settings ?? {}) as Record<string, boolean>
+        setAutoPay(a.payment_reminders !== false)
+        setAutoReview(a.review_request !== false)
+      }
       setReady(true)
       try {
         const res = await fetch('/api/connect/status', { method: 'POST', headers: { Authorization: 'Bearer ' + data.session.access_token } })
@@ -65,6 +79,18 @@ export default function SettingsPage() {
     if (error) { setPwMsg({ ok: false, text: error.message }); return }
     setPw1(''); setPw2('')
     setPwMsg({ ok: true, text: 'Password updated.' })
+  }
+
+  async function saveAutomation(e: React.FormEvent) {
+    e.preventDefault()
+    setAutoMsg(null)
+    const url = reviewUrl.trim()
+    if (url && !/^https?:\/\//i.test(url)) { setAutoMsg({ ok: false, text: 'The review link should start with https://' }); return }
+    if (!supabase || !uid) return
+    setAutoBusy(true)
+    const { error } = await supabase.from('profiles').update({ google_review_url: url || null, automation_settings: { payment_reminders: autoPay, review_request: autoReview } }).eq('id', uid)
+    setAutoBusy(false)
+    setAutoMsg(error ? { ok: false, text: 'Could not save. Please try again.' } : { ok: true, text: 'Saved.' })
   }
 
   const input = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-twilight'
@@ -99,6 +125,25 @@ export default function SettingsPage() {
                 </div>
                 {pwMsg && <p className={'text-sm ' + (pwMsg.ok ? 'text-emerald-700' : 'text-red-700')}>{pwMsg.text}</p>}
                 <button type="submit" className={btn} disabled={pwBusy || !pw1}>{pwBusy ? 'Saving…' : 'Update password'}</button>
+              </form>
+            </Card>
+
+            <Card title="Automatic messages" hint="Camrhia sends these to your clients for you, as notifications in the app.">
+              <form onSubmit={saveAutomation} className="space-y-4">
+                <label className="flex items-start gap-3 text-sm text-ink">
+                  <input type="checkbox" className="mt-0.5 h-4 w-4" checked={autoPay} onChange={(e) => setAutoPay(e.target.checked)} />
+                  <span><span className="font-medium">Payment reminders</span><span className="block text-ink-soft">3 days before, on the due date, and 3 days after.</span></span>
+                </label>
+                <label className="flex items-start gap-3 text-sm text-ink">
+                  <input type="checkbox" className="mt-0.5 h-4 w-4" checked={autoReview} onChange={(e) => setAutoReview(e.target.checked)} />
+                  <span><span className="font-medium">Review request</span><span className="block text-ink-soft">Sent 3 days after you deliver a gallery.</span></span>
+                </label>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink">Google review link</label>
+                  <input className={input} placeholder="https://g.page/r/..." value={reviewUrl} onChange={(e) => setReviewUrl(e.target.value)} />
+                </div>
+                {autoMsg && <p className={'text-sm ' + (autoMsg.ok ? 'text-emerald-700' : 'text-red-700')}>{autoMsg.text}</p>}
+                <button type="submit" disabled={autoBusy} className={btn}>{autoBusy ? 'Saving…' : 'Save'}</button>
               </form>
             </Card>
 
