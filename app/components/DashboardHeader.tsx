@@ -8,7 +8,7 @@ import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
 import { APP_STORE_URL } from '@/lib/appStore'
 
-type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'packages' | 'questionnaires'
+type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'packages' | 'questionnaires'
 
 const ICONS: Record<string, string> = {
   dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
@@ -22,6 +22,7 @@ const ICONS: Record<string, string> = {
   website: 'M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M2 9h20 M6 6.5h.01 M9 6.5h.01',
   reminders: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0',
   storage: 'M22 12H2 M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z M6 16h.01 M10 16h.01',
+  settings: 'M4 21v-7 M4 10V3 M12 21v-9 M12 8V3 M20 21v-5 M20 12V3 M1 14h6 M9 8h6 M17 16h6',
   billing: 'M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M1 10h22',
   packages: 'M21 8l-9-5-9 5v8l9 5 9-5z M3.3 7.5L12 12l8.7-4.5 M12 21v-9',
   questionnaires: 'M9 2h6a1 1 0 0 1 1 1v2H8V3a1 1 0 0 1 1-1z M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2 M9 12h6 M9 16h4',
@@ -41,6 +42,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'website', href: '/website', label: 'Your website' },
   { tab: 'portfolio', href: '/portfolio', label: 'App portfolio' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
+  { tab: 'settings', href: '/settings', label: 'Settings' },
 ]
 
 // Returns the color only if white text stays readable on it.
@@ -180,7 +182,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
     { label: 'Clients', tabs: ['messages', 'sessions', 'calendar'] },
     { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments'] },
     { label: 'Your brand', tabs: ['website', 'portfolio'] },
-    { label: 'Account', tabs: ['billing'] },
+    { label: 'Account', tabs: ['billing', 'settings'] },
   ]
   const groupedNav = GROUPS.map((g, gi) => (
     <div key={gi} className={gi === 0 ? '' : 'mt-5'}>
