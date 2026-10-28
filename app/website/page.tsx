@@ -401,6 +401,26 @@ const THUMBS = {
   bkCentered: <div className="flex h-full flex-col items-center justify-center gap-1">{ln('w-3/5')}{ln('w-4/5')}{bx('h-3 w-4/5')}{bx('h-3 w-4/5')}</div>,
   bkSide: <div className="flex h-full gap-1">{bx('w-2/5')}<div className="flex flex-1 flex-col justify-center gap-1">{ln()}{bx('h-3')}{bx('h-3')}</div></div>,
   bkBanner: <div className="flex h-full flex-col gap-1">{bx('h-1/3')}<div className="flex flex-1 flex-col items-center justify-center gap-1">{ln('w-3/5')}{bx('h-3 w-4/5')}</div></div>,
+  abText: <div className="flex h-full flex-col items-center gap-2">{xbar('34%', 6)}{xbar('85%', 2, '#2A1F24', 0.35)}{xbar('70%', 2, '#2A1F24', 0.35)}{bx('w-full flex-1')}</div>,
+  abCollage: (
+    <div className="relative h-full w-full">
+      <div style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '74%', background: 'linear-gradient(145deg,#D9C7B5 0%,#A8917C 55%,#7A6858 100%)', borderRadius: '0 0 14px 14px' }} />
+      <div style={{ position: 'absolute', right: 0, bottom: 0, width: '27%', height: '46%', background: 'linear-gradient(145deg,#C9BCAE,#8F7C6B)', borderRadius: 5 }} />
+      <div className="flex flex-col gap-1" style={{ position: 'absolute', left: '34%', right: '5%', top: '40%', bottom: '4%', background: '#EBE3D8', borderRadius: 6, boxShadow: '0 3px 8px rgba(0,0,0,0.12)', padding: 6 }}>
+        {xbar('55%', 5)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('70%', 2, '#2A1F24', 0.35)}
+      </div>
+    </div>
+  ),
+  abFree: (
+    <div className="relative h-full w-full">
+      <div style={{ position: 'absolute', left: '4%', top: '6%', width: '40%', height: '56%', background: 'linear-gradient(145deg,#D9C7B5 0%,#A8917C 55%,#7A6858 100%)', borderRadius: 2 }} />
+      <div className="flex flex-col gap-1" style={{ position: 'absolute', left: '52%', top: '10%', width: '42%' }}>
+        {xbar('70%', 5)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('90%', 2, '#2A1F24', 0.35)}{xbar('60%', 2, '#2A1F24', 0.35)}
+      </div>
+      <div style={{ position: 'absolute', left: '30%', top: '46%', width: '34%', height: '44%', background: 'linear-gradient(145deg,#C9BCAE,#8F7C6B)', borderRadius: 2, outline: '1px dashed #B08D57', outlineOffset: 2 }} />
+      <div style={{ position: 'absolute', left: 'calc(64% - 3px)', top: 'calc(90% - 3px)', width: 7, height: 7, background: '#B08D57', borderRadius: 2 }} />
+    </div>
+  ),
   teCards: <div className="grid h-full grid-cols-3 gap-1.5">{[0, 1, 2].map((i) => <div key={i} className="flex flex-col gap-1" style={{ background: '#EBE3D8', border: '1px solid #D8CDBF', padding: 4 }}>{xbar('18%', 6, '#B08D57')}{xbar('95%', 2, '#2A1F24', 0.4)}{xbar('85%', 2, '#2A1F24', 0.4)}{xbar('60%', 2, '#2A1F24', 0.4)}<div className="mt-auto flex items-center gap-1">{pavatar(8)}{xbar('40%', 2, '#2A1F24', 0.45)}</div></div>)}</div>,
 }
 
@@ -2119,7 +2139,7 @@ export default function WebsitePage() {
 <div>
                     <p className="mb-2 text-sm text-ink">Layout</p>
                     <LayoutPicker value={(S.about?.layout ?? T.about.layout) as any} onChange={(v) => setIn('about', { layout: v })}
-                      options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }, { v: 'collage', name: 'Collage', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="3" width="26" height="24" rx="2" fill="#D8D0C4" /><rect x="36" y="18" width="18" height="18" rx="3" fill="#C9BFB2" /><rect x="16" y="16" width="32" height="18" rx="3" fill="#F2EBDD" stroke="#B9AFA2" strokeWidth="0.8" /><rect x="20" y="20" width="14" height="2" fill="#9A8A74" /><rect x="20" y="25" width="24" height="1.5" fill="#B9AFA2" /><rect x="20" y="28" width="22" height="1.5" fill="#B9AFA2" /></svg> }, { v: 'canvas', name: 'Free layout', thumb: <svg viewBox="0 0 60 40" className="h-full w-full"><rect x="6" y="5" width="22" height="18" rx="2" fill="#D8D0C4" /><rect x="34" y="10" width="20" height="14" rx="2" fill="#C9BFB2" /><rect x="14" y="20" width="26" height="14" rx="2" fill="#F2EBDD" stroke="#9A8A74" strokeWidth="0.8" strokeDasharray="2 1.5" /><rect x="38" y="30" width="5" height="5" fill="#B08D57" /></svg> }]} />
+                      options={[{ v: 'left', name: 'Photo left', thumb: THUMBS.abLeft }, { v: 'right', name: 'Photo right', thumb: THUMBS.abRight }, { v: 'stacked', name: 'Stacked', thumb: THUMBS.abStack }, { v: 'textfirst', name: 'Text then photo', thumb: THUMBS.abText }, { v: 'collage', name: 'Collage', thumb: THUMBS.abCollage }, { v: 'canvas', name: 'Free layout', thumb: THUMBS.abFree }]} />
                   </div>
                   {(S.about?.layout ?? T.about.layout) === 'canvas' && canvasPanel('about')}
 </Group>
@@ -2127,7 +2147,7 @@ export default function WebsitePage() {
 <Group title="About photos" hint="heading, text and photos" onOpen={() => scrollPreview('about')}>
 {(() => {
   const lay = (S.about?.layout ?? T.about.layout) as string
-  const key = lay === 'stacked' ? 'stacked' : lay === 'collage' ? 'collage' : 'side'
+  const key = lay === 'stacked' || lay === 'textfirst' ? 'stacked' : lay === 'collage' ? 'collage' : 'side'
   const aspect = key === 'stacked' ? 16 / 9 : key === 'collage' ? 3 / 4 : 4 / 5
   const crop = { x: 50, y: 50, z: 1, ...(((S.about?.crop ?? {}) as Record<string, any>)[key] ?? {}) }
   return (

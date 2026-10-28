@@ -338,19 +338,24 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </div>, false)
         }
         const body = (
-          <div className={L === 'stacked' ? 'mx-auto max-w-2xl text-center' : ''}>
+          <div className={L === 'stacked' || L === 'textfirst' ? 'mx-auto max-w-2xl text-center' : ''}>
             <p className="el-about_text whitespace-pre-line leading-[1.85]" style={{ color: soft, fontSize: fsp('fs-about', 16) }}>{t.text.about ?? r.bio ?? ''}</p>
             <div className="mt-8">{cta(true)}</div>
           </div>
         )
         const photo = aboutPhoto ? (
-          <div className="w-full overflow-hidden" style={{ aspectRatio: L === 'stacked' ? '16/9' : '4/5' }}><img src={aboutPhoto} alt={name} className="h-full w-full object-cover" style={aboutCrop(L === 'stacked' ? 'stacked' : 'side')} /></div>
+          <div className="w-full overflow-hidden" style={{ aspectRatio: L === 'stacked' || L === 'textfirst' ? '16/9' : '4/5' }}><img src={aboutPhoto} alt={name} className="h-full w-full object-cover" style={aboutCrop(L === 'stacked' || L === 'textfirst' ? 'stacked' : 'side')} /></div>
         ) : null
         return sec('about', t.titles.about,
           L === 'stacked' ? (
             <div className="mx-auto max-w-4xl">
               {photo && <div className="mb-10">{photo}</div>}
               {body}
+            </div>
+          ) : L === 'textfirst' ? (
+            <div className="mx-auto max-w-4xl">
+              {body}
+              {photo && <div className="mt-10">{photo}</div>}
             </div>
           ) : (
             <div className={`mx-auto grid max-w-5xl items-center gap-12 ${photo ? 'md:grid-cols-2' : ''}`}>

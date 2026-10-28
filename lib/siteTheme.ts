@@ -232,7 +232,7 @@ export function resolveTheme(r: Record<string, any>) {
   }
 
   const about = {
-    layout: pick(s.about?.layout, ['left', 'right', 'stacked'] as const, 'left'),
+    layout: pick(s.about?.layout, ['left', 'right', 'stacked', 'textfirst'] as const, 'left'),
   }
 
   const galpage = {
