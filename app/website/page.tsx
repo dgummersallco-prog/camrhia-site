@@ -368,8 +368,8 @@ const tcard = () => (
 )
 const xbar = (w: string, h: number, c = '#2A1F24', o = 1) => <div style={{ width: w, height: h, background: c, opacity: o, borderRadius: 1 }} />
 const exw = (inner: React.ReactNode) => <div className="flex h-full flex-col gap-2"><div className="flex justify-center">{xbar('26%', 3, '#2A1F24', 0.45)}</div><div className="min-h-0 flex-1">{inner}</div></div>
-const fld = (cls = '') => <div className={'flex flex-col justify-center gap-[3px] ' + cls} style={{ border: '1px solid #CBBFB0', borderRadius: 2, background: '#fff', padding: '0 6px' }}>{xbar('45%', 2, '#2A1F24', 0.3)}{xbar('100%', 2, '#2A1F24', 0.18)}{xbar('100%', 2, '#2A1F24', 0.18)}</div>
-const cal = (cls = '') => <div className={'flex flex-col overflow-hidden ' + cls} style={{ border: '1px solid #CBBFB0', borderRadius: 2, background: '#fff' }}><div className="flex items-center justify-center" style={{ height: 9, background: '#EBE3D8', borderBottom: '1px solid #CBBFB0' }}>{xbar('34%', 2, '#2A1F24', 0.5)}</div><div className="flex-1" /></div>
+const fld = (w: number, h: number, btn = true) => <div className="flex flex-col gap-[3px]" style={{ width: w, height: h, border: '1px solid #CBBFB0', borderRadius: 2, background: '#fff', padding: 5 }}>{xbar('50%', 2, '#2A1F24', 0.3)}{xbar('100%', 2, '#2A1F24', 0.18)}{xbar('100%', 2, '#2A1F24', 0.18)}{btn && <div className="mt-auto" style={{ height: 5, background: '#B08D57', borderRadius: 2 }} />}</div>
+const cal = (sz: number) => <div className="flex flex-col overflow-hidden" style={{ width: sz, height: sz, border: '1px solid #CBBFB0', borderRadius: 2, background: '#fff' }}><div className="flex items-center justify-center" style={{ height: 8, background: '#EBE3D8', borderBottom: '1px solid #CBBFB0' }}>{xbar('34%', 2, '#2A1F24', 0.5)}</div><div className="flex-1" /></div>
 const bkBtn = () => <div style={{ height: 8, background: '#B08D57', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{xbar('30%', 2, '#F6F1EA')}</div>
 const dvd = (w = '70%') => <div style={{ width: w, height: 1, background: '#CFC4B8' }} />
 const pavatar = (sz: number) => <div style={{ width: sz, height: sz, borderRadius: 999, background: 'linear-gradient(145deg,#D9C7B5,#7A6858)' }} />
@@ -2270,9 +2270,9 @@ export default function WebsitePage() {
                       <p className="mb-2 text-sm text-ink">Calendar and form</p>
                       <LayoutPicker value={T.availability.layout === 'centered' || T.availability.layout === 'between' ? T.availability.layout : 'side'} onChange={(v) => setIn('availability', { layout: v })}
                     options={[
-                      { v: 'side', name: 'Side by side', thumb: <div className="flex h-full flex-col gap-2"><div className="flex flex-col items-center gap-[3px]">{xbar('42%', 4)}{xbar('62%', 2, '#2A1F24', 0.35)}</div><div className="flex min-h-0 flex-1 gap-3">{cal('flex-1')}<div className="flex flex-1 flex-col gap-1.5">{fld('flex-1')}{bkBtn()}</div></div></div> },
-                      { v: 'centered', name: 'Stacked', thumb: <div className="flex h-full flex-col gap-2"><div className="flex flex-col items-center gap-[3px]">{xbar('42%', 4)}{xbar('62%', 2, '#2A1F24', 0.35)}</div>{cal('flex-1')}{fld('h-[22px]')}{bkBtn()}</div> },
-                      { v: 'between', name: 'Calendar above button', thumb: <div className="flex h-full flex-col gap-2"><div className="flex flex-col items-center gap-[3px]">{xbar('42%', 4)}{xbar('62%', 2, '#2A1F24', 0.35)}</div>{fld('h-[22px]')}{cal('flex-1')}{bkBtn()}</div> },
+                      { v: 'side', name: 'Side by side', thumb: <div className="flex h-full flex-col gap-2"><div className="flex flex-col items-center gap-[3px]">{xbar('42%', 4)}{xbar('62%', 2, '#2A1F24', 0.35)}</div><div className="flex min-h-0 flex-1 items-center justify-center gap-3">{cal(54)}{fld(42, 70)}</div></div> },
+                      { v: 'centered', name: 'Stacked', thumb: <div className="flex h-full flex-col items-center gap-2"><div className="flex flex-col items-center gap-[3px]">{xbar('42%', 4)}{xbar('62%', 2, '#2A1F24', 0.35)}</div>{cal(36)}{fld(28, 34)}</div> },
+                      { v: 'between', name: 'Calendar above button', thumb: <div className="flex h-full flex-col items-center gap-2"><div className="flex flex-col items-center gap-[3px]">{xbar('42%', 4)}{xbar('62%', 2, '#2A1F24', 0.35)}</div>{fld(26, 28, false)}{cal(30)}<div style={{ width: 40 }}>{bkBtn()}</div></div> },
                     ]} />
                     </div>
                   )}
