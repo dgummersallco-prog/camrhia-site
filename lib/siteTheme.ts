@@ -228,7 +228,7 @@ export function resolveTheme(r: Record<string, any>) {
   }
 
   const portfolio = {
-    layout: pick(s.portfolio?.layout, ['grid', 'banners', 'feature', 'carousel', 'rows'] as const, 'grid'),
+    layout: pick(s.portfolio?.layout, ['grid', 'banners', 'feature', 'carousel', 'rows', 'custom'] as const, 'grid'),
     shape: pick(s.portfolio?.shape, ['auto', 'portrait', 'landscape', 'square', 'tall'] as const, 'auto'),
     radius: pick(s.portfolio?.radius, ['sharp', 'soft', 'round'] as const, 'sharp'),
     spacing: pick(s.portfolio?.spacing, ['tight', 'normal', 'airy'] as const, 'normal'),

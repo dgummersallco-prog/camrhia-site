@@ -466,12 +466,12 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
             ) : L === 'custom' ? (
               <AboutCanvas
-                canvas={(r as any).site_settings?.galindex?.canvas} photo2={null} aboutPhoto={aboutPhoto} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
+                canvas={page === 'home' ? (r as any).site_settings?.portfolio?.canvas : (r as any).site_settings?.galindex?.canvas} photo2={null} aboutPhoto={aboutPhoto} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
                 title={null} bio="" headStyle={headStyle} ink={ink} soft={soft} tint={tint}
-                bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId="galleries"
-                galleries={galleries.map((g) => ({ id: g.id, title: g.title, coverUrl: photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path) }))}
+                bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId={page === 'home' ? 'featured' : 'galleries'}
+                galleries={list.map((g) => ({ id: g.id, title: g.title, coverUrl: photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path) }))}
                 galleryHref={(id) => `${base}/g/${id}${qs}`}
-                fallback={(dv) => galleryStarter(dv, galleries.map((g) => g.id))}
+                fallback={(dv) => galleryStarter(dv, list.map((g) => g.id))}
                 renderButton={(label) => (
                   <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
                 )}

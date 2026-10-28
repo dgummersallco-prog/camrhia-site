@@ -594,7 +594,9 @@ export default function WebsitePage() {
       if (d.type === 'camrhia-canvas' && d.dev && d.board && cvBridge.upd) {
         const bid = d.boardId ?? 'about'
         cvBridge.upd((st: any) => {
-          if (bid === 'galleries') {
+          if (bid === 'featured') {
+            st.portfolio = { ...(st.portfolio ?? {}), canvas: { ...((st.portfolio ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
+          } else if (bid === 'galleries') {
             st.galindex = { ...(st.galindex ?? {}), canvas: { ...((st.galindex ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
           } else if (bid.startsWith('gal:')) {
             const gid2 = bid.slice(4)
@@ -922,15 +924,16 @@ export default function WebsitePage() {
 
   function canvasPanel(boardId: string, part: 'layout' | 'tiles' = 'layout') {
     const isAbout = boardId === 'about'
-    const isGal = boardId === 'galleries'
+    const isFeat = boardId === 'featured'
+    const isGal = boardId === 'galleries' || isFeat
     const isHero = boardId === 'hero'
     const isGalPage = boardId.startsWith('gal:')
     const gpid = boardId.slice(4)
     const customsList = (S.customs ?? []) as any[]
-    const canvasData = isGalPage ? (S.galpage?.canvases ?? {})[gpid] : isHero ? S.hero?.canvas : isAbout ? S.about?.canvas : isGal ? S.galindex?.canvas : customsList.find((c) => c.id === boardId)?.canvas
+    const canvasData = isGalPage ? (S.galpage?.canvases ?? {})[gpid] : isHero ? S.hero?.canvas : isAbout ? S.about?.canvas : isFeat ? S.portfolio?.canvas : isGal ? S.galindex?.canvas : customsList.find((c) => c.id === boardId)?.canvas
     const ph2 = isAbout ? S.about?.photo2 : null
     const galIds = cvGalleries.map((g) => g.id)
-    const b = isGalPage && !hasBoard(canvasData, device) ? { h: 88, items: [] as CItem[] } : isHero && !hasBoard(canvasData, device) ? heroStarter(device, heroSel.slice(0, 3)) : isGal && !hasBoard(canvasData, device) ? galleryStarter(device, galIds) : getBoard(canvasData, device, ph2, !isAbout)
+    const b = isGalPage && !hasBoard(canvasData, device) ? { h: 88, items: [] as CItem[] } : isHero && !hasBoard(canvasData, device) ? heroStarter(device, heroSel.slice(0, 3)) : isGal && !hasBoard(canvasData, device) ? galleryStarter(device, isFeat ? featured.map((g) => g.id) : galIds) : getBoard(canvasData, device, ph2, !isAbout)
     const sel: CItem | null = cvBoard === boardId ? (b.items.find((i) => i.id === cvSel) ?? null) : null
     const setBoard = (nb: { h: number; items: CItem[] }) => upd((st: any) => {
       if (isGalPage) {
@@ -943,6 +946,10 @@ export default function WebsitePage() {
         const h2 = { ...(st.hero ?? {}) }
         h2.canvas = { ...(h2.canvas ?? {}), [device]: nb }
         st.hero = h2
+      } else if (isFeat) {
+        const f2 = { ...(st.portfolio ?? {}) }
+        f2.canvas = { ...(f2.canvas ?? {}), [device]: nb }
+        st.portfolio = f2
       } else if (isGal) {
         const g2 = { ...(st.galindex ?? {}) }
         g2.canvas = { ...(g2.canvas ?? {}), [device]: nb }
@@ -1162,7 +1169,7 @@ export default function WebsitePage() {
         </div>
           </div>
         )}
-        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { isGalPage ? upd((st: any) => { const gpp = { ...(st.galpage ?? {}) }; const cvs = { ...(gpp.canvases ?? {}) }; delete cvs[gpid]; gpp.canvases = cvs; st.galpage = gpp }) : setBoard(isHero ? heroStarter(device, heroSel.slice(0, 3)) : isAbout ? starter(device, ph2) : isGal ? galleryStarter(device, galIds) : blank(device)); pick(null) }}>
+        <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { isGalPage ? upd((st: any) => { const gpp = { ...(st.galpage ?? {}) }; const cvs = { ...(gpp.canvases ?? {}) }; delete cvs[gpid]; gpp.canvases = cvs; st.galpage = gpp }) : setBoard(isHero ? heroStarter(device, heroSel.slice(0, 3)) : isAbout ? starter(device, ph2) : isGal ? galleryStarter(device, isFeat ? featured.map((g) => g.id) : galIds) : blank(device)); pick(null) }}>
           Start over with the {isHero || isAbout ? 'starter' : isGal ? 'default' : 'blank'} layout
         </button>
       </div>
@@ -1885,7 +1892,9 @@ export default function WebsitePage() {
   <LayoutPicker value={T.portfolio.layout} onChange={(v) => setIn('portfolio', { layout: v })}
     options={[{ v: 'grid', name: 'Grid', thumb: THUMBS.galGrid }, { v: 'banners', name: 'Banners', thumb: THUMBS.galBanners }, { v: 'feature', name: 'Feature', thumb: THUMBS.galFeature },
       { v: 'carousel', name: 'Carousel', thumb: THUMBS.galCarousel },
-      { v: 'rows', name: 'Rows', thumb: THUMBS.galRows }]} />
+      { v: 'rows', name: 'Rows', thumb: THUMBS.galRows },
+      { v: 'custom', name: 'Freestyle', thumb: <div className="relative h-full"><div className="absolute" style={{ left: 0, top: 0, width: '46%', height: '62%' }}>{bx('h-full w-full')}</div><div className="absolute" style={{ left: '52%', top: '8%', width: '28%', height: '44%' }}>{bx('h-full w-full')}</div><div className="absolute" style={{ left: '24%', top: '58%', width: '40%', height: '40%', outline: '1px dashed #B08D57', outlineOffset: 2 }}>{bx('h-full w-full')}</div><div className="absolute" style={{ left: 'calc(64% - 3px)', top: 'calc(98% - 3px)', width: 7, height: 7, background: '#B08D57', borderRadius: 2 }} /></div> }]} />
+{T.portfolio.layout === 'custom' && canvasPanel('featured')}
 </Group>
 {secBg('Featured work background', 'portfolio', 'portfolio')}
 <Group title="Featured work details" onOpen={() => scrollPreview(featured.length ? 'fw-' + featured[Math.min(gSlot, Math.min(featured.length, 6) - 1)].id : 'portfolio')}>
