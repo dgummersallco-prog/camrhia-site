@@ -878,7 +878,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         ))}
 
         {page !== 'home' && page !== 'about' && visible.length > 0 && (
-          <div className="px-6 pb-12 pt-4 text-center">{cta(true)}</div>
+          <div className="px-6 pb-12 pt-4 text-center"><a href={availHref} id="gal-btn" className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.galBtnText}</a></div>
         )}
 
         <footer id="footer" className="px-6 pb-12 pt-6 text-center uppercase tracking-[0.2em]" style={{ color: soft, fontSize: 'calc(11px * var(--fs-foot, 1))' }}>
