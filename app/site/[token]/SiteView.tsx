@@ -324,7 +324,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const cardBg = tint
           return sec('about', null,
             <div className="relative mx-auto max-w-5xl pb-20 md:pb-32">
-              <div className="relative z-0 w-[68%] overflow-hidden md:w-[52%]" style={{ borderRadius: '0 0 56px 56px', aspectRatio: '3/4', background: tint }}>
+              <div className="relative z-0 w-[68%] overflow-hidden md:w-[52%]" style={{ borderRadius: 28, aspectRatio: '3/4', background: tint }}>
                 {aboutPhoto && <img src={aboutPhoto} alt={name} className="h-full w-full object-cover" style={aboutCrop('collage')} />}
               </div>
               <div className="relative z-10 -mt-28 ml-[10%] w-[90%] p-7 md:-mt-44 md:ml-[34%] md:w-[62%] md:p-12" style={{ background: cardBg, borderRadius: 28, boxShadow: '0 20px 50px rgba(0,0,0,0.07)' }}>

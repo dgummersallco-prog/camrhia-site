@@ -405,8 +405,7 @@ const THUMBS = {
   abText: <div className="flex h-full flex-col items-center gap-2">{xbar('34%', 6)}{xbar('85%', 2, '#2A1F24', 0.35)}{xbar('70%', 2, '#2A1F24', 0.35)}{bx('w-full flex-1')}</div>,
   abCollage: (
     <div className="relative h-full w-full">
-      <div style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '74%', background: 'linear-gradient(145deg,#D9C7B5 0%,#A8917C 55%,#7A6858 100%)', borderRadius: '0 0 14px 14px' }} />
-      <div style={{ position: 'absolute', right: 0, bottom: 0, width: '27%', height: '46%', background: 'linear-gradient(145deg,#C9BCAE,#8F7C6B)', borderRadius: 5 }} />
+      <div style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '74%', background: 'linear-gradient(145deg,#D9C7B5 0%,#A8917C 55%,#7A6858 100%)', borderRadius: 10 }} />
       <div className="flex flex-col gap-1" style={{ position: 'absolute', left: '34%', right: '5%', top: '40%', bottom: '4%', background: '#EBE3D8', borderRadius: 6, boxShadow: '0 3px 8px rgba(0,0,0,0.12)', padding: 6 }}>
         {xbar('55%', 5)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('100%', 2, '#2A1F24', 0.35)}{xbar('70%', 2, '#2A1F24', 0.35)}
       </div>
