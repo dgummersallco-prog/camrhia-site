@@ -136,7 +136,7 @@ function BoardView({ dev, className, p, sel, setSel }: { dev: Dev; className: st
 
   function inner(it: CItem): ReactNode {
     const ff = it.font === 'body' ? p.bodyFont : it.font === 'head' ? (p.headStyle as CSSProperties).fontFamily : undefined
-    if (it.type === 'menu' || it.type === 'logo' || it.type === 'title' || it.type === 'subtitle') {
+    if (it.type === 'menu' || it.type === 'logo' || it.type === 'title' || it.type === 'subtitle' || it.type === 'door') {
       const al = it.align ?? (it.type === 'menu' ? 'right' : 'left')
       return (
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: al === 'center' ? 'center' : al === 'right' ? 'flex-end' : 'flex-start', textAlign: al, color: it.color ?? (it.light ? '#fff' : undefined), fontFamily: ff, zoom: it.fs ?? undefined, pointerEvents: p.editing ? 'none' : undefined }}>

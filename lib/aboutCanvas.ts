@@ -1,11 +1,11 @@
-export type CType = 'photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle'
+export type CType = 'photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle' | 'door'
 export type Dev = 'desktop' | 'phone'
 export type CItem = {
   id: string; type: CType; x: number; y: number; w: number; h: number; z: number
   src?: string | null; radius?: number; title?: string; text?: string; fs?: number; bg?: boolean
   galleryId?: string; titleMode?: 'overlay' | 'below' | 'none'
   align?: 'left' | 'center' | 'right'; light?: boolean
-  color?: string; font?: 'head' | 'body'
+  color?: string; font?: 'head' | 'body'; door?: string
 }
 export type Board = { h: number; items: CItem[] }
 
@@ -68,6 +68,7 @@ export function newItem(type: CType, dev: Dev, z: number): CItem {
   if (type === 'card') return { id, type, x: 8, y: 8, w: ph ? 80 : 40, h: ph ? 40 : 24, z, fs: ph ? 3.6 : 1.45, bg: true, title: '', text: '' }
   if (type === 'heading') return { id, type, x: 8, y: 8, w: ph ? 80 : 50, h: ph ? 18 : 10, z, text: 'A little more about me', fs: ph ? 9 : 4.6 }
   if (type === 'gallery') return { id, type, x: 8, y: 8, w: ph ? 46 : 30, h: ph ? 60 : 36, z, radius: 0, fs: ph ? 3.4 : 1.8, titleMode: 'overlay' }
+  if (type === 'door') return { id, type, x: 8, y: 8, w: ph ? 88 : 30, h: ph ? 12 : 14, z, align: 'center', door: 'about' }
   return { id, type, x: 8, y: 8, w: ph ? 50 : 20, h: ph ? 10 : 5, z, text: '' }
 }
 
@@ -149,4 +150,14 @@ export function galleryPhotosStarter(dev: Dev, paths: string[]): Board {
         { id: 'btn', type: 'button', x: 40, y: bh - 8, w: 20, h: 5, z: 5 },
       ]
   return { h: bh, items: [...text, ...items] }
+}
+
+export function exploreStarter(dev: Dev): Board {
+  const ph = dev === 'phone'
+  const keys = ['galleries', 'about', 'book']
+  const items: CItem[] = keys.map((k, i) => ({
+    id: 'd' + i, type: 'door', door: k, align: 'center',
+    x: ph ? 3 : 2 + i * 33, y: ph ? i * 14 : 2, w: ph ? 94 : 30, h: ph ? 12 : 16, z: 1,
+  }))
+  return { h: ph ? 44 : 22, items }
 }

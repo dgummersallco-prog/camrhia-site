@@ -3,7 +3,7 @@
 import { useSiteBase } from '@/app/site/useSiteBase'
 import { AboutCanvas } from './AboutCanvas'
 import { heroStarter } from '@/lib/aboutCanvas'
-import { galleryStarter } from '@/lib/aboutCanvas'
+import { galleryStarter, exploreStarter } from '@/lib/aboutCanvas'
 import { installPreviewGlow } from '@/lib/previewGlow'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import React, { useEffect, useState } from 'react'
@@ -158,11 +158,11 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     .map((k) => ({ key: k, href: hrefs[k], label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === page }))
 
   const ex = ((r as any).site_settings?.explore ?? {}) as { show?: boolean; layout?: string; heading?: string; lines?: Record<string, string>; titles?: Record<string, string> }
-  const exLayout = ['lines', 'tiles', 'list', 'cards', 'stack', 'outline'].includes(String(ex.layout)) ? String(ex.layout) : 'lines'
+  const exLayout = ['lines', 'tiles', 'list', 'cards', 'stack', 'outline', 'free'].includes(String(ex.layout)) ? String(ex.layout) : 'lines'
   const doors = [
-    ...(galleries.length > 0 ? [{ href: hrefs.galleries, t: ex.titles?.galleries?.trim() || t.menu.labels.galleries?.trim() || NAV_DEFAULTS.galleries, s: ex.lines?.galleries?.trim() || 'See my work' }] : []),
-    { href: hrefs.about, t: ex.titles?.about?.trim() || t.menu.labels.about?.trim() || NAV_DEFAULTS.about, s: ex.lines?.about?.trim() || 'Get to know me' },
-    { href: hrefs.book, t: ex.titles?.book?.trim() || t.menu.labels.book?.trim() || NAV_DEFAULTS.book, s: ex.lines?.book?.trim() || 'Check my dates' },
+    ...(galleries.length > 0 ? [{ k: 'galleries', href: hrefs.galleries, t: ex.titles?.galleries?.trim() || t.menu.labels.galleries?.trim() || NAV_DEFAULTS.galleries, s: ex.lines?.galleries?.trim() || 'See my work' }] : []),
+    { k: 'about', href: hrefs.about, t: ex.titles?.about?.trim() || t.menu.labels.about?.trim() || NAV_DEFAULTS.about, s: ex.lines?.about?.trim() || 'Get to know me' },
+    { k: 'book', href: hrefs.book, t: ex.titles?.book?.trim() || t.menu.labels.book?.trim() || NAV_DEFAULTS.book, s: ex.lines?.book?.trim() || 'Check my dates' },
   ]
 
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: t.headWeight ?? 500, letterSpacing: '0.01em' }
@@ -696,6 +696,29 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <div className="mx-auto max-w-6xl">
             {ex.heading?.trim() && (
               <p className="el-ex_label mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
+            )}
+
+            {exLayout === 'free' && (
+              <AboutCanvas
+                canvas={(ex as any).canvas} photo2={null} aboutPhoto={aboutPhoto} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
+                title={null} bio="" headStyle={headStyle} ink={ink} soft={soft} tint={tint}
+                bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId="explore"
+                fallback={(dv) => exploreStarter(dv)}
+                renderButton={(label) => (
+                  <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+                )}
+                renderSpecial={(type, it) => {
+                  if (type !== 'door') return null
+                  const d = doors.find((x) => x.k === it.door)
+                  if (!d) return null
+                  return (
+                    <a href={d.href} className="block">
+                      <p className="ex-t el-ex_title" style={{ ...headStyle, fontSize: 'clamp(1.25rem, 3.2vw, 2.6rem)', lineHeight: 1.15 }}>{d.t}</p>
+                      <p className="ex-s el-ex_sub mt-1 text-[10px] uppercase tracking-[0.22em]" style={{ color: accent }}>{d.s} &rarr;</p>
+                    </a>
+                  )
+                }}
+              />
             )}
 
             {exLayout === 'lines' && (

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
-import { getBoard, starter, blank, newItem, hasBoard, galleryStarter } from '@/lib/aboutCanvas'
+import { getBoard, starter, blank, newItem, hasBoard, galleryStarter, exploreStarter } from '@/lib/aboutCanvas'
 import type { CItem } from '@/lib/aboutCanvas'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { FONT_OPTIONS, PAIR_PRESETS, NAV_DEFAULTS, DEFAULT_TITLES, resolveTheme } from '@/lib/siteTheme'
@@ -537,7 +537,7 @@ function Thumb({ kind }: { kind: string }) {
 
 import { heroStarter } from '@/lib/aboutCanvas'
 
-const CV_ICONS: Record<string, string> = {
+const CV_ICONS: Record<string, string> = { door: 'M5 12h14M13 6l6 6-6 6',
   photo: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6',
   card: 'M4 5h16v14H4z M8 10h8 M8 14h5',
   heading: 'M6 5v14 M18 5v14 M6 12h12',
@@ -594,7 +594,9 @@ export default function WebsitePage() {
       if (d.type === 'camrhia-canvas' && d.dev && d.board && cvBridge.upd) {
         const bid = d.boardId ?? 'about'
         cvBridge.upd((st: any) => {
-          if (bid === 'featured') {
+          if (bid === 'explore') {
+            st.explore = { ...(st.explore ?? {}), canvas: { ...((st.explore ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
+          } else if (bid === 'featured') {
             st.portfolio = { ...(st.portfolio ?? {}), canvas: { ...((st.portfolio ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
           } else if (bid === 'galleries') {
             st.galindex = { ...(st.galindex ?? {}), canvas: { ...((st.galindex ?? {}).canvas ?? {}), [d.dev as string]: d.board } }
@@ -925,15 +927,16 @@ export default function WebsitePage() {
   function canvasPanel(boardId: string, part: 'layout' | 'tiles' = 'layout') {
     const isAbout = boardId === 'about'
     const isFeat = boardId === 'featured'
+    const isExplore = boardId === 'explore'
     const isGal = boardId === 'galleries' || isFeat
     const isHero = boardId === 'hero'
     const isGalPage = boardId.startsWith('gal:')
     const gpid = boardId.slice(4)
     const customsList = (S.customs ?? []) as any[]
-    const canvasData = isGalPage ? (S.galpage?.canvases ?? {})[gpid] : isHero ? S.hero?.canvas : isAbout ? S.about?.canvas : isFeat ? S.portfolio?.canvas : isGal ? S.galindex?.canvas : customsList.find((c) => c.id === boardId)?.canvas
+    const canvasData = isGalPage ? (S.galpage?.canvases ?? {})[gpid] : isHero ? S.hero?.canvas : isAbout ? S.about?.canvas : isExplore ? S.explore?.canvas : isFeat ? S.portfolio?.canvas : isGal ? S.galindex?.canvas : customsList.find((c) => c.id === boardId)?.canvas
     const ph2 = isAbout ? S.about?.photo2 : null
     const galIds = cvGalleries.map((g) => g.id)
-    const b = isGalPage && !hasBoard(canvasData, device) ? { h: 88, items: [] as CItem[] } : isHero && !hasBoard(canvasData, device) ? heroStarter(device, heroSel.slice(0, 3)) : isGal && !hasBoard(canvasData, device) ? galleryStarter(device, isFeat ? featured.map((g) => g.id) : galIds) : getBoard(canvasData, device, ph2, !isAbout)
+    const b = isGalPage && !hasBoard(canvasData, device) ? { h: 88, items: [] as CItem[] } : isHero && !hasBoard(canvasData, device) ? heroStarter(device, heroSel.slice(0, 3)) : isExplore && !hasBoard(canvasData, device) ? exploreStarter(device) : isGal && !hasBoard(canvasData, device) ? galleryStarter(device, isFeat ? featured.map((g) => g.id) : galIds) : getBoard(canvasData, device, ph2, !isAbout)
     const sel: CItem | null = cvBoard === boardId ? (b.items.find((i) => i.id === cvSel) ?? null) : null
     const setBoard = (nb: { h: number; items: CItem[] }) => upd((st: any) => {
       if (isGalPage) {
@@ -946,6 +949,10 @@ export default function WebsitePage() {
         const h2 = { ...(st.hero ?? {}) }
         h2.canvas = { ...(h2.canvas ?? {}), [device]: nb }
         st.hero = h2
+      } else if (isExplore) {
+        const x2 = { ...(st.explore ?? {}) }
+        x2.canvas = { ...(x2.canvas ?? {}), [device]: nb }
+        st.explore = x2
       } else if (isFeat) {
         const f2 = { ...(st.portfolio ?? {}) }
         f2.canvas = { ...(f2.canvas ?? {}), [device]: nb }
@@ -969,14 +976,14 @@ export default function WebsitePage() {
       cvBridge.board = id ? boardId : null
       ;(document.getElementById('site-frame') as HTMLIFrameElement | null)?.contentWindow?.postMessage({ type: 'camrhia-canvas-pick', id, boardId }, '*')
     }
-    const add = (type: 'photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle') => {
+    const add = (type: 'photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle' | 'door') => {
       if (isGalPage && !hasBoard(canvasData, device)) { flash('Drag any photo in the preview first, then add things.'); return }
       const it = newItem(type, device, Math.max(0, ...b.items.map((i) => i.z)) + 1)
       if (type === 'gallery') it.galleryId = galIds.find((id) => !b.items.some((i) => i.galleryId === id)) ?? galIds[0]
       setBoard({ ...b, items: [...b.items, it] })
       pick(it.id)
     }
-    const names: Record<string, string> = { photo: 'Photo', card: 'Text card', heading: 'Heading', button: 'Button', gallery: 'Gallery tile', menu: 'Menu', logo: 'Logo', title: 'Title', subtitle: 'Subtitle' }
+    const names: Record<string, string> = { photo: 'Photo', card: 'Text card', heading: 'Heading', button: 'Button', gallery: 'Gallery tile', menu: 'Menu', logo: 'Logo', title: 'Title', subtitle: 'Subtitle', door: 'Explore link' }
     async function up(id: string, file: File) {
       const sb = supabase
       if (!sb) return
@@ -1033,7 +1040,7 @@ export default function WebsitePage() {
         <div>
           <p className="mb-2 text-xs font-medium text-ink">Add to your layout</p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {((isGalPage ? ['title', 'subtitle', 'button', 'photo', 'heading', 'card'] : isHero ? ['title', 'subtitle', 'menu', 'logo', 'button', 'photo', 'heading', 'card'] : isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle')[]).map((tp) => (
+            {((isGalPage ? ['title', 'subtitle', 'button', 'photo', 'heading', 'card'] : isHero ? ['title', 'subtitle', 'menu', 'logo', 'button', 'photo', 'heading', 'card'] : isExplore ? ['door', 'heading', 'card', 'button', 'photo'] : isGal ? ['gallery', 'heading', 'card', 'button', 'photo'] : ['photo', 'card', 'heading', 'button']) as ('photo' | 'card' | 'heading' | 'button' | 'gallery' | 'menu' | 'logo' | 'title' | 'subtitle')[]).map((tp) => (
               <button key={tp} type="button" onClick={() => add(tp)} className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-line bg-white px-2 py-3 text-xs text-ink-soft transition hover:border-twilight hover:bg-twilight/5 hover:text-twilight">
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d={CV_ICONS[tp]} /></svg>
                 {names[tp]}
@@ -1067,6 +1074,16 @@ export default function WebsitePage() {
         {sel && (
           <div className="space-y-3 rounded-xl border border-line bg-white p-4">
             <p className="text-sm font-medium text-ink">{names[sel.type]}</p>
+            {sel.type === 'door' && (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-ink">Link to</label>
+                <Select value={sel.door ?? 'about'} onChange={(e) => patch(sel.id, { door: e.target.value })} className={inputCls}>
+                  <option value="galleries">Galleries</option>
+                  <option value="about">About</option>
+                  <option value="book">Book</option>
+                </Select>
+              </div>
+            )}
             {sel.type === 'photo' && (
               <>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1877,8 +1894,9 @@ export default function WebsitePage() {
       { v: 'list', name: 'Numbered list', thumb: exv(<div>{[0, 1, 2].map((i) => <div key={i} className="flex items-center gap-1.5" style={{ height: 20, borderTop: '1px solid #CBBFB0', borderBottom: i === 2 ? '1px solid #CBBFB0' : undefined }}>{xbar('8%', 2, '#B08D57')}<div className="flex-1">{xbar('40%', 6)}</div>{xbar('8px', 2, '#B08D57')}</div>)}</div>) },
       { v: 'cards', name: 'Cards', thumb: exv(<div className="grid grid-cols-3 gap-1.5" style={{ height: 36 }}>{[0, 1, 2].map((i) => <div key={i} className="flex flex-col items-center justify-center gap-1" style={{ background: '#EBE3D8', borderTop: '2px solid #B08D57', borderRadius: 3 }}>{xbar('56%', 5)}{xbar('40%', 2, '#2A1F24', 0.35)}</div>)}</div>) },
       { v: 'stack', name: 'Centered stack', thumb: exv(<div className="flex flex-col items-center gap-2">{[0, 1, 2].map((i) => <div key={i} className="flex w-full flex-col items-center gap-[3px]">{xbar('44%', 8)}{xbar('20%', 2, '#B08D57')}</div>)}</div>) },
-      { v: 'outline', name: 'Outline boxes', thumb: exv(<div className="grid grid-cols-3 gap-1.5" style={{ height: 40 }}>{[0, 1, 2].map((i) => <div key={i} className="flex flex-col justify-between" style={{ border: '1px solid #B08D57', borderRadius: 3, padding: 5 }}>{xbar('56%', 5)}<div className="flex items-center justify-between">{xbar('40%', 2, '#2A1F24', 0.35)}{xbar('8px', 2, '#B08D57')}</div></div>)}</div>) },
+      { v: 'free', name: 'Free layout', thumb: exv(<div className="relative" style={{ height: 46 }}><div className="absolute" style={{ left: 0, top: 0, width: '36%', height: 22, background: '#EBE3D8', border: '1px solid #D8CDBF', borderRadius: 3, padding: 5 }}>{xbar('60%', 5)}</div><div className="absolute" style={{ left: '44%', top: 12, width: '32%', height: 22, background: '#EBE3D8', border: '1px solid #D8CDBF', borderRadius: 3, padding: 5, outline: '1px dashed #B08D57', outlineOffset: 2 }}>{xbar('60%', 5)}</div><div className="absolute" style={{ left: 'calc(76% - 3px)', top: 'calc(12px + 22px - 3px)', width: 7, height: 7, background: '#B08D57', borderRadius: 2 }} /><div className="absolute" style={{ right: 0, top: 0, width: '20%', height: 14, background: '#EBE3D8', border: '1px solid #D8CDBF', borderRadius: 3 }} /></div>) },
     ]} />
+{S.explore?.layout === 'free' && canvasPanel('explore')}
 
 </Group>
 {secBg('Explore background', 'explore', 'explore', <ColorField label="Card color" value={S.explore?.tile_bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('explore', { tile_bg: h })} onReset={() => upd((st) => { const b = { ...(st.explore ?? {}) }; delete b.tile_bg; st.explore = b })} />)}
