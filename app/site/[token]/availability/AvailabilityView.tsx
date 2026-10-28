@@ -146,7 +146,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
         resultTextColor: soft, bgColor: t.calendar.bg,
       }
 
-  const showPhoto = t.availability.photo && !!photo
+  const showPhoto = false && !!photo
   const stacked = L === 'centered'
   const between = L === 'between' && t.calendar.show
   const photoPos: string = (r as any).site_settings?.availability?.photoPos ?? 'side'
