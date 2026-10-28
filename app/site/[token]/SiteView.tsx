@@ -568,22 +568,26 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const list = quotesShown.slice(0, 6)
         return sec('words', t.titles.testimonials,
           L === 'stacked' ? (
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-2xl">
               {list.map((q, i) => (
-                <figure key={i} id={'tm-' + i} className="py-10 text-center" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
-                  {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 h-24 w-24 rounded-full object-cover" />}
-                  <blockquote className="el-tes_quote italic leading-relaxed" style={{ fontFamily: t.head, fontSize: fsr('fs-testi', 1.5) }}>&ldquo;{q.text}&rdquo;</blockquote>
-                  {q.who && <figcaption className="el-tes_name mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
+                <figure key={i} id={'tm-' + i} className="py-12 text-center" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
+                  <span style={{ ...headStyle, color: accent, fontSize: 44, lineHeight: 1, display: 'block' }}>&ldquo;</span>
+                  <blockquote className="el-tes_quote mt-2 leading-[1.7]" style={{ fontFamily: t.head, fontWeight: 300, fontSize: fsr('fs-testi', 1.5) }}>{q.text}</blockquote>
+                  <figcaption className="mt-8 flex flex-col items-center gap-3">
+                    {q.img && <img src={q.img} alt="" loading="lazy" className="h-14 w-14 rounded-full object-cover" />}
+                    {q.who && <span className="el-tes_name text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</span>}
+                  </figcaption>
                 </figure>
               ))}
             </div>
           ) : L === 'cards' ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {list.map((q, i) => (
-                <figure key={i} id={'tm-' + i} className="flex flex-col p-8" style={{ background: `color-mix(in srgb, ${bg} 40%, #fff)`, border: `1px solid ${line}` }}>
-                  <span style={{ ...headStyle, color: accent, fontSize: 48, lineHeight: 1 }}>&ldquo;</span>
-                  <blockquote className="el-tes_quote mt-2 flex-1 leading-relaxed" style={{ fontSize: fsp('fs-testi', 15) }}>{q.text}</blockquote>
-                  <figcaption className="mt-6 flex items-center gap-3">
+                <figure key={i} id={'tm-' + i} className="flex flex-col p-8 md:p-10" style={{ background: `color-mix(in srgb, ${bg} 40%, #fff)`, borderRadius: 28, boxShadow: '0 20px 50px rgba(0,0,0,0.07)' }}>
+                  <span style={{ ...headStyle, color: accent, fontSize: 44, lineHeight: 1 }}>&ldquo;</span>
+                  <blockquote className="el-tes_quote mt-2 flex-1 leading-[1.8]" style={{ fontWeight: 300, fontSize: fsp('fs-testi', 15) }}>{q.text}</blockquote>
+                  <div className="mt-8 h-px w-8" style={{ background: accent }} />
+                  <figcaption className="mt-5 flex items-center gap-3">
                     {q.img && <img src={q.img} alt="" loading="lazy" className="h-10 w-10 rounded-full object-cover" />}
                     {q.who && <span className="el-tes_name text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</span>}
                   </figcaption>
@@ -591,12 +595,13 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               ))}
             </div>
           ) : (
-            <div className="grid gap-10 md:grid-cols-3">
+            <div className="grid gap-12 md:grid-cols-3">
               {list.map((q, i) => (
                 <figure key={i} id={'tm-' + i} className="text-center">
-                  {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-6 w-full object-cover" style={{ aspectRatio: '4/5' }} />}
-                  <blockquote className="el-tes_quote italic leading-relaxed" style={{ fontFamily: t.head, fontSize: fsr('fs-testi', 1.25) }}>&ldquo;{q.text}&rdquo;</blockquote>
-                  {q.who && <figcaption className="el-tes_name mt-4 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
+                  {q.img && <img src={q.img} alt="" loading="lazy" className="mx-auto mb-8 w-full object-cover" style={{ aspectRatio: '4/5', borderRadius: 28 }} />}
+                  <blockquote className="el-tes_quote leading-[1.75]" style={{ fontFamily: t.head, fontWeight: 300, fontSize: fsr('fs-testi', 1.25) }}>&ldquo;{q.text}&rdquo;</blockquote>
+                  <div className="mx-auto mt-6 h-px w-8" style={{ background: accent }} />
+                  {q.who && <figcaption className="el-tes_name mt-5 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</figcaption>}
                 </figure>
               ))}
             </div>
