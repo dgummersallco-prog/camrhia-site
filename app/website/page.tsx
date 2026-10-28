@@ -262,6 +262,7 @@ function ColorField({ label, value, swatches, onChange, onReset }: {
       {open && (
         <>
           
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 z-40 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-2xl border border-line bg-card p-4 shadow-lg">
             <p className="mb-2 text-[11px] uppercase tracking-widest text-ink-soft">Your colors</p>
             <div className="mb-4 flex flex-wrap gap-2">
