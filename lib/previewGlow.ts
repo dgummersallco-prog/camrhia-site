@@ -58,7 +58,15 @@ export function installPreviewGlow(): () => void {
     if (d.type === 'camrhia-outline') targetId = d.id || null
     if (d.type === 'camrhia-scroll' && d.id) {
       const el = document.getElementById(d.id)
-      if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' })
+      if (el) {
+        const r = el.getBoundingClientRect()
+        const vh = window.innerHeight
+        const visible = r.top >= 0 && r.bottom <= vh
+        if (!visible) {
+          const top = r.height >= vh - 120 ? r.top + window.scrollY - 80 : r.top + window.scrollY - (vh - r.height) / 2
+          window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+        }
+      }
     }
   }
   window.addEventListener('message', onMsg)
