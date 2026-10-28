@@ -404,7 +404,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                       </a>
                     )
                     const textTile = (
-                      <a key={g.id + 't'} href={href} className="flex aspect-square items-center justify-center p-4 text-center" style={{ background: bg }}>
+                      <a key={g.id + 't'} href={href} className="flex aspect-square items-center justify-center p-4 text-center" style={{ background: (r as any).site_settings?.galindex?.tileBg ?? 'transparent' }}>
                         <span className="cr-h el-gal_name" style={{ ...headStyle, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1, fontSize: 'calc(clamp(1.4rem, 4.2vw, 3.6rem) * var(--fs-cover, 1))' }}>{g.title}</span>
                       </a>
                     )
