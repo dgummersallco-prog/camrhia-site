@@ -8,7 +8,7 @@ import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
 import { APP_STORE_URL } from '@/lib/appStore'
 
-type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'invoices' | 'packages' | 'questionnaires'
+type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'invoices' | 'insights' | 'packages' | 'questionnaires'
 
 const ICONS: Record<string, string> = {
   dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
@@ -22,6 +22,7 @@ const ICONS: Record<string, string> = {
   website: 'M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M2 9h20 M6 6.5h.01 M9 6.5h.01',
   reminders: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0',
   storage: 'M22 12H2 M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z M6 16h.01 M10 16h.01',
+  insights: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
   invoices: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M9 13h6 M9 17h6',
   clients: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   team: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
@@ -42,6 +43,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'contracts', href: '/contracts', label: 'Contracts' },
   { tab: 'payments', href: '/payments', label: 'Payments' },
   { tab: 'invoices', href: '/invoices', label: 'Invoices' },
+  { tab: 'insights', href: '/insights', label: 'Insights' },
   { tab: 'team', href: '/team', label: 'Team' },
   { tab: 'messages', href: '/messages', label: 'Messages' },
   { tab: 'calendar', href: '/calendar', label: 'Calendar' },
@@ -186,7 +188,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
   const GROUPS: { label: string | null; tabs: string[] }[] = [
     { label: null, tabs: ['dashboard'] },
     { label: 'Clients', tabs: ['clients', 'messages', 'sessions', 'calendar'] },
-    { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments', 'invoices', 'team'] },
+    { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments', 'invoices', 'insights', 'team'] },
     { label: 'Your brand', tabs: ['website', 'portfolio'] },
     { label: 'Account', tabs: ['billing', 'settings'] },
   ]
