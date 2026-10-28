@@ -23,8 +23,8 @@ function photoUrl(path: string | null | undefined): string | null {
 // Shown only inside the designer preview, so every section is visible while building.
 const PH_SCENES = [1, 2, 3, 4, 5, 6].map((n) => 'https://picsum.photos/seed/camrhia' + n + '/800/1000')
 const PH_AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#E6E3DE"/><circle cx="100" cy="80" r="34" fill="#BDB8B0"/><path d="M32 200c0-42 30-68 68-68s68 26 68 68z" fill="#BDB8B0"/></svg>')
-const PH_ABOUT = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000"><rect width="800" height="1000" fill="#E6E3DE"/><circle cx="400" cy="520" r="105" fill="#CFCAC3"/><path d="M170 1000 C170 760 280 665 400 665 C520 665 630 760 630 1000 Z" fill="#CFCAC3"/></svg>')
-const PH_ABOUT_W = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><rect width="1600" height="900" fill="#E6E3DE"/><circle cx="800" cy="330" r="100" fill="#CFCAC3"/><path d="M520 900 C520 540 650 465 800 465 C950 465 1080 540 1080 900 Z" fill="#CFCAC3"/></svg>')
+const PH_ABOUT = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000"><rect width="800" height="1000" fill="#EFECE7"/><g fill=\"none\" stroke=\"#BDB7AD\" stroke-width=\"14\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><circle cx="560" cy="430" r="55"/><path d="M170 700 L340 500 L450 630 L520 550 L630 700 Z"/></g></svg>')
+const PH_ABOUT_W = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><rect width="1600" height="900" fill="#EFECE7"/><g fill=\"none\" stroke=\"#BDB7AD\" stroke-width=\"14\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><circle cx="930" cy="330" r="60"/><path d="M600 610 L780 400 L890 530 L960 450 L1080 610 Z"/></g></svg>')
 const PH_GALLERIES = ['Wedding day', 'Engagement', 'Family'].map((title, gi) => ({
   id: 'ph' + gi,
   title,
