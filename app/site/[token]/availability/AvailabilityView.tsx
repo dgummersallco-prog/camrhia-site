@@ -28,6 +28,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [sessionType, setSessionType] = useState('')
+  const [packageId, setPackageId] = useState('')
   const [date, setDate] = useState('')
   const [city, setCity] = useState('')
   const [message, setMessage] = useState('')
@@ -112,6 +113,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
         p_city: city || null,
         p_state: null,
         p_note: message || null,
+        p_package_id: packageId || null,
       })
       setSending(false)
       if (ce) { setError(ce.message); return }
@@ -128,6 +130,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       p_preferred_date: date || null,
       p_message: [city ? `Location: ${city}` : '', message].filter(Boolean).join('\n\n') || null,
       p_website: website || null,
+      p_package_id: packageId || null,
     })
     setSending(false)
     if (rpcError) { setError(rpcError.message); return }
@@ -212,6 +215,13 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
           <option value="">Choose a session type</option>
           {SESSION_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
         </Select></div>
+      {((r.site_packages ?? []) as { id: string; title: string; price: string | null }[]).length > 0 && (
+        <div><label style={label}>Package (optional)</label>
+          <Select style={input} value={packageId} onChange={(e) => setPackageId(e.target.value)}>
+            <option value="">Not sure yet</option>
+            {((r.site_packages ?? []) as { id: string; title: string; price: string | null }[]).map((pk) => <option key={pk.id} value={pk.id}>{pk.title}{pk.price ? ' · ' + pk.price : ''}</option>)}
+          </Select></div>
+      )}
       <div><label style={label}>Date</label>
         <input style={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
       <div><label style={label}>Location (city)</label>
