@@ -370,17 +370,35 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const rawGal = (r as any).site_settings?.galindex?.layout
         const L: string = page === 'galleries' ? (['checker', 'rows', 'custom'].includes(rawGal) ? rawGal : t.galindex.layout) : t.portfolio.layout
         const list = page === 'home' ? galleries.slice(0, 6) : galleries
+        const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
+        const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'
+        const shapeRatio = ({ portrait: '4/5', landscape: '3/2', square: '1/1', tall: '2/3' } as Record<string, string>)[t.portfolio.shape]
         const card = (g: any, style: React.CSSProperties, cls = '', big = false) => {
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           const u = photoUrl(cover?.storage_path)
+          const href = `${base}/g/${g.id}${qs}`
+          const nm = t.portfolio.name
+          const img = u ? <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" /> : null
+          if (nm === 'below') {
+            const { aspectRatio, minHeight, ...rest } = style as any
+            return (
+              <a key={g.id} id={'fw-' + g.id} href={href} className={`group block ${cls}`} style={rest}>
+                <div className="relative overflow-hidden" style={{ aspectRatio, minHeight, background: '#E5E1DB', borderRadius: rad }}>{img}</div>
+                <div className="pt-4 text-center">
+                  <p className="el-gal_name" style={{ ...headStyle, fontSize: fsr('fs-cover', big ? 2.25 : 1.5), lineHeight: 1.15 }}>{g.title}</p>
+                  {g.line && <p className="el-gal_count mt-1 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{g.line}</p>}
+                </div>
+              </a>
+            )
+          }
+          const hov = nm === 'hover' ? ' opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100' : ''
           return (
-            <a key={g.id} id={'fw-' + g.id} href={`${base}/g/${g.id}${qs}`} className={`group relative block overflow-hidden ${cls}`} style={{ background: '#E5E1DB', ...style }}>
-              {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
-              <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+            <a key={g.id} id={'fw-' + g.id} href={href} className={`group relative block overflow-hidden ${cls}`} style={{ background: '#E5E1DB', borderRadius: rad, ...style }}>
+              {img}
+              <div className={'absolute inset-0 transition duration-500' + hov} style={{ background: 'linear-gradient(transparent 55%, rgba(0,0,0,0.62))' }} />
+              <div className={'absolute inset-x-0 bottom-0 p-6 text-white transition duration-500' + hov}>
                 <p className="el-gal_name" style={{ ...headStyle, fontSize: fsr('fs-cover', big ? 2.25 : 1.875), lineHeight: 1.15 }}>{g.title}</p>
                 {g.line && <p className="el-gal_count mt-1 text-[11px] uppercase tracking-[0.22em] opacity-90">{g.line}</p>}
-                
               </div>
             </a>
           )
@@ -448,20 +466,20 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 )}
               />
             ) : L === 'carousel' ? (
-              <div className="-mx-6 flex snap-x snap-mandatory overflow-x-auto px-6 pb-4" style={{ gap: 'calc(var(--gap) + 8px)', scrollbarWidth: 'thin' }}>
-                {list.map((g) => card(g, { aspectRatio: '4/5', flex: '0 0 auto', width: 'min(78vw, 340px)' }, 'snap-start'))}
+              <div className="-mx-6 flex snap-x snap-mandatory overflow-x-auto px-6 pb-4" style={{ gap: gapX, scrollbarWidth: 'thin' }}>
+                {list.map((g) => card(g, { aspectRatio: shapeRatio, flex: '0 0 auto', width: 'min(78vw, 340px)' }, 'snap-start'))}
               </div>
             ) : L === 'banners' ? (
-              <div className="flex flex-col" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: 'calc(var(--gap) + 8px)' }}>
+              <div className="flex flex-col" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: gapX }}>
                 {list.map((g) => card(g, { aspectRatio: '21/9', minHeight: 180 }))}
               </div>
             ) : L === 'feature' ? (
-              <div className="grid md:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: 'calc(var(--gap) + 8px)' }}>
+              <div className="grid md:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: gapX }}>
                 {list.map((g, i) => (i === 0 ? card(g, { minHeight: 300 }, 'md:col-span-2 md:row-span-2', true) : card(g, { aspectRatio: '16/10' })))}
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: 'calc(var(--gap) + 8px)' }}>
-                {list.map((g) => card(g, { aspectRatio: t.cardRatio }))}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: gapX }}>
+                {list.map((g) => card(g, { aspectRatio: shapeRatio }))}
               </div>
             )}
             {page === 'home' && galleries.length > 0 && (
