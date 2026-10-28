@@ -2067,13 +2067,9 @@ export default function WebsitePage() {
                   </div>
 {(S.galindex?.layout ?? T.galindex.layout) === 'custom' && canvasPanel('galleries')}
 </Group>
-{secBg('Galleries background', 'portfolio', 'portfolio')}
-{(S.galindex?.layout ?? T.galindex.layout) === 'checker' && (
-<Group title="Checkerboard squares" hint="color behind the gallery names" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
-<ColorField label="Name square color" value={S.galindex?.tileBg ?? '#FFFFFF'} swatches={palette()} onChange={(h) => setIn('galindex', { tileBg: h })} onReset={() => setIn('galindex', { tileBg: undefined })} />
-<p className="text-xs text-ink-soft">Reset to match your Galleries background.</p>
-</Group>
-)}
+{secBg('Galleries background', 'portfolio', 'portfolio', (S.galindex?.layout ?? T.galindex.layout) === 'checker' ? (
+  <ColorField label="Checkerboard name squares" value={S.galindex?.tileBg ?? (S as any).secStyle?.portfolio?.bg ?? T.bg} swatches={palette()} onChange={(h) => setIn('galindex', { tileBg: h })} onReset={() => setIn('galindex', { tileBg: undefined })} />
+) : null)}
 <Group title="Galleries details" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
 {!firstGid && <p className="text-sm text-ink-soft">Add a gallery with photos first and it will show in the preview.</p>}
 <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries &amp; photos</Link>
