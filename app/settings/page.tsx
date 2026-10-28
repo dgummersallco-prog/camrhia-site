@@ -47,11 +47,11 @@ export default function SettingsPage() {
       if (!data.session) { router.push('/login'); return }
       setEmail(data.session.user.email ?? '')
       setUid(data.session.user.id)
-      const { data: prof } = await supabase.from('profiles').select('google_review_url, automation_settings').eq('id', data.session.user.id).maybeSingle()
+      const { data: prof } = await supabase.from('profiles').select('google_review_url, automation_settings, auto_payment_reminders').eq('id', data.session.user.id).maybeSingle()
       if (prof) {
         setReviewUrl(prof.google_review_url ?? '')
         const a = (prof.automation_settings ?? {}) as Record<string, boolean>
-        setAutoPay(a.payment_reminders !== false)
+        setAutoPay((prof as any).auto_payment_reminders === true)
         setAutoReview(a.review_request !== false)
       }
       setReady(true)
@@ -88,7 +88,7 @@ export default function SettingsPage() {
     if (url && !/^https?:\/\//i.test(url)) { setAutoMsg({ ok: false, text: 'The review link should start with https://' }); return }
     if (!supabase || !uid) return
     setAutoBusy(true)
-    const { error } = await supabase.from('profiles').update({ google_review_url: url || null, automation_settings: { payment_reminders: autoPay, review_request: autoReview } }).eq('id', uid)
+    const { error } = await supabase.from('profiles').update({ google_review_url: url || null, auto_payment_reminders: autoPay, automation_settings: { review_request: autoReview } }).eq('id', uid)
     setAutoBusy(false)
     setAutoMsg(error ? { ok: false, text: 'Could not save. Please try again.' } : { ok: true, text: 'Saved.' })
   }
@@ -132,7 +132,7 @@ export default function SettingsPage() {
               <form onSubmit={saveAutomation} className="space-y-4">
                 <label className="flex items-start gap-3 text-sm text-ink">
                   <input type="checkbox" className="mt-0.5 h-4 w-4" checked={autoPay} onChange={(e) => setAutoPay(e.target.checked)} />
-                  <span><span className="font-medium">Payment reminders</span><span className="block text-ink-soft">3 days before, on the due date, and 3 days after.</span></span>
+                  <span><span className="font-medium">Payment reminders</span><span className="block text-ink-soft">Sent once, when a payment is due within 3 days.</span></span>
                 </label>
                 <label className="flex items-start gap-3 text-sm text-ink">
                   <input type="checkbox" className="mt-0.5 h-4 w-4" checked={autoReview} onChange={(e) => setAutoReview(e.target.checked)} />
