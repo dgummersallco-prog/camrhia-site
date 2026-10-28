@@ -24,6 +24,10 @@ export async function POST(request: Request) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session
       const lineId = session.metadata?.payment_schedule_id
+      const miniSlotId = session.metadata?.mini_slot_id
+      if (miniSlotId && session.payment_status === 'paid') {
+        await supabase.rpc('finalize_mini_slot', { p_slot_id: miniSlotId, p_session_id: session.id })
+      }
       if (lineId && session.payment_status === 'paid') {
         const piId = typeof session.payment_intent === 'string' ? session.payment_intent : null
         const { data: paidLine } = await supabase
