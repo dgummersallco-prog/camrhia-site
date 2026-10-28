@@ -1428,6 +1428,22 @@ export default function WebsitePage() {
     )
   }
 
+  function backCard(pg: 'galleries' | 'about' | 'book') {
+    if (!T) return null
+    const cb = (((S as any).backBtn ?? {})[pg] ?? {}) as { text?: string; color?: string }
+    const put = (patch: Record<string, string | undefined>) => setIn('backBtn', { [pg]: { ...cb, ...patch } })
+    return (
+      <Group title="Back button" hint="the link back to your site" onOpen={() => scrollPreview('nav')}>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
+          <input value={cb.text ?? ''} onChange={(e) => put({ text: e.target.value })} placeholder={pg === 'book' ? '← Back' : pg === 'galleries' ? '← Home' : '← Home'} className={inputCls} />
+        </div>
+        <ColorField label="Button color" value={cb.color ?? T.ink} swatches={palette()} onChange={(h) => put({ color: h })} onReset={() => put({ color: undefined })} />
+        <SizeControl device={device} label="Button size" unit="px" min={8} max={24} step={1} value={T.sizes.back[pg]} onChange={(d, v) => setSize(('bk_' + pg) as any, d, v)} />
+      </Group>
+    )
+  }
+
   function pickTab(t: 'style' | 'home' | 'galleries' | 'about' | 'book') {
     setTab(t)
     setPreviewPage(t === 'book' ? 'availability' : t === 'style' ? 'home' : t)
@@ -1750,7 +1766,6 @@ export default function WebsitePage() {
     <>
       <ColorField label="Menu words color (home page)" value={e.color ?? T.ink} swatches={palette()} onChange={(h) => put({ color: h })} onReset={() => put({ color: undefined })} />
       <FontPicker label="Menu words font" value={e.font ?? T.bodyKey} cats={['serif', 'sans', 'script', 'display']} onChange={(k) => put({ font: k })} />
-      <ColorField label="Back button color" value={S.menu?.backColor ?? T.ink} swatches={palette()} onChange={(h) => setIn('menu', { backColor: h })} onReset={() => upd((st) => { const b = { ...(st.menu ?? {}) }; delete b.backColor; st.menu = b })} />
     </>
   )
 })()}
@@ -2078,6 +2093,7 @@ export default function WebsitePage() {
 </Row>
 <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.gbBtn} onChange={(d, v) => setSize('gb_btn' as any, d, v)} />
 </Group>
+{backCard('galleries')}
 </>)}
 {tab === 'about' && (<>{styleHead('About style', 'layout, story, colors and size', 'about')}
 <Group title="About layout" hint="pick a look" onOpen={() => scrollPreview('about')}>
@@ -2244,6 +2260,7 @@ export default function WebsitePage() {
 </Row>
 <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.abBtn} onChange={(d, v) => setSize('ab_btn' as any, d, v)} />
 </Group>
+{backCard('about')}
 </>)}
 {tab === 'book' && (<>
                 <Group title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>
@@ -2336,7 +2353,8 @@ export default function WebsitePage() {
                   <Row label="Send them to the app automatically"><Switch on={T.availability.redirect} onChange={(v) => setIn('availability', { redirect: v })} /></Row>
                   <p className="text-xs text-ink-soft">After a short countdown, new visitors are taken to the Camrhia app to finish. Their message is already waiting in your inbox.</p>
                 </Group>
-                </>)}
+                {backCard('book')}
+</>)}
 
 
               </div>

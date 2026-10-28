@@ -276,6 +276,7 @@ export function resolveTheme(r: Record<string, any>) {
     bkBtn: pairNum(s.sizes?.bk_btn ?? s.sizes?.button, 9, 20, 11, 12),
     abBtn: pairNum(s.sizes?.ab_btn ?? s.sizes?.button, 9, 20, 11, 12),
     gbBtn: pairNum(s.sizes?.gb_btn ?? s.sizes?.button, 9, 20, 11, 12),
+    back: Object.fromEntries(['galleries', 'about', 'book'].map((k) => [k, pairNum(s.sizes?.['bk_' + k], 8, 24, 11, 11)])) as Record<string, ReturnType<typeof pairNum>>,
     exTitle: pairNum(s.sizes?.ex_title, 14, 90, 26, 32),
     exSub: pairNum(s.sizes?.ex_sub, 9, 28, 11, 11),
     subhead: pairNum(s.sizes?.subhead, 9, 28, 11, 12),
@@ -360,6 +361,16 @@ export function resolveTheme(r: Record<string, any>) {
     }
     return out
   })()
+  const backCss = ['galleries', 'about', 'book'].map((pg) => {
+    const cb: any = (s.backBtn ?? {})[pg] ?? {}
+    const c = typeof cb.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(cb.color) ? cb.color : null
+    let out = c ? `.cr-back-${pg}{color:${c}!important}` : ''
+    if (s.sizes?.['bk_' + pg]) {
+      const z = sizes.back[pg]
+      out += `.cr-back-${pg}{font-size:${z.phone}px!important}@media (min-width:768px){.cr-back-${pg}{font-size:${z.desktop}px!important}}`
+    }
+    return out
+  }).join('')
   const galBtnCss = (() => {
     const cb: any = s.galBtn ?? {}
     const okHex = (v: any) => (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null)
@@ -434,7 +445,7 @@ export function resolveTheme(r: Record<string, any>) {
     (hero.headFont || hero.headColor ? `#top h1{${hero.headFont ? `font-family:${hero.headFont}!important;` : ''}${hero.headColor ? `color:${hero.headColor}!important;` : ''}}` : '') +
     (hero.subFont || hero.subColor ? `#top .cr-sub{${hero.subFont ? `font-family:${hero.subFont}!important;` : ''}${hero.subColor ? `color:${hero.subColor}!important;` : ''}}` : '') +
     `#top .cr-hpara{font-size:var(--hpara)!important;${hero.paraFont ? `font-family:${hero.paraFont}!important;` : ''}${hero.paraColor ? `color:${hero.paraColor}!important;` : ''}}`
-  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${galBtnCss}${exploreCss}${contactBtnCss}${bookBtnCss}${aboutBtnCss}${secTitleCss}${elCss}${portfolioBtnCss}`
+  const cssVars = `:root{${vars('phone')}}@media (min-width:768px){:root{${vars('desktop')}}}.cr-btn{font-size:var(--btn)!important;padding:calc(var(--btn)*1.15) calc(var(--btn)*2.7)!important}${heroCss}${heroBtnCss}${galBtnCss}${backCss}${exploreCss}${contactBtnCss}${bookBtnCss}${aboutBtnCss}${secTitleCss}${elCss}${portfolioBtnCss}`
 
   return {
     tpl,
@@ -459,6 +470,7 @@ export function resolveTheme(r: Record<string, any>) {
     orderHome,
     aboutBtnText: (str(s.aboutBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability') as string,
     galBtnText: (str(s.galBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability') as string,
+    backText: Object.fromEntries(['galleries', 'about', 'book'].map((pg) => [pg, str((s.backBtn ?? {})[pg]?.text)])) as Record<string, string | null>,
     socialHidden: (Array.isArray(s.socials_off) ? s.socials_off : []) as string[],
     galText: (s.galtext && typeof s.galtext === 'object' ? s.galtext : {}) as Record<string, { name?: string; line?: string }>,
     orderAbout,

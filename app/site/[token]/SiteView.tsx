@@ -734,7 +734,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${bg}}`}</style>
       <PortfolioLightbox />
       <div style={{ background: bg, color: ink, fontFamily: t.body }}>
-        {page === 'galleries' ? <SiteNav t={t} logo={logo} name={name} homeHref={hrefs.home} headStyle={headStyle} back={{ href: hrefs.home, label: '← Home' }} items={navItems} /> : page !== 'home' && renderNav(false, false)}
+        {page === 'galleries' || page === 'about' ? <SiteNav t={t} logo={logo} name={name} homeHref={hrefs.home} headStyle={headStyle} back={{ href: hrefs.home, label: t.backText[page] ?? '← Home', key: page }} items={navItems} /> : page !== 'home' && renderNav(false, false)}
 
         {page === 'home' && tpl === 'editorial' && (
           <>

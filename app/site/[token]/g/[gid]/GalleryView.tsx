@@ -62,7 +62,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
   )
 
   const nav = (
-    <SiteNav t={t} logo={logo} name={name} homeHref={`${homeHref}${qs}`} headStyle={head} back={{ href: `${base}/galleries${qs}`, label: '← Galleries' }} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`]] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k)).map(([k, h]) => ({ key: k, href: h, label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === 'galleries' }))} />
+    <SiteNav t={t} logo={logo} name={name} homeHref={`${homeHref}${qs}`} headStyle={head} back={{ href: `${base}/galleries${qs}`, label: t.backText.galleries ?? '← Galleries', key: 'galleries' }} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`]] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k)).map(([k, h]) => ({ key: k, href: h, label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === 'galleries' }))} />
   )
 
   if (!gal) {

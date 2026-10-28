@@ -230,7 +230,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <link rel="stylesheet" href={t.fontsHref} />
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
       <div id={photoBack ? 'book-photo' : undefined} style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
-        <SiteNav t={t} logo={logo} name={studio} homeHref={`${homeHref}${qs}`} headStyle={head} back={{ href: `${homeHref}${qs}`, label: '← Back' }} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`]] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k)).map(([k, h]) => ({ key: k, href: h, label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === 'book' }))} />
+        <SiteNav t={t} logo={logo} name={studio} homeHref={`${homeHref}${qs}`} headStyle={head} back={{ href: `${homeHref}${qs}`, label: t.backText.book ?? '← Back', key: 'book' }} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`]] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k)).map(([k, h]) => ({ key: k, href: h, label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === 'book' }))} />
 
         {photoAbove && (
           <div id="book-photo" className="mx-auto max-w-5xl px-6 pt-4">
