@@ -2294,9 +2294,37 @@ export default function WebsitePage() {
 {styleHead('FAQ style', 'questions, colors and sizes', 'faq')}
 {secBg('FAQ background', 'faq', 'faq')}
 <Group title="FAQ questions" hint="heading and your questions" onOpen={() => scrollPreview('faq')}>
-                  
-                  <p className="text-sm text-ink-soft">Your questions and answers are shared with your app profile.</p>
-                  <Link href="/portfolio" className={btnGhost + ' inline-block'}>Edit your FAQ</Link>
+                  {(() => {
+                    const list: any[] | null = Array.isArray((S as any).faq) ? (S as any).faq : null
+                    const mk = (qq: string, aa: string, id?: string) => ({ id: id ?? 'f' + Math.random().toString(36).slice(2, 9), question: qq, answer: aa, q: qq, a: aa })
+                    const put = (next: any[]) => upd((st: any) => { st.faq = next })
+                    if (!list) {
+                      return (
+                        <>
+                          <p className="text-sm text-ink-soft">Your site is showing the FAQ from your app. Edit it here to give your website its own questions. Changes here will not touch your app.</p>
+                          <button type="button" className={btnGhost + ' inline-block'} onClick={async () => {
+                            const { data: u } = await supabase!.auth.getUser()
+                            const { data } = await supabase!.from('profiles').select('faq').eq('id', u.user!.id).single()
+                            const src: any[] = Array.isArray((data as any)?.faq) ? (data as any).faq : []
+                            put(src.map((x: any, n: number) => mk(x.question ?? x.q ?? '', x.answer ?? x.a ?? '', x.id ? String(x.id) : 'f' + n)))
+                          }}>Edit the questions here</button>
+                        </>
+                      )
+                    }
+                    return (
+                      <>
+                        {list.map((it: any, n: number) => (
+                          <div key={it.id ?? n} className="space-y-2 rounded-lg border border-line p-3">
+                            <input className={inputCls} value={it.question ?? ''} placeholder="Question" onChange={(e) => put(list.map((x: any, m: number) => (m === n ? mk(e.target.value, x.answer ?? '', x.id) : x)))} />
+                            <textarea className={inputCls} rows={3} value={it.answer ?? ''} placeholder="Answer" onChange={(e) => put(list.map((x: any, m: number) => (m === n ? mk(x.question ?? '', e.target.value, x.id) : x)))} />
+                            <button type="button" className="text-xs text-ink-soft hover:text-red-700" onClick={() => put(list.filter((_: any, m: number) => m !== n))}>Remove ×</button>
+                          </div>
+                        ))}
+                        <button type="button" className={btnGhost + ' inline-block'} onClick={() => put([...list, mk('', '')])}>+ Add a question</button>
+                        <p className="text-xs text-ink-soft">These questions belong to your website only.</p>
+                      </>
+                    )
+                  })()}
                 </Group>
 <Group title="FAQ text" onOpen={() => scrollPreview('faq')}>
 {titleBlock('faq')}

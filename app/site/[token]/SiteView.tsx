@@ -126,7 +126,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     ...((r.testimonials ?? []) as any[]).filter((x) => x.quote).map((x) => ({ text: x.quote as string, who: (x.client_name ?? '') as string, img: photoUrl(x.storage_path) })),
     ...((r.reviews ?? []) as any[]).filter((v) => v.body).map((v) => ({ text: v.body as string, who: (v.couple_names ?? '') as string, img: null })),
   ]
-  const realFaq = (r.faq ?? []) as any[]
+  const siteFaq = (r as any).site_settings?.faq
+  const realFaq = (Array.isArray(siteFaq) ? siteFaq : (r.faq ?? [])) as any[]
   const faq = isPreview && realFaq.length === 0 ? (PH_FAQ as any[]) : realFaq
   const quotesShown = quotes.length >= 3 ? quotes : [...quotes, ...PH_QUOTES.slice(quotes.length)]
   React.useEffect(() => {
