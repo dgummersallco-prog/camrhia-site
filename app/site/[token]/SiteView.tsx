@@ -372,7 +372,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const list = page === 'home' ? galleries.slice(0, 6) : galleries
         const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
         const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'
-        const shapeRatio = ({ portrait: '4/5', landscape: '3/2', square: '1/1', tall: '2/3' } as Record<string, string>)[t.portfolio.shape]
+        const shapeRatio = (({ portrait: '4/5', landscape: '3/2', square: '1/1', tall: '2/3' } as Record<string, string>)[(t.portfolio as any)?.shape] ?? t.cardRatio ?? '4/5')
         const card = (g: any, style: React.CSSProperties, cls = '', big = false) => {
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           const u = photoUrl(cover?.storage_path)
