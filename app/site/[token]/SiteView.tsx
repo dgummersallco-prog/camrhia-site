@@ -168,6 +168,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string; title?: string; titleFont?: string }>)
   const famOf = (k?: string) => (k && FONT_OPTIONS[k] ? FONT_OPTIONS[k].family : null)
   const hexOk = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
+  const pageBg = page === 'galleries' ? hexOk(secStyles.portfolio?.bg) : page === 'about' ? hexOk(secStyles.about?.bg) : null
   const secCss = Object.entries(secStyles).map(([id, v]) => {
     if (!v || !/^[A-Za-z0-9_-]+$/.test(id)) return ''
     const rules: string[] = []
@@ -731,10 +732,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       <link rel="stylesheet" href={t.fontsHref} />
       {extraFontsHref && <link rel="stylesheet" href={extraFontsHref} />}
       {secCss && <style dangerouslySetInnerHTML={{ __html: secCss }} />}
-      <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${bg}}`}</style>
+      <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${pageBg ?? bg}}`}</style>
       <PortfolioLightbox />
-      <div style={{ background: bg, color: ink, fontFamily: t.body }}>
-        {page === 'galleries' || page === 'about' ? <SiteNav t={t} logo={logo} name={name} homeHref={hrefs.home} headStyle={headStyle} back={{ href: hrefs.home, label: t.backText[page] ?? '← Home', key: page }} items={navItems} /> : page !== 'home' && renderNav(false, false)}
+      <div style={{ background: pageBg ?? bg, color: ink, fontFamily: t.body }}>
+        {page === 'galleries' || page === 'about' ? <SiteNav t={t} logo={logo} name={name} homeHref={hrefs.home} headStyle={headStyle} pageBg={pageBg} back={{ href: hrefs.home, label: t.backText[page] ?? '← Home', key: page }} items={navItems} /> : page !== 'home' && renderNav(false, false)}
 
         {page === 'home' && tpl === 'editorial' && (
           <>

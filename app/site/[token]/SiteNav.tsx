@@ -6,7 +6,7 @@ import type { resolveTheme } from '@/lib/siteTheme'
 type Theme = ReturnType<typeof resolveTheme>
 export type NavItem = { key: string; href: string; label: string; active: boolean }
 
-export function SiteNav({ t, logo, name, items, homeHref, headStyle, back }: { back?: { href: string; label: string; key: string }; t: Theme; logo: string | null; name: string; items: NavItem[]; homeHref: string; headStyle: React.CSSProperties }) {
+export function SiteNav({ t, logo, name, items, homeHref, headStyle, back, pageBg }: { pageBg?: string | null; back?: { href: string; label: string; key: string }; t: Theme; logo: string | null; name: string; items: NavItem[]; homeHref: string; headStyle: React.CSSProperties }) {
   const [open, setOpen] = useState(false)
   const burger = t.menu.icon === 'burger'
   const { ink, bg, line } = t
@@ -15,7 +15,7 @@ export function SiteNav({ t, logo, name, items, homeHref, headStyle, back }: { b
     ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} />
     : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24 }}>{t.menu.brand ?? name}</span>
   if (back) {
-    const m = /^#?([0-9a-f]{6})$/i.exec(String(bg).trim())
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(pageBg ?? bg).trim())
     const n = m ? parseInt(m[1], 16) : null
     const lum = n === null ? null : (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
     const auto = lum === null ? ink : lum > 0.55 ? '#2A1F24' : '#FFFFFF'
