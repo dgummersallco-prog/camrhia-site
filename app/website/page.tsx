@@ -2343,14 +2343,7 @@ export default function WebsitePage() {
                   <p className="text-xs text-ink-soft">On a phone the calendar always sits above the form. Turn the calendar off in step 3 to show only the form.</p>
                 </Group>
 
-                <Group title="2. Photo" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-photo'), 500) }}>
-<Row label="Photo position">
-                    <Seg value={S.availability?.photoPos ?? 'side'} options={[{ v: 'side', label: 'Beside' }, { v: 'above', label: 'Above' }, { v: 'background', label: 'Background' }]} onChange={(v) => setIn('availability', { photoPos: v })} />
-                  </Row>
-<Row label="Photo above the page"><Switch on={T.availability.photo} onChange={(v) => setIn('availability', { photo: v })} /></Row>
-</Group>
-
-<Group title="3. Title & fonts" hint="heading and intro" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-head'), 500) }}>
+                <Group title="2. Title & fonts" hint="heading and intro" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-head'), 500) }}>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Heading</label>
                     <input value={S.availability?.title ?? ''} onChange={(e) => setIn('availability', { title: e.target.value })} placeholder="Check availability" className={inputCls} />
@@ -2364,7 +2357,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Heading size" unit="px" min={24} max={120} step={2} value={T.sizes.bookHeading} onChange={(d, v) => setSize('bookHeading', d, v)} />
                 </Group>
 
-                <Group title="4. Calendar" hint="colors and on/off" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-cal'), 500) }}>
+                <Group title="3. Calendar" hint="colors and on/off" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-cal'), 500) }}>
                   <SizeControl device={device} label="Calendar size" unit="%" min={50} max={160} step={5} value={T.sizes.calScale} onChange={(d, v) => setSize('calScale', d, v)} />
                   <Row label="Show the calendar"><Switch on={T.calendar.show} onChange={(v) => setIn('calendar', { show: v })} /></Row>
                   <p className="text-xs text-ink-soft">Dates and bookings always stay in sync with your app, whether the calendar is shown or not.</p>
@@ -2388,7 +2381,7 @@ export default function WebsitePage() {
                   )}
                 </Group>
 
-                <Group title="5. Button" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-btn'), 500) }}>
+                <Group title="4. Button" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-btn'), 500) }}>
 <p className="text-xs text-ink-soft">This button sends their request to your Camrhia inbox, with their date and message attached.</p>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
@@ -2406,7 +2399,7 @@ export default function WebsitePage() {
                   <SizeControl device={device} label="Button size" unit="px" min={9} max={20} step={1} value={T.sizes.bkBtn} onChange={(d, v) => setSize('bk_btn' as any, d, v)} />
                 </Group>
 
-                <Group title="6. Thank you message" onOpen={() => { setShowSent(true); setTimeout(() => scrollPreview('book-sent'), 900) }}>
+                <Group title="5. Thank you message" onOpen={() => { setShowSent(true); setTimeout(() => scrollPreview('book-sent'), 900) }}>
 <p className="text-xs text-ink-soft">This is what visitors see after they send their booking info.</p>
                   
                   <div>
