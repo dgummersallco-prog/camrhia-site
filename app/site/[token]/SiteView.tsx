@@ -372,7 +372,18 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const list = page === 'home' ? galleries.slice(0, 6) : galleries
         const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
         const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'
-        const shapeRatio = (({ portrait: '4/5', landscape: '3/2', square: '1/1', tall: '2/3' } as Record<string, string>)[(t.portfolio as any)?.shape] ?? t.cardRatio ?? '4/5')
+        const shapeFor = (native: string, kind: 'grid' | 'banners' | 'feature' | 'rows'): string => {
+          const sh = (t.portfolio as any)?.shape as string
+          if (!sh || sh === 'auto') return native
+          const M: Record<string, Record<string, string>> = {
+            grid: { portrait: '4/5', landscape: '3/2', square: '1/1', tall: '2/3' },
+            banners: { portrait: '3/2', landscape: '21/9', square: '16/9', tall: '4/3' },
+            feature: { portrait: '4/5', landscape: '16/10', square: '1/1', tall: '2/3' },
+            rows: { portrait: '4/5', landscape: '3/2', square: '1/1', tall: '2/3' },
+          }
+          return M[kind][sh] ?? native
+        }
+        const rowGap = t.portfolio.spacing === 'tight' ? '16px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 56px)' : 'calc(var(--gap) + 24px)'
         const card = (g: any, style: React.CSSProperties, cls = '', big = false) => {
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           const u = photoUrl(cover?.storage_path)
@@ -438,8 +449,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   const href = `${base}/g/${g.id}${qs}`
                   const odd = i % 2 === 1
                   return (
-                    <div key={g.id} className="grid items-center md:grid-cols-2" style={{ marginTop: i > 0 ? 'calc(var(--gap) + 24px)' : 0 }}>
-                      <a href={href} id={'fw-' + g.id} className={`group relative block overflow-hidden ${odd ? 'md:order-2' : ''}`} style={{ aspectRatio: '4/3', background: '#E5E1DB' }}>
+                    <div key={g.id} className="grid items-center md:grid-cols-2" style={{ marginTop: i > 0 ? rowGap : 0 }}>
+                      <a href={href} id={'fw-' + g.id} className={`group relative block overflow-hidden ${odd ? 'md:order-2' : ''}`} style={{ aspectRatio: shapeFor('4/3', 'rows'), background: '#E5E1DB', borderRadius: rad }}>
                         {u && <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />}
                       </a>
                       <div className={`flex flex-col items-center justify-center px-6 py-10 text-center ${odd ? 'md:order-1' : ''}`}>
@@ -467,19 +478,19 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               />
             ) : L === 'carousel' ? (
               <div className="-mx-6 flex snap-x snap-mandatory overflow-x-auto px-6 pb-4" style={{ gap: gapX, scrollbarWidth: 'thin' }}>
-                {list.map((g) => card(g, { aspectRatio: shapeRatio, flex: '0 0 auto', width: 'min(78vw, 340px)' }, 'snap-start'))}
+                {list.map((g) => card(g, { aspectRatio: shapeFor('4/5', 'grid'), flex: '0 0 auto', width: 'min(78vw, 340px)' }, 'snap-start'))}
               </div>
             ) : L === 'banners' ? (
               <div className="flex flex-col" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: gapX }}>
-                {list.map((g) => card(g, { aspectRatio: '21/9', minHeight: 180 }))}
+                {list.map((g) => card(g, { aspectRatio: shapeFor('21/9', 'banners'), minHeight: 180 }))}
               </div>
             ) : L === 'feature' ? (
               <div className="grid md:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: gapX }}>
-                {list.map((g, i) => (i === 0 ? card(g, { minHeight: 300 }, 'md:col-span-2 md:row-span-2', true) : card(g, { aspectRatio: '16/10' })))}
+                {list.map((g, i) => (i === 0 ? card(g, { minHeight: 300 }, 'md:col-span-2 md:row-span-2', true) : card(g, { aspectRatio: shapeFor('16/10', 'feature') })))}
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ maxWidth: 'var(--cover-w)', marginLeft: 'auto', marginRight: 'auto', gap: gapX }}>
-                {list.map((g) => card(g, { aspectRatio: shapeRatio }))}
+                {list.map((g) => card(g, { aspectRatio: shapeFor(t.cardRatio, 'grid') }))}
               </div>
             )}
             {page === 'home' && galleries.length > 0 && (

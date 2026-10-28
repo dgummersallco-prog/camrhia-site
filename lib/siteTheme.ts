@@ -229,7 +229,7 @@ export function resolveTheme(r: Record<string, any>) {
 
   const portfolio = {
     layout: pick(s.portfolio?.layout, ['grid', 'banners', 'feature', 'carousel', 'rows'] as const, 'grid'),
-    shape: pick(s.portfolio?.shape, ['portrait', 'landscape', 'square', 'tall'] as const, gallery.card === 'square' ? 'square' : gallery.card === 'landscape' ? 'landscape' : 'portrait'),
+    shape: pick(s.portfolio?.shape, ['auto', 'portrait', 'landscape', 'square', 'tall'] as const, 'auto'),
     radius: pick(s.portfolio?.radius, ['sharp', 'soft', 'round'] as const, 'sharp'),
     spacing: pick(s.portfolio?.spacing, ['tight', 'normal', 'airy'] as const, 'normal'),
     name: pick(s.portfolio?.name, ['over', 'hover', 'below'] as const, 'over'),

@@ -1918,11 +1918,11 @@ export default function WebsitePage() {
 })()}
   <Link href="/website/galleries" className={btn + ' inline-block'}>Manage galleries</Link>
   <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
-  <Row label="Photo shape"><Seg value={T.portfolio.shape} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'landscape', label: 'Wide' }, { v: 'square', label: 'Square' }, { v: 'tall', label: 'Tall' }]} onChange={(v) => setIn('portfolio', { shape: v })} /></Row>
-  <p className="text-xs text-ink-soft">Shape applies to the Even grid and Carousel layouts. The others keep their own proportions.</p>
+  <Row label="Photo shape"><Seg value={T.portfolio.shape} options={[{ v: 'auto', label: 'Auto' }, { v: 'portrait', label: 'Portrait' }, { v: 'landscape', label: 'Wide' }, { v: 'square', label: 'Square' }, { v: 'tall', label: 'Tall' }]} onChange={(v) => setIn('portfolio', { shape: v })} /></Row>
+  <p className="text-xs text-ink-soft">Auto keeps each layout's own proportions. Checkerboard and Freestyle always keep theirs.</p>
   <Row label="Corners"><Seg value={T.portfolio.radius} options={[{ v: 'sharp', label: 'Sharp' }, { v: 'soft', label: 'Soft' }, { v: 'round', label: 'Round' }]} onChange={(v) => setIn('portfolio', { radius: v })} /></Row>
   <Row label="Space between"><Seg value={T.portfolio.spacing} options={[{ v: 'tight', label: 'Tight' }, { v: 'normal', label: 'Normal' }, { v: 'airy', label: 'Airy' }]} onChange={(v) => setIn('portfolio', { spacing: v })} /></Row>
-  <Row label="Gallery name"><Seg value={T.portfolio.name} options={[{ v: 'over', label: 'On photo' }, { v: 'hover', label: 'On hover' }, { v: 'below', label: 'Below' }]} onChange={(v) => setIn('portfolio', { name: v })} /></Row>
+  <Row label="Name placement"><Seg value={T.portfolio.name} options={[{ v: 'over', label: 'On photo' }, { v: 'hover', label: 'On hover' }, { v: 'below', label: 'Below' }]} onChange={(v) => setIn('portfolio', { name: v })} /></Row>
 </Group>
 <Group title="Featured work text" onOpen={() => scrollPreview('portfolio')}>
 {titleBlock('portfolio')}
@@ -2079,11 +2079,11 @@ export default function WebsitePage() {
                   </Row>
                   )}
 <SizeControl device={device} label="Gallery cover size" unit="%" min={40} max={100} step={5} value={T.sizes.coverSize} onChange={(d, v) => setSize('coverSize', d, v)} />
-  <Row label="Photo shape"><Seg value={T.portfolio.shape} options={[{ v: 'portrait', label: 'Portrait' }, { v: 'landscape', label: 'Wide' }, { v: 'square', label: 'Square' }, { v: 'tall', label: 'Tall' }]} onChange={(v) => setIn('portfolio', { shape: v })} /></Row>
-  <p className="text-xs text-ink-soft">Shape applies to the Even grid and Carousel layouts. The others keep their own proportions.</p>
+  <Row label="Photo shape"><Seg value={T.portfolio.shape} options={[{ v: 'auto', label: 'Auto' }, { v: 'portrait', label: 'Portrait' }, { v: 'landscape', label: 'Wide' }, { v: 'square', label: 'Square' }, { v: 'tall', label: 'Tall' }]} onChange={(v) => setIn('portfolio', { shape: v })} /></Row>
+  <p className="text-xs text-ink-soft">Auto keeps each layout's own proportions. Checkerboard and Freestyle always keep theirs.</p>
   <Row label="Corners"><Seg value={T.portfolio.radius} options={[{ v: 'sharp', label: 'Sharp' }, { v: 'soft', label: 'Soft' }, { v: 'round', label: 'Round' }]} onChange={(v) => setIn('portfolio', { radius: v })} /></Row>
   <Row label="Space between"><Seg value={T.portfolio.spacing} options={[{ v: 'tight', label: 'Tight' }, { v: 'normal', label: 'Normal' }, { v: 'airy', label: 'Airy' }]} onChange={(v) => setIn('portfolio', { spacing: v })} /></Row>
-  <Row label="Gallery name"><Seg value={T.portfolio.name} options={[{ v: 'over', label: 'On photo' }, { v: 'hover', label: 'On hover' }, { v: 'below', label: 'Below' }]} onChange={(v) => setIn('portfolio', { name: v })} /></Row>
+  <Row label="Name placement"><Seg value={T.portfolio.name} options={[{ v: 'over', label: 'On photo' }, { v: 'hover', label: 'On hover' }, { v: 'below', label: 'Below' }]} onChange={(v) => setIn('portfolio', { name: v })} /></Row>
 </Group>
 <Group title="Galleries text" onOpen={() => { setPreviewPage('galleries'); setTimeout(() => scrollPreview('portfolio'), 700) }}>
 {titleBlock('portfolio')}
