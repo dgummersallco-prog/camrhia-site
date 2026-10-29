@@ -122,8 +122,8 @@ export default function MyGalleriesPage() {
                           </span>
                         )}
                         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-4 text-white">
-                          <p className="font-mono text-[10px] uppercase tracking-widest text-white/80">{label(r.session_type)}</p>
-                          <p className="mt-1 font-fraunces text-lg font-semibold leading-tight">{g.title || 'Your photos'}</p>
+                          {g.title && <p className="font-mono text-[10px] uppercase tracking-widest text-white/80">{g.title}</p>}
+                          <p className="mt-1 font-fraunces text-lg font-semibold leading-tight">{label(r.session_type)}</p>
                           <p className="mt-1 text-xs text-white/85">{fmt(r.wedding_date)}</p>
                           <p className="text-xs text-white/85">{studio}</p>
                           {meta && <p className="mt-1 text-xs text-white/70">{meta.count} photo{meta.count === 1 ? '' : 's'}</p>}

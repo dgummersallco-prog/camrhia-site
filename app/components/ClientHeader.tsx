@@ -23,7 +23,6 @@ const ITEMS: { tab: ClientTab; href: string; label: string }[] = [
   { tab: 'sessions', href: '/my/sessions', label: 'My sessions' },
   { tab: 'galleries', href: '/my/galleries', label: 'Galleries' },
   { tab: 'messages', href: '/my/messages', label: 'Messages' },
-  { tab: 'notifications', href: '/my/notifications', label: 'Notifications' },
   { tab: 'account', href: '/my/account', label: 'Account' },
 ]
 
