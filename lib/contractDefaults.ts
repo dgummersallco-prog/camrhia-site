@@ -197,10 +197,12 @@ export const CONTRACT_TYPE_CONFIG: Record<string, ContractTypeConfig> = {
   boudoir:     { title: 'BOUDOIR PHOTOGRAPHY SERVICES AGREEMENT',        serviceLabel: 'boudoir photography services',        eventLabel: 'Session Date',   locationLabel: 'Location', deliveryWeeks: 2, cancellationDays: 7  },
 };
 
-function buildDefaultContractTemplate(cfg: ContractTypeConfig): string {
+type TemplateVars = { title: string; service: string; event: string; location: string; delivery: string; cancel: string };
+
+function buildFromVars(v: TemplateVars): string {
   return `DISCLAIMER: This is a starting template, not legal advice. Have a licensed attorney in your state review it before use.
 
-${cfg.title}
+${v.title}
 
 This Agreement is entered into as of {today_date} between {studio_name} ("Photographer") and {client_names} ("Client").
 
@@ -210,8 +212,8 @@ This Agreement is entered into as of {today_date} between {studio_name} ("Photog
 Studio: {studio_name}
 Photographer: {photographer_name}
 Client: {client_names}
-${cfg.eventLabel}: {session_date}
-${cfg.locationLabel}: {location}
+${v.event}: {session_date}
+${v.location}: {location}
 ────────────────────────────────────────────
 
 2. SCOPE OF SERVICES
@@ -220,9 +222,9 @@ Package: {package_name}
 Coverage: {coverage}
 Deliverables: {deliverables}
 
-The Photographer will provide professional ${cfg.serviceLabel} as described above. While every effort will be made to capture key moments, specific photographs cannot be guaranteed due to time, lighting, location restrictions, or circumstances beyond the Photographer's control.
+The Photographer will provide professional ${v.service} as described above. While every effort will be made to capture key moments, specific photographs cannot be guaranteed due to time, lighting, location restrictions, or circumstances beyond the Photographer's control.
 
-Estimated delivery: Within {delivery_window|${cfg.deliveryWeeks} week${cfg.deliveryWeeks === 1 ? '' : 's'}} of the session date.
+Estimated delivery: Within {delivery_window|${v.delivery}} of the session date.
 
 ────────────────────────────────────────────
 
@@ -238,7 +240,7 @@ The Booking Payment is due upon signing and is non-refundable under any circumst
 
 4. CANCELLATION & RESCHEDULING
 
-Cancellation by Client: The Booking Payment is non-refundable regardless of the reason for cancellation. If cancelled more than ${cfg.cancellationDays} days before the session, no additional fees are owed. If cancelled within ${cfg.cancellationDays} days of the session, the full contract amount is due.
+Cancellation by Client: The Booking Payment is non-refundable regardless of the reason for cancellation. If cancelled more than ${v.cancel} days before the session, no additional fees are owed. If cancelled within ${v.cancel} days of the session, the full contract amount is due.
 
 Cancellation by Photographer: If the Photographer must cancel due to emergency, all fees beyond the Booking Payment will be refunded and the Photographer will make reasonable efforts to locate a suitable replacement.
 
@@ -287,6 +289,39 @@ Date: {today_date}
 {client_names} (Client)
 Signature: ___________________________
 Date: ____________`;
+}
+
+function buildDefaultContractTemplate(cfg: ContractTypeConfig): string {
+  return buildFromVars({
+    title: cfg.title,
+    service: cfg.serviceLabel,
+    event: cfg.eventLabel,
+    location: cfg.locationLabel,
+    delivery: `${cfg.deliveryWeeks} week${cfg.deliveryWeeks === 1 ? '' : 's'}`,
+    cancel: String(cfg.cancellationDays),
+  });
+}
+
+// One master agreement. The six values that differ by session type are filled in per client.
+export const MASTER_KEY = '_master';
+export const MASTER_CONTRACT_TEMPLATE = buildFromVars({
+  title: '{contract_title}',
+  service: '{service_label}',
+  event: '{event_label}',
+  location: '{location_label}',
+  delivery: '{delivery_weeks_text}',
+  cancel: '{cancellation_days}',
+});
+
+export function applyTypeVars(template: string, sessionType: string): string {
+  const cfg = CONTRACT_TYPE_CONFIG[sessionType] ?? CONTRACT_TYPE_CONFIG.wedding;
+  return template
+    .replace(/\{contract_title\}/g, cfg.title)
+    .replace(/\{service_label\}/g, cfg.serviceLabel)
+    .replace(/\{event_label\}/g, cfg.eventLabel)
+    .replace(/\{location_label\}/g, cfg.locationLabel)
+    .replace(/\{delivery_weeks_text\}/g, `${cfg.deliveryWeeks} week${cfg.deliveryWeeks === 1 ? '' : 's'}`)
+    .replace(/\{cancellation_days\}/g, String(cfg.cancellationDays));
 }
 
 export const DEFAULT_CONTRACT_TEMPLATES: Record<string, string> = Object.fromEntries(

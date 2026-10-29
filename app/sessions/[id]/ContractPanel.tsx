@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { ContractText } from '@/app/components/ContractText'
 import { signedHtml } from '@/lib/contractSign'
-import { DEFAULT_CONTRACT_TEMPLATE, DEFAULT_CONTRACT_TEMPLATES, fillContractTemplate } from '@/lib/contractDefaults'
+import { DEFAULT_CONTRACT_TEMPLATE, DEFAULT_CONTRACT_TEMPLATES, MASTER_KEY, applyTypeVars, fillContractTemplate } from '@/lib/contractDefaults'
 
 type CRow = {
   id: string
@@ -93,9 +93,14 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
 
   const templateFor = useCallback(async (me: string, p: Prof): Promise<string> => {
     const sb = supabase
-    if (!sb) return DEFAULT_CONTRACT_TEMPLATE
-    const { data } = await sb.from('contract_templates').select('template').eq('owner_id', me).eq('session_type', sessionType).maybeSingle()
-    return (data as { template?: string } | null)?.template || DEFAULT_CONTRACT_TEMPLATES[sessionType] || p.contract_template || DEFAULT_CONTRACT_TEMPLATE
+    if (!sb) return applyTypeVars(DEFAULT_CONTRACT_TEMPLATE, sessionType)
+    const { data } = await sb.from('contract_templates').select('session_type, template').eq('owner_id', me).in('session_type', [sessionType, MASTER_KEY])
+    const rows = (data ?? []) as { session_type: string; template: string }[]
+    const own = rows.find((r) => r.session_type === sessionType)?.template
+    const master = rows.find((r) => r.session_type === MASTER_KEY)?.template
+    const def = DEFAULT_CONTRACT_TEMPLATES[sessionType]
+    const customized = own && own !== def ? own : null
+    return applyTypeVars(customized || master || def || p.contract_template || DEFAULT_CONTRACT_TEMPLATE, sessionType)
   }, [sessionType])
 
   const load = useCallback(async () => {
