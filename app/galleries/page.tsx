@@ -31,6 +31,7 @@ type Sess = {
   gallery_sent_at: string | null
   gallery_opened_at: string | null
   gallery_downloaded_all_at: string | null
+  session_type: string | null
 }
 
 export default function GalleriesPage() {
@@ -44,6 +45,7 @@ export default function GalleriesPage() {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [sessions, setSessions] = useState<Sess[]>([])
+  const [typeLabels, setTypeLabels] = useState<Record<string, string>>({})
   const [sessionPick, setSessionPick] = useState('')
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [q, setQ] = useState('')
@@ -65,9 +67,11 @@ export default function GalleriesPage() {
     setRows(list)
     const { data: ses } = await sb
       .from('weddings')
-      .select('id, names, wedding_date, gallery_url, gallery_sent_at, gallery_opened_at, gallery_downloaded_all_at')
+      .select('id, names, wedding_date, gallery_url, gallery_sent_at, gallery_opened_at, gallery_downloaded_all_at, session_type')
       .order('wedding_date', { ascending: false, nullsFirst: false })
     setSessions((ses ?? []) as Sess[])
+    const { data: st } = await sb.from('session_types').select('key, label')
+    setTypeLabels(Object.fromEntries(((st ?? []) as { key: string; label: string }[]).map((t) => [t.key, t.label])))
 
     // Find a cover thumbnail for each gallery: chosen cover, else the first photo.
     const pathFor: Record<string, string> = {}
@@ -358,9 +362,16 @@ export default function GalleriesPage() {
                   <div className="flex items-start justify-between gap-3 p-4">
                     <div className="min-w-0">
                       <p className="truncate font-fraunces text-lg font-semibold text-ink">{g.title}</p>
-                      {g.session_id && sessById.get(g.session_id)?.names && (
-                        <p className="truncate text-xs text-ink-soft">{sessById.get(g.session_id)?.names}</p>
-                      )}
+                      {(() => {
+                        const x = g.session_id ? sessById.get(g.session_id) : undefined
+                        if (!x) return null
+                        const bits = [
+                          x.session_type ? (typeLabels[x.session_type] ?? x.session_type) : null,
+                          x.wedding_date ? new Date(`${x.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null,
+                          x.names && x.names.trim().toLowerCase() !== g.title.trim().toLowerCase() ? x.names : null,
+                        ].filter(Boolean)
+                        return bits.length ? <p className="truncate text-xs text-ink-soft">{bits.join(' · ')}</p> : null
+                      })()}
                       <p className="mt-0.5 text-xs text-ink-soft">
                         {count} {count === 1 ? 'photo' : 'photos'}
                         {g.collection ? ` · ${g.collection}` : ''}
