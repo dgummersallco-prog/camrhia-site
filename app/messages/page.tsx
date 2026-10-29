@@ -185,7 +185,8 @@ export default function MessagesPage() {
     const weds = ((wedR.data ?? []) as any[]).filter((w) => !hiddenWed.has(w.id))
     const wedName = new Map<string, string>(weds.map((w) => [w.id, w.names]))
     const converted = new Set<string>(inqs.filter((i) => i.converted_wedding_id).map((i) => i.converted_wedding_id))
-    const wedsOnly = weds.filter((w) => !converted.has(w.id))
+    const pairedCouples = new Set<string>(((inqR.data ?? []) as any[]).map((i) => i.couple_id).filter(Boolean))
+    const wedsOnly = weds.filter((w) => !converted.has(w.id) && !(w.couple_user_id && pairedCouples.has(w.couple_user_id)))
 
     const cpIds = Array.from(new Set([...inqs.map((i) => i.couple_id), ...weds.map((w) => w.couple_user_id)].filter(Boolean)))
     const profR = cpIds.length ? await sb.from('profiles').select('id, avatar_path').in('id', cpIds) : { data: [] as any[] }

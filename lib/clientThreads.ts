@@ -64,6 +64,8 @@ export async function loadClientThreads(sb: SupabaseClient, me: string): Promise
       ? sb.from('inquiry_messages').select('inquiry_id, body, sender_id, created_at, message_type').in('inquiry_id', inqs.map((i) => i.id)).is('deleted_at', null).order('created_at', { ascending: false })
       : Promise.resolve({ data: [] as any[] }),
     Promise.all(sessions.map(async (r) => {
+      const { data: pair } = await sb.rpc('pair_inquiry_for_wedding', { p_wedding: r.wedding_id })
+      if (pair) return { id: r.wedding_id as string, msgs: [] as any[] }
       const { data } = await sb.rpc('client_get_thread', { p_wedding_id: r.wedding_id })
       return { id: r.wedding_id as string, msgs: ((data ?? []) as any[]) }
     })),

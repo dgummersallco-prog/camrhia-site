@@ -106,7 +106,7 @@ export default function SessionDetailPage() {
       sb.from('weddings').select('*').eq('id', id).maybeSingle(),
       sb.from('events').select('id, title, event_date, event_time, location, type, notes').eq('wedding_id', id).order('event_date', { ascending: true }),
       sb.from('contracts').select('id, status, sent_at, signed_at, signer_name').eq('wedding_id', id).order('created_at', { ascending: false }).limit(1),
-      sb.from('messages').select('id, sender, body, created_at').eq('wedding_id', id).order('created_at', { ascending: true }),
+      sb.rpc('session_thread_messages', { p_wedding: id }),
       sb.from('galleries').select('id, title, status, token, pin_hash, expires_at, gallery_photos(count)').eq('session_id', id),
       sb.from('galleries').select('id, title').is('session_id', null),
     ])
@@ -137,7 +137,7 @@ export default function SessionDetailPage() {
     if (!sb || !id) return
     const t = setInterval(async () => {
       if (document.hidden) return
-      const { data } = await sb.from('messages').select('id, sender, body, created_at').eq('wedding_id', id).order('created_at', { ascending: true })
+      const { data } = await sb.rpc('session_thread_messages', { p_wedding: id })
       if (data) setMsgs(data as Msg[])
     }, 20000)
     return () => clearInterval(t)
