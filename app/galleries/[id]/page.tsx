@@ -18,6 +18,7 @@ type Gallery = {
   status: 'draft' | 'published'
   cover_photo_id: string | null
   cover_path: string | null
+  session_id: string | null
 }
 type Photo = {
   id: string
@@ -87,6 +88,7 @@ export default function GalleryManagePage() {
   const [expiry, setExpiry] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [origin, setOrigin] = useState('')
+  const [sessInfo, setSessInfo] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const [filter, setFilter] = useState<'all' | 'fav'>('all')
   const fileInput = useRef<HTMLInputElement>(null)
@@ -113,7 +115,7 @@ export default function GalleryManagePage() {
     if (!sb) return
     const { data, error } = await sb
       .from('galleries')
-      .select('id, title, token, pin_hash, allow_downloads, expires_at, status, cover_photo_id, cover_path')
+      .select('id, title, token, pin_hash, allow_downloads, expires_at, status, cover_photo_id, cover_path, session_id')
       .eq('id', galleryId)
       .maybeSingle()
     if (error || !data) { setMessage('Gallery not found.'); return }
@@ -121,6 +123,17 @@ export default function GalleryManagePage() {
     setGallery(g)
     setTitle(g.title)
     setExpiry(g.expires_at ? toDateInput(g.expires_at) : '')
+    if (g.session_id) {
+      const [{ data: w }, { data: st }] = await Promise.all([
+        sb.from('weddings').select('names, wedding_date, session_type').eq('id', g.session_id).maybeSingle(),
+        sb.from('session_types').select('key, label'),
+      ])
+      const wd = w as { names: string | null; wedding_date: string | null; session_type: string | null } | null
+      const label = ((st ?? []) as { key: string; label: string }[]).find((t) => t.key === wd?.session_type)?.label ?? wd?.session_type ?? null
+      const date = wd?.wedding_date ? new Date(`${wd.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null
+      const nm = wd?.names && wd.names.trim().toLowerCase() !== g.title.trim().toLowerCase() ? wd.names : null
+      setSessInfo([label, date, nm].filter(Boolean).join(' · ') || null)
+    }
   }, [galleryId])
 
   const loadFavs = useCallback(async () => {
@@ -461,8 +474,8 @@ export default function GalleryManagePage() {
           <p className="text-sm text-ink-soft">{message ?? 'Loading…'}</p>
         ) : (
           <>
-            {/* Title row */}
-            <div className="mb-6 flex flex-wrap items-center gap-4">
+            {/* Header */}
+            <div className="mb-6 flex flex-wrap items-start gap-4">
               {coverThumb && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={coverThumb} alt="Cover" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
@@ -475,56 +488,54 @@ export default function GalleryManagePage() {
                   className="w-full bg-transparent font-fraunces text-3xl font-semibold text-ink focus:outline-none focus:ring-0"
                   aria-label="Gallery name"
                 />
-                <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
                   <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-emerald-100 text-emerald-700' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
-                  {isPublished ? 'Clients can open the link.' : photos.length === 0 ? 'Add photos, then publish when you are ready to share.' : 'Publish when you are ready to share.'}
+                  {sessInfo && <span>{sessInfo}</span>}
+                </p>
+                <p className="mt-1 text-xs text-ink-soft">
+                  {photos.length} {photos.length === 1 ? 'photo' : 'photos'} · {totalFavs} {totalFavs === 1 ? 'favorite' : 'favorites'}
+                  {!isPublished ? (photos.length === 0 ? ' · Add photos, then publish when you are ready to share.' : ' · Publish when you are ready to share.') : ''}
                 </p>
               </div>
-              <button
-                onClick={async () => {
-                  const publishing = !isPublished
-                  const ok = await saveSettings({ status: publishing ? 'published' : 'draft' })
-                  if (ok && publishing) {
-                    await syncCover(gallery.cover_photo_id)
-                    router.push('/galleries')
-                  }
-                }}
-                disabled={!isPublished && photos.length === 0}
-                className={isPublished ? btnGhost : btn}
-              >
-                {isPublished ? 'Unpublish' : 'Publish gallery'}
-              </button>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {isPublished && (
+                  <>
+                    <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }}>Copy link</button>
+                    <a className={btnGhost} href={shareUrl} target="_blank" rel="noreferrer">Preview</a>
+                  </>
+                )}
+                <button
+                  onClick={async () => {
+                    const publishing = !isPublished
+                    const ok = await saveSettings({ status: publishing ? 'published' : 'draft' })
+                    if (ok && publishing) {
+                      await syncCover(gallery.cover_photo_id)
+                      router.push('/galleries')
+                    }
+                  }}
+                  disabled={!isPublished && photos.length === 0}
+                  className={isPublished ? btnGhost : btn}
+                >
+                  {isPublished ? 'Unpublish' : 'Publish gallery'}
+                </button>
+              </div>
             </div>
 
             {message && <p className="mb-4 text-sm text-twilight">{message}</p>}
-
-            {/* Stats */}
-            <div className="mb-8 grid grid-cols-3 gap-4">
-              <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Photos</p>
-                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{photos.length}</p>
-              </div>
-              <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Total favorites</p>
-                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{totalFavs}</p>
-              </div>
-              <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Favorited photos</p>
-                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{favPhotoCount}</p>
-              </div>
-            </div>
 
             <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
               {/* Left: upload + photos */}
               <div className="min-w-0">
                 <section
-                  className={`mb-4 rounded-2xl border-2 border-dashed ${photos.length > 0 ? 'p-4' : 'p-8'} text-center transition ${dragging ? 'border-twilight bg-twilight/5' : 'border-line bg-card'}`}
+                  className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed px-5 ${photos.length > 0 ? 'py-4' : 'py-10'} transition ${dragging ? 'border-twilight bg-twilight/5' : 'border-line bg-card'}`}
                   onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
                   onDragLeave={() => setDragging(false)}
                   onDrop={onDrop}
                 >
-                  <p className="font-fraunces text-xl text-ink">Drop photos or a whole folder here</p>
-                  <p className="mt-1 text-sm text-ink-soft">JPG, PNG, WebP and HEIC, up to 50 MB each. Select hundreds at once. Keep this tab open until they finish.</p>
+                  <div className="min-w-0">
+                    <p className="font-fraunces text-lg text-ink">Add photos</p>
+                    <p className="text-xs text-ink-soft">Drop photos or a whole folder here. JPG, PNG, WebP and HEIC, up to 50 MB each. Keep this tab open until they finish.</p>
+                  </div>
                   <input
                     ref={fileInput}
                     type="file"
@@ -541,7 +552,7 @@ export default function GalleryManagePage() {
                     {...({ webkitdirectory: '' } as Record<string, string>)}
                     onChange={(e) => { if (e.target.files) uploadFiles(Array.from(e.target.files)); e.target.value = '' }}
                   />
-                  <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  <div className="flex gap-2">
                     <button className={btn} disabled={active} onClick={() => fileInput.current?.click()}>
                       {active ? 'Uploading…' : 'Choose photos'}
                     </button>
@@ -575,8 +586,8 @@ export default function GalleryManagePage() {
                 )}
 
                 {/* Photo toolbar */}
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="flex gap-2 text-sm">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
                     <button
                       onClick={() => setFilter('all')}
                       className={`rounded-full px-4 py-1.5 ${filter === 'all' ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
@@ -590,27 +601,27 @@ export default function GalleryManagePage() {
                       ♥ Client favorites ({favPhotoCount})
                     </button>
                   </div>
-                  {filter === 'all' && photos.length > 1 && (
-                    <p className="hidden text-xs text-ink-soft sm:block">Drag photos to reorder</p>
-                  )}
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    {filter === 'all' && photos.length > 1 && !selecting && (
+                      <p className="hidden text-xs text-ink-soft sm:block">Drag photos to reorder</p>
+                    )}
+                    {!selecting ? (
+                      <button className={btnGhost} disabled={photos.length === 0} onClick={() => { setSelecting(true); setSelected(new Set()) }}>
+                        Select
+                      </button>
+                    ) : (
+                      <>
+                        <button className={btnGhost} onClick={() => setSelected(new Set(shown.map((p) => p.id)))}>Select all ({shown.length})</button>
+                        <button className={`${btnGhost} text-red-600`} disabled={selected.size === 0} onClick={bulkDelete}>Delete{selected.size ? ` (${selected.size})` : ''}</button>
+                        <button className={btnGhost} onClick={() => { setSelecting(false); setSelected(new Set()) }}>Cancel</button>
+                      </>
+                    )}
+                    {filter === 'fav' && shown.length > 0 && (
+                      <button className={btnGhost} onClick={copyFavNames}>Copy favorite filenames</button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
-                  {!selecting ? (
-                    <button className={btnGhost} disabled={photos.length === 0} onClick={() => { setSelecting(true); setSelected(new Set()) }}>
-                      Select
-                    </button>
-                  ) : (
-                    <>
-                      <button className={btnGhost} onClick={() => setSelected(new Set(shown.map((p) => p.id)))}>Select all ({shown.length})</button>
-                      <button className={`${btnGhost} text-red-600`} disabled={selected.size === 0} onClick={bulkDelete}>Delete{selected.size ? ` (${selected.size})` : ''}</button>
-                      <button className={btnGhost} onClick={() => { setSelecting(false); setSelected(new Set()) }}>Cancel</button>
-                    </>
-                  )}
-                  {filter === 'fav' && shown.length > 0 && (
-                    <button className={btnGhost} onClick={copyFavNames}>Copy favorite filenames</button>
-                  )}
-                </div>
 
                 {shown.length === 0 ? (
                   <p className="rounded-2xl border border-line bg-card py-16 text-center text-sm text-ink-soft">
@@ -654,36 +665,31 @@ export default function GalleryManagePage() {
               </div>
 
               {/* Right: share + access */}
-              <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+              <aside className="lg:sticky lg:top-6 lg:self-start">
                 <div className={card}>
                   <p className="mb-3 text-xs font-medium uppercase tracking-wider text-ink-soft">Share with your client</p>
                   <input readOnly value={shareUrl} className={input} onFocus={(e) => e.currentTarget.select()} />
-                  <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="mt-3 grid grid-cols-3 gap-2">
                     <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }}>
                       Copy link
                     </button>
-                    <a
-                      className={`${btnGhost} text-center`}
-                      href={shareUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
+                    <a className={`${btnGhost} text-center`} href={shareUrl} target="_blank" rel="noreferrer">
                       Preview
                     </a>
-                  </div>
-                  <a
-                    className={`${btnGhost} mt-2 block text-center`}
+                    <a
+                    className={`${btnGhost} text-center`}
                     href={`mailto:?subject=${encodeURIComponent(`Your photos: ${gallery.title}`)}&body=${encodeURIComponent(`Your photos are ready! View and download them here:\n\n${shareUrl}\n\n${gallery.pin_hash ? "I'll send your PIN separately." : ''}`)}`}
                   >
                     Email the link
                   </a>
+                  </div>
                   {!isPublished && (
                     <p className="mt-3 text-xs text-ink-soft">This gallery is a draft. Publish it before sharing the link.</p>
                   )}
-                </div>
 
-                <div className={card}>
-                  <p className="mb-4 text-xs font-medium uppercase tracking-wider text-ink-soft">Access</p>
+                  <div className="mt-5 border-t border-line pt-5">
+                    <p className="mb-4 text-xs font-medium uppercase tracking-wider text-ink-soft">Access</p>
+                    
 
                   <div>
                     <label className={label}>
@@ -725,14 +731,13 @@ export default function GalleryManagePage() {
                     </label>
                     <p className="mt-2 text-xs text-ink-soft">When off, clients can view and favorite but not download.</p>
                   </div>
-                </div>
+                
+                  </div>
 
-                <div className="rounded-2xl border border-red-200 p-5">
-                  <p className="text-sm font-medium text-ink">Delete gallery</p>
-                  <p className="mb-3 mt-1 text-xs text-ink-soft">Removes the gallery and every photo in it. This cannot be undone.</p>
-                  <button onClick={deleteGallery} className="rounded-xl border border-red-300 px-4 py-2 text-sm text-red-600 transition hover:bg-red-50">
-                    Delete this gallery
-                  </button>
+                  <div className="mt-5 border-t border-line pt-4">
+                    <button onClick={deleteGallery} className="text-sm text-red-600 hover:underline">Delete gallery</button>
+                    <p className="mt-1 text-xs text-ink-soft">Removes the gallery and every photo in it. This cannot be undone.</p>
+                  </div>
                 </div>
               </aside>
             </div>
