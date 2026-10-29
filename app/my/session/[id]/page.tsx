@@ -26,6 +26,7 @@ type Detail = {
   total_price: number | null; timeline_approved_at: string | null
   partner1_name: string | null; partner1_role: string | null; partner2_name: string | null; partner2_role: string | null
   last_name: string | null; venue: string | null; wedding_date: string | null
+  shoot_completed_at: string | null; gallery_due_date: string | null
 }
 type Pay = { id: string; label: string | null; amount: number; due_date: string | null; status: string | null; paid_at: string | null; method: string | null; sent_by_couple: boolean | null }
 type Shot = { id: string; label: string; done: boolean }
@@ -90,7 +91,7 @@ export default function ClientSessionPage() {
     setRow(r)
     setMine(m)
     const [w, p, s, c] = await Promise.all([
-      sb.from('weddings').select('package_name, coverage, deliverables, guests, session_start_time, session_length_hours, total_price, timeline_approved_at, partner1_name, partner1_role, partner2_name, partner2_role, last_name, venue, wedding_date').eq('id', id).maybeSingle(),
+      sb.from('weddings').select('package_name, coverage, deliverables, guests, session_start_time, session_length_hours, total_price, timeline_approved_at, partner1_name, partner1_role, partner2_name, partner2_role, last_name, venue, wedding_date, shoot_completed_at, gallery_due_date').eq('id', id).maybeSingle(),
       sb.from('payment_schedule').select('id, label, amount, due_date, status, paid_at, method, sent_by_couple, receipt_url').eq('wedding_id', id).order('sort_order', { ascending: true }),
       sb.from('shot_list').select('id, label, done').eq('wedding_id', id).order('sort_order', { ascending: true }),
       sb.from('wedding_contacts').select('id, name, role, phone').eq('wedding_id', id).order('sort_order', { ascending: true }),
@@ -237,6 +238,12 @@ export default function ClientSessionPage() {
               <p className="mt-1 text-ink-soft">{day(row.wedding_date)}{place ? ` · ${place}` : ''}</p>
             </div>
             {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+
+            {d?.shoot_completed_at && (row.galleries ?? []).length === 0 && (
+              <p className="mb-6 rounded-2xl border border-line bg-card p-4 text-sm text-ink">
+                Shoot complete. Your photos are being edited{d.gallery_due_date ? ` · due ${day(d.gallery_due_date)}` : ''}
+              </p>
+            )}
 
             <div className="mb-6 flex flex-wrap gap-2">
               {mine?.has_contract && (mine.contract_status === 'sent' || mine.contract_status === 'signed') && (
