@@ -10,6 +10,8 @@ import { DashboardHeader } from '@/app/components/DashboardHeader'
 type Session = {
   delivered?: boolean | null
   shoot_completed_at?: string | null
+  couple_user_id?: string | null
+  parent_session_id?: string | null
   id: string
   names: string | null
   wedding_date: string | null
@@ -68,6 +70,10 @@ export default function SessionsPage() {
   const [typeFilter, setTypeFilter] = useState('')
   const [q, setQ] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [snoozed, setSnoozed] = useState<string[]>([])
+  const [promptMode, setPromptMode] = useState<'ask' | 'reschedule' | 'cancel'>('ask')
+  const [newDate, setNewDate] = useState('')
+  const [promptBusy, setPromptBusy] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -78,7 +84,7 @@ export default function SessionsPage() {
       const uid = sess.session.user.id
       const { data, error: e } = await sb
         .from('weddings')
-        .select('id, names, wedding_date, session_type, status, city, state, venue, package_name, gallery_url, paid_in_full, delivered, shoot_completed_at')
+        .select('id, names, wedding_date, session_type, status, city, state, venue, package_name, gallery_url, paid_in_full, delivered, shoot_completed_at, couple_user_id, parent_session_id')
         .is('canceled_at', null)
         .order('wedding_date', { ascending: false, nullsFirst: false })
       if (e) { setError(e.message); return }
@@ -105,6 +111,61 @@ export default function SessionsPage() {
   }
 
   const today = todayStr()
+
+  function fmtPromptDate(iso: string): string {
+    const d = new Date(`${iso}T00:00:00`)
+    return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  const promptCutoff = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 30)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })()
+  const promptRow = (rows ?? []).find((r) =>
+    !r.parent_session_id && r.status === 'booked' && !r.delivered && !r.shoot_completed_at &&
+    !!r.wedding_date && r.wedding_date < today && r.wedding_date >= promptCutoff && !snoozed.includes(r.id),
+  ) ?? null
+
+  async function promptComplete(row: Session) {
+    setPromptBusy(true)
+    await setShootComplete(row.id, true)
+    setPromptBusy(false)
+    setPromptMode('ask')
+  }
+
+  async function promptReschedule(row: Session) {
+    const sb = supabase
+    if (!sb || !newDate) return
+    if (newDate < today) { setError('Choose a date that has not passed yet.'); return }
+    const clash = (rows ?? []).some((r) => r.id !== row.id && r.status === 'booked' && r.wedding_date === newDate)
+    if (clash && !window.confirm('You already have a session that day. Book it anyway?')) return
+    setPromptBusy(true)
+    const { error: e } = await sb.from('weddings').update({ wedding_date: newDate, booked_start: newDate, booked_end: newDate }).eq('id', row.id)
+    if (e) { setPromptBusy(false); setError(e.message); return }
+    if (row.wedding_date) await sb.from('events').update({ event_date: newDate }).eq('wedding_id', row.id).eq('event_date', row.wedding_date)
+    if (row.couple_user_id) {
+      await sb.from('notifications').insert({
+        user_id: row.couple_user_id, wedding_id: row.id, type: 'session_update',
+        title: 'Session rescheduled', body: `Your session moved to ${fmtPromptDate(newDate)}.`,
+      })
+    }
+    setRows((prev) => (prev ?? []).map((r) => (r.id === row.id ? { ...r, wedding_date: newDate } : r)))
+    setPromptBusy(false)
+    setPromptMode('ask')
+    setNewDate('')
+  }
+
+  async function promptCancel(row: Session) {
+    const sb = supabase
+    if (!sb) return
+    setPromptBusy(true)
+    const { error: e } = await sb.from('weddings').update({ canceled_at: new Date().toISOString() }).eq('id', row.id)
+    setPromptBusy(false)
+    if (e) { setError(e.message); return }
+    setRows((prev) => (prev ?? []).filter((r) => r.id !== row.id))
+    setPromptMode('ask')
+  }
 
   const needsAttention = (s: Session) => {
     const past = !!s.wedding_date && s.wedding_date < today
@@ -306,6 +367,48 @@ export default function SessionsPage() {
           </div>
         )}
       </main>
+
+      {promptRow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-6">
+          <div className="w-full max-w-md rounded-2xl border border-line bg-card p-6 shadow-xl">
+            <h2 className="font-fraunces text-2xl font-semibold text-ink">
+              {promptMode === 'ask' ? 'How did this shoot go?' : promptMode === 'reschedule' ? 'Pick the new date' : 'Cancel this session?'}
+            </h2>
+            <p className="mb-4 mt-1 text-sm text-ink-soft">{promptRow.names} · {fmtPromptDate(promptRow.wedding_date ?? '')}</p>
+
+            {promptMode === 'ask' && (
+              <div className="space-y-2">
+                <button disabled={promptBusy} onClick={() => promptComplete(promptRow)} className="w-full rounded-xl bg-twilight px-4 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">Shoot complete</button>
+                <button disabled={promptBusy} onClick={() => { setNewDate(''); setPromptMode('reschedule') }} className="w-full rounded-xl border border-line px-4 py-3 text-sm text-ink transition hover:border-twilight">Rescheduled</button>
+                <button disabled={promptBusy} onClick={() => setPromptMode('cancel')} className="w-full rounded-xl border border-line px-4 py-3 text-sm text-ink transition hover:border-twilight">Canceled</button>
+                <button onClick={() => setSnoozed((prev) => [...prev, promptRow.id])} className="w-full pt-2 text-sm text-ink-soft hover:text-ink">Ask me later</button>
+              </div>
+            )}
+
+            {promptMode === 'reschedule' && (
+              <div className="space-y-2">
+                <input
+                  type="date"
+                  min={today}
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                  className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+                />
+                <button disabled={promptBusy || !newDate} onClick={() => promptReschedule(promptRow)} className="w-full rounded-xl bg-twilight px-4 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{promptBusy ? 'Saving…' : 'Save new date'}</button>
+                <button onClick={() => setPromptMode('ask')} className="w-full pt-2 text-sm text-ink-soft hover:text-ink">Back</button>
+              </div>
+            )}
+
+            {promptMode === 'cancel' && (
+              <div className="space-y-2">
+                <p className="text-sm text-ink-soft">It will be hidden from your lists and calendar. The contract and payment records are kept.</p>
+                <button disabled={promptBusy} onClick={() => promptCancel(promptRow)} className="w-full rounded-xl border border-red-300 px-4 py-3 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50">{promptBusy ? 'Canceling…' : 'Cancel session'}</button>
+                <button onClick={() => setPromptMode('ask')} className="w-full pt-2 text-sm text-ink-soft hover:text-ink">Back</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
