@@ -26,6 +26,7 @@ type Profile = {
   tiktok_url: string | null
   cover_path: string | null
   cover_paths: string[] | null
+  cover_slideshow: boolean | null
   logo_path: string | null
   avatar_path: string | null
   about_photo_path: string | null
@@ -78,7 +79,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, about_photo_shape, about_photo_size, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, show_testimonials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, cover_slideshow, logo_path, avatar_path, about_photo_path, show_about_photo, about_photo_shape, about_photo_size, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, show_testimonials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -219,6 +220,7 @@ export default function PortfolioEditorPage() {
     return () => ro.disconnect()
   }, [stageEl])
   const fileInput = useRef<HTMLInputElement>(null)
+  const coverTarget = useRef<number | null>(0)
   const logoInput = useRef<HTMLInputElement>(null)
   const avatarInput = useRef<HTMLInputElement>(null)
   const aboutInput = useRef<HTMLInputElement>(null)
@@ -301,6 +303,7 @@ export default function PortfolioEditorPage() {
       cover_scale: form.cover_scale ?? 1,
       cover_style_web: form.cover_style_web ?? null,
       cover_scale_web: form.cover_scale_web ?? null,
+      cover_slideshow: form.cover_slideshow === true,
       logo_height: form.logo_height ?? null,
       show_name_with_logo: form.show_name_with_logo === true,
       desktop_overrides: form.desktop_overrides ?? {},
@@ -337,7 +340,22 @@ export default function PortfolioEditorPage() {
     flash('Saved. Your portfolio is updated.')
   }
 
-  async function uploadCover(file: File) {
+  async function removeCover(i: number) {
+    const sb = supabase
+    if (!sb || !form) return
+    const current = form.cover_paths?.length ? form.cover_paths : (form.cover_path ? [form.cover_path] : [])
+    if (current.length <= 1) return
+    const gone = current[i]
+    const next = current.filter((_, k) => k !== i)
+    const { error } = await sb.from('profiles').update({ cover_path: next[0], cover_paths: next }).eq('id', form.id)
+    if (error) { setMessage(error.message); return }
+    setForm((f) => (f ? { ...f, cover_path: next[0], cover_paths: next } : f))
+    setSaved((v) => (v ? { ...v, cover_path: next[0], cover_paths: next } : v))
+    setPreviewKey((k) => k + 1)
+    await sb.storage.from('portfolio').remove([gone])
+  }
+
+  async function uploadCover(file: File, index: number | null = 0) {
     const sb = supabase
     if (!sb || !form) return
     setUploading(true)
@@ -347,12 +365,16 @@ export default function PortfolioEditorPage() {
       const path = `${form.id}/cover_${Date.now()}.jpg`
       const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
       if (up.error) throw up.error
-      const rest = (form.cover_paths ?? []).slice(1)
-      const coverPaths = [path, ...rest]
-      const { error } = await sb.from('profiles').update({ cover_path: path, cover_paths: coverPaths }).eq('id', form.id)
+      const current = form.cover_paths?.length ? form.cover_paths : (form.cover_path ? [form.cover_path] : [])
+      const coverPaths = index == null
+        ? [...current, path].slice(0, 5)
+        : (current.length ? current.map((p, k) => (k === index ? path : p)) : [path])
+      const old = index == null ? null : (current[index] ?? null)
+      const { error } = await sb.from('profiles').update({ cover_path: coverPaths[0], cover_paths: coverPaths }).eq('id', form.id)
       if (error) throw error
-      setForm((f) => (f ? { ...f, cover_path: path, cover_paths: coverPaths } : f))
-      setSaved((s) => (s ? { ...s, cover_path: path, cover_paths: coverPaths } : s))
+      setForm((f) => (f ? { ...f, cover_path: coverPaths[0], cover_paths: coverPaths } : f))
+      setSaved((s) => (s ? { ...s, cover_path: coverPaths[0], cover_paths: coverPaths } : s))
+      if (old && old !== path) await sb.storage.from('portfolio').remove([old])
       setPreviewKey((k) => k + 1)
       flash('Cover photo updated')
     } catch (e) {
@@ -642,6 +664,7 @@ export default function PortfolioEditorPage() {
         const bw = baseW * curScale
         const bh = bw / ratio
         const hasWeb = form.cover_style_web != null || form.cover_scale_web != null
+        const coverList = form.cover_paths?.length ? form.cover_paths : (form.cover_path ? [form.cover_path] : [])
         const setStyle = (k: string) => setField(isDesk ? 'cover_style_web' : 'cover_style', k)
         const setScale = (v: number) => setField(isDesk ? 'cover_scale_web' : 'cover_scale', v)
         return sec(
@@ -660,11 +683,49 @@ export default function PortfolioEditorPage() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp,.heic,.heif"
                 className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.target.value = '' }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f, coverTarget.current); e.target.value = '' }}
               />
-              <button className={btnGhost} disabled={uploading} onClick={() => fileInput.current?.click()}>
-                {uploading ? 'Uploading…' : coverUrl ? 'Change photo' : 'Add photo'}
-              </button>
+              <p className={label}>Cover photos ({coverList.length}/5)</p>
+              <div className="flex flex-wrap gap-2">
+                {coverList.map((p, i) => (
+                  <div key={p} className="relative h-16 w-16">
+                    <button
+                      type="button"
+                      disabled={uploading}
+                      onClick={() => { coverTarget.current = i; fileInput.current?.click() }}
+                      className="h-16 w-16 overflow-hidden rounded-lg border border-line"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`${STORAGE_BASE}${p}`} alt="" className="h-full w-full object-cover" />
+                    </button>
+                    {coverList.length > 1 && (
+                      <button
+                        type="button"
+                        aria-label="Remove photo"
+                        onClick={() => removeCover(i)}
+                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-xs text-white"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {coverList.length < 5 && (
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={() => { coverTarget.current = null; fileInput.current?.click() }}
+                    className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-ink-soft text-xl text-ink-soft"
+                  >
+                    {uploading ? '…' : '+'}
+                  </button>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-ink-soft">Click a photo to replace it. Up to 5 photos.</p>
+              <label className="mt-3 flex items-center gap-3 text-sm text-ink">
+                <Toggle on={form.cover_slideshow === true} onChange={(v) => setField('cover_slideshow', v as never)} label="Rotate between photos" />
+                Rotate between photos
+              </label>
             </div>
             <div>
               <p className={label}>Cover shape</p>
