@@ -5,7 +5,7 @@ import Wordmark from "@/app/components/Wordmark"
 export const metadata: Metadata = {
   title: "Camrhia | Become the photographer everyone is looking for.",
   description:
-    "Stop juggling six tools. Camrhia gives photographers a website of their own, a place to get found, booking, contracts, payments and gallery delivery. Free for 14 days.",
+    "Stop juggling seven tools. Camrhia gives photographers a website of their own, a place to get found, booking, contracts, payments and gallery delivery. Free for 14 days.",
   openGraph: {
     title: "Camrhia | Become the photographer everyone is looking for.",
     description:
@@ -182,7 +182,7 @@ export default function Home() {
               ))}
             </ul>
             <p className="mt-10 font-fraunces text-2xl text-twilight">
-              Being easy to find and easy to book is. That is exactly what Camrhia fixes.
+              What actually fills a calendar is being easy to find and easy to book. That is exactly what Camrhia fixes.
             </p>
           </div>
         </section>
