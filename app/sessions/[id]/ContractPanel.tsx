@@ -96,11 +96,9 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
     if (!sb) return applyTypeVars(DEFAULT_CONTRACT_TEMPLATE, sessionType)
     const { data } = await sb.from('contract_templates').select('session_type, template').eq('owner_id', me).in('session_type', [sessionType, MASTER_KEY])
     const rows = (data ?? []) as { session_type: string; template: string }[]
-    const own = rows.find((r) => r.session_type === sessionType)?.template
     const master = rows.find((r) => r.session_type === MASTER_KEY)?.template
     const def = DEFAULT_CONTRACT_TEMPLATES[sessionType]
-    const customized = own && own !== def && own !== DEFAULT_CONTRACT_TEMPLATE ? own : null
-    return applyTypeVars(customized || master || def || p.contract_template || DEFAULT_CONTRACT_TEMPLATE, sessionType)
+    return applyTypeVars(master || def || p.contract_template || DEFAULT_CONTRACT_TEMPLATE, sessionType)
   }, [sessionType])
 
   const load = useCallback(async () => {

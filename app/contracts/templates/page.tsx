@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { SubTabs } from '@/app/components/SubTabs'
-import { CONTRACT_TYPE_CONFIG, DEFAULT_CONTRACT_TEMPLATE, DEFAULT_CONTRACT_TEMPLATES, MASTER_CONTRACT_TEMPLATE, MASTER_KEY } from '@/lib/contractDefaults'
+import { CONTRACT_TYPE_CONFIG, MASTER_CONTRACT_TEMPLATE, MASTER_KEY } from '@/lib/contractDefaults'
 
 type Tpl = {
   session_type: string; template: string; updated_at: string | null
@@ -61,7 +61,6 @@ export default function ContractPage() {
       ? 'Reviewed by ' + (master.reviewed_by || 'your attorney') + ' on ' + fmtDate(master.reviewed_at)
       : 'Changed since review'
     : null
-  const customized = Object.values(rows).filter((r) => r.session_type !== MASTER_KEY && r.template !== DEFAULT_CONTRACT_TEMPLATES[r.session_type] && r.template !== DEFAULT_CONTRACT_TEMPLATE)
 
   async function write(patch: Record<string, unknown>, okText: string) {
     const sb = supabase
@@ -98,13 +97,6 @@ export default function ContractPage() {
   async function copy(token: string) {
     try { await navigator.clipboard.writeText(SITE + '/contract-review/' + token); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch {}
   }
-  async function useMaster(k: string) {
-    const sb = supabase
-    if (!sb || !uid) return
-    await sb.from('contract_templates').delete().eq('owner_id', uid).eq('session_type', k)
-    setRows((r) => { const n = { ...r }; delete n[k]; return n })
-  }
-
   const input = 'w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm text-ink outline-none focus:border-twilight'
   const btn = 'rounded-xl bg-twilight px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
   const ghost = 'rounded-xl border border-line bg-white px-4 py-2 text-sm font-medium text-ink transition hover:border-ink disabled:opacity-40'
@@ -199,20 +191,6 @@ export default function ContractPage() {
               </div>
             </section>
 
-            {customized.length > 0 && (
-              <section className={card}>
-                <h2 className="font-fraunces text-lg font-semibold text-ink">Customized session types</h2>
-                <p className="mt-1 text-sm text-ink-soft">These session types use their own wording instead of the contract above, so your review doesn&apos;t cover them.</p>
-                <div className="mt-4 space-y-2">
-                  {customized.map((r) => (
-                    <div key={r.session_type} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 py-3">
-                      <span className="text-sm font-medium text-ink">{labels[r.session_type] ?? r.session_type}</span>
-                      <button type="button" className={ghost} onClick={() => useMaster(r.session_type)}>Use the contract above</button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
           </div>
         )}
       </main>
