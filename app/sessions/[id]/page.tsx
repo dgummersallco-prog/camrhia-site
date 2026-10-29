@@ -89,6 +89,32 @@ export default function SessionDetailPage() {
   const [pick, setPick] = useState('')
   const [busy, setBusy] = useState(false)
   const [paperOpen, setPaperOpen] = useState(false)
+  const [canDelete, setCanDelete] = useState(false)
+
+  useEffect(() => {
+    const sb = supabase
+    if (!sb || !id) return
+    sb.rpc('wedding_can_delete', { p_wedding: id }).then(({ data }) => setCanDelete(data === true))
+  }, [id])
+
+  async function cancelSession() {
+    if (!window.confirm('Cancel this session? It will be hidden from your lists. Any payments and the contract stay on record.')) return
+    const sb = supabase
+    if (!sb) return
+    const { error: e } = await sb.from('weddings').update({ canceled_at: new Date().toISOString() }).eq('id', id)
+    if (e) { setError(e.message); return }
+    router.push('/sessions')
+  }
+
+  async function deletePermanently() {
+    const t = window.prompt('This permanently deletes the session. Type DELETE to confirm.')
+    if (t?.trim() !== 'DELETE') return
+    const sb = supabase
+    if (!sb) return
+    const { error: e } = await sb.rpc('delete_wedding', { p_wedding_id: id })
+    if (e) { setError(e.message); return }
+    router.push('/sessions')
+  }
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [sendFor, setSendFor] = useState<string | null>(null)
@@ -663,6 +689,13 @@ export default function SessionDetailPage() {
                 </button>
               </div>
             </section>
+
+            <div className="mt-8 flex flex-wrap justify-end gap-3">
+              <button type="button" onClick={cancelSession} className={btnGhost}>Cancel session</button>
+              {canDelete && (
+                <button type="button" onClick={deletePermanently} className={btnGhost}>Delete permanently</button>
+              )}
+            </div>
           </>
         )}
       </main>
