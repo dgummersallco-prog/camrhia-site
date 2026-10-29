@@ -9,6 +9,7 @@ import { DateCheckWidget } from "./DateCheckWidget"
 import { ContactButton } from "./ContactButton"
 import { CoverHero } from "./CoverHero"
 import { PortfolioLightbox } from "./PortfolioLightbox"
+import { aboutPhotoStyle } from '@/lib/aboutPhoto'
 
 // Same shape geometry as the app's lib/customShapes.ts — kept in sync
 // manually since this is a separate codebase from the mobile app.
@@ -317,7 +318,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
                   </h2>
                   {r.show_about_photo !== false && photoUrl(r.about_photo_path ?? r.avatar_path) && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={photoUrl(r.about_photo_path ?? r.avatar_path)!} alt={studioName} style={{ display: 'block', width: '100%', maxWidth: 300, aspectRatio: '4/5', objectFit: 'cover', borderRadius: 12, margin: '0 auto 18px' }} />
+                    <img src={photoUrl(r.about_photo_path ?? r.avatar_path)!} alt={studioName} style={aboutPhotoStyle((r as any).about_photo_shape, (r as any).about_photo_size)} />
                   )}
                   <p style={sectionParagraphStyle('about_paragraph')}>{r.bio || ''}</p>
                 </div>

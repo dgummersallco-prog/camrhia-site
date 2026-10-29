@@ -9,6 +9,7 @@ import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { ABOUT_SHAPES, ABOUT_SIZES, aboutPhotoStyle } from '@/lib/aboutPhoto'
 
 type Profile = {
   id: string
@@ -29,6 +30,8 @@ type Profile = {
   avatar_path: string | null
   about_photo_path: string | null
   show_about_photo: boolean | null
+  about_photo_shape: string | null
+  about_photo_size: string | null
   cover_style: string | null
   cover_scale: number | null
   cover_style_web: string | null
@@ -75,7 +78,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, show_testimonials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, logo_path, avatar_path, about_photo_path, show_about_photo, about_photo_shape, about_photo_size, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, show_testimonials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -317,6 +320,8 @@ export default function PortfolioEditorPage() {
       message_btn_italic: form.message_btn_italic ?? null,
       message_btn_show_icon: form.message_btn_show_icon !== false,
       show_about_photo: form.show_about_photo !== false,
+      about_photo_shape: form.about_photo_shape ?? 'portrait',
+      about_photo_size: form.about_photo_size ?? 'large',
       ...(form.brand_colors_named ? {
         brand_colors_named: form.brand_colors_named,
         brand_colors: BRAND_ROLES.map((r) => form.brand_colors_named?.[r.key]).filter((c): c is string => !!c),
@@ -843,12 +848,12 @@ export default function PortfolioEditorPage() {
             <div>
               <p className={label}>About photo</p>
               <p className="mb-2 text-xs text-ink-soft">The portrait that shows above your bio. Separate from your round profile photo.</p>
-              <div className="mb-2 aspect-[4/5] w-28 overflow-hidden rounded-xl bg-line">
-                {(form.about_photo_path ?? form.avatar_path) && (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`${STORAGE_BASE}${form.about_photo_path ?? form.avatar_path}`} alt="" className="h-full w-full object-cover" />
-                  </>
+              <div className="mb-3 rounded-xl bg-paper p-4">
+                {(form.about_photo_path ?? form.avatar_path) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`${STORAGE_BASE}${form.about_photo_path ?? form.avatar_path}`} alt="" style={{ ...aboutPhotoStyle(form.about_photo_shape, form.about_photo_size), margin: '0 auto' }} />
+                ) : (
+                  <p className="py-6 text-center text-xs text-ink-soft">Add a photo to see it here</p>
                 )}
               </div>
               <input ref={aboutInput} type="file" accept="image/jpeg,image/png,image/webp,.heic,.heif" className="hidden"
@@ -865,6 +870,32 @@ export default function PortfolioEditorPage() {
                 <input type="checkbox" checked={form.show_about_photo !== false} onChange={(e) => setField('show_about_photo', e.target.checked)} />
                 Show this photo in my About section
               </label>
+              <p className={`${label} mt-4`}>Photo shape</p>
+              <div className="flex flex-wrap gap-2">
+                {ABOUT_SHAPES.map((o) => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => setField('about_photo_shape', o.key)}
+                    className={`rounded-xl border px-3 py-2 text-sm transition ${(form.about_photo_shape ?? 'portrait') === o.key ? 'border-twilight bg-blush-wash' : 'border-line hover:border-twilight'}`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <p className={`${label} mt-4`}>Photo size</p>
+              <div className="flex flex-wrap gap-2">
+                {ABOUT_SIZES.map((o) => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => setField('about_photo_size', o.key)}
+                    className={`rounded-xl border px-3 py-2 text-sm transition ${(form.about_photo_size ?? 'large') === o.key ? 'border-twilight bg-blush-wash' : 'border-line hover:border-twilight'}`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label className={label}>About you</label>
