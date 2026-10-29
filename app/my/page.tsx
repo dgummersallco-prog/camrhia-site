@@ -83,8 +83,12 @@ export default function MyPage() {
   }, [router])
 
   const today = new Date().toISOString().slice(0, 10)
-  const upcoming = rows.filter((r) => r.wedding_date && r.wedding_date >= today).reverse()
-  const past = rows.filter((r) => !r.wedding_date || r.wedding_date < today)
+  const dated = rows.filter((r) => r.wedding_date && r.wedding_date >= today).reverse()
+  const undated = rows.filter((r) => !r.wedding_date)
+  const upcoming = [...dated, ...undated]
+  const past = rows.filter((r) => r.wedding_date && r.wedding_date < today)
+  const spot = dated[0] ?? undated[0]
+  const placeOf = (r: Portal) => [r.venue, [r.city, r.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')
   const studioOf = (r: Portal) => r.studio_name || r.display_name || 'Your photographer'
 
   const attention: { key: string; text: string; href: string; cta: string }[] = []
@@ -104,7 +108,9 @@ export default function MyPage() {
 
   const signedRows = rows.filter((r) => mine[r.wedding_id]?.contract_status === 'signed')
 
-  const photos = rows.flatMap((r) => (r.galleries ?? []).map((g) => ({ g, r })))
+  const photos = rows
+    .flatMap((r) => (r.galleries ?? []).map((g) => ({ g, r })))
+    .sort((a, b) => (b.r.wedding_date ?? '').localeCompare(a.r.wedding_date ?? ''))
 
   function SessionRow({ r }: { r: Portal }) {
     const place = [r.venue, [r.city, r.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')
@@ -147,6 +153,21 @@ export default function MyPage() {
               </section>
             )}
 
+            {spot && (
+              <section className={`${card} mt-6`}>
+                <p className="font-mono text-xs uppercase tracking-widest text-brass">{spot.wedding_date ? 'Next session' : 'Coming up'}</p>
+                <p className="mt-2 font-fraunces text-2xl font-semibold text-ink">{label(spot.session_type)} with {studioOf(spot)}</p>
+                <p className="mt-1 text-sm text-ink-soft">
+                  {spot.wedding_date ? when(spot.wedding_date) : 'Your photographer will confirm a date.'}
+                  {placeOf(spot) ? ` · ${placeOf(spot)}` : ''}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link href={`/my/session/${spot.wedding_id}`} className="rounded-full bg-twilight px-5 py-2 text-sm font-semibold text-white hover:opacity-90">Open session</Link>
+                  <Link href="/my/messages" className="rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink hover:border-twilight">Message</Link>
+                </div>
+              </section>
+            )}
+
             {signedRows.length > 0 && (
               <section className={`${card} mt-6`}>
                 <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Your signed contracts</p>
@@ -171,7 +192,7 @@ export default function MyPage() {
                   {photos.map(({ g, r }) => (
                     <div key={g.token} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-paper-deep p-4">
                       <div>
-                        <p className="text-sm font-semibold text-ink">{g.title || 'Your photos'}</p>
+                        <p className="text-sm font-semibold text-ink">{label(r.session_type)}{r.wedding_date ? ` · ${when(r.wedding_date)}` : ''}</p>
                         <p className="text-xs text-ink-soft">{studioOf(r)}{g.has_pin && mine[r.wedding_id]?.gallery_password ? ` · PIN ${mine[r.wedding_id].gallery_password}` : ''}</p>
                       </div>
                       <a href={`/g/${g.token}`} className="rounded-full bg-twilight px-5 py-2 text-sm font-semibold text-white hover:opacity-90">View and download</a>
@@ -199,7 +220,7 @@ export default function MyPage() {
             )}
 
             {rows.length === 0 ? (
-              <p className={`${card} mt-8 text-ink-soft`}>No sessions yet. When a photographer adds you to a session, it will show up here.</p>
+              <p className={`${card} mt-8 text-ink-soft`}>Your photographer will add your session here. Once they do, your contract, questionnaire, payments and photos will all be in one place.</p>
             ) : (
               <>
                 {upcoming.length > 0 && (
