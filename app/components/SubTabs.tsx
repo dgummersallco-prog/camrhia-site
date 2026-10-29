@@ -11,7 +11,7 @@ const GROUPS: Record<string, { key: string; href: string; label: string }[]> = {
   ],
   contracts: [
     { key: 'contracts', href: '/contracts', label: 'Contracts' },
-    { key: 'templates', href: '/contracts/templates', label: 'Templates' },
+    { key: 'templates', href: '/contracts/templates', label: 'Master contract' },
   ],
   account: [
     { key: 'settings', href: '/settings', label: 'Settings' },
