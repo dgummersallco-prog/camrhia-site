@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
-type T = { id: string; storage_path: string | null; quote: string | null; client_name: string | null; sort_order: number }
+type T = { id: string; storage_path: string | null; quote: string | null; client_name: string | null; sort_order: number; card_scale?: number | null }
 
 const BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 const card = 'rounded-2xl border border-line bg-card p-5'
@@ -38,7 +38,7 @@ export default function TestimonialsEditor() {
     setUid(sess.session.user.id)
     const { data } = await sb
       .from('testimonials')
-      .select('id, storage_path, quote, client_name, sort_order')
+      .select('id, storage_path, quote, client_name, sort_order, card_scale')
       .eq('owner_id', sess.session.user.id)
       .order('sort_order', { ascending: true })
     setItems((data ?? []) as T[])
@@ -171,6 +171,16 @@ export default function TestimonialsEditor() {
               <div className="flex-1 space-y-2">
                 <input className={input} value={t.client_name ?? ''} placeholder="Client name" onChange={(e) => edit(t.id, { client_name: e.target.value })} onBlur={(e) => saveField(t, { client_name: e.target.value.trim() || null })} />
                 <textarea rows={3} className={input} value={t.quote ?? ''} placeholder="Quote" onChange={(e) => edit(t.id, { quote: e.target.value })} onBlur={(e) => { if (e.target.value.trim()) saveField(t, { quote: e.target.value }); else { setMsg('A testimonial needs a quote.'); load() } }} />
+                <div>
+                  <p className="mb-1 text-xs uppercase tracking-wider text-ink-soft">Card size · {Math.round((t.card_scale ?? 0.8) * 100)}%</p>
+                  <input
+                    type="range" min={0.5} max={1} step={0.05}
+                    value={t.card_scale ?? 0.8}
+                    className="w-full accent-twilight"
+                    onChange={(e) => edit(t.id, { card_scale: Number(e.target.value) })}
+                    onPointerUp={(e) => saveField(t, { card_scale: Number((e.target as HTMLInputElement).value) })}
+                  />
+                </div>
                 <div className="flex items-center gap-4">
                   <label className="cursor-pointer text-xs text-ink-soft underline hover:text-ink">
                     {t.storage_path ? 'Change photo' : 'Add photo'}

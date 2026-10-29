@@ -661,7 +661,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
                   <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8 }}>
                     {r.testimonials.map((t: any) => (
                       <div key={t.id} style={{
-                        minWidth: 260, flexShrink: 0, borderRadius: 12, overflow: 'hidden', position: 'relative',
+                        minWidth: 260 * tk(t), width: 260 * tk(t), flexShrink: 0, borderRadius: 12, overflow: 'hidden', position: 'relative',
                         backgroundColor: t.card_bg_color ?? '#fff', aspectRatio: '4/5',
                       }}>
                         {photoUrl(t.storage_path) && (
@@ -669,8 +669,8 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
                           <img src={photoUrl(t.storage_path)!} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: t.photo_opacity ?? 1 }} />
                         )}
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 18, background: photoUrl(t.storage_path) ? 'linear-gradient(transparent 40%, rgba(0,0,0,0.6))' : undefined }}>
-                          {t.quote && <p style={{ color: photoUrl(t.storage_path) ? '#fff' : '#2A1F24', fontFamily: "'Fraunces', serif", fontStyle: 'italic', fontSize: 15, lineHeight: 1.4, margin: 0 }}>&ldquo;{t.quote}&rdquo;</p>}
-                          {t.client_name && <p style={{ color: photoUrl(t.storage_path) ? 'rgba(255,255,255,0.85)' : '#8A8A8A', fontFamily: "system-ui, sans-serif", fontSize: 12, marginTop: 8 }}>{t.client_name}</p>}
+                          {t.quote && <p style={{ color: photoUrl(t.storage_path) ? '#fff' : autoText(t.card_bg_color ?? '#fff'), fontFamily: "'Fraunces', serif", fontStyle: 'italic', fontSize: 15 * tk(t), lineHeight: 1.4, margin: 0 }}>&ldquo;{t.quote}&rdquo;</p>}
+                          {t.client_name && <p style={{ color: photoUrl(t.storage_path) ? 'rgba(255,255,255,0.85)' : autoText(t.card_bg_color ?? '#fff', true), fontFamily: "system-ui, sans-serif", fontSize: 12, marginTop: 8 }}>{t.client_name}</p>}
                         </div>
                       </div>
                     ))}
@@ -786,4 +786,22 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
       />
     </>
   )
+}
+
+// Testimonial card size: the app's 80% default is today's 260px card.
+function tk(t: any): number {
+  return Math.min(1.25, Math.max(0.6, (t?.card_scale ?? 0.8) / 0.8))
+}
+
+// Readable text on a card with no photo: dark on light cards, light on dark.
+function autoText(bg: string | null | undefined, muted = false): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec((bg ?? '').trim())
+  let dark = false
+  if (m) {
+    const n = parseInt(m[1], 16)
+    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
+    dark = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 <= 0.55
+  }
+  if (dark) return muted ? 'rgba(255,255,255,0.8)' : '#FFFFFF'
+  return muted ? '#8A8A8A' : '#2A1F24'
 }
