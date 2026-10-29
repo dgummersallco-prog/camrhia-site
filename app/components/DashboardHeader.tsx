@@ -8,7 +8,7 @@ import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
 import { APP_STORE_URL } from '@/lib/appStore'
 
-type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'invoices' | 'insights' | 'minis' | 'help' | 'packages' | 'questionnaires'
+type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'insights' | 'minis' | 'help' | 'packages' | 'questionnaires'
 
 const ICONS: Record<string, string> = {
   dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
@@ -25,7 +25,6 @@ const ICONS: Record<string, string> = {
   help: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3 M12 17h.01',
   minis: 'M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
   insights: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
-  invoices: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M9 13h6 M9 17h6',
   clients: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   team: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
   settings: 'M4 21v-7 M4 10V3 M12 21v-9 M12 8V3 M20 21v-5 M20 12V3 M1 14h6 M9 8h6 M17 16h6',
@@ -36,7 +35,7 @@ const ICONS: Record<string, string> = {
 }
 
 const COVERS: Record<string, string[]> = {
-  payments: ['payments', 'invoices', 'insights'],
+  payments: ['payments', 'insights'],
   packages: ['packages', 'minis'],
   settings: ['settings', 'billing'],
 }
@@ -50,7 +49,6 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
   { tab: 'contracts', href: '/contracts', label: 'Contracts' },
   { tab: 'payments', href: '/payments', label: 'Money' },
-  { tab: 'invoices', href: '/invoices', label: 'Invoices' },
   { tab: 'insights', href: '/insights', label: 'Insights' },
   { tab: 'minis', href: '/minis', label: 'Mini-sessions' },
   { tab: 'team', href: '/team', label: 'Team' },

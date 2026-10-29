@@ -3,7 +3,6 @@ import Link from 'next/link'
 const GROUPS: Record<string, { key: string; href: string; label: string }[]> = {
   money: [
     { key: 'payments', href: '/payments', label: 'Payments' },
-    { key: 'invoices', href: '/invoices', label: 'Invoices' },
     { key: 'insights', href: '/insights', label: 'Insights' },
   ],
   packages: [

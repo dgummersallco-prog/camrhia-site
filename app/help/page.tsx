@@ -8,7 +8,7 @@ import { DashboardHeader } from '@/app/components/DashboardHeader'
 
 const TOPICS: { q: string; a: string; href?: string; cta?: string }[] = [
   { q: 'How do I add a client?', a: 'Clients are created when you add a session. Start a new session with their name and details, and they appear on your Clients page with all of their sessions together.', href: '/sessions/new', cta: 'New session' },
-  { q: 'Where do I see what a client owes?', a: 'The Clients page shows paid and owed totals for each client. The Invoices page lists every payment, with filters for outstanding, overdue and paid.', href: '/invoices', cta: 'Open Invoices' },
+  { q: 'Where do I see what a client owes?', a: 'The Clients page shows paid and owed totals for each client. The Payments page tracks every payment.', href: '/payments', cta: 'Open Payments' },
   { q: 'How do I get paid by my clients?', a: 'Connect your payout account from Payments. Client card payments go through Stripe straight to your bank account.', href: '/payments', cta: 'Open Payments' },
   { q: 'Where do I change my password or check my payout account?', a: 'Both are in Settings, along with your tax and payout details held by Stripe.', href: '/settings', cta: 'Open Settings' },
   { q: 'How do I add team members?', a: 'The Team page is for Studio plans. Share your studio code, approve requests, then set each member\'s role, title and pay.', href: '/team', cta: 'Open Team' },
