@@ -9,13 +9,17 @@ const GROUPS: Record<string, { key: string; href: string; label: string }[]> = {
     { key: 'packages', href: '/portfolio/packages', label: 'Packages' },
     { key: 'minis', href: '/minis', label: 'Mini-sessions' },
   ],
+  contracts: [
+    { key: 'contracts', href: '/contracts', label: 'Contracts' },
+    { key: 'templates', href: '/contracts/templates', label: 'Templates' },
+  ],
   account: [
     { key: 'settings', href: '/settings', label: 'Settings' },
     { key: 'billing', href: '/billing', label: 'Billing' },
   ],
 }
 
-export function SubTabs({ group, active }: { group: 'money' | 'packages' | 'account'; active: string }) {
+export function SubTabs({ group, active }: { group: 'money' | 'packages' | 'account' | 'contracts'; active: string }) {
   return (
     <div className="flex justify-center px-6 pt-8">
       <nav className="inline-flex rounded-full border border-line bg-white p-1">

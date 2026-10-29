@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { SubTabs } from '@/app/components/SubTabs'
 import { signedHtml } from '@/lib/contractSign'
 
 type Row = {
@@ -113,6 +114,7 @@ export default function ContractsPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="contracts" />
+      <SubTabs group="contracts" active="contracts" />
       <main className="mx-auto max-w-4xl px-6 py-8">
         <h1 className="font-fraunces text-3xl font-semibold text-ink">Contracts</h1>
         <p className="mt-1 text-sm text-ink-soft">Every contract in one place. Signed copies include both signatures and the date.</p>
