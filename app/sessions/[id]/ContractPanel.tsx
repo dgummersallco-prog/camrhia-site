@@ -99,7 +99,7 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
     const own = rows.find((r) => r.session_type === sessionType)?.template
     const master = rows.find((r) => r.session_type === MASTER_KEY)?.template
     const def = DEFAULT_CONTRACT_TEMPLATES[sessionType]
-    const customized = own && own !== def ? own : null
+    const customized = own && own !== def && own !== DEFAULT_CONTRACT_TEMPLATE ? own : null
     return applyTypeVars(customized || master || def || p.contract_template || DEFAULT_CONTRACT_TEMPLATE, sessionType)
   }, [sessionType])
 

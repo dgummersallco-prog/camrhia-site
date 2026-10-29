@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { SubTabs } from '@/app/components/SubTabs'
-import { CONTRACT_TYPE_CONFIG, DEFAULT_CONTRACT_TEMPLATES, MASTER_CONTRACT_TEMPLATE, MASTER_KEY } from '@/lib/contractDefaults'
+import { CONTRACT_TYPE_CONFIG, DEFAULT_CONTRACT_TEMPLATE, DEFAULT_CONTRACT_TEMPLATES, MASTER_CONTRACT_TEMPLATE, MASTER_KEY } from '@/lib/contractDefaults'
 
 type Tpl = {
   session_type: string; template: string; updated_at: string | null
@@ -61,7 +61,7 @@ export default function ContractPage() {
       ? 'Reviewed by ' + (master.reviewed_by || 'your attorney') + ' on ' + fmtDate(master.reviewed_at)
       : 'Changed since review'
     : null
-  const customized = Object.values(rows).filter((r) => r.session_type !== MASTER_KEY && r.template !== DEFAULT_CONTRACT_TEMPLATES[r.session_type])
+  const customized = Object.values(rows).filter((r) => r.session_type !== MASTER_KEY && r.template !== DEFAULT_CONTRACT_TEMPLATES[r.session_type] && r.template !== DEFAULT_CONTRACT_TEMPLATE)
 
   async function write(patch: Record<string, unknown>, okText: string) {
     const sb = supabase
