@@ -43,6 +43,7 @@ const NEW_STACK = [
   "Contracts that fill themselves in",
   "Payments tracked and confirmed",
   "Client messaging, tied to each session",
+  "A free dashboard for every client, with their galleries, contracts, payments and messages in one place",
   "Galleries hosted and delivered, with client favorites",
   "Your calendar, always current",
 ]
