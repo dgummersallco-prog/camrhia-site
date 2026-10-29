@@ -86,7 +86,7 @@ export async function loadClientThreads(sb: SupabaseClient, me: string): Promise
       snippet: l ? snip(l.body, l.message_type) : 'No messages yet',
       lastAt: l?.created_at ?? i.created_at,
       unread: isUnread(otherI.get(i.id), readAt.get('inq:' + i.id)),
-      href: `/my/inquiry/${i.id}?s=${encodeURIComponent(studio)}`,
+      href: `/my/messages?t=inq:${i.id}`,
     })
   })
   wmList.forEach(({ id, msgs }) => {
@@ -100,7 +100,7 @@ export async function loadClientThreads(sb: SupabaseClient, me: string): Promise
       key: 'wed:' + id, kind: 'wed', id, name: studio,
       snippet: snip(last.body, null), lastAt: last.created_at,
       unread: isUnread(otherAt, readAt.get('wed:' + id)),
-      href: `/my/messages/${id}?s=${encodeURIComponent(studio)}`,
+      href: `/my/messages?t=wed:${id}`,
     })
   })
   out.sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1))

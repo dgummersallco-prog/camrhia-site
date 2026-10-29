@@ -12,7 +12,7 @@ type Notif = {
 }
 
 function route(n: Notif): string {
-  if (n.inquiry_id && !n.wedding_id) return `/my/inquiry/${n.inquiry_id}`
+  if (n.inquiry_id && !n.wedding_id) return `/my/messages?t=inq:${n.inquiry_id}`
   if (!n.wedding_id) return '/my'
   if (n.type === 'message') return `/my/messages/${n.wedding_id}`
   if (n.type === 'contract') return `/my/contract/${n.wedding_id}`
