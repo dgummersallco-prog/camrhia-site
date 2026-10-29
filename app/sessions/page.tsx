@@ -8,6 +8,8 @@ import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
 type Session = {
+  delivered?: boolean | null
+  shoot_completed_at?: string | null
   id: string
   names: string | null
   wedding_date: string | null
@@ -62,7 +64,7 @@ export default function SessionsPage() {
   const router = useRouter()
   const [rows, setRows] = useState<Session[] | null>(null)
   const [contracts, setContracts] = useState<Record<string, string>>({})
-  const [filter, setFilter] = useState<'upcoming' | 'past' | 'all'>('upcoming')
+  const [filter, setFilter] = useState<'upcoming' | 'editing' | 'delivered' | 'all'>('upcoming')
   const [typeFilter, setTypeFilter] = useState('')
   const [q, setQ] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -76,7 +78,8 @@ export default function SessionsPage() {
       const uid = sess.session.user.id
       const { data, error: e } = await sb
         .from('weddings')
-        .select('id, names, wedding_date, session_type, status, city, state, venue, package_name, gallery_url, paid_in_full')
+        .select('id, names, wedding_date, session_type, status, city, state, venue, package_name, gallery_url, paid_in_full, delivered, shoot_completed_at')
+        .is('canceled_at', null)
         .order('wedding_date', { ascending: false, nullsFirst: false })
       if (e) { setError(e.message); return }
       setRows((data ?? []) as Session[])
@@ -91,6 +94,15 @@ export default function SessionsPage() {
     }
     load()
   }, [router])
+
+  async function setShootComplete(id: string, done: boolean) {
+    const sb = supabase
+    if (!sb) return
+    const at = done ? new Date().toISOString() : null
+    const { error: e } = await sb.from('weddings').update({ shoot_completed_at: at }).eq('id', id)
+    if (e) { setError(e.message); return }
+    setRows((prev) => (prev ?? []).map((r) => (r.id === id ? { ...r, shoot_completed_at: at } : r)))
+  }
 
   const today = todayStr()
 
@@ -125,8 +137,9 @@ export default function SessionsPage() {
     if (!rows) return []
     const needle = q.trim().toLowerCase()
     let list = rows.filter((r) => {
-      if (filter === 'upcoming' && !(r.wedding_date && r.wedding_date >= today)) return false
-      if (filter === 'past' && !(r.wedding_date && r.wedding_date < today)) return false
+      if (filter === 'upcoming' && (r.delivered || r.shoot_completed_at)) return false
+      if (filter === 'editing' && (r.delivered || !r.shoot_completed_at)) return false
+      if (filter === 'delivered' && !r.delivered) return false
       if (typeFilter && r.session_type !== typeFilter) return false
       if (needle) {
         const hay = `${r.names ?? ''} ${r.venue ?? ''} ${r.city ?? ''} ${r.session_type ?? ''}`.toLowerCase()
@@ -185,7 +198,8 @@ export default function SessionsPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-2">
             {tab('upcoming', 'Upcoming')}
-            {tab('past', 'Past')}
+            {tab('editing', 'Editing')}
+            {tab('delivered', 'Delivered')}
             {tab('all', 'All')}
           </div>
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
@@ -215,7 +229,7 @@ export default function SessionsPage() {
         ) : shown.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-line bg-card px-6 py-16 text-center">
             <p className="font-fraunces text-xl text-ink">
-              {filter === 'upcoming' ? 'No upcoming sessions' : filter === 'past' ? 'No past sessions' : 'No sessions here'}
+              {filter === 'upcoming' ? 'No upcoming sessions' : filter === 'editing' ? 'Nothing in editing' : filter === 'delivered' ? 'No delivered sessions' : 'No sessions here'}
             </p>
             <p className="mt-1 text-sm text-ink-soft">New sessions you add in the Camrhia app show up here.</p>
           </div>
@@ -266,6 +280,24 @@ export default function SessionsPage() {
                         : chip('No contract', 'bg-line text-ink-soft')}
                       {s.paid_in_full ? chip('Paid in full', 'bg-emerald-100 text-emerald-700') : chip('Balance open', 'bg-amber-100 text-amber-700')}
                       {s.gallery_url ? chip('Gallery delivered', 'bg-brass/15 text-brass') : chip('No gallery yet', 'bg-line text-ink-soft')}
+                      {!s.delivered && !s.shoot_completed_at && s.status !== 'not_booked' && !!s.wedding_date && s.wedding_date < today && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShootComplete(s.id, true) }}
+                          className="rounded-full border border-brass px-3 py-1 text-xs font-medium text-brass transition hover:bg-brass/10"
+                        >
+                          Shoot complete
+                        </button>
+                      )}
+                      {filter === 'editing' && !s.delivered && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShootComplete(s.id, false) }}
+                          className="rounded-full border border-line px-3 py-1 text-xs text-ink-soft transition hover:border-twilight"
+                        >
+                          Not done yet
+                        </button>
+                      )}
                     </div>
                   </Link>
                 </div>
