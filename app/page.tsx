@@ -251,7 +251,7 @@ export default function Home() {
               See it in action
             </h2>
             <p className="text-lg text-ink-soft leading-relaxed">
-              This is the real app, not a mockup. Every session, date and setting, right where you need it.
+              Every session, date and setting, right where you need it.
             </p>
           </div>
 
@@ -404,7 +404,7 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login. One price.</p>
+                <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login.</p>
                 <p className="mt-1 text-sm text-ink-soft">Plans start at $59.99 a month. Your first 14 days are free.</p>
                 <p className="mt-3 text-sm text-ink-soft">Galleries are included too. Upload your photos, share a PIN-protected link, and your clients can favorite and download. No separate gallery host to pay for.</p>
               </div>
