@@ -88,6 +88,7 @@ export default function SessionDetailPage() {
   const [loose, setLoose] = useState<{ id: string; title: string }[]>([])
   const [pick, setPick] = useState('')
   const [busy, setBusy] = useState(false)
+  const [paperOpen, setPaperOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [sendFor, setSendFor] = useState<string | null>(null)
@@ -507,15 +508,58 @@ export default function SessionDetailPage() {
               </section>
 
               {/* Contract + timeline */}
-              <div className="space-y-6">
-                <ContractPanel weddingId={id} w={w as unknown as Record<string, any>} onChanged={load} />
-                <PaymentsPanel weddingId={id} w={w as unknown as Record<string, any>} />
-                <QuestionnairePanel weddingId={id} />
-              </div>
+              {(() => {
+                const wr = w as unknown as Record<string, any>
+                const done = !!wr.shoot_completed_at
+                if (!done) {
+                  return (
+                    <div className="space-y-6">
+                      <ContractPanel weddingId={id} w={wr} onChanged={load} />
+                      <PaymentsPanel weddingId={id} w={wr} />
+                      <QuestionnairePanel weddingId={id} />
+                    </div>
+                  )
+                }
+                return (
+                  <div className="space-y-6">
+                    {!wr.delivered && (
+                      <section className={card}>
+                        <p className="font-fraunces text-xl font-semibold text-ink">Shoot complete</p>
+                        <p className="mt-1 text-sm text-ink-soft">Now it&apos;s editing time. Deliver the gallery when it&apos;s ready.</p>
+                        <button
+                          type="button"
+                          className={`${btn} mt-4`}
+                          onClick={() => document.getElementById('galleries')?.scrollIntoView({ behavior: 'smooth' })}
+                        >
+                          Deliver gallery
+                        </button>
+                      </section>
+                    )}
+                    <PaymentsPanel weddingId={id} w={wr} />
+                    <button
+                      type="button"
+                      onClick={() => setPaperOpen((o) => !o)}
+                      className={`${card} flex w-full items-center justify-between text-left`}
+                    >
+                      <span>
+                        <span className="block font-fraunces text-xl font-semibold text-ink">Paperwork</span>
+                        <span className="block text-sm text-ink-soft">{paperOpen ? 'Hide contract and questionnaire' : 'Contract and questionnaire'}</span>
+                      </span>
+                      <span className="text-ink-soft">{paperOpen ? '−' : '+'}</span>
+                    </button>
+                    {paperOpen && (
+                      <>
+                        <ContractPanel weddingId={id} w={wr} onChanged={load} />
+                        <QuestionnairePanel weddingId={id} />
+                      </>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Galleries */}
-            <section className={`${card} mt-6`}>
+            <section id="galleries" className={`${card} mt-6`}>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="font-fraunces text-xl font-semibold text-ink">Galleries</p>
                 <div className="flex flex-wrap items-center gap-2">
