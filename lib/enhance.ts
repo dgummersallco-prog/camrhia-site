@@ -25,15 +25,15 @@ const Z: LookParams = {
 const mk = (p: Partial<LookParams>): LookParams => ({ ...Z, ...p })
 
 export const LOOKS: Look[] = [
-  { id: 'natural', label: 'Natural', blurb: 'Clean and true to life', params: mk({}) },
+  { id: 'natural', label: 'True to Color', blurb: 'Clean and true to life', params: mk({}) },
   { id: 'bright', label: 'Clean & Bright', blurb: 'Fresh, light, lifted', params: mk({ exposure: 0.18, contrast: 0.1, shadows: 0.25, saturation: 0.05 }) },
-  { id: 'airy', label: 'Warm & Airy', blurb: 'Soft, glowing, sunlit', params: mk({ exposure: 0.25, contrast: -0.05, shadows: 0.3, highlights: -0.1, temp: 0.12, saturation: -0.04, fade: 0.03 }) },
+  { id: 'airy', label: 'Light & Airy', blurb: 'Soft, glowing, sunlit', params: mk({ exposure: 0.25, contrast: -0.05, shadows: 0.3, highlights: -0.1, temp: 0.12, saturation: -0.04, fade: 0.03 }) },
   { id: 'golden', label: 'Golden Hour', blurb: 'Rich, warm light', params: mk({ temp: 0.2, contrast: 0.1, highlights: -0.1, saturation: 0.1, splitHigh: [14, 6, -12] }) },
   { id: 'matte', label: 'Soft Matte', blurb: 'Gentle, faded blacks', params: mk({ fade: 0.07, contrast: -0.1, saturation: -0.08, shadows: 0.1 }) },
   { id: 'film', label: 'Film', blurb: 'Warm tones, teal shadows', params: mk({ fade: 0.05, contrast: 0.1, saturation: -0.06, temp: 0.05, splitShadow: [-8, 5, 10], splitHigh: [10, 5, -8] }) },
-  { id: 'moody', label: 'Moody', blurb: 'Deep and dramatic', params: mk({ exposure: -0.2, contrast: 0.25, saturation: -0.1, shadows: -0.1, splitShadow: [-10, 4, 10] }) },
+  { id: 'moody', label: 'Dark & Moody', blurb: 'Deep and dramatic', params: mk({ exposure: -0.2, contrast: 0.25, saturation: -0.1, shadows: -0.1, splitShadow: [-10, 4, 10] }) },
   { id: 'editorial', label: 'Cool Editorial', blurb: 'Crisp, cool, modern', params: mk({ temp: -0.1, contrast: 0.15, saturation: -0.12, highlights: -0.05 }) },
-  { id: 'vivid', label: 'Vivid', blurb: 'Bold color and punch', params: mk({ saturation: 0.25, contrast: 0.15, shadows: 0.05 }) },
+  { id: 'vivid', label: 'Bold & Vibrant', blurb: 'Bold color and punch', params: mk({ saturation: 0.25, contrast: 0.15, shadows: 0.05 }) },
   { id: 'bw', label: 'Black & White', blurb: 'Timeless monochrome', params: mk({ bw: 1, contrast: 0.2 }) },
 ]
 

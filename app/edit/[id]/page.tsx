@@ -763,7 +763,7 @@ export default function EditWalkthrough() {
 
             {!dev.busy && todoDev.length > 0 && (
               <div className={`${panel} mt-8`}>
-                <p className="text-white/70">{todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'} ready to develop with the {LOOKS.find((l) => l.id === lookId)?.label ?? 'Natural'} look at {Math.round(strength * 100)}%. Keep this tab open while it runs.</p>
+                <p className="text-white/70">{todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'} ready to develop with the {LOOKS.find((l) => l.id === lookId)?.label ?? 'True to Color'} look at {Math.round(strength * 100)}%. Keep this tab open while it runs.</p>
                 <div className="mt-6 flex gap-3">
                   <button className={btnPrimary} onClick={runDevelop}>Develop all</button>
                   <button className={btnQuiet} onClick={() => goTo(5)}>Skip</button>

@@ -45,7 +45,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'dashboard', href: '/dashboard', label: 'Home' },
   { tab: 'clients', href: '/clients', label: 'Clients' },
   { tab: 'galleries', href: '/galleries', label: 'Galleries' },
-  { tab: 'edit', href: '/edit', label: 'Edit' },
+  { tab: 'edit', href: '/edit', label: 'Camrhia Pro' },
   { tab: 'packages', href: '/portfolio/packages', label: 'Packages' },
   { tab: 'questionnaires', href: '/questionnaires', label: 'Questionnaires' },
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
@@ -215,9 +215,9 @@ export function DashboardHeader({ active }: { active: Tab }) {
   }
 
   const GROUPS: { label: string | null; tabs: string[] }[] = [
-    { label: null, tabs: ['dashboard'] },
+    { label: null, tabs: ['dashboard', 'edit'] },
     { label: 'Clients', tabs: ['clients', 'messages', 'sessions', 'calendar'] },
-    { label: 'Work', tabs: ['galleries', 'edit', 'packages', 'questionnaires', 'contracts', 'payments', 'team'] },
+    { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments', 'team'] },
     { label: 'Your brand', tabs: ['website', 'portfolio'] },
     { label: 'Account', tabs: ['settings', 'help'] },
   ]
