@@ -9,7 +9,7 @@ import { enhancePhoto, renderPreview, LOOKS } from '@/lib/enhance'
 import { sendGalleryToClient } from '@/lib/sendGallery'
 import BriefScreen from '@/app/edit/BriefScreen'
 import { SCENE_IDEAS, readHead, exifTime, orderPhotos, normalizeScenes, buildLightMap, countByScene, autoSplit } from '@/lib/scenes'
-import { briefAdjust, STYLE_LOOK, QUESTIONS, type Brief, type SceneDef } from '@/lib/brief'
+import { briefAdjust, STYLE_LOOK, QUESTIONS, type Brief, type SceneDef, type Signature } from '@/lib/brief'
 import { uploadPhotos } from '@/lib/galleryUpload'
 
 type Photo = {
@@ -64,22 +64,43 @@ export default function EditWalkthrough() {
   const [brief, setBrief] = useState<Brief>({})
   const [briefReady, setBriefReady] = useState(false)
   const [history, setHistory] = useState<Brief[]>([])
+  const [signatures, setSignatures] = useState<Signature[]>([])
+  const [sigId, setSigId] = useState<string | null>(null)
   const { adjust, skin } = briefAdjust(brief)
   const briefKey = JSON.stringify({ ...brief, scenes: undefined })
 
-  function applyBrief(b: Brief, save: boolean) {
+  function applyBrief(b: Brief, save: boolean, sig?: Signature | null) {
     setBrief(b)
     setBriefReady(true)
     const lk = b.style ? STYLE_LOOK[b.style] : undefined
-    if (lk) { setLookId(lk); setStrength(0.8) }
-    if (save) void persistBrief(b)
+    if (lk) { setLookId(lk); setStrength(sig ? sig.strength : 0.8) }
+    if (sig) setSigId(sig.id)
+    if (save) void persistBrief(b, sig ? sig.id : null)
   }
 
-  async function persistBrief(b: Brief) {
+  async function persistBrief(b: Brief, sid: string | null) {
     const sb = supabase
     if (!sb || !userId) return
-    await sb.from('edit_briefs').upsert({ gallery_id: galleryId, owner_id: userId, answers: b, updated_at: new Date().toISOString() })
-    await sb.from('edit_choices').insert({ owner_id: userId, gallery_id: galleryId, kind: 'brief', value: b })
+    await sb.from('edit_briefs').upsert({ gallery_id: galleryId, owner_id: userId, answers: b, signature_id: sid, updated_at: new Date().toISOString() })
+    await sb.from('edit_choices').insert({ owner_id: userId, gallery_id: galleryId, kind: 'brief', value: b, signature_id: sid })
+  }
+
+  async function saveSignature(name: string, answers: Brief): Promise<Signature | null> {
+    const sb = supabase
+    if (!sb || !userId) return null
+    const clean = { ...answers, scenes: undefined }
+    const { data: row } = await sb.from('edit_signatures').insert({ owner_id: userId, name, answers: clean, strength }).select('id, name, answers, strength').maybeSingle()
+    if (!row) return null
+    const sig = { ...(row as Signature), strength: Number((row as Signature).strength) }
+    setSignatures((prev) => [...prev, sig])
+    return sig
+  }
+
+  async function deleteSignature(id: string): Promise<void> {
+    const sb = supabase
+    if (!sb) return
+    await sb.from('edit_signatures').delete().eq('id', id)
+    setSignatures((prev) => prev.filter((s) => s.id !== id))
   }
 
   async function sendNow() {
@@ -108,7 +129,7 @@ export default function EditWalkthrough() {
       })
       if (err) { setSending(false); setSendErr(err); return }
     }
-    if (userId) await sb.from('edit_choices').insert({ owner_id: userId, gallery_id: gallery.id, kind: 'final', value: { look: lookId, strength, audience, brief } })
+    if (userId) await sb.from('edit_choices').insert({ owner_id: userId, gallery_id: gallery.id, kind: 'final', value: { look: lookId, strength, audience, brief }, signature_id: sigId })
     setSending(false)
     setGallery({ ...gallery, status: 'published', audience, expires_at: expiresAt })
     setSentDone(sess ? 'sent' : 'published')
@@ -326,11 +347,15 @@ export default function EditWalkthrough() {
       if (!g) { setMsg('Shoot not found.'); setLoaded(true); return }
       setGallery(g as G)
       setAudience(((g as G).audience || 'all') as 'picks' | 'picks_maybe' | 'all')
-      const { data: bf } = await sb.from('edit_briefs').select('answers').eq('gallery_id', galleryId).maybeSingle()
+      const { data: bf } = await sb.from('edit_briefs').select('answers, signature_id').eq('gallery_id', galleryId).maybeSingle()
       const saved = (bf as { answers?: Brief } | null)?.answers
+      const savedSig = (bf as { signature_id?: string | null } | null)?.signature_id ?? null
+      if (savedSig) setSigId(savedSig)
       if (!cancelled && saved && Object.keys(saved).length > 0) applyBrief(saved, false)
       const { data: hist } = await sb.from('edit_briefs').select('answers').eq('owner_id', data.session.user.id).neq('gallery_id', galleryId)
       if (!cancelled) setHistory(((hist ?? []) as { answers: Brief }[]).map((h) => h.answers).filter(Boolean))
+      const { data: sg } = await sb.from('edit_signatures').select('id, name, answers, strength').eq('owner_id', data.session.user.id).order('created_at', { ascending: true })
+      if (!cancelled) setSignatures(((sg ?? []) as Signature[]).map((s) => ({ ...s, strength: Number(s.strength) })))
       if ((g as G).session_id) {
         const { data: sw } = await sb.from('weddings').select('id, names, couple_user_id, gallery_sent_at, gallery_url').eq('id', (g as G).session_id).maybeSingle()
         if (!cancelled) setSess((sw as Sess | null) ?? null)
@@ -581,7 +606,10 @@ export default function EditWalkthrough() {
         title={gallery?.title ?? ''}
         initial={brief}
         history={history}
-        onDone={(b) => applyBrief(b, true)}
+        signatures={signatures}
+        onSaveSignature={saveSignature}
+        onDeleteSignature={deleteSignature}
+        onDone={(b, sig) => applyBrief(b, true, sig)}
         onSkip={() => setBriefReady(true)}
       />
     )
