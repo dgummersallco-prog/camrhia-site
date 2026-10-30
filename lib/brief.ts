@@ -31,8 +31,8 @@ export const QUESTIONS: Question[] = [
   },
   {
     key: 'style',
-    title: 'What style do you edit in?',
-    hint: 'This is your starting look. You can change it later.',
+    title: 'What style do you want to edit this shoot in?',
+    hint: 'Your starting look for this shoot. It can be different every time.',
     options: [
       { value: 'light_airy', label: 'Light & Airy', blurb: 'Soft, bright and dreamy' },
       { value: 'true_color', label: 'True to Color', blurb: 'Clean and natural' },

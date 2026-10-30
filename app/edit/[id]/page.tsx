@@ -63,6 +63,7 @@ export default function EditWalkthrough() {
   const [sentDone, setSentDone] = useState<'sent' | 'published' | null>(null)
   const [brief, setBrief] = useState<Brief>({})
   const [briefReady, setBriefReady] = useState(false)
+  const [history, setHistory] = useState<Brief[]>([])
   const { adjust, skin } = briefAdjust(brief)
   const briefKey = JSON.stringify({ ...brief, scenes: undefined })
 
@@ -328,6 +329,8 @@ export default function EditWalkthrough() {
       const { data: bf } = await sb.from('edit_briefs').select('answers').eq('gallery_id', galleryId).maybeSingle()
       const saved = (bf as { answers?: Brief } | null)?.answers
       if (!cancelled && saved && Object.keys(saved).length > 0) applyBrief(saved, false)
+      const { data: hist } = await sb.from('edit_briefs').select('answers').eq('owner_id', data.session.user.id).neq('gallery_id', galleryId)
+      if (!cancelled) setHistory(((hist ?? []) as { answers: Brief }[]).map((h) => h.answers).filter(Boolean))
       if ((g as G).session_id) {
         const { data: sw } = await sb.from('weddings').select('id, names, couple_user_id, gallery_sent_at, gallery_url').eq('id', (g as G).session_id).maybeSingle()
         if (!cancelled) setSess((sw as Sess | null) ?? null)
@@ -577,6 +580,7 @@ export default function EditWalkthrough() {
       <BriefScreen
         title={gallery?.title ?? ''}
         initial={brief}
+        history={history}
         onDone={(b) => applyBrief(b, true)}
         onSkip={() => setBriefReady(true)}
       />
