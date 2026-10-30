@@ -1,0 +1,657 @@
+'use client'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import { cullPhotos, type CullLabel } from '@/lib/cull'
+import { enhancePhoto } from '@/lib/enhance'
+import { uploadPhotos } from '@/lib/galleryUpload'
+
+type Photo = {
+  id: string
+  filename: string | null
+  orig_path: string
+  web_path: string | null
+  thumb_path: string | null
+  full_path: string | null
+  size_bytes: number | null
+  sort_order: number
+  cull_label: CullLabel | null
+  cull_score: number | null
+  cull_group: string | null
+  cull_reason: string | null
+  enhanced: boolean | null
+  pre_web_path: string | null
+  pre_thumb_path: string | null
+  pre_full_path: string | null
+}
+type G = { id: string; title: string; status: string }
+
+const BUCKET = 'galleries'
+const COLS =
+  'id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, enhanced, pre_web_path, pre_thumb_path, pre_full_path'
+const ACCEPT =
+  'image/jpeg,image/png,image/webp,.heic,.heif,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.dng,.orf,.rw2,.raf,.pef,.3fr,.erf,.kdc,.mrw,.raw,.rwl,.iiq'
+const STEPS = ['Photos', 'Cull', 'Duplicates', 'Develop', 'Send']
+
+const panel = 'rounded-2xl border border-white/10 bg-[#151518] p-6'
+const btnPrimary = 'rounded-xl bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
+const btnQuiet = 'rounded-xl border border-white/15 px-5 py-3 text-sm text-white/80 transition hover:border-white/40 disabled:opacity-40'
+const btnDanger = 'rounded-xl bg-red-600 px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
+
+export default function EditWalkthrough() {
+  const params = useParams<{ id: string }>()
+  const galleryId = params.id
+  const router = useRouter()
+  const fileInput = useRef<HTMLInputElement>(null)
+  const folderInput = useRef<HTMLInputElement>(null)
+  const failedRef = useRef<File[]>([])
+
+  const [userId, setUserId] = useState<string | null>(null)
+  const [gallery, setGallery] = useState<G | null>(null)
+  const [photos, setPhotos] = useState<Photo[]>([])
+  const [thumbs, setThumbs] = useState<Record<string, string>>({})
+  const [loaded, setLoaded] = useState(false)
+  const [step, setStep] = useState(0)
+  const [reached, setReached] = useState(0)
+  const [msg, setMsg] = useState<string | null>(null)
+  const [dragging, setDragging] = useState(false)
+
+  const [up, setUp] = useState({ busy: false, done: 0, total: 0, note: null as string | null })
+  const [cullTarget, setCullTarget] = useState('')
+  const [cullEyes, setCullEyes] = useState(true)
+  const [cull, setCull] = useState<{ busy: boolean; done: number; total: number; phase: 'sharp' | 'eyes' }>({ busy: false, done: 0, total: 0, phase: 'sharp' })
+  const [rescued, setRescued] = useState<Set<string>>(new Set())
+  const [confirmCut, setConfirmCut] = useState(false)
+  const [choice, setChoice] = useState<Record<string, string>>({})
+  const [working, setWorking] = useState(false)
+  const [dev, setDev] = useState({ busy: false, done: 0, total: 0 })
+  const [latest, setLatest] = useState<{ before: string | null; after: string } | null>(null)
+
+  const loadPhotos = useCallback(async (): Promise<Photo[]> => {
+    const sb = supabase
+    if (!sb) return []
+    const all: Photo[] = []
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await sb
+        .from('gallery_photos')
+        .select(COLS)
+        .eq('gallery_id', galleryId)
+        .order('sort_order', { ascending: true })
+        .range(from, from + 999)
+      if (error) { setMsg(error.message); return all }
+      const batch = (data ?? []) as Photo[]
+      all.push(...batch)
+      if (batch.length < 1000) break
+    }
+    setPhotos(all)
+    const paths = all.map((p) => p.thumb_path).filter((x): x is string => !!x)
+    const map: Record<string, string> = {}
+    for (let i = 0; i < paths.length; i += 200) {
+      const { data: signed } = await sb.storage.from(BUCKET).createSignedUrls(paths.slice(i, i + 200), 3600)
+      signed?.forEach((s) => { if (s.path && s.signedUrl) map[s.path] = s.signedUrl })
+    }
+    setThumbs(map)
+    return all
+  }, [galleryId])
+
+  useEffect(() => {
+    const sb = supabase
+    if (!sb) return
+    let cancelled = false
+    sb.auth.getSession().then(async ({ data }) => {
+      if (!data.session) { router.replace(`/login?next=/edit/${galleryId}`); return }
+      setUserId(data.session.user.id)
+      const { data: g } = await sb.from('galleries').select('id, title, status').eq('id', galleryId).maybeSingle()
+      if (cancelled) return
+      if (!g) { setMsg('Shoot not found.'); setLoaded(true); return }
+      setGallery(g as G)
+      const list = await loadPhotos()
+      if (cancelled) return
+      const s = list.length === 0 ? 0 : list.every((p) => p.enhanced) ? 4 : 1
+      setStep(s)
+      setReached(s)
+      setLoaded(true)
+    })
+    return () => { cancelled = true }
+  }, [galleryId, router, loadPhotos])
+
+  function goTo(i: number) {
+    setStep(i)
+    setReached((r) => Math.max(r, i))
+    setConfirmCut(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const img = (p: Photo, cls = 'h-full w-full object-cover') =>
+    p.thumb_path && thumbs[p.thumb_path] ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={thumbs[p.thumb_path]} alt="" loading="lazy" draggable={false} className={cls} />
+    ) : null
+
+  async function removePhotos(list: Photo[]): Promise<boolean> {
+    const sb = supabase
+    if (!sb || list.length === 0) return true
+    const ids = list.map((p) => p.id)
+    const paths = list
+      .flatMap((p) => [p.orig_path, p.web_path, p.thumb_path, p.full_path, p.pre_web_path, p.pre_thumb_path, p.pre_full_path])
+      .filter((x): x is string => !!x)
+    for (let i = 0; i < ids.length; i += 100) {
+      const { error } = await sb.from('gallery_photos').delete().in('id', ids.slice(i, i + 100))
+      if (error) { setMsg(error.message); return false }
+    }
+    for (let i = 0; i < paths.length; i += 100) {
+      await sb.storage.from(BUCKET).remove(paths.slice(i, i + 100))
+    }
+    return true
+  }
+
+  // ---- Step 1: photos ----
+  async function addFiles(files: File[]) {
+    if (!userId || up.busy || files.length === 0) return
+    setMsg(null)
+    setUp({ busy: true, done: 0, total: files.length, note: null })
+    const r = await uploadPhotos({
+      userId,
+      galleryId,
+      files,
+      existing: photos.map((p) => ({ filename: p.filename, size_bytes: p.size_bytes, sort_order: p.sort_order })),
+      onProgress: (done, total) => setUp((u) => ({ ...u, done, total })),
+    })
+    failedRef.current = r.failed
+    const note = [r.message, r.failed.length ? `${r.failed.length} could not be uploaded` : null].filter(Boolean).join(' · ') || null
+    setUp({ busy: false, done: 0, total: 0, note })
+    await loadPhotos()
+  }
+
+  // ---- Step 2: cull ----
+  async function runCull() {
+    const sb = supabase
+    if (!sb || cull.busy) return
+    const webMap: Record<string, string> = {}
+    if (cullEyes) {
+      const wp = photos.map((p) => p.web_path).filter((x): x is string => !!x)
+      for (let i = 0; i < wp.length; i += 200) {
+        const { data: signed } = await sb.storage.from(BUCKET).createSignedUrls(wp.slice(i, i + 200), 3600)
+        signed?.forEach((s) => { if (s.path && s.signedUrl) webMap[s.path] = s.signedUrl })
+      }
+    }
+    const items = photos
+      .filter((p) => p.thumb_path && thumbs[p.thumb_path])
+      .map((p) => ({ id: p.id, url: thumbs[p.thumb_path as string], webUrl: p.web_path ? webMap[p.web_path] : undefined }))
+    if (items.length === 0) { setMsg('Photos are still loading. Try again in a moment.'); return }
+    setCull({ busy: true, done: 0, total: items.length, phase: 'sharp' })
+    try {
+      const t = parseInt(cullTarget, 10)
+      const { results } = await cullPhotos(items, {
+        target: t > 0 ? t : undefined,
+        eyes: cullEyes,
+        onProgress: (done, total, phase) => setCull({ busy: true, done, total, phase }),
+      })
+      for (let i = 0; i < results.length; i += 10) {
+        const rs = await Promise.all(
+          results.slice(i, i + 10).map((r) =>
+            sb.from('gallery_photos').update({ cull_label: r.label, cull_score: r.score, cull_group: r.group, cull_reason: r.reason }).eq('id', r.id),
+          ),
+        )
+        const bad = rs.find((x) => x.error)
+        if (bad?.error) throw bad.error
+      }
+      setRescued(new Set())
+      await loadPhotos()
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Culling failed. Please try again.')
+    }
+    setCull({ busy: false, done: 0, total: 0, phase: 'sharp' })
+  }
+
+  const labeled = photos.some((p) => p.cull_label)
+  const cuts = photos.filter((p) => p.cull_label === 'reject' && !p.cull_group)
+  const toCut = cuts.filter((p) => !rescued.has(p.id))
+  const picks = photos.filter((p) => p.cull_label === 'pick').length
+  const maybes = photos.filter((p) => p.cull_label === 'maybe').length
+
+  async function doCut() {
+    const sb = supabase
+    if (!sb || working) return
+    setWorking(true)
+    const keepIds = cuts.filter((p) => rescued.has(p.id)).map((p) => p.id)
+    for (let i = 0; i < keepIds.length; i += 100) {
+      await sb.from('gallery_photos').update({ cull_label: 'pick', cull_reason: null }).in('id', keepIds.slice(i, i + 100))
+    }
+    const ok = await removePhotos(toCut)
+    await loadPhotos()
+    setRescued(new Set())
+    setConfirmCut(false)
+    setWorking(false)
+    if (ok) goTo(2)
+  }
+
+  // ---- Step 3: duplicates ----
+  const groupMap = new Map<string, Photo[]>()
+  photos.forEach((p) => {
+    if (!p.cull_group) return
+    const arr = groupMap.get(p.cull_group) ?? []
+    arr.push(p)
+    groupMap.set(p.cull_group, arr)
+  })
+  const groupList = Array.from(groupMap.entries()).filter(([, m]) => m.length > 1)
+  const bestOf = (key: string, m: Photo[]) => choice[key] ?? (m.find((p) => p.cull_label !== 'reject') ?? m[0]).id
+
+  async function dropDuplicates() {
+    const sb = supabase
+    if (!sb || working) return
+    setWorking(true)
+    const drop: Photo[] = []
+    const keepIds: string[] = []
+    const promote: string[] = []
+    groupList.forEach(([key, m]) => {
+      const best = bestOf(key, m)
+      m.forEach((p) => {
+        if (p.id === best) {
+          keepIds.push(p.id)
+          if (p.cull_label === 'reject') promote.push(p.id)
+        } else {
+          drop.push(p)
+        }
+      })
+    })
+    const ok = await removePhotos(drop)
+    for (let i = 0; i < keepIds.length; i += 100) {
+      await sb.from('gallery_photos').update({ cull_group: null }).in('id', keepIds.slice(i, i + 100))
+    }
+    for (let i = 0; i < promote.length; i += 100) {
+      await sb.from('gallery_photos').update({ cull_label: 'pick', cull_reason: null }).in('id', promote.slice(i, i + 100))
+    }
+    await loadPhotos()
+    setChoice({})
+    setWorking(false)
+    if (ok) goTo(3)
+  }
+
+  // ---- Step 4: develop ----
+  const todoDev = photos.filter((p) => !p.enhanced)
+
+  async function runDevelop() {
+    const sb = supabase
+    if (!sb || dev.busy) return
+    const client = sb
+    const todo = photos.filter((p) => !p.enhanced)
+    if (todo.length === 0) { goTo(4); return }
+    setDev({ busy: true, done: 0, total: todo.length })
+    let done = 0
+    let failed = 0
+    let next = 0
+    async function worker() {
+      while (true) {
+        const i = next++
+        if (i >= todo.length) return
+        const p = todo[i]
+        try {
+          const srcPath = p.full_path ?? p.orig_path
+          const dl = await client.storage.from(BUCKET).download(srcPath)
+          if (dl.error || !dl.data) throw dl.error ?? new Error('Could not load the photo.')
+          const out = await enhancePhoto(dl.data, srcPath)
+          const dir = p.orig_path.slice(0, p.orig_path.lastIndexOf('/'))
+          const eFull = `${dir}/enh-full.jpg`
+          const eWeb = `${dir}/enh-web.jpg`
+          const eThumb = `${dir}/enh-thumb.jpg`
+          const ups = await Promise.all([
+            client.storage.from(BUCKET).upload(eFull, out.full, { contentType: 'image/jpeg', upsert: true }),
+            client.storage.from(BUCKET).upload(eWeb, out.web.blob, { contentType: 'image/jpeg', upsert: true }),
+            client.storage.from(BUCKET).upload(eThumb, out.thumb.blob, { contentType: 'image/jpeg', upsert: true }),
+          ])
+          const bad = ups.find((u) => u.error)
+          if (bad?.error) throw bad.error
+          const { error } = await client
+            .from('gallery_photos')
+            .update({
+              enhanced: true,
+              pre_web_path: p.web_path,
+              pre_thumb_path: p.thumb_path,
+              pre_full_path: p.full_path ?? null,
+              web_path: eWeb,
+              thumb_path: eThumb,
+              full_path: eFull,
+              enh_bytes: out.full.size + out.web.blob.size + out.thumb.blob.size,
+            })
+            .eq('id', p.id)
+          if (error) throw error
+          const url = URL.createObjectURL(out.web.blob)
+          const before = p.thumb_path ? thumbs[p.thumb_path] ?? null : null
+          setLatest((prev) => {
+            if (prev?.after) URL.revokeObjectURL(prev.after)
+            return { before, after: url }
+          })
+        } catch {
+          failed++
+        }
+        done++
+        setDev({ busy: true, done, total: todo.length })
+      }
+    }
+    await Promise.all(Array.from({ length: 2 }, () => worker()))
+    await loadPhotos()
+    setDev({ busy: false, done: 0, total: 0 })
+    if (failed) setMsg(`${failed} photo${failed === 1 ? '' : 's'} could not be developed. You can run this step again.`)
+    else goTo(4)
+  }
+
+  if (!loaded) {
+    return <div className="min-h-screen bg-[#0c0c0e] p-10 text-sm text-white/40">{msg ?? 'Loading…'}</div>
+  }
+
+  const enhancedCount = photos.filter((p) => p.enhanced).length
+
+  return (
+    <div className="min-h-screen bg-[#0c0c0e] text-[#ececf0]">
+      <div className="mx-auto max-w-5xl px-6 py-8">
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/edit" className="text-sm text-white/50 transition hover:text-white">← Editing room</Link>
+          <p className="truncate font-fraunces text-lg text-white">{gallery?.title}</p>
+          <Link href={`/galleries/${galleryId}`} className="text-sm text-white/50 transition hover:text-white">Gallery</Link>
+        </div>
+
+        <ol className="mt-8 flex items-center gap-2 overflow-x-auto pb-2">
+          {STEPS.map((label, i) => (
+            <li key={label} className="flex items-center gap-2">
+              <button
+                disabled={i > reached}
+                onClick={() => goTo(i)}
+                className="flex items-center gap-2 disabled:cursor-default"
+              >
+                <span
+                  className={`flex h-7 w-7 items-center justify-center rounded-full text-xs transition ${
+                    i < step ? 'bg-twilight text-white' : i === step ? 'border border-twilight text-white shadow-[0_0_18px_var(--color-twilight)]' : 'border border-white/15 text-white/40'
+                  }`}
+                >
+                  {i < step ? '✓' : i + 1}
+                </span>
+                <span className={`text-sm ${i === step ? 'text-white' : 'text-white/40'}`}>{label}</span>
+              </button>
+              {i < STEPS.length - 1 && <span className="mx-1 h-px w-8 bg-white/15" />}
+            </li>
+          ))}
+        </ol>
+
+        {msg && <p className="mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80">{msg}</p>}
+
+        {/* STEP 1: PHOTOS */}
+        {step === 0 && (
+          <section className="mt-10">
+            <h1 className="font-fraunces text-4xl text-white">Bring in the shoot</h1>
+            <p className="mt-3 max-w-xl text-white/55">Drop your photos in. RAW files from your camera work. Keep this tab open until they finish.</p>
+
+            <div
+              className={`mt-8 flex flex-col items-center rounded-3xl border-2 border-dashed px-6 py-16 text-center transition ${dragging ? 'border-twilight bg-twilight/10' : 'border-white/15 bg-[#121215]'}`}
+              onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(Array.from(e.dataTransfer.files)) }}
+            >
+              <p className="font-fraunces text-2xl text-white">{up.busy ? `Uploading ${up.done} of ${up.total}` : 'Drop photos here'}</p>
+              <p className="mt-2 text-sm text-white/45">JPG, PNG, WebP, HEIC and RAW, up to 250 MB each</p>
+              {up.busy && (
+                <div className="mt-6 h-1.5 w-full max-w-md overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full bg-twilight transition-all" style={{ width: `${up.total ? (up.done / up.total) * 100 : 0}%` }} />
+                </div>
+              )}
+              <input ref={fileInput} type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = '' }} />
+              <input ref={folderInput} type="file" multiple className="hidden" {...({ webkitdirectory: '' } as Record<string, string>)} onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = '' }} />
+              <div className="mt-8 flex gap-3">
+                <button className={btnPrimary} disabled={up.busy} onClick={() => fileInput.current?.click()}>Choose photos</button>
+                <button className={btnQuiet} disabled={up.busy} onClick={() => folderInput.current?.click()}>Choose folder</button>
+              </div>
+              {up.note && <p className="mt-6 text-sm text-white/60">{up.note}</p>}
+              {!up.busy && failedRef.current.length > 0 && (
+                <button className={`${btnQuiet} mt-4`} onClick={() => addFiles(failedRef.current)}>Retry the failed ones</button>
+              )}
+            </div>
+
+            {photos.length > 0 && (
+              <div className="mt-8">
+                <p className="text-sm text-white/60">{photos.length} {photos.length === 1 ? 'photo' : 'photos'} in this shoot</p>
+                <div className="mt-3 grid grid-cols-6 gap-2 sm:grid-cols-8 lg:grid-cols-12">
+                  {photos.slice(0, 24).map((p) => (
+                    <div key={p.id} className="aspect-square overflow-hidden rounded-lg bg-white/5">{img(p)}</div>
+                  ))}
+                </div>
+                <div className="mt-8">
+                  <button className={btnPrimary} disabled={up.busy} onClick={() => goTo(1)}>Continue</button>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* STEP 2: CULL */}
+        {step === 1 && (
+          <section className="mt-10">
+            <h1 className="font-fraunces text-4xl text-white">Find the keepers</h1>
+
+            {!labeled && !cull.busy && (
+              <div className={`${panel} mt-8`}>
+                <p className="text-white/70">We look through every photo for soft shots and closed eyes, and group near-identical frames. Nothing is removed until you say so.</p>
+                <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
+                  <span className="text-white/70">Keep about</span>
+                  <input
+                    value={cullTarget}
+                    onChange={(e) => setCullTarget(e.target.value.replace(/\D/g, ''))}
+                    placeholder="all"
+                    inputMode="numeric"
+                    className="w-24 rounded-xl border border-white/15 bg-transparent px-3 py-2 text-white placeholder:text-white/30 focus:border-twilight focus:outline-none"
+                  />
+                  <span className="text-white/45">photos (optional)</span>
+                </div>
+                <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-white/70">
+                  <input type="checkbox" checked={cullEyes} onChange={(e) => setCullEyes(e.target.checked)} className="h-4 w-4" />
+                  Also check for closed eyes (slower)
+                </label>
+                <div className="mt-8">
+                  <button className={btnPrimary} onClick={runCull}>Start</button>
+                </div>
+              </div>
+            )}
+
+            {cull.busy && (
+              <div className={`${panel} mt-8 text-center`}>
+                <p className="text-sm uppercase tracking-[0.18em] text-white/40">{cull.phase === 'eyes' ? 'Checking eyes' : 'Checking sharpness'}</p>
+                <p className="mt-4 font-fraunces text-6xl text-white">
+                  {cull.done}
+                  <span className="text-white/25"> / {cull.total}</span>
+                </p>
+                <div className="mx-auto mt-6 h-1.5 w-full max-w-md overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full bg-twilight transition-all" style={{ width: `${cull.total ? (cull.done / cull.total) * 100 : 0}%` }} />
+                </div>
+              </div>
+            )}
+
+            {labeled && !cull.busy && (
+              <>
+                <div className="mt-6 flex flex-wrap gap-3 text-sm">
+                  <span className="rounded-full border border-white/10 px-4 py-1.5 text-white/80"><b className="text-white">{picks}</b> keepers</span>
+                  <span className="rounded-full border border-white/10 px-4 py-1.5 text-white/80"><b className="text-white">{maybes}</b> maybe</span>
+                  <span className="rounded-full border border-white/10 px-4 py-1.5 text-white/80"><b className="text-white">{cuts.length}</b> suggested cuts</span>
+                  <span className="rounded-full border border-white/10 px-4 py-1.5 text-white/80"><b className="text-white">{groupList.length}</b> duplicate groups</span>
+                </div>
+
+                {cuts.length > 0 ? (
+                  <>
+                    <p className="mt-8 max-w-2xl text-white/55">
+                      These are the ones we recommend cutting. Tap any you want to keep. Cutting only removes a photo from this gallery, and your own copy stays wherever you saved it.
+                    </p>
+                    <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+                      {cuts.map((p) => {
+                        const kept = rescued.has(p.id)
+                        return (
+                          <button
+                            key={p.id}
+                            onClick={() => {
+                              setConfirmCut(false)
+                              setRescued((prev) => {
+                                const n = new Set(prev)
+                                if (n.has(p.id)) n.delete(p.id)
+                                else n.add(p.id)
+                                return n
+                              })
+                            }}
+                            className={`relative aspect-square overflow-hidden rounded-xl bg-white/5 transition ${kept ? 'ring-2 ring-emerald-400' : 'opacity-90 hover:opacity-100'}`}
+                          >
+                            {img(p)}
+                            <span className={`absolute inset-x-0 bottom-0 px-2 py-1 text-[10px] ${kept ? 'bg-emerald-600 text-white' : 'bg-black/70 text-white/80'}`}>
+                              {kept ? 'Keeping' : p.cull_reason ?? 'Cut'}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-8 text-white/60">Nothing to cut here. Nice shoot.</p>
+                )}
+
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  {toCut.length > 0 ? (
+                    confirmCut ? (
+                      <>
+                        <button className={btnDanger} disabled={working} onClick={doCut}>{working ? 'Removing…' : `Yes, remove ${toCut.length} photo${toCut.length === 1 ? '' : 's'}`}</button>
+                        <button className={btnQuiet} disabled={working} onClick={() => setConfirmCut(false)}>Cancel</button>
+                      </>
+                    ) : (
+                      <button className={btnPrimary} onClick={() => setConfirmCut(true)}>Cut {toCut.length} photo{toCut.length === 1 ? '' : 's'}</button>
+                    )
+                  ) : (
+                    <button className={btnPrimary} onClick={() => goTo(2)}>Continue</button>
+                  )}
+                  {toCut.length > 0 && !confirmCut && <button className={btnQuiet} onClick={() => goTo(2)}>Skip, keep everything</button>}
+                  <button className={btnQuiet} disabled={working} onClick={runCull}>Run again</button>
+                </div>
+              </>
+            )}
+          </section>
+        )}
+
+        {/* STEP 3: DUPLICATES */}
+        {step === 2 && (
+          <section className="mt-10">
+            <h1 className="font-fraunces text-4xl text-white">Pick the best of each</h1>
+            {groupList.length === 0 ? (
+              <>
+                <p className="mt-4 text-white/60">No near-identical frames found.</p>
+                <div className="mt-8"><button className={btnPrimary} onClick={() => goTo(3)}>Continue</button></div>
+              </>
+            ) : (
+              <>
+                <p className="mt-3 max-w-2xl text-white/55">
+                  We kept the sharpest frame from each group. Tap a different one to choose it instead. The rest are removed from this gallery.
+                </p>
+                <div className="mt-8 space-y-4">
+                  {groupList.map(([key, m]) => {
+                    const best = bestOf(key, m)
+                    return (
+                      <div key={key} className={`${panel} flex flex-wrap gap-3`}>
+                        {m.map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => setChoice((c) => ({ ...c, [key]: p.id }))}
+                            className={`relative h-28 w-28 overflow-hidden rounded-xl bg-white/5 transition sm:h-32 sm:w-32 ${p.id === best ? 'ring-2 ring-twilight' : 'opacity-50 hover:opacity-90'}`}
+                          >
+                            {img(p)}
+                            {p.id === best && <span className="absolute left-1.5 top-1.5 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Best</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button className={btnPrimary} disabled={working} onClick={dropDuplicates}>
+                    {working ? 'Working…' : `Keep the best, drop ${groupList.reduce((n, [, m]) => n + m.length - 1, 0)}`}
+                  </button>
+                  <button className={btnQuiet} disabled={working} onClick={() => goTo(3)}>Skip, keep everything</button>
+                </div>
+              </>
+            )}
+          </section>
+        )}
+
+        {/* STEP 4: DEVELOP */}
+        {step === 3 && (
+          <section className="mt-10">
+            <h1 className="font-fraunces text-4xl text-white">Develop</h1>
+            <p className="mt-3 max-w-2xl text-white/55">A first-pass edit for exposure, contrast and color. Your originals are kept, and you can revert any photo later from the gallery.</p>
+
+            {!dev.busy && todoDev.length === 0 && (
+              <div className={`${panel} mt-8`}>
+                <p className="text-white/70">Every photo is already developed.</p>
+                <div className="mt-6"><button className={btnPrimary} onClick={() => goTo(4)}>Continue</button></div>
+              </div>
+            )}
+
+            {!dev.busy && todoDev.length > 0 && (
+              <div className={`${panel} mt-8`}>
+                <p className="text-white/70">{todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'} ready to develop. Keep this tab open while it runs.</p>
+                <div className="mt-6 flex gap-3">
+                  <button className={btnPrimary} onClick={runDevelop}>Develop all</button>
+                  <button className={btnQuiet} onClick={() => goTo(4)}>Skip</button>
+                </div>
+              </div>
+            )}
+
+            {dev.busy && (
+              <div className={`${panel} mt-8`}>
+                <p className="text-center text-sm uppercase tracking-[0.18em] text-white/40">Developing</p>
+                <p className="mt-3 text-center font-fraunces text-6xl text-white">
+                  {dev.done}
+                  <span className="text-white/25"> / {dev.total}</span>
+                </p>
+                <div className="mx-auto mt-6 h-1.5 w-full max-w-md overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full bg-twilight transition-all" style={{ width: `${dev.total ? (dev.done / dev.total) * 100 : 0}%` }} />
+                </div>
+                {latest && (
+                  <div className="mt-8 grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">Before</p>
+                      <div className="aspect-[4/3] overflow-hidden rounded-xl bg-white/5">
+                        {latest.before && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={latest.before} alt="" className="h-full w-full object-contain" />
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">After</p>
+                      <div className="aspect-[4/3] overflow-hidden rounded-xl bg-white/5">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={latest.after} alt="" className="h-full w-full object-contain" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* STEP 5: SEND */}
+        {step === 4 && (
+          <section className="mt-10">
+            <h1 className="font-fraunces text-4xl text-white">Ready to send</h1>
+            <p className="mt-3 max-w-2xl text-white/55">
+              {photos.length} {photos.length === 1 ? 'photo' : 'photos'}, {enhancedCount} developed. Take a last look in the gallery, then publish it to your client.
+            </p>
+            <div className="mt-8 grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-10">
+              {photos.slice(0, 30).map((p) => (
+                <div key={p.id} className="aspect-square overflow-hidden rounded-lg bg-white/5">{img(p)}</div>
+              ))}
+            </div>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <button className={btnPrimary} onClick={() => router.push(`/galleries/${galleryId}`)}>Review and publish</button>
+              <button className={btnQuiet} onClick={() => goTo(3)}>Back</button>
+            </div>
+          </section>
+        )}
+      </div>
+    </div>
+  )
+}
