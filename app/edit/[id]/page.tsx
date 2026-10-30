@@ -8,7 +8,8 @@ import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { enhancePhoto, renderPreview, LOOKS } from '@/lib/enhance'
 import { sendGalleryToClient } from '@/lib/sendGallery'
 import BriefScreen from '@/app/edit/BriefScreen'
-import { briefAdjust, STYLE_LOOK, type Brief } from '@/lib/brief'
+import { SCENE_IDEAS, readHead, exifTime, orderPhotos, normalizeScenes, buildLightMap, countByScene, autoSplit } from '@/lib/scenes'
+import { briefAdjust, STYLE_LOOK, QUESTIONS, type Brief, type SceneDef } from '@/lib/brief'
 import { uploadPhotos } from '@/lib/galleryUpload'
 
 type Photo = {
@@ -63,7 +64,7 @@ export default function EditWalkthrough() {
   const [brief, setBrief] = useState<Brief>({})
   const [briefReady, setBriefReady] = useState(false)
   const { adjust, skin } = briefAdjust(brief)
-  const briefKey = JSON.stringify(brief)
+  const briefKey = JSON.stringify({ ...brief, scenes: undefined })
 
   function applyBrief(b: Brief, save: boolean) {
     setBrief(b)
@@ -135,6 +136,106 @@ export default function EditWalkthrough() {
   const [sampleUrls, setSampleUrls] = useState<Record<string, string>>({})
   const [cardUrls, setCardUrls] = useState<Record<string, string>>({})
   const bmps = useRef<Map<string, ImageBitmap>>(new Map())
+
+  // ---- Scenes (parts of the day) ----
+  const [showScenes, setShowScenes] = useState(false)
+  const [scenesRead, setScenesRead] = useState(false)
+  const [readingTimes, setReadingTimes] = useState(false)
+  const [times, setTimes] = useState<Record<string, number>>({})
+  const ordered = orderPhotos(photos.filter((p) => p.cull_label !== 'reject'), times)
+  const sceneList = normalizeScenes(brief.scenes ?? [], ordered)
+  const sceneCounts = countByScene(ordered, sceneList)
+  const timesCount = ordered.filter((p) => times[p.id] !== undefined).length
+  const LIGHTS = QUESTIONS.find((q) => q.key === 'light')?.options ?? []
+  const fieldCls = 'w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-white/30'
+
+  async function fetchTimes(): Promise<Record<string, number>> {
+    const sb = supabase
+    if (!sb) return {}
+    const out: Record<string, number> = {}
+    for (let from = 0; ; from += 1000) {
+      const { data } = await sb.from('gallery_photos').select('id, taken_at').eq('gallery_id', galleryId).range(from, from + 999)
+      const rows = (data ?? []) as { id: string; taken_at: string | null }[]
+      for (const r of rows) if (r.taken_at) out[r.id] = new Date(r.taken_at).getTime()
+      if (rows.length < 1000) break
+    }
+    setTimes(out)
+    return out
+  }
+
+  async function readTimes() {
+    const sb = supabase
+    if (!sb) return
+    setReadingTimes(true)
+    const have = await fetchTimes()
+    const missing = photos.filter((p) => p.cull_label !== 'reject' && have[p.id] === undefined)
+    const found: Record<string, number> = {}
+    for (let i = 0; i < missing.length; i += 100) {
+      const chunk = missing.slice(i, i + 100)
+      const { data } = await sb.storage.from(BUCKET).createSignedUrls(chunk.map((p) => p.orig_path), 600)
+      const urls = new Map<string, string>()
+      data?.forEach((d) => { if (d.path && d.signedUrl) urls.set(d.path, d.signedUrl) })
+      let idx = 0
+      await Promise.all(
+        Array.from({ length: 6 }, async () => {
+          while (true) {
+            const j = idx++
+            if (j >= chunk.length) return
+            const p = chunk[j]
+            const u = urls.get(p.orig_path)
+            if (!u) continue
+            const head = await readHead(u)
+            const t = head ? exifTime(head) : null
+            if (t) {
+              found[p.id] = t
+              await sb.from('gallery_photos').update({ taken_at: new Date(t).toISOString() }).eq('id', p.id)
+            }
+          }
+        }),
+      )
+    }
+    setTimes({ ...have, ...found })
+    setReadingTimes(false)
+  }
+
+  function saveScenes(next: SceneDef[]) {
+    const nb = { ...brief, scenes: next }
+    setBrief(nb)
+    const sb = supabase
+    if (sb && userId) void sb.from('edit_briefs').upsert({ gallery_id: galleryId, owner_id: userId, answers: nb, updated_at: new Date().toISOString() })
+  }
+
+  function patchScene(id: string, patch: Partial<SceneDef>) {
+    saveScenes(sceneList.map((s) => (s.id === id ? { ...s, ...patch } : s)))
+  }
+
+  function toggleStart(photoId: string) {
+    const i = sceneList.findIndex((s) => s.startId === photoId)
+    if (i === 0) return
+    if (i > 0) saveScenes(sceneList.filter((_, n) => n !== i))
+    else saveScenes([...sceneList, { id: Math.random().toString(36).slice(2, 9), name: '', startId: photoId, light: '' }])
+  }
+
+  function autoDetect() {
+    const starts = autoSplit(ordered, times)
+    const first = sceneList[0] ?? { id: 'first', name: '', startId: ordered[0]?.id ?? '', light: '' }
+    saveScenes([first, ...starts.map((startId) => ({ id: Math.random().toString(36).slice(2, 9), name: '', startId, light: '' }))])
+  }
+
+  async function lightByPhoto(): Promise<Record<string, string>> {
+    const sc = brief.scenes ?? []
+    if (sc.length === 0) return {}
+    const tm = Object.keys(times).length > 0 ? times : await fetchTimes()
+    const list = orderPhotos(photos.filter((p) => p.cull_label !== 'reject'), tm)
+    return buildLightMap(list, normalizeScenes(sc, list))
+  }
+
+  useEffect(() => {
+    if (!showScenes || scenesRead || photos.length === 0) return
+    setScenesRead(true)
+    void readTimes()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showScenes, photos.length])
 
   const samples = (() => {
     const pool = photos.filter((p) => p.cull_label !== 'reject' && p.thumb_path)
@@ -403,6 +504,7 @@ export default function EditWalkthrough() {
     const client = sb
     const todo = photos.filter((p) => !p.enhanced)
     if (todo.length === 0) { goTo(5); return }
+    const lightMap = await lightByPhoto()
     setDev({ busy: true, done: 0, total: todo.length })
     let done = 0
     let failed = 0
@@ -416,7 +518,9 @@ export default function EditWalkthrough() {
           const srcPath = p.full_path ?? p.orig_path
           const dl = await client.storage.from(BUCKET).download(srcPath)
           if (dl.error || !dl.data) throw dl.error ?? new Error('Could not load the photo.')
-          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust, skin })
+          const lg = lightMap[p.id]
+          const pa = lg ? briefAdjust({ ...brief, light: lg }) : { adjust, skin }
+          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: pa.adjust, skin: pa.skin })
           const dir = p.orig_path.slice(0, p.orig_path.lastIndexOf('/'))
           const eFull = `${dir}/enh-full.jpg`
           const eWeb = `${dir}/enh-web.jpg`
@@ -775,6 +879,66 @@ export default function EditWalkthrough() {
               >
                 Hold to compare with the original
               </button>
+            </div>
+
+            <div className={`${panel} mt-8`}>
+              <button className="flex w-full items-center justify-between text-left" onClick={() => setShowScenes(!showScenes)}>
+                <span className="text-white/80">Set different light for parts of the day</span>
+                <span className="text-sm text-white/45">{showScenes ? 'Hide' : 'Optional'}</span>
+              </button>
+              {showScenes && (
+                <div className="mt-5">
+                  <p className="text-sm text-white/55">Tap the first photo of each part of the day, like the ceremony or the reception. Then tell us the light for each part.</p>
+                  {readingTimes && <p className="mt-3 text-sm text-white/45">Reading when each photo was taken…</p>}
+                  {!readingTimes && scenesRead && timesCount === 0 && (
+                    <p className="mt-3 text-sm text-white/45">We could not read the times, so photos are in file name order.</p>
+                  )}
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button className={btnQuiet} disabled={timesCount === 0} onClick={autoDetect}>Find the parts of the day for me</button>
+                    {sceneList.length > 1 && <button className={btnQuiet} onClick={() => saveScenes([])}>Clear</button>}
+                  </div>
+                  <div className="mt-5 grid max-h-72 gap-1.5 overflow-y-auto" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))' }}>
+                    {ordered.map((p) => {
+                      const start = sceneList.findIndex((s) => s.startId === p.id)
+                      const src = p.thumb_path ? thumbs[p.thumb_path] : undefined
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => toggleStart(p.id)}
+                          className={`relative aspect-square overflow-hidden rounded-md bg-white/5 ${start >= 0 ? 'ring-2 ring-[var(--color-twilight)]' : ''}`}
+                        >
+                          {src && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
+                          )}
+                          {start >= 0 && (
+                            <span className="absolute left-0 top-0 rounded-br bg-[var(--color-twilight)] px-1.5 text-[10px] text-white">{start + 1}</span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="mt-5 space-y-3">
+                    {sceneList.map((sc, n) => (
+                      <div key={sc.id} className="grid gap-3 rounded-xl border border-white/10 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+                        <input
+                          value={sc.name}
+                          onChange={(e) => patchScene(sc.id, { name: e.target.value })}
+                          placeholder={`Part ${n + 1}, like ${SCENE_IDEAS[n] ?? 'Reception'}`}
+                          className={fieldCls}
+                        />
+                        <select value={sc.light} onChange={(e) => patchScene(sc.id, { light: e.target.value })} className={fieldCls}>
+                          <option value="" className="bg-[#151518]">Same light as the rest</option>
+                          {LIGHTS.map((o) => (
+                            <option key={o.value} value={o.value} className="bg-[#151518]">{o.label}</option>
+                          ))}
+                        </select>
+                        <p className="text-sm text-white/45">{sceneCounts[sc.id] ?? 0} photos</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
