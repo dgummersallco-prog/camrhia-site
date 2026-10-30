@@ -47,9 +47,9 @@ export default function StoragePage() {
     setError(null)
     const paths: string[] = []
     for (let from = 0; ; from += 1000) {
-      const { data } = await sb.from('gallery_photos').select('orig_path, web_path, thumb_path').eq('gallery_id', r.gallery_id).range(from, from + 999)
-      const batch = (data ?? []) as { orig_path: string | null; web_path: string | null; thumb_path: string | null }[]
-      batch.forEach((b) => [b.orig_path, b.web_path, b.thumb_path].forEach((x) => { if (x) paths.push(x) }))
+      const { data } = await sb.from('gallery_photos').select('orig_path, web_path, thumb_path, full_path').eq('gallery_id', r.gallery_id).range(from, from + 999)
+      const batch = (data ?? []) as { orig_path: string | null; web_path: string | null; thumb_path: string | null; full_path: string | null }[]
+      batch.forEach((b) => [b.orig_path, b.web_path, b.thumb_path, b.full_path].forEach((x) => { if (x) paths.push(x) }))
       if (batch.length < 1000) break
     }
     const { data: g } = await sb.from('galleries').select('cover_path').eq('id', r.gallery_id).maybeSingle()

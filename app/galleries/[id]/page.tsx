@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { makeVersions, isHeic } from '@/lib/galleryImages'
+import { makeVersions, isHeic, isRaw } from '@/lib/galleryImages'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
@@ -26,6 +26,7 @@ type Photo = {
   orig_path: string
   web_path: string | null
   thumb_path: string | null
+  full_path?: string | null
   size_bytes: number | null
   sort_order: number
 }
@@ -33,8 +34,8 @@ type UploadItem = { key: string; name: string; status: 'queued' | 'uploading' | 
 
 const BUCKET = 'galleries'
 const CONCURRENCY = 5
-const MAX_BYTES = 50 * 1024 * 1024 // per-file limit on the current Supabase plan
-const isAccepted = (f: File) => isHeic(f) || /^image\/(jpeg|png|webp)$/.test(f.type)
+const MAX_BYTES = 250 * 1024 * 1024 // per-file limit (matches the Supabase storage limit)
+const isAccepted = (f: File) => isHeic(f) || isRaw(f) || /^image\/(jpeg|png|webp)$/.test(f.type)
 
 function toDateInput(iso: string): string {
   const d = new Date(iso)
@@ -156,7 +157,7 @@ export default function GalleryManagePage() {
     for (let from = 0; ; from += 1000) {
       const { data, error } = await sb
         .from('gallery_photos')
-        .select('id, filename, orig_path, web_path, thumb_path, size_bytes, sort_order')
+        .select('id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order')
         .eq('gallery_id', galleryId)
         .order('sort_order', { ascending: true })
         .range(from, from + 999)
@@ -257,9 +258,9 @@ export default function GalleryManagePage() {
     if (dupes > 0) flash(`${dupes} already in this gallery, skipped.`)
     const tooBig = list.filter((f) => isAccepted(f) && f.size > MAX_BYTES)
     if (tooBig.length > 0) {
-      setMessage(`${tooBig.length} file${tooBig.length === 1 ? '' : 's'} over 50 MB skipped: ${tooBig.slice(0, 3).map((f) => f.name).join(', ')}${tooBig.length > 3 ? '…' : ''}`)
+      setMessage(`${tooBig.length} file${tooBig.length === 1 ? '' : 's'} over 250 MB skipped: ${tooBig.slice(0, 3).map((f) => f.name).join(', ')}${tooBig.length > 3 ? '…' : ''}`)
     }
-    if (skipped > 0) setMessage(`${skipped} file(s) skipped. Supported: JPG, PNG, WebP and HEIC.`)
+    if (skipped > 0) setMessage(`${skipped} file(s) skipped. Supported: JPG, PNG, WebP, HEIC and RAW.`)
     if (files.length === 0) return
 
     const incoming = files.reduce((n, f) => n + f.size, 0)
@@ -285,12 +286,14 @@ export default function GalleryManagePage() {
       setItem(key, { status: 'uploading' })
       const photoId = crypto.randomUUID()
       const heic = isHeic(file)
-      const ext = heic ? 'heic' : file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
-      const origType = heic ? 'image/heic' : file.type
+      const raw = isRaw(file)
+      const ext = raw ? ((file.name.split('.').pop() ?? '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'raw') : heic ? 'heic' : file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+      const origType = raw ? 'application/octet-stream' : heic ? 'image/heic' : file.type
       const dir = `${userId}/${gallery.id}/${photoId}`
       const origPath = `${dir}/orig.${ext}`
       const webPath = `${dir}/web.jpg`
       const thumbPath = `${dir}/thumb.jpg`
+      const fullPath = `${dir}/full.jpg`
       let lastError = 'Upload failed'
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
@@ -300,15 +303,17 @@ export default function GalleryManagePage() {
             bucket.upload(origPath, file, { contentType: origType, upsert: true }),
           ])
           if (o.error) throw o.error
-          const [t, w] = await Promise.all([
+          const [t, w, f] = await Promise.all([
             bucket.upload(thumbPath, v.thumb.blob, { contentType: 'image/jpeg', upsert: true }),
             bucket.upload(webPath, v.web.blob, { contentType: 'image/jpeg', upsert: true }),
+            v.full ? bucket.upload(fullPath, v.full, { contentType: 'image/jpeg', upsert: true }) : Promise.resolve(null),
           ])
           if (t.error) throw t.error
           if (w.error) throw w.error
+          if (f && f.error) throw f.error
           const { error } = await sb.from('gallery_photos').insert({
             id: photoId, gallery_id: gallery.id, owner_id: userId, filename: file.name,
-            orig_path: origPath, web_path: webPath, thumb_path: thumbPath,
+            orig_path: origPath, web_path: webPath, thumb_path: thumbPath, full_path: v.full ? fullPath : null,
             width: v.width, height: v.height, size_bytes: file.size, sort_order: order,
           })
           if (error) throw error
@@ -346,7 +351,7 @@ export default function GalleryManagePage() {
     const sb = supabase
     if (!sb) return
     if (!window.confirm('Delete this photo?')) return
-    const paths = [p.orig_path, p.web_path, p.thumb_path].filter((x): x is string => !!x)
+    const paths = [p.orig_path, p.web_path, p.thumb_path, p.full_path].filter((x): x is string => !!x)
     const { error } = await sb.from('gallery_photos').delete().eq('id', p.id)
     if (error) { setMessage(error.message); return }
     await sb.storage.from(BUCKET).remove(paths)
@@ -361,7 +366,7 @@ export default function GalleryManagePage() {
     const sb = supabase
     if (!sb || !gallery) return
     if (!window.confirm('Delete this whole gallery and all of its photos? This cannot be undone.')) return
-    const paths = photos.flatMap((p) => [p.orig_path, p.web_path, p.thumb_path]).filter((x): x is string => !!x)
+    const paths = photos.flatMap((p) => [p.orig_path, p.web_path, p.thumb_path, p.full_path]).filter((x): x is string => !!x)
     for (let i = 0; i < paths.length; i += 100) {
       await sb.storage.from(BUCKET).remove(paths.slice(i, i + 100))
     }
@@ -419,7 +424,7 @@ export default function GalleryManagePage() {
       const { error } = await sb.from('gallery_photos').delete().in('id', ids.slice(i, i + 100))
       if (error) { setMessage(error.message); return }
     }
-    const paths = doomed.flatMap((p) => [p.orig_path, p.web_path, p.thumb_path]).filter((x): x is string => !!x)
+    const paths = doomed.flatMap((p) => [p.orig_path, p.web_path, p.thumb_path, p.full_path]).filter((x): x is string => !!x)
     for (let i = 0; i < paths.length; i += 100) {
       await sb.storage.from(BUCKET).remove(paths.slice(i, i + 100))
     }
@@ -606,13 +611,13 @@ export default function GalleryManagePage() {
                 >
                   <div className="min-w-0">
                     <p className="font-fraunces text-lg text-ink">Add photos</p>
-                    <p className="text-xs text-ink-soft">Drop photos or a whole folder here. JPG, PNG, WebP and HEIC, up to 50 MB each. Keep this tab open until they finish.</p>
+                    <p className="text-xs text-ink-soft">Drop photos or a whole folder here. JPG, PNG, WebP, HEIC and RAW, up to 250 MB each. Keep this tab open until they finish.</p>
                   </div>
                   <input
                     ref={fileInput}
                     type="file"
                     multiple
-                    accept="image/jpeg,image/png,image/webp,.heic,.heif"
+                    accept="image/jpeg,image/png,image/webp,.heic,.heif,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.dng,.orf,.rw2,.raf,.pef,.3fr,.erf,.kdc,.mrw,.raw,.rwl,.iiq"
                     className="hidden"
                     onChange={(e) => { if (e.target.files) uploadFiles(Array.from(e.target.files)); e.target.value = '' }}
                   />

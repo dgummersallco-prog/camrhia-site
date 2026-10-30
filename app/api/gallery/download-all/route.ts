@@ -19,11 +19,11 @@ export async function GET(req: Request) {
   if (!g || isLive(g) !== 'ok') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (!g.allow_downloads) return NextResponse.json({ error: 'Downloads are turned off' }, { status: 403 })
 
-  const photos: { id: string; filename: string | null; orig_path: string; size_bytes: number | null }[] = []
+  const photos: { id: string; filename: string | null; orig_path: string; full_path: string | null; size_bytes: number | null }[] = []
   for (let from = 0; ; from += 1000) {
     const { data } = await sb
       .from('gallery_photos')
-      .select('id, filename, orig_path, size_bytes')
+      .select('id, filename, orig_path, full_path, size_bytes')
       .eq('gallery_id', galleryId)
       .order('sort_order', { ascending: true })
       .range(from, from + 999)
@@ -33,13 +33,14 @@ export async function GET(req: Request) {
   }
 
   const SIX_HOURS = 6 * 3600
-  const urls = await signMap(sb, photos.map((p) => p.orig_path).filter((x): x is string => !!x), SIX_HOURS)
+  const urls = await signMap(sb, photos.map((p) => p.full_path ?? p.orig_path).filter((x): x is string => !!x), SIX_HOURS)
 
   const seen = new Map<string, number>()
   const files = photos
-    .filter((p) => p.orig_path && urls[p.orig_path])
+    .filter((p) => { const k = p.full_path ?? p.orig_path; return k && urls[k] })
     .map((p, i) => {
-      const base = (p.filename && p.filename.trim()) || `photo-${i + 1}.jpg`
+      const raw = (p.filename && p.filename.trim()) || `photo-${i + 1}.jpg`
+      const base = p.full_path ? raw.replace(/\.[^.]+$/, '') + '.jpg' : raw
       const n = seen.get(base.toLowerCase()) ?? 0
       seen.set(base.toLowerCase(), n + 1)
       let name = base
@@ -47,7 +48,7 @@ export async function GET(req: Request) {
         const dot = base.lastIndexOf('.')
         name = dot > 0 ? `${base.slice(0, dot)} (${n + 1})${base.slice(dot)}` : `${base} (${n + 1})`
       }
-      return { id: p.id, name, size: p.size_bytes, url: urls[p.orig_path] }
+      return { id: p.id, name, size: p.full_path ? null : p.size_bytes, url: urls[p.full_path ?? p.orig_path] }
     })
 
   return NextResponse.json({ title: g.title, files })

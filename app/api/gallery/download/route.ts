@@ -22,15 +22,16 @@ export async function GET(req: Request) {
 
   const { data: photo } = await sb
     .from('gallery_photos')
-    .select('orig_path, filename')
+    .select('orig_path, full_path, filename')
     .eq('id', photoId)
     .eq('gallery_id', galleryId)
     .maybeSingle()
   if (!photo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  const jpgName = photo.full_path && photo.filename ? photo.filename.replace(/\.[^.]+$/, '') + '.jpg' : photo.filename
   const { data, error } = await sb.storage
     .from('galleries')
-    .createSignedUrl(photo.orig_path, 120, { download: photo.filename ?? true })
+    .createSignedUrl(photo.full_path ?? photo.orig_path, 120, { download: jpgName ?? true })
   if (error || !data?.signedUrl) return NextResponse.json({ error: 'Could not prepare download' }, { status: 500 })
   return NextResponse.redirect(data.signedUrl, 302)
 }
