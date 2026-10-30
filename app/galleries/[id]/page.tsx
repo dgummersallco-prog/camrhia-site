@@ -31,6 +31,7 @@ type Photo = {
   cull_label?: CullLabel | null
   cull_score?: number | null
   cull_group?: string | null
+  cull_reason?: string | null
   size_bytes: number | null
   sort_order: number
 }
@@ -98,7 +99,8 @@ export default function GalleryManagePage() {
   const [filter, setFilter] = useState<'all' | 'fav' | CullLabel>('all')
   const [cullOpen, setCullOpen] = useState(false)
   const [cullTarget, setCullTarget] = useState('')
-  const [cull, setCull] = useState({ busy: false, done: 0, total: 0 })
+  const [cull, setCull] = useState<{ busy: boolean; done: number; total: number; phase: 'sharp' | 'eyes' }>({ busy: false, done: 0, total: 0, phase: 'sharp' })
+  const [cullEyes, setCullEyes] = useState(true)
   const fileInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
   const failedRef = useRef<File[]>([])
@@ -164,7 +166,7 @@ export default function GalleryManagePage() {
     for (let from = 0; ; from += 1000) {
       const { data, error } = await sb
         .from('gallery_photos')
-        .select('id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group')
+        .select('id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason')
         .eq('gallery_id', galleryId)
         .order('sort_order', { ascending: true })
         .range(from, from + 999)
@@ -409,31 +411,40 @@ export default function GalleryManagePage() {
     const sb = supabase
     if (!sb || ids.length === 0) return
     for (let i = 0; i < ids.length; i += 100) {
-      const { error } = await sb.from('gallery_photos').update({ cull_label: label }).in('id', ids.slice(i, i + 100))
+      const { error } = await sb.from('gallery_photos').update({ cull_label: label, cull_reason: null }).in('id', ids.slice(i, i + 100))
       if (error) { setMessage(error.message); return }
     }
     const set = new Set(ids)
-    setPhotos((prev) => prev.map((p) => (set.has(p.id) ? { ...p, cull_label: label } : p)))
+    setPhotos((prev) => prev.map((p) => (set.has(p.id) ? { ...p, cull_label: label, cull_reason: null } : p)))
   }
 
   async function runCull() {
     const sb = supabase
     if (!sb || cull.busy) return
+    const webMap: Record<string, string> = {}
+    if (cullEyes) {
+      const wp = photos.map((p) => p.web_path).filter((x): x is string => !!x)
+      for (let i = 0; i < wp.length; i += 200) {
+        const { data: signed } = await sb.storage.from(BUCKET).createSignedUrls(wp.slice(i, i + 200), 3600)
+        signed?.forEach((s) => { if (s.path && s.signedUrl) webMap[s.path] = s.signedUrl })
+      }
+    }
     const items = photos
       .filter((p) => p.thumb_path && thumbs[p.thumb_path])
-      .map((p) => ({ id: p.id, url: thumbs[p.thumb_path as string] }))
+      .map((p) => ({ id: p.id, url: thumbs[p.thumb_path as string], webUrl: p.web_path ? webMap[p.web_path] : undefined }))
     if (items.length === 0) { setMessage('Photos are still loading. Try again in a moment.'); return }
-    setCull({ busy: true, done: 0, total: items.length })
+    setCull({ busy: true, done: 0, total: items.length, phase: 'sharp' })
     try {
       const t = parseInt(cullTarget, 10)
-      const results = await cullPhotos(items, {
+      const { results, eyesOk } = await cullPhotos(items, {
         target: t > 0 ? t : undefined,
-        onProgress: (done, total) => setCull({ busy: true, done, total }),
+        eyes: cullEyes,
+        onProgress: (done, total, phase) => setCull({ busy: true, done, total, phase }),
       })
       for (let i = 0; i < results.length; i += 10) {
         const rs = await Promise.all(
           results.slice(i, i + 10).map((r) =>
-            sb.from('gallery_photos').update({ cull_label: r.label, cull_score: r.score, cull_group: r.group }).eq('id', r.id),
+            sb.from('gallery_photos').update({ cull_label: r.label, cull_score: r.score, cull_group: r.group, cull_reason: r.reason }).eq('id', r.id),
           ),
         )
         const bad = rs.find((x) => x.error)
@@ -443,16 +454,16 @@ export default function GalleryManagePage() {
       setPhotos((prev) =>
         prev.map((p) => {
           const r = byId.get(p.id)
-          return r ? { ...p, cull_label: r.label, cull_score: r.score, cull_group: r.group } : p
+          return r ? { ...p, cull_label: r.label, cull_score: r.score, cull_group: r.group, cull_reason: r.reason } : p
         }),
       )
       const n = (l: CullLabel) => results.filter((r) => r.label === l).length
-      flash(`Done: ${n('pick')} picks, ${n('maybe')} maybe, ${n('reject')} rejects.`)
+      flash(`Done: ${n('pick')} picks, ${n('maybe')} maybe, ${n('reject')} rejects.${cullEyes && !eyesOk ? ' Eye check was not available.' : ''}`)
       setCullOpen(false)
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Culling failed. Please try again.')
     }
-    setCull({ busy: false, done: 0, total: 0 })
+    setCull({ busy: false, done: 0, total: 0, phase: 'sharp' })
   }
 
   const shown =
@@ -735,9 +746,13 @@ export default function GalleryManagePage() {
                       </div>
                       <span className="text-sm text-ink-soft">photos (optional)</span>
                     </div>
+                    <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-ink">
+                      <input type="checkbox" checked={cullEyes} onChange={(e) => setCullEyes(e.target.checked)} className="h-4 w-4" />
+                      Also check for closed eyes (slower)
+                    </label>
                     <div className="mt-3 flex gap-2">
                       <button className={btn} disabled={cull.busy} onClick={runCull}>
-                        {cull.busy ? `Checking ${cull.done} of ${cull.total}…` : 'Start'}
+                        {cull.busy ? `${cull.phase === 'eyes' ? 'Checking eyes' : 'Checking sharpness'} ${cull.done} of ${cull.total}…` : 'Start'}
                       </button>
                       <button className={btnGhost} disabled={cull.busy} onClick={() => setCullOpen(false)}>Cancel</button>
                     </div>
@@ -827,7 +842,7 @@ export default function GalleryManagePage() {
                           <span className="absolute left-2 top-2 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Cover</span>
                         )}
                         {p.cull_label && (
-                          <span className={`absolute bottom-2 right-2 rounded-full px-2 py-0.5 text-[10px] capitalize text-white ${p.cull_label === 'pick' ? 'bg-emerald-600' : p.cull_label === 'maybe' ? 'bg-amber-500' : 'bg-red-600'}`}>
+                          <span title={p.cull_reason ?? undefined} className={`absolute bottom-2 right-2 rounded-full px-2 py-0.5 text-[10px] capitalize text-white ${p.cull_label === 'pick' ? 'bg-emerald-600' : p.cull_label === 'maybe' ? 'bg-amber-500' : 'bg-red-600'}`}>
                             {p.cull_label}
                           </span>
                         )}

@@ -1,6 +1,8 @@
+import { eyesClosed, faceEyesReady } from '@/lib/faces'
+
 export type CullLabel = 'pick' | 'maybe' | 'reject'
-export type CullInput = { id: string; url: string }
-export type CullResult = { id: string; score: number; label: CullLabel; group: string | null }
+export type CullInput = { id: string; url: string; webUrl?: string }
+export type CullResult = { id: string; score: number; label: CullLabel; group: string | null; reason: string | null }
 
 type Analysis = { sharp: number; hash: boolean[] } | null
 
@@ -80,11 +82,25 @@ async function analyse(url: string): Promise<Analysis> {
   }
 }
 
+async function fetchBlob(url: string | undefined): Promise<Blob | null> {
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    return res.ok ? await res.blob() : null
+  } catch {
+    return null
+  }
+}
+
 // Photos must be passed in shoot order so bursts sit next to each other.
 export async function cullPhotos(
   items: CullInput[],
-  opts: { target?: number; onProgress?: (done: number, total: number) => void } = {},
-): Promise<CullResult[]> {
+  opts: {
+    target?: number
+    eyes?: boolean
+    onProgress?: (done: number, total: number, phase: 'sharp' | 'eyes') => void
+  } = {},
+): Promise<{ results: CullResult[]; eyesOk: boolean }> {
   const analyses: Analysis[] = new Array(items.length).fill(null)
   let done = 0
   let next = 0
@@ -98,10 +114,37 @@ export async function cullPhotos(
         analyses[i] = null
       }
       done++
-      opts.onProgress?.(done, items.length)
+      opts.onProgress?.(done, items.length, 'sharp')
     }
   }
   await Promise.all(Array.from({ length: 6 }, () => worker()))
+
+  // Closed-eye check on the bigger web copies, one at a time, fetching the next while the model works.
+  const eyes: (boolean | null)[] = items.map(() => null)
+  let eyesOk = false
+  if (opts.eyes) {
+    eyesOk = await faceEyesReady()
+    if (eyesOk) {
+      let pending = fetchBlob(items[0]?.webUrl)
+      for (let i = 0; i < items.length; i++) {
+        const blob = await pending
+        pending = fetchBlob(items[i + 1]?.webUrl)
+        if (blob) {
+          try {
+            const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' })
+            try {
+              eyes[i] = await eyesClosed(bmp)
+            } finally {
+              bmp.close()
+            }
+          } catch { /* skip this photo */ }
+        }
+        opts.onProgress?.(i + 1, items.length, 'eyes')
+        await new Promise((r) => setTimeout(r, 0))
+      }
+    }
+  }
+  const closed = eyes.map((e) => e === true)
 
   const valid = analyses.filter((a): a is NonNullable<Analysis> => !!a).map((a) => a.sharp).sort((a, b) => a - b)
   const median = valid.length ? valid[Math.floor(valid.length / 2)] : 1
@@ -112,8 +155,20 @@ export async function cullPhotos(
   }
 
   const labels: CullLabel[] = items.map(() => 'maybe')
+  const reasons: (string | null)[] = items.map(() => null)
   const scores: number[] = analyses.map((a) => (a ? a.sharp : 0))
-  analyses.forEach((a, i) => { if (a) labels[i] = single(a.sharp) })
+  analyses.forEach((a, i) => {
+    if (!a) return
+    const l = single(a.sharp)
+    labels[i] = l
+    reasons[i] = l === 'reject' ? 'Soft' : l === 'maybe' ? 'Slightly soft' : null
+  })
+  items.forEach((_, i) => {
+    if (closed[i] && labels[i] !== 'reject') {
+      labels[i] = 'maybe'
+      reasons[i] = 'Eyes closed'
+    }
+  })
 
   // Group near-identical frames that sit next to each other.
   const groups: number[][] = []
@@ -138,18 +193,29 @@ export async function cullPhotos(
 
   const groupId: (string | null)[] = items.map(() => null)
   groups.forEach((members, k) => {
-    let best = members[0]
-    for (const i of members) if (scores[i] > scores[best]) best = i
+    const open = members.filter((i) => !closed[i])
+    const pool = open.length ? open : members
+    let best = pool[0]
+    for (const i of pool) if (scores[i] > scores[best]) best = i
     for (const i of members) {
       groupId[i] = `g${k}`
-      if (i !== best) labels[i] = 'reject'
+      if (i !== best) {
+        labels[i] = 'reject'
+        reasons[i] = closed[i] ? 'Eyes closed' : 'Near-duplicate of a better frame'
+      }
     }
   })
 
   if (opts.target && opts.target > 0) {
     const picks = labels.map((l, i) => (l === 'pick' ? i : -1)).filter((i) => i >= 0).sort((a, b) => scores[b] - scores[a])
-    for (const i of picks.slice(opts.target)) labels[i] = 'maybe'
+    for (const i of picks.slice(opts.target)) {
+      labels[i] = 'maybe'
+      reasons[i] = 'Over your target'
+    }
   }
 
-  return items.map((it, i) => ({ id: it.id, score: scores[i], label: labels[i], group: groupId[i] }))
+  return {
+    results: items.map((it, i) => ({ id: it.id, score: scores[i], label: labels[i], group: groupId[i], reason: reasons[i] })),
+    eyesOk,
+  }
 }
