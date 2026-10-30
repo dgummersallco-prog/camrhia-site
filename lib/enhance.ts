@@ -12,15 +12,19 @@ export type LookParams = {
   saturation: number
   fade: number
   bw: number
+  whites: number
+  blacks: number
+  vibrance: number
   splitShadow: [number, number, number]
   splitHigh: [number, number, number]
 }
 export type Look = { id: string; label: string; blurb: string; params: LookParams }
-export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'saturation' | 'fade'>>
+export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>>
 export type LookChoice = { id: string; strength: number; adjust?: Adjust; skin?: boolean }
 
 const Z: LookParams = {
   exposure: 0, contrast: 0, highlights: 0, shadows: 0, temp: 0, tint: 0, saturation: 0, fade: 0, bw: 0,
+  whites: 0, blacks: 0, vibrance: 0,
   splitShadow: [0, 0, 0], splitHigh: [0, 0, 0],
 }
 const mk = (p: Partial<LookParams>): LookParams => ({ ...Z, ...p })
@@ -51,6 +55,9 @@ function scaleLook(p: LookParams, s: number): LookParams {
     saturation: p.saturation * s,
     fade: p.fade * s,
     bw: p.bw,
+    whites: p.whites * s,
+    blacks: p.blacks * s,
+    vibrance: p.vibrance * s,
     splitShadow: [p.splitShadow[0] * s, p.splitShadow[1] * s, p.splitShadow[2] * s],
     splitHigh: [p.splitHigh[0] * s, p.splitHigh[1] * s, p.splitHigh[2] * s],
   }
@@ -71,6 +78,11 @@ function buildK(look: LookParams | null, strength: number, adjust?: Adjust, skin
       temp: k.temp + (adjust.temp ?? 0),
       saturation: k.saturation + (adjust.saturation ?? 0),
       fade: k.fade + (adjust.fade ?? 0),
+      tint: k.tint + (adjust.tint ?? 0),
+      whites: k.whites + (adjust.whites ?? 0),
+      blacks: k.blacks + (adjust.blacks ?? 0),
+      vibrance: k.vibrance + (adjust.vibrance ?? 0),
+      bw: clamp(k.bw + (adjust.bw ?? 0), 0, 1),
     }
   }
   if (skin) k = { ...k, temp: clamp(k.temp, -0.08, 0.08), saturation: Math.min(k.saturation, 0.1) }
@@ -139,6 +151,8 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
         v = v * Math.pow(2, k.exposure)
         v = v + k.shadows * 0.25 * Math.pow(1 - clamp(v, 0, 1), 2)
         v = v + k.highlights * 0.25 * Math.pow(clamp(v, 0, 1), 2)
+        v = v + k.whites * 0.25 * Math.pow(clamp(v, 0, 1), 3)
+        v = v + k.blacks * 0.25 * Math.pow(1 - clamp(v, 0, 1), 3)
         v = clamp(v, 0, 1)
         v = v + k.contrast * (v * v * (3 - 2 * v) - v) * 2
         const cg = chan === 0 ? 1 + k.temp * 0.5 : chan === 2 ? 1 - k.temp * 0.5 : 1 - k.tint * 0.3
@@ -154,6 +168,7 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
   const lutB = lut(gainB, 2)
   const sat = 1.07 + (k ? k.saturation : 0)
   const bwA = k ? k.bw : 0
+  const vib = k ? k.vibrance : 0
   const sh = k ? k.splitShadow : null
   const hg = k ? k.splitHigh : null
 
@@ -165,6 +180,14 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
     r = l + (r - l) * sat
     g = l + (g - l) * sat
     b = l + (b - l) * sat
+    if (vib !== 0) {
+      const mx = Math.max(r, g, b)
+      const mn = Math.min(r, g, b)
+      const amt = vib * (1 - (mx > 0 ? (mx - mn) / mx : 0))
+      r = l + (r - l) * (1 + amt)
+      g = l + (g - l) * (1 + amt)
+      b = l + (b - l) * (1 + amt)
+    }
     if (bwA > 0) {
       r += (l - r) * bwA
       g += (l - g) * bwA
@@ -241,4 +264,53 @@ export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: 
   ctx.putImageData(img, 0, 0)
   const blob = await encode(c, 0.85)
   return URL.createObjectURL(blob)
+}
+
+// The photo as shot, scaled for the screen. Returns an object URL; the caller should revoke it.
+export async function originalPreview(bmp: ImageBitmap, maxEdge = 1400): Promise<string> {
+  const scale = Math.min(1, maxEdge / Math.max(bmp.width, bmp.height))
+  const c = document.createElement('canvas')
+  c.width = Math.max(1, Math.round(bmp.width * scale))
+  c.height = Math.max(1, Math.round(bmp.height * scale))
+  const ctx = c.getContext('2d')
+  if (!ctx) throw new Error('Your browser cannot process photos.')
+  ctx.drawImage(bmp, 0, 0, c.width, c.height)
+  return URL.createObjectURL(await encode(c, 0.85))
+}
+
+// A few simple numbers describing how a photo looks. Saved with each correction so the learning knows what kind of photo it was.
+export function photoFeatures(bmp: ImageBitmap): Record<string, number> {
+  const c = document.createElement('canvas')
+  c.width = 64
+  c.height = 64
+  const ctx = c.getContext('2d', { willReadFrequently: true })
+  if (!ctx) return {}
+  ctx.drawImage(bmp, 0, 0, 64, 64)
+  const d = ctx.getImageData(0, 0, 64, 64).data
+  const ls: number[] = []
+  let r = 0
+  let b = 0
+  let sat = 0
+  for (let i = 0; i < d.length; i += 4) {
+    ls.push((0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255)
+    r += d[i]
+    b += d[i + 2]
+    const mx = Math.max(d[i], d[i + 1], d[i + 2])
+    const mn = Math.min(d[i], d[i + 1], d[i + 2])
+    sat += mx > 0 ? (mx - mn) / mx : 0
+  }
+  const n = ls.length
+  const mean = ls.reduce((a, v) => a + v, 0) / n
+  const sorted = [...ls].sort((x, y) => x - y)
+  const std = Math.sqrt(ls.reduce((a, v) => a + (v - mean) * (v - mean), 0) / n)
+  const q = (x: number) => Math.round(x * 1000) / 1000
+  return {
+    luma_mean: q(mean),
+    luma_p5: q(sorted[Math.floor(n * 0.05)]),
+    luma_p95: q(sorted[Math.floor(n * 0.95)]),
+    contrast: q(std),
+    warmth: q((r - b) / (n * 255)),
+    saturation: q(sat / n),
+    aspect: q(bmp.width / bmp.height),
+  }
 }

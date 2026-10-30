@@ -8,6 +8,7 @@ import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { enhancePhoto, renderPreview, LOOKS } from '@/lib/enhance'
 import { sendGalleryToClient } from '@/lib/sendGallery'
 import BriefScreen from '@/app/edit/BriefScreen'
+import ReviewStep from '@/app/edit/ReviewStep'
 import { SCENE_IDEAS, readHead, exifTime, orderPhotos, normalizeScenes, buildLightMap, countByScene, autoSplit, groupByScene, lightStats, lightingBreaks } from '@/lib/scenes'
 import { briefAdjust, STYLE_LOOK, QUESTIONS, type Brief, type SceneDef, type Signature } from '@/lib/brief'
 import { uploadPhotos } from '@/lib/galleryUpload'
@@ -38,7 +39,7 @@ const COLS =
   'id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, enhanced, pre_web_path, pre_thumb_path, pre_full_path'
 const ACCEPT =
   'image/jpeg,image/png,image/webp,.heic,.heif,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.dng,.orf,.rw2,.raf,.pef,.3fr,.erf,.kdc,.mrw,.raw,.rwl,.iiq'
-const STEPS = ['Photos', 'Cull', 'Duplicates', 'Style', 'Develop', 'Send']
+const STEPS = ['Photos', 'Cull', 'Duplicates', 'Style', 'Develop', 'Review', 'Send']
 
 const panel = 'rounded-2xl border border-white/10 bg-[#151518] p-6'
 const btnPrimary = 'rounded-xl bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
@@ -1111,8 +1112,23 @@ export default function EditWalkthrough() {
           </section>
         )}
 
-        {/* STEP 6: SEND */}
+        {/* STEP 6: REVIEW */}
         {step === 5 && (
+          <ReviewStep
+            galleryId={galleryId}
+            userId={userId}
+            signatureId={sigId}
+            lookId={lookId}
+            strength={strength}
+            brief={brief}
+            getLightMap={lightByPhoto}
+            onBack={() => goTo(4)}
+            onDone={async () => { await loadPhotos(); goTo(6) }}
+          />
+        )}
+
+        {/* STEP 7: SEND */}
+        {step === 6 && (
           <section className="mt-10">
             <h1 className="font-fraunces text-4xl text-white">Ready to send</h1>
             <p className="mt-3 max-w-2xl text-white/55">
@@ -1184,7 +1200,7 @@ export default function EditWalkthrough() {
                     {sending ? 'Sending…' : sess ? 'Publish and send to client' : 'Publish'}
                   </button>
                   <button className={btnQuiet} onClick={() => router.push(`/galleries/${galleryId}`)}>Review in gallery first</button>
-                  <button className={btnQuiet} onClick={() => goTo(4)}>Back</button>
+                  <button className={btnQuiet} onClick={() => goTo(5)}>Back</button>
                 </div>
               </>
             )}
