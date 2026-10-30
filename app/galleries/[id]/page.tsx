@@ -333,7 +333,7 @@ export default function GalleryManagePage() {
           const { error } = await sb.from('gallery_photos').insert({
             id: photoId, gallery_id: gallery.id, owner_id: userId, filename: file.name,
             orig_path: origPath, web_path: webPath, thumb_path: thumbPath, full_path: v.full ? fullPath : null,
-            width: v.width, height: v.height, size_bytes: file.size, sort_order: order,
+            width: v.width, height: v.height, size_bytes: file.size, extra_bytes: v.web.blob.size + v.thumb.blob.size + (v.full ? v.full.size : 0), sort_order: order,
           })
           if (error) throw error
           setItem(key, { status: 'done' })
@@ -473,6 +473,7 @@ export default function GalleryManagePage() {
               web_path: eWeb,
               thumb_path: eThumb,
               full_path: eFull,
+              enh_bytes: out.full.size + out.web.blob.size + out.thumb.blob.size,
             })
             .eq('id', p.id)
           if (error) throw error
@@ -508,6 +509,7 @@ export default function GalleryManagePage() {
             .from('gallery_photos')
             .update({
               enhanced: false,
+              enh_bytes: 0,
               web_path: p.pre_web_path ?? null,
               thumb_path: p.pre_thumb_path ?? null,
               full_path: p.pre_full_path ?? null,
