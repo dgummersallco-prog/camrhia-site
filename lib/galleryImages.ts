@@ -10,7 +10,7 @@ export function isRaw(f: File): boolean {
   return RAW_EXT.test(f.name)
 }
 
-function encode(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+export function encode(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('Could not process this photo.'))),
@@ -20,7 +20,7 @@ function encode(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   })
 }
 
-function scaled(bmp: ImageBitmap, maxEdge: number): HTMLCanvasElement {
+export function scaled(bmp: ImageBitmap, maxEdge: number): HTMLCanvasElement {
   const scale = Math.min(1, maxEdge / Math.max(bmp.width, bmp.height))
   const w = Math.max(1, Math.round(bmp.width * scale))
   const h = Math.max(1, Math.round(bmp.height * scale))

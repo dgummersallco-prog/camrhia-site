@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { makeVersions, isHeic, isRaw } from '@/lib/galleryImages'
 import { cullPhotos, type CullLabel } from '@/lib/cull'
+import { enhancePhoto } from '@/lib/enhance'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
@@ -32,6 +33,10 @@ type Photo = {
   cull_score?: number | null
   cull_group?: string | null
   cull_reason?: string | null
+  enhanced?: boolean | null
+  pre_web_path?: string | null
+  pre_thumb_path?: string | null
+  pre_full_path?: string | null
   size_bytes: number | null
   sort_order: number
 }
@@ -101,6 +106,11 @@ export default function GalleryManagePage() {
   const [cullTarget, setCullTarget] = useState('')
   const [cull, setCull] = useState<{ busy: boolean; done: number; total: number; phase: 'sharp' | 'eyes' }>({ busy: false, done: 0, total: 0, phase: 'sharp' })
   const [cullEyes, setCullEyes] = useState(true)
+  const [enhOpen, setEnhOpen] = useState(false)
+  const [enhPicksOnly, setEnhPicksOnly] = useState(false)
+  const [enh, setEnh] = useState<{ busy: boolean; done: number; total: number; phase: 'enhance' | 'revert' }>({ busy: false, done: 0, total: 0, phase: 'enhance' })
+  const [showBefore, setShowBefore] = useState(false)
+  const [before, setBefore] = useState<{ id: string; url: string } | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
   const failedRef = useRef<File[]>([])
@@ -166,7 +176,7 @@ export default function GalleryManagePage() {
     for (let from = 0; ; from += 1000) {
       const { data, error } = await sb
         .from('gallery_photos')
-        .select('id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason')
+        .select('id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, enhanced, pre_web_path, pre_thumb_path, pre_full_path')
         .eq('gallery_id', galleryId)
         .order('sort_order', { ascending: true })
         .range(from, from + 999)
@@ -360,7 +370,7 @@ export default function GalleryManagePage() {
     const sb = supabase
     if (!sb) return
     if (!window.confirm('Delete this photo?')) return
-    const paths = [p.orig_path, p.web_path, p.thumb_path, p.full_path].filter((x): x is string => !!x)
+    const paths = [p.orig_path, p.web_path, p.thumb_path, p.full_path, p.pre_web_path, p.pre_thumb_path, p.pre_full_path].filter((x): x is string => !!x)
     const { error } = await sb.from('gallery_photos').delete().eq('id', p.id)
     if (error) { setMessage(error.message); return }
     await sb.storage.from(BUCKET).remove(paths)
@@ -375,7 +385,7 @@ export default function GalleryManagePage() {
     const sb = supabase
     if (!sb || !gallery) return
     if (!window.confirm('Delete this whole gallery and all of its photos? This cannot be undone.')) return
-    const paths = photos.flatMap((p) => [p.orig_path, p.web_path, p.thumb_path, p.full_path]).filter((x): x is string => !!x)
+    const paths = photos.flatMap((p) => [p.orig_path, p.web_path, p.thumb_path, p.full_path, p.pre_web_path, p.pre_thumb_path, p.pre_full_path]).filter((x): x is string => !!x)
     for (let i = 0; i < paths.length; i += 100) {
       await sb.storage.from(BUCKET).remove(paths.slice(i, i + 100))
     }
@@ -407,6 +417,121 @@ export default function GalleryManagePage() {
   }
 
   const shareUrl = gallery ? `${origin}/g/${gallery.token}` : ''
+  async function toggleBefore() {
+    const sb = supabase
+    if (!sb || !view) return
+    if (showBefore) { setShowBefore(false); return }
+    const p = photos.find((x) => x.id === view.id)
+    const src = p?.pre_web_path ?? p?.pre_thumb_path
+    if (!src) return
+    if (!before || before.id !== view.id) {
+      const { data } = await sb.storage.from(BUCKET).createSignedUrl(src, 3600)
+      if (!data?.signedUrl) return
+      setBefore({ id: view.id, url: data.signedUrl })
+    }
+    setShowBefore(true)
+  }
+
+  async function runEnhance() {
+    const sb = supabase
+    if (!sb || enh.busy) return
+    const todo = photos.filter((p) => !p.enhanced && (!enhPicksOnly || p.cull_label === 'pick'))
+    if (todo.length === 0) { setMessage('Nothing to enhance.'); return }
+    setEnh({ busy: true, done: 0, total: todo.length, phase: 'enhance' })
+    let done = 0
+    let failed = 0
+    let next = 0
+    async function worker() {
+      if (!sb) return
+      while (true) {
+        const i = next++
+        if (i >= todo.length) return
+        const p = todo[i]
+        try {
+          const srcPath = p.full_path ?? p.orig_path
+          const dl = await sb.storage.from(BUCKET).download(srcPath)
+          if (dl.error || !dl.data) throw dl.error ?? new Error('Could not load the photo.')
+          const out = await enhancePhoto(dl.data, srcPath)
+          const dir = p.orig_path.slice(0, p.orig_path.lastIndexOf('/'))
+          const eFull = `${dir}/enh-full.jpg`
+          const eWeb = `${dir}/enh-web.jpg`
+          const eThumb = `${dir}/enh-thumb.jpg`
+          const ups = await Promise.all([
+            sb.storage.from(BUCKET).upload(eFull, out.full, { contentType: 'image/jpeg', upsert: true }),
+            sb.storage.from(BUCKET).upload(eWeb, out.web.blob, { contentType: 'image/jpeg', upsert: true }),
+            sb.storage.from(BUCKET).upload(eThumb, out.thumb.blob, { contentType: 'image/jpeg', upsert: true }),
+          ])
+          const bad = ups.find((u) => u.error)
+          if (bad?.error) throw bad.error
+          const { error } = await sb
+            .from('gallery_photos')
+            .update({
+              enhanced: true,
+              pre_web_path: p.web_path,
+              pre_thumb_path: p.thumb_path,
+              pre_full_path: p.full_path ?? null,
+              web_path: eWeb,
+              thumb_path: eThumb,
+              full_path: eFull,
+            })
+            .eq('id', p.id)
+          if (error) throw error
+        } catch {
+          failed++
+        }
+        done++
+        setEnh({ busy: true, done, total: todo.length, phase: 'enhance' })
+      }
+    }
+    await Promise.all(Array.from({ length: 2 }, () => worker()))
+    await loadPhotos()
+    setEnh({ busy: false, done: 0, total: 0, phase: 'enhance' })
+    flash(failed ? `Enhanced ${todo.length - failed}. ${failed} could not be processed.` : `Enhanced ${todo.length} photos.`)
+  }
+
+  async function revertPhotos(ids: string[]) {
+    const sb = supabase
+    if (!sb || enh.busy) return
+    const idSet = new Set(ids)
+    const list = photos.filter((p) => idSet.has(p.id) && p.enhanced)
+    if (list.length === 0) return
+    setView(null)
+    setShowBefore(false)
+    setEnh({ busy: true, done: 0, total: list.length, phase: 'revert' })
+    const doomed: string[] = []
+    let done = 0
+    for (let i = 0; i < list.length; i += 10) {
+      const chunk = list.slice(i, i + 10)
+      const rs = await Promise.all(
+        chunk.map((p) =>
+          sb
+            .from('gallery_photos')
+            .update({
+              enhanced: false,
+              web_path: p.pre_web_path ?? null,
+              thumb_path: p.pre_thumb_path ?? null,
+              full_path: p.pre_full_path ?? null,
+              pre_web_path: null,
+              pre_thumb_path: null,
+              pre_full_path: null,
+            })
+            .eq('id', p.id),
+        ),
+      )
+      chunk.forEach((p, k) => {
+        if (!rs[k].error) [p.web_path, p.thumb_path, p.full_path].forEach((x) => { if (x) doomed.push(x) })
+      })
+      done += chunk.length
+      setEnh({ busy: true, done, total: list.length, phase: 'revert' })
+    }
+    for (let i = 0; i < doomed.length; i += 100) {
+      await sb.storage.from(BUCKET).remove(doomed.slice(i, i + 100))
+    }
+    await loadPhotos()
+    setEnh({ busy: false, done: 0, total: 0, phase: 'enhance' })
+    flash(`Reverted ${list.length} photo${list.length === 1 ? '' : 's'} to the original.`)
+  }
+
   async function setLabel(ids: string[], label: CullLabel | null) {
     const sb = supabase
     if (!sb || ids.length === 0) return
@@ -497,7 +622,7 @@ export default function GalleryManagePage() {
       const { error } = await sb.from('gallery_photos').delete().in('id', ids.slice(i, i + 100))
       if (error) { setMessage(error.message); return }
     }
-    const paths = doomed.flatMap((p) => [p.orig_path, p.web_path, p.thumb_path, p.full_path]).filter((x): x is string => !!x)
+    const paths = doomed.flatMap((p) => [p.orig_path, p.web_path, p.thumb_path, p.full_path, p.pre_web_path, p.pre_thumb_path, p.pre_full_path]).filter((x): x is string => !!x)
     for (let i = 0; i < paths.length; i += 100) {
       await sb.storage.from(BUCKET).remove(paths.slice(i, i + 100))
     }
@@ -524,6 +649,7 @@ export default function GalleryManagePage() {
     const sb = supabase
     if (!sb) return
     setView({ id: p.id, url: null })
+    setShowBefore(false)
     const src = p.web_path ?? p.thumb_path ?? p.orig_path
     const { data } = await sb.storage.from(BUCKET).createSignedUrl(src, 3600)
     setView((v) => (v && v.id === p.id ? { id: p.id, url: data?.signedUrl ?? null } : v))
@@ -759,6 +885,35 @@ export default function GalleryManagePage() {
                   </div>
                 )}
 
+                {enhOpen && (
+                  <div className={`${card} mb-4`}>
+                    <p className="font-fraunces text-lg text-ink">Enhance this gallery</p>
+                    <p className="mt-1 text-xs text-ink-soft">Fixes exposure, color balance and contrast. Your original files are kept, and you can revert any photo or the whole gallery at any time.</p>
+                    {isPublished && (
+                      <p className="mt-2 text-xs text-amber-700">This gallery is published. Your client will see the enhanced photos as soon as they finish.</p>
+                    )}
+                    {photos.some((p) => p.cull_label === 'pick') && (
+                      <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-ink">
+                        <input type="checkbox" checked={enhPicksOnly} onChange={(e) => setEnhPicksOnly(e.target.checked)} className="h-4 w-4" />
+                        Only photos marked Pick
+                      </label>
+                    )}
+                    <p className="mt-3 text-xs text-ink-soft">{photos.filter((p) => p.enhanced).length} of {photos.length} enhanced</p>
+                    {enh.busy && <p className="mt-1 text-xs text-ink-soft">Keep this tab open until it finishes.</p>}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button className={btn} disabled={enh.busy} onClick={runEnhance}>
+                        {enh.busy && enh.phase === 'enhance' ? `Enhancing ${enh.done} of ${enh.total}…` : isPublished ? 'Enhance and update live gallery' : 'Start'}
+                      </button>
+                      {photos.some((p) => p.enhanced) && (
+                        <button className={btnGhost} disabled={enh.busy} onClick={() => revertPhotos(photos.filter((p) => p.enhanced).map((p) => p.id))}>
+                          {enh.busy && enh.phase === 'revert' ? `Reverting ${enh.done} of ${enh.total}…` : 'Revert all'}
+                        </button>
+                      )}
+                      <button className={btnGhost} disabled={enh.busy} onClick={() => setEnhOpen(false)}>Close</button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Photo toolbar */}
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -790,6 +945,9 @@ export default function GalleryManagePage() {
                   <div className="flex flex-wrap items-center gap-2 text-sm">
                     {!selecting && (
                       <button className={btnGhost} disabled={photos.length === 0 || cull.busy} onClick={() => setCullOpen((o) => !o)}>Cull</button>
+                    )}
+                    {!selecting && (
+                      <button className={btnGhost} disabled={photos.length === 0 || enh.busy} onClick={() => setEnhOpen((o) => !o)}>Enhance</button>
                     )}
                     {filter === 'all' && photos.length > 1 && !selecting && (
                       <p className="hidden text-xs text-ink-soft sm:block">Drag photos to reorder</p>
@@ -873,6 +1031,15 @@ export default function GalleryManagePage() {
             <div className="flex items-center justify-between p-4 text-white" onClick={(e) => e.stopPropagation()}>
               <span className="text-sm opacity-70">{shown.findIndex((x) => x.id === view.id) + 1} / {shown.length}</span>
               <div className="flex items-center gap-5">
+                {(() => {
+                  const cp = photos.find((x) => x.id === view.id)
+                  return cp?.enhanced ? (
+                    <>
+                      <button className="text-sm" onClick={toggleBefore}>{showBefore ? 'Viewing: Before' : 'Before / After'}</button>
+                      <button className="text-sm" onClick={() => revertPhotos([cp.id])}>Revert</button>
+                    </>
+                  ) : null
+                })()}
                 {(['pick', 'maybe', 'reject'] as const).map((l) => {
                   const cur = photos.find((x) => x.id === view.id)?.cull_label
                   return (
@@ -891,7 +1058,7 @@ export default function GalleryManagePage() {
               )}
               {view.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={view.url} alt="" onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain" />
+                <img src={showBefore && before && before.id === view.id ? before.url : view.url} alt="" onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain" />
               ) : (
                 <p className="text-sm text-white/70">Loading…</p>
               )}
