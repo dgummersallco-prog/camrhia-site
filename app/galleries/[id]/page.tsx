@@ -32,7 +32,7 @@ type Photo = {
 type UploadItem = { key: string; name: string; status: 'queued' | 'uploading' | 'done' | 'error'; error?: string }
 
 const BUCKET = 'galleries'
-const CONCURRENCY = 3
+const CONCURRENCY = 5
 const MAX_BYTES = 50 * 1024 * 1024 // per-file limit on the current Supabase plan
 const isAccepted = (f: File) => isHeic(f) || /^image\/(jpeg|png|webp)$/.test(f.type)
 
@@ -294,14 +294,18 @@ export default function GalleryManagePage() {
       let lastError = 'Upload failed'
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const v = await makeVersions(file)
           const bucket = sb.storage.from(BUCKET)
-          const t = await bucket.upload(thumbPath, v.thumb.blob, { contentType: 'image/jpeg', upsert: true })
-          if (t.error) throw t.error
-          const w = await bucket.upload(webPath, v.web.blob, { contentType: 'image/jpeg', upsert: true })
-          if (w.error) throw w.error
-          const o = await bucket.upload(origPath, file, { contentType: origType, upsert: true })
+          const [v, o] = await Promise.all([
+            makeVersions(file),
+            bucket.upload(origPath, file, { contentType: origType, upsert: true }),
+          ])
           if (o.error) throw o.error
+          const [t, w] = await Promise.all([
+            bucket.upload(thumbPath, v.thumb.blob, { contentType: 'image/jpeg', upsert: true }),
+            bucket.upload(webPath, v.web.blob, { contentType: 'image/jpeg', upsert: true }),
+          ])
+          if (t.error) throw t.error
+          if (w.error) throw w.error
           const { error } = await sb.from('gallery_photos').insert({
             id: photoId, gallery_id: gallery.id, owner_id: userId, filename: file.name,
             orig_path: origPath, web_path: webPath, thumb_path: thumbPath,
