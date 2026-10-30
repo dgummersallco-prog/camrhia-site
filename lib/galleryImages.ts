@@ -57,7 +57,8 @@ function tiffOrientation(b: Uint8Array, start: number): number {
     const be = b[start] === 0x4d && b[start + 1] === 0x4d
     if (!le && !be) return 0
     const dv = new DataView(b.buffer, b.byteOffset, b.byteLength)
-    if (dv.getUint16(start + 2, le) !== 42) return 0
+    const magic = dv.getUint16(start + 2, le)
+    if (magic !== 42 && magic !== 0x55 && magic !== 0x4f52 && magic !== 0x5352) return 0
     const ifd = start + dv.getUint32(start + 4, le)
     if (ifd + 2 > b.length) return 0
     const n = dv.getUint16(ifd, le)
@@ -74,10 +75,9 @@ function tiffOrientation(b: Uint8Array, start: number): number {
 }
 
 function rawOrientation(b: Uint8Array): number {
-  const tiffLE = b[0] === 0x49 && b[1] === 0x49 && b[2] === 0x2a && b[3] === 0
-  const tiffBE = b[0] === 0x4d && b[1] === 0x4d && b[2] === 0 && b[3] === 0x2a
+  const hasHeader = (b[0] === 0x49 && b[1] === 0x49) || (b[0] === 0x4d && b[1] === 0x4d)
   let start = 0
-  if (!tiffLE && !tiffBE) {
+  if (!hasHeader) {
     const limit = 512 * 1024
     const a = findSeq(b, [0x49, 0x49, 0x2a, 0x00], 0, limit)
     const m = findSeq(b, [0x4d, 0x4d, 0x00, 0x2a], 0, limit)
