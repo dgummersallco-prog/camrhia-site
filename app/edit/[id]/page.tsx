@@ -159,6 +159,22 @@ export default function EditWalkthrough() {
   const [cardUrls, setCardUrls] = useState<Record<string, string>>({})
   const bmps = useRef<Map<string, ImageBitmap>>(new Map())
 
+  const [cullView, setCullView] = useState<'cuts' | 'picks' | 'maybe' | 'dupes'>('cuts')
+  const chipCls = (v: string) => `rounded-full border px-4 py-1.5 text-sm transition ${cullView === v ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/80 hover:border-white/30'}`
+  const pickList = photos.filter((p) => p.cull_label === 'pick')
+  const maybeList = photos.filter((p) => p.cull_label === 'maybe')
+  const dupeGroups = (() => {
+    const m = new Map<string, typeof photos>()
+    for (const p of photos) {
+      if (!p.cull_group) continue
+      const k = String(p.cull_group)
+      const a = m.get(k) ?? []
+      a.push(p)
+      m.set(k, a)
+    }
+    return [...m.values()].filter((g) => g.length > 1)
+  })()
+
   // ---- Scenes (parts of the day) ----
   const [showScenes, setShowScenes] = useState(false)
   const [scenesRead, setScenesRead] = useState(false)
@@ -740,13 +756,44 @@ export default function EditWalkthrough() {
             {labeled && !cull.busy && (
               <>
                 <div className="mt-6 flex flex-wrap gap-3 text-sm">
-                  <span className="rounded-full border border-white/10 px-4 py-1.5 text-white/80"><b className="text-white">{picks}</b> keepers</span>
-                  <span className="rounded-full border border-white/10 px-4 py-1.5 text-white/80"><b className="text-white">{maybes}</b> maybe</span>
-                  <span className="rounded-full border border-white/10 px-4 py-1.5 text-white/80"><b className="text-white">{cuts.length}</b> suggested cuts</span>
-                  <span className="rounded-full border border-white/10 px-4 py-1.5 text-white/80"><b className="text-white">{groupList.length}</b> duplicate groups</span>
+                  <button className={chipCls('picks')} onClick={() => setCullView('picks')}><b className="text-white">{picks}</b> keepers</button>
+                  <button className={chipCls('maybe')} onClick={() => setCullView('maybe')}><b className="text-white">{maybes}</b> maybe</button>
+                  <button className={chipCls('cuts')} onClick={() => setCullView('cuts')}><b className="text-white">{cuts.length}</b> suggested cuts</button>
+                  <button className={chipCls('dupes')} onClick={() => setCullView('dupes')}><b className="text-white">{groupList.length}</b> duplicate groups</button>
                 </div>
 
-                {cuts.length > 0 ? (
+                {cullView === 'picks' || cullView === 'maybe' ? (
+                  <div className="mt-8">
+                    <p className="max-w-2xl text-white/55">
+                      {cullView === 'picks' ? 'These look good to us.' : 'These are close calls. They stay in your gallery.'}
+                    </p>
+                    <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+                      {(cullView === 'picks' ? pickList : maybeList).map((p) => (
+                        <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-white/5">
+                          {img(p)}
+                          {p.cull_reason && <span className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1 text-[10px] text-white/80">{p.cull_reason}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : cullView === 'dupes' ? (
+                  <div className="mt-8">
+                    <p className="max-w-2xl text-white/55">Near-identical frames are grouped together. You pick the best one from each group in the next step.</p>
+                    <div className="mt-6 space-y-4">
+                      {dupeGroups.map((g, n) => (
+                        <div key={n} className="rounded-2xl border border-white/10 bg-[#151518] p-3">
+                          <p className="mb-2 text-xs text-white/45">Group {n + 1} · {g.length} frames</p>
+                          <div className="flex gap-2 overflow-x-auto">
+                            {g.map((p) => (
+                              <div key={p.id} className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-white/5">{img(p)}</div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      {dupeGroups.length === 0 && <p className="text-white/60">No near-identical frames.</p>}
+                    </div>
+                  </div>
+                ) : cuts.length > 0 ? (
                   <>
                     <p className="mt-8 max-w-2xl text-white/55">
                       These are the ones we recommend cutting. Tap any you want to keep. Cutting only removes a photo from this gallery, and your own copy stays wherever you saved it.
