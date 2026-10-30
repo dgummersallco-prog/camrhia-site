@@ -8,7 +8,7 @@ import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { enhancePhoto, renderPreview, LOOKS } from '@/lib/enhance'
 import { sendGalleryToClient } from '@/lib/sendGallery'
 import BriefScreen from '@/app/edit/BriefScreen'
-import { SCENE_IDEAS, readHead, exifTime, orderPhotos, normalizeScenes, buildLightMap, countByScene, autoSplit } from '@/lib/scenes'
+import { SCENE_IDEAS, readHead, exifTime, orderPhotos, normalizeScenes, buildLightMap, countByScene, autoSplit, groupByScene, lightStats, lightingBreaks } from '@/lib/scenes'
 import { briefAdjust, STYLE_LOOK, QUESTIONS, type Brief, type SceneDef, type Signature } from '@/lib/brief'
 import { uploadPhotos } from '@/lib/galleryUpload'
 
@@ -180,9 +180,13 @@ export default function EditWalkthrough() {
   const [scenesRead, setScenesRead] = useState(false)
   const [readingTimes, setReadingTimes] = useState(false)
   const [times, setTimes] = useState<Record<string, number>>({})
+  const [analyzing, setAnalyzing] = useState(false)
+  const [splitAt, setSplitAt] = useState<string | null>(null)
   const ordered = orderPhotos(photos.filter((p) => p.cull_label !== 'reject'), times)
   const sceneList = normalizeScenes(brief.scenes ?? [], ordered)
   const sceneCounts = countByScene(ordered, sceneList)
+  const sceneMembers = groupByScene(ordered, sceneList)
+  const lightChip = (on: boolean) => `rounded-full border px-3 py-1.5 text-xs transition ${on ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`
   const timesCount = ordered.filter((p) => times[p.id] !== undefined).length
   const LIGHTS = QUESTIONS.find((q) => q.key === 'light')?.options ?? []
   const fieldCls = 'w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-white/30'
@@ -254,10 +258,26 @@ export default function EditWalkthrough() {
     else saveScenes([...sceneList, { id: Math.random().toString(36).slice(2, 9), name: '', startId: photoId, light: '' }])
   }
 
-  function autoDetect() {
-    const starts = autoSplit(ordered, times)
-    const first = sceneList[0] ?? { id: 'first', name: '', startId: ordered[0]?.id ?? '', light: '' }
-    saveScenes([first, ...starts.map((startId) => ({ id: Math.random().toString(36).slice(2, 9), name: '', startId, light: '' }))])
+  async function autoDetect() {
+    if (ordered.length === 0 || analyzing) return
+    setAnalyzing(true)
+    let starts: string[]
+    if (timesCount >= ordered.length * 0.8) {
+      starts = autoSplit(ordered, times)
+    } else {
+      const stats = await lightStats(ordered, (p) => (p.thumb_path ? thumbs[p.thumb_path] : undefined))
+      starts = lightingBreaks(stats).map((i) => ordered[i].id)
+    }
+    const first = sceneList[0] ?? { id: 'first', name: '', startId: ordered[0].id, light: '' }
+    saveScenes([{ ...first, startId: ordered[0].id }, ...starts.map((startId) => ({ id: Math.random().toString(36).slice(2, 9), name: '', startId, light: '' }))])
+    setAnalyzing(false)
+  }
+
+  function splitHere() {
+    if (!splitAt) return
+    const owner = sceneList.find((sc) => (sceneMembers[sc.id] ?? []).some((p) => p.id === splitAt))
+    saveScenes([...sceneList, { id: Math.random().toString(36).slice(2, 9), name: '', startId: splitAt, light: owner?.light ?? '' }])
+    setSplitAt(null)
   }
 
   async function lightByPhoto(): Promise<Record<string, string>> {
@@ -967,54 +987,60 @@ export default function EditWalkthrough() {
               </button>
               {showScenes && (
                 <div className="mt-5">
-                  <p className="text-sm text-white/55">Tap the first photo of each part of the day, like the ceremony or the reception. Then tell us the light for each part.</p>
-                  {readingTimes && <p className="mt-3 text-sm text-white/45">Reading when each photo was taken…</p>}
-                  {!readingTimes && scenesRead && timesCount === 0 && (
-                    <p className="mt-3 text-sm text-white/45">We could not read the times, so photos are in file name order.</p>
-                  )}
+                  <p className="text-sm text-white/55">The light changes through a shoot. Split it into parts, tell us the light in each, and every part gets its own edit.</p>
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <button className={btnQuiet} disabled={timesCount === 0} onClick={autoDetect}>Find the parts of the day for me</button>
-                    {sceneList.length > 1 && <button className={btnQuiet} onClick={() => saveScenes([])}>Clear</button>}
+                    <button className={btnQuiet} disabled={analyzing || ordered.length === 0} onClick={autoDetect}>{analyzing ? 'Looking…' : 'Find the parts for me'}</button>
+                    {sceneList.length > 1 && <button className={btnQuiet} onClick={() => saveScenes([])}>Start over</button>}
                   </div>
-                  <div className="mt-5 grid max-h-72 gap-1.5 overflow-y-auto" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))' }}>
-                    {ordered.map((p) => {
-                      const start = sceneList.findIndex((s) => s.startId === p.id)
-                      const src = p.thumb_path ? thumbs[p.thumb_path] : undefined
+                  <div className="mt-6 space-y-5">
+                    {sceneList.map((sc, n) => {
+                      const members = sceneMembers[sc.id] ?? []
                       return (
-                        <button
-                          key={p.id}
-                          onClick={() => toggleStart(p.id)}
-                          className={`relative aspect-square overflow-hidden rounded-md bg-white/5 ${start >= 0 ? 'ring-2 ring-[var(--color-twilight)]' : ''}`}
-                        >
-                          {src && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
+                        <div key={sc.id} className="rounded-2xl border border-white/10 bg-[#151518] p-4">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-twilight)] text-xs text-white">{n + 1}</span>
+                            <input
+                              value={sc.name}
+                              onChange={(e) => patchScene(sc.id, { name: e.target.value })}
+                              placeholder={`Name this part, like ${SCENE_IDEAS[n] ?? 'Reception'}`}
+                              className={`${fieldCls} min-w-[12rem] flex-1`}
+                            />
+                            <span className="text-sm text-white/45">{members.length} {members.length === 1 ? 'photo' : 'photos'}</span>
+                            {n > 0 && (
+                              <button className="text-sm text-white/45 hover:text-white" onClick={() => saveScenes(sceneList.filter((x) => x.id !== sc.id))}>
+                                Merge with previous
+                              </button>
+                            )}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <button className={lightChip(sc.light === '')} onClick={() => patchScene(sc.id, { light: '' })}>Same as the rest</button>
+                            {LIGHTS.map((o) => (
+                              <button key={o.value} className={lightChip(sc.light === o.value)} onClick={() => patchScene(sc.id, { light: o.value })}>{o.label}</button>
+                            ))}
+                          </div>
+                          <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+                            {members.map((p, k) => {
+                              const src = p.thumb_path ? thumbs[p.thumb_path] : undefined
+                              return (
+                                <button
+                                  key={p.id}
+                                  onClick={() => { if (k > 0) setSplitAt(splitAt === p.id ? null : p.id) }}
+                                  className={`h-16 w-16 shrink-0 overflow-hidden rounded-md bg-white/5 ${splitAt === p.id ? 'ring-2 ring-[var(--color-twilight)]' : ''}`}
+                                >
+                                  {src && (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+                          {splitAt && members.some((p) => p.id === splitAt) && (
+                            <button className={`${btnQuiet} mt-3`} onClick={splitHere}>Start a new part from the selected photo</button>
                           )}
-                          {start >= 0 && (
-                            <span className="absolute left-0 top-0 rounded-br bg-[var(--color-twilight)] px-1.5 text-[10px] text-white">{start + 1}</span>
-                          )}
-                        </button>
+                        </div>
                       )
                     })}
-                  </div>
-                  <div className="mt-5 space-y-3">
-                    {sceneList.map((sc, n) => (
-                      <div key={sc.id} className="grid gap-3 rounded-xl border border-white/10 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
-                        <input
-                          value={sc.name}
-                          onChange={(e) => patchScene(sc.id, { name: e.target.value })}
-                          placeholder={`Part ${n + 1}, like ${SCENE_IDEAS[n] ?? 'Reception'}`}
-                          className={fieldCls}
-                        />
-                        <select value={sc.light} onChange={(e) => patchScene(sc.id, { light: e.target.value })} className={fieldCls}>
-                          <option value="" className="bg-[#151518]">Same light as the rest</option>
-                          {LIGHTS.map((o) => (
-                            <option key={o.value} value={o.value} className="bg-[#151518]">{o.label}</option>
-                          ))}
-                        </select>
-                        <p className="text-sm text-white/45">{sceneCounts[sc.id] ?? 0} photos</p>
-                      </div>
-                    ))}
                   </div>
                 </div>
               )}

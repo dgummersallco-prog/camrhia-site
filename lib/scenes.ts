@@ -107,3 +107,89 @@ export function autoSplit(ordered: { id: string }[], times: Record<string, numbe
   }
   return gaps.sort((x, y) => y.gap - x.gap).slice(0, max - 1).map((g) => ordered[g.i].id)
 }
+
+export function groupByScene<T extends { id: string }>(ordered: T[], scenes: SceneDef[]): Record<string, T[]> {
+  const out: Record<string, T[]> = {}
+  const startAt = new Map(scenes.map((s) => [s.startId, s]))
+  let cur = scenes[0]?.id ?? ''
+  for (const p of ordered) {
+    const s = startAt.get(p.id)
+    if (s) cur = s.id
+    if (!out[cur]) out[cur] = []
+    out[cur].push(p)
+  }
+  return out
+}
+
+// Brightness and warmth of each photo, from its small thumbnail.
+export async function lightStats<T extends { id: string }>(
+  list: T[],
+  urlOf: (p: T) => string | undefined,
+): Promise<{ luma: number; warm: number }[]> {
+  const out: { luma: number; warm: number }[] = list.map(() => ({ luma: 0.5, warm: 0 }))
+  let next = 0
+  await Promise.all(
+    Array.from({ length: 8 }, async () => {
+      const c = document.createElement('canvas')
+      c.width = 24
+      c.height = 24
+      const ctx = c.getContext('2d', { willReadFrequently: true })
+      if (!ctx) return
+      while (true) {
+        const i = next++
+        if (i >= list.length) return
+        const u = urlOf(list[i])
+        if (!u) continue
+        try {
+          const blob = await (await fetch(u)).blob()
+          const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' })
+          ctx.drawImage(bmp, 0, 0, 24, 24)
+          bmp.close()
+          const d = ctx.getImageData(0, 0, 24, 24).data
+          let r = 0
+          let g = 0
+          let b = 0
+          const n = 24 * 24
+          for (let k = 0; k < d.length; k += 4) {
+            r += d[k]
+            g += d[k + 1]
+            b += d[k + 2]
+          }
+          out[i] = { luma: (0.299 * r + 0.587 * g + 0.114 * b) / (n * 255), warm: (r - b) / (n * 255) }
+        } catch {
+          /* leave neutral */
+        }
+      }
+    }),
+  )
+  return out
+}
+
+// Finds where the light changes the most. Returns the index where each new part starts.
+export function lightingBreaks(stats: { luma: number; warm: number }[], minSize = 12, max = 7, threshold = 0.12): number[] {
+  const n = stats.length
+  const win = 6
+  if (n < minSize * 2) return []
+  const med = (a: number[]) => {
+    const s = [...a].sort((x, y) => x - y)
+    return s[Math.floor(s.length / 2)]
+  }
+  const scored: { i: number; v: number }[] = []
+  for (let i = win; i <= n - win; i++) {
+    const left = stats.slice(i - win, i)
+    const right = stats.slice(i, i + win)
+    const v =
+      Math.abs(med(right.map((s) => s.luma)) - med(left.map((s) => s.luma))) +
+      Math.abs(med(right.map((s) => s.warm)) - med(left.map((s) => s.warm))) * 0.8
+    if (v >= threshold) scored.push({ i, v })
+  }
+  scored.sort((a, b) => b.v - a.v)
+  const picks: number[] = []
+  for (const { i } of scored) {
+    if (picks.length >= max - 1) break
+    if (i < minSize || n - i < minSize) continue
+    if (picks.some((p) => Math.abs(p - i) < minSize)) continue
+    picks.push(i)
+  }
+  return picks.sort((a, b) => a - b)
+}
