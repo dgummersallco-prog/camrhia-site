@@ -527,9 +527,77 @@ export default function GalleryManagePage() {
 
             {message && <p className="mb-4 text-sm text-twilight">{message}</p>}
 
-            <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
+            <div>
               {/* Left: upload + photos */}
               <div className="min-w-0">
+
+                <div className={`${card} mb-4`}>
+                  <p className="mb-3 text-xs font-medium uppercase tracking-wider text-ink-soft">Share with your client</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="min-w-[220px] flex-1">
+                      <input readOnly value={shareUrl} className={input} onFocus={(e) => e.currentTarget.select()} />
+                    </div>
+                    <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }}>
+                      Copy link
+                    </button>
+                    <a className={`${btnGhost} text-center`} href={shareUrl} target="_blank" rel="noreferrer">
+                      Preview
+                    </a>
+                    <a
+                      className={`${btnGhost} text-center`}
+                      href={`mailto:?subject=${encodeURIComponent(`Your photos: ${gallery.title}`)}&body=${encodeURIComponent(`Your photos are ready! View and download them here:\n\n${shareUrl}\n\n${gallery.pin_hash ? "I'll send your PIN separately." : ''}`)}`}
+                    >
+                      Email the link
+                    </a>
+                  </div>
+                  {!isPublished && (
+                    <p className="mt-3 text-xs text-ink-soft">This gallery is a draft. Publish it before sharing the link.</p>
+                  )}
+
+                  <div className="mt-5 grid gap-6 border-t border-line pt-5 md:grid-cols-3">
+                    <div>
+                      <label className={label}>
+                        PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(off)</span>}
+                      </label>
+                      <div className="flex gap-2">
+                        <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="Set a new PIN" className={input} />
+                        <button className={btnGhost} onClick={() => savePin(false)}>Save</button>
+                      </div>
+                      {gallery.pin_hash && (
+                        <button className="mt-2 text-xs text-ink-soft underline" onClick={() => savePin(true)}>Remove PIN</button>
+                      )}
+                      <p className="mt-2 text-xs text-ink-soft">Clients enter this to open the gallery. Leave it off for an open link.</p>
+                    </div>
+
+                    <div>
+                      <label className={label}>Expires on</label>
+                      <div className="flex gap-2">
+                        <input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} className={input} />
+                        <button
+                          className={btnGhost}
+                          onClick={() => saveSettings({ expires_at: expiry ? new Date(`${expiry}T23:59:59`).toISOString() : null })}
+                        >
+                          Save
+                        </button>
+                      </div>
+                      <p className="mt-2 text-xs text-ink-soft">After this date the link stops working. Leave blank for no expiry.</p>
+                    </div>
+
+                    <div>
+                      <label className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink">
+                        Allow downloads
+                        <input
+                          type="checkbox"
+                          checked={gallery.allow_downloads}
+                          onChange={(e) => saveSettings({ allow_downloads: e.target.checked })}
+                          className="h-5 w-5"
+                        />
+                      </label>
+                      <p className="mt-2 text-xs text-ink-soft">When off, clients can view and favorite but not download.</p>
+                    </div>
+                  </div>
+                </div>
+
                 <section
                   className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed px-5 ${photos.length > 0 ? 'py-4' : 'py-10'} transition ${dragging ? 'border-twilight bg-twilight/5' : 'border-line bg-card'}`}
                   onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
@@ -668,82 +736,10 @@ export default function GalleryManagePage() {
                 )}
               </div>
 
-              {/* Right: share + access */}
-              <aside className="lg:sticky lg:top-6 lg:self-start">
-                <div className={card}>
-                  <p className="mb-3 text-xs font-medium uppercase tracking-wider text-ink-soft">Share with your client</p>
-                  <input readOnly value={shareUrl} className={input} onFocus={(e) => e.currentTarget.select()} />
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }}>
-                      Copy link
-                    </button>
-                    <a className={`${btnGhost} text-center`} href={shareUrl} target="_blank" rel="noreferrer">
-                      Preview
-                    </a>
-                    <a
-                    className={`${btnGhost} text-center`}
-                    href={`mailto:?subject=${encodeURIComponent(`Your photos: ${gallery.title}`)}&body=${encodeURIComponent(`Your photos are ready! View and download them here:\n\n${shareUrl}\n\n${gallery.pin_hash ? "I'll send your PIN separately." : ''}`)}`}
-                  >
-                    Email the link
-                  </a>
-                  </div>
-                  {!isPublished && (
-                    <p className="mt-3 text-xs text-ink-soft">This gallery is a draft. Publish it before sharing the link.</p>
-                  )}
-
-                  <div className="mt-5 border-t border-line pt-5">
-                    <p className="mb-4 text-xs font-medium uppercase tracking-wider text-ink-soft">Access</p>
-                    
-
-                  <div>
-                    <label className={label}>
-                      PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(off)</span>}
-                    </label>
-                    <div className="flex gap-2">
-                      <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="Set a new PIN" className={input} />
-                      <button className={btnGhost} onClick={() => savePin(false)}>Save</button>
-                    </div>
-                    {gallery.pin_hash && (
-                      <button className="mt-2 text-xs text-ink-soft underline" onClick={() => savePin(true)}>Remove PIN</button>
-                    )}
-                    <p className="mt-2 text-xs text-ink-soft">Clients enter this to open the gallery. Leave it off for an open link.</p>
-                  </div>
-
-                  <div className="mt-5 border-t border-line pt-5">
-                    <label className={label}>Expires on</label>
-                    <div className="flex gap-2">
-                      <input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} className={input} />
-                      <button
-                        className={btnGhost}
-                        onClick={() => saveSettings({ expires_at: expiry ? new Date(`${expiry}T23:59:59`).toISOString() : null })}
-                      >
-                        Save
-                      </button>
-                    </div>
-                    <p className="mt-2 text-xs text-ink-soft">After this date the link stops working. Leave blank for no expiry.</p>
-                  </div>
-
-                  <div className="mt-5 border-t border-line pt-5">
-                    <label className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink">
-                      Allow downloads
-                      <input
-                        type="checkbox"
-                        checked={gallery.allow_downloads}
-                        onChange={(e) => saveSettings({ allow_downloads: e.target.checked })}
-                        className="h-5 w-5"
-                      />
-                    </label>
-                    <p className="mt-2 text-xs text-ink-soft">When off, clients can view and favorite but not download.</p>
-                  </div>
-                
-                  </div>
-
-                  <div className="mt-5 border-t border-line pt-4">
-                    <button onClick={deleteGallery} className="text-sm text-red-600 hover:underline">Delete gallery</button>
-                    <p className="mt-1 text-xs text-ink-soft">Removes the gallery and every photo in it. This cannot be undone.</p>
-                  </div>
-                </div>
-              </aside>
+              <div className="mt-10 border-t border-line pt-5">
+                <button onClick={deleteGallery} className="text-sm text-red-600 hover:underline">Delete gallery</button>
+                <p className="mt-1 text-xs text-ink-soft">Removes the gallery and every photo in it. This cannot be undone.</p>
+              </div>
             </div>
           </>
         )}
