@@ -111,6 +111,7 @@ export default function GalleryManagePage() {
   const [enh, setEnh] = useState<{ busy: boolean; done: number; total: number; phase: 'enhance' | 'revert' }>({ busy: false, done: 0, total: 0, phase: 'enhance' })
   const [showBefore, setShowBefore] = useState(false)
   const [before, setBefore] = useState<{ id: string; url: string } | null>(null)
+  const [accessOpen, setAccessOpen] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
   const failedRef = useRef<File[]>([])
@@ -759,49 +760,6 @@ export default function GalleryManagePage() {
                   {!isPublished && (
                     <p className="mt-3 text-xs text-ink-soft">This gallery is a draft. Publish it before sharing the link.</p>
                   )}
-
-                  <div className="mt-5 grid gap-6 border-t border-line pt-5 md:grid-cols-3">
-                    <div>
-                      <label className={label}>
-                        PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(off)</span>}
-                      </label>
-                      <div className="flex gap-2">
-                        <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="Set a new PIN" className={input} />
-                        <button className={btnGhost} onClick={() => savePin(false)}>Save</button>
-                      </div>
-                      {gallery.pin_hash && (
-                        <button className="mt-2 text-xs text-ink-soft underline" onClick={() => savePin(true)}>Remove PIN</button>
-                      )}
-                      <p className="mt-2 text-xs text-ink-soft">Clients enter this to open the gallery. Leave it off for an open link.</p>
-                    </div>
-
-                    <div>
-                      <label className={label}>Expires on</label>
-                      <div className="flex gap-2">
-                        <input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} className={input} />
-                        <button
-                          className={btnGhost}
-                          onClick={() => saveSettings({ expires_at: expiry ? new Date(`${expiry}T23:59:59`).toISOString() : null })}
-                        >
-                          Save
-                        </button>
-                      </div>
-                      <p className="mt-2 text-xs text-ink-soft">After this date the link stops working. Leave blank for no expiry.</p>
-                    </div>
-
-                    <div>
-                      <label className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink">
-                        Allow downloads
-                        <input
-                          type="checkbox"
-                          checked={gallery.allow_downloads}
-                          onChange={(e) => saveSettings({ allow_downloads: e.target.checked })}
-                          className="h-5 w-5"
-                        />
-                      </label>
-                      <p className="mt-2 text-xs text-ink-soft">When off, clients can view and favorite but not download.</p>
-                    </div>
-                  </div>
                 </div>
 
                 <section
@@ -862,6 +820,15 @@ export default function GalleryManagePage() {
                     )}
                   </div>
                 )}
+
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <button className={btnGhost} disabled={photos.length === 0 || cull.busy} onClick={() => setCullOpen((o) => !o)}>
+                    Cull{photos.some((p) => p.cull_label) ? ` · ${photos.filter((p) => p.cull_label === 'pick').length} picks` : ''}
+                  </button>
+                  <button className={btnGhost} disabled={photos.length === 0 || enh.busy} onClick={() => setEnhOpen((o) => !o)}>
+                    Enhance{photos.some((p) => p.enhanced) ? ` · ${photos.filter((p) => p.enhanced).length} of ${photos.length}` : ''}
+                  </button>
+                </div>
 
                 {cullOpen && (
                   <div className={`${card} mb-4`}>
@@ -945,12 +912,6 @@ export default function GalleryManagePage() {
                     })}
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-sm">
-                    {!selecting && (
-                      <button className={btnGhost} disabled={photos.length === 0 || cull.busy} onClick={() => setCullOpen((o) => !o)}>Cull</button>
-                    )}
-                    {!selecting && (
-                      <button className={btnGhost} disabled={photos.length === 0 || enh.busy} onClick={() => setEnhOpen((o) => !o)}>Enhance</button>
-                    )}
                     {filter === 'all' && photos.length > 1 && !selecting && (
                       <p className="hidden text-xs text-ink-soft sm:block">Drag photos to reorder</p>
                     )}
@@ -1022,8 +983,66 @@ export default function GalleryManagePage() {
               </div>
 
               <div className="mt-10 border-t border-line pt-5">
-                <button onClick={deleteGallery} className="text-sm text-red-600 hover:underline">Delete gallery</button>
-                <p className="mt-1 text-xs text-ink-soft">Removes the gallery and every photo in it. This cannot be undone.</p>
+                <button onClick={() => setAccessOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
+                  <span>
+                    <span className="block text-xs font-medium uppercase tracking-wider text-ink-soft">Access settings</span>
+                    <span className="mt-1 block text-xs text-ink-soft">
+                      PIN {gallery.pin_hash ? 'on' : 'off'} · Downloads {gallery.allow_downloads ? 'on' : 'off'}{expiry ? ` · Expires ${expiry}` : ' · No expiry'}
+                    </span>
+                  </span>
+                  <span className="text-sm text-ink-soft">{accessOpen ? 'Hide' : 'Show'}</span>
+                </button>
+                {accessOpen && (
+                  <div className={`${card} mt-4`}>
+                    <div className="grid gap-6 md:grid-cols-3">
+                      <div>
+                        <label className={label}>
+                          PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(off)</span>}
+                        </label>
+                        <div className="flex gap-2">
+                          <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="Set a new PIN" className={input} />
+                          <button className={btnGhost} onClick={() => savePin(false)}>Save</button>
+                        </div>
+                        {gallery.pin_hash && (
+                          <button className="mt-2 text-xs text-ink-soft underline" onClick={() => savePin(true)}>Remove PIN</button>
+                        )}
+                        <p className="mt-2 text-xs text-ink-soft">Clients enter this to open the gallery. Leave it off for an open link.</p>
+                      </div>
+
+                      <div>
+                        <label className={label}>Expires on</label>
+                        <div className="flex gap-2">
+                          <input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} className={input} />
+                          <button
+                            className={btnGhost}
+                            onClick={() => saveSettings({ expires_at: expiry ? new Date(`${expiry}T23:59:59`).toISOString() : null })}
+                          >
+                            Save
+                          </button>
+                        </div>
+                        <p className="mt-2 text-xs text-ink-soft">After this date the link stops working. Leave blank for no expiry.</p>
+                      </div>
+
+                      <div>
+                        <label className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink">
+                          Allow downloads
+                          <input
+                            type="checkbox"
+                            checked={gallery.allow_downloads}
+                            onChange={(e) => saveSettings({ allow_downloads: e.target.checked })}
+                            className="h-5 w-5"
+                          />
+                        </label>
+                        <p className="mt-2 text-xs text-ink-soft">When off, clients can view and favorite but not download.</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 border-t border-line pt-5">
+                      <button onClick={deleteGallery} className="text-sm text-red-600 hover:underline">Delete gallery</button>
+                      <p className="mt-1 text-xs text-ink-soft">Removes the gallery and every photo in it. This cannot be undone.</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </>
