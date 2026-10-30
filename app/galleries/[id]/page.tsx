@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { makeVersions, isHeic, isRaw } from '@/lib/galleryImages'
+import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
@@ -27,6 +28,9 @@ type Photo = {
   web_path: string | null
   thumb_path: string | null
   full_path?: string | null
+  cull_label?: CullLabel | null
+  cull_score?: number | null
+  cull_group?: string | null
   size_bytes: number | null
   sort_order: number
 }
@@ -91,7 +95,10 @@ export default function GalleryManagePage() {
   const [origin, setOrigin] = useState('')
   const [sessInfo, setSessInfo] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'fav'>('all')
+  const [filter, setFilter] = useState<'all' | 'fav' | CullLabel>('all')
+  const [cullOpen, setCullOpen] = useState(false)
+  const [cullTarget, setCullTarget] = useState('')
+  const [cull, setCull] = useState({ busy: false, done: 0, total: 0 })
   const fileInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
   const failedRef = useRef<File[]>([])
@@ -157,7 +164,7 @@ export default function GalleryManagePage() {
     for (let from = 0; ; from += 1000) {
       const { data, error } = await sb
         .from('gallery_photos')
-        .select('id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order')
+        .select('id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group')
         .eq('gallery_id', galleryId)
         .order('sort_order', { ascending: true })
         .range(from, from + 999)
@@ -398,7 +405,62 @@ export default function GalleryManagePage() {
   }
 
   const shareUrl = gallery ? `${origin}/g/${gallery.token}` : ''
-  const shown = filter === 'fav' ? photos.filter((p) => favCounts[p.id]) : photos
+  async function setLabel(ids: string[], label: CullLabel | null) {
+    const sb = supabase
+    if (!sb || ids.length === 0) return
+    for (let i = 0; i < ids.length; i += 100) {
+      const { error } = await sb.from('gallery_photos').update({ cull_label: label }).in('id', ids.slice(i, i + 100))
+      if (error) { setMessage(error.message); return }
+    }
+    const set = new Set(ids)
+    setPhotos((prev) => prev.map((p) => (set.has(p.id) ? { ...p, cull_label: label } : p)))
+  }
+
+  async function runCull() {
+    const sb = supabase
+    if (!sb || cull.busy) return
+    const items = photos
+      .filter((p) => p.thumb_path && thumbs[p.thumb_path])
+      .map((p) => ({ id: p.id, url: thumbs[p.thumb_path as string] }))
+    if (items.length === 0) { setMessage('Photos are still loading. Try again in a moment.'); return }
+    setCull({ busy: true, done: 0, total: items.length })
+    try {
+      const t = parseInt(cullTarget, 10)
+      const results = await cullPhotos(items, {
+        target: t > 0 ? t : undefined,
+        onProgress: (done, total) => setCull({ busy: true, done, total }),
+      })
+      for (let i = 0; i < results.length; i += 10) {
+        const rs = await Promise.all(
+          results.slice(i, i + 10).map((r) =>
+            sb.from('gallery_photos').update({ cull_label: r.label, cull_score: r.score, cull_group: r.group }).eq('id', r.id),
+          ),
+        )
+        const bad = rs.find((x) => x.error)
+        if (bad?.error) throw bad.error
+      }
+      const byId = new Map(results.map((r) => [r.id, r]))
+      setPhotos((prev) =>
+        prev.map((p) => {
+          const r = byId.get(p.id)
+          return r ? { ...p, cull_label: r.label, cull_score: r.score, cull_group: r.group } : p
+        }),
+      )
+      const n = (l: CullLabel) => results.filter((r) => r.label === l).length
+      flash(`Done: ${n('pick')} picks, ${n('maybe')} maybe, ${n('reject')} rejects.`)
+      setCullOpen(false)
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Culling failed. Please try again.')
+    }
+    setCull({ busy: false, done: 0, total: 0 })
+  }
+
+  const shown =
+    filter === 'fav'
+      ? photos.filter((p) => favCounts[p.id])
+      : filter === 'all'
+        ? photos
+        : photos.filter((p) => p.cull_label === filter)
   const isPublished = gallery?.status === 'published'
   const coverId = gallery?.cover_photo_id ?? null
   const coverPhoto = coverId ? photos.find((p) => p.id === coverId) : undefined
@@ -662,6 +724,26 @@ export default function GalleryManagePage() {
                   </div>
                 )}
 
+                {cullOpen && (
+                  <div className={`${card} mb-4`}>
+                    <p className="font-fraunces text-lg text-ink">Cull this gallery</p>
+                    <p className="mt-1 text-xs text-ink-soft">Finds soft shots and groups near-identical frames, keeping the sharpest of each. Nothing is deleted, and you can change any label afterwards.</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span className="text-sm text-ink">Keep about</span>
+                      <div className="w-24">
+                        <input value={cullTarget} onChange={(e) => setCullTarget(e.target.value.replace(/\D/g, ''))} placeholder="all" inputMode="numeric" className={input} />
+                      </div>
+                      <span className="text-sm text-ink-soft">photos (optional)</span>
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <button className={btn} disabled={cull.busy} onClick={runCull}>
+                        {cull.busy ? `Checking ${cull.done} of ${cull.total}…` : 'Start'}
+                      </button>
+                      <button className={btnGhost} disabled={cull.busy} onClick={() => setCullOpen(false)}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Photo toolbar */}
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -677,8 +759,23 @@ export default function GalleryManagePage() {
                     >
                       ♥ Client favorites ({favPhotoCount})
                     </button>
+                    {(['pick', 'maybe', 'reject'] as const).map((l) => {
+                      const n = photos.filter((p) => p.cull_label === l).length
+                      return n > 0 ? (
+                        <button
+                          key={l}
+                          onClick={() => setFilter(l)}
+                          className={`rounded-full px-4 py-1.5 capitalize ${filter === l ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
+                        >
+                          {l} ({n})
+                        </button>
+                      ) : null
+                    })}
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-sm">
+                    {!selecting && (
+                      <button className={btnGhost} disabled={photos.length === 0 || cull.busy} onClick={() => setCullOpen((o) => !o)}>Cull</button>
+                    )}
                     {filter === 'all' && photos.length > 1 && !selecting && (
                       <p className="hidden text-xs text-ink-soft sm:block">Drag photos to reorder</p>
                     )}
@@ -689,6 +786,9 @@ export default function GalleryManagePage() {
                     ) : (
                       <>
                         <button className={btnGhost} onClick={() => setSelected(new Set(shown.map((p) => p.id)))}>Select all ({shown.length})</button>
+                        {(['pick', 'maybe', 'reject'] as const).map((l) => (
+                          <button key={l} className={`${btnGhost} capitalize`} disabled={selected.size === 0} onClick={() => setLabel(Array.from(selected), l)}>Mark {l}</button>
+                        ))}
                         <button className={`${btnGhost} text-red-600`} disabled={selected.size === 0} onClick={bulkDelete}>Delete{selected.size ? ` (${selected.size})` : ''}</button>
                         <button className={btnGhost} onClick={() => { setSelecting(false); setSelected(new Set()) }}>Cancel</button>
                       </>
@@ -702,7 +802,7 @@ export default function GalleryManagePage() {
 
                 {shown.length === 0 ? (
                   <p className="rounded-2xl border border-line bg-card py-16 text-center text-sm text-ink-soft">
-                    {filter === 'fav' ? 'No client favorites yet.' : 'No photos yet. Drop some above.'}
+                    {filter === 'fav' ? 'No client favorites yet.' : filter !== 'all' ? `No ${filter} photos.` : 'No photos yet. Drop some above.'}
                   </p>
                 ) : (
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
@@ -725,6 +825,11 @@ export default function GalleryManagePage() {
                         )}
                         {gallery.cover_photo_id === p.id && (
                           <span className="absolute left-2 top-2 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Cover</span>
+                        )}
+                        {p.cull_label && (
+                          <span className={`absolute bottom-2 right-2 rounded-full px-2 py-0.5 text-[10px] capitalize text-white ${p.cull_label === 'pick' ? 'bg-emerald-600' : p.cull_label === 'maybe' ? 'bg-amber-500' : 'bg-red-600'}`}>
+                            {p.cull_label}
+                          </span>
                         )}
                         {favCounts[p.id] > 0 && (
                           <span style={{ color: 'color-mix(in srgb, var(--color-twilight) 55%, white)' }} className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs">
@@ -753,6 +858,12 @@ export default function GalleryManagePage() {
             <div className="flex items-center justify-between p-4 text-white" onClick={(e) => e.stopPropagation()}>
               <span className="text-sm opacity-70">{shown.findIndex((x) => x.id === view.id) + 1} / {shown.length}</span>
               <div className="flex items-center gap-5">
+                {(['pick', 'maybe', 'reject'] as const).map((l) => {
+                  const cur = photos.find((x) => x.id === view.id)?.cull_label
+                  return (
+                    <button key={l} className={`text-sm capitalize ${cur === l ? 'font-semibold underline' : 'opacity-70'}`} onClick={() => setLabel([view.id], cur === l ? null : l)}>{l}</button>
+                  )
+                })}
                 <button className="text-sm" onClick={async () => { if (await saveSettings({ cover_photo_id: view.id })) await syncCover(view.id) }}>
                   Set as cover
                 </button>
