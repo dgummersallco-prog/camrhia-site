@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { enhancePhoto, renderPreview, LOOKS } from '@/lib/enhance'
+import { sendGalleryToClient } from '@/lib/sendGallery'
 import { uploadPhotos } from '@/lib/galleryUpload'
 
 type Photo = {
@@ -26,7 +27,8 @@ type Photo = {
   pre_thumb_path: string | null
   pre_full_path: string | null
 }
-type G = { id: string; title: string; status: string }
+type G = { id: string; title: string; status: string; session_id: string | null; token: string; pin_hash: string | null; expires_at: string | null; audience: string }
+type Sess = { id: string; names: string | null; couple_user_id: string | null; gallery_sent_at: string | null; gallery_url: string | null }
 
 const BUCKET = 'galleries'
 const COLS =
@@ -50,6 +52,43 @@ export default function EditWalkthrough() {
 
   const [userId, setUserId] = useState<string | null>(null)
   const [gallery, setGallery] = useState<G | null>(null)
+  const [sess, setSess] = useState<Sess | null>(null)
+  const [audience, setAudience] = useState<'picks' | 'picks_maybe' | 'all'>('all')
+  const [pin, setPin] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendErr, setSendErr] = useState<string | null>(null)
+  const [sentDone, setSentDone] = useState<'sent' | 'published' | null>(null)
+
+  async function sendNow() {
+    const sb = supabase
+    if (!sb || !gallery) return
+    setSendErr(null)
+    const code = pin.trim()
+    if (gallery.pin_hash && !code) { setSendErr('Enter the PIN your client should use.'); return }
+    if (code && code.length < 4) { setSendErr('Use a PIN of at least 4 characters.'); return }
+    setSending(true)
+    const { data: upd, error: ue } = await sb.from('galleries').update({ audience, status: 'published' }).eq('id', gallery.id).select('expires_at').maybeSingle()
+    if (ue) { setSending(false); setSendErr(ue.message); return }
+    const expiresAt = (upd as { expires_at: string | null } | null)?.expires_at ?? gallery.expires_at
+    if (code) {
+      const { error: pe } = await sb.rpc('set_gallery_pin', { p_gallery_id: gallery.id, p_pin: code })
+      if (pe) { setSending(false); setSendErr(pe.message); return }
+    }
+    if (sess) {
+      const err = await sendGalleryToClient(sb, {
+        weddingId: sess.id,
+        coupleUserId: sess.couple_user_id,
+        token: gallery.token,
+        expiresAt,
+        pin: code,
+        alreadySent: !!sess.gallery_sent_at && !!sess.gallery_url && sess.gallery_url.includes(gallery.token),
+      })
+      if (err) { setSending(false); setSendErr(err); return }
+    }
+    setSending(false)
+    setGallery({ ...gallery, status: 'published', audience, expires_at: expiresAt })
+    setSentDone(sess ? 'sent' : 'published')
+  }
   const [photos, setPhotos] = useState<Photo[]>([])
   const [thumbs, setThumbs] = useState<Record<string, string>>({})
   const [loaded, setLoaded] = useState(false)
@@ -158,10 +197,15 @@ export default function EditWalkthrough() {
     sb.auth.getSession().then(async ({ data }) => {
       if (!data.session) { router.replace(`/login?next=/edit/${galleryId}`); return }
       setUserId(data.session.user.id)
-      const { data: g } = await sb.from('galleries').select('id, title, status').eq('id', galleryId).maybeSingle()
+      const { data: g } = await sb.from('galleries').select('id, title, status, session_id, token, pin_hash, expires_at, audience').eq('id', galleryId).maybeSingle()
       if (cancelled) return
       if (!g) { setMsg('Shoot not found.'); setLoaded(true); return }
       setGallery(g as G)
+      setAudience(((g as G).audience || 'all') as 'picks' | 'picks_maybe' | 'all')
+      if ((g as G).session_id) {
+        const { data: sw } = await sb.from('weddings').select('id, names, couple_user_id, gallery_sent_at, gallery_url').eq('id', (g as G).session_id).maybeSingle()
+        if (!cancelled) setSess((sw as Sess | null) ?? null)
+      }
       const list = await loadPhotos()
       if (cancelled) return
       const s = list.length === 0 ? 0 : list.every((p) => p.enhanced) ? 5 : 1
@@ -767,17 +811,78 @@ export default function EditWalkthrough() {
           <section className="mt-10">
             <h1 className="font-fraunces text-4xl text-white">Ready to send</h1>
             <p className="mt-3 max-w-2xl text-white/55">
-              {photos.length} {photos.length === 1 ? 'photo' : 'photos'}, {enhancedCount} developed. Take a last look in the gallery, then publish it to your client.
+              {photos.length} {photos.length === 1 ? 'photo' : 'photos'}, {enhancedCount} developed. Choose what your client sees, then send it.
             </p>
             <div className="mt-8 grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-10">
               {photos.slice(0, 30).map((p) => (
                 <div key={p.id} className="aspect-square overflow-hidden rounded-lg bg-white/5">{img(p)}</div>
               ))}
             </div>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <button className={btnPrimary} onClick={() => router.push(`/galleries/${galleryId}`)}>Review and publish</button>
-              <button className={btnQuiet} onClick={() => goTo(4)}>Back</button>
-            </div>
+
+            {sentDone ? (
+              <div className={`${panel} mt-10`}>
+                <p className="font-fraunces text-2xl text-white">{sentDone === 'sent' ? 'Sent' : 'Published'}</p>
+                <p className="mt-2 text-white/60">
+                  {sentDone === 'sent'
+                    ? `${sess?.names || 'Your client'} was notified in the Camrhia app and can open the gallery from their session.`
+                    : 'The gallery is live. Attach it to a session to send it to your client in the app.'}
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <button className={btnPrimary} onClick={() => router.push(`/galleries/${galleryId}`)}>Open gallery</button>
+                  <button className={btnQuiet} onClick={() => router.push('/edit')}>Back to the editing room</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={`${panel} mt-10`}>
+                  <p className="text-sm text-white/80">What your client sees</p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    {([
+                      ['picks', 'Picks only', photos.filter((p) => p.cull_label !== 'reject' && p.cull_label !== 'maybe').length],
+                      ['picks_maybe', 'Picks and maybes', photos.filter((p) => p.cull_label !== 'reject').length],
+                      ['all', 'Everything', photos.length],
+                    ] as const).map(([key, label, count]) => (
+                      <button
+                        key={key}
+                        onClick={() => setAudience(key)}
+                        className={`rounded-xl border p-4 text-left transition ${audience === key ? 'border-twilight shadow-[0_0_24px_-6px_var(--color-twilight)]' : 'border-white/10 hover:border-white/30'}`}
+                      >
+                        <p className="text-white">{label}</p>
+                        <p className="mt-1 text-sm text-white/50">{count} {count === 1 ? 'photo' : 'photos'}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs text-white/40">Hidden photos stay in your gallery. You can change this any time.</p>
+
+                  {gallery?.pin_hash && (
+                    <div className="mt-6">
+                      <p className="text-sm text-white/80">Gallery PIN</p>
+                      <input
+                        value={pin}
+                        onChange={(e) => setPin(e.target.value)}
+                        placeholder="The PIN your client will use"
+                        className="mt-2 w-full max-w-sm rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-white outline-none focus:border-white/30"
+                      />
+                    </div>
+                  )}
+
+                  <p className="mt-6 text-sm text-white/55">
+                    {sess
+                      ? `This will publish the gallery and send it to ${sess.names || 'your client'} in the app.`
+                      : 'This shoot is not attached to a session, so this will publish it without sending it to anyone.'}
+                  </p>
+                  {sendErr && <p className="mt-3 text-sm text-red-300">{sendErr}</p>}
+                </div>
+
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button className={btnPrimary} disabled={sending} onClick={sendNow}>
+                    {sending ? 'Sending…' : sess ? 'Publish and send to client' : 'Publish'}
+                  </button>
+                  <button className={btnQuiet} onClick={() => router.push(`/galleries/${galleryId}`)}>Review in gallery first</button>
+                  <button className={btnQuiet} onClick={() => goTo(4)}>Back</button>
+                </div>
+              </>
+            )}
           </section>
         )}
       </div>

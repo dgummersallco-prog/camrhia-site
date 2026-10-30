@@ -1,5 +1,7 @@
 'use client'
 
+import { sendGalleryToClient } from '@/lib/sendGallery'
+
 import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -226,31 +228,16 @@ export default function SessionDetailPage() {
       const { error: pe } = await sb.rpc('set_gallery_pin', { p_gallery_id: g.id, p_pin: pin })
       if (pe) { setBusy(false); setError(pe.message); return }
     }
-    const alreadySent = sentTo(g) !== ''
-    const now = new Date().toISOString()
-    const { error: we } = await sb
-      .from('weddings')
-      .update({
-        gallery_url: `${window.location.origin}/g/${g.token}`,
-        gallery_source: 'link',
-        gallery_password: pin || null,
-        gallery_expires_at: g.expires_at ? localDate(g.expires_at) : null,
-        delivered: true,
-        gallery_delivered_at: now,
-        gallery_sent_at: now,
-      })
-      .eq('id', id)
+    const sendErr = await sendGalleryToClient(sb, {
+      weddingId: id,
+      coupleUserId: w.couple_user_id,
+      token: g.token,
+      expiresAt: g.expires_at,
+      pin,
+      alreadySent: sentTo(g) !== '',
+    })
     setBusy(false)
-    if (we) { setError(we.message); return }
-    if (w.couple_user_id && !alreadySent) {
-      await sb.from('notifications').insert({
-        user_id: w.couple_user_id,
-        type: 'gallery_ready',
-        title: 'Your gallery is ready',
-        body: 'Your photographer shared your gallery. Tap to view your photos.',
-        wedding_id: id,
-      })
-    }
+    if (sendErr) { setError(sendErr); return }
     setSendFor(null)
     setSendPin('')
     setNote('Sent. Your client can now see the gallery in their session.')
