@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { admin, isLive, verifyAccess } from '@/lib/galleryServer'
+import { isVisible } from '@/lib/galleryAudience'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,7 @@ export async function GET(req: Request) {
 
   const { data: g } = await sb
     .from('galleries')
-    .select('allow_downloads, status, expires_at')
+    .select('allow_downloads, status, expires_at, audience')
     .eq('id', galleryId)
     .maybeSingle()
   if (!g || isLive(g) !== 'ok') return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -22,11 +23,11 @@ export async function GET(req: Request) {
 
   const { data: photo } = await sb
     .from('gallery_photos')
-    .select('orig_path, full_path, filename')
+    .select('orig_path, full_path, filename, cull_label')
     .eq('id', photoId)
     .eq('gallery_id', galleryId)
     .maybeSingle()
-  if (!photo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!photo || !isVisible(photo.cull_label, g.audience)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const jpgName = photo.full_path && photo.filename ? photo.filename.replace(/\.[^.]+$/, '') + '.jpg' : photo.filename
   const { data, error } = await sb.storage

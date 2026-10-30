@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { admin, isLive, signMap, verifyAccess } from '@/lib/galleryServer'
+import { isVisible } from '@/lib/galleryAudience'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +14,7 @@ export async function GET(req: Request) {
 
   const { data: g } = await sb
     .from('galleries')
-    .select('title, allow_downloads, status, expires_at')
+    .select('title, allow_downloads, status, expires_at, audience')
     .eq('id', galleryId)
     .maybeSingle()
   if (!g || isLive(g) !== 'ok') return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -23,12 +24,12 @@ export async function GET(req: Request) {
   for (let from = 0; ; from += 1000) {
     const { data } = await sb
       .from('gallery_photos')
-      .select('id, filename, orig_path, full_path, size_bytes')
+      .select('id, filename, orig_path, full_path, size_bytes, cull_label')
       .eq('gallery_id', galleryId)
       .order('sort_order', { ascending: true })
       .range(from, from + 999)
     const batch = data ?? []
-    photos.push(...batch)
+    photos.push(...batch.filter((p: { cull_label: string | null }) => isVisible(p.cull_label, g.audience)))
     if (batch.length < 1000) break
   }
 
