@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { cullPhotos, type CullLabel } from '@/lib/cull'
-import { enhancePhoto } from '@/lib/enhance'
+import { enhancePhoto, renderPreview, LOOKS } from '@/lib/enhance'
 import { uploadPhotos } from '@/lib/galleryUpload'
 
 type Photo = {
@@ -33,7 +33,7 @@ const COLS =
   'id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, enhanced, pre_web_path, pre_thumb_path, pre_full_path'
 const ACCEPT =
   'image/jpeg,image/png,image/webp,.heic,.heif,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.dng,.orf,.rw2,.raf,.pef,.3fr,.erf,.kdc,.mrw,.raw,.rwl,.iiq'
-const STEPS = ['Photos', 'Cull', 'Duplicates', 'Develop', 'Send']
+const STEPS = ['Photos', 'Cull', 'Duplicates', 'Style', 'Develop', 'Send']
 
 const panel = 'rounded-2xl border border-white/10 bg-[#151518] p-6'
 const btnPrimary = 'rounded-xl bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
@@ -68,6 +68,61 @@ export default function EditWalkthrough() {
   const [working, setWorking] = useState(false)
   const [dev, setDev] = useState({ busy: false, done: 0, total: 0 })
   const [latest, setLatest] = useState<{ before: string | null; after: string } | null>(null)
+  const [lookId, setLookId] = useState('natural')
+  const [strength, setStrength] = useState(0.8)
+  const [showOrig, setShowOrig] = useState(false)
+  const [sampleUrls, setSampleUrls] = useState<Record<string, string>>({})
+  const [cardUrls, setCardUrls] = useState<Record<string, string>>({})
+  const bmps = useRef<Map<string, ImageBitmap>>(new Map())
+
+  const samples = (() => {
+    const pool = photos.filter((p) => p.cull_label !== 'reject' && p.thumb_path)
+    if (pool.length <= 4) return pool
+    return [0, 1, 2, 3].map((i) => pool[Math.floor(((i + 0.5) / 4) * pool.length)])
+  })()
+  const sampleKey = samples.map((p) => p.id).join(',')
+
+  useEffect(() => {
+    if (step !== 3 || !sampleKey) return
+    let cancelled = false
+    ;(async () => {
+      for (const p of samples) {
+        if (bmps.current.has(p.id) || !p.thumb_path || !thumbs[p.thumb_path]) continue
+        try {
+          const res = await fetch(thumbs[p.thumb_path])
+          const bmp = await createImageBitmap(await res.blob(), { imageOrientation: 'from-image' })
+          bmps.current.set(p.id, bmp)
+        } catch {
+          /* skip this sample */
+        }
+      }
+      if (cancelled) return
+      const first = samples[0] ? bmps.current.get(samples[0].id) : undefined
+      if (!first) return
+      const next: Record<string, string> = {}
+      for (const l of LOOKS) next[l.id] = await renderPreview(first, l.id, 1, 320)
+      if (cancelled) { Object.values(next).forEach((u) => URL.revokeObjectURL(u)); return }
+      setCardUrls((prev) => { Object.values(prev).forEach((u) => URL.revokeObjectURL(u)); return next })
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, sampleKey, thumbs])
+
+  useEffect(() => {
+    if (step !== 3 || !sampleKey) return
+    let cancelled = false
+    const t = setTimeout(async () => {
+      const next: Record<string, string> = {}
+      for (const p of samples) {
+        const bmp = bmps.current.get(p.id)
+        if (bmp) next[p.id] = await renderPreview(bmp, lookId, strength, 480)
+      }
+      if (cancelled) { Object.values(next).forEach((u) => URL.revokeObjectURL(u)); return }
+      setSampleUrls((prev) => { Object.values(prev).forEach((u) => URL.revokeObjectURL(u)); return next })
+    }, 150)
+    return () => { cancelled = true; clearTimeout(t) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, lookId, strength, sampleKey, cardUrls])
 
   const loadPhotos = useCallback(async (): Promise<Photo[]> => {
     const sb = supabase
@@ -109,7 +164,7 @@ export default function EditWalkthrough() {
       setGallery(g as G)
       const list = await loadPhotos()
       if (cancelled) return
-      const s = list.length === 0 ? 0 : list.every((p) => p.enhanced) ? 4 : 1
+      const s = list.length === 0 ? 0 : list.every((p) => p.enhanced) ? 5 : 1
       setStep(s)
       setReached(s)
       setLoaded(true)
@@ -278,7 +333,7 @@ export default function EditWalkthrough() {
     if (!sb || dev.busy) return
     const client = sb
     const todo = photos.filter((p) => !p.enhanced)
-    if (todo.length === 0) { goTo(4); return }
+    if (todo.length === 0) { goTo(5); return }
     setDev({ busy: true, done: 0, total: todo.length })
     let done = 0
     let failed = 0
@@ -292,7 +347,7 @@ export default function EditWalkthrough() {
           const srcPath = p.full_path ?? p.orig_path
           const dl = await client.storage.from(BUCKET).download(srcPath)
           if (dl.error || !dl.data) throw dl.error ?? new Error('Could not load the photo.')
-          const out = await enhancePhoto(dl.data, srcPath)
+          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength })
           const dir = p.orig_path.slice(0, p.orig_path.lastIndexOf('/'))
           const eFull = `${dir}/enh-full.jpg`
           const eWeb = `${dir}/enh-web.jpg`
@@ -335,7 +390,7 @@ export default function EditWalkthrough() {
     await loadPhotos()
     setDev({ busy: false, done: 0, total: 0 })
     if (failed) setMsg(`${failed} photo${failed === 1 ? '' : 's'} could not be developed. You can run this step again.`)
-    else goTo(4)
+    else goTo(5)
   }
 
   if (!loaded) {
@@ -575,8 +630,82 @@ export default function EditWalkthrough() {
           </section>
         )}
 
-        {/* STEP 4: DEVELOP */}
+        {/* STEP 4: STYLE */}
         {step === 3 && (
+          <section className="mt-10">
+            <h1 className="font-fraunces text-4xl text-white">Choose a look</h1>
+            <p className="mt-3 max-w-2xl text-white/55">Pick a style, then set how strong it is. This is what we apply to the whole shoot.</p>
+
+            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              {LOOKS.map((l) => (
+                <button
+                  key={l.id}
+                  onClick={() => setLookId(l.id)}
+                  className={`overflow-hidden rounded-2xl border text-left transition ${lookId === l.id ? 'border-twilight shadow-[0_0_24px_-6px_var(--color-twilight)]' : 'border-white/10 hover:border-white/30'}`}
+                >
+                  <div className="aspect-[4/3] bg-white/5">
+                    {cardUrls[l.id] && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={cardUrls[l.id]} alt="" className="h-full w-full object-cover" />
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm text-white">{l.label}</p>
+                    <p className="mt-0.5 text-xs text-white/45">{l.blurb}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className={`${panel} mt-8`}>
+              <div className="flex items-center justify-between text-sm">
+                <p className="text-white/80">Intensity</p>
+                <p className="text-white/50">{Math.round(strength * 100)}%</p>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={Math.round(strength * 100)}
+                onChange={(e) => setStrength(Number(e.target.value) / 100)}
+                className="mt-3 w-full"
+              />
+              {samples.length === 0 ? (
+                <p className="mt-6 text-sm text-white/50">Add photos first to see the preview.</p>
+              ) : (
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  {samples.map((p) => {
+                    const src = showOrig ? (p.thumb_path ? thumbs[p.thumb_path] : undefined) : sampleUrls[p.id]
+                    return (
+                      <div key={p.id} className="aspect-[4/3] overflow-hidden rounded-xl bg-white/5">
+                        {src && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={src} alt="" className="h-full w-full object-contain" />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              <button
+                className={`${btnQuiet} mt-5 select-none`}
+                onPointerDown={() => setShowOrig(true)}
+                onPointerUp={() => setShowOrig(false)}
+                onPointerLeave={() => setShowOrig(false)}
+              >
+                Hold to compare with the original
+              </button>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button className={btnPrimary} onClick={() => goTo(4)}>Use this look</button>
+              <button className={btnQuiet} onClick={() => goTo(2)}>Back</button>
+            </div>
+          </section>
+        )}
+
+        {/* STEP 5: DEVELOP */}
+        {step === 4 && (
           <section className="mt-10">
             <h1 className="font-fraunces text-4xl text-white">Develop</h1>
             <p className="mt-3 max-w-2xl text-white/55">A first-pass edit for exposure, contrast and color. Your originals are kept, and you can revert any photo later from the gallery.</p>
@@ -584,16 +713,16 @@ export default function EditWalkthrough() {
             {!dev.busy && todoDev.length === 0 && (
               <div className={`${panel} mt-8`}>
                 <p className="text-white/70">Every photo is already developed.</p>
-                <div className="mt-6"><button className={btnPrimary} onClick={() => goTo(4)}>Continue</button></div>
+                <div className="mt-6"><button className={btnPrimary} onClick={() => goTo(5)}>Continue</button></div>
               </div>
             )}
 
             {!dev.busy && todoDev.length > 0 && (
               <div className={`${panel} mt-8`}>
-                <p className="text-white/70">{todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'} ready to develop. Keep this tab open while it runs.</p>
+                <p className="text-white/70">{todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'} ready to develop with the {LOOKS.find((l) => l.id === lookId)?.label ?? 'Natural'} look at {Math.round(strength * 100)}%. Keep this tab open while it runs.</p>
                 <div className="mt-6 flex gap-3">
                   <button className={btnPrimary} onClick={runDevelop}>Develop all</button>
-                  <button className={btnQuiet} onClick={() => goTo(4)}>Skip</button>
+                  <button className={btnQuiet} onClick={() => goTo(5)}>Skip</button>
                 </div>
               </div>
             )}
@@ -633,8 +762,8 @@ export default function EditWalkthrough() {
           </section>
         )}
 
-        {/* STEP 5: SEND */}
-        {step === 4 && (
+        {/* STEP 6: SEND */}
+        {step === 5 && (
           <section className="mt-10">
             <h1 className="font-fraunces text-4xl text-white">Ready to send</h1>
             <p className="mt-3 max-w-2xl text-white/55">
@@ -647,7 +776,7 @@ export default function EditWalkthrough() {
             </div>
             <div className="mt-10 flex flex-wrap gap-3">
               <button className={btnPrimary} onClick={() => router.push(`/galleries/${galleryId}`)}>Review and publish</button>
-              <button className={btnQuiet} onClick={() => goTo(3)}>Back</button>
+              <button className={btnQuiet} onClick={() => goTo(4)}>Back</button>
             </div>
           </section>
         )}
