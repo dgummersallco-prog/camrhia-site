@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase'
 import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { enhancePhoto, renderPreview, LOOKS } from '@/lib/enhance'
 import { sendGalleryToClient } from '@/lib/sendGallery'
+import BriefScreen from '@/app/edit/BriefScreen'
+import { briefAdjust, STYLE_LOOK, type Brief } from '@/lib/brief'
 import { uploadPhotos } from '@/lib/galleryUpload'
 
 type Photo = {
@@ -58,6 +60,25 @@ export default function EditWalkthrough() {
   const [sending, setSending] = useState(false)
   const [sendErr, setSendErr] = useState<string | null>(null)
   const [sentDone, setSentDone] = useState<'sent' | 'published' | null>(null)
+  const [brief, setBrief] = useState<Brief>({})
+  const [briefReady, setBriefReady] = useState(false)
+  const { adjust, skin } = briefAdjust(brief)
+  const briefKey = JSON.stringify(brief)
+
+  function applyBrief(b: Brief, save: boolean) {
+    setBrief(b)
+    setBriefReady(true)
+    const lk = b.style ? STYLE_LOOK[b.style] : undefined
+    if (lk) { setLookId(lk); setStrength(0.8) }
+    if (save) void persistBrief(b)
+  }
+
+  async function persistBrief(b: Brief) {
+    const sb = supabase
+    if (!sb || !userId) return
+    await sb.from('edit_briefs').upsert({ gallery_id: galleryId, owner_id: userId, answers: b, updated_at: new Date().toISOString() })
+    await sb.from('edit_choices').insert({ owner_id: userId, gallery_id: galleryId, kind: 'brief', value: b })
+  }
 
   async function sendNow() {
     const sb = supabase
@@ -85,6 +106,7 @@ export default function EditWalkthrough() {
       })
       if (err) { setSending(false); setSendErr(err); return }
     }
+    if (userId) await sb.from('edit_choices').insert({ owner_id: userId, gallery_id: gallery.id, kind: 'final', value: { look: lookId, strength, audience, brief } })
     setSending(false)
     setGallery({ ...gallery, status: 'published', audience, expires_at: expiresAt })
     setSentDone(sess ? 'sent' : 'published')
@@ -154,14 +176,14 @@ export default function EditWalkthrough() {
       const next: Record<string, string> = {}
       for (const p of samples) {
         const bmp = bmps.current.get(p.id)
-        if (bmp) next[p.id] = await renderPreview(bmp, lookId, strength, 480)
+        if (bmp) next[p.id] = await renderPreview(bmp, lookId, strength, 480, adjust, skin)
       }
       if (cancelled) { Object.values(next).forEach((u) => URL.revokeObjectURL(u)); return }
       setSampleUrls((prev) => { Object.values(prev).forEach((u) => URL.revokeObjectURL(u)); return next })
     }, 150)
     return () => { cancelled = true; clearTimeout(t) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, lookId, strength, sampleKey, cardUrls])
+  }, [step, lookId, strength, sampleKey, cardUrls, briefKey])
 
   const loadPhotos = useCallback(async (): Promise<Photo[]> => {
     const sb = supabase
@@ -202,6 +224,9 @@ export default function EditWalkthrough() {
       if (!g) { setMsg('Shoot not found.'); setLoaded(true); return }
       setGallery(g as G)
       setAudience(((g as G).audience || 'all') as 'picks' | 'picks_maybe' | 'all')
+      const { data: bf } = await sb.from('edit_briefs').select('answers').eq('gallery_id', galleryId).maybeSingle()
+      const saved = (bf as { answers?: Brief } | null)?.answers
+      if (!cancelled && saved && Object.keys(saved).length > 0) applyBrief(saved, false)
       if ((g as G).session_id) {
         const { data: sw } = await sb.from('weddings').select('id, names, couple_user_id, gallery_sent_at, gallery_url').eq('id', (g as G).session_id).maybeSingle()
         if (!cancelled) setSess((sw as Sess | null) ?? null)
@@ -391,7 +416,7 @@ export default function EditWalkthrough() {
           const srcPath = p.full_path ?? p.orig_path
           const dl = await client.storage.from(BUCKET).download(srcPath)
           if (dl.error || !dl.data) throw dl.error ?? new Error('Could not load the photo.')
-          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength })
+          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust, skin })
           const dir = p.orig_path.slice(0, p.orig_path.lastIndexOf('/'))
           const eFull = `${dir}/enh-full.jpg`
           const eWeb = `${dir}/enh-web.jpg`
@@ -442,6 +467,17 @@ export default function EditWalkthrough() {
   }
 
   const enhancedCount = photos.filter((p) => p.enhanced).length
+
+  if (!briefReady) {
+    return (
+      <BriefScreen
+        title={gallery?.title ?? ''}
+        initial={brief}
+        onDone={(b) => applyBrief(b, true)}
+        onSkip={() => setBriefReady(true)}
+      />
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#0c0c0e] text-[#ececf0]">

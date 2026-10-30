@@ -16,7 +16,8 @@ export type LookParams = {
   splitHigh: [number, number, number]
 }
 export type Look = { id: string; label: string; blurb: string; params: LookParams }
-export type LookChoice = { id: string; strength: number }
+export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'saturation' | 'fade'>>
+export type LookChoice = { id: string; strength: number; adjust?: Adjust; skin?: boolean }
 
 const Z: LookParams = {
   exposure: 0, contrast: 0, highlights: 0, shadows: 0, temp: 0, tint: 0, saturation: 0, fade: 0, bw: 0,
@@ -56,7 +57,27 @@ function scaleLook(p: LookParams, s: number): LookParams {
 }
 
 // Automatic first-pass edit (levels, exposure, contrast, white balance, color), then an optional look on top.
-function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | null, strength: number) {
+function buildK(look: LookParams | null, strength: number, adjust?: Adjust, skin?: boolean): LookParams | null {
+  const base = look ?? (adjust ? Z : null)
+  if (!base) return null
+  let k = scaleLook(base, strength)
+  if (adjust) {
+    k = {
+      ...k,
+      exposure: k.exposure + (adjust.exposure ?? 0),
+      contrast: k.contrast + (adjust.contrast ?? 0),
+      highlights: k.highlights + (adjust.highlights ?? 0),
+      shadows: k.shadows + (adjust.shadows ?? 0),
+      temp: k.temp + (adjust.temp ?? 0),
+      saturation: k.saturation + (adjust.saturation ?? 0),
+      fade: k.fade + (adjust.fade ?? 0),
+    }
+  }
+  if (skin) k = { ...k, temp: clamp(k.temp, -0.08, 0.08), saturation: Math.min(k.saturation, 0.1) }
+  return k
+}
+
+function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | null, strength: number, adjust?: Adjust, skin?: boolean) {
   const hist = new Uint32Array(256)
   let n = 0
   let sr = 0
@@ -105,7 +126,7 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
     gainB = 1 + (clamp(avg / mb, 0.92, 1.08) - 1) * 0.6
   }
 
-  const k = look ? scaleLook(look, strength) : null
+  const k = buildK(look, strength, adjust, skin)
 
   const lut = (gain: number, chan: 0 | 1 | 2) => {
     const t = new Uint8ClampedArray(256)
@@ -183,7 +204,7 @@ export async function enhancePhoto(source: Blob, path: string, look?: LookChoice
     if (!ctx) throw new Error('Your browser cannot process photos.')
     ctx.drawImage(bmp, 0, 0)
     const img = ctx.getImageData(0, 0, w, h)
-    process(img.data, w, h, findLook(look?.id), look?.strength ?? 1)
+    process(img.data, w, h, findLook(look?.id), look?.strength ?? 1, look?.adjust, look?.skin)
     ctx.putImageData(img, 0, 0)
 
     const full = await encode(canvas, 0.92)
@@ -205,7 +226,7 @@ export async function enhancePhoto(source: Blob, path: string, look?: LookChoice
 }
 
 // Small, fast preview of a look on one photo. Returns an object URL; the caller should revoke it.
-export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: number, maxEdge = 480): Promise<string> {
+export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: number, maxEdge = 480, adjust?: Adjust, skin?: boolean): Promise<string> {
   const scale = Math.min(1, maxEdge / Math.max(bmp.width, bmp.height))
   const w = Math.max(1, Math.round(bmp.width * scale))
   const h = Math.max(1, Math.round(bmp.height * scale))
@@ -216,7 +237,7 @@ export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: 
   if (!ctx) throw new Error('Your browser cannot process photos.')
   ctx.drawImage(bmp, 0, 0, w, h)
   const img = ctx.getImageData(0, 0, w, h)
-  process(img.data, w, h, findLook(lookId), strength)
+  process(img.data, w, h, findLook(lookId), strength, adjust, skin)
   ctx.putImageData(img, 0, 0)
   const blob = await encode(c, 0.85)
   return URL.createObjectURL(blob)
