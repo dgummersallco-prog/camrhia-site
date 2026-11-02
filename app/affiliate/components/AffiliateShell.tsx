@@ -16,6 +16,7 @@ export type ShellAffiliate = {
   commission_rate: number | null
   override_rate: number | null
   parent_affiliate_id: string | null
+  approved: boolean | null
 }
 
 export default function AffiliateShell({
@@ -40,7 +41,7 @@ export default function AffiliateShell({
       if (!session) { router.replace('/affiliate/login'); return }
       const { data } = await client
         .from('affiliates')
-        .select('id, name, referral_code, team_code, is_master, commission_rate, override_rate, parent_affiliate_id')
+        .select('id, name, referral_code, team_code, is_master, commission_rate, override_rate, parent_affiliate_id, approved')
         .eq('id', session.user.id)
         .maybeSingle()
       if (!cancelled) {
@@ -103,6 +104,11 @@ export default function AffiliateShell({
         </div>
         {loading ? (
           <p className="text-sm text-ink-soft">Loading…</p>
+        ) : affiliate && !affiliate.approved ? (
+          <div className="rounded-2xl border border-line bg-card p-6">
+            <p className="font-medium text-ink">Your application is being reviewed</p>
+            <p className="mt-2 text-sm text-ink-soft">Once you are approved, your referral link and earnings will show up here.</p>
+          </div>
         ) : affiliate ? (
           children(affiliate)
         ) : (

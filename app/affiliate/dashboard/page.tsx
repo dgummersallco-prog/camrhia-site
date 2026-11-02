@@ -1,5 +1,7 @@
 'use client'
 
+import AffiliateShell from '@/app/affiliate/components/AffiliateShell'
+
 import { Select } from '@/app/components/Select'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -79,6 +81,7 @@ export default function AffiliateDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [needsActivation, setNeedsActivation] = useState(false)
+  const [pending, setPending] = useState(false)
   const [activating, setActivating] = useState(false)
 
   // Copy link state
@@ -118,7 +121,7 @@ export default function AffiliateDashboardPage() {
       // Affiliate row
       const { data: affiliateData, error: affiliateError } = await supabase
         .from('affiliates')
-        .select('id, name, email, referral_code, payout_email, payout_method')
+        .select('id, name, email, referral_code, payout_email, payout_method, approved')
         .eq('id', userId)
         .single()
 
@@ -126,6 +129,7 @@ export default function AffiliateDashboardPage() {
         setNeedsActivation(true)
         return
       }
+      if (!affiliateData.approved) { setPending(true); return }
       setAffiliate(affiliateData)
       setCodeInput(affiliateData.referral_code)
       setPayoutEmail(affiliateData.payout_email ?? '')
@@ -328,6 +332,8 @@ export default function AffiliateDashboardPage() {
       </div>
     )
   }
+
+  if (pending) return <AffiliateShell title="Overview">{() => null}</AffiliateShell>
 
   if (needsActivation && !affiliate) {
     return (
