@@ -17,7 +17,7 @@ const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   : ''
 function photoUrl(path: string | null | undefined): string | null {
   if (path && (path.startsWith('data:') || path.startsWith('http'))) return path
-  return path ? `${STORAGE_BASE}${path}` : null
+  return path ? (path.startsWith('/') ? path : `${STORAGE_BASE}${path}`) : null
 }
 
 // Shown only inside the designer preview, so every section is visible while building.

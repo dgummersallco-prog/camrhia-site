@@ -9,7 +9,7 @@ const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   : ''
 
 function photoUrl(path: string | null | undefined): string | null {
-  return path ? `${STORAGE_BASE}${path}` : null
+  return path ? (path.startsWith('/') ? path : `${STORAGE_BASE}${path}`) : null
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ token: string }> }) {

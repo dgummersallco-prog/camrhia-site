@@ -7,7 +7,8 @@ import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
-type Gal = { id: string; title: string; cover_photo_id: string | null; sort_order: number }
+type Gal = { id: string; title: string; cover_photo_id: string | null; sort_order: number; source_gallery_id: string | null }
+type Client = { id: string; title: string; count: number }
 type Sec = { id: string; gallery_id: string; title: string; sort_order: number }
 type Ph = { id: string; gallery_id: string; section_id: string | null; storage_path: string; sort_order: number }
 
@@ -24,6 +25,7 @@ export default function WebsiteGalleries() {
   const [gals, setGals] = useState<Gal[]>([])
   const [secs, setSecs] = useState<Sec[]>([])
   const [photos, setPhotos] = useState<Ph[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [title, setTitle] = useState('')
   const [newSec, setNewSec] = useState<Record<string, string>>({})
   const [progress, setProgress] = useState<string | null>(null)
@@ -37,13 +39,15 @@ export default function WebsiteGalleries() {
     const id = sess.session.user.id
     setUid(id)
     const [g, s, p] = await Promise.all([
-      sb.from('website_galleries').select('id, title, cover_photo_id, sort_order').eq('photographer_id', id).order('sort_order', { ascending: true }),
+      sb.from('website_galleries').select('id, title, cover_photo_id, sort_order, source_gallery_id').eq('photographer_id', id).order('sort_order', { ascending: true }),
       sb.from('website_sections').select('id, gallery_id, title, sort_order').eq('photographer_id', id).order('sort_order', { ascending: true }),
       sb.from('website_photos').select('id, gallery_id, section_id, storage_path, sort_order').eq('photographer_id', id).order('sort_order', { ascending: true }),
     ])
     setGals((g.data ?? []) as Gal[])
     setSecs((s.data ?? []) as Sec[])
     setPhotos((p.data ?? []) as Ph[])
+    const { data: cg } = await sb.from('galleries').select('id, title, gallery_photos(count)').eq('owner_id', id).order('created_at', { ascending: false })
+    setClients(((cg ?? []) as unknown as { id: string; title: string; gallery_photos: { count: number }[] }[]).map((c) => ({ id: c.id, title: c.title, count: c.gallery_photos?.[0]?.count ?? 0 })))
   }, [router])
   useEffect(() => { load() }, [load])
 
@@ -179,6 +183,14 @@ export default function WebsiteGalleries() {
     }
   }
 
+  async function connect(g: Gal, sourceId: string | null) {
+    const sb = supabase
+    if (!sb) return
+    const { error } = await sb.from('website_galleries').update({ source_gallery_id: sourceId }).eq('id', g.id)
+    if (error) setMsg(error.message)
+    else { flash(sourceId ? 'Connected' : 'Disconnected'); await load() }
+  }
+
   async function setCover(g: Gal, p: Ph) {
     const sb = supabase
     if (!sb) return
@@ -286,7 +298,7 @@ export default function WebsiteGalleries() {
               <section key={g.id} className={card}>
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                   <input key={g.id + g.title} className={input + ' max-w-xs font-medium'} defaultValue={g.title} onBlur={(e) => rename(g, e.target.value)} />
-                  <span className="text-xs text-ink-soft">{all.length} photos</span>
+                  <span className="text-xs text-ink-soft">{g.source_gallery_id ? (clients.find((c) => c.id === g.source_gallery_id)?.count ?? 0) : all.length} photos</span>
                   <div className="ml-auto flex gap-2">
                     <button className={btnGhost} disabled={gi === 0} onClick={() => moveGallery(g, -1)} aria-label="Move up">↑</button>
                     <button className={btnGhost} disabled={gi === gals.length - 1} onClick={() => moveGallery(g, 1)} aria-label="Move down">↓</button>
@@ -294,14 +306,23 @@ export default function WebsiteGalleries() {
                   </div>
                 </div>
 
-                {(loose.length > 0 || mySecs.length === 0) && (
+                <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-ink-soft">Photos from</span>
+                  <select className={input + ' max-w-xs'} value={g.source_gallery_id ?? ''} onChange={(e) => connect(g, e.target.value || null)}>
+                    <option value="">Photos I add here</option>
+                    {clients.map((c) => <option key={c.id} value={c.id}>{c.title} ({c.count})</option>)}
+                  </select>
+                  {g.source_gallery_id && <span className="text-xs text-ink-soft">Showing this client gallery. Add or remove photos there and they update here.</span>}
+                </div>
+
+                {!g.source_gallery_id && (loose.length > 0 || mySecs.length === 0) && (
                   <div className="mb-5">
                     {mySecs.length > 0 && <p className="mb-2 text-xs font-medium uppercase tracking-widest text-ink-soft">Photos</p>}
                     {renderGroup(g, null, coverId)}
                   </div>
                 )}
 
-                {mySecs.map((s, si) => (
+                {!g.source_gallery_id && mySecs.map((s, si) => (
                   <div key={s.id} className="mb-5 rounded-xl border border-line bg-paper p-4">
                     <div className="mb-3 flex flex-wrap items-center gap-2">
                       <input key={s.id + s.title} className={input + ' max-w-xs'} defaultValue={s.title} onBlur={(e) => renameSection(s, e.target.value)} />
@@ -315,7 +336,7 @@ export default function WebsiteGalleries() {
                   </div>
                 ))}
 
-                <div className="mt-2 flex flex-wrap items-center gap-2">
+                <div className={'mt-2 flex flex-wrap items-center gap-2' + (g.source_gallery_id ? ' hidden' : '')}>
                   <input className={input + ' max-w-xs'} value={newSec[g.id] ?? ''} placeholder="Add a section, e.g. Sarah & Tom"
                     onChange={(e) => setNewSec((m) => ({ ...m, [g.id]: e.target.value }))}
                     onKeyDown={(e) => { if (e.key === 'Enter') addSection(g) }} />
