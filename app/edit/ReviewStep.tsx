@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjust } from '@/lib/enhance'
 import { briefAdjust, type Brief } from '@/lib/brief'
+import type { Crop } from '@/lib/crop'
 
 const BUCKET = 'galleries'
 
@@ -17,6 +18,7 @@ type Row = {
   thumb_path: string | null
   review_adj: Adjust | null
   reviewed: boolean
+  crop: Crop | null
 }
 
 const TOOLS: { key: keyof Adjust; label: string; scale: number }[] = [
@@ -77,6 +79,7 @@ export default function ReviewStep({
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({})
   const [light, setLight] = useState<Record<string, string>>({})
   const [manual, setManual] = useState<Adjust>({})
+  const [crop, setCrop] = useState<Crop | null>(null)
   const [afterUrl, setAfterUrl] = useState<string | null>(null)
   const [beforeUrl, setBeforeUrl] = useState<string | null>(null)
   const [mode, setMode] = useState<'after' | 'before' | 'split'>('after')
@@ -88,6 +91,7 @@ export default function ReviewStep({
 
   const row: Row | undefined = rows[idx]
   const manualKey = JSON.stringify(manual)
+  const cropKey = JSON.stringify(crop)
 
   const base = useMemo(() => {
     const lg = row ? light[row.id] : ''
@@ -106,7 +110,7 @@ export default function ReviewStep({
       for (let from = 0; ; from += 1000) {
         const { data } = await sb
           .from('gallery_photos')
-          .select('id, filename, orig_path, full_path, pre_full_path, web_path, thumb_path, review_adj, reviewed')
+          .select('id, filename, orig_path, full_path, pre_full_path, web_path, thumb_path, review_adj, reviewed, crop')
           .eq('gallery_id', galleryId)
           .eq('enhanced', true)
           .range(from, from + 999)
@@ -140,6 +144,7 @@ export default function ReviewStep({
     if (!row) return
     let cancelled = false
     setManual(row.review_adj ?? {})
+    setCrop(row.crop ?? null)
     setErr(null)
     ;(async () => {
       const sb = supabase
@@ -178,7 +183,7 @@ export default function ReviewStep({
     let cancelled = false
     const t = setTimeout(async () => {
       try {
-        const url = await renderPreview(src.bmp, lookId, strength, 1400, total, base.skin)
+        const url = await renderPreview(src.bmp, lookId, strength, 1400, total, base.skin, crop ?? undefined)
         if (cancelled) { URL.revokeObjectURL(url); return }
         setAfterUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url })
       } catch {
@@ -187,7 +192,7 @@ export default function ReviewStep({
     }, 60)
     return () => { cancelled = true; clearTimeout(t) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [srcTick, manualKey, lookId, strength, base])
+  }, [srcTick, manualKey, cropKey, lookId, strength, base])
 
   useEffect(() => () => { srcRef.current?.bmp.close() }, [])
 
@@ -207,7 +212,9 @@ export default function ReviewStep({
     setErr(null)
     try {
       const mine = cleanAdj(manual)
-      const same = JSON.stringify(mine) === JSON.stringify(cleanAdj(row.review_adj ?? {}))
+      const adjSame = JSON.stringify(mine) === JSON.stringify(cleanAdj(row.review_adj ?? {}))
+      const cropSame = JSON.stringify(crop ?? null) === JSON.stringify(row.crop ?? null)
+      const same = adjSame && cropSame
       if (same && row.reviewed) {
         setBusy(false)
         if (next) go(idx + 1)
@@ -217,7 +224,7 @@ export default function ReviewStep({
       const oldPaths: string[] = []
       let newPaths: { full: string; web: string; thumb: string } | null = null
       if (!same) {
-        const out = await enhancePhoto(src.blob, row.pre_full_path ?? row.orig_path, { id: lookId, strength, adjust: total, skin: base.skin })
+        const out = await enhancePhoto(src.blob, row.pre_full_path ?? row.orig_path, { id: lookId, strength, adjust: total, skin: base.skin, crop: crop ?? undefined })
         const dir = row.orig_path.slice(0, row.orig_path.lastIndexOf('/'))
         const v = Date.now().toString(36)
         newPaths = { full: `${dir}/enh-full-${v}.jpg`, web: `${dir}/enh-web-${v}.jpg`, thumb: `${dir}/enh-thumb-${v}.jpg` }
@@ -238,6 +245,8 @@ export default function ReviewStep({
           web_path: newPaths.web,
           thumb_path: newPaths.thumb,
           enh_bytes: out.full.size + out.web.blob.size + out.thumb.blob.size,
+          crop: crop ?? null,
+          ...(cropSame ? {} : { width: out.web.width, height: out.web.height }),
         }
       }
       const { error } = await sb.from('gallery_photos').update(patch).eq('id', row.id)
@@ -252,13 +261,14 @@ export default function ReviewStep({
           light: light[row.id] || brief.light || null,
           features: photoFeatures(src.bmp),
           baseline: { look: lookId, strength, adjust: addAdj(base.adjust, baseTweak) },
-          final: { look: lookId, strength, adjust: total, manual: mine },
+          final: { look: lookId, strength, adjust: total, manual: mine, crop: crop ?? null },
         })
       }
       const updated: Row = {
         ...row,
         reviewed: true,
         review_adj: Object.keys(mine).length > 0 ? mine : null,
+        crop: crop ?? null,
         ...(newPaths ? { full_path: newPaths.full, web_path: newPaths.web, thumb_path: newPaths.thumb } : {}),
       }
       setRows((prev) => prev.map((r) => (r.id === row.id ? updated : r)))
@@ -286,12 +296,25 @@ export default function ReviewStep({
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, busy, manualKey, rows])
+  }, [idx, busy, manualKey, cropKey, rows])
 
   useEffect(() => {
     if (!row) return
     document.getElementById(`rv-${row.id}`)?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
   }, [row?.id])
+
+  const landscape = (srcRef.current?.bmp.width ?? 1) >= (srcRef.current?.bmp.height ?? 1)
+  const shapeValue = (v: number | null) => (v === null ? null : v === 1 ? 1 : landscape ? 1 / v : v)
+  const shapeOn = (v: number | null) => {
+    const t = shapeValue(v)
+    const a = crop?.aspect ?? null
+    return t === null ? a === null : a !== null && Math.abs(a - t) < 0.001
+  }
+  function setCropPart(p: Partial<Crop>) {
+    const next: Crop = { angle: 0, aspect: null, zoom: 1, x: 0, y: 0, ...(crop ?? {}), ...p }
+    const plain = next.angle === 0 && next.aspect === null && next.zoom === 1
+    setCrop(plain ? null : next)
+  }
 
   function setTool(key: keyof Adjust, ui: number, scale: number) {
     const next: Adjust = { ...manual }
@@ -354,6 +377,66 @@ export default function ReviewStep({
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-[#151518] p-4">
+              <div className="mb-5 border-b border-white/10 pb-5">
+                <p className="mb-3 text-xs uppercase tracking-[0.18em] text-white/40">Crop &amp; straighten</p>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-white/75">Straighten</span>
+                  <span className="text-white/45">{(crop?.angle ?? 0).toFixed(1)}°</span>
+                </div>
+                <input
+                  type="range"
+                  min={-15}
+                  max={15}
+                  step={0.1}
+                  value={crop?.angle ?? 0}
+                  onChange={(e) => setCropPart({ angle: Number(e.target.value) })}
+                  onDoubleClick={() => setCropPart({ angle: 0 })}
+                  className="mt-1 w-full accent-[var(--color-twilight)]"
+                />
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {[{ l: 'Original', v: null }, { l: '1:1', v: 1 }, { l: '4:5', v: 0.8 }, { l: '5:7', v: 5 / 7 }, { l: '2:3', v: 2 / 3 }, { l: '9:16', v: 9 / 16 }].map((c) => (
+                    <button key={c.l} className={tab(shapeOn(c.v))} onClick={() => setCropPart({ aspect: shapeValue(c.v) })}>{c.l}</button>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs">
+                  <span className="text-white/75">Zoom</span>
+                  <span className="text-white/45">{Math.round((crop?.zoom ?? 1) * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={100}
+                  max={300}
+                  value={Math.round((crop?.zoom ?? 1) * 100)}
+                  onChange={(e) => setCropPart({ zoom: Number(e.target.value) / 100 })}
+                  onDoubleClick={() => setCropPart({ zoom: 1 })}
+                  className="mt-1 w-full accent-[var(--color-twilight)]"
+                />
+                {crop ? (
+                  <>
+                    <div className="mt-3 text-xs text-white/75">Move left or right</div>
+                    <input
+                      type="range"
+                      min={-100}
+                      max={100}
+                      value={Math.round(crop.x * 100)}
+                      onChange={(e) => setCropPart({ x: Number(e.target.value) / 100 })}
+                      onDoubleClick={() => setCropPart({ x: 0 })}
+                      className="mt-1 w-full accent-[var(--color-twilight)]"
+                    />
+                    <div className="mt-3 text-xs text-white/75">Move up or down</div>
+                    <input
+                      type="range"
+                      min={-100}
+                      max={100}
+                      value={Math.round(crop.y * 100)}
+                      onChange={(e) => setCropPart({ y: Number(e.target.value) / 100 })}
+                      onDoubleClick={() => setCropPart({ y: 0 })}
+                      className="mt-1 w-full accent-[var(--color-twilight)]"
+                    />
+                    <button className={`${tab(false)} mt-3`} onClick={() => setCrop(null)}>Reset crop</button>
+                  </>
+                ) : null}
+              </div>
               <div className="space-y-4">
                 {TOOLS.map((t) => {
                   const ui = Math.round((((manual[t.key] ?? 0) as number) / t.scale) * 100)
@@ -378,7 +461,7 @@ export default function ReviewStep({
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
                 <button className={tab(isBw)} onClick={() => setManual({ ...manual, bw: isBw ? 0 : 1 })}>Black &amp; White</button>
-                <button className={tab(false)} onClick={() => setManual({})}>Reset this photo</button>
+                <button className={tab(false)} onClick={() => { setManual({}); setCrop(null) }}>Reset this photo</button>
               </div>
             </div>
           </div>

@@ -1,5 +1,7 @@
 import { encode, scaled, type Version } from '@/lib/galleryImages'
 
+import { cropRect, drawCropped, type Crop } from '@/lib/crop'
+
 export type Enhanced = { full: Blob; web: Version; thumb: Version }
 
 export type LookParams = {
@@ -20,7 +22,7 @@ export type LookParams = {
 }
 export type Look = { id: string; label: string; blurb: string; params: LookParams }
 export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>>
-export type LookChoice = { id: string; strength: number; adjust?: Adjust; skin?: boolean }
+export type LookChoice = { id: string; strength: number; adjust?: Adjust; skin?: boolean; crop?: Crop }
 
 const Z: LookParams = {
   exposure: 0, contrast: 0, highlights: 0, shadows: 0, temp: 0, tint: 0, saturation: 0, fade: 0, bw: 0,
@@ -219,13 +221,15 @@ export async function enhancePhoto(source: Blob, path: string, look?: LookChoice
   const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' })
   const canvas = document.createElement('canvas')
   try {
-    const w = bmp.width
-    const h = bmp.height
+    const cr = look?.crop ? cropRect(bmp.width, bmp.height, look.crop) : null
+    const w = cr ? Math.max(1, Math.round(cr.cw)) : bmp.width
+    const h = cr ? Math.max(1, Math.round(cr.ch)) : bmp.height
     canvas.width = w
     canvas.height = h
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     if (!ctx) throw new Error('Your browser cannot process photos.')
-    ctx.drawImage(bmp, 0, 0)
+    if (cr && look?.crop) drawCropped(ctx, bmp, look.crop, cr, w, h, 1)
+    else ctx.drawImage(bmp, 0, 0)
     const img = ctx.getImageData(0, 0, w, h)
     process(img.data, w, h, findLook(look?.id), look?.strength ?? 1, look?.adjust, look?.skin)
     ctx.putImageData(img, 0, 0)
@@ -249,16 +253,20 @@ export async function enhancePhoto(source: Blob, path: string, look?: LookChoice
 }
 
 // Small, fast preview of a look on one photo. Returns an object URL; the caller should revoke it.
-export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: number, maxEdge = 480, adjust?: Adjust, skin?: boolean): Promise<string> {
-  const scale = Math.min(1, maxEdge / Math.max(bmp.width, bmp.height))
-  const w = Math.max(1, Math.round(bmp.width * scale))
-  const h = Math.max(1, Math.round(bmp.height * scale))
+export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: number, maxEdge = 480, adjust?: Adjust, skin?: boolean, crop?: Crop): Promise<string> {
+  const cr = crop ? cropRect(bmp.width, bmp.height, crop) : null
+  const sw = cr ? cr.cw : bmp.width
+  const sh = cr ? cr.ch : bmp.height
+  const scale = Math.min(1, maxEdge / Math.max(sw, sh))
+  const w = Math.max(1, Math.round(sw * scale))
+  const h = Math.max(1, Math.round(sh * scale))
   const c = document.createElement('canvas')
   c.width = w
   c.height = h
   const ctx = c.getContext('2d', { willReadFrequently: true })
   if (!ctx) throw new Error('Your browser cannot process photos.')
-  ctx.drawImage(bmp, 0, 0, w, h)
+  if (cr && crop) drawCropped(ctx, bmp, crop, cr, w, h, scale)
+  else ctx.drawImage(bmp, 0, 0, w, h)
   const img = ctx.getImageData(0, 0, w, h)
   process(img.data, w, h, findLook(lookId), strength, adjust, skin)
   ctx.putImageData(img, 0, 0)
