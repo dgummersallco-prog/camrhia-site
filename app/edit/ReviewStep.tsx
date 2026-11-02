@@ -86,6 +86,7 @@ export default function ReviewStep({
   const [beforeUrl, setBeforeUrl] = useState<string | null>(null)
   const [mode, setMode] = useState<'after' | 'before' | 'split'>('after')
   const [hold, setHold] = useState(false)
+  const [picking, setPicking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [srcTick, setSrcTick] = useState(0)
@@ -318,6 +319,48 @@ export default function ReviewStep({
     setCrop(plain ? null : next)
   }
 
+  function pickBalance(e: React.MouseEvent<HTMLDivElement>) {
+    const img = e.target as HTMLImageElement
+    if (!picking || img.tagName !== 'IMG' || !afterUrl || showing !== 'after') return
+    const rect = img.getBoundingClientRect()
+    const nw = img.naturalWidth
+    const nh = img.naturalHeight
+    if (!nw || !nh) return
+    const sc = Math.min(rect.width / nw, rect.height / nh)
+    const ox = (rect.width - nw * sc) / 2
+    const oy = (rect.height - nh * sc) / 2
+    const px = Math.round((e.clientX - rect.left - ox) / sc)
+    const py = Math.round((e.clientY - rect.top - oy) / sc)
+    if (px < 0 || py < 0 || px >= nw || py >= nh) return
+    const c = document.createElement('canvas')
+    c.width = nw
+    c.height = nh
+    const ctx = c.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return
+    ctx.drawImage(img, 0, 0)
+    const x0 = Math.max(0, px - 3)
+    const y0 = Math.max(0, py - 3)
+    const d = ctx.getImageData(x0, y0, Math.min(7, nw - x0), Math.min(7, nh - y0)).data
+    let R = 0
+    let G = 0
+    let B = 0
+    for (let i = 0; i < d.length; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2] }
+    const cnt = d.length / 4
+    R /= cnt
+    G /= cnt
+    B /= cnt
+    if (R < 8 || G < 8 || B < 8) return
+    const t = Math.max(-0.3, Math.min(0.3, (2 * (B - R)) / (R + B)))
+    const V = R * (1 + 0.5 * t)
+    const n = Math.max(-0.3, Math.min(0.3, (1 - V / G) / 0.3))
+    setManual({
+      ...manual,
+      temp: Math.max(-0.3, Math.min(0.3, (manual.temp ?? 0) + t)),
+      tint: Math.max(-0.3, Math.min(0.3, (manual.tint ?? 0) + n)),
+    })
+    setPicking(false)
+  }
+
   function setTool(key: keyof Adjust, ui: number, scale: number) {
     const next: Adjust = { ...manual }
     if (ui === 0) delete next[key]
@@ -348,8 +391,9 @@ export default function ReviewStep({
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_20rem]">
             <div>
               <div
-                className="relative flex min-h-[320px] select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40"
-                onPointerDown={() => setHold(true)}
+                className={`relative flex min-h-[320px] select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40 ${picking ? 'cursor-crosshair' : ''}`}
+                onClick={pickBalance}
+                onPointerDown={() => { if (!picking) setHold(true) }}
                 onPointerUp={() => setHold(false)}
                 onPointerLeave={() => setHold(false)}
               >
@@ -375,6 +419,7 @@ export default function ReviewStep({
                 <button className={tab(mode === 'split')} onClick={() => setMode('split')}>Side by side</button>
                 <span className="ml-auto text-xs text-white/45">Photo {idx + 1} of {rows.length} · {reviewed} reviewed</span>
               </div>
+              {picking && <p className="mt-2 text-xs text-white/50">Click something that should be neutral gray or white.</p>}
               {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
             </div>
 
@@ -462,6 +507,7 @@ export default function ReviewStep({
                 })}
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
+                <button className={tab(picking)} onClick={() => { setPicking(!picking); setMode('after') }}>White balance picker</button>
                 <button className={tab(isBw)} onClick={() => setManual({ ...manual, bw: isBw ? 0 : 1 })}>Black &amp; White</button>
                 <button className={tab(false)} onClick={() => { setManual({}); setCrop(null) }}>Reset this photo</button>
               </div>
