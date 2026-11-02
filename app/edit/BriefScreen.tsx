@@ -95,7 +95,7 @@ export default function BriefScreen({
       <div className="mx-auto max-w-4xl">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-white/40">Camrhia Pro</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-white/40">The Editing Room</p>
             <p className="mt-1 text-sm text-white/60">{title}</p>
           </div>
           <button className="text-sm text-white/45 hover:text-white" onClick={onSkip}>Skip for now</button>

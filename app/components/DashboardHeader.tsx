@@ -45,7 +45,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'dashboard', href: '/dashboard', label: 'Home' },
   { tab: 'clients', href: '/clients', label: 'Clients' },
   { tab: 'galleries', href: '/galleries', label: 'Galleries' },
-  { tab: 'edit', href: '/edit', label: 'Camrhia Pro' },
+  { tab: 'edit', href: '/edit', label: 'The Editing Room' },
   { tab: 'packages', href: '/portfolio/packages', label: 'Packages' },
   { tab: 'questionnaires', href: '/questionnaires', label: 'Questionnaires' },
   { tab: 'sessions', href: '/sessions', label: 'Sessions' },
