@@ -88,6 +88,9 @@ export default function ReviewStep({
   const [mode, setMode] = useState<'after' | 'before' | 'split'>('after')
   const [hold, setHold] = useState(false)
   const [picking, setPicking] = useState(false)
+  const [zoom100, setZoom100] = useState(false)
+  const [fullUrl, setFullUrl] = useState<string | null>(null)
+  const [fullBusy, setFullBusy] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [srcTick, setSrcTick] = useState(0)
@@ -197,6 +200,26 @@ export default function ReviewStep({
     return () => { cancelled = true; clearTimeout(t) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [srcTick, manualKey, cropKey, lookId, strength, base])
+
+  // Full-size render for checking focus and noise
+  useEffect(() => {
+    const src = srcRef.current
+    if (!zoom100 || !src || !row || src.id !== row.id) return
+    let cancelled = false
+    setFullBusy(true)
+    const t = setTimeout(async () => {
+      try {
+        const url = await renderPreview(src.bmp, lookId, strength, 100000, total, base.skin, crop ?? undefined)
+        if (cancelled) { URL.revokeObjectURL(url); return }
+        setFullUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url })
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) setFullBusy(false)
+    }, 500)
+    return () => { cancelled = true; clearTimeout(t) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom100, srcTick, manualKey, cropKey, lookId, strength, base])
 
   useEffect(() => () => { srcRef.current?.bmp.close() }, [])
 
@@ -394,11 +417,17 @@ export default function ReviewStep({
               <div
                 className={`relative flex min-h-[320px] select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40 ${picking ? 'cursor-crosshair' : ''}`}
                 onClick={pickBalance}
-                onPointerDown={() => { if (!picking) setHold(true) }}
+                onPointerDown={() => { if (!picking && !zoom100) setHold(true) }}
                 onPointerUp={() => setHold(false)}
                 onPointerLeave={() => setHold(false)}
               >
-                {showing === 'split' ? (
+                {zoom100 ? (
+                  <div className="max-h-[70vh] w-full overflow-auto">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {fullUrl && <img src={fullUrl} alt="" style={{ maxWidth: 'none' }} />}
+                    {fullBusy && <p className="absolute bottom-3 left-3 rounded-full bg-black/60 px-3 py-1 text-xs text-white/80">Rendering at full size…</p>}
+                  </div>
+                ) : showing === 'split' ? (
                   <div className="grid w-full grid-cols-2 gap-1">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {beforeUrl && <img src={beforeUrl} alt="" className="max-h-[70vh] w-full object-contain" />}
@@ -418,6 +447,7 @@ export default function ReviewStep({
                 <button className={tab(mode === 'after')} onClick={() => setMode('after')}>After</button>
                 <button className={tab(mode === 'before')} onClick={() => setMode('before')}>Before</button>
                 <button className={tab(mode === 'split')} onClick={() => setMode('split')}>Side by side</button>
+                <button className={tab(zoom100)} onClick={() => setZoom100(!zoom100)}>100%</button>
                 <span className="ml-auto text-xs text-white/45">Photo {idx + 1} of {rows.length} · {reviewed} reviewed</span>
               </div>
               {picking && <p className="mt-2 text-xs text-white/50">Click something that should be neutral gray or white.</p>}
