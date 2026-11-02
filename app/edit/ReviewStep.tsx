@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjust } from '@/lib/enhance'
 import { briefAdjust, type Brief } from '@/lib/brief'
@@ -36,6 +36,25 @@ const TOOLS: { key: keyof Adjust; label: string; scale: number }[] = [
   { key: 'sharpen', label: 'Sharpen', scale: 1 },
   { key: 'noise', label: 'Noise reduction', scale: 1 },
 ]
+const byKeys = (keys: string[]) => TOOLS.filter((t) => keys.includes(t.key as string))
+const LIGHT = byKeys(['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks'])
+const COLOR = byKeys(['temp', 'tint', 'vibrance', 'saturation'])
+const DETAIL = byKeys(['sharpen', 'noise'])
+
+const PHRASE: Record<string, [string, string]> = {
+  exposure: ['Brighten', 'Darken'],
+  contrast: ['Add contrast', 'Soften contrast'],
+  highlights: ['Boost highlights', 'Pull back highlights'],
+  shadows: ['Lift shadows', 'Deepen shadows'],
+  whites: ['Brighten whites', 'Tame whites'],
+  blacks: ['Lift blacks', 'Deepen blacks'],
+  temp: ['Warm up', 'Cool down'],
+  tint: ['Add magenta', 'Add green'],
+  vibrance: ['Boost vibrance', 'Tone down vibrance'],
+  saturation: ['Boost color', 'Mute color'],
+  sharpen: ['Sharpen', 'Soften'],
+  noise: ['Reduce noise', 'Add grain'],
+}
 
 function addAdj(a: Adjust | undefined, b: Adjust): Adjust {
   const out: Adjust = { ...(a ?? {}) }
@@ -49,9 +68,53 @@ function cleanAdj(a: Adjust): Adjust {
   return out
 }
 
-const primary = 'rounded-full bg-[var(--color-twilight)] px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50'
-const quiet = 'rounded-full border border-white/15 px-5 py-2.5 text-sm text-white/70 transition hover:border-white/35 hover:text-white disabled:opacity-40'
-const tab = (on: boolean) => `rounded-full border px-4 py-1.5 text-xs transition ${on ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`
+const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
+const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-white/70 transition hover:border-white/35 hover:text-white disabled:opacity-40'
+const tab = (on: boolean) => `rounded-full border px-3 py-1.5 text-xs transition ${on ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`
+
+function Slide({ label, shown, min, max, step, value, onChange, onReset }: {
+  label: string
+  shown: string | number
+  min: number
+  max: number
+  step?: number
+  value: number
+  onChange: (v: number) => void
+  onReset: () => void
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-white/75">{label}</span>
+        <span className="text-white/45">{shown}</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        onDoubleClick={onReset}
+        onPointerUp={(e) => e.currentTarget.blur()}
+        className="mt-1 w-full accent-[var(--color-twilight)]"
+      />
+    </div>
+  )
+}
+
+function Panel({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="border-b border-white/10 py-3 first:pt-0 last:border-b-0">
+      <button className="flex w-full items-center justify-between text-left" onClick={() => setOpen(!open)}>
+        <span className="text-xs uppercase tracking-[0.18em] text-white/50">{title}</span>
+        <span className="text-sm text-white/35">{open ? '–' : '+'}</span>
+      </button>
+      {open && <div className="mt-3 space-y-3">{children}</div>}
+    </div>
+  )
+}
 
 export default function ReviewStep({
   galleryId,
@@ -97,8 +160,13 @@ export default function ReviewStep({
   const [flags, setFlags] = useState<Record<string, string>>({})
   const [checked, setChecked] = useState(false)
   const [filter, setFilter] = useState<'flagged' | 'all'>('all')
+  const [dirty, setDirty] = useState(0)
   const movedRef = useRef(false)
   const autoRef = useRef(false)
+  const dirtyRef = useRef(0)
+  const pendingRef = useRef(false)
+  const scrolledRef = useRef(false)
+  const wrapRef = useRef<HTMLDivElement | null>(null)
   const srcRef = useRef<{ id: string; blob: Blob; bmp: ImageBitmap } | null>(null)
 
   const row: Row | undefined = rows[idx]
@@ -111,6 +179,19 @@ export default function ReviewStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row?.id, light, brief])
   const total = useMemo(() => addAdj(addAdj(base.adjust, baseTweak), manual), [base, manual, baseTweak])
+
+  function bump() {
+    dirtyRef.current += 1
+    setDirty(dirtyRef.current)
+  }
+  function editManual(m: Adjust) {
+    setManual(m)
+    bump()
+  }
+  function editCrop(c: Crop | null) {
+    setCrop(c)
+    bump()
+  }
 
   // Load the developed photos
   useEffect(() => {
@@ -213,6 +294,7 @@ export default function ReviewStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [galleryId])
 
+  // Jump to the first flagged photo once the check is done
   useEffect(() => {
     if (!checked || autoRef.current) return
     autoRef.current = true
@@ -224,12 +306,22 @@ export default function ReviewStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checked])
 
+  // Bring the workspace into view once
+  useEffect(() => {
+    if (loading || rows.length === 0 || scrolledRef.current) return
+    scrolledRef.current = true
+    wrapRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }, [loading, rows.length])
+
   // Load the current photo
   useEffect(() => {
     if (!row) return
     let cancelled = false
     setManual(row.review_adj ?? {})
     setCrop(row.crop ?? null)
+    dirtyRef.current = 0
+    pendingRef.current = false
+    setDirty(0)
     setErr(null)
     ;(async () => {
       const sb = supabase
@@ -301,15 +393,6 @@ export default function ReviewStep({
 
   useEffect(() => () => { srcRef.current?.bmp.close() }, [])
 
-  function go(i: number) {
-    if (busy || rows.length === 0) return
-    const n = Math.max(0, Math.min(rows.length - 1, i))
-    if (n === idx) return
-    movedRef.current = true
-    setAfterUrl(null)
-    setIdx(n)
-  }
-
   const needs = (r: Row) => !!flags[r.id] && !r.reviewed
   const shown = (r: Row, i: number) => filter === 'all' || needs(r) || i === idx
   function nextVisible(dir: 1 | -1) {
@@ -317,10 +400,23 @@ export default function ReviewStep({
     return idx
   }
 
-  async function apply(next: boolean) {
+  function finishSave(mark: number) {
+    if (dirtyRef.current === mark) {
+      dirtyRef.current = 0
+      setDirty(0)
+    }
+    if (pendingRef.current) {
+      pendingRef.current = false
+      bump()
+    }
+  }
+
+  async function apply(): Promise<boolean> {
     const sb = supabase
     const src = srcRef.current
-    if (!sb || !row || !src || src.id !== row.id || busy) return
+    if (!sb || !row || !src || src.id !== row.id) return false
+    if (busy) { pendingRef.current = true; return false }
+    const mark = dirtyRef.current
     setBusy(true)
     setErr(null)
     try {
@@ -330,8 +426,8 @@ export default function ReviewStep({
       const same = adjSame && cropSame
       if (same && row.reviewed) {
         setBusy(false)
-        if (next) go(nextVisible(1))
-        return
+        finishSave(mark)
+        return true
       }
       let patch: Record<string, unknown> = { reviewed: true }
       const oldPaths: string[] = []
@@ -390,26 +486,53 @@ export default function ReviewStep({
         if (data?.signedUrl) setThumbUrls((prev) => ({ ...prev, [newPaths!.thumb]: data.signedUrl }))
       }
       setBusy(false)
-      if (next) go(nextVisible(1))
+      finishSave(mark)
+      return true
     } catch (e) {
       setBusy(false)
       setErr(e instanceof Error ? e.message : 'Could not save this photo.')
+      return false
     }
   }
 
-  // Keyboard: arrows move, Enter saves and moves on
+  // Save a second after the last change
+  useEffect(() => {
+    if (dirty === 0) return
+    const t = setTimeout(() => { void apply() }, 1000)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty])
+
+  // Leaving a photo saves it. Going forward also counts it as checked.
+  async function go(i: number, accept = false) {
+    if (busy || rows.length === 0 || !row) return
+    const n = Math.max(0, Math.min(rows.length - 1, i))
+    if (n === idx) return
+    movedRef.current = true
+    const loaded = srcRef.current?.id === row.id
+    if (loaded && (dirtyRef.current > 0 || (accept && !row.reviewed))) {
+      const ok = await apply()
+      if (!ok) return
+    }
+    setAfterUrl(null)
+    setIdx(n)
+  }
+
+  async function flush() {
+    if (row && srcRef.current?.id === row.id && dirtyRef.current > 0) await apply()
+  }
+
+  // Keyboard: arrows move between photos
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return
-      if (e.key === 'ArrowRight') { e.preventDefault(); go(nextVisible(1)) }
-      else if (e.key === 'ArrowLeft') { e.preventDefault(); go(nextVisible(-1)) }
-      else if (e.key === 'Enter') { e.preventDefault(); void apply(true) }
+      if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); void go(nextVisible(1), true) }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); void go(nextVisible(-1)) }
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, busy, manualKey, cropKey, rows, filter, flags])
+  })
 
   useEffect(() => {
     if (!row) return
@@ -426,7 +549,7 @@ export default function ReviewStep({
   function setCropPart(p: Partial<Crop>) {
     const next: Crop = { angle: 0, aspect: null, zoom: 1, x: 0, y: 0, ...(crop ?? {}), ...p }
     const plain = next.angle === 0 && next.aspect === null && next.zoom === 1
-    setCrop(plain ? null : next)
+    editCrop(plain ? null : next)
   }
 
   function pickBalance(e: React.MouseEvent<HTMLDivElement>) {
@@ -463,7 +586,7 @@ export default function ReviewStep({
     const t = Math.max(-0.3, Math.min(0.3, (2 * (B - R)) / (R + B)))
     const V = R * (1 + 0.5 * t)
     const n = Math.max(-0.3, Math.min(0.3, (1 - V / G) / 0.3))
-    setManual({
+    editManual({
       ...manual,
       temp: Math.max(-0.3, Math.min(0.3, (manual.temp ?? 0) + t)),
       tint: Math.max(-0.3, Math.min(0.3, (manual.tint ?? 0) + n)),
@@ -475,17 +598,56 @@ export default function ReviewStep({
     const next: Adjust = { ...manual }
     if (ui === 0) delete next[key]
     else next[key] = (ui / 100) * scale
-    setManual(next)
+    editManual(next)
   }
+
+  const tools = (list: typeof TOOLS) =>
+    list.map((t) => {
+      const ui = Math.round((((manual[t.key] ?? 0) as number) / t.scale) * 100)
+      return (
+        <Slide
+          key={t.key}
+          label={t.label}
+          shown={ui > 0 ? `+${ui}` : ui}
+          min={-100}
+          max={100}
+          value={ui}
+          onChange={(v) => setTool(t.key, v, t.scale)}
+          onReset={() => setTool(t.key, 0, t.scale)}
+        />
+      )
+    })
 
   const showing = hold ? 'before' : mode
   const reviewed = rows.filter((r) => r.reviewed).length
   const isBw = (manual.bw ?? 0) > 0
+  const saveLabel = busy ? 'Saving…' : dirty > 0 ? 'Saving soon…' : row?.reviewed ? 'Saved ✓' : ''
+
+  const style = useMemo(() => {
+    const fixed = rows.filter((r) => r.review_adj && Object.values(r.review_adj).some((v) => v))
+    const tally = new Map<string, number>()
+    for (const r of fixed) {
+      const a = r.review_adj as unknown as Record<string, number>
+      const seen = new Set<string>()
+      for (const [k, v] of Object.entries(a)) {
+        if (!v) continue
+        if (k === 'bw') { seen.add('Go black & white'); continue }
+        const ph = PHRASE[k]
+        if (ph) seen.add(v > 0 ? ph[0] : ph[1])
+        else if (/^[hsl]_/.test(k)) seen.add('Adjust colors by hue')
+      }
+      seen.forEach((x) => tally.set(x, (tally.get(x) ?? 0) + 1))
+    }
+    const top = Array.from(tally.entries()).sort((x, y) => y[1] - x[1]).slice(0, 4)
+    return { fixed: fixed.length, top }
+  }, [rows])
+
+  const frameImg = 'max-h-[70vh] w-full object-contain lg:h-full lg:max-h-full'
 
   return (
     <section className="mt-6">
       <p className="max-w-2xl text-white/55">
-        Go through your photos one at a time. Nudge anything that is off, then move on. Use the arrow keys to move, and Enter to save and go to the next.
+        Change anything and it saves on its own. Use the arrows to move between photos.
       </p>
 
       {loading ? (
@@ -497,174 +659,158 @@ export default function ReviewStep({
         </div>
       ) : (
         <>
-          <div className="mt-6 flex flex-wrap items-center gap-2">
+          <div className="mt-5 flex flex-wrap items-center gap-2">
             <button className={tab(filter === 'flagged')} onClick={() => setFilter('flagged')}>Needs a look ({rows.filter(needs).length})</button>
             <button className={tab(filter === 'all')} onClick={() => setFilter('all')}>All photos ({rows.length})</button>
             {!checked && <span className="text-xs text-white/40">Checking your photos…</span>}
           </div>
-          <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_20rem]">
-            <div className="lg:sticky lg:top-4 lg:self-start">
+
+          <div ref={wrapRef} className="mt-4 grid scroll-mt-4 gap-4 lg:h-[calc(100vh-2rem)] lg:grid-cols-[17rem_minmax(0,1fr)_17rem]">
+            {/* LEFT: light and color */}
+            <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
+              <Panel title="Light">{tools(LIGHT)}</Panel>
+              <Panel title="Color">
+                {tools(COLOR)}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button className={tab(picking)} onClick={() => { setPicking(!picking); setMode('after') }}>White balance picker</button>
+                  <button className={tab(isBw)} onClick={() => editManual({ ...manual, bw: isBw ? 0 : 1 })}>Black &amp; White</button>
+                </div>
+                {picking && <p className="text-xs text-white/50">Click something that should be neutral gray or white.</p>}
+              </Panel>
+            </div>
+
+            {/* CENTER: the photo */}
+            <div className="flex min-h-0 flex-col">
               <div
-                className={`relative flex min-h-[320px] select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40 ${picking ? 'cursor-crosshair' : ''}`}
+                className={`relative flex min-h-[320px] flex-1 select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40 ${picking ? 'cursor-crosshair' : ''}`}
                 onClick={pickBalance}
                 onPointerDown={() => { if (!picking && !zoom100) setHold(true) }}
                 onPointerUp={() => setHold(false)}
                 onPointerLeave={() => setHold(false)}
               >
                 {zoom100 ? (
-                  <div className="max-h-[70vh] w-full overflow-auto">
+                  <div className="max-h-[70vh] w-full overflow-auto lg:h-full lg:max-h-full">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {fullUrl && <img src={fullUrl} alt="" style={{ maxWidth: 'none' }} />}
                     {fullBusy && <p className="absolute bottom-3 left-3 rounded-full bg-black/60 px-3 py-1 text-xs text-white/80">Rendering at full size…</p>}
                   </div>
                 ) : showing === 'split' ? (
-                  <div className="grid w-full grid-cols-2 gap-1">
+                  <div className="grid w-full grid-cols-2 gap-1 lg:h-full">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {beforeUrl && <img src={beforeUrl} alt="" className="max-h-[70vh] w-full object-contain" />}
+                    {beforeUrl && <img src={beforeUrl} alt="" className={frameImg} />}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {afterUrl && <img src={afterUrl} alt="" className="max-h-[70vh] w-full object-contain" />}
+                    {afterUrl && <img src={afterUrl} alt="" className={frameImg} />}
                   </div>
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
-                  (showing === 'before' ? beforeUrl : afterUrl) && <img src={(showing === 'before' ? beforeUrl : afterUrl) as string} alt="" className="max-h-[70vh] w-full object-contain" />
+                  (showing === 'before' ? beforeUrl : afterUrl) && <img src={(showing === 'before' ? beforeUrl : afterUrl) as string} alt="" className={frameImg} />
                 )}
                 {!afterUrl && !err && <p className="absolute text-sm text-white/40">Loading…</p>}
                 <span className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-xs text-white/80">
                   {showing === 'before' ? 'Before' : showing === 'split' ? 'Before · After' : 'After'}
                 </span>
+                {saveLabel && <span className="absolute right-3 top-3 rounded-full bg-black/60 px-3 py-1 text-xs text-white/70">{saveLabel}</span>}
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+
+              <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2">
                 <button className={tab(mode === 'after')} onClick={() => setMode('after')}>After</button>
                 <button className={tab(mode === 'before')} onClick={() => setMode('before')}>Before</button>
                 <button className={tab(mode === 'split')} onClick={() => setMode('split')}>Side by side</button>
                 <button className={tab(zoom100)} onClick={() => setZoom100(!zoom100)}>100%</button>
                 {flags[row.id] && !row.reviewed && <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs text-amber-300">{flags[row.id]}</span>}
-                <span className="ml-auto text-xs text-white/45">Photo {idx + 1} of {rows.length} · {reviewed} reviewed</span>
+                <span className="ml-auto text-xs text-white/45">Photo {idx + 1} of {rows.length} · {reviewed} checked</span>
               </div>
-              {picking && <p className="mt-2 text-xs text-white/50">Click something that should be neutral gray or white.</p>}
-              {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
+              {err && <p className="mt-2 shrink-0 text-sm text-red-300">{err}</p>}
+
+              <div className="mt-3 flex shrink-0 gap-1.5 overflow-x-auto pb-1">
+                {rows.map((r, i) => {
+                  if (!shown(r, i)) return null
+                  const src = r.thumb_path ? thumbUrls[r.thumb_path] : undefined
+                  return (
+                    <button
+                      key={r.id}
+                      id={`rv-${r.id}`}
+                      onClick={() => void go(i)}
+                      className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-white/5 ${i === idx ? 'ring-2 ring-[var(--color-twilight)]' : ''}`}
+                    >
+                      {src && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      )}
+                      {r.reviewed && <span className="absolute bottom-0 right-0 rounded-tl bg-emerald-600 px-1 text-[9px] text-white">✓</span>}
+                      {needs(r) && <span className="absolute left-0.5 top-0.5 h-2 w-2 rounded-full bg-amber-400" />}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2">
+                <button className={quiet} disabled={busy || nextVisible(-1) === idx} onClick={() => void go(nextVisible(-1))}>‹ Back a photo</button>
+                <button className={primary} disabled={busy || nextVisible(1) === idx} onClick={() => void go(nextVisible(1), true)}>Next photo ›</button>
+                <button className={`${quiet} ml-auto`} disabled={busy} onClick={async () => { await flush(); onDone() }}>Done editing</button>
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-[#151518] p-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
-              <div className="mb-5 border-b border-white/10 pb-5">
-                <p className="mb-3 text-xs uppercase tracking-[0.18em] text-white/40">Crop &amp; straighten</p>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/75">Straighten</span>
-                  <span className="text-white/45">{(crop?.angle ?? 0).toFixed(1)}°</span>
-                </div>
-                <input
-                  type="range"
+            {/* RIGHT: crop, detail, color mix, your style */}
+            <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
+              <Panel title="Crop & straighten">
+                <Slide
+                  label="Straighten"
+                  shown={`${(crop?.angle ?? 0).toFixed(1)}°`}
                   min={-15}
                   max={15}
                   step={0.1}
                   value={crop?.angle ?? 0}
-                  onChange={(e) => setCropPart({ angle: Number(e.target.value) })}
-                  onDoubleClick={() => setCropPart({ angle: 0 })}
-                  className="mt-1 w-full accent-[var(--color-twilight)]"
+                  onChange={(v) => setCropPart({ angle: v })}
+                  onReset={() => setCropPart({ angle: 0 })}
                 />
-                <div className="mt-3 flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   {[{ l: 'Original', v: null }, { l: '1:1', v: 1 }, { l: '4:5', v: 0.8 }, { l: '5:7', v: 5 / 7 }, { l: '2:3', v: 2 / 3 }, { l: '9:16', v: 9 / 16 }].map((c) => (
                     <button key={c.l} className={tab(shapeOn(c.v))} onClick={() => setCropPart({ aspect: shapeValue(c.v) })}>{c.l}</button>
                   ))}
                 </div>
-                <div className="mt-3 flex items-center justify-between text-xs">
-                  <span className="text-white/75">Zoom</span>
-                  <span className="text-white/45">{Math.round((crop?.zoom ?? 1) * 100)}%</span>
-                </div>
-                <input
-                  type="range"
+                <Slide
+                  label="Zoom"
+                  shown={`${Math.round((crop?.zoom ?? 1) * 100)}%`}
                   min={100}
                   max={300}
                   value={Math.round((crop?.zoom ?? 1) * 100)}
-                  onChange={(e) => setCropPart({ zoom: Number(e.target.value) / 100 })}
-                  onDoubleClick={() => setCropPart({ zoom: 1 })}
-                  className="mt-1 w-full accent-[var(--color-twilight)]"
+                  onChange={(v) => setCropPart({ zoom: v / 100 })}
+                  onReset={() => setCropPart({ zoom: 1 })}
                 />
                 {crop ? (
                   <>
-                    <div className="mt-3 text-xs text-white/75">Move left or right</div>
-                    <input
-                      type="range"
-                      min={-100}
-                      max={100}
-                      value={Math.round(crop.x * 100)}
-                      onChange={(e) => setCropPart({ x: Number(e.target.value) / 100 })}
-                      onDoubleClick={() => setCropPart({ x: 0 })}
-                      className="mt-1 w-full accent-[var(--color-twilight)]"
-                    />
-                    <div className="mt-3 text-xs text-white/75">Move up or down</div>
-                    <input
-                      type="range"
-                      min={-100}
-                      max={100}
-                      value={Math.round(crop.y * 100)}
-                      onChange={(e) => setCropPart({ y: Number(e.target.value) / 100 })}
-                      onDoubleClick={() => setCropPart({ y: 0 })}
-                      className="mt-1 w-full accent-[var(--color-twilight)]"
-                    />
-                    <button className={`${tab(false)} mt-3`} onClick={() => setCrop(null)}>Reset crop</button>
+                    <Slide label="Move left or right" shown="" min={-100} max={100} value={Math.round(crop.x * 100)} onChange={(v) => setCropPart({ x: v / 100 })} onReset={() => setCropPart({ x: 0 })} />
+                    <Slide label="Move up or down" shown="" min={-100} max={100} value={Math.round(crop.y * 100)} onChange={(v) => setCropPart({ y: v / 100 })} onReset={() => setCropPart({ y: 0 })} />
+                    <button className={tab(false)} onClick={() => editCrop(null)}>Reset crop</button>
                   </>
                 ) : null}
+              </Panel>
+              <Panel title="Detail" defaultOpen={false}>{tools(DETAIL)}</Panel>
+              <Panel title="Color mix" defaultOpen={false}>
+                <ColorMixer value={manual} onChange={editManual} />
+              </Panel>
+              <div className="py-3">
+                <button className={tab(false)} onClick={() => { editManual({}); editCrop(null) }}>Reset this photo</button>
               </div>
-              <div className="space-y-4">
-                {TOOLS.map((t) => {
-                  const ui = Math.round((((manual[t.key] ?? 0) as number) / t.scale) * 100)
-                  return (
-                    <div key={t.key}>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-white/75">{t.label}</span>
-                        <span className="text-white/45">{ui > 0 ? `+${ui}` : ui}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={-100}
-                        max={100}
-                        value={ui}
-                        onChange={(e) => setTool(t.key, Number(e.target.value), t.scale)}
-                        onDoubleClick={() => setTool(t.key, 0, t.scale)}
-                        className="mt-1 w-full accent-[var(--color-twilight)]"
-                      />
-                    </div>
-                  )
-                })}
+              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-white/50">Your style</p>
+                <p className="mt-2 text-xs text-white/55">Every fix you make is saved, so Camrhia can learn how you edit.</p>
+                <p className="mt-2 text-sm text-white/80">{reviewed} checked · {style.fixed} changed</p>
+                {style.fixed >= 3 ? (
+                  <ul className="mt-2 space-y-1">
+                    {style.top.map(([label, n]) => (
+                      <li key={label} className="flex justify-between text-xs text-white/70">
+                        <span>{label}</span>
+                        <span className="text-white/40">{n} of {style.fixed}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-xs text-white/45">Make a few more fixes and your patterns show up here.</p>
+                )}
               </div>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <button className={tab(picking)} onClick={() => { setPicking(!picking); setMode('after') }}>White balance picker</button>
-                <button className={tab(isBw)} onClick={() => setManual({ ...manual, bw: isBw ? 0 : 1 })}>Black &amp; White</button>
-                <button className={tab(false)} onClick={() => { setManual({}); setCrop(null) }}>Reset this photo</button>
-              </div>
-              <div className="mt-5 border-t border-white/10 pt-5"><ColorMixer value={manual} onChange={setManual} /></div>
             </div>
-          </div>
-
-          <div className="mt-6 flex gap-1.5 overflow-x-auto pb-2">
-            {rows.map((r, i) => {
-              if (!shown(r, i)) return null
-              const src = r.thumb_path ? thumbUrls[r.thumb_path] : undefined
-              return (
-                <button
-                  key={r.id}
-                  id={`rv-${r.id}`}
-                  onClick={() => go(i)}
-                  className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-white/5 ${i === idx ? 'ring-2 ring-[var(--color-twilight)]' : ''}`}
-                >
-                  {src && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
-                  )}
-                  {r.reviewed && <span className="absolute bottom-0 right-0 rounded-tl bg-emerald-600 px-1 text-[9px] text-white">✓</span>}
-                  {needs(r) && <span className="absolute left-0.5 top-0.5 h-2 w-2 rounded-full bg-amber-400" />}
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button className={primary} disabled={busy} onClick={() => void apply(true)}>{busy ? 'Saving…' : nextVisible(1) === idx ? 'Save' : 'Save and next'}</button>
-            <button className={quiet} disabled={busy || nextVisible(-1) === idx} onClick={() => go(nextVisible(-1))}>Previous</button>
-            <button className={quiet} disabled={busy || nextVisible(1) === idx} onClick={() => go(nextVisible(1))}>Skip</button>
-            <button className={quiet} disabled={busy} onClick={onDone}>Done reviewing</button>
-            <button className={quiet} disabled={busy} onClick={onBack}>Back</button>
           </div>
         </>
       )}
