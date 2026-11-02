@@ -413,7 +413,7 @@ export default function ReviewStep({
       ) : (
         <>
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_20rem]">
-            <div>
+            <div className="lg:sticky lg:top-4 lg:self-start">
               <div
                 className={`relative flex min-h-[320px] select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40 ${picking ? 'cursor-crosshair' : ''}`}
                 onClick={pickBalance}
@@ -454,7 +454,7 @@ export default function ReviewStep({
               {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-[#151518] p-4">
+            <div className="rounded-2xl border border-white/10 bg-[#151518] p-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
               <div className="mb-5 border-b border-white/10 pb-5">
                 <p className="mb-3 text-xs uppercase tracking-[0.18em] text-white/40">Crop &amp; straighten</p>
                 <div className="flex items-center justify-between text-xs">

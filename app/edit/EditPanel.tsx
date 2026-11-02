@@ -154,7 +154,7 @@ export default function EditPanel({
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <div>
+        <div className="lg:sticky lg:top-4 lg:self-start">
           <p className="mb-2 text-xs text-white/45">Tap a photo to try the edit on it</p>
           <div className="flex gap-1.5 overflow-x-auto pb-2">
             {samples.map((p) => {
@@ -196,7 +196,7 @@ export default function EditPanel({
           {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
         </div>
 
-        <div>
+        <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
           <Dials value={tweak} onChange={setTweak} />
           {signatureName && onSaveToSignature && (
             <div className="mt-4">
