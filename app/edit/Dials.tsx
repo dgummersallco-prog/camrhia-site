@@ -1,6 +1,7 @@
 'use client'
 
 import { TOOLS } from '@/lib/tools'
+import ColorMixer from '@/app/edit/ColorMixer'
 import type { Adjust } from '@/lib/enhance'
 
 const chip = (on: boolean) => `rounded-full border px-4 py-1.5 text-xs transition ${on ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`
@@ -43,6 +44,7 @@ export default function Dials({ value, onChange }: { value: Adjust; onChange: (a
         <button className={chip(isBw)} onClick={() => onChange({ ...value, bw: isBw ? 0 : 1 })}>Black &amp; White</button>
         <button className={chip(false)} onClick={() => onChange({})}>Reset dials</button>
       </div>
+      <div className="mt-5 border-t border-white/10 pt-5"><ColorMixer value={value} onChange={onChange} /></div>
     </div>
   )
 }

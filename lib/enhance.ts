@@ -1,6 +1,7 @@
 import { encode, scaled, type Version } from '@/lib/galleryImages'
 
 import { cropRect, drawCropped, type Crop } from '@/lib/crop'
+import { BANDS, type HslKey } from '@/lib/hsl'
 
 export type Enhanced = { full: Blob; web: Version; thumb: Version }
 
@@ -21,7 +22,7 @@ export type LookParams = {
   splitHigh: [number, number, number]
 }
 export type Look = { id: string; label: string; blurb: string; params: LookParams }
-export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>> & { sharpen?: number; noise?: number }
+export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>> & { sharpen?: number; noise?: number } & Partial<Record<HslKey, number>>
 export type LookChoice = { id: string; strength: number; adjust?: Adjust; skin?: boolean; crop?: Crop }
 
 const Z: LookParams = {
@@ -173,6 +174,10 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
   const vib = k ? k.vibrance : 0
   const sh = k ? k.splitShadow : null
   const hg = k ? k.splitHigh : null
+  const hslH = BANDS.map((b) => adjust?.[`h_${b.id}` as HslKey] ?? 0)
+  const hslS = BANDS.map((b) => adjust?.[`s_${b.id}` as HslKey] ?? 0)
+  const hslL = BANDS.map((b) => adjust?.[`l_${b.id}` as HslKey] ?? 0)
+  const hslOn = hslH.some((v) => v) || hslS.some((v) => v) || hslL.some((v) => v)
 
   for (let i = 0; i < d.length; i += 4) {
     let r = lutR[d[i]]
@@ -189,6 +194,47 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
       r = l + (r - l) * (1 + amt)
       g = l + (g - l) * (1 + amt)
       b = l + (b - l) * (1 + amt)
+    }
+    if (hslOn) {
+      const mx = Math.max(r, g, b)
+      const mn = Math.min(r, g, b)
+      const c = mx - mn
+      if (c > 2 && mx > 0) {
+        let hue = mx === r ? ((g - b) / c) % 6 : mx === g ? (b - r) / c + 2 : (r - g) / c + 4
+        hue *= 60
+        if (hue < 0) hue += 360
+        let bi = 0
+        while (bi < 7 && hue >= BANDS[bi + 1].center) bi++
+        const lo = BANDS[bi].center
+        const hi = bi === 7 ? 360 : BANDS[bi + 1].center
+        const t = (hue - lo) / (hi - lo)
+        const nb = bi === 7 ? 0 : bi + 1
+        const dh = hslH[bi] * (1 - t) + hslH[nb] * t
+        const ds = hslS[bi] * (1 - t) + hslS[nb] * t
+        const dl = hslL[bi] * (1 - t) + hslL[nb] * t
+        const cw = Math.min(1, c / 80)
+        const L = clamp((mx + mn) / 510, 0, 1)
+        const S = c / 255 / Math.max(0.0001, 1 - Math.abs(2 * L - 1))
+        const nh = (hue + dh * cw * 30 + 360) % 360
+        const nS = clamp(S * (1 + ds * cw), 0, 1)
+        const nL = clamp(L + dl * cw * 0.25, 0, 1)
+        const C2 = (1 - Math.abs(2 * nL - 1)) * nS
+        const hp = nh / 60
+        const X = C2 * (1 - Math.abs((hp % 2) - 1))
+        let r1 = 0
+        let g1 = 0
+        let b1 = 0
+        if (hp < 1) { r1 = C2; g1 = X }
+        else if (hp < 2) { r1 = X; g1 = C2 }
+        else if (hp < 3) { g1 = C2; b1 = X }
+        else if (hp < 4) { g1 = X; b1 = C2 }
+        else if (hp < 5) { r1 = X; b1 = C2 }
+        else { r1 = C2; b1 = X }
+        const mm = nL - C2 / 2
+        r = (r1 + mm) * 255
+        g = (g1 + mm) * 255
+        b = (b1 + mm) * 255
+      }
     }
     if (bwA > 0) {
       r += (l - r) * bwA

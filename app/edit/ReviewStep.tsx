@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjust } from '@/lib/enhance'
 import { briefAdjust, type Brief } from '@/lib/brief'
 import type { Crop } from '@/lib/crop'
+import ColorMixer from '@/app/edit/ColorMixer'
 
 const BUCKET = 'galleries'
 
@@ -511,6 +512,7 @@ export default function ReviewStep({
                 <button className={tab(isBw)} onClick={() => setManual({ ...manual, bw: isBw ? 0 : 1 })}>Black &amp; White</button>
                 <button className={tab(false)} onClick={() => { setManual({}); setCrop(null) }}>Reset this photo</button>
               </div>
+              <div className="mt-5 border-t border-white/10 pt-5"><ColorMixer value={manual} onChange={setManual} /></div>
             </div>
           </div>
 
