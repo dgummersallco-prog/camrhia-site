@@ -21,7 +21,7 @@ export type LookParams = {
   splitHigh: [number, number, number]
 }
 export type Look = { id: string; label: string; blurb: string; params: LookParams }
-export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>>
+export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>> & { sharpen?: number; noise?: number }
 export type LookChoice = { id: string; strength: number; adjust?: Adjust; skin?: boolean; crop?: Crop }
 
 const Z: LookParams = {
@@ -206,6 +206,59 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
     d[i] = r
     d[i + 1] = g
     d[i + 2] = b
+  }
+  if (adjust && (adjust.sharpen || adjust.noise)) detail(d, w, h, adjust.sharpen ?? 0, adjust.noise ?? 0)
+}
+
+// Simple box blur (3 channels) used by sharpening and noise reduction.
+function boxBlur(src: Uint8ClampedArray, w: number, h: number, r: number): Uint8ClampedArray {
+  const tmp = new Uint8ClampedArray(src.length)
+  const out = new Uint8ClampedArray(src.length)
+  const win = 2 * r + 1
+  for (let y = 0; y < h; y++) {
+    const row = y * w * 4
+    for (let c = 0; c < 3; c++) {
+      let sum = 0
+      for (let x = -r; x <= r; x++) sum += src[row + clamp(x, 0, w - 1) * 4 + c]
+      for (let x = 0; x < w; x++) {
+        tmp[row + x * 4 + c] = sum / win
+        sum += src[row + clamp(x + r + 1, 0, w - 1) * 4 + c] - src[row + clamp(x - r, 0, w - 1) * 4 + c]
+      }
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    for (let c = 0; c < 3; c++) {
+      let sum = 0
+      for (let y = -r; y <= r; y++) sum += tmp[clamp(y, 0, h - 1) * w * 4 + x * 4 + c]
+      for (let y = 0; y < h; y++) {
+        out[y * w * 4 + x * 4 + c] = sum / win
+        sum += tmp[clamp(y + r + 1, 0, h - 1) * w * 4 + x * 4 + c] - tmp[clamp(y - r, 0, h - 1) * w * 4 + x * 4 + c]
+      }
+    }
+  }
+  return out
+}
+
+// Noise reduction (smooths flat areas, leaves edges) then sharpening (or softening when negative).
+function detail(d: Uint8ClampedArray, w: number, h: number, sharpen: number, noise: number) {
+  const r = Math.max(1, Math.round(Math.max(w, h) / 1400))
+  const nz = clamp(noise, 0, 1)
+  if (nz > 0) {
+    const bl = boxBlur(d, w, h, r)
+    for (let i = 0; i < d.length; i += 4) {
+      for (let c = 0; c < 3; c++) {
+        const diff = Math.abs(d[i + c] - bl[i + c])
+        const m = nz * (1 - clamp(diff / 24, 0, 1))
+        d[i + c] = d[i + c] + (bl[i + c] - d[i + c]) * m
+      }
+    }
+  }
+  if (sharpen !== 0) {
+    const bl = boxBlur(d, w, h, r)
+    const a = sharpen > 0 ? sharpen * 1.5 : sharpen * 0.8
+    for (let i = 0; i < d.length; i += 4) {
+      for (let c = 0; c < 3; c++) d[i + c] = d[i + c] + (d[i + c] - bl[i + c]) * a
+    }
   }
 }
 

@@ -11,6 +11,8 @@ export const TOOLS: { key: keyof Adjust; label: string; scale: number }[] = [
   { key: 'tint', label: 'Tint', scale: 0.3 },
   { key: 'vibrance', label: 'Vibrance', scale: 0.5 },
   { key: 'saturation', label: 'Saturation', scale: 0.5 },
+  { key: 'sharpen', label: 'Sharpen', scale: 1 },
+  { key: 'noise', label: 'Noise reduction', scale: 1 },
 ]
 
 export function addAdj(a: Adjust | undefined, b: Adjust | undefined): Adjust {
