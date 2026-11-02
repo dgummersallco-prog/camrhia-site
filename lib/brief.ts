@@ -1,7 +1,7 @@
 import type { Adjust } from '@/lib/enhance'
 
 export type SceneDef = { id: string; name: string; startId: string; light: string }
-export type Brief = { type?: string; style?: string; setting?: string; light?: string; mood?: string; skin?: string; scenes?: SceneDef[] }
+export type Brief = { type?: string; style?: string; setting?: string; light?: string; mood?: string; skin?: string; scenes?: SceneDef[]; look?: string; tweak?: Adjust }
 export type Signature = { id: string; name: string; answers: Brief; strength: number }
 export type Option = { value: string; label: string; blurb?: string }
 export type Question = { key: keyof Brief; title: string; hint?: string; options: Option[] }

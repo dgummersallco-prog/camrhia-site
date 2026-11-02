@@ -56,6 +56,7 @@ export default function ReviewStep({
   strength,
   brief,
   getLightMap,
+  baseTweak,
   onBack,
   onDone,
 }: {
@@ -66,6 +67,7 @@ export default function ReviewStep({
   strength: number
   brief: Brief
   getLightMap: () => Promise<Record<string, string>>
+  baseTweak: Adjust
   onBack: () => void
   onDone: () => void
 }) {
@@ -92,7 +94,7 @@ export default function ReviewStep({
     return briefAdjust(lg ? { ...brief, light: lg } : brief)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row?.id, light, brief])
-  const total = useMemo(() => addAdj(base.adjust, manual), [base, manual])
+  const total = useMemo(() => addAdj(addAdj(base.adjust, baseTweak), manual), [base, manual, baseTweak])
 
   // Load the developed photos
   useEffect(() => {
@@ -249,7 +251,7 @@ export default function ReviewStep({
           signature_id: signatureId,
           light: light[row.id] || brief.light || null,
           features: photoFeatures(src.bmp),
-          baseline: { look: lookId, strength, adjust: base.adjust ?? {} },
+          baseline: { look: lookId, strength, adjust: addAdj(base.adjust, baseTweak) },
           final: { look: lookId, strength, adjust: total, manual: mine },
         })
       }
