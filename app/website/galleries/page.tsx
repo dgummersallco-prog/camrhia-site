@@ -142,22 +142,35 @@ export default function WebsiteGalleries() {
     if (list.length === 0) { setMsg('Please choose image files.'); return }
     try {
       let done = 0
+      const failed: string[] = []
+      let lastErr = ''
       const queue = list.map((file, i) => ({ file, i }))
       setProgress(`Uploading 0 of ${list.length}…`)
       const worker = async () => {
         for (let item = queue.shift(); item; item = queue.shift()) {
-          const v = await makeVersions(item.file)
-          const path = `${uid}/web_${g.id}_${Date.now()}_${item.i}.jpg`
-          const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
-          if (up.error) throw up.error
-          const { error } = await sb.from('website_photos').insert({ gallery_id: g.id, photographer_id: uid, section_id: sectionId, storage_path: path, sort_order: existing + item.i })
-          if (error) throw error
-          done++
+          let ok = false
+          for (let attempt = 0; attempt < 3 && !ok; attempt++) {
+            try {
+              const v = await makeVersions(item.file)
+              const path = `${uid}/web_${g.id}_${Date.now()}_${item.i}.jpg`
+              const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+              if (up.error) throw up.error
+              const { error } = await sb.from('website_photos').insert({ gallery_id: g.id, photographer_id: uid, section_id: sectionId, storage_path: path, sort_order: existing + item.i })
+              if (error) { await sb.storage.from('portfolio').remove([path]); throw error }
+              ok = true
+            } catch (e) {
+              lastErr = (e as { message?: string })?.message ?? 'Upload failed.'
+              await new Promise((r) => setTimeout(r, 800 * (attempt + 1)))
+            }
+          }
+          if (ok) done++
+          else failed.push(item.file.name)
           setProgress(`Uploading ${done} of ${list.length}…`)
         }
       }
       await Promise.all([worker(), worker(), worker()])
-      flash('Photos added')
+      if (failed.length) setMsg(`${failed.length} of ${list.length} did not upload (${failed.join(', ')}): ${lastErr}`)
+      else flash('Photos added')
     } catch (e) {
       setMsg((e as { message?: string })?.message ?? 'Upload failed.')
     } finally {
