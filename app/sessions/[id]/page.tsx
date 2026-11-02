@@ -401,7 +401,7 @@ export default function SessionDetailPage() {
               </div>
               {editKey === 'header' ? (
                 <div className="mt-3 rounded-2xl border border-line bg-card p-4">
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <label className={lblCls}>Name</label>
                       {field('names', 'text', 'w-full', '', true)}
@@ -437,7 +437,7 @@ export default function SessionDetailPage() {
               )}
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {/* Details */}
               <section className={card}>
                 <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Details</p>
