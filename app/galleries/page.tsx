@@ -1,7 +1,7 @@
 'use client'
 
 import { Select } from '@/app/components/Select'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -54,6 +54,7 @@ export default function GalleriesPage() {
   const [sel, setSel] = useState<Set<string>>(new Set())
   const [colName, setColName] = useState('')
   const [saving, setSaving] = useState(false)
+  const prefilled = useRef(false)
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -98,11 +99,24 @@ export default function GalleriesPage() {
   useEffect(() => {
     if (!supabase) return
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) { router.replace('/login?next=/galleries'); return }
+      if (!data.session) { router.replace('/login?next=' + encodeURIComponent('/galleries' + window.location.search)); return }
       setUserId(data.session.user.id)
       load()
     })
   }, [router, load])
+
+  // Opened from the app's "Create gallery" on a session: open the new-gallery form with that session filled in.
+  useEffect(() => {
+    if (prefilled.current || sessions.length === 0) return
+    prefilled.current = true
+    const sid = new URLSearchParams(window.location.search).get('session')
+    if (!sid) return
+    const x = sessions.find((v) => v.id === sid)
+    if (!x) return
+    setShowNew(true)
+    setSessionPick(sid)
+    if (x.names) setTitle(x.names)
+  }, [sessions])
 
   async function createGallery(e: React.FormEvent) {
     e.preventDefault()
