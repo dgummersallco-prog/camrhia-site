@@ -94,6 +94,11 @@ export default function ReviewStep({
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [srcTick, setSrcTick] = useState(0)
+  const [flags, setFlags] = useState<Record<string, string>>({})
+  const [checked, setChecked] = useState(false)
+  const [filter, setFilter] = useState<'flagged' | 'all'>('all')
+  const movedRef = useRef(false)
+  const autoRef = useRef(false)
   const srcRef = useRef<{ id: string; blob: Blob; bmp: ImageBitmap } | null>(null)
 
   const row: Row | undefined = rows[idx]
@@ -141,10 +146,83 @@ export default function ReviewStep({
         if (cancelled) return
         setThumbUrls({ ...out })
       }
+      const stats: { id: string; m: number; clip: number; w: number; sat: number }[] = []
+      let nextI = 0
+      const worker = async () => {
+        while (nextI < all.length && !cancelled) {
+          const r = all[nextI++]
+          if (!r.thumb_path) continue
+          try {
+            const dl = await sb.storage.from(BUCKET).download(r.thumb_path)
+            if (dl.error || !dl.data) continue
+            const bmp = await createImageBitmap(dl.data)
+            const W = 40
+            const H = Math.max(1, Math.round((bmp.height / bmp.width) * W))
+            const c = document.createElement('canvas')
+            c.width = W
+            c.height = H
+            const ctx = c.getContext('2d', { willReadFrequently: true })
+            if (!ctx) { bmp.close(); continue }
+            ctx.drawImage(bmp, 0, 0, W, H)
+            bmp.close()
+            const d = ctx.getImageData(0, 0, W, H).data
+            let L = 0
+            let R = 0
+            let B = 0
+            let hi = 0
+            let sat = 0
+            const n = d.length / 4
+            for (let i = 0; i < d.length; i += 4) {
+              const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+              L += l
+              R += d[i]
+              B += d[i + 2]
+              if (l > 250) hi++
+              sat += Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2])
+            }
+            stats.push({ id: r.id, m: L / n, clip: hi / n, w: (R - B) / Math.max(1, R + B), sat: sat / n })
+          } catch {
+            /* skip this one */
+          }
+        }
+      }
+      await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()])
+      if (cancelled) return
+      if (stats.length > 0) {
+        const med = (a: number[]) => { const q = [...a].sort((x, y) => x - y); return q[Math.floor(q.length / 2)] }
+        const mm = med(stats.map((x) => x.m))
+        const madM = med(stats.map((x) => Math.abs(x.m - mm))) * 1.4826
+        const mw = med(stats.map((x) => x.w))
+        const madW = med(stats.map((x) => Math.abs(x.w - mw))) * 1.4826
+        const found: Record<string, string> = {}
+        for (const x of stats) {
+          const zm = (x.m - mm) / Math.max(madM, 14)
+          const zw = (x.w - mw) / Math.max(madW, 0.04)
+          if (x.m < 55) found[x.id] = 'Very dark'
+          else if (x.m > 210) found[x.id] = 'Very bright'
+          else if (x.clip > 0.08) found[x.id] = 'Blown highlights'
+          else if (zm < -2.2) found[x.id] = 'Darker than the rest'
+          else if (zm > 2.2) found[x.id] = 'Brighter than the rest'
+          else if (x.sat > 12 && Math.abs(zw) > 2.8) found[x.id] = zw > 0 ? 'Looks too warm' : 'Looks too cool'
+        }
+        setFlags(found)
+      }
+      setChecked(true)
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [galleryId])
+
+  useEffect(() => {
+    if (!checked || autoRef.current) return
+    autoRef.current = true
+    const first = rows.findIndex((r) => flags[r.id] && !r.reviewed)
+    if (first >= 0) {
+      setFilter('flagged')
+      if (!movedRef.current) setIdx(first)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checked])
 
   // Load the current photo
   useEffect(() => {
@@ -227,8 +305,16 @@ export default function ReviewStep({
     if (busy || rows.length === 0) return
     const n = Math.max(0, Math.min(rows.length - 1, i))
     if (n === idx) return
+    movedRef.current = true
     setAfterUrl(null)
     setIdx(n)
+  }
+
+  const needs = (r: Row) => !!flags[r.id] && !r.reviewed
+  const shown = (r: Row, i: number) => filter === 'all' || needs(r) || i === idx
+  function nextVisible(dir: 1 | -1) {
+    for (let j = idx + dir; j >= 0 && j < rows.length; j += dir) if (shown(rows[j], j)) return j
+    return idx
   }
 
   async function apply(next: boolean) {
@@ -244,7 +330,7 @@ export default function ReviewStep({
       const same = adjSame && cropSame
       if (same && row.reviewed) {
         setBusy(false)
-        if (next) go(idx + 1)
+        if (next) go(nextVisible(1))
         return
       }
       let patch: Record<string, unknown> = { reviewed: true }
@@ -304,7 +390,7 @@ export default function ReviewStep({
         if (data?.signedUrl) setThumbUrls((prev) => ({ ...prev, [newPaths!.thumb]: data.signedUrl }))
       }
       setBusy(false)
-      if (next) go(idx + 1)
+      if (next) go(nextVisible(1))
     } catch (e) {
       setBusy(false)
       setErr(e instanceof Error ? e.message : 'Could not save this photo.')
@@ -316,14 +402,14 @@ export default function ReviewStep({
     const h = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return
-      if (e.key === 'ArrowRight') { e.preventDefault(); go(idx + 1) }
-      else if (e.key === 'ArrowLeft') { e.preventDefault(); go(idx - 1) }
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(nextVisible(1)) }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); go(nextVisible(-1)) }
       else if (e.key === 'Enter') { e.preventDefault(); void apply(true) }
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, busy, manualKey, cropKey, rows])
+  }, [idx, busy, manualKey, cropKey, rows, filter, flags])
 
   useEffect(() => {
     if (!row) return
@@ -411,7 +497,12 @@ export default function ReviewStep({
         </div>
       ) : (
         <>
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_20rem]">
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <button className={tab(filter === 'flagged')} onClick={() => setFilter('flagged')}>Needs a look ({rows.filter(needs).length})</button>
+            <button className={tab(filter === 'all')} onClick={() => setFilter('all')}>All photos ({rows.length})</button>
+            {!checked && <span className="text-xs text-white/40">Checking your photos…</span>}
+          </div>
+          <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_20rem]">
             <div className="lg:sticky lg:top-4 lg:self-start">
               <div
                 className={`relative flex min-h-[320px] select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40 ${picking ? 'cursor-crosshair' : ''}`}
@@ -447,6 +538,7 @@ export default function ReviewStep({
                 <button className={tab(mode === 'before')} onClick={() => setMode('before')}>Before</button>
                 <button className={tab(mode === 'split')} onClick={() => setMode('split')}>Side by side</button>
                 <button className={tab(zoom100)} onClick={() => setZoom100(!zoom100)}>100%</button>
+                {flags[row.id] && !row.reviewed && <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs text-amber-300">{flags[row.id]}</span>}
                 <span className="ml-auto text-xs text-white/45">Photo {idx + 1} of {rows.length} · {reviewed} reviewed</span>
               </div>
               {picking && <p className="mt-2 text-xs text-white/50">Click something that should be neutral gray or white.</p>}
@@ -547,6 +639,7 @@ export default function ReviewStep({
 
           <div className="mt-6 flex gap-1.5 overflow-x-auto pb-2">
             {rows.map((r, i) => {
+              if (!shown(r, i)) return null
               const src = r.thumb_path ? thumbUrls[r.thumb_path] : undefined
               return (
                 <button
@@ -560,15 +653,16 @@ export default function ReviewStep({
                     <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
                   )}
                   {r.reviewed && <span className="absolute bottom-0 right-0 rounded-tl bg-emerald-600 px-1 text-[9px] text-white">✓</span>}
+                  {needs(r) && <span className="absolute left-0.5 top-0.5 h-2 w-2 rounded-full bg-amber-400" />}
                 </button>
               )
             })}
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <button className={primary} disabled={busy} onClick={() => void apply(true)}>{busy ? 'Saving…' : idx === rows.length - 1 ? 'Save' : 'Save and next'}</button>
-            <button className={quiet} disabled={busy || idx === 0} onClick={() => go(idx - 1)}>Previous</button>
-            <button className={quiet} disabled={busy || idx === rows.length - 1} onClick={() => go(idx + 1)}>Skip</button>
+            <button className={primary} disabled={busy} onClick={() => void apply(true)}>{busy ? 'Saving…' : nextVisible(1) === idx ? 'Save' : 'Save and next'}</button>
+            <button className={quiet} disabled={busy || nextVisible(-1) === idx} onClick={() => go(nextVisible(-1))}>Previous</button>
+            <button className={quiet} disabled={busy || nextVisible(1) === idx} onClick={() => go(nextVisible(1))}>Skip</button>
             <button className={quiet} disabled={busy} onClick={onDone}>Done reviewing</button>
             <button className={quiet} disabled={busy} onClick={onBack}>Back</button>
           </div>
