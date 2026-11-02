@@ -41,7 +41,7 @@ const COLS =
   'id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, enhanced, pre_web_path, pre_thumb_path, pre_full_path'
 const ACCEPT =
   'image/jpeg,image/png,image/webp,.heic,.heif,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.dng,.orf,.rw2,.raf,.pef,.3fr,.erf,.kdc,.mrw,.raw,.rwl,.iiq'
-const STEPS = ['Photos', 'Cull', 'Edit', 'Review', 'Send']
+const STEPS = ['Photos', 'Cull', 'Edit', 'Send']
 
 const panel = 'rounded-2xl border border-white/10 bg-[#151518] p-6'
 const btnPrimary = 'rounded-xl bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
@@ -142,6 +142,7 @@ export default function EditWalkthrough() {
   const [loaded, setLoaded] = useState(false)
   const [step, setStep] = useState(0)
   const [reached, setReached] = useState(0)
+  const [editTab, setEditTab] = useState<'shoot' | 'each'>('shoot')
   const [msg, setMsg] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
 
@@ -371,9 +372,10 @@ export default function EditWalkthrough() {
       }
       const list = await loadPhotos()
       if (cancelled) return
-      const s = list.length === 0 ? 0 : list.every((p) => p.enhanced) ? 3 : 1
+      const s = list.length === 0 ? 0 : list.every((p) => p.enhanced) ? 2 : 1
       setStep(s)
       setReached(s)
+      if (list.length > 0 && list.every((p) => p.enhanced)) setEditTab('each')
       setLoaded(true)
     })
     return () => { cancelled = true }
@@ -540,7 +542,7 @@ export default function EditWalkthrough() {
     if (!sb || dev.busy) return
     const client = sb
     const todo = photos.filter((p) => !p.enhanced)
-    if (todo.length === 0) { goTo(4); return }
+    if (todo.length === 0) { setEditTab('each'); return }
     const lightMap = await lightByPhoto()
     if (userId) void client.from('edit_choices').insert({ owner_id: userId, gallery_id: galleryId, kind: 'edit', value: { look: lookId, strength, tweak }, signature_id: sigId })
     setDev({ busy: true, done: 0, total: todo.length })
@@ -601,7 +603,7 @@ export default function EditWalkthrough() {
     await loadPhotos()
     setDev({ busy: false, done: 0, total: 0 })
     if (failed) setMsg(`${failed} photo${failed === 1 ? '' : 's'} could not be developed. You can run this step again.`)
-    else goTo(4)
+    else setEditTab('each')
   }
 
   if (!loaded) {
@@ -866,16 +868,35 @@ export default function EditWalkthrough() {
         {step === 2 && (
           <section className="mt-10">
             <h1 className="font-fraunces text-4xl text-white">Edit</h1>
-            <p className="mt-3 max-w-2xl text-white/55">Set the edit on a few of your photos. Every photo gets its own exposure and color fix, then your look and dials on top. Your originals are kept, and you can revert any photo later.</p>
+            {!dev.busy && (
+              <div className="mt-5 flex gap-2">
+                <button
+                  className={`rounded-full border px-4 py-1.5 text-sm transition ${editTab === 'shoot' ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                  onClick={() => setEditTab('shoot')}
+                >
+                  Whole shoot
+                </button>
+                <button
+                  disabled={enhancedCount === 0}
+                  className={`rounded-full border px-4 py-1.5 text-sm transition disabled:opacity-40 ${editTab === 'each' ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                  onClick={() => setEditTab('each')}
+                >
+                  One at a time
+                </button>
+              </div>
+            )}
+            {(editTab === 'shoot' || dev.busy) && (
+              <p className="mt-3 max-w-2xl text-white/55">Set the edit on a few of your photos. Every photo gets its own exposure and color fix, then your look and dials on top. Your originals are kept, and you can revert any photo later.</p>
+            )}
 
-            {!dev.busy && todoDev.length === 0 && (
+            {editTab === 'shoot' && !dev.busy && todoDev.length === 0 && (
               <div className={`${panel} mt-8`}>
                 <p className="text-white/70">Every photo is already edited.</p>
-                <div className="mt-6"><button className={btnPrimary} onClick={() => goTo(3)}>Continue</button></div>
+                <div className="mt-6"><button className={btnPrimary} onClick={() => setEditTab('each')}>Fix photos one at a time</button></div>
               </div>
             )}
 
-            {!dev.busy && todoDev.length > 0 && (
+            {editTab === 'shoot' && !dev.busy && todoDev.length > 0 && (
               <>
                 <EditPanel
                   candidates={ordered.filter((p) => !p.enhanced)}
@@ -999,27 +1020,25 @@ export default function EditWalkthrough() {
                 )}
               </div>
             )}
+            {editTab === 'each' && !dev.busy && (
+              <ReviewStep
+                galleryId={galleryId}
+                userId={userId}
+                signatureId={sigId}
+                lookId={lookId}
+                strength={strength}
+                brief={brief}
+                getLightMap={lightByPhoto}
+                baseTweak={tweak}
+                onBack={() => setEditTab('shoot')}
+                onDone={async () => { await loadPhotos(); goTo(3) }}
+              />
+            )}
           </section>
         )}
 
-        {/* STEP 5: REVIEW */}
-        {step === 3 && (
-          <ReviewStep
-            galleryId={galleryId}
-            userId={userId}
-            signatureId={sigId}
-            lookId={lookId}
-            strength={strength}
-            brief={brief}
-            getLightMap={lightByPhoto}
-            baseTweak={tweak}
-            onBack={() => goTo(2)}
-            onDone={async () => { await loadPhotos(); goTo(4) }}
-          />
-        )}
-
         {/* STEP 6: SEND */}
-        {step === 4 && (
+        {step === 3 && (
           <section className="mt-10">
             <h1 className="font-fraunces text-4xl text-white">Ready to send</h1>
             <p className="mt-3 max-w-2xl text-white/55">
@@ -1091,7 +1110,7 @@ export default function EditWalkthrough() {
                     {sending ? 'Sending…' : sess ? 'Publish and send to client' : 'Publish'}
                   </button>
                   <button className={btnQuiet} onClick={() => router.push(`/galleries/${galleryId}`)}>Review in gallery first</button>
-                  <button className={btnQuiet} onClick={() => goTo(3)}>Back</button>
+                  <button className={btnQuiet} onClick={() => { goTo(2); setEditTab('each') }}>Back</button>
                 </div>
               </>
             )}

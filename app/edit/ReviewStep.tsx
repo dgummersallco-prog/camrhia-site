@@ -397,9 +397,8 @@ export default function ReviewStep({
   const isBw = (manual.bw ?? 0) > 0
 
   return (
-    <section className="mt-10">
-      <h1 className="font-fraunces text-4xl text-white">Review</h1>
-      <p className="mt-3 max-w-2xl text-white/55">
+    <section className="mt-6">
+      <p className="max-w-2xl text-white/55">
         Go through your photos one at a time. Nudge anything that is off, then move on. Use the arrow keys to move, and Enter to save and go to the next.
       </p>
 
