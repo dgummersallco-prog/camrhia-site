@@ -125,6 +125,7 @@ export default function ReviewStep({
   brief,
   getLightMap,
   baseTweak,
+  onSaveStyle,
   onBack,
   onDone,
 }: {
@@ -136,6 +137,7 @@ export default function ReviewStep({
   brief: Brief
   getLightMap: () => Promise<Record<string, string>>
   baseTweak: Adjust
+  onSaveStyle?: (name: string, tweak: Adjust) => Promise<void>
   onBack: () => void
   onDone: () => void
 }) {
@@ -161,6 +163,10 @@ export default function ReviewStep({
   const [checked, setChecked] = useState(false)
   const [filter, setFilter] = useState<'flagged' | 'all'>('all')
   const [dirty, setDirty] = useState(0)
+  const [naming, setNaming] = useState(false)
+  const [styleName, setStyleName] = useState('')
+  const [styleBusy, setStyleBusy] = useState(false)
+  const [styleSaved, setStyleSaved] = useState<string | null>(null)
   const movedRef = useRef(false)
   const autoRef = useRef(false)
   const dirtyRef = useRef(0)
@@ -642,6 +648,37 @@ export default function ReviewStep({
     return { fixed: fixed.length, top }
   }, [rows])
 
+  const usual = useMemo(() => {
+    const fixed = rows.filter((r) => r.review_adj && Object.values(r.review_adj).some((v) => v))
+    const sum: Record<string, number> = {}
+    const cnt: Record<string, number> = {}
+    for (const r of fixed) {
+      const a = r.review_adj as unknown as Record<string, number>
+      for (const [k, v] of Object.entries(a)) {
+        if (!v || k === 'bw') continue
+        sum[k] = (sum[k] ?? 0) + v
+        cnt[k] = (cnt[k] ?? 0) + 1
+      }
+    }
+    const out: Record<string, number> = {}
+    for (const k of Object.keys(sum)) if (fixed.length > 0 && cnt[k] / fixed.length >= 0.4) out[k] = sum[k] / fixed.length
+    return out as Adjust
+  }, [rows])
+
+  async function saveStyle() {
+    const name = styleName.trim()
+    if (!onSaveStyle || !name) return
+    setStyleBusy(true)
+    try {
+      await onSaveStyle(name, cleanAdj(addAdj(baseTweak, usual)))
+      setStyleSaved(name)
+      setNaming(false)
+    } catch {
+      setErr('Could not save the style.')
+    }
+    setStyleBusy(false)
+  }
+
   const frameImg = 'max-h-[70vh] w-full object-contain lg:h-full lg:max-h-full'
 
   return (
@@ -808,6 +845,25 @@ export default function ReviewStep({
                   </ul>
                 ) : (
                   <p className="mt-2 text-xs text-white/45">Make a few more fixes and your patterns show up here.</p>
+                )}
+                {onSaveStyle && style.fixed >= 3 && (
+                  <div className="mt-3">
+                    {styleSaved ? (
+                      <p className="text-xs text-emerald-300">Saved as {styleSaved} ✓</p>
+                    ) : naming ? (
+                      <div className="flex gap-2">
+                        <input
+                          value={styleName}
+                          onChange={(e) => setStyleName(e.target.value)}
+                          placeholder="Name this style"
+                          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs text-white outline-none focus:border-white/30"
+                        />
+                        <button className={tab(true)} disabled={!styleName.trim() || styleBusy} onClick={() => void saveStyle()}>{styleBusy ? 'Saving…' : 'Save'}</button>
+                      </div>
+                    ) : (
+                      <button className={tab(false)} onClick={() => setNaming(true)}>Save as signature style</button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

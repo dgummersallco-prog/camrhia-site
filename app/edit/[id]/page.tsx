@@ -1025,6 +1025,7 @@ export default function EditWalkthrough() {
                 galleryId={galleryId}
                 userId={userId}
                 signatureId={sigId}
+                onSaveStyle={async (name, tw) => { await saveSignature(name, { ...brief, look: lookId, tweak: tw }) }}
                 lookId={lookId}
                 strength={strength}
                 brief={brief}
