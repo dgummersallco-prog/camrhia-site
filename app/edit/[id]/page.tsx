@@ -41,7 +41,7 @@ const COLS =
   'id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, enhanced, pre_web_path, pre_thumb_path, pre_full_path'
 const ACCEPT =
   'image/jpeg,image/png,image/webp,.heic,.heif,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.dng,.orf,.rw2,.raf,.pef,.3fr,.erf,.kdc,.mrw,.raw,.rwl,.iiq'
-const STEPS = ['Photos', 'Cull', 'Duplicates', 'Edit', 'Review', 'Send']
+const STEPS = ['Photos', 'Cull', 'Edit', 'Review', 'Send']
 
 const panel = 'rounded-2xl border border-white/10 bg-[#151518] p-6'
 const btnPrimary = 'rounded-xl bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
@@ -371,7 +371,7 @@ export default function EditWalkthrough() {
       }
       const list = await loadPhotos()
       if (cancelled) return
-      const s = list.length === 0 ? 0 : list.every((p) => p.enhanced) ? 4 : 1
+      const s = list.length === 0 ? 0 : list.every((p) => p.enhanced) ? 3 : 1
       setStep(s)
       setReached(s)
       setLoaded(true)
@@ -529,7 +529,7 @@ export default function EditWalkthrough() {
     await loadPhotos()
     setChoice({})
     setWorking(false)
-    if (ok) goTo(3)
+    if (ok) setCullView('cuts')
   }
 
   // ---- Step 4: develop ----
@@ -540,7 +540,7 @@ export default function EditWalkthrough() {
     if (!sb || dev.busy) return
     const client = sb
     const todo = photos.filter((p) => !p.enhanced)
-    if (todo.length === 0) { goTo(5); return }
+    if (todo.length === 0) { goTo(4); return }
     const lightMap = await lightByPhoto()
     if (userId) void client.from('edit_choices').insert({ owner_id: userId, gallery_id: galleryId, kind: 'edit', value: { look: lookId, strength, tweak }, signature_id: sigId })
     setDev({ busy: true, done: 0, total: todo.length })
@@ -601,7 +601,7 @@ export default function EditWalkthrough() {
     await loadPhotos()
     setDev({ busy: false, done: 0, total: 0 })
     if (failed) setMsg(`${failed} photo${failed === 1 ? '' : 's'} could not be developed. You can run this step again.`)
-    else goTo(5)
+    else goTo(4)
   }
 
   if (!loaded) {
@@ -772,20 +772,39 @@ export default function EditWalkthrough() {
                   </div>
                 ) : cullView === 'dupes' ? (
                   <div className="mt-8">
-                    <p className="max-w-2xl text-white/55">Near-identical frames are grouped together. You pick the best one from each group in the next step.</p>
-                    <div className="mt-6 space-y-4">
-                      {dupeGroups.map((g, n) => (
-                        <div key={n} className="rounded-2xl border border-white/10 bg-[#151518] p-3">
-                          <p className="mb-2 text-xs text-white/45">Group {n + 1} · {g.length} frames</p>
-                          <div className="flex gap-2 overflow-x-auto">
-                            {g.map((p) => (
-                              <div key={p.id} className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-white/5">{img(p)}</div>
-                            ))}
-                          </div>
+                    {groupList.length === 0 ? (
+                      <p className="text-white/60">No near-identical frames found.</p>
+                    ) : (
+                      <>
+                        <p className="max-w-2xl text-white/55">
+                          We kept the sharpest frame from each group. Tap a different one to choose it instead. The rest are removed from this gallery.
+                        </p>
+                        <div className="mt-6 space-y-4">
+                          {groupList.map(([key, m]) => {
+                            const best = bestOf(key, m)
+                            return (
+                              <div key={key} className={`${panel} flex flex-wrap gap-3`}>
+                                {m.map((p) => (
+                                  <button
+                                    key={p.id}
+                                    onClick={() => setChoice((c) => ({ ...c, [key]: p.id }))}
+                                    className={`relative h-28 w-28 overflow-hidden rounded-xl bg-white/5 transition sm:h-32 sm:w-32 ${p.id === best ? 'ring-2 ring-twilight' : 'opacity-50 hover:opacity-90'}`}
+                                  >
+                                    {img(p)}
+                                    {p.id === best && <span className="absolute left-1.5 top-1.5 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Best</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            )
+                          })}
                         </div>
-                      ))}
-                      {dupeGroups.length === 0 && <p className="text-white/60">No near-identical frames.</p>}
-                    </div>
+                        <div className="mt-6">
+                          <button className={btnPrimary} disabled={working} onClick={dropDuplicates}>
+                            {working ? 'Working…' : `Keep the best, drop ${groupList.reduce((n, [, m]) => n + m.length - 1, 0)}`}
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : cuts.length > 0 ? (
                   <>
@@ -843,52 +862,8 @@ export default function EditWalkthrough() {
           </section>
         )}
 
-        {/* STEP 3: DUPLICATES */}
-        {step === 2 && (
-          <section className="mt-10">
-            <h1 className="font-fraunces text-4xl text-white">Pick the best of each</h1>
-            {groupList.length === 0 ? (
-              <>
-                <p className="mt-4 text-white/60">No near-identical frames found.</p>
-                <div className="mt-8"><button className={btnPrimary} onClick={() => goTo(3)}>Continue</button></div>
-              </>
-            ) : (
-              <>
-                <p className="mt-3 max-w-2xl text-white/55">
-                  We kept the sharpest frame from each group. Tap a different one to choose it instead. The rest are removed from this gallery.
-                </p>
-                <div className="mt-8 space-y-4">
-                  {groupList.map(([key, m]) => {
-                    const best = bestOf(key, m)
-                    return (
-                      <div key={key} className={`${panel} flex flex-wrap gap-3`}>
-                        {m.map((p) => (
-                          <button
-                            key={p.id}
-                            onClick={() => setChoice((c) => ({ ...c, [key]: p.id }))}
-                            className={`relative h-28 w-28 overflow-hidden rounded-xl bg-white/5 transition sm:h-32 sm:w-32 ${p.id === best ? 'ring-2 ring-twilight' : 'opacity-50 hover:opacity-90'}`}
-                          >
-                            {img(p)}
-                            {p.id === best && <span className="absolute left-1.5 top-1.5 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Best</span>}
-                          </button>
-                        ))}
-                      </div>
-                    )
-                  })}
-                </div>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <button className={btnPrimary} disabled={working} onClick={dropDuplicates}>
-                    {working ? 'Working…' : `Keep the best, drop ${groupList.reduce((n, [, m]) => n + m.length - 1, 0)}`}
-                  </button>
-                  <button className={btnQuiet} disabled={working} onClick={() => goTo(3)}>Skip, keep everything</button>
-                </div>
-              </>
-            )}
-          </section>
-        )}
-
         {/* STEP 4: EDIT */}
-        {step === 3 && (
+        {step === 2 && (
           <section className="mt-10">
             <h1 className="font-fraunces text-4xl text-white">Edit</h1>
             <p className="mt-3 max-w-2xl text-white/55">Set the edit on a few of your photos. Every photo gets its own exposure and color fix, then your look and dials on top. Your originals are kept, and you can revert any photo later.</p>
@@ -896,7 +871,7 @@ export default function EditWalkthrough() {
             {!dev.busy && todoDev.length === 0 && (
               <div className={`${panel} mt-8`}>
                 <p className="text-white/70">Every photo is already edited.</p>
-                <div className="mt-6"><button className={btnPrimary} onClick={() => goTo(4)}>Continue</button></div>
+                <div className="mt-6"><button className={btnPrimary} onClick={() => goTo(3)}>Continue</button></div>
               </div>
             )}
 
@@ -985,8 +960,8 @@ export default function EditWalkthrough() {
 
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button className={btnPrimary} onClick={runDevelop}>Edit all {todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'}</button>
-                  <button className={btnQuiet} onClick={() => goTo(4)}>Skip</button>
-                  <button className={btnQuiet} onClick={() => goTo(2)}>Back</button>
+                  <button className={btnQuiet} onClick={() => goTo(3)}>Skip</button>
+                  <button className={btnQuiet} onClick={() => goTo(1)}>Back</button>
                 </div>
                 <p className="mt-3 text-xs text-white/40">Keep this tab open while it runs.</p>
               </>
@@ -1028,7 +1003,7 @@ export default function EditWalkthrough() {
         )}
 
         {/* STEP 5: REVIEW */}
-        {step === 4 && (
+        {step === 3 && (
           <ReviewStep
             galleryId={galleryId}
             userId={userId}
@@ -1038,13 +1013,13 @@ export default function EditWalkthrough() {
             brief={brief}
             getLightMap={lightByPhoto}
             baseTweak={tweak}
-            onBack={() => goTo(3)}
-            onDone={async () => { await loadPhotos(); goTo(5) }}
+            onBack={() => goTo(2)}
+            onDone={async () => { await loadPhotos(); goTo(4) }}
           />
         )}
 
         {/* STEP 6: SEND */}
-        {step === 5 && (
+        {step === 4 && (
           <section className="mt-10">
             <h1 className="font-fraunces text-4xl text-white">Ready to send</h1>
             <p className="mt-3 max-w-2xl text-white/55">
@@ -1116,7 +1091,7 @@ export default function EditWalkthrough() {
                     {sending ? 'Sending…' : sess ? 'Publish and send to client' : 'Publish'}
                   </button>
                   <button className={btnQuiet} onClick={() => router.push(`/galleries/${galleryId}`)}>Review in gallery first</button>
-                  <button className={btnQuiet} onClick={() => goTo(4)}>Back</button>
+                  <button className={btnQuiet} onClick={() => goTo(3)}>Back</button>
                 </div>
               </>
             )}
