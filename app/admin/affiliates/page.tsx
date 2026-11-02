@@ -12,6 +12,7 @@ type Row = {
   email: string | null
   referral_code: string | null
   is_master: boolean
+  approved: boolean
   commission_rate: number | null
   override_rate: number | null
   recruited_by: string | null
@@ -97,6 +98,20 @@ export default function AdminAffiliatesPage() {
     }
   }
 
+  async function setApproved(row: Row) {
+    setBusyId(row.id)
+    try {
+      const res = await callApi({ action: 'set_approved', affiliateId: row.id, approved: true })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Update failed')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Update failed')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   async function handleSignOut() {
     if (!supabase) return
     await supabase.auth.signOut()
@@ -134,6 +149,9 @@ export default function AdminAffiliatesPage() {
                   {r.is_master ? (
                     <span className="rounded-full bg-brass/15 text-brass text-xs px-2 py-0.5">Master</span>
                   ) : null}
+                  {!r.approved ? (
+                    <span className="rounded-full bg-black/5 text-ink-soft text-xs px-2 py-0.5">Pending</span>
+                  ) : null}
                 </div>
                 <p className="text-sm text-ink-soft">{r.email}</p>
                 <p className="mt-1 text-xs text-ink-soft">
@@ -141,6 +159,17 @@ export default function AdminAffiliatesPage() {
                   {r.recruited_by ? ` · recruited by ${r.recruited_by}` : ''}
                 </p>
               </div>
+              <div className="flex flex-wrap gap-2">
+              {!r.approved ? (
+                <button
+                  onClick={() => setApproved(r)}
+                  disabled={busyId === r.id}
+                  className="rounded-full px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
+                  style={{ backgroundColor: '#A9545F' }}
+                >
+                  {busyId === r.id ? 'Saving…' : 'Approve'}
+                </button>
+              ) : null}
               <button
                 onClick={() => setMaster(r, !r.is_master)}
                 disabled={busyId === r.id}
@@ -153,6 +182,7 @@ export default function AdminAffiliatesPage() {
               >
                 {busyId === r.id ? 'Saving…' : r.is_master ? 'Remove master' : 'Promote to master'}
               </button>
+              </div>
             </div>
           ))}
         </div>

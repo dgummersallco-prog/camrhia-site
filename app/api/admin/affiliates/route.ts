@@ -31,6 +31,7 @@ type Aff = {
   commission_rate: number | null
   override_rate: number | null
   parent_affiliate_id: string | null
+  approved: boolean | null
   created_at: string
 }
 
@@ -40,13 +41,13 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { action, affiliateId, isMaster } = await request.json()
+  const { action, affiliateId, isMaster, approved } = await request.json()
   const supabase = adminClient()
 
   if (action === 'list') {
     const { data, error } = await supabase
       .from('affiliates')
-      .select('id, name, email, referral_code, is_master, commission_rate, override_rate, parent_affiliate_id, created_at')
+      .select('id, name, email, referral_code, is_master, commission_rate, override_rate, parent_affiliate_id, approved, created_at')
       .order('created_at', { ascending: false })
     if (error) return Response.json({ error: error.message }, { status: 500 })
 
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
       email: a.email,
       referral_code: a.referral_code,
       is_master: !!a.is_master,
+      approved: !!a.approved,
       commission_rate: a.commission_rate,
       override_rate: a.override_rate,
       recruited_by: a.parent_affiliate_id ? nameById.get(a.parent_affiliate_id) ?? 'Unknown' : null,
@@ -74,7 +76,7 @@ export async function POST(request: Request) {
   if (action === 'masters') {
     const { data: affData, error: affErr } = await supabase
       .from('affiliates')
-      .select('id, name, email, referral_code, is_master, commission_rate, override_rate, parent_affiliate_id, created_at')
+      .select('id, name, email, referral_code, is_master, commission_rate, override_rate, parent_affiliate_id, approved, created_at')
     if (affErr) return Response.json({ error: affErr.message }, { status: 500 })
     const affs = (affData ?? []) as Aff[]
 
@@ -131,6 +133,15 @@ export async function POST(request: Request) {
       ? { is_master: true, commission_rate: 0.5, override_rate: 0.5 }
       : { is_master: false, commission_rate: null, override_rate: 0 }
     const { error } = await supabase.from('affiliates').update(patch).eq('id', affiliateId)
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    return Response.json({ ok: true })
+  }
+
+  if (action === 'set_approved') {
+    if (typeof affiliateId !== 'string' || typeof approved !== 'boolean') {
+      return Response.json({ error: 'affiliateId and approved are required' }, { status: 400 })
+    }
+    const { error } = await supabase.from('affiliates').update({ approved }).eq('id', affiliateId)
     if (error) return Response.json({ error: error.message }, { status: 500 })
     return Response.json({ ok: true })
   }
