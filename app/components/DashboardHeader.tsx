@@ -191,21 +191,24 @@ export function DashboardHeader({ active }: { active: Tab }) {
 
   const item = (it: { tab: Tab | 'affiliate'; href: string; label: string }, accent = false) => {
     const isActive = (COVERS[it.tab] ?? [it.tab]).includes(active)
+    const isPro = it.tab === 'edit'
     return (
       <Link
         key={it.href}
         href={it.href}
         onClick={() => setOpen(false)}
         className={`relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13.5px] font-medium tracking-wide transition ${
-          isActive
+          isPro
+            ? `bg-twilight text-white hover:opacity-90${isActive ? ' ring-2 ring-twilight/30' : ''}`
+            : isActive
             ? 'bg-blush-wash text-twilight'
             : accent
               ? 'text-brass hover:bg-blush-wash/60'
               : 'text-ink-soft hover:bg-blush-wash/60 hover:text-ink'
         }`}
       >
-        {isActive && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-twilight" />}
-        <Icon name={it.tab} />
+        {isActive && !isPro && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-twilight" />}
+        {!isPro && <Icon name={it.tab} />}
         {it.label}
         {it.tab === 'messages' && unread > 0 && (
           <span className="ml-auto rounded-full bg-brass px-2 py-0.5 text-[11px] font-semibold text-white">{unread > 9 ? '9+' : unread}</span>
