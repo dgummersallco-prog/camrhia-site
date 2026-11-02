@@ -184,6 +184,10 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
   for (const style of Object.values(r.section_styles ?? {})) {
     if ((style as any)?.font) usedFontKeys.add((style as any).font)
   }
+  for (const t of (r.testimonials ?? []) as any[]) {
+    if (t?.quote_style?.font) usedFontKeys.add(t.quote_style.font)
+    if (t?.name_style?.font) usedFontKeys.add(t.name_style.font)
+  }
 
   const titleStyle = textStyle({
     font: r.title_font, size: r.title_font_size, color: r.title_color,
@@ -669,8 +673,8 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
                           <img src={photoUrl(t.storage_path)!} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: t.photo_opacity ?? 1 }} />
                         )}
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 18, background: photoUrl(t.storage_path) ? 'linear-gradient(transparent 40%, rgba(0,0,0,0.6))' : undefined }}>
-                          {t.quote && <p style={{ color: photoUrl(t.storage_path) ? '#fff' : autoText(t.card_bg_color ?? '#fff'), fontFamily: "'Fraunces', serif", fontStyle: 'italic', fontSize: 15 * tk(t), lineHeight: 1.4, margin: 0 }}>&ldquo;{t.quote}&rdquo;</p>}
-                          {t.client_name && <p style={{ color: photoUrl(t.storage_path) ? 'rgba(255,255,255,0.85)' : autoText(t.card_bg_color ?? '#fff', true), fontFamily: "system-ui, sans-serif", fontSize: 12, marginTop: 8 }}>{t.client_name}</p>}
+                          {t.quote && <p style={tText(t.quote_style ?? r.section_styles?.testimonials_quote, photoUrl(t.storage_path) ? '#fff' : autoText(t.card_bg_color ?? '#fff'), "'Fraunces', serif", 15, { lineHeight: 1.4, margin: 0 }) ?? { color: photoUrl(t.storage_path) ? '#fff' : autoText(t.card_bg_color ?? '#fff'), fontFamily: "'Fraunces', serif", fontStyle: 'italic', fontSize: 15 * tk(t), lineHeight: 1.4, margin: 0 }}>&ldquo;{t.quote}&rdquo;</p>}
+                          {t.client_name && <p style={tText(t.name_style ?? r.section_styles?.testimonials_name, photoUrl(t.storage_path) ? 'rgba(255,255,255,0.85)' : autoText(t.card_bg_color ?? '#fff', true), "system-ui, sans-serif", 12, { marginTop: 8 }) ?? { color: photoUrl(t.storage_path) ? 'rgba(255,255,255,0.85)' : autoText(t.card_bg_color ?? '#fff', true), fontFamily: "system-ui, sans-serif", fontSize: 12, marginTop: 8 }}>{t.client_name}</p>}
                         </div>
                       </div>
                     ))}
@@ -791,6 +795,21 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
 // Testimonial card size: the app's 80% default is today's 260px card.
 function tk(t: any): number {
   return Math.min(1.25, Math.max(0.6, (t?.card_scale ?? 0.8) / 0.8))
+}
+
+// Text style for a testimonial's quote or name. Returns null when the
+// photographer set nothing custom, so the original look is kept.
+function tText(st: any, color: string, fallbackFont: string, fallbackSize: number, extra: React.CSSProperties): React.CSSProperties | null {
+  if (!st || !(st.font || st.size || st.color || st.bold || st.italic || st.shadow)) return null
+  return {
+    ...textStyle({
+      font: st.font, size: st.size != null ? Math.round(st.size * 0.93 * 10) / 10 : null, color: st.color ?? color,
+      bold: st.bold, italic: st.italic, align: st.align ?? 'center',
+      shadow: st.shadow, shadowColor: st.shadowColor, shadowOffsetX: st.shadowOffsetX, shadowOffsetY: st.shadowOffsetY, shadowBlur: st.shadowBlur,
+      fallbackFont, fallbackColor: color, fallbackSize,
+    }),
+    ...extra,
+  }
 }
 
 // Readable text on a card with no photo: dark on light cards, light on dark.
