@@ -57,6 +57,7 @@ export default function DashboardPage() {
   const [payRows, setPayRows] = useState<PayRow[]>([])
   const [inq, setInq] = useState({ waiting: 0, total: 0, booked: 0 })
   const [bellOpen, setBellOpen] = useState(false)
+  const [todoAll, setTodoAll] = useState(false)
   const bellRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -332,27 +333,84 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {attention.length > 0 && (
-              <section className={`${card} mt-8`}>
-                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Needs your attention</p>
-                <ul className="divide-y divide-line">
-                  {attention.slice(0, 8).map((a) => (
-                    <li key={a.key} className="flex flex-wrap items-center gap-3 py-3">
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-brass" />
-                      <p className="min-w-0 flex-1 text-sm text-ink">{a.text}</p>
-                      <Link
-                        href={a.href}
-                        onClick={() => { if (a.notifId) markRead(a.notifId) }}
-                        className="shrink-0 text-sm font-medium text-twilight hover:underline"
-                      >{a.cta} →</Link>
-                      {a.notifId && (
-                        <button type="button" onClick={() => markRead(a.notifId!)} className="shrink-0 text-xs text-ink-soft hover:text-ink">Dismiss</button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+            <div className="mt-8 grid gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+            {next && (
+              <section className={`${card} flex flex-wrap items-center gap-5`}>
+                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-blush-wash text-twilight">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">{new Date(`${next.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}</span>
+                  <span className="font-fraunces text-2xl font-semibold leading-none">{new Date(`${next.wedding_date}T00:00:00`).getDate()}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs uppercase tracking-wider text-ink-soft">Next shoot · {countdown(daysUntil(next.wedding_date!))}</p>
+                  <p className="truncate font-fraunces text-xl font-semibold text-ink">{next.names || 'Untitled session'}</p>
+                  <p className="text-sm text-ink-soft">{typeLabel(next.session_type)} · {fmtDay(next.wedding_date!)}</p>
+                </div>
+                <Link href={`/sessions/${next.id}`} className={btnGhost}>Open session →</Link>
               </section>
             )}
+
+              {/* Coming up */}
+              <section className={card}>
+                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Coming up</p>
+                {upcoming.length === 0 ? (
+                  <p className="text-sm text-ink-soft">No upcoming sessions. New bookings show up here.</p>
+                ) : (
+                  <ul className="divide-y divide-line">
+                    {upcoming.map((x) => (
+                      <li key={x.id}>
+                        <Link href={`/sessions/${x.id}`} className="flex items-center justify-between gap-3 py-2.5 hover:opacity-80">
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium text-ink">{x.names || 'Untitled session'}</span>
+                            <span className="block text-xs text-ink-soft">{typeLabel(x.session_type)}</span>
+                          </span>
+                          <span className="shrink-0 text-xs text-ink-soft">{fmtDay(x.wedding_date!)}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Link href="/calendar" className="mt-3 block text-sm font-medium text-twilight hover:underline">Open calendar →</Link>
+              </section>
+
+              </div>
+              <div>
+                <section className={card}>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="font-fraunces text-xl font-semibold text-ink">To do</p>
+                    {attention.length > 3 && (
+                      <button type="button" onClick={() => setTodoAll((o) => !o)} className="text-xs text-ink-soft hover:text-ink">
+                        {todoAll ? 'Show less' : `See all (${attention.length})`}
+                      </button>
+                    )}
+                  </div>
+                  {attention.length === 0 ? (
+                    <p className="text-sm text-ink-soft">You are all caught up.</p>
+                  ) : (
+                    <ul className="divide-y divide-line">
+                      {(todoAll ? attention.slice(0, 12) : attention.slice(0, 3)).map((a) => (
+                        <li key={a.key} className="py-3">
+                          <div className="flex items-start gap-2">
+                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brass" />
+                            <p className="min-w-0 flex-1 text-sm text-ink">{a.text}</p>
+                          </div>
+                          <div className="mt-1 flex items-center gap-3 pl-4">
+                            <Link
+                              href={a.href}
+                              onClick={() => { if (a.notifId) markRead(a.notifId) }}
+                              className="text-sm font-medium text-twilight hover:underline"
+                            >{a.cta} →</Link>
+                            {a.notifId && (
+                              <button type="button" onClick={() => markRead(a.notifId!)} className="text-xs text-ink-soft hover:text-ink">Dismiss</button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              </div>
+            </div>
 
             {showSetup && (
               <section className={`${card} mt-6`}>
@@ -406,21 +464,6 @@ export default function DashboardPage() {
               </section>
             )}
 
-            {next && (
-              <section className={`${card} mt-6 flex flex-wrap items-center gap-5`}>
-                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-blush-wash text-twilight">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider">{new Date(`${next.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}</span>
-                  <span className="font-fraunces text-2xl font-semibold leading-none">{new Date(`${next.wedding_date}T00:00:00`).getDate()}</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs uppercase tracking-wider text-ink-soft">Next shoot · {countdown(daysUntil(next.wedding_date!))}</p>
-                  <p className="truncate font-fraunces text-xl font-semibold text-ink">{next.names || 'Untitled session'}</p>
-                  <p className="text-sm text-ink-soft">{typeLabel(next.session_type)} · {fmtDay(next.wedding_date!)}</p>
-                </div>
-                <Link href={`/sessions/${next.id}`} className={btnGhost}>Open session →</Link>
-              </section>
-            )}
-
             {/* Money */}
             <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
               <div className={card}>
@@ -470,29 +513,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
-              {/* Coming up */}
-              <section className={card}>
-                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Coming up</p>
-                {upcoming.length === 0 ? (
-                  <p className="text-sm text-ink-soft">No upcoming sessions. New bookings show up here.</p>
-                ) : (
-                  <ul className="divide-y divide-line">
-                    {upcoming.map((x) => (
-                      <li key={x.id}>
-                        <Link href={`/sessions/${x.id}`} className="flex items-center justify-between gap-3 py-2.5 hover:opacity-80">
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-medium text-ink">{x.names || 'Untitled session'}</span>
-                            <span className="block text-xs text-ink-soft">{typeLabel(x.session_type)}</span>
-                          </span>
-                          <span className="shrink-0 text-xs text-ink-soft">{fmtDay(x.wedding_date!)}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <Link href="/calendar" className="mt-3 block text-sm font-medium text-twilight hover:underline">Open calendar →</Link>
-              </section>
-
               {/* Activity */}
               <section className={card}>
                 <p className="mb-4 font-fraunces text-xl font-semibold text-ink">Recent client activity</p>
@@ -519,6 +539,24 @@ export default function DashboardPage() {
                   </ul>
                 )}
               </section>
+              {/* Storage */}
+              <section className={card}>
+                <div className="mb-2 flex items-center justify-between gap-4">
+                  <p className="font-fraunces text-xl font-semibold text-ink">Storage</p>
+                  <Link href="/storage" className="text-sm font-medium text-twilight hover:underline">Manage storage →</Link>
+                </div>
+                {Number.isFinite(limitBytes) && limitBytes > 0 ? (
+                  <>
+                    <div className="h-2 overflow-hidden rounded-full bg-line">
+                      <div className={`h-full rounded-full ${usedBytes / limitBytes > 0.9 ? 'bg-brass' : 'bg-twilight'}`} style={{ width: `${Math.min(100, (usedBytes / limitBytes) * 100)}%` }} />
+                    </div>
+                    <p className="mt-2 text-xs text-ink-soft">{formatBytes(usedBytes)} of {formatBytes(limitBytes)} used across {galleries.length} galler{galleries.length === 1 ? 'y' : 'ies'}</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-ink-soft">{formatBytes(usedBytes)} used across {galleries.length} galler{galleries.length === 1 ? 'y' : 'ies'}</p>
+                )}
+              </section>
+
             </div>
 
             {/* Your year */}
@@ -549,27 +587,8 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-2">
-              {/* Storage */}
-              <section className={card}>
-                <div className="mb-2 flex items-center justify-between gap-4">
-                  <p className="font-fraunces text-xl font-semibold text-ink">Storage</p>
-                  <Link href="/storage" className="text-sm font-medium text-twilight hover:underline">Manage storage →</Link>
-                </div>
-                {Number.isFinite(limitBytes) && limitBytes > 0 ? (
-                  <>
-                    <div className="h-2 overflow-hidden rounded-full bg-line">
-                      <div className={`h-full rounded-full ${usedBytes / limitBytes > 0.9 ? 'bg-brass' : 'bg-twilight'}`} style={{ width: `${Math.min(100, (usedBytes / limitBytes) * 100)}%` }} />
-                    </div>
-                    <p className="mt-2 text-xs text-ink-soft">{formatBytes(usedBytes)} of {formatBytes(limitBytes)} used across {galleries.length} galler{galleries.length === 1 ? 'y' : 'ies'}</p>
-                  </>
-                ) : (
-                  <p className="text-sm text-ink-soft">{formatBytes(usedBytes)} used across {galleries.length} galler{galleries.length === 1 ? 'y' : 'ies'}</p>
-                )}
-              </section>
-
               {/* Reminders */}
-              <section className={card}>
+              <section className={`${card} mt-6`}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-fraunces text-xl font-semibold text-ink">Client reminders</p>
@@ -578,7 +597,7 @@ export default function DashboardPage() {
                   <Link href="/reminders" className="text-sm font-medium text-twilight hover:underline">Manage reminders →</Link>
                 </div>
               </section>
-            </div>
+
           </>
         )}
       </main>
