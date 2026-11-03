@@ -8,10 +8,10 @@ import AffiliateShell, { type ShellAffiliate } from '../../components/AffiliateS
 const APPLE_RATE = 0.15
 
 const PLANS = [
-  { key: 'solo-m', label: 'Solo, monthly', price: 59.99 },
+  { key: 'solo-m', label: 'Solo, monthly', price: 59 },
   { key: 'solo-y', label: 'Solo, yearly', price: 590 },
   { key: 'studio-m', label: 'Studio, monthly', price: 149 },
-  { key: 'studio-y', label: 'Studio, yearly', price: 999.99 },
+  { key: 'studio-y', label: 'Studio, yearly', price: 999 },
 ]
 
 const usd = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
@@ -23,7 +23,7 @@ const td = 'px-3 py-2.5 whitespace-nowrap'
 
 function PayoutTable({ withMaster, override }: { withMaster: boolean; override: number }) {
   const plans = [
-    { label: 'Solo', price: 59.99 },
+    { label: 'Solo', price: 59 },
     { label: 'Studio', price: 149 },
   ]
   const rates = [0.2, 0.25, 0.3]
@@ -201,7 +201,7 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
     { label: '26+ referrals', rt: 0.3 },
   ]
   const plans = [
-    { label: 'Solo', price: 59.99 },
+    { label: 'Solo', price: 59 },
     { label: 'Studio', price: 149 },
   ]
   const custom = a.commission_rate != null && ![0.2, 0.25, 0.3].includes(Number(a.commission_rate))
@@ -257,7 +257,7 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
               {[10, 20, 50, 100, 500].map((n) => (
                 <tr key={n}>
                   <td className={td + ' text-ink font-medium'}>{n}</td>
-                  <td className={td + ' text-ink font-semibold'}>{usd(monthlyEarn(n, 59.99, custom ? Number(a.commission_rate) : null))}</td>
+                  <td className={td + ' text-ink font-semibold'}>{usd(monthlyEarn(n, 59, custom ? Number(a.commission_rate) : null))}</td>
                   <td className={td + ' text-ink font-semibold'}>{usd(monthlyEarn(n, 149, custom ? Number(a.commission_rate) : null))}</td>
                 </tr>
               ))}

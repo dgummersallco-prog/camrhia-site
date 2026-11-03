@@ -32,7 +32,7 @@ function calcMonthlyEarnings(n: number): number {
   const tier1 = Math.min(n, 10)
   const tier2 = Math.max(0, Math.min(n, 25) - 10)
   const tier3 = Math.max(0, n - 25)
-  const net = 59.99 * 0.85 // Solo monthly, after Apple's 15% fee
+  const net = 59 * 0.85 // Solo monthly, after Apple's 15% fee
   return tier1 * net * 0.20 + tier2 * net * 0.25 + tier3 * net * 0.30
 }
 

@@ -19,7 +19,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How much does Camrhia cost?',
-        a: '$59.99/month, or $590/year (2 months free). Every photographer gets a free 14-day trial first — no credit card required to start.',
+        a: '$59/month, or $590/year (2 months free). Every photographer gets a free 14-day trial first — no credit card required to start.',
       },
       {
         q: 'Is there a free trial?',
