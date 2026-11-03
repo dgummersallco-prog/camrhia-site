@@ -66,6 +66,10 @@ export function prettyType(t: string | null): string {
   return t.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
 }
 
+function isPastDue(r: Session, today: string): boolean {
+  return !r.delivered && !r.shoot_completed_at && r.status !== 'not_booked' && !!r.wedding_date && r.wedding_date < today
+}
+
 export default function SessionsPage() {
   const router = useRouter()
   const [rows, setRows] = useState<Session[] | null>(null)
@@ -73,7 +77,7 @@ export default function SessionsPage() {
   const [qTotals, setQTotals] = useState<Record<string, number>>({})
   const [qAnswered, setQAnswered] = useState<Record<string, number>>({})
   const [typeCfg, setTypeCfg] = useState<Record<string, { c: boolean; t: boolean; q: boolean }>>({})
-  const [filter, setFilter] = useState<'upcoming' | 'editing' | 'delivered' | 'all'>('upcoming')
+  const [filter, setFilter] = useState<'upcoming' | 'update' | 'editing' | 'delivered' | 'all'>('upcoming')
   const [typeFilter, setTypeFilter] = useState('')
   const [q, setQ] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -234,7 +238,8 @@ export default function SessionsPage() {
     if (!rows) return []
     const needle = q.trim().toLowerCase()
     let list = rows.filter((r) => {
-      if (filter === 'upcoming' && (r.delivered || r.shoot_completed_at)) return false
+      if (filter === 'upcoming' && (r.delivered || r.shoot_completed_at || isPastDue(r, today))) return false
+      if (filter === 'update' && !isPastDue(r, today)) return false
       if (filter === 'editing' && (r.delivered || !r.shoot_completed_at)) return false
       if (filter === 'delivered' && !r.delivered) return false
       if (typeFilter && r.session_type !== typeFilter) return false
@@ -248,6 +253,7 @@ export default function SessionsPage() {
     return list
   }, [rows, filter, typeFilter, q, today])
 
+  const pastCount = (rows ?? []).filter((r) => isPastDue(r, today)).length
   const tab = (key: typeof filter, label: string) => (
     <button
       onClick={() => setFilter(key)}
@@ -295,6 +301,7 @@ export default function SessionsPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-2">
             {tab('upcoming', 'Upcoming')}
+            {tab('update', pastCount > 0 ? `Needs update (${pastCount})` : 'Needs update')}
             {tab('editing', 'Editing')}
             {tab('delivered', 'Delivered')}
             {tab('all', 'All')}
@@ -326,7 +333,7 @@ export default function SessionsPage() {
         ) : shown.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-line bg-card px-6 py-16 text-center">
             <p className="font-fraunces text-xl text-ink">
-              {filter === 'upcoming' ? 'No upcoming sessions' : filter === 'editing' ? 'Nothing in editing' : filter === 'delivered' ? 'No delivered sessions' : 'No sessions here'}
+              {filter === 'upcoming' ? 'No upcoming sessions' : filter === 'update' ? 'Nothing needs an update' : filter === 'editing' ? 'Nothing in editing' : filter === 'delivered' ? 'No delivered sessions' : 'No sessions here'}
             </p>
             <p className="mt-1 text-sm text-ink-soft">New sessions you add in the Camrhia app show up here.</p>
           </div>
@@ -367,14 +374,14 @@ export default function SessionsPage() {
                     className="mb-3 block rounded-2xl border border-line bg-card px-5 py-4 transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md"
                   >
                     <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-twilight/10 text-twilight">
+                    <div className="flex min-w-[3rem] shrink-0 flex-col items-center justify-center border-r border-line pr-4">
                       {dt ? (
                         <>
-                          <span className="text-[10px] font-medium uppercase tracking-wider">{dt.toLocaleDateString(undefined, { month: 'short' })}</span>
-                          <span className="font-fraunces text-xl font-semibold leading-none">{dt.getDate()}</span>
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-brass">{dt.toLocaleDateString(undefined, { month: 'short' })}</span>
+                          <span className="font-fraunces text-2xl font-semibold leading-none text-ink">{dt.getDate()}</span>
                         </>
                       ) : (
-                        <span className="text-xs">TBD</span>
+                        <span className="text-xs text-ink-soft">TBD</span>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -386,6 +393,7 @@ export default function SessionsPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       {chip(prettyType(s.session_type), 'bg-line text-ink-soft')}
+                      {isPastDue(s, today) && chip('Date passed', 'bg-amber-100 text-amber-700')}
                       {(s.delivered || s.shoot_completed_at) && (
                         <>
                           {s.paid_in_full ? chip('Paid in full', OK) : chip('Balance open', WAIT)}
@@ -419,7 +427,7 @@ export default function SessionsPage() {
                           const next = !done && steps.findIndex((x) => x.cls !== OK) === i
                           return (
                             <span key={i} className="inline-flex items-center gap-1.5">
-                              <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-medium ${done ? 'bg-emerald-500 text-white' : next ? 'border border-twilight bg-twilight/10 text-twilight' : 'border border-line text-ink-soft'}`}>{done ? '✓' : i + 1}</span>
+                              <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-medium ${done ? 'bg-twilight text-white' : next ? 'border border-twilight bg-twilight/10 text-twilight' : 'border border-line text-ink-soft'}`}>{done ? '✓' : i + 1}</span>
                               <span className={done ? 'text-ink-soft' : next ? 'font-medium text-ink' : 'text-ink-soft/70'}>{st.text}</span>
                             </span>
                           )
