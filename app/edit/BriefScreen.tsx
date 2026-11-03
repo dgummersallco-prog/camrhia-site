@@ -8,6 +8,12 @@ const quiet = 'rounded-full border border-white/15 px-6 py-3 text-sm text-white/
 
 type Usual = { value: string; n: number; total: number }
 
+const LG: Record<number, string> = {
+  2: 'lg:w-[calc(50%-0.375rem)]',
+  3: 'lg:w-[calc(33.333%-0.5rem)]',
+  4: 'lg:w-[calc(25%-0.5625rem)]',
+}
+
 function usualFor(history: Brief[], key: keyof Brief): Usual | null {
   const tally = new Map<string, number>()
   let total = 0
@@ -50,6 +56,8 @@ export default function BriefScreen({
   const q = QUESTIONS[i]
   const last = i === QUESTIONS.length - 1
   const usual = usualFor(history, q.key)
+  const nOpts = q.options.length
+  const cols = nOpts <= 2 ? 2 : nOpts <= 4 ? nOpts : nOpts <= 6 ? 3 : 4
 
   function pick(v: string) {
     setB({ ...b, [q.key]: v })
@@ -134,7 +142,7 @@ export default function BriefScreen({
           <button className={`${quiet} mt-6`} onClick={useUsual}>Use my usual for everything</button>
         )}
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
           {q.options.map((o) => {
             const on = b[q.key] === o.value
             const isUsual = usual?.value === o.value
@@ -142,12 +150,12 @@ export default function BriefScreen({
               <button
                 key={o.value}
                 onClick={() => pick(o.value)}
-                className={`rounded-2xl border bg-[#151518] p-5 text-left transition ${on ? 'border-[var(--color-twilight)] shadow-[0_0_24px_-6px_var(--color-twilight)]' : 'border-white/10 hover:border-white/30'}`}
+                className={`relative flex h-[116px] w-full flex-col items-center justify-center rounded-2xl border bg-[#151518] px-4 pb-5 text-center transition sm:w-[calc(50%-0.375rem)] ${LG[cols]} ${on ? 'border-[var(--color-twilight)] shadow-[0_0_24px_-6px_var(--color-twilight)]' : 'border-white/10 hover:border-white/30'}`}
               >
                 <p className="text-lg text-white">{o.label}</p>
-                {o.blurb && <p className="mt-1 text-sm text-white/50">{o.blurb}</p>}
+                {o.blurb && <p className="mt-1 line-clamp-2 text-sm text-white/50">{o.blurb}</p>}
                 {isUsual && usual && (
-                  <p className="mt-3 text-xs text-[var(--color-twilight)]">Your usual · {usual.n} of {usual.total} shoots</p>
+                  <p className="absolute bottom-2.5 left-0 right-0 text-center text-[11px] text-[var(--color-twilight)]">Your usual · {usual.n} of {usual.total} shoots</p>
                 )}
               </button>
             )
