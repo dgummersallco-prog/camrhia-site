@@ -364,8 +364,9 @@ export default function SessionsPage() {
                   )}
                   <Link
                     href={`/sessions/${s.id}`}
-                    className="mb-3 flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-card px-5 py-4 transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md"
+                    className="mb-3 block rounded-2xl border border-line bg-card px-5 py-4 transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md"
                   >
+                    <div className="flex flex-wrap items-center gap-4">
                     <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-twilight/10 text-twilight">
                       {dt ? (
                         <>
@@ -385,13 +386,11 @@ export default function SessionsPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       {chip(prettyType(s.session_type), 'bg-line text-ink-soft')}
-                      {(s.delivered || s.shoot_completed_at) ? (
+                      {(s.delivered || s.shoot_completed_at) && (
                         <>
                           {s.paid_in_full ? chip('Paid in full', OK) : chip('Balance open', WAIT)}
                           {s.gallery_url ? chip('Gallery delivered', 'bg-brass/15 text-brass') : chip('No gallery yet', 'bg-line text-ink-soft')}
                         </>
-                      ) : (
-                        steps.map((st, i) => <span key={i}>{chip(`${i + 1}. ${st.text}`, st.cls)}</span>)
                       )}
                       {!s.delivered && !s.shoot_completed_at && s.status !== 'not_booked' && !!s.wedding_date && s.wedding_date < today && (
                         <button
@@ -412,6 +411,21 @@ export default function SessionsPage() {
                         </button>
                       )}
                     </div>
+                    </div>
+                    {!(s.delivered || s.shoot_completed_at) && (
+                      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 border-t border-line/70 pt-3 text-xs">
+                        {steps.map((st, i) => {
+                          const done = st.cls === OK
+                          const next = !done && steps.findIndex((x) => x.cls !== OK) === i
+                          return (
+                            <span key={i} className="inline-flex items-center gap-1.5">
+                              <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-medium ${done ? 'bg-emerald-500 text-white' : next ? 'border border-twilight bg-twilight/10 text-twilight' : 'border border-line text-ink-soft'}`}>{done ? '✓' : i + 1}</span>
+                              <span className={done ? 'text-ink-soft' : next ? 'font-medium text-ink' : 'text-ink-soft/70'}>{st.text}</span>
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
                   </Link>
                 </div>
               )
