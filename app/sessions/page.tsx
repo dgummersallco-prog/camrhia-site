@@ -11,6 +11,10 @@ type Session = {
   delivered?: boolean | null
   shoot_completed_at?: string | null
   couple_user_id?: string | null
+  timeline_approved?: boolean | null
+  timeline_shared_at?: string | null
+  payments_seeded?: boolean | null
+  client_invited_at?: string | null
   parent_session_id?: string | null
   id: string
   names: string | null
@@ -66,6 +70,9 @@ export default function SessionsPage() {
   const router = useRouter()
   const [rows, setRows] = useState<Session[] | null>(null)
   const [contracts, setContracts] = useState<Record<string, string>>({})
+  const [qTotals, setQTotals] = useState<Record<string, number>>({})
+  const [qAnswered, setQAnswered] = useState<Record<string, number>>({})
+  const [typeCfg, setTypeCfg] = useState<Record<string, { c: boolean; t: boolean; q: boolean }>>({})
   const [filter, setFilter] = useState<'upcoming' | 'editing' | 'delivered' | 'all'>('upcoming')
   const [typeFilter, setTypeFilter] = useState('')
   const [q, setQ] = useState('')
@@ -84,7 +91,7 @@ export default function SessionsPage() {
       const uid = sess.session.user.id
       const { data, error: e } = await sb
         .from('weddings')
-        .select('id, names, wedding_date, session_type, status, city, state, venue, package_name, gallery_url, paid_in_full, delivered, shoot_completed_at, couple_user_id, parent_session_id')
+        .select('id, names, wedding_date, session_type, status, city, state, venue, package_name, gallery_url, paid_in_full, delivered, shoot_completed_at, couple_user_id, parent_session_id, timeline_approved, timeline_shared_at, payments_seeded, client_invited_at')
         .is('canceled_at', null)
         .order('wedding_date', { ascending: false, nullsFirst: false })
       if (e) { setError(e.message); return }
@@ -97,6 +104,26 @@ export default function SessionsPage() {
         if (!prev || st === 'signed' || (st === 'sent' && prev === 'draft')) map[c.wedding_id] = st
       }
       setContracts(map)
+      const { data: qs } = await sb.from('questionnaire_questions').select('session_type').eq('owner_id', uid)
+      const qt: Record<string, number> = {}
+      for (const q of (qs ?? []) as { session_type: string | null }[]) {
+        const k = q.session_type ?? 'wedding'
+        qt[k] = (qt[k] ?? 0) + 1
+      }
+      setQTotals(qt)
+      const ids = ((data ?? []) as Session[]).map((r) => r.id)
+      const qa: Record<string, number> = {}
+      if (ids.length && Object.keys(qt).length) {
+        const { data: ans } = await sb.from('questionnaire_answers').select('wedding_id').in('wedding_id', ids)
+        for (const a of (ans ?? []) as { wedding_id: string }[]) qa[a.wedding_id] = (qa[a.wedding_id] ?? 0) + 1
+      }
+      setQAnswered(qa)
+      const { data: st } = await sb.from('session_types').select('key, has_contract, has_timeline, has_questionnaire')
+      const cfg: Record<string, { c: boolean; t: boolean; q: boolean }> = {}
+      for (const t of (st ?? []) as { key: string; has_contract: boolean; has_timeline: boolean; has_questionnaire: boolean }[]) {
+        cfg[t.key] = { c: t.has_contract, t: t.has_timeline, q: t.has_questionnaire }
+      }
+      setTypeCfg(cfg)
     }
     load()
     const refresh = () => { if (document.visibilityState === 'visible') void load() }
@@ -313,6 +340,23 @@ export default function SessionsPage() {
               const n = s.wedding_date ? daysFrom(s.wedding_date, today) : null
               const where = [s.venue, [s.city, s.state].filter(Boolean).join(', ')].filter(Boolean).join(', ')
               const c = contracts[s.id]
+              const OK = 'bg-emerald-100 text-emerald-700'
+              const WAIT = 'bg-amber-100 text-amber-700'
+              const tcfg = typeCfg[s.session_type ?? 'wedding']
+              const qTotal = qTotals[s.session_type ?? 'wedding'] ?? 0
+              const qDone = qAnswered[s.id] ?? 0
+              const steps: { text: string; cls: string }[] = []
+              steps.push(s.couple_user_id ? { text: 'Client connected', cls: OK } : s.client_invited_at ? { text: 'Invited to session', cls: WAIT } : { text: 'Invite client', cls: WAIT })
+              if (tcfg?.t ?? true) {
+                steps.push(s.timeline_approved ? { text: 'Time approved', cls: OK } : s.timeline_shared_at ? { text: 'Time awaiting approval', cls: WAIT } : { text: 'Time not approved yet', cls: WAIT })
+              }
+              if ((tcfg?.q ?? true) && qTotal > 0) {
+                steps.push(qDone >= qTotal ? { text: 'Questionnaire complete', cls: OK } : qDone > 0 ? { text: 'Questionnaire in progress', cls: WAIT } : { text: 'Questionnaire not started', cls: WAIT })
+              }
+              if (tcfg?.c ?? true) {
+                steps.push(c === 'signed' ? { text: 'Contract signed', cls: OK } : c === 'sent' ? { text: 'Contract unsigned', cls: WAIT } : { text: 'Contract unsent', cls: WAIT })
+              }
+              steps.push(s.paid_in_full ? { text: 'Paid in full', cls: OK } : !s.payments_seeded ? { text: 'Payments not set up', cls: WAIT } : { text: 'Balance open', cls: WAIT })
               return (
                 <div key={s.id}>
                   {showHeading && (
@@ -341,15 +385,14 @@ export default function SessionsPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       {chip(prettyType(s.session_type), 'bg-line text-ink-soft')}
-                      {c === 'signed'
-                        ? chip('Contract signed', 'bg-emerald-100 text-emerald-700')
-                        : c === 'sent'
-                        ? chip('Contract waiting', 'bg-amber-100 text-amber-700')
-                        : c === 'draft'
-                        ? chip('Contract draft', 'bg-line text-ink-soft')
-                        : chip('No contract', 'bg-line text-ink-soft')}
-                      {s.paid_in_full ? chip('Paid in full', 'bg-emerald-100 text-emerald-700') : chip('Balance open', 'bg-amber-100 text-amber-700')}
-                      {s.gallery_url ? chip('Gallery delivered', 'bg-brass/15 text-brass') : chip('No gallery yet', 'bg-line text-ink-soft')}
+                      {(s.delivered || s.shoot_completed_at) ? (
+                        <>
+                          {s.paid_in_full ? chip('Paid in full', OK) : chip('Balance open', WAIT)}
+                          {s.gallery_url ? chip('Gallery delivered', 'bg-brass/15 text-brass') : chip('No gallery yet', 'bg-line text-ink-soft')}
+                        </>
+                      ) : (
+                        steps.map((st, i) => <span key={i}>{chip(`${i + 1}. ${st.text}`, st.cls)}</span>)
+                      )}
                       {!s.delivered && !s.shoot_completed_at && s.status !== 'not_booked' && !!s.wedding_date && s.wedding_date < today && (
                         <button
                           type="button"
