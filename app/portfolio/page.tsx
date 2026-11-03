@@ -38,6 +38,7 @@ type Profile = {
   cover_style_web: string | null
   cover_scale_web: number | null
   logo_height: number | null
+  logo_align: string | null
   desktop_overrides: Record<string, number> | null
   title_font_size: number | null
   location_font_size: number | null
@@ -79,7 +80,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, cover_slideshow, logo_path, avatar_path, about_photo_path, show_about_photo, about_photo_shape, about_photo_size, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, show_testimonials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, cover_slideshow, logo_path, logo_align, avatar_path, about_photo_path, show_about_photo, about_photo_shape, about_photo_size, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, show_testimonials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -305,6 +306,7 @@ export default function PortfolioEditorPage() {
       cover_scale_web: form.cover_scale_web ?? null,
       cover_slideshow: form.cover_slideshow === true,
       logo_height: form.logo_height ?? null,
+      logo_align: form.logo_align ?? null,
       show_name_with_logo: form.show_name_with_logo === true,
       desktop_overrides: form.desktop_overrides ?? {},
       title_font_size: form.title_font_size ?? null,
@@ -794,6 +796,20 @@ export default function PortfolioEditorPage() {
               {form.logo_path && (
                 <div className="mt-4 space-y-4">
                   {deviceSlider('Logo size (height)', 'logo_height', 'logo_height', 24, 320, 4, 40)}
+                  <div>
+                    <p className={label}>Logo alignment</p>
+                    <div className="flex gap-2">
+                      {(['left', 'center', 'right'] as const).map((a) => {
+                        const on = (form.logo_align ?? (form as any).title_align ?? 'center') === a
+                        return (
+                          <button key={a} type="button" onClick={() => setField('logo_align', a)}
+                            className={`flex-1 rounded-lg border px-3 py-2 text-sm capitalize ${on ? 'border-twilight bg-twilight/10 text-ink' : 'border-line text-ink-soft'}`}>
+                            {a}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                   <label className="flex items-center gap-2 text-sm text-ink">
                     <input type="checkbox" checked={form.show_name_with_logo === true} onChange={(e) => setField('show_name_with_logo', e.target.checked)} />
                     Also show my studio name above the logo

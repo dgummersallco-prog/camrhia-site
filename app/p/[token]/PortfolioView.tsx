@@ -299,7 +299,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
               <>
                 {r.show_name_with_logo && <h1 style={titleStyle2}>{studioName}</h1>}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photoUrl(r.logo_path)!} alt={studioName} style={{ height: 'var(--logo-h)', objectFit: 'contain', marginBottom: 8 }} />
+                <img src={photoUrl(r.logo_path)!} alt={studioName} style={{ width: '100%', height: 'var(--logo-h)', objectFit: 'contain', objectPosition: (((r as any).logo_align ?? r.title_align ?? 'center') as string), marginBottom: 8 }} />
               </>
             ) : (
               <h1 style={titleStyle2}>{studioName}</h1>
