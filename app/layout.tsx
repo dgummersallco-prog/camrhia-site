@@ -63,10 +63,10 @@ const jsonLd = {
         "Camrhia is an app for photographers with a website builder, a marketplace where clients browse photographers in their area, bookings, contracts, payment tracking, client messaging, a calendar and gallery link delivery. Free for clients. 14-day free trial for photographers.",
       "publisher": { "@id": "https://camrhia.com/#org" },
       "offers": [
-        { "@type": "Offer", "name": "Solo, monthly", "price": "59", "priceCurrency": "USD" },
+        { "@type": "Offer", "name": "Solo, monthly", "price": "59.99", "priceCurrency": "USD" },
         { "@type": "Offer", "name": "Solo, yearly", "price": "590.00", "priceCurrency": "USD" },
         { "@type": "Offer", "name": "Studio, monthly", "price": "149.00", "priceCurrency": "USD" },
-        { "@type": "Offer", "name": "Studio, yearly", "price": "999", "priceCurrency": "USD" },
+        { "@type": "Offer", "name": "Studio, yearly", "price": "999.99", "priceCurrency": "USD" },
       ],
     },
   ],

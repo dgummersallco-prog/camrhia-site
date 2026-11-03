@@ -80,7 +80,7 @@ if you ever wanna compare, you could run just one session through Camrhia during
         when: "They ask what it costs.",
         why: "Saying it as \"about $2 a day\" makes it feel small, and the free trial means they can decide with no risk.",
         body: (link) =>
-          `it's $59 a month for Solo, so about $2 a day. you get 14 days free first, so you can try it on a real booking before you pay anything: ${link}`,
+          `it's $59.99 a month for Solo, so about $2 a day. you get 14 days free first, so you can try it on a real booking before you pay anything: ${link}`,
       },
     ],
   },
