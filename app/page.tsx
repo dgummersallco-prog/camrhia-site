@@ -42,6 +42,7 @@ const NEW_STACK = [
   "A marketplace where new clients find you",
   "Bookings and sessions, organized",
   "Contracts that fill themselves in",
+  "Client questionnaires sent and collected for you",
   "Payments tracked and confirmed",
   "Client messaging, tied to each session",
   "A free dashboard for every client, with their galleries, contracts, payments and messages in one place",
