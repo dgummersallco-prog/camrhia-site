@@ -39,8 +39,8 @@ function optionLabel(key: string, value: unknown): string | null {
   return q?.options.find((o) => o.value === value)?.label ?? null
 }
 
-const tabBtn = (on: boolean) =>
-  `rounded-full border px-4 py-2 text-sm transition ${on ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30 hover:text-white'}`
+const tileBtn = (on: boolean) =>
+  `rounded-2xl border p-5 text-left transition ${on ? 'border-twilight bg-twilight text-white' : 'border-white/10 bg-[#151518] text-white hover:-translate-y-0.5 hover:border-twilight'}`
 const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
 const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-white/70 transition hover:border-white/35 hover:text-white disabled:opacity-40'
 
@@ -158,10 +158,13 @@ export default function EditingRoom() {
 
         <h1 className="mt-12 font-fraunces text-4xl text-white">The editing room</h1>
 
-        <div className="mt-8 flex flex-wrap gap-2">
-          <button className={tabBtn(tab === 'edit')} onClick={() => setTab('edit')}>Edit</button>
-          <button className={tabBtn(tab === 'styles')} onClick={() => setTab('styles')}>My styles</button>
-          <button className={tabBtn(tab === 'brain')} onClick={() => setTab('brain')}>AI brain</button>
+        <div className="mt-8 grid gap-3 sm:grid-cols-3">
+          {([['edit', 'Edit', 'Pick a shoot and start'], ['styles', 'My styles', 'Your signature looks'], ['brain', 'Your habits', 'What it has learned from you']] as [Tab, string, string][]).map(([k, label, sub]) => (
+            <button key={k} className={tileBtn(tab === k)} onClick={() => setTab(k)}>
+              <p className="font-fraunces text-xl">{label}</p>
+              <p className={`mt-1 text-sm ${tab === k ? 'text-white/80' : 'text-white/50'}`}>{sub}</p>
+            </button>
+          ))}
         </div>
 
         {tab === 'edit' && (
