@@ -8,9 +8,10 @@ type Props = {
   coverStyle?: string | null
   slideshow?: boolean
   scale?: number | null
+  focus?: { x: number; y: number }[] | null
 }
 
-export function CoverHero({ urls, alt, coverStyle, slideshow, scale }: Props) {
+export function CoverHero({ urls, alt, coverStyle, slideshow, scale, focus }: Props) {
   const [idx, setIdx] = useState(0)
   const shown = slideshow ? urls : urls.slice(0, 1)
   // 1 = full width (default). Photographers can shrink down to 0.5 so more of
@@ -65,6 +66,7 @@ export function CoverHero({ urls, alt, coverStyle, slideshow, scale }: Props) {
               loading={i === 0 ? 'eager' : 'lazy'}
               style={{
                 position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                objectPosition: focus?.[i] ? `${focus[i].x}% ${focus[i].y}%` : '50% 50%',
                 opacity: i === idx ? 1 : 0, transition: 'opacity 1.2s ease-in-out',
               }}
             />

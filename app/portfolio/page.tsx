@@ -26,6 +26,7 @@ type Profile = {
   tiktok_url: string | null
   cover_path: string | null
   cover_paths: string[] | null
+  cover_focus: { x: number; y: number }[] | null
   cover_slideshow: boolean | null
   logo_path: string | null
   avatar_path: string | null
@@ -80,7 +81,7 @@ type Profile = {
 }
 
 const COLUMNS =
-  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, cover_slideshow, logo_path, logo_align, avatar_path, about_photo_path, show_about_photo, about_photo_shape, about_photo_size, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, show_testimonials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
+  'id, is_listed, public_token, studio_name, bio, service_city, service_state, website_url, instagram_url, facebook_url, pinterest_url, tiktok_url, cover_path, cover_paths, cover_focus, cover_slideshow, logo_path, logo_align, avatar_path, about_photo_path, show_about_photo, about_photo_shape, about_photo_size, cover_style, cover_scale, cover_style_web, cover_scale_web, logo_height, show_name_with_logo, desktop_overrides, title_font_size, location_font_size, portfolio_title_spacing, openings_display_mode, openings_badge_text, openings_badge_color, message_btn_text, message_btn_bg_color, message_btn_color, message_btn_font_size, message_btn_width, message_btn_align, message_btn_bold, message_btn_italic, message_btn_show_icon, show_portfolio_public, show_bio_public, show_pricing_public, show_availability_public, show_faq_public, show_socials_public, show_testimonials_public, section_order, accent_color, portfolio_bg_color, title_color, location_color, paragraph_color, portfolio_section_spacing, faq, title_font, title_bold, title_italic, paragraph_font, section_titles, brand_colors_named'
 
 const DEFAULT_ORDER = ['featured_photos', 'about', 'testimonials', 'pricing', 'openings', 'faq', 'links']
 const LABELS: Record<string, string> = {
@@ -188,6 +189,9 @@ export default function PortfolioEditorPage() {
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [previewKey, setPreviewKey] = useState(0)
+  const [focusIdx, setFocusIdx] = useState(0)
+  const [natSize, setNatSize] = useState<Record<string, { w: number; h: number }>>({})
+  const dragRef = useRef<{ sx: number; sy: number; fx: number; fy: number } | null>(null)
   const [open, setOpen] = useState<string | null>(null)
   const device: 'phone' | 'desktop' = 'phone'
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
@@ -304,6 +308,7 @@ export default function PortfolioEditorPage() {
       cover_scale: form.cover_scale ?? 1,
       cover_style_web: form.cover_style_web ?? null,
       cover_scale_web: form.cover_scale_web ?? null,
+      cover_focus: form.cover_focus ?? null,
       cover_slideshow: form.cover_slideshow === true,
       logo_height: form.logo_height ?? null,
       logo_align: form.logo_align ?? null,
@@ -349,10 +354,12 @@ export default function PortfolioEditorPage() {
     if (current.length <= 1) return
     const gone = current[i]
     const next = current.filter((_, k) => k !== i)
-    const { error } = await sb.from('profiles').update({ cover_path: next[0], cover_paths: next }).eq('id', form.id)
+    const focus = current.map((_, k) => (form.cover_focus ?? [])[k] ?? { x: 50, y: 50 }).filter((_, k) => k !== i)
+    const { error } = await sb.from('profiles').update({ cover_path: next[0], cover_paths: next, cover_focus: focus }).eq('id', form.id)
     if (error) { setMessage(error.message); return }
-    setForm((f) => (f ? { ...f, cover_path: next[0], cover_paths: next } : f))
-    setSaved((v) => (v ? { ...v, cover_path: next[0], cover_paths: next } : v))
+    setForm((f) => (f ? { ...f, cover_path: next[0], cover_paths: next, cover_focus: focus } : f))
+    setSaved((v) => (v ? { ...v, cover_path: next[0], cover_paths: next, cover_focus: focus } : v))
+    setFocusIdx(0)
     setPreviewKey((k) => k + 1)
     await sb.storage.from('portfolio').remove([gone])
   }
@@ -372,10 +379,14 @@ export default function PortfolioEditorPage() {
         ? [...current, path].slice(0, 5)
         : (current.length ? current.map((p, k) => (k === index ? path : p)) : [path])
       const old = index == null ? null : (current[index] ?? null)
-      const { error } = await sb.from('profiles').update({ cover_path: coverPaths[0], cover_paths: coverPaths }).eq('id', form.id)
+      const curFocus = form.cover_focus ?? []
+      const nextFocus = index == null
+        ? [...current.map((_, k) => curFocus[k] ?? { x: 50, y: 50 }), { x: 50, y: 50 }].slice(0, 5)
+        : (current.length ? current.map((_, k) => (k === index ? { x: 50, y: 50 } : (curFocus[k] ?? { x: 50, y: 50 }))) : [{ x: 50, y: 50 }])
+      const { error } = await sb.from('profiles').update({ cover_path: coverPaths[0], cover_paths: coverPaths, cover_focus: nextFocus }).eq('id', form.id)
       if (error) throw error
-      setForm((f) => (f ? { ...f, cover_path: coverPaths[0], cover_paths: coverPaths } : f))
-      setSaved((s) => (s ? { ...s, cover_path: coverPaths[0], cover_paths: coverPaths } : s))
+      setForm((f) => (f ? { ...f, cover_path: coverPaths[0], cover_paths: coverPaths, cover_focus: nextFocus } : f))
+      setSaved((s) => (s ? { ...s, cover_path: coverPaths[0], cover_paths: coverPaths, cover_focus: nextFocus } : s))
       if (old && old !== path) await sb.storage.from('portfolio').remove([old])
       setPreviewKey((k) => k + 1)
       flash('Cover photo updated')
@@ -669,16 +680,56 @@ export default function PortfolioEditorPage() {
         const coverList = form.cover_paths?.length ? form.cover_paths : (form.cover_path ? [form.cover_path] : [])
         const setStyle = (k: string) => setField(isDesk ? 'cover_style_web' : 'cover_style', k)
         const setScale = (v: number) => setField(isDesk ? 'cover_scale_web' : 'cover_scale', v)
+        const sel = Math.min(focusIdx, Math.max(0, coverList.length - 1))
+        const selPath = coverList[sel] ?? null
+        const selUrl = selPath ? `${STORAGE_BASE}${selPath}` : null
+        const foc = (form.cover_focus ?? [])[sel] ?? { x: 50, y: 50 }
+        const nat = selPath ? natSize[selPath] : undefined
+        const setFocus = (x: number, y: number) => {
+          const arr = coverList.map((_, k) => (form.cover_focus ?? [])[k] ?? { x: 50, y: 50 })
+          arr[sel] = { x: Math.min(100, Math.max(0, x)), y: Math.min(100, Math.max(0, y)) }
+          setField('cover_focus', arr)
+        }
         return sec(
           <>
             <div className="flex h-[200px] items-center justify-center rounded-xl bg-paper">
-              <div className="overflow-hidden rounded-lg bg-line" style={{ width: bw, height: bh }}>
-                {coverUrl && (
+              <div
+                className="relative overflow-hidden rounded-lg bg-line"
+                style={{ width: bw, height: bh, touchAction: 'none', cursor: selUrl ? 'grab' : 'default' }}
+                onPointerDown={(e) => {
+                  if (!nat) return
+                  e.currentTarget.setPointerCapture(e.pointerId)
+                  dragRef.current = { sx: e.clientX, sy: e.clientY, fx: foc.x, fy: foc.y }
+                }}
+                onPointerMove={(e) => {
+                  const d = dragRef.current
+                  if (!d || !nat) return
+                  const sc = Math.max(bw / nat.w, bh / nat.h)
+                  const ox = nat.w * sc - bw
+                  const oy = nat.h * sc - bh
+                  const nx = ox > 0 ? d.fx - ((e.clientX - d.sx) / ox) * 100 : d.fx
+                  const ny = oy > 0 ? d.fy - ((e.clientY - d.sy) / oy) * 100 : d.fy
+                  setFocus(nx, ny)
+                }}
+                onPointerUp={() => { dragRef.current = null }}
+                onPointerCancel={() => { dragRef.current = null }}
+              >
+                {selUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`${STORAGE_BASE}${coverUrl}`} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={selUrl}
+                    alt=""
+                    draggable={false}
+                    onLoad={(e) => {
+                      const im = e.currentTarget
+                      setNatSize((m) => (m[selPath as string] ? m : { ...m, [selPath as string]: { w: im.naturalWidth, h: im.naturalHeight } }))
+                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${foc.x}% ${foc.y}%`, pointerEvents: 'none', userSelect: 'none' }}
+                  />
                 )}
               </div>
             </div>
+            <p className="text-xs text-ink-soft">Drag the photo to choose which part shows in this layout.</p>
             <div>
               <input
                 ref={fileInput}
@@ -687,15 +738,20 @@ export default function PortfolioEditorPage() {
                 className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f, coverTarget.current); e.target.value = '' }}
               />
-              <p className={label}>Cover photos ({coverList.length}/5)</p>
+              <div className="mb-1 flex items-center justify-between">
+                <p className={label}>Cover photos ({coverList.length}/5)</p>
+                {coverList.length > 0 && (
+                  <button type="button" disabled={uploading} onClick={() => { coverTarget.current = sel; fileInput.current?.click() }} className="text-xs text-twilight underline">Replace selected photo</button>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2">
                 {coverList.map((p, i) => (
                   <div key={p} className="relative h-16 w-16">
                     <button
                       type="button"
                       disabled={uploading}
-                      onClick={() => { coverTarget.current = i; fileInput.current?.click() }}
-                      className="h-16 w-16 overflow-hidden rounded-lg border border-line"
+                      onClick={() => setFocusIdx(i)}
+                      className={`h-16 w-16 overflow-hidden rounded-lg border-2 ${sel === i ? 'border-twilight' : 'border-line'}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={`${STORAGE_BASE}${p}`} alt="" className="h-full w-full object-cover" />

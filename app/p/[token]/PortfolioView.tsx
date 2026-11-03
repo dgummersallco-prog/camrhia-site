@@ -271,6 +271,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
           alt={studioName}
           coverStyle={r.cover_style}
           slideshow={!!r.cover_slideshow}
+          focus={(r as any).cover_focus}
           scale={r.cover_scale}
         />
             </div>
@@ -280,6 +281,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
           alt={studioName}
           coverStyle={r.cover_style_web ?? r.cover_style}
           slideshow={!!r.cover_slideshow}
+          focus={(r as any).cover_focus}
           scale={r.cover_scale_web ?? r.cover_scale}
         />
             </div>
@@ -290,6 +292,7 @@ export function PortfolioView({ initial, token }: { initial: Record<string, any>
           alt={studioName}
           coverStyle={r.cover_style}
           slideshow={!!r.cover_slideshow}
+          focus={(r as any).cover_focus}
           scale={r.cover_scale}
         />
         )}
