@@ -99,6 +99,15 @@ export default function SessionsPage() {
       setContracts(map)
     }
     load()
+    const refresh = () => { if (document.visibilityState === 'visible') void load() }
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    const t = setInterval(refresh, 60000)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refresh)
+      clearInterval(t)
+    }
   }, [router])
 
   async function setShootComplete(id: string, done: boolean) {
