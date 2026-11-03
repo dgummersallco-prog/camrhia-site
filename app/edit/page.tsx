@@ -159,7 +159,7 @@ export default function EditingRoom() {
         <h1 className="mt-12 font-fraunces text-4xl text-white">The editing room</h1>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
-          {([['edit', 'Edit', 'Pick a shoot and start'], ['styles', 'My styles', 'Your signature looks'], ['brain', 'Your habits', 'What it has learned from you']] as [Tab, string, string][]).map(([k, label, sub]) => (
+          {([['edit', 'Edit', 'Pick a shoot and start'], ['styles', 'My styles', 'Your signature looks'], ['brain', 'Cami', 'Your AI editing assistant']] as [Tab, string, string][]).map(([k, label, sub]) => (
             <button key={k} className={tileBtn(tab === k)} onClick={() => setTab(k)}>
               <p className="font-fraunces text-xl">{label}</p>
               <p className={`mt-1 text-sm ${tab === k ? 'text-white/80' : 'text-white/50'}`}>{sub}</p>
@@ -274,12 +274,12 @@ export default function EditingRoom() {
 
         {tab === 'brain' && (
           <div className="mt-8">
-            <p className="max-w-xl text-white/55">What the editing room has noticed from the fixes you make while you review photos.</p>
+            <p className="max-w-xl text-white/55">What Cami has noticed from the fixes you make while you review photos.</p>
 
             {brain === null && <p className="mt-8 text-sm text-white/40">Loading…</p>}
             {brain && brain.checked === 0 && (
               <p className="mt-8 rounded-2xl border border-white/10 bg-[#151518] p-8 text-white/60">
-                Nothing yet. Review a few photos in a shoot and fix what you want to change. It starts noticing your habits right away.
+                Nothing yet. Review a few photos in a shoot and fix what you want to change. Cami starts noticing your habits right away.
               </p>
             )}
             {brain && brain.checked > 0 && (
