@@ -8,7 +8,14 @@ import { QUESTIONS, STYLE_LOOK, type Signature } from '@/lib/brief'
 
 type Row = { id: string; title: string; status: string; created_at: string; gallery_photos: { count: number }[] }
 type Tab = 'edit' | 'styles' | 'brain'
-type Correction = { photo_id: string; gallery_id: string; manual: Record<string, number> | null }
+type Correction = {
+  photo_id: string
+  gallery_id: string
+  light: string | null
+  signature_id: string | null
+  created_at: string
+  manual: Record<string, number> | null
+}
 
 const PHRASE: Record<string, [string, string]> = {
   exposure: ['Brighten', 'Darken'],
@@ -39,6 +46,29 @@ function optionLabel(key: string, value: unknown): string | null {
   return q?.options.find((o) => o.value === value)?.label ?? null
 }
 
+function hasFix(c: Correction): boolean {
+  if (!c.manual) return false
+  return Object.entries(c.manual).some(([k, v]) => !!v && typeof v === 'number' && !!PHRASE[k])
+}
+
+function summarize(items: Correction[]) {
+  const fixedItems = items.filter(hasFix)
+  const tally: Record<string, { up: number; down: number; sum: number }> = {}
+  for (const c of fixedItems) {
+    for (const [k, v] of Object.entries(c.manual ?? {})) {
+      if (!v || typeof v !== 'number' || !PHRASE[k]) continue
+      const t = tally[k] ?? (tally[k] = { up: 0, down: 0, sum: 0 })
+      t.sum += v
+      if (v > 0) t.up++
+      else t.down++
+    }
+  }
+  const habits = Object.entries(tally)
+    .map(([k, t]) => ({ key: k, n: t.up + t.down, sum: t.sum, phrase: PHRASE[k][t.up >= t.down ? 0 : 1] }))
+    .sort((a, b) => b.n - a.n)
+  return { checked: items.length, fixed: fixedItems.length, habits }
+}
+
 const tileBtn = (on: boolean) =>
   `rounded-2xl border p-5 text-left transition ${on ? 'border-twilight bg-twilight text-white' : 'border-white/10 bg-[#151518] text-white hover:-translate-y-0.5 hover:border-twilight'}`
 const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
@@ -57,6 +87,7 @@ export default function EditingRoom() {
   const [creating, setCreating] = useState(false)
   const [renaming, setRenaming] = useState<string | null>(null)
   const [renameVal, setRenameVal] = useState('')
+  const [adding, setAdding] = useState<string | null>(null)
 
   useEffect(() => {
     const sb = supabase
@@ -68,7 +99,7 @@ export default function EditingRoom() {
       const [g, sg, co] = await Promise.all([
         sb.from('galleries').select('id, title, status, created_at, gallery_photos(count)').eq('owner_id', uid).order('created_at', { ascending: false }),
         sb.from('edit_signatures').select('id, name, answers, strength').eq('owner_id', uid).order('created_at', { ascending: true }),
-        sb.from('edit_corrections').select('photo_id, gallery_id, manual:final->manual').eq('owner_id', uid).order('created_at', { ascending: false }).limit(5000),
+        sb.from('edit_corrections').select('photo_id, gallery_id, light, signature_id, created_at, manual:final->manual').eq('owner_id', uid).order('created_at', { ascending: false }).limit(5000),
       ])
       if (g.error) { setError(g.error.message); setRows([]) } else setRows((g.data ?? []) as unknown as Row[])
       setSigs(((sg.data ?? []) as Signature[]).map((s) => ({ ...s, strength: Number(s.strength) })))
@@ -76,38 +107,86 @@ export default function EditingRoom() {
     })
   }, [router])
 
-  const brain = useMemo(() => {
+  const latest = useMemo(() => {
     if (!corr) return null
     const seen = new Set<string>()
-    const latest: Correction[] = []
+    const out: Correction[] = []
     for (const c of corr) {
       if (seen.has(c.photo_id)) continue
       seen.add(c.photo_id)
-      latest.push(c)
+      out.push(c)
     }
-    const shoots = new Set(latest.map((c) => c.gallery_id)).size
-    const tally: Record<string, { up: number; down: number }> = {}
-    let fixed = 0
-    for (const c of latest) {
-      const m = c.manual
-      if (!m) continue
-      let any = false
-      for (const [k, v] of Object.entries(m)) {
-        if (!v || typeof v !== 'number' || !PHRASE[k]) continue
-        any = true
-        const t = tally[k] ?? (tally[k] = { up: 0, down: 0 })
-        if (v > 0) t.up++
-        else t.down++
-      }
-      if (any) fixed++
-    }
-    const habits = Object.entries(tally)
-      .map(([k, t]) => ({ key: k, n: t.up + t.down, phrase: PHRASE[k][t.up >= t.down ? 0 : 1] }))
-      .filter((h) => h.n >= 3)
-      .sort((a, b) => b.n - a.n)
-      .slice(0, 8)
-    return { checked: latest.length, fixed, shoots, habits }
+    return out
   }, [corr])
+
+  const brain = useMemo(() => {
+    if (!latest) return null
+    const all = summarize(latest)
+    const shoots = new Set(latest.map((c) => c.gallery_id)).size
+    const habits = all.habits.filter((h) => h.n >= 3).slice(0, 8)
+
+    const byGallery = new Map<string, Correction[]>()
+    for (const c of latest) {
+      const list = byGallery.get(c.gallery_id) ?? []
+      list.push(c)
+      byGallery.set(c.gallery_id, list)
+    }
+    const scores = [...byGallery.entries()].slice(0, 8).map(([gid, items]) => {
+      const s = summarize(items)
+      return { gid, checked: s.checked, pct: Math.round((100 * (s.checked - s.fixed)) / s.checked) }
+    })
+
+    const byLight = new Map<string, Correction[]>()
+    for (const c of latest) {
+      if (!c.light) continue
+      const list = byLight.get(c.light) ?? []
+      list.push(c)
+      byLight.set(c.light, list)
+    }
+    const situations = [...byLight.entries()]
+      .map(([light, items]) => {
+        const s = summarize(items)
+        const top = s.habits.filter((h) => s.fixed >= 3 && h.n / s.fixed >= 0.4).slice(0, 3)
+        return { light, fixed: s.fixed, top }
+      })
+      .filter((x) => x.top.length > 0)
+      .sort((a, b) => b.fixed - a.fixed)
+
+    return { checked: all.checked, fixed: all.fixed, shoots, habits, scores, situations }
+  }, [latest])
+
+  const suggestions = useMemo(() => {
+    if (!latest || !sigs) return []
+    const out: { sig: Signature; fixed: number; useful: { key: string; n: number; phrase: string }[]; usual: Record<string, number> }[] = []
+    for (const sig of sigs) {
+      const learnedRaw = (sig.answers as Record<string, unknown>).learnedAt
+      const learned = typeof learnedRaw === 'string' ? new Date(learnedRaw).getTime() : 0
+      const items = latest.filter((c) => c.signature_id === sig.id && new Date(c.created_at).getTime() > learned)
+      const s = summarize(items)
+      if (s.fixed < 5) continue
+      const useful = s.habits.filter((h) => h.n / s.fixed >= 0.4)
+      if (useful.length === 0) continue
+      const usual: Record<string, number> = {}
+      for (const h of useful) usual[h.key] = Math.round((h.sum / s.fixed) * 1000) / 1000
+      out.push({ sig, fixed: s.fixed, useful, usual })
+    }
+    return out
+  }, [latest, sigs])
+
+  async function addToStyle(sig: Signature, usual: Record<string, number>) {
+    const sb = supabase
+    if (!sb) return
+    setAdding(sig.id)
+    const a = sig.answers as Record<string, unknown>
+    const tweak: Record<string, number> = { ...((a.tweak ?? {}) as Record<string, number>) }
+    for (const [k, v] of Object.entries(usual)) tweak[k] = Math.round(((tweak[k] ?? 0) + v) * 1000) / 1000
+    for (const k of Object.keys(tweak)) if (!tweak[k]) delete tweak[k]
+    const answers = { ...a, tweak, learnedAt: new Date().toISOString() }
+    const { error: e } = await sb.from('edit_signatures').update({ answers }).eq('id', sig.id)
+    setAdding(null)
+    if (e) { setError(e.message); return }
+    setSigs((prev) => (prev ?? []).map((s) => (s.id === sig.id ? { ...s, answers: answers as unknown as Signature['answers'] } : s)))
+  }
 
   async function createStyle() {
     const sb = supabase
@@ -148,6 +227,8 @@ export default function EditingRoom() {
     setSigs((prev) => (prev ?? []).filter((x) => x.id !== s.id))
   }
 
+  const titleOf = (gid: string) => rows?.find((r) => r.id === gid)?.title ?? 'A shoot'
+
   return (
     <div className="min-h-screen bg-[#0c0c0e] text-[#ececf0]">
       <div className="mx-auto max-w-5xl px-6 py-10">
@@ -167,11 +248,12 @@ export default function EditingRoom() {
           ))}
         </div>
 
+        {error && <p className="mt-6 text-sm text-red-300">{error}</p>}
+
         {tab === 'edit' && (
           <>
             <p className="mt-8 max-w-xl text-white/55">Pick a shoot. We walk it from raw photos to a finished gallery, one step at a time.</p>
 
-            {error && <p className="mt-6 text-sm text-red-300">{error}</p>}
             {rows === null && <p className="mt-10 text-sm text-white/40">Loading…</p>}
             {rows && rows.length === 0 && !error && (
               <p className="mt-10 rounded-2xl border border-white/10 bg-[#151518] p-8 text-white/60">
@@ -299,7 +381,36 @@ export default function EditingRoom() {
                   </div>
                 </div>
 
-                <p className="mt-10 font-fraunces text-xl text-white">Your habits</p>
+                <p className="mt-10 font-fraunces text-xl text-white">How Cami did on each shoot</p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {brain.scores.map((sc) => (
+                    <div key={sc.gid} className="rounded-2xl border border-white/10 bg-[#151518] p-5">
+                      <p className="truncate text-white">{titleOf(sc.gid)}</p>
+                      <p className="mt-1 text-sm text-white/50">Cami got {sc.pct}% right · {sc.checked} {sc.checked === 1 ? 'photo' : 'photos'} checked</p>
+                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-full rounded-full bg-[var(--color-twilight)]" style={{ width: `${sc.pct}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-10 font-fraunces text-xl text-white">Your habits by light</p>
+                {brain.situations.length === 0 ? (
+                  <p className="mt-3 text-white/55">Not enough fixes yet to see a pattern for each kind of light. Keep reviewing and they show up here.</p>
+                ) : (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {brain.situations.map((sit) => (
+                      <div key={sit.light} className="rounded-2xl border border-white/10 bg-[#151518] p-5">
+                        <p className="text-lg text-white">{optionLabel('light', sit.light) ?? sit.light}</p>
+                        <ul className="mt-3 space-y-1 text-sm text-white/70">
+                          {sit.top.map((h) => <li key={h.key}>{h.phrase} · {h.n} of {sit.fixed} photos</li>)}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="mt-10 font-fraunces text-xl text-white">Your habits overall</p>
                 {brain.habits.length === 0 ? (
                   <p className="mt-3 text-white/55">Not enough fixes yet to see a pattern. Keep reviewing and they show up here.</p>
                 ) : (
@@ -311,6 +422,26 @@ export default function EditingRoom() {
                       </div>
                     ))}
                   </div>
+                )}
+
+                {suggestions.length > 0 && (
+                  <>
+                    <p className="mt-10 font-fraunces text-xl text-white">Make Cami&apos;s edits yours</p>
+                    <p className="mt-2 max-w-xl text-white/55">You keep making the same fixes. Add them to your style and they happen on their own next time.</p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {suggestions.map(({ sig, fixed, useful, usual }) => (
+                        <div key={sig.id} className="rounded-2xl border border-white/10 bg-[#151518] p-5">
+                          <p className="font-fraunces text-lg text-white">{sig.name}</p>
+                          <ul className="mt-3 space-y-1 text-sm text-white/70">
+                            {useful.map((h) => <li key={h.key}>{h.phrase} · {h.n} of {fixed} photos</li>)}
+                          </ul>
+                          <button className={`${primary} mt-4`} disabled={adding === sig.id} onClick={() => addToStyle(sig, usual)}>
+                            {adding === sig.id ? 'Adding…' : 'Add these to this style'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </>
             )}
