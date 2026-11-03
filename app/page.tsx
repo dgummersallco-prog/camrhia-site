@@ -426,13 +426,13 @@ export default function Home() {
               Every plan starts with 14 free days. If it is not for you, you owe nothing.
             </p>
             <div className="mt-12 grid md:grid-cols-2 gap-6">
-              <div className="rounded-3xl bg-card border border-line p-8">
+              <div className="rounded-3xl bg-card border-2 border-twilight p-8">
                 <p className="font-fraunces text-2xl font-semibold text-ink">Solo</p>
                 <p className="mt-1 text-sm text-ink-soft">For the photographer running their own show.</p>
                 <p className="mt-6 font-fraunces text-5xl text-ink">$59.99<span className="text-base text-ink-soft"> /month</span></p>
                 <p className="mt-1 text-sm text-ink-soft">or $590 /year</p>
               </div>
-              <div className="rounded-3xl bg-card border-2 border-twilight p-8">
+              <div className="rounded-3xl bg-card border border-line p-8">
                 <p className="font-fraunces text-2xl font-semibold text-ink">Studio</p>
                 <p className="mt-1 text-sm text-ink-soft">For studios with a team.</p>
                 <p className="mt-6 font-fraunces text-5xl text-ink">$149<span className="text-base text-ink-soft"> /month</span></p>
