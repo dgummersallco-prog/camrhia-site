@@ -85,7 +85,7 @@ function Row({ n, title, input, result, control }: { n: number; title: string; i
   )
 }
 
-function AdCard({ ad, net, onChange, onSave, onDelete }: { ad: Ad; net: number; onChange: (patch: Partial<Ad>) => void; onSave: () => void; onDelete: () => void }) {
+function AdCard({ ad, net, onChange, onSave, onDelete, footer }: { ad: Ad; net: number; onChange: (patch: Partial<Ad>) => void; onSave: () => void; onDelete?: () => void; footer?: React.ReactNode }) {
   const cost = ad.cost_total
   const cpv = ratio(cost, ad.visits)
   const cpd = ratio(cost, ad.downloads)
@@ -117,7 +117,7 @@ function AdCard({ ad, net, onChange, onSave, onDelete }: { ad: Ad; net: number; 
           className="rounded-xl border border-line bg-paper px-3 py-1.5 text-sm text-ink-soft outline-none focus:border-twilight"
           aria-label="Start date"
         />
-        <button type="button" onClick={onDelete} className="text-xs text-ink-soft underline hover:text-red-700">Delete</button>
+        {onDelete && <button type="button" onClick={onDelete} className="text-xs text-ink-soft underline hover:text-red-700">Delete</button>}
       </div>
 
       <div className="mt-2">
@@ -179,8 +179,13 @@ function AdCard({ ad, net, onChange, onSave, onDelete }: { ad: Ad; net: number; 
           </p>
         )}
       </div>
+      {footer}
     </section>
   )
+}
+
+function newDraft(): Ad {
+  return { id: '', name: 'New ad', started_on: new Date().toISOString().slice(0, 10), cost_total: 0, visits: 0, downloads: 0, trials: 0, paying: 0, retained: null, notes: null }
 }
 
 export default function AdminAdsPage() {
@@ -191,6 +196,8 @@ export default function AdminAdsPage() {
   const net = 51
   const [view, setView] = useState<'cac' | 'profit'>('cac')
   const [ltvView, setLtvView] = useState<'back' | 'total'>('back')
+  const [open, setOpen] = useState<string | null>(null)
+  const [draft, setDraft] = useState<Ad>(newDraft())
 
   const load = useCallback(async () => {
     try {
@@ -225,13 +232,19 @@ export default function AdminAdsPage() {
     }
   }
 
-  async function addAd() {
+  function startNew() {
+    setDraft(newDraft())
+    setOpen('new')
+  }
+
+  async function submitDraft() {
     try {
-      const { ad } = await call('save', { ad: { name: 'New ad', started_on: new Date().toISOString().slice(0, 10) } })
+      const { ad } = await call('save', { ad: draft })
       setAds((prev) => [ad as Ad, ...prev])
+      setOpen(null)
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not add the ad')
+      setError(e instanceof Error ? e.message : 'Could not submit the ad')
     }
   }
 
@@ -240,6 +253,7 @@ export default function AdminAdsPage() {
     try {
       await call('delete', { id })
       setAds((prev) => prev.filter((a) => a.id !== id))
+      setOpen(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not delete')
     }
@@ -254,7 +268,7 @@ export default function AdminAdsPage() {
           <h1 className="font-fraunces text-3xl font-semibold text-ink">Ads</h1>
           <p className="mt-1 text-sm text-ink-soft">How each ad moves people from a click to a paying subscriber.</p>
         </div>
-        <button type="button" onClick={addAd} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ Add an ad</button>
+        <button type="button" onClick={startNew} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ Add an ad</button>
       </div>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
@@ -436,20 +450,85 @@ export default function AdminAdsPage() {
         </div>
       </section>
 
-      {ads.length === 0 ? (
-        <p className="mt-8 text-sm text-ink-soft">No ads yet. Press “Add an ad” and fill in the numbers as you get them.</p>
-      ) : (
-        ads.map((ad) => (
-          <AdCard
-            key={ad.id}
-            ad={ad}
-            net={net}
-            onChange={(p) => patch(ad.id, p)}
-            onSave={() => save(ad.id)}
-            onDelete={() => remove(ad.id)}
-          />
-        ))
+      {open === 'new' && (
+        <AdCard
+          ad={draft}
+          net={net}
+          onChange={(p) => setDraft((d) => ({ ...d, ...p }))}
+          onSave={() => {}}
+          footer={
+            <div className="mt-4 flex items-center gap-3">
+              <button type="button" onClick={submitDraft} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90">Submit ad</button>
+              <button type="button" onClick={() => setOpen(null)} className="text-sm text-ink-soft underline">Cancel</button>
+            </div>
+          }
+        />
       )}
+
+      {open && open !== 'new' && ads.find((a) => a.id === open) && (
+        <AdCard
+          ad={ads.find((a) => a.id === open) as Ad}
+          net={net}
+          onChange={(p) => patch(open, p)}
+          onSave={() => save(open)}
+          onDelete={() => remove(open)}
+          footer={
+            <div className="mt-4">
+              <button type="button" onClick={() => setOpen(null)} className="rounded-full border border-line px-5 py-2 text-sm text-ink transition hover:border-twilight">Close</button>
+            </div>
+          }
+        />
+      )}
+
+      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Your ads</p>
+        <p className="mt-2 text-sm text-ink-soft">{ads.length === 0 ? 'Placeholders for now. Each ad you submit fills in a row here.' : 'Click a row to open and edit that ad.'}</p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[44rem] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-ink-soft">
+                <th className="py-2 pr-3 font-medium">Ad</th>
+                <th className="py-2 pr-3 text-right font-medium">Cost</th>
+                <th className="py-2 pr-3 text-right font-medium">Visits</th>
+                <th className="py-2 pr-3 text-right font-medium">Cost per visit</th>
+                <th className="py-2 pr-3 text-right font-medium">Downloads</th>
+                <th className="py-2 pr-3 text-right font-medium">Trials</th>
+                <th className="py-2 pr-3 text-right font-medium">Paying</th>
+                <th className="py-2 text-right font-medium">CAC</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ads.length === 0
+                ? [1, 2, 3].map((i) => (
+                    <tr key={i} className="border-b border-line text-ink-soft/50 last:border-0">
+                      <td className="py-3 pr-3 font-fraunces text-lg font-semibold">Ad {i}</td>
+                      {[0, 1, 2, 3, 4, 5, 6].map((k) => (
+                        <td key={k} className="py-3 pr-3 text-right">—</td>
+                      ))}
+                    </tr>
+                  ))
+                : ads.map((ad) => {
+                    const cac = ad.paying > 0 ? ad.cost_total / ad.paying : 0
+                    return (
+                      <tr key={ad.id} onClick={() => setOpen(ad.id)} className="cursor-pointer border-b border-line last:border-0 hover:bg-paper">
+                        <td className="py-3 pr-3">
+                          <span className="font-fraunces text-lg font-semibold text-ink">{ad.name}</span>
+                          {ad.started_on ? <span className="ml-2 text-xs text-ink-soft">{ad.started_on}</span> : null}
+                        </td>
+                        <td className="py-3 pr-3 text-right text-ink">{usd(ad.cost_total)}</td>
+                        <td className="py-3 pr-3 text-right text-ink">{ad.visits.toLocaleString('en-US')}</td>
+                        <td className="py-3 pr-3 text-right text-ink">{ad.visits > 0 && ad.cost_total > 0 ? usd(ad.cost_total / ad.visits) : '—'}</td>
+                        <td className="py-3 pr-3 text-right text-ink">{ad.downloads.toLocaleString('en-US')}</td>
+                        <td className="py-3 pr-3 text-right text-ink">{ad.trials.toLocaleString('en-US')}</td>
+                        <td className="py-3 pr-3 text-right text-ink">{ad.paying.toLocaleString('en-US')}</td>
+                        <td className={`py-3 text-right font-medium ${cac === 0 ? 'text-ink-soft' : cac <= net ? 'text-sage' : 'text-red-700'}`}>{cac > 0 ? usd(Math.round(cac)) : '—'}</td>
+                      </tr>
+                    )
+                  })}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   )
 }
