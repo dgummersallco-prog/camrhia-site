@@ -17,13 +17,6 @@ type Ad = {
   notes: string | null
 }
 
-const PLANS = [
-  { label: 'Solo monthly', net: '50.99' },
-  { label: 'Solo yearly', net: '41.79' },
-  { label: 'Studio monthly', net: '126.65' },
-  { label: 'Studio yearly', net: '70.83' },
-]
-
 const LIFETIME_CAP_MONTHS = 24
 
 function usd(n: number): string {
@@ -189,8 +182,7 @@ export default function AdminAdsPage() {
   const [ready, setReady] = useState(false)
   const [ads, setAds] = useState<Ad[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [netS, setNetS] = useState('51')
-  const net = Number(netS) || 0
+  const net = 51
 
   const load = useCallback(async () => {
     try {
@@ -258,32 +250,6 @@ export default function AdminAdsPage() {
       </div>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
-
-      <div className="mt-6 rounded-2xl border border-line bg-card p-5">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">What you keep per subscriber, per month</p>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <input
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step="any"
-            value={netS}
-            onChange={(e) => setNetS(e.target.value)}
-            className="w-28 rounded-xl border border-line bg-paper px-3 py-2 font-fraunces text-lg font-semibold text-ink outline-none focus:border-twilight"
-          />
-          {PLANS.map((p) => (
-            <button
-              key={p.label}
-              type="button"
-              onClick={() => setNetS(p.net)}
-              className={`rounded-full border px-3 py-1 text-xs transition ${netS === p.net ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-        <p className="mt-2 text-xs text-ink-soft">After Apple's 15%. This is used to work out what each subscriber is worth.</p>
-      </div>
 
       {ads.length === 0 ? (
         <p className="mt-8 text-sm text-ink-soft">No ads yet. Press “Add an ad” and fill in the numbers as you get them.</p>
