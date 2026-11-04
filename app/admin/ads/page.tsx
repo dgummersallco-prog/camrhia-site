@@ -187,6 +187,7 @@ export default function AdminAdsPage() {
   const [ads, setAds] = useState<Ad[]>([])
   const [error, setError] = useState<string | null>(null)
   const net = 51
+  const [view, setView] = useState<'cac' | 'profit'>('cac')
 
   const load = useCallback(async () => {
     try {
@@ -292,8 +293,15 @@ export default function AdminAdsPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">What one paying subscriber costs you (CAC)</p>
-        <p className="mt-2 text-sm text-ink-soft">Find your cost per visit on the left and your conversion across the top. Green is {usd(net)} or less (profit). Red is above {usd(net)}.</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setView('cac')} className={`rounded-full border px-4 py-1.5 text-sm transition ${view === 'cac' ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}>What a subscriber costs (CAC)</button>
+          <button type="button" onClick={() => setView('profit')} className={`rounded-full border px-4 py-1.5 text-sm transition ${view === 'profit' ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}>Profit or loss on a subscriber</button>
+        </div>
+        <p className="mt-3 text-sm text-ink-soft">
+          {view === 'cac'
+            ? <>Find your cost per visit across the top and your conversion down the left. Green is {usd(net)} or less. Red is above {usd(net)}.</>
+            : <>{usd(net)} kept minus the CAC, for the first month. Green is profit. Red is a loss.</>}
+        </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[30rem] text-sm">
             <thead>
@@ -315,7 +323,7 @@ export default function AdminAdsPage() {
                   {CPVS.map((c) => {
                     const cac = c / (v / 100)
                     return (
-                      <td key={c} className={`py-3 pr-3 text-right font-medium ${cac <= net ? 'text-sage' : 'text-red-700'}`}>{usd(Math.round(cac))}</td>
+                      <td key={c} className={`py-3 pr-3 text-right font-medium ${cac <= net ? 'text-sage' : 'text-red-700'}`}>{view === 'cac' ? usd(Math.round(cac)) : (Math.round(net - cac) > 0 ? '+' : '') + usd(Math.round(net - cac))}</td>
                     )
                   })}
                 </tr>
@@ -330,40 +338,6 @@ export default function AdminAdsPage() {
         <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Break-even</p>
         <p className="mt-2 font-fraunces text-2xl font-semibold text-ink">CAC break even is {usd(net)}</p>
         <p className="mt-2 text-sm text-ink-soft">$59.99 Solo monthly minus Apple's 15% = about {usd(net)} kept.</p>
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">What you make or lose on one subscriber (first month)</p>
-        <p className="mt-2 text-sm text-ink-soft">{usd(net)} kept minus the CAC from the chart above. Green is profit. Red is a loss.</p>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[30rem] text-sm">
-            <thead>
-              <tr className="text-left text-ink-soft">
-                <th className="pb-1 pr-3" />
-                <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={CPVS.length}>Cost per visit</th>
-              </tr>
-              <tr className="border-b border-line text-left text-ink-soft">
-                <th className="py-2 pr-3 font-medium">Conversion (visits that become paying)</th>
-                {CPVS.map((c) => (
-                  <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {CONVS.map((v) => (
-                <tr key={v} className="border-b border-line last:border-0">
-                  <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{pct(v)}</td>
-                  {CPVS.map((c) => {
-                    const gain = Math.round(net - c / (v / 100))
-                    return (
-                      <td key={c} className={`py-3 pr-3 text-right font-medium ${gain >= 0 ? 'text-sage' : 'text-red-700'}`}>{gain > 0 ? '+' : ''}{usd(gain)}</td>
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
