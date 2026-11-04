@@ -20,7 +20,8 @@ type Ad = {
 const LIFETIME_CAP_MONTHS = 24
 const SPENDS = [100, 200, 500, 1000]
 const CPVS = [0.25, 0.5, 0.75, 1]
-const CHURNS = [100, 50, 25, 10, 5]
+const LTV_MONTHS = [1, 3, 6, 12, 18, 24]
+const LTV_CACS = [10, 25, 50, 75, 100]
 const CONVS = [0.5, 1, 1.5, 2, 3, 5, 7.5, 10]
 
 function usd(n: number): string {
@@ -355,35 +356,43 @@ export default function AdminAdsPage() {
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
         <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Lifetime value</p>
-        <p className="mt-2 text-sm text-ink-soft">What one subscriber is worth depends on churn, the share who cancel each month. Compared against a {usd(net)} CAC.</p>
+        <p className="mt-2 text-sm text-ink-soft">What one subscriber is worth if they stay that many months ({usd(net)} a month), and how many times that pays back what you paid for them. Green is 3x or more. Red is under 1x.</p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[30rem] text-sm">
+          <table className="w-full min-w-[36rem] text-sm">
             <thead>
+              <tr className="text-left text-ink-soft">
+                <th className="pb-1 pr-3" colSpan={3} />
+                <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={LTV_CACS.length}>Your CAC</th>
+              </tr>
               <tr className="border-b border-line text-left text-ink-soft">
-                <th className="py-2 pr-3 font-medium">Churn per month</th>
-                <th className="py-2 pr-3 text-right font-medium">Months they stay</th>
-                <th className="py-2 pr-3 text-right font-medium">One subscriber is worth</th>
-                <th className="py-2 text-right font-medium">Back on {usd(net)} CAC</th>
+                <th className="py-2 pr-3 font-medium">Months they stay</th>
+                <th className="py-2 pr-3 text-right font-medium">Same as churn of</th>
+                <th className="py-2 pr-3 text-right font-medium">Worth</th>
+                {LTV_CACS.map((c) => (
+                  <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {CHURNS.map((c) => {
-                const months = 100 / c
-                const ltv = net * months
-                const back = ltv / net
+              {LTV_MONTHS.map((mo) => {
+                const ltv = net * mo
                 return (
-                  <tr key={c} className="border-b border-line last:border-0">
-                    <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{c}%</td>
-                    <td className="py-3 pr-3 text-right text-ink">{Number(months.toFixed(1))}</td>
-                    <td className="py-3 pr-3 text-right text-ink">{usd(ltv)}</td>
-                    <td className={`py-3 text-right font-medium ${back >= 3 ? 'text-twilight' : back >= 1.5 ? 'text-ink' : 'text-red-700'}`}>{Number(back.toFixed(1))}x</td>
+                  <tr key={mo} className="border-b border-line last:border-0">
+                    <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{mo}</td>
+                    <td className="py-3 pr-3 text-right text-ink-soft">{pct(100 / mo)}</td>
+                    <td className="py-3 pr-3 text-right text-ink">{usd(Math.round(ltv))}</td>
+                    {LTV_CACS.map((c) => {
+                      const back = ltv / c
+                      return (
+                        <td key={c} className={`py-3 pr-3 text-right font-medium ${back >= 3 ? 'text-sage' : back >= 1 ? 'text-ink' : 'text-red-700'}`}>{Number(back.toFixed(1))}x</td>
+                      )
+                    })}
                   </tr>
                 )
               })}
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-xs text-ink-soft">3x or more is healthy. Under 1x loses money.</p>
       </section>
 
       {ads.length === 0 ? (
