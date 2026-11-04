@@ -323,10 +323,9 @@ export default function AdminAdsPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Where the {usd(net)} comes from</p>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-          Solo monthly is $59.99. Apple keeps 15%, so you keep about {usd(net)} a month per subscriber. Break-even CAC is {usd(net)}: pay less than that for a subscriber and you are ahead after the first month.
-        </p>
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Break-even</p>
+        <p className="mt-2 font-fraunces text-2xl font-semibold text-ink">CAC break even is {usd(net)}</p>
+        <p className="mt-2 text-sm text-ink-soft">$59.99 Solo monthly minus Apple's 15% = about {usd(net)} kept.</p>
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
