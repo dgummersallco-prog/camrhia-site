@@ -6,35 +6,51 @@ import { supabase } from '@/lib/supabase'
 
 const RATES = [1.5, 3, 5, 10, 20, 30]
 
+const PLANS = [
+  { label: 'Solo monthly', net: '50.99' },
+  { label: 'Solo yearly', net: '41.79' },
+  { label: 'Studio monthly', net: '126.65' },
+  { label: 'Studio yearly', net: '70.83' },
+]
+
+function num(s: string): number {
+  const n = parseFloat(s)
+  return Number.isFinite(n) ? n : 0
+}
+
 function usd(n: number): string {
   const r = Math.round(n * 100) / 100
   return '$' + r.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(r) ? 0 : 2, maximumFractionDigits: 2 })
 }
 
-function Field({ label, value, onChange, hint }: { label: string; value: number; onChange: (v: number) => void; hint: string }) {
+function Field({ label, value, onChange, hint, children }: { label: string; value: string; onChange: (v: string) => void; hint: string; children?: React.ReactNode }) {
   return (
-    <label className="flex h-full flex-col rounded-2xl border border-line bg-card p-5">
-      <span className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">{label}</span>
-      <input
-        type="number"
-        min={0}
-        step="any"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="mt-3 w-full rounded-xl border border-line bg-paper px-3 py-2.5 font-fraunces text-2xl font-semibold text-ink outline-none focus:border-twilight"
-      />
-      <span className="mt-3 text-xs leading-relaxed text-ink-soft">{hint}</span>
-    </label>
+    <div className="flex h-full flex-col rounded-2xl border border-line bg-card p-5">
+      <label className="block">
+        <span className="block min-h-[2rem] font-mono text-xs uppercase leading-4 tracking-widest text-ink-soft/60">{label}</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="any"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="mt-2 w-full rounded-xl border border-line bg-paper px-3 py-2.5 font-fraunces text-2xl font-semibold text-ink outline-none focus:border-twilight"
+        />
+      </label>
+      <p className="mt-3 min-h-[2.5rem] text-xs leading-relaxed text-ink-soft">{hint}</p>
+      {children}
+    </div>
   )
 }
 
 export default function AdminAdsPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
-  const [spend, setSpend] = useState(72)
-  const [visits, setVisits] = useState(100)
-  const [net, setNet] = useState(51)
-  const [months, setMonths] = useState(6)
+  const [spendS, setSpendS] = useState('72')
+  const [visitsS, setVisitsS] = useState('100')
+  const [netS, setNetS] = useState('51')
+  const [monthsS, setMonthsS] = useState('6')
 
   useEffect(() => {
     async function check() {
@@ -48,8 +64,14 @@ export default function AdminAdsPage() {
 
   if (!ready) return null
 
-  const th = 'px-4 py-3 text-left font-mono text-xs font-normal uppercase tracking-widest text-ink-soft/60'
-  const td = 'px-4 py-3.5 text-ink tabular-nums'
+  const spend = num(spendS)
+  const visits = num(visitsS)
+  const net = num(netS)
+  const months = num(monthsS)
+
+  const thBase = 'px-4 py-3 font-mono text-xs font-normal uppercase tracking-widest text-ink-soft/60'
+  const th = `${thBase} text-right`
+  const td = 'px-4 py-3.5 text-right tabular-nums text-ink'
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -59,17 +81,30 @@ export default function AdminAdsPage() {
       </p>
 
       <div className="mt-6 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Ad spend ($)" value={spend} onChange={setSpend} hint="What the ad cost you" />
-        <Field label="Visits" value={visits} onChange={setVisits} hint="Visits to the site or App Store page that the spend buys" />
-        <Field label="Net per subscriber / month ($)" value={net} onChange={setNet} hint="Solo $59.99 minus Apple's 15% is about $51" />
-        <Field label="Months of revenue" value={months} onChange={setMonths} hint="Assumes nobody cancels" />
+        <Field label="Ad spend ($)" value={spendS} onChange={setSpendS} hint="What the ad cost you" />
+        <Field label="Visits" value={visitsS} onChange={setVisitsS} hint="Visits to the site or App Store page that the spend buys" />
+        <Field label="Net per subscriber / month ($)" value={netS} onChange={setNetS} hint="What you keep per month after Apple's 15%. Type any number or tap a plan.">
+          <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+            {PLANS.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => setNetS(p.net)}
+                className={`rounded-full border px-2.5 py-1 text-xs transition ${netS === p.net ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+        <Field label="Months of revenue" value={monthsS} onChange={setMonthsS} hint="Assumes nobody cancels" />
       </div>
 
       <div className="mt-8 overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-line bg-paper">
-              <th className={th}>Visit to paid</th>
+              <th className={`${thBase} text-left`}>Visit to paid</th>
               <th className={th}>Paying subs</th>
               <th className={th}>Cost per paying sub</th>
               <th className={th}>Revenue, 1 month</th>
@@ -84,20 +119,29 @@ export default function AdminAdsPage() {
               const rev1 = subs * net
               const revN = rev1 * months
               const ratio = spend > 0 ? revN / spend : 0
+              const red = spend > 0 && rev1 < spend
               return (
-                <tr key={rate} className="border-b border-line transition hover:bg-paper last:border-0">
-                  <td className={td}><span className="inline-flex rounded-full bg-twilight/10 px-3 py-1 text-sm font-medium text-twilight">{rate}%</span></td>
+                <tr key={rate} className={`border-b border-line last:border-0 ${red ? 'bg-red-50' : 'transition hover:bg-paper'}`}>
+                  <td className="px-4 py-3.5 text-left">
+                    <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${red ? 'bg-red-100 text-red-700' : 'bg-twilight/10 text-twilight'}`}>{rate}%</span>
+                  </td>
                   <td className={td}>{Number(subs.toFixed(2))}</td>
-                  <td className={td}>{subs > 0 ? usd(perSub) : '-'}</td>
-                  <td className={td}>{usd(Math.round(rev1))}</td>
+                  <td className={`${td} ${red ? 'text-red-700' : ''}`}>{subs > 0 ? usd(perSub) : '-'}</td>
+                  <td className={`${td} ${red ? 'text-red-700' : ''}`}>{usd(Math.round(rev1))}</td>
                   <td className={td}>{usd(Math.round(revN))}</td>
-                  <td className={`${td} font-fraunces text-lg font-semibold text-twilight`}>{spend > 0 ? `about ${ratio >= 2 ? Math.round(ratio) : ratio.toFixed(1)}x` : '-'}</td>
+                  <td className={`${td} font-fraunces text-lg font-semibold ${red ? 'text-red-700' : 'text-twilight'}`}>
+                    {spend > 0 ? `about ${ratio >= 2 ? Math.round(ratio) : ratio.toFixed(1)}x` : '-'}
+                  </td>
                 </tr>
               )
             })}
           </tbody>
         </table>
       </div>
+      <p className="mt-3 flex items-center gap-2 text-xs text-ink-soft">
+        <span className="inline-block h-3 w-3 rounded-sm bg-red-100 ring-1 ring-red-300" />
+        Red means the ad does not earn back its cost in the first month, so it is not safe to scale.
+      </p>
 
       <div className="mt-8 rounded-2xl border border-line bg-card p-6">
         <h2 className="font-fraunces text-xl font-semibold text-ink">Can you hit 20% or higher?</h2>
