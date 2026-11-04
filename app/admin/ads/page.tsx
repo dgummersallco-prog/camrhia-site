@@ -21,6 +21,7 @@ const LIFETIME_CAP_MONTHS = 24
 const SPENDS = [100, 200, 500, 1000]
 const CPVS = [0.25, 0.5, 0.75, 1]
 const CHURNS = [100, 50, 25, 10, 5]
+const CONVS = [0.5, 1, 1.5, 2, 3, 5, 7.5, 10]
 
 function usd(n: number): string {
   const r = Math.round(Math.abs(n) * 100) / 100
@@ -291,12 +292,34 @@ export default function AdminAdsPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">How these make CAC</p>
-        <p className="mt-2 font-fraunces text-xl font-semibold text-ink">CAC = cost per visit ÷ conversion</p>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-          CAC is what one paying subscriber costs you. The first chart sets cost per visit, the third chart is the share of visits that become paying, and the second chart is how many subscribers that adds up to.
-          Example: $500 at $0.50 per visit is 1,000 visits. At 1% conversion that is 10 paying subscribers, so $500 ÷ 10 = $50 CAC.
-        </p>
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">What one paying subscriber costs you (CAC)</p>
+        <p className="mt-2 text-sm text-ink-soft">Find your cost per visit on the left and your conversion across the top. Green is {usd(net)} or less (profit). Red is above {usd(net)}.</p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[36rem] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-ink-soft">
+                <th className="py-2 pr-3 font-medium">Cost per visit</th>
+                {CONVS.map((v) => (
+                  <th key={v} className="py-2 pr-3 text-right font-medium">{pct(v)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {CPVS.map((c) => (
+                <tr key={c} className="border-b border-line last:border-0">
+                  <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{usd(c)}</td>
+                  {CONVS.map((v) => {
+                    const cac = c / (v / 100)
+                    return (
+                      <td key={v} className={`py-3 pr-3 text-right font-medium ${cac <= net ? 'text-twilight' : 'text-red-700'}`}>{usd(Math.round(cac))}</td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs text-ink-soft">CAC = cost per visit ÷ conversion. Example: $0.50 ÷ 1% = $50.</p>
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
