@@ -32,18 +32,24 @@ const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D5
 
 const DECOR_OPTIONS: { id: Decor; label: string }[] = [
   { id: 'none', label: 'None' },
-  { id: 'santa', label: '🎅 Santa hats' },
-  { id: 'leaves', label: '🍂 Fall leaves' },
-  { id: 'flowers', label: '🌸 Flowers' },
-  { id: 'pencils', label: '✏️ Pencils' },
-  { id: 'hearts', label: '❤️ Hearts' },
-  { id: 'pumpkins', label: '🎃 Pumpkins' },
-  { id: 'sun', label: '☀️ Sun' },
+  { id: 'santa', label: '🎅🎄⭐ Holiday' },
+  { id: 'leaves', label: '🍂🍁🍃 Fall' },
+  { id: 'flowers', label: '🌸🌷🌼 Spring' },
+  { id: 'pencils', label: '✏️📚🍎 School' },
+  { id: 'hearts', label: '❤️💕🌹 Love' },
+  { id: 'pumpkins', label: '🎃🍂🦇 Pumpkin patch' },
+  { id: 'sun', label: '☀️🌊🐚 Beach' },
 ]
 
 const TITLE_SIZES = [{ id: '32', label: 'S' }, { id: '40', label: 'M' }, { id: '48', label: 'L' }, { id: '60', label: 'XL' }, { id: '72', label: '2XL' }]
 const SUB_SIZES = [{ id: '14', label: 'S' }, { id: '16', label: 'M' }, { id: '18', label: 'L' }, { id: '22', label: 'XL' }, { id: '26', label: '2XL' }]
 const ALIGNS: { id: 'left' | 'center'; label: string }[] = [{ id: 'left', label: 'Left' }, { id: 'center', label: 'Center' }]
+
+const PLACES: { id: TextBlock['place']; label: string }[] = [
+  { id: 'title', label: 'With the title' },
+  { id: 'subtitle', label: 'With the subtitle' },
+  { id: 'claim', label: 'Above the sign-up box' },
+]
 
 type Example = { name: string; cta: string; text: Record<string, string>; theme: Partial<SpecialTheme> }
 const EXAMPLES: Example[] = [
@@ -352,6 +358,7 @@ export default function SpecialsPage() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const bgInput = useRef<HTMLInputElement>(null)
+  const photoInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async (uid: string) => {
     const sb = supabase
@@ -385,7 +392,7 @@ export default function SpecialsPage() {
   const setBlock = (i: number, patch: Partial<TextBlock>) =>
     setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)) } } : f))
   const addBlock = () =>
-    setForm((f) => (f && f.theme.blocks.length < 10 ? { ...f, theme: { ...f.theme, blocks: [...f.theme.blocks, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 20, align: 'center' as const }] } } : f))
+    setForm((f) => (f && f.theme.blocks.length < 10 ? { ...f, theme: { ...f.theme, blocks: [...f.theme.blocks, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 20, align: 'center' as const, place: 'subtitle' as const }] } } : f))
   const removeBlock = (i: number) =>
     setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.filter((_, j) => j !== i) } } : f))
   const setText = (k: string, v: string) => setForm((f) => (f ? { ...f, text: { ...f.text, [k]: v } } : f))
@@ -450,6 +457,33 @@ export default function SpecialsPage() {
     } finally {
       setUploading(false)
     }
+  }
+
+  async function uploadPhotos(files: FileList) {
+    const sb = supabase
+    if (!sb || !form || !userId) return
+    setUploading(true)
+    try {
+      const urls: string[] = []
+      for (const file of Array.from(files).slice(0, Math.max(0, 8 - form.photos.length))) {
+        const v = await makeVersions(file)
+        const path = `${userId}/special_${Date.now()}_${rand()}.jpg`
+        const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+        if (up.error) throw up.error
+        urls.push(STORAGE_BASE + path)
+      }
+      setForm((f) => (f ? { ...f, photos: [...f.photos, ...urls] } : f))
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Could not upload that photo.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  async function removePhoto(url: string) {
+    const sb = supabase
+    setForm((f) => (f ? { ...f, photos: f.photos.filter((u) => u !== url) } : f))
+    if (sb && url.startsWith(STORAGE_BASE)) await sb.storage.from('portfolio').remove([url.slice(STORAGE_BASE.length)])
   }
 
   async function removeBackground() {
@@ -577,6 +611,25 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
+                    <MiniCard title="Photos">
+                      <p className="text-sm text-ink-soft">Add up to 8. One photo stays still. Two or more fade into each other.</p>
+                      <div className="flex flex-wrap gap-3">
+                        {form.photos.map((u) => (
+                          <div key={u} className="relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={u} alt="" className="h-24 w-20 rounded-xl object-cover" />
+                            <button type="button" onClick={() => removePhoto(u)} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-white">×</button>
+                          </div>
+                        ))}
+                      </div>
+                      {form.photos.length < 8 && (
+                        <button type="button" disabled={uploading} onClick={() => photoInput.current?.click()} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight disabled:opacity-50">
+                          {uploading ? 'Uploading…' : '+ Add photos'}
+                        </button>
+                      )}
+                      <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) uploadPhotos(e.target.files); e.target.value = '' }} />
+                    </MiniCard>
+
                     <MiniCard title="Text boxes">
                       {form.theme.blocks.map((b, i) => (
                         <div key={i} className="space-y-4 rounded-xl border border-line bg-card p-4">
@@ -596,6 +649,10 @@ export default function SpecialsPage() {
                           <div>
                             <Label>Alignment</Label>
                             <Chips value={b.align} options={ALIGNS} onChange={(v) => setBlock(i, { align: v })} />
+                          </div>
+                          <div>
+                            <Label>Shows</Label>
+                            <Chips value={b.place} options={PLACES} onChange={(v) => setBlock(i, { place: v })} />
                           </div>
                         </div>
                       ))}

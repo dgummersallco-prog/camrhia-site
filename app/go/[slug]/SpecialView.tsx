@@ -1,4 +1,5 @@
 import LeadForm from './LeadForm'
+import Slideshow from './Slideshow'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 
 export type SpecialData = {
@@ -52,7 +53,7 @@ function patternUrl(decor: string): string | null {
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
-export type TextBlock = { text: string; font: string; color: string; size: number; align: 'left' | 'center' }
+export type TextBlock = { text: string; font: string; color: string; size: number; align: 'left' | 'center'; place: 'title' | 'subtitle' | 'claim' }
 
 export type SpecialTheme = {
   bgImage: string
@@ -153,6 +154,7 @@ function readBlocks(v: unknown): TextBlock[] {
       color: hexOr(o.color, '#2A1F24'),
       size: num(o.size, 8, 160, 18),
       align: pick(o.align, ['left', 'center'] as const, 'center'),
+      place: pick(o.place, ['title', 'subtitle', 'claim'] as const, 'claim'),
     }
   })
 }
@@ -193,7 +195,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
   const fontHref = keys.length
     ? 'https://fonts.googleapis.com/css2?' + keys.map((k) => 'family=' + FONT_OPTIONS[k].gf.split(':')[0]).join('&') + '&display=swap'
     : null
-  const photos = d.photos.filter(Boolean).slice(0, 3)
+  const photos = d.photos.filter(Boolean).slice(0, 8)
   const radius = t.shape === 'square' ? '0px' : t.shape === 'rounded' ? '12px' : '999px'
   const btnStyle = { background: t.accent, color: t.btnText, borderRadius: radius, fontSize: t.btnSizePx }
   const heading = { fontFamily: headFam, fontWeight: 500 as const }
@@ -201,6 +203,10 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
   const emoji = DECOR_EMOJI[t.decor]
   const pattern = patternUrl(t.decor)
   const titleAlign = t.titleAlign
+  const renderBlocks = (place: 'title' | 'subtitle' | 'claim') =>
+    t.blocks.filter((b) => b.place === place && b.text.trim()).map((b, i) => (
+      <p key={i} className="mt-5 whitespace-pre-line leading-snug" style={{ fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: b.align }}>{b.text}</p>
+    ))
 
   return (
     <div style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="relative min-h-full overflow-hidden">
@@ -220,9 +226,11 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
           >
             {d.headline || 'Your offer title'}
           </h1>
+          {renderBlocks('title')}
           {d.sub ? (
             <p className="mt-5 leading-relaxed" style={{ fontFamily: subFam, color: t.subColor, fontSize: t.subSizePx, textAlign: t.subAlign }}>{d.sub}</p>
           ) : null}
+          {renderBlocks('subtitle')}
           {d.price ? <p className="mt-5 text-2xl" style={{ ...heading, color: t.bgImage ? '#FFFFFF' : t.accent, textAlign: titleAlign }}>{d.price}</p> : null}
           {d.whenWhere ? <p className="mt-2 opacity-80" style={{ color: heroText, textAlign: titleAlign }}>{d.whenWhere}</p> : null}
           <div className="mt-8" style={{ display: 'flex', justifyContent: titleAlign === 'center' ? 'center' : 'flex-start' }}>
@@ -237,11 +245,8 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
 
       <div className="relative mx-auto max-w-xl px-6 pb-16">
         {photos.length > 0 && (
-          <div className={`mt-10 grid gap-3 ${photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-            {photos.map((u, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={u} alt="" className={`w-full rounded-2xl object-cover ${photos.length === 1 || i === 0 ? 'aspect-[4/5] sm:aspect-[4/3]' : 'aspect-square'} ${photos.length === 3 && i === 0 ? 'col-span-2' : ''}`} />
-            ))}
+          <div className="mt-10">
+            <Slideshow photos={photos} />
           </div>
         )}
 
@@ -259,9 +264,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
           </section>
         ) : null}
 
-        {t.blocks.filter((b) => b.text.trim()).map((b, i) => (
-          <p key={i} className="mt-8 whitespace-pre-line leading-snug" style={{ fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: b.align }}>{b.text}</p>
-        ))}
+        {renderBlocks('claim')}
 
         <div id="claim">
           <section className="mt-12 p-6" style={{ background: t.cardBg, color: t.cardText, borderRadius: t.cardRadius }}>
