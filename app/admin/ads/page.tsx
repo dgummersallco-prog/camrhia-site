@@ -22,6 +22,7 @@ const SPENDS = [100, 200, 500, 1000]
 const CPVS = [0.25, 0.5, 0.75, 1]
 const LTV_MONTHS = [1, 3, 6, 12, 18, 24]
 const LTV_CACS = [10, 25, 50, 75, 100]
+const LTV_SUBS = [1, 10, 25, 50, 100, 500, 1000]
 const CONVS = [0.5, 1, 1.5, 2, 3, 5, 7.5, 10]
 
 function usd(n: number): string {
@@ -189,6 +190,7 @@ export default function AdminAdsPage() {
   const [error, setError] = useState<string | null>(null)
   const net = 51
   const [view, setView] = useState<'cac' | 'profit'>('cac')
+  const [ltvView, setLtvView] = useState<'back' | 'total'>('back')
 
   const load = useCallback(async () => {
     try {
@@ -356,42 +358,81 @@ export default function AdminAdsPage() {
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
         <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Lifetime value</p>
-        <p className="mt-2 text-sm text-ink-soft">What one subscriber is worth if they stay that many months ({usd(net)} a month), and how many times that pays back what you paid for them. Green is 3x or more. Red is under 1x.</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setLtvView('back')} className={`rounded-full border px-4 py-1.5 text-sm transition ${ltvView === 'back' ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}>Payback on my CAC</button>
+          <button type="button" onClick={() => setLtvView('total')} className={`rounded-full border px-4 py-1.5 text-sm transition ${ltvView === 'total' ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}>Total from many subscribers</button>
+        </div>
+        <p className="mt-3 text-sm text-ink-soft">
+          {ltvView === 'back'
+            ? <>CAC is what you paid to get one subscriber. Each box is what that subscriber earns you over their stay, divided by their CAC. Green is 3x or more. Red is under 1x (you lose money).</>
+            : <>What you keep in total from that many subscribers, if they each stay that long ({usd(net)} a month each).</>}
+        </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[36rem] text-sm">
-            <thead>
-              <tr className="text-left text-ink-soft">
-                <th className="pb-1 pr-3" colSpan={3} />
-                <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={LTV_CACS.length}>Your CAC</th>
-              </tr>
-              <tr className="border-b border-line text-left text-ink-soft">
-                <th className="py-2 pr-3 font-medium">Months they stay</th>
-                <th className="py-2 pr-3 text-right font-medium">Same as churn of</th>
-                <th className="py-2 pr-3 text-right font-medium">Worth</th>
-                {LTV_CACS.map((c) => (
-                  <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {LTV_MONTHS.map((mo) => {
-                const ltv = net * mo
-                return (
+          {ltvView === 'back' ? (
+            <table className="w-full min-w-[36rem] text-sm">
+              <thead>
+                <tr className="text-left text-ink-soft">
+                  <th className="pb-1 pr-3" colSpan={2} />
+                  <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={LTV_CACS.length}>CAC: what you paid for one subscriber</th>
+                </tr>
+                <tr className="border-b border-line text-left text-ink-soft">
+                  <th className="py-2 pr-3 font-medium">How long they stay</th>
+                  <th className="py-2 pr-3 text-right font-medium">One subscriber is worth</th>
+                  {LTV_CACS.map((c) => (
+                    <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {LTV_MONTHS.map((mo) => {
+                  const ltv = net * mo
+                  return (
+                    <tr key={mo} className="border-b border-line last:border-0">
+                      <td className="py-3 pr-3">
+                        <span className="font-fraunces text-lg font-semibold text-ink">{mo} {mo === 1 ? 'month' : 'months'}</span>
+                        <span className="ml-2 text-xs text-ink-soft">{pct(100 / mo)} churn</span>
+                      </td>
+                      <td className="py-3 pr-3 text-right text-ink">{usd(Math.round(ltv))}</td>
+                      {LTV_CACS.map((c) => {
+                        const back = ltv / c
+                        return (
+                          <td key={c} className={`py-3 pr-3 text-right font-medium ${back >= 3 ? 'text-sage' : back >= 1 ? 'text-ink' : 'text-red-700'}`}>{Number(back.toFixed(1))}x</td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full min-w-[36rem] text-sm">
+              <thead>
+                <tr className="text-left text-ink-soft">
+                  <th className="pb-1 pr-3" />
+                  <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={LTV_SUBS.length}>Paying subscribers</th>
+                </tr>
+                <tr className="border-b border-line text-left text-ink-soft">
+                  <th className="py-2 pr-3 font-medium">How long they stay</th>
+                  {LTV_SUBS.map((n) => (
+                    <th key={n} className="py-2 pr-3 text-right font-medium">{n.toLocaleString('en-US')}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {LTV_MONTHS.map((mo) => (
                   <tr key={mo} className="border-b border-line last:border-0">
-                    <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{mo}</td>
-                    <td className="py-3 pr-3 text-right text-ink-soft">{pct(100 / mo)}</td>
-                    <td className="py-3 pr-3 text-right text-ink">{usd(Math.round(ltv))}</td>
-                    {LTV_CACS.map((c) => {
-                      const back = ltv / c
-                      return (
-                        <td key={c} className={`py-3 pr-3 text-right font-medium ${back >= 3 ? 'text-sage' : back >= 1 ? 'text-ink' : 'text-red-700'}`}>{Number(back.toFixed(1))}x</td>
-                      )
-                    })}
+                    <td className="py-3 pr-3">
+                      <span className="font-fraunces text-lg font-semibold text-ink">{mo} {mo === 1 ? 'month' : 'months'}</span>
+                      <span className="ml-2 text-xs text-ink-soft">{pct(100 / mo)} churn</span>
+                    </td>
+                    {LTV_SUBS.map((n) => (
+                      <td key={n} className="py-3 pr-3 text-right font-medium text-ink">{usd(Math.round(net * mo * n))}</td>
+                    ))}
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </section>
 
