@@ -287,46 +287,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-5">
-            <Link
-              href="/"
-              className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors"
-            >
-              {BRAND_NAME}{' '}
-              <span className="text-ink-soft font-normal">/ admin</span>
-            </Link>
-            <nav className="hidden sm:flex items-center gap-4 text-sm font-medium">
-              <Link href="/admin/dashboard" className="text-ink">
-                Messages
-              </Link>
-              {newCount > 0 && (
-                <span className="inline-flex items-center rounded-full bg-brass/15 px-2 py-0.5 text-xs font-medium text-brass">
-                  {newCount} new
-                </span>
-              )}
-              <Link href="/admin/metrics" className="text-ink-soft hover:text-ink transition-colors">
-                Metrics
-              </Link>
-              <Link href="/admin/affiliates" className="text-ink-soft hover:text-ink transition-colors">
-                Affiliates
-              </Link>
-              <Link href="/admin/users" className="text-ink-soft hover:text-ink transition-colors">
-                Users
-              </Link>
-            </nav>
-          </div>
-          <button
-            onClick={handleSignOut}
-            className="text-sm text-ink-soft hover:text-ink transition-colors"
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
-
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-8">
 
         {/* View toggle */}

@@ -120,15 +120,6 @@ export default function AdminAffiliatesPage() {
 
   return (
     <div className="min-h-screen bg-paper">
-      <header className="border-b border-line bg-paper/95">
-        <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between gap-4">
-          <Link href="/" className="font-fraunces text-lg font-semibold text-ink">
-            {BRAND_NAME} <span className="text-ink-soft font-normal">/ admin</span>
-          </Link>
-          <button onClick={handleSignOut} className="text-sm text-ink-soft hover:text-ink">Sign out</button>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-5xl px-6 py-10">
         <h1 className="font-fraunces text-3xl text-ink">Affiliates</h1>
         <p className="mt-1 text-sm text-ink-soft">Promote an affiliate to master partner with one click.</p>

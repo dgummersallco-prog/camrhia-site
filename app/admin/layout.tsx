@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 const TABS = [
   { href: '/admin/dashboard', label: 'Dashboard' },
@@ -14,6 +15,7 @@ const TABS = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? ''
+  const router = useRouter()
   if (pathname.startsWith('/admin/login')) return <>{children}</>
 
   return (
@@ -36,6 +38,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </Link>
             )
           })}
+          <button
+            type="button"
+            onClick={async () => { await supabase?.auth.signOut(); router.replace('/admin/login') }}
+            className="ml-auto rounded-full px-4 py-1.5 text-sm text-white/70 hover:text-white"
+          >
+            Sign out
+          </button>
         </nav>
       </div>
       {children}

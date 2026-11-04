@@ -101,26 +101,6 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-5">
-            <Link href="/" className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors">
-              {BRAND_NAME}{' '}
-              <span className="text-ink-soft font-normal">/ admin</span>
-            </Link>
-            <nav className="hidden sm:flex items-center gap-4 text-sm font-medium">
-              <Link href="/admin/dashboard" className="text-ink-soft hover:text-ink transition-colors">Messages</Link>
-              <Link href="/admin/metrics"   className="text-ink-soft hover:text-ink transition-colors">Metrics</Link>
-              <Link href="/admin/users"     className="text-ink">Users</Link>
-            </nav>
-          </div>
-          <button onClick={handleSignOut} className="text-sm text-ink-soft hover:text-ink transition-colors">
-            Sign out
-          </button>
-        </div>
-      </header>
-
       <main className="flex-1 mx-auto w-full max-w-2xl px-6 py-8">
         <div className="mb-8">
           <h1 className="font-fraunces text-2xl font-semibold text-ink">Grant free access</h1>
