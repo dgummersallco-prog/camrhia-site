@@ -311,7 +311,7 @@ export default function AdminAdsPage() {
                   {CONVS.map((v) => {
                     const cac = c / (v / 100)
                     return (
-                      <td key={v} className={`py-3 pr-3 text-right font-medium ${cac <= net ? 'text-twilight' : 'text-red-700'}`}>{usd(Math.round(cac))}</td>
+                      <td key={v} className={`py-3 pr-3 text-right font-medium ${cac <= net ? 'text-sage' : 'text-red-700'}`}>{usd(Math.round(cac))}</td>
                     )
                   })}
                 </tr>
