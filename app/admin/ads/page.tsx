@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -184,6 +184,25 @@ function AdCard({ ad, net, onChange, onSave, onDelete, footer }: { ad: Ad; net: 
   )
 }
 
+function adMetrics(ad: Ad, net: number) {
+  const cac = ad.paying > 0 ? ad.cost_total / ad.paying : 0
+  const churnKnown = ad.paying > 0 && ad.retained !== null
+  const churn = churnKnown ? Math.min(1, Math.max(0, 1 - (ad.retained as number) / ad.paying)) : 1
+  const months = churn > 0 ? Math.min(LIFETIME_CAP_MONTHS, 1 / churn) : LIFETIME_CAP_MONTHS
+  const ltv = net * months
+  return {
+    cac,
+    good: ad.paying > 0 && cac <= net,
+    bad: ad.paying > 0 && cac > net,
+    churnKnown,
+    months,
+    ltv,
+    back: cac > 0 ? ltv / cac : 0,
+    cpv: ratio(ad.cost_total, ad.visits),
+    conv: ratio(ad.paying, ad.visits) * 100,
+  }
+}
+
 function newDraft(): Ad {
   return { id: '', name: 'New ad', started_on: new Date().toISOString().slice(0, 10), cost_total: 0, visits: 0, downloads: 0, trials: 0, paying: 0, retained: null, notes: null }
 }
@@ -197,6 +216,7 @@ export default function AdminAdsPage() {
   const [view, setView] = useState<'cac' | 'profit'>('cac')
   const [ltvView, setLtvView] = useState<'back' | 'total'>('back')
   const [open, setOpen] = useState<string | null>(null)
+  const [verdictId, setVerdictId] = useState<string | null>(null)
   const [draft, setDraft] = useState<Ad>(newDraft())
 
   const load = useCallback(async () => {
@@ -495,6 +515,7 @@ export default function AdminAdsPage() {
                 <th className="py-3 pr-5 text-right font-medium">Trials</th>
                 <th className="py-3 pr-5 text-right font-medium">Paying</th>
                 <th className="py-3 text-right font-medium">CAC</th>
+                <th className="py-3 pl-4 text-center font-medium">Result</th>
               </tr>
             </thead>
             <tbody>
@@ -502,15 +523,17 @@ export default function AdminAdsPage() {
                 ? [1, 2, 3].map((i) => (
                     <tr key={i} className="border-b border-line text-ink-soft/50 last:border-0">
                       <td className="py-4 pr-5 font-fraunces text-lg font-semibold">Ad {i}</td>
-                      {[0, 1, 2, 3, 4, 5, 6].map((k) => (
+                      {[0, 1, 2, 3, 4, 5, 6, 7].map((k) => (
                         <td key={k} className="py-4 pr-5 text-right">—</td>
                       ))}
                     </tr>
                   ))
                 : ads.map((ad) => {
                     const cac = ad.paying > 0 ? ad.cost_total / ad.paying : 0
+                    const m = adMetrics(ad, net)
                     return (
-                      <tr key={ad.id} onClick={() => setOpen(ad.id)} className="cursor-pointer border-b border-line last:border-0 hover:bg-paper">
+                      <Fragment key={ad.id}>
+                      <tr onClick={() => setOpen(ad.id)} className="cursor-pointer border-b border-line last:border-0 hover:bg-paper">
                         <td className="py-4 pr-5">
                           <span className="font-fraunces text-xl font-semibold text-ink">{ad.name}</span>
                           {ad.started_on ? <span className="ml-2 text-xs text-ink-soft">{ad.started_on}</span> : null}
@@ -522,7 +545,43 @@ export default function AdminAdsPage() {
                         <td className="py-4 pr-5 text-right text-ink">{ad.trials.toLocaleString('en-US')}</td>
                         <td className="py-4 pr-5 text-right text-ink">{ad.paying.toLocaleString('en-US')}</td>
                         <td className={`py-4 text-right font-medium ${cac === 0 ? 'text-ink-soft' : cac <= net ? 'text-sage' : 'text-red-700'}`}>{cac > 0 ? usd(Math.round(cac)) : '—'}</td>
+                        <td className="py-4 pl-4 text-center">
+                          {m.good || m.bad ? (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setVerdictId(verdictId === ad.id ? null : ad.id) }}
+                              title="See the numbers"
+                              className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-lg font-bold text-white transition hover:opacity-80 ${m.good ? 'bg-sage' : 'bg-red-700'}`}
+                            >
+                              {m.good ? '✓' : '✗'}
+                            </button>
+                          ) : (
+                            <span className="text-ink-soft/50" title="Waiting on paying subscribers">—</span>
+                          )}
+                        </td>
                       </tr>
+                      {verdictId === ad.id && (m.good || m.bad) && (
+                        <tr className="border-b border-line bg-paper">
+                          <td colSpan={9} className="px-5 py-5">
+                            <p className={`font-fraunces text-xl font-semibold ${m.good ? 'text-sage' : 'text-red-700'}`}>
+                              {m.good ? 'This ad worked.' : 'This ad has not paid off yet.'}
+                            </p>
+                            <p className="mt-1 text-sm text-ink-soft">
+                              Each paying subscriber cost you {usd(Math.round(m.cac))}. Your break even is {usd(net)}, so you {m.good ? 'make' : 'lose'} {usd(Math.abs(Math.round(net - m.cac)))} on each one in the first month.
+                            </p>
+                            <div className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+                              <div><p className="text-ink-soft">CAC</p><p className="font-fraunces text-xl font-semibold text-ink">{usd(Math.round(m.cac))}</p></div>
+                              <div><p className="text-ink-soft">Cost per visit</p><p className="font-fraunces text-xl font-semibold text-ink">{m.cpv > 0 ? usd(m.cpv) : '—'}</p></div>
+                              <div><p className="text-ink-soft">Visits that became paying</p><p className="font-fraunces text-xl font-semibold text-ink">{ad.visits > 0 ? pct(m.conv) : '—'}</p></div>
+                              <div><p className="text-ink-soft">Lifetime value payback</p><p className="font-fraunces text-xl font-semibold text-ink">{m.back.toFixed(1)}x</p></div>
+                            </div>
+                            <p className="mt-3 text-xs text-ink-soft">
+                              {m.churnKnown ? `Worth about ${usd(Math.round(m.ltv))} per subscriber, based on your first-month retention.` : `Worth ${usd(Math.round(m.ltv))} per subscriber in the worst case (everyone leaves after one month). Fill in "Still paying after 1 month" for a real number.`}
+                            </p>
+                          </td>
+                        </tr>
+                      )}
+                      </Fragment>
                     )
                   })}
             </tbody>
