@@ -17,17 +17,43 @@ export type SpecialData = {
   terms?: string
 }
 
+export const DECORS = ['none', 'santa', 'leaves', 'flowers', 'pencils', 'hearts', 'pumpkins', 'sun'] as const
+export type Decor = (typeof DECORS)[number]
+export const DECOR_EMOJI: Record<Decor, string> = {
+  none: '',
+  santa: '🎅',
+  leaves: '🍂',
+  flowers: '🌸',
+  pencils: '✏️',
+  hearts: '❤️',
+  pumpkins: '🎃',
+  sun: '☀️',
+}
+
+const DECOR_POS = [
+  { x: 6, y: 6, s: 30, r: -18 }, { x: 80, y: 5, s: 36, r: 14 }, { x: 44, y: 2, s: 24, r: -6 },
+  { x: 90, y: 38, s: 28, r: 20 }, { x: 3, y: 42, s: 34, r: -12 }, { x: 12, y: 84, s: 30, r: 10 },
+  { x: 70, y: 86, s: 38, r: -16 }, { x: 46, y: 92, s: 24, r: 8 }, { x: 88, y: 70, s: 26, r: -8 },
+  { x: 24, y: 62, s: 22, r: 16 },
+]
+
 export type SpecialTheme = {
   bgImage: string
   overlay: number
   bgColor: string
+  decor: Decor
+  headFont: string
+  titleColor: string
+  titleSizePx: number
+  titleAlign: 'left' | 'center'
+  subFont: string
+  subColor: string
+  subSizePx: number
+  subAlign: 'left' | 'center'
+  bodyFont: string
   textColor: string
   accent: string
   btnText: string
-  headFont: string
-  bodyFont: string
-  align: 'left' | 'center'
-  titleSize: 'small' | 'medium' | 'large'
   shape: 'square' | 'rounded' | 'pill'
 }
 
@@ -35,13 +61,19 @@ export const DEFAULT_THEME: SpecialTheme = {
   bgImage: '',
   overlay: 45,
   bgColor: '#FAF7F2',
+  decor: 'none',
+  headFont: 'cormorant',
+  titleColor: '#2A1F24',
+  titleSizePx: 48,
+  titleAlign: 'center',
+  subFont: 'montserrat',
+  subColor: '#2A1F24',
+  subSizePx: 18,
+  subAlign: 'center',
+  bodyFont: 'montserrat',
   textColor: '#2A1F24',
   accent: '#A9545F',
   btnText: '#FFFFFF',
-  headFont: 'cormorant',
-  bodyFont: 'montserrat',
-  align: 'center',
-  titleSize: 'medium',
   shape: 'pill',
 }
 
@@ -49,21 +81,33 @@ const hexOr = (v: unknown, d: string) => (/^#[0-9a-fA-F]{3,8}$/.test(String(v ??
 function pick<T extends string>(v: unknown, allowed: readonly T[], d: T): T {
   return (allowed as readonly string[]).includes(String(v)) ? (v as T) : d
 }
+function num(v: unknown, min: number, max: number, d: number): number {
+  if (v === undefined || v === null || v === '') return d
+  const n = Number(v)
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : d
+}
+const fontOr = (v: unknown, d: string) => (typeof v === 'string' && FONT_OPTIONS[v] ? v : d)
 
 export function readTheme(c: Record<string, unknown>): SpecialTheme {
-  const o = Number(c.overlay)
+  const D = DEFAULT_THEME
   return {
     bgImage: typeof c.bg_image === 'string' ? c.bg_image : '',
-    overlay: c.overlay !== undefined && Number.isFinite(o) ? Math.min(80, Math.max(0, o)) : DEFAULT_THEME.overlay,
-    bgColor: hexOr(c.bg_color, DEFAULT_THEME.bgColor),
-    textColor: hexOr(c.text_color, DEFAULT_THEME.textColor),
-    accent: hexOr(c.accent_color, DEFAULT_THEME.accent),
-    btnText: hexOr(c.btn_text, DEFAULT_THEME.btnText),
-    headFont: typeof c.head_font === 'string' && FONT_OPTIONS[c.head_font] ? c.head_font : DEFAULT_THEME.headFont,
-    bodyFont: typeof c.body_font === 'string' && FONT_OPTIONS[c.body_font] ? c.body_font : DEFAULT_THEME.bodyFont,
-    align: pick(c.align, ['left', 'center'] as const, DEFAULT_THEME.align),
-    titleSize: pick(c.title_size, ['small', 'medium', 'large'] as const, DEFAULT_THEME.titleSize),
-    shape: pick(c.shape, ['square', 'rounded', 'pill'] as const, DEFAULT_THEME.shape),
+    overlay: num(c.overlay, 0, 80, D.overlay),
+    bgColor: hexOr(c.bg_color, D.bgColor),
+    decor: pick(c.decor, DECORS, D.decor),
+    headFont: fontOr(c.head_font, D.headFont),
+    titleColor: hexOr(c.title_color, D.titleColor),
+    titleSizePx: num(c.title_size_px, 24, 96, D.titleSizePx),
+    titleAlign: pick(c.title_align ?? c.align, ['left', 'center'] as const, D.titleAlign),
+    subFont: fontOr(c.sub_font, D.subFont),
+    subColor: hexOr(c.sub_color, D.subColor),
+    subSizePx: num(c.sub_size_px, 12, 40, D.subSizePx),
+    subAlign: pick(c.sub_align ?? c.align, ['left', 'center'] as const, D.subAlign),
+    bodyFont: fontOr(c.body_font, D.bodyFont),
+    textColor: hexOr(c.text_color, D.textColor),
+    accent: hexOr(c.accent_color, D.accent),
+    btnText: hexOr(c.btn_text, D.btnText),
+    shape: pick(c.shape, ['square', 'rounded', 'pill'] as const, D.shape),
   }
 }
 
@@ -72,13 +116,19 @@ export function themeToContent(t: SpecialTheme): Record<string, unknown> {
     bg_image: t.bgImage,
     overlay: t.overlay,
     bg_color: t.bgColor,
+    decor: t.decor,
+    head_font: t.headFont,
+    title_color: t.titleColor,
+    title_size_px: t.titleSizePx,
+    title_align: t.titleAlign,
+    sub_font: t.subFont,
+    sub_color: t.subColor,
+    sub_size_px: t.subSizePx,
+    sub_align: t.subAlign,
+    body_font: t.bodyFont,
     text_color: t.textColor,
     accent_color: t.accent,
     btn_text: t.btnText,
-    head_font: t.headFont,
-    body_font: t.bodyFont,
-    align: t.align,
-    title_size: t.titleSize,
     shape: t.shape,
   }
 }
@@ -86,38 +136,55 @@ export function themeToContent(t: SpecialTheme): Record<string, unknown> {
 export default function SpecialView({ d, theme, funnelId, preview }: { d: SpecialData; theme: SpecialTheme; funnelId: string; preview?: boolean }) {
   const t = theme
   const headFam = FONT_OPTIONS[t.headFont]?.family ?? 'serif'
+  const subFam = FONT_OPTIONS[t.subFont]?.family ?? 'sans-serif'
   const bodyFam = FONT_OPTIONS[t.bodyFont]?.family ?? 'sans-serif'
-  const keys = Array.from(new Set([t.headFont, t.bodyFont])).filter((k) => FONT_OPTIONS[k])
+  const keys = Array.from(new Set([t.headFont, t.subFont, t.bodyFont])).filter((k) => FONT_OPTIONS[k])
   const fontHref = keys.length
     ? 'https://fonts.googleapis.com/css2?' + keys.map((k) => 'family=' + FONT_OPTIONS[k].gf.split(':')[0]).join('&') + '&display=swap'
     : null
   const photos = d.photos.filter(Boolean).slice(0, 3)
   const radius = t.shape === 'square' ? '0px' : t.shape === 'rounded' ? '12px' : '999px'
-  const sizeCls = { small: 'text-3xl', medium: 'text-4xl', large: 'text-5xl' }[t.titleSize]
-  const center = t.align === 'center'
-  const heroColor = t.bgImage ? '#FFFFFF' : t.textColor
   const btnStyle = { background: t.accent, color: t.btnText, borderRadius: radius }
   const heading = { fontFamily: headFam, fontWeight: 500 as const }
+  const heroText = t.bgImage ? '#FFFFFF' : t.textColor
+  const emoji = DECOR_EMOJI[t.decor]
+  const titleAlign = t.titleAlign
 
   return (
     <div style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="min-h-full">
       {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
 
       <div
-        className="relative"
+        className="relative overflow-hidden"
         style={t.bgImage ? { backgroundImage: `url(${t.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
       >
         {t.bgImage ? <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${t.overlay / 100})` }} /> : null}
-        <div
-          className={`relative mx-auto flex max-w-xl flex-col justify-center px-6 py-16 ${t.bgImage ? 'min-h-[520px]' : ''} ${center ? 'items-center text-center' : 'items-start text-left'}`}
-          style={{ color: heroColor }}
-        >
-          {d.brand ? <p className="font-mono text-xs uppercase tracking-widest opacity-70">{d.brand}</p> : null}
-          <h1 className={`mt-4 leading-tight ${sizeCls}`} style={heading}>{d.headline || 'Your offer title'}</h1>
-          {d.sub ? <p className="mt-5 text-lg leading-relaxed opacity-85">{d.sub}</p> : null}
-          {d.price ? <p className="mt-5 text-2xl" style={{ ...heading, color: t.bgImage ? '#FFFFFF' : t.accent }}>{d.price}</p> : null}
-          {d.whenWhere ? <p className="mt-2 opacity-80">{d.whenWhere}</p> : null}
-          <div className="mt-8">
+        {emoji
+          ? DECOR_POS.map((p, i) => (
+              <span
+                key={i}
+                aria-hidden="true"
+                className="pointer-events-none absolute select-none"
+                style={{ left: `${p.x}%`, top: `${p.y}%`, fontSize: p.s, transform: `rotate(${p.r}deg)`, opacity: 0.9 }}
+              >
+                {emoji}
+              </span>
+            ))
+          : null}
+        <div className={`relative mx-auto flex max-w-xl flex-col justify-center px-6 py-16 ${t.bgImage ? 'min-h-[520px]' : emoji ? 'min-h-[440px]' : ''}`}>
+          {d.brand ? <p className="font-mono text-xs uppercase tracking-widest opacity-70" style={{ color: heroText, textAlign: titleAlign }}>{d.brand}</p> : null}
+          <h1
+            className="mt-4 leading-tight"
+            style={{ ...heading, color: t.titleColor, fontSize: `min(${t.titleSizePx}px, 13vw)`, textAlign: titleAlign }}
+          >
+            {d.headline || 'Your offer title'}
+          </h1>
+          {d.sub ? (
+            <p className="mt-5 leading-relaxed" style={{ fontFamily: subFam, color: t.subColor, fontSize: t.subSizePx, textAlign: t.subAlign }}>{d.sub}</p>
+          ) : null}
+          {d.price ? <p className="mt-5 text-2xl" style={{ ...heading, color: t.bgImage ? '#FFFFFF' : t.accent, textAlign: titleAlign }}>{d.price}</p> : null}
+          {d.whenWhere ? <p className="mt-2 opacity-80" style={{ color: heroText, textAlign: titleAlign }}>{d.whenWhere}</p> : null}
+          <div className="mt-8" style={{ display: 'flex', justifyContent: titleAlign === 'center' ? 'center' : 'flex-start' }}>
             {preview ? (
               <span className="inline-block px-8 py-4 text-base font-medium" style={btnStyle}>{d.label}</span>
             ) : (

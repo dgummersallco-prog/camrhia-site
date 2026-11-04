@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
-import SpecialView, { DEFAULT_THEME, readTheme, themeToContent, type SpecialData, type SpecialTheme } from '@/app/go/[slug]/SpecialView'
+import SpecialView, { DEFAULT_THEME, readTheme, themeToContent, type Decor, type SpecialData, type SpecialTheme } from '@/app/go/[slug]/SpecialView'
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 const ALL_FONTS_HREF =
@@ -26,25 +26,30 @@ type Funnel = {
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const FIELDS: { key: string; label: string; hint?: string; area?: boolean }[] = [
-  { key: 'hero_headline', label: 'Offer title', hint: 'Holiday mini sessions' },
-  { key: 'brand_name', label: 'Your name or studio', hint: 'Shown at the top of the page' },
-  { key: 'hero_sub', label: 'One line about the offer', hint: 'Family portraits by the lake, 20 minutes each', area: true },
-  { key: 'price_line', label: 'Price line', hint: '$250 · 20 minutes · 6 spots' },
-  { key: 'when_where', label: 'When and where', hint: 'Saturday, December 6 · Ross Park, Pocatello' },
-  { key: 'details_body', label: 'What is included', hint: 'One line per item', area: true },
-  { key: 'spots_note', label: 'Limited spots note (optional)', hint: 'Only 6 spots available' },
-  { key: 'terms', label: 'Good to know (optional)', hint: 'Bookings are final and non-refundable', area: true },
-  { key: 'thanks_message', label: 'Message after they sign up', hint: 'Thank you! I will email you within a day.' },
-]
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
+
+const DECOR_OPTIONS: { id: Decor; label: string }[] = [
+  { id: 'none', label: 'None' },
+  { id: 'santa', label: '🎅 Santa hats' },
+  { id: 'leaves', label: '🍂 Fall leaves' },
+  { id: 'flowers', label: '🌸 Flowers' },
+  { id: 'pencils', label: '✏️ Pencils' },
+  { id: 'hearts', label: '❤️ Hearts' },
+  { id: 'pumpkins', label: '🎃 Pumpkins' },
+  { id: 'sun', label: '☀️ Sun' },
+]
+
+const TITLE_SIZES = [{ id: '32', label: 'S' }, { id: '40', label: 'M' }, { id: '48', label: 'L' }, { id: '60', label: 'XL' }, { id: '72', label: '2XL' }]
+const SUB_SIZES = [{ id: '14', label: 'S' }, { id: '16', label: 'M' }, { id: '18', label: 'L' }, { id: '22', label: 'XL' }, { id: '26', label: '2XL' }]
+const ALIGNS: { id: 'left' | 'center'; label: string }[] = [{ id: 'left', label: 'Left' }, { id: 'center', label: 'Center' }]
 
 type Example = { name: string; text: Record<string, string>; theme: Partial<SpecialTheme> }
 const EXAMPLES: Example[] = [
   {
     name: 'Holiday',
-    theme: { bgColor: '#1F3A2E', textColor: '#F6EFE2', accent: '#C8A24A', btnText: '#1F3A2E', headFont: 'playfair', bodyFont: 'lora', align: 'center', titleSize: 'large', shape: 'pill' },
+    theme: { bgColor: '#1F3A2E', decor: 'santa', headFont: 'playfair', titleColor: '#F6EFE2', titleSizePx: 60, subFont: 'lora', subColor: '#E9DFC9', textColor: '#F6EFE2', accent: '#C8A24A', btnText: '#1F3A2E', bodyFont: 'lora' },
     text: {
       hero_headline: 'Holiday Mini Sessions',
       brand_name: 'Your Studio',
@@ -59,7 +64,7 @@ const EXAMPLES: Example[] = [
   },
   {
     name: 'Fall family',
-    theme: { bgColor: '#F3E3CF', textColor: '#4A2C17', accent: '#B5532A', btnText: '#FFFFFF', headFont: 'cormorant', bodyFont: 'montserrat', align: 'left', titleSize: 'large', shape: 'rounded' },
+    theme: { bgColor: '#F3E3CF', decor: 'leaves', headFont: 'cormorant', titleColor: '#4A2C17', titleSizePx: 60, titleAlign: 'left', subColor: '#6B4A33', subAlign: 'left', textColor: '#4A2C17', accent: '#B5532A', shape: 'rounded' },
     text: {
       hero_headline: 'Fall Family Minis',
       brand_name: 'Your Studio',
@@ -74,7 +79,7 @@ const EXAMPLES: Example[] = [
   },
   {
     name: 'Spring blossom',
-    theme: { bgColor: '#FBEFF1', textColor: '#4B2A33', accent: '#D77A8F', btnText: '#FFFFFF', headFont: 'playfair', bodyFont: 'lora', align: 'center', titleSize: 'medium', shape: 'pill' },
+    theme: { bgColor: '#FBEFF1', decor: 'flowers', headFont: 'playfair', titleColor: '#4B2A33', titleSizePx: 48, subFont: 'lora', subColor: '#7A4A57', textColor: '#4B2A33', accent: '#D77A8F', bodyFont: 'lora' },
     text: {
       hero_headline: 'Spring Blossom Minis',
       brand_name: 'Your Studio',
@@ -89,7 +94,7 @@ const EXAMPLES: Example[] = [
   },
   {
     name: 'Back to school',
-    theme: { bgColor: '#F2F6FA', textColor: '#17324D', accent: '#2F6DB5', btnText: '#FFFFFF', headFont: 'josefin', bodyFont: 'worksans', align: 'left', titleSize: 'medium', shape: 'square' },
+    theme: { bgColor: '#F2F6FA', decor: 'pencils', headFont: 'josefin', titleColor: '#17324D', titleSizePx: 48, titleAlign: 'left', subFont: 'worksans', subColor: '#3D5A78', subAlign: 'left', textColor: '#17324D', accent: '#2F6DB5', bodyFont: 'worksans', shape: 'square' },
     text: {
       hero_headline: 'Back-to-School Portraits',
       brand_name: 'Your Studio',
@@ -103,8 +108,8 @@ const EXAMPLES: Example[] = [
     },
   },
   {
-    name: 'Couples',
-    theme: { bgColor: '#2A1F24', textColor: '#F6F1EA', accent: '#A9545F', btnText: '#FFFFFF', headFont: 'cormorant', bodyFont: 'montserrat', align: 'center', titleSize: 'large', shape: 'pill' },
+    name: 'Valentine',
+    theme: { bgColor: '#2A1F24', decor: 'hearts', headFont: 'cormorant', titleColor: '#F6F1EA', titleSizePx: 60, subColor: '#E7D6DB', textColor: '#F6F1EA', accent: '#A9545F' },
     text: {
       hero_headline: 'Valentine Couples Minis',
       brand_name: 'Your Studio',
@@ -118,8 +123,38 @@ const EXAMPLES: Example[] = [
     },
   },
   {
+    name: 'Pumpkin patch',
+    theme: { bgColor: '#1C1A24', decor: 'pumpkins', headFont: 'playfair', titleColor: '#FFF4E0', titleSizePx: 60, subFont: 'lora', subColor: '#F2D9B8', textColor: '#FFF4E0', accent: '#E8731A', btnText: '#1C1A24', bodyFont: 'lora' },
+    text: {
+      hero_headline: 'Pumpkin Patch Minis',
+      brand_name: 'Your Studio',
+      hero_sub: 'Hay bales, pumpkins and the cutest fall photos.',
+      price_line: '$185 · 15 minutes · 8 edited photos',
+      when_where: '[date] · [pumpkin patch name]',
+      details_body: '15 minute session at the patch\n8 edited photos in an online gallery\nCostumes welcome\nPrints available',
+      spots_note: 'Only 10 spots',
+      terms: 'Bookings are final and non-refundable.',
+      thanks_message: 'Thank you! I will email you to confirm your time.',
+    },
+  },
+  {
+    name: 'Summer beach',
+    theme: { bgColor: '#E8F4F6', decor: 'sun', headFont: 'josefin', titleColor: '#12414F', titleSizePx: 48, subFont: 'worksans', subColor: '#2F6A7A', textColor: '#12414F', accent: '#F2A33A', btnText: '#12414F', bodyFont: 'worksans' },
+    text: {
+      hero_headline: 'Summer Beach Minis',
+      brand_name: 'Your Studio',
+      hero_sub: 'Sand, sun and sunset light for the whole family.',
+      price_line: '$200 · 20 minutes · 10 edited photos',
+      when_where: '[date] · [beach name]',
+      details_body: '20 minute sunset session\n10 edited photos in an online gallery\nFamilies and couples welcome\nPrints available',
+      spots_note: 'Only 6 spots',
+      terms: 'Bookings are final and non-refundable. Weather dates by email.',
+      thanks_message: 'Thank you! I will email you to pick your time.',
+    },
+  },
+  {
     name: 'Branding',
-    theme: { bgColor: '#FFFFFF', textColor: '#111111', accent: '#111111', btnText: '#FFFFFF', headFont: 'josefin', bodyFont: 'worksans', align: 'left', titleSize: 'large', shape: 'square' },
+    theme: { bgColor: '#FFFFFF', headFont: 'josefin', titleColor: '#111111', titleSizePx: 60, titleAlign: 'left', subFont: 'worksans', subColor: '#444444', subAlign: 'left', textColor: '#111111', accent: '#111111', bodyFont: 'worksans', shape: 'square' },
     text: {
       hero_headline: 'Branding Mini Sessions',
       brand_name: 'Your Studio',
@@ -157,7 +192,7 @@ function toData(text: Record<string, string>, photos: string[], label: string): 
 function toForm(f: Funnel | null): Form {
   const c = (f?.content ?? {}) as Record<string, unknown>
   const text: Record<string, string> = {}
-  FIELDS.forEach((x) => { text[x.key] = String(c[x.key] ?? '') })
+  TEXT_KEYS.forEach((k) => { text[k] = String(c[k] ?? '') })
   return {
     id: f?.id ?? '',
     slug: f?.slug ?? makeSlug(),
@@ -181,15 +216,24 @@ function StepCard({ n, title, children }: { n: number; title: string; children: 
   )
 }
 
-function Group({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2 mt-7 border-t border-line pt-5 text-xs font-semibold uppercase tracking-widest text-ink-soft first:mt-0 first:border-0 first:pt-0">{children}</p>
+function MiniCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-line bg-paper p-5">
+      <p className="mb-4 font-fraunces text-lg font-semibold text-ink">{title}</p>
+      <div className="space-y-4">{children}</div>
+    </div>
+  )
+}
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <span className="text-sm font-medium text-ink">{children}</span>
 }
 
 function Chips<T extends string>({ value, options, onChange }: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void }) {
   return (
     <div className="mt-1 flex flex-wrap gap-2">
       {options.map((o) => (
-        <button key={o.id} type="button" onClick={() => onChange(o.id)} className={`rounded-full border px-4 py-1.5 text-sm transition ${value === o.id ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}>{o.label}</button>
+        <button key={o.id} type="button" onClick={() => onChange(o.id)} className={`rounded-full border px-4 py-1.5 text-sm transition ${value === o.id ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line bg-card text-ink-soft hover:border-twilight'}`}>{o.label}</button>
       ))}
     </div>
   )
@@ -201,8 +245,8 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   useEffect(() => setTxt(value), [value])
   return (
     <div>
-      <span className="text-sm font-medium text-ink">{label}</span>
-      <button type="button" onClick={() => setOpen(!open)} className="mt-1 flex w-full items-center gap-2 rounded-xl border border-line bg-paper px-3 py-2">
+      <Label>{label}</Label>
+      <button type="button" onClick={() => setOpen(!open)} className="mt-1 flex w-full items-center gap-2 rounded-xl border border-line bg-card px-3 py-2">
         <span className="h-5 w-5 rounded border border-line" style={{ background: value }} />
         <span className="font-mono text-xs uppercase text-ink">{value}</span>
       </button>
@@ -235,8 +279,8 @@ function FontPicker({ label, value, onChange }: { label: string; value: string; 
   const cur = FONT_OPTIONS[value]
   return (
     <div>
-      <span className="text-sm font-medium text-ink">{label}</span>
-      <button type="button" onClick={() => setOpen(!open)} className="mt-1 block w-full rounded-xl border border-line bg-paper px-3 py-2 text-left text-lg text-ink" style={{ fontFamily: cur?.family }}>
+      <Label>{label}</Label>
+      <button type="button" onClick={() => setOpen(!open)} className="mt-1 block w-full rounded-xl border border-line bg-card px-3 py-2 text-left text-lg text-ink" style={{ fontFamily: cur?.family }}>
         {cur?.label ?? 'Pick a font'}
       </button>
       {open && (
@@ -266,7 +310,6 @@ export default function SpecialsPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const photoInput = useRef<HTMLInputElement>(null)
   const bgInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async (uid: string) => {
@@ -290,6 +333,7 @@ export default function SpecialsPage() {
       const { data: sess } = await sb.auth.getSession()
       if (!sess.session) { router.replace('/login?next=/specials'); return }
       setUserId(sess.session.user.id)
+      setForm((f) => f ?? toForm(null))
       load(sess.session.user.id)
     }
     init()
@@ -297,6 +341,7 @@ export default function SpecialsPage() {
 
   const flash = (m: string) => { setMessage(m); setTimeout(() => setMessage(null), 2500) }
   const setTheme = (patch: Partial<SpecialTheme>) => setForm((f) => (f ? { ...f, theme: { ...f.theme, ...patch } } : f))
+  const setText = (k: string, v: string) => setForm((f) => (f ? { ...f, text: { ...f.text, [k]: v } } : f))
 
   async function save() {
     const sb = supabase
@@ -341,22 +386,18 @@ export default function SpecialsPage() {
     }
   }
 
-  async function uploadImage(file: File, kind: 'photo' | 'bg') {
+  async function uploadBackground(file: File) {
     const sb = supabase
     if (!sb || !form || !userId) return
     setUploading(true)
     try {
       const v = await makeVersions(file)
-      const path = `${userId}/special_${kind}_${Date.now()}.jpg`
+      const path = `${userId}/special_bg_${Date.now()}.jpg`
       const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
       if (up.error) throw up.error
-      const url = STORAGE_BASE + path
-      if (kind === 'photo') setForm((f) => (f ? { ...f, photos: [...f.photos, url].slice(0, 3) } : f))
-      else {
-        const old = form.theme.bgImage
-        setTheme({ bgImage: url })
-        if (old.startsWith(STORAGE_BASE)) await sb.storage.from('portfolio').remove([old.slice(STORAGE_BASE.length)])
-      }
+      const old = form.theme.bgImage
+      setTheme({ bgImage: STORAGE_BASE + path, titleColor: '#FFFFFF', subColor: '#FFFFFF' })
+      if (old.startsWith(STORAGE_BASE)) await sb.storage.from('portfolio').remove([old.slice(STORAGE_BASE.length)])
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Could not upload that photo.')
     } finally {
@@ -364,10 +405,10 @@ export default function SpecialsPage() {
     }
   }
 
-  async function removeImage(url: string, kind: 'photo' | 'bg') {
+  async function removeBackground() {
     const sb = supabase
-    if (kind === 'photo') setForm((f) => (f ? { ...f, photos: f.photos.filter((p) => p !== url) } : f))
-    else setTheme({ bgImage: '' })
+    const url = form?.theme.bgImage ?? ''
+    setTheme({ bgImage: '' })
     if (sb && url.startsWith(STORAGE_BASE)) await sb.storage.from('portfolio').remove([url.slice(STORAGE_BASE.length)])
   }
 
@@ -376,7 +417,7 @@ export default function SpecialsPage() {
     if (!sb || !userId) return
     if (!window.confirm('Delete this special and its sign-ups for good?')) return
     await sb.from('funnel_pages').delete().eq('id', id)
-    setForm(null)
+    setForm(toForm(null))
     await load(userId)
   }
 
@@ -392,7 +433,7 @@ export default function SpecialsPage() {
             <h1 className="font-fraunces text-3xl font-semibold text-ink">Specials</h1>
             <p className="mt-1 text-sm text-ink-soft">A simple page for an offer, like holiday minis. Sign-ups land here.</p>
           </div>
-          {!form && <button type="button" onClick={() => setForm(toForm(null))} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New special</button>}
+          {form?.id && <button type="button" onClick={() => { setForm(toForm(null)); window.scrollTo({ top: 0 }) }} className="rounded-full border border-line px-5 py-2.5 text-sm text-ink transition hover:border-twilight">+ New special</button>}
         </div>
 
         {message && <p className="mb-4 text-sm text-ink-soft">{message}</p>}
@@ -421,90 +462,73 @@ export default function SpecialsPage() {
             <div className="mb-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
               <div className="space-y-6">
                 <StepCard n={3} title="Design your special">
-                  <Group>Background</Group>
-                  <div className="flex flex-wrap items-center gap-4">
-                    {form.theme.bgImage ? (
-                      <div className="relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={form.theme.bgImage} alt="" className="h-24 w-36 rounded-xl object-cover" />
-                        <button type="button" onClick={() => removeImage(form.theme.bgImage, 'bg')} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-white">×</button>
+                  <div className="space-y-5">
+                    <MiniCard title="Background">
+                      <div className="flex flex-wrap items-center gap-4">
+                        {form.theme.bgImage ? (
+                          <div className="relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={form.theme.bgImage} alt="" className="h-24 w-36 rounded-xl object-cover" />
+                            <button type="button" onClick={removeBackground} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-white">×</button>
+                          </div>
+                        ) : null}
+                        <button type="button" disabled={uploading} onClick={() => bgInput.current?.click()} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight disabled:opacity-50">
+                          {uploading ? 'Uploading…' : form.theme.bgImage ? 'Replace background photo' : '+ Background photo'}
+                        </button>
+                        <input ref={bgInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBackground(f); e.target.value = '' }} />
                       </div>
-                    ) : null}
-                    <button type="button" disabled={uploading} onClick={() => bgInput.current?.click()} className="rounded-full border border-line px-4 py-2 text-sm text-ink transition hover:border-twilight disabled:opacity-50">
-                      {uploading ? 'Uploading…' : form.theme.bgImage ? 'Replace background photo' : '+ Background photo'}
-                    </button>
-                    <input ref={bgInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, 'bg'); e.target.value = '' }} />
-                  </div>
-                  {form.theme.bgImage && (
-                    <div className="mt-4">
-                      <span className="text-sm font-medium text-ink">Darken the photo</span>
-                      <Chips value={String(form.theme.overlay)} options={[{ id: '0', label: 'None' }, { id: '25', label: 'Light' }, { id: '45', label: 'Medium' }, { id: '65', label: 'Dark' }]} onChange={(v) => setTheme({ overlay: Number(v) })} />
-                    </div>
-                  )}
-                  <div className="mt-4 max-w-xs">
-                    <ColorField label="Background color" value={form.theme.bgColor} onChange={(v) => setTheme({ bgColor: v })} />
-                  </div>
+                      {form.theme.bgImage && (
+                        <div>
+                          <Label>Darken the photo</Label>
+                          <Chips value={String(form.theme.overlay)} options={[{ id: '0', label: 'None' }, { id: '25', label: 'Light' }, { id: '45', label: 'Medium' }, { id: '65', label: 'Dark' }]} onChange={(v) => setTheme({ overlay: Number(v) })} />
+                        </div>
+                      )}
+                      <div className="max-w-xs">
+                        <ColorField label="Background color" value={form.theme.bgColor} onChange={(v) => setTheme({ bgColor: v })} />
+                      </div>
+                      <div>
+                        <Label>Decoration</Label>
+                        <Chips value={form.theme.decor} options={DECOR_OPTIONS} onChange={(v) => setTheme({ decor: v })} />
+                      </div>
+                    </MiniCard>
 
-                  <Group>Words</Group>
-                  <div className="grid gap-4">
-                    {FIELDS.map((f) => (
-                      <label key={f.key} className="block">
-                        <span className="text-sm font-medium text-ink">{f.label}</span>
-                        {f.area ? (
-                          <textarea rows={3} placeholder={f.hint} value={form.text[f.key]} onChange={(e) => setForm({ ...form, text: { ...form.text, [f.key]: e.target.value } })} className={inputCls} />
-                        ) : (
-                          <input placeholder={f.hint} value={form.text[f.key]} onChange={(e) => setForm({ ...form, text: { ...form.text, [f.key]: e.target.value } })} className={inputCls} />
-                        )}
+                    <MiniCard title="Title">
+                      <label className="block">
+                        <Label>Words</Label>
+                        <input placeholder="Holiday mini sessions" value={form.text.hero_headline} onChange={(e) => setText('hero_headline', e.target.value)} className={inputCls} />
                       </label>
-                    ))}
-                  </div>
-
-                  <Group>Fonts</Group>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FontPicker label="Title font" value={form.theme.headFont} onChange={(k) => setTheme({ headFont: k })} />
-                    <FontPicker label="Body font" value={form.theme.bodyFont} onChange={(k) => setTheme({ bodyFont: k })} />
-                  </div>
-                  <div className="mt-4">
-                    <span className="text-sm font-medium text-ink">Title size</span>
-                    <Chips value={form.theme.titleSize} options={[{ id: 'small', label: 'Small' }, { id: 'medium', label: 'Medium' }, { id: 'large', label: 'Large' }]} onChange={(v) => setTheme({ titleSize: v })} />
-                  </div>
-                  <div className="mt-4">
-                    <span className="text-sm font-medium text-ink">Alignment</span>
-                    <Chips value={form.theme.align} options={[{ id: 'left', label: 'Left' }, { id: 'center', label: 'Center' }]} onChange={(v) => setTheme({ align: v })} />
-                  </div>
-
-                  <Group>Colors</Group>
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <ColorField label="Text color" value={form.theme.textColor} onChange={(v) => setTheme({ textColor: v })} />
-                    <ColorField label="Button color" value={form.theme.accent} onChange={(v) => setTheme({ accent: v })} />
-                    <ColorField label="Button text" value={form.theme.btnText} onChange={(v) => setTheme({ btnText: v })} />
-                  </div>
-
-                  <Group>Button</Group>
-                  <label className="block">
-                    <span className="text-sm font-medium text-ink">Button words</span>
-                    <input value={form.cta_label} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} className={inputCls} />
-                  </label>
-                  <div className="mt-4">
-                    <span className="text-sm font-medium text-ink">Button shape</span>
-                    <Chips value={form.theme.shape} options={[{ id: 'square', label: 'Square' }, { id: 'rounded', label: 'Rounded' }, { id: 'pill', label: 'Pill' }]} onChange={(v) => setTheme({ shape: v })} />
-                  </div>
-
-                  <Group>Photos (up to 3)</Group>
-                  <div className="flex flex-wrap gap-3">
-                    {form.photos.map((u) => (
-                      <div key={u} className="relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={u} alt="" className="h-28 w-28 rounded-xl object-cover" />
-                        <button type="button" onClick={() => removeImage(u, 'photo')} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-white">×</button>
+                      <FontPicker label="Font" value={form.theme.headFont} onChange={(k) => setTheme({ headFont: k })} />
+                      <div>
+                        <Label>Size</Label>
+                        <Chips value={String(form.theme.titleSizePx)} options={TITLE_SIZES} onChange={(v) => setTheme({ titleSizePx: Number(v) })} />
                       </div>
-                    ))}
-                    {form.photos.length < 3 && (
-                      <button type="button" disabled={uploading} onClick={() => photoInput.current?.click()} className="flex h-28 w-28 items-center justify-center rounded-xl border border-dashed border-line text-2xl text-ink-soft hover:border-twilight disabled:opacity-50">
-                        {uploading ? '…' : '+'}
-                      </button>
-                    )}
-                    <input ref={photoInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, 'photo'); e.target.value = '' }} />
+                      <div className="max-w-xs">
+                        <ColorField label="Color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
+                      </div>
+                      <div>
+                        <Label>Alignment</Label>
+                        <Chips value={form.theme.titleAlign} options={ALIGNS} onChange={(v) => setTheme({ titleAlign: v })} />
+                      </div>
+                    </MiniCard>
+
+                    <MiniCard title="Subtitle">
+                      <label className="block">
+                        <Label>Words</Label>
+                        <textarea rows={2} placeholder="Family portraits by the lake, 20 minutes each" value={form.text.hero_sub} onChange={(e) => setText('hero_sub', e.target.value)} className={inputCls} />
+                      </label>
+                      <FontPicker label="Font" value={form.theme.subFont} onChange={(k) => setTheme({ subFont: k })} />
+                      <div>
+                        <Label>Size</Label>
+                        <Chips value={String(form.theme.subSizePx)} options={SUB_SIZES} onChange={(v) => setTheme({ subSizePx: Number(v) })} />
+                      </div>
+                      <div className="max-w-xs">
+                        <ColorField label="Color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
+                      </div>
+                      <div>
+                        <Label>Alignment</Label>
+                        <Chips value={form.theme.subAlign} options={ALIGNS} onChange={(v) => setTheme({ subAlign: v })} />
+                      </div>
+                    </MiniCard>
                   </div>
                 </StepCard>
 
@@ -515,7 +539,6 @@ export default function SpecialsPage() {
                   </label>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <button type="button" onClick={save} disabled={saving} className="rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{saving ? 'Saving…' : 'Save'}</button>
-                    <button type="button" onClick={() => setForm(null)} className="text-sm text-ink-soft underline">Close</button>
                     {form.id && <button type="button" onClick={() => remove(form.id)} className="ml-auto text-xs text-ink-soft underline hover:text-red-700">Delete</button>}
                   </div>
                 </StepCard>
@@ -542,7 +565,7 @@ export default function SpecialsPage() {
                     <p className="text-sm text-ink-soft">{leads.filter((l) => l.funnel_id === it.id).length} sign-ups</p>
                   </div>
                   <span className={`rounded-full px-3 py-1 text-xs font-medium ${it.published ? 'bg-sage/15 text-sage' : 'bg-line text-ink-soft'}`}>{it.published ? 'Published' : 'Draft'}</span>
-                  <button type="button" onClick={() => setForm(toForm(it))} className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-twilight">Edit</button>
+                  <button type="button" onClick={() => { setForm(toForm(it)); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-twilight">Edit</button>
                 </li>
               ))}
             </ul>
