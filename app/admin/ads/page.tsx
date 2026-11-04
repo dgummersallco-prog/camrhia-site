@@ -18,6 +18,8 @@ type Ad = {
 }
 
 const LIFETIME_CAP_MONTHS = 24
+const SPENDS = [100, 200, 500, 1000]
+const CPVS = [0.25, 0.5, 0.75, 1]
 
 function usd(n: number): string {
   const r = Math.round(Math.abs(n) * 100) / 100
@@ -250,6 +252,42 @@ export default function AdminAdsPage() {
       </div>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
+
+      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Before you spend: what it takes to break even</p>
+        <p className="mt-2 text-sm text-ink-soft">Visits you get for each ad budget at each cost per visit. You keep {usd(net)} per subscriber.</p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[34rem] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-ink-soft">
+                <th className="py-2 pr-3 font-medium">Ad spend</th>
+                <th className="py-2 pr-3 font-medium">Paying subscribers needed</th>
+                {CPVS.map((c) => (
+                  <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)} per visit</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SPENDS.map((sp) => (
+                <tr key={sp} className="border-b border-line">
+                  <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{usd(sp)}</td>
+                  <td className="py-3 pr-3 text-ink">{Math.ceil(sp / net)}</td>
+                  {CPVS.map((c) => (
+                    <td key={c} className="py-3 pr-3 text-right text-ink">{Math.round(sp / c).toLocaleString('en-US')} visits</td>
+                  ))}
+                </tr>
+              ))}
+              <tr>
+                <td className="py-3 pr-3 font-medium text-twilight" colSpan={2}>Visits that must become paying</td>
+                {CPVS.map((c) => (
+                  <td key={c} className="py-3 pr-3 text-right font-medium text-twilight">{pct((c / net) * 100)}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs text-ink-soft">The percentage at the bottom depends only on cost per visit. A bigger budget just means more visits and more subscribers needed.</p>
+      </section>
 
       {ads.length === 0 ? (
         <p className="mt-8 text-sm text-ink-soft">No ads yet. Press “Add an ad” and fill in the numbers as you get them.</p>
