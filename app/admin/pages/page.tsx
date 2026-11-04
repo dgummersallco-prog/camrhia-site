@@ -178,10 +178,10 @@ export default function AdminPagesPage() {
     <main className="mx-auto max-w-5xl px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-fraunces text-3xl font-semibold text-ink">Pages</h1>
+          <h1 className="font-fraunces text-3xl font-semibold text-ink">Funnels</h1>
           <p className="mt-1 text-sm text-ink-soft">One-page funnels you send ad traffic to. Each lives at camrhia.com/go/its-address.</p>
         </div>
-        <button type="button" onClick={() => setForm(toForm(null))} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New page</button>
+        <button type="button" onClick={() => setForm(toForm(null))} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New funnel</button>
       </div>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
@@ -278,7 +278,7 @@ export default function AdminPagesPage() {
       )}
 
       <section className="mt-8 rounded-2xl border border-line bg-card p-8">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Your pages</p>
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Your funnels</p>
         {pages.length === 0 ? (
           <p className="mt-3 text-sm text-ink-soft">No pages yet.</p>
         ) : (

@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 const TABS = [
   { href: '/admin/dashboard', label: 'Dashboard' },
   { href: '/admin/metrics', label: 'Metrics' },
-  { href: '/admin/ads', label: 'Ads' }, { href: '/admin/pages', label: 'Pages' },
+  { href: '/admin/ads', label: 'Ads' }, { href: '/admin/pages', label: 'Funnels' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/affiliates', label: 'Affiliates' },
   { href: '/admin/masters', label: 'Masters' },
