@@ -20,6 +20,7 @@ type Ad = {
 const LIFETIME_CAP_MONTHS = 24
 const SPENDS = [100, 200, 500, 1000]
 const CPVS = [0.25, 0.5, 0.75, 1]
+const CHURNS = [100, 50, 25, 10, 5]
 
 function usd(n: number): string {
   const r = Math.round(Math.abs(n) * 100) / 100
@@ -287,6 +288,55 @@ export default function AdminAdsPage() {
           </table>
         </div>
         <p className="mt-3 text-xs text-ink-soft">The percentage at the bottom depends only on cost per visit. A bigger budget just means more visits and more subscribers needed.</p>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">How these make CAC</p>
+        <p className="mt-2 font-fraunces text-xl font-semibold text-ink">CAC = cost per visit ÷ conversion</p>
+        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+          CAC is what one paying subscriber costs you. The first chart sets cost per visit, the third chart is the share of visits that become paying, and the second chart is how many subscribers that adds up to.
+          Example: $500 at $0.50 per visit is 1,000 visits. At 1% conversion that is 10 paying subscribers, so $500 ÷ 10 = $50 CAC.
+        </p>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Where the {usd(net)} comes from</p>
+        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+          Solo monthly is $59.99. Apple keeps 15%, so you keep about {usd(net)} a month per subscriber. Break-even CAC is {usd(net)}: pay less than that for a subscriber and you are ahead after the first month.
+        </p>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Lifetime value</p>
+        <p className="mt-2 text-sm text-ink-soft">What one subscriber is worth depends on churn, the share who cancel each month. Compared against a {usd(net)} CAC.</p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[30rem] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-ink-soft">
+                <th className="py-2 pr-3 font-medium">Churn per month</th>
+                <th className="py-2 pr-3 text-right font-medium">Months they stay</th>
+                <th className="py-2 pr-3 text-right font-medium">One subscriber is worth</th>
+                <th className="py-2 text-right font-medium">Back on {usd(net)} CAC</th>
+              </tr>
+            </thead>
+            <tbody>
+              {CHURNS.map((c) => {
+                const months = 100 / c
+                const ltv = net * months
+                const back = ltv / net
+                return (
+                  <tr key={c} className="border-b border-line last:border-0">
+                    <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{c}%</td>
+                    <td className="py-3 pr-3 text-right text-ink">{Number(months.toFixed(1))}</td>
+                    <td className="py-3 pr-3 text-right text-ink">{usd(ltv)}</td>
+                    <td className={`py-3 text-right font-medium ${back >= 3 ? 'text-twilight' : back >= 1.5 ? 'text-ink' : 'text-red-700'}`}>{Number(back.toFixed(1))}x</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs text-ink-soft">3x or more is healthy. Under 1x loses money.</p>
       </section>
 
       {ads.length === 0 ? (
