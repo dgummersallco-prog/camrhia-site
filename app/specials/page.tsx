@@ -25,8 +25,10 @@ const FIELDS: { key: string; label: string; hint?: string; area?: boolean }[] = 
   { key: 'brand_name', label: 'Your name or studio', hint: 'Shown at the top of the page' },
   { key: 'hero_sub', label: 'One line about the offer', hint: 'Family portraits by the lake, 20 minutes each', area: true },
   { key: 'price_line', label: 'Price line', hint: '$250 · 20 minutes · 6 spots' },
+  { key: 'when_where', label: 'When and where', hint: 'Saturday, December 6 · Ross Park, Pocatello' },
   { key: 'details_body', label: 'What is included', hint: 'One line per item', area: true },
   { key: 'spots_note', label: 'Limited spots note (optional)', hint: 'Only 6 spots available' },
+  { key: 'terms', label: 'Good to know (optional)', hint: 'Bookings are final and non-refundable', area: true },
   { key: 'thanks_message', label: 'Message after they sign up', hint: 'Thank you! I will email you within a day.' },
 ]
 
@@ -47,6 +49,95 @@ function toForm(f: Funnel | null): Form {
     photos: Array.isArray(c.photos) ? (c.photos as string[]) : [],
   }
 }
+
+type Example = { name: string; cta_label: string; text: Record<string, string> }
+
+const EXAMPLES: Example[] = [
+  {
+    name: 'Holiday',
+    cta_label: 'Claim my spot',
+    text: {
+      hero_headline: 'Holiday Mini Sessions',
+      hero_sub: 'Twenty minutes by the tree, and your holiday cards are done.',
+      price_line: '$225 · 20 minutes · 8 edited photos',
+      when_where: 'Saturday, [date] · [your location]',
+      details_body: '20 minute session for your family\n8 edited photos in an online gallery\nA cozy holiday set with lights\nExtra photos and prints available',
+      spots_note: 'Only 6 spots available',
+      terms: 'Bookings are final and non-refundable, but you can pass your spot to a friend.',
+      thanks_message: 'Thank you! I will email you within a day to lock in your time.',
+    },
+  },
+  {
+    name: 'Fall family',
+    cta_label: 'Save my spot',
+    text: {
+      hero_headline: 'Fall Family Minis',
+      hero_sub: 'Golden light, a short session, and no stress.',
+      price_line: '$195 · 15 minutes · 8 edited photos',
+      when_where: 'Two Saturdays in October · [your location]',
+      details_body: '15 minute outdoor session\n8 edited photos in an online gallery\nKids and pets welcome\nPrints and albums available',
+      spots_note: 'Only 8 spots per day',
+      terms: 'Rain date included. Bookings are final and non-refundable.',
+      thanks_message: 'You are on the list! Watch your email for next steps.',
+    },
+  },
+  {
+    name: 'Spring blossom',
+    cta_label: 'Book my time',
+    text: {
+      hero_headline: 'Spring Blossom Minis',
+      hero_sub: 'Soft light, fresh blooms, and photos you will want on your wall.',
+      price_line: '$175 · 15 minutes · 6 edited photos',
+      when_where: '[date] · [garden or park name]',
+      details_body: '15 minute session among the blossoms\n6 edited photos in an online gallery\nGreat for families, couples and moms\nExtra photos available',
+      spots_note: 'Blossoms are short lived, so spots are limited',
+      terms: 'Bookings are final and non-refundable. Weather dates are announced by email.',
+      thanks_message: 'Thank you! I will be in touch soon with your time.',
+    },
+  },
+  {
+    name: 'Back to school',
+    cta_label: 'Reserve a time',
+    text: {
+      hero_headline: 'Back-to-School Portraits',
+      hero_sub: 'A quick portrait to remember this grade.',
+      price_line: '$85 · 10 minutes · 5 edited photos',
+      when_where: '[date] · [your location]',
+      details_body: '10 minute portrait session per child\n5 edited photos in an online gallery\nSiblings can share one slot\nPrints ready for grandparents',
+      spots_note: 'Limited time slots',
+      terms: 'Bookings are final and non-refundable.',
+      thanks_message: 'Thank you! I will email you to confirm your time.',
+    },
+  },
+  {
+    name: 'Couples',
+    cta_label: 'Claim my spot',
+    text: {
+      hero_headline: 'Valentine Couples Minis',
+      hero_sub: 'A short, relaxed session just for the two of you.',
+      price_line: '$150 · 20 minutes · 8 edited photos',
+      when_where: '[date] · [your location]',
+      details_body: '20 minute couples session\n8 edited photos in an online gallery\nPosing help, so no experience needed\nPrints available',
+      spots_note: 'Only 5 spots',
+      terms: 'Bookings are final and non-refundable, but can be gifted.',
+      thanks_message: 'Thank you! I will email you shortly to pick your time.',
+    },
+  },
+  {
+    name: 'Branding',
+    cta_label: 'Book my branding mini',
+    text: {
+      hero_headline: 'Branding Mini Sessions',
+      hero_sub: 'Fresh photos for your website and social media, in one short visit.',
+      price_line: '$250 · 30 minutes · 10 edited photos',
+      when_where: '[date] · [your location]',
+      details_body: '30 minute session with two outfit changes\n10 edited photos for web and social\nPlanning call before the session\nFull usage for your business',
+      spots_note: 'Only 4 spots this month',
+      terms: 'Bookings are final and non-refundable.',
+      thanks_message: 'Thank you! I will email you to plan your session.',
+    },
+  },
+]
 
 function StepCard({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
@@ -173,6 +264,14 @@ export default function SpecialsPage() {
     await load(userId)
   }
 
+  function applyExample(ex: Example) {
+    setForm((f) => {
+      const base = f ?? toForm(null)
+      return { ...base, cta_label: ex.cta_label, text: { ...base.text, ...ex.text } }
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const linkFor = (slug: string) => `${typeof window !== 'undefined' ? window.location.origin : 'https://camrhia.com'}/go/${slug}`
 
   return (
@@ -274,6 +373,8 @@ export default function SpecialsPage() {
                       photos: form.photos,
                       details: form.text.details_body,
                       spots: form.text.spots_note,
+                      whenWhere: form.text.when_where,
+                      terms: form.text.terms,
                       label: form.cta_label || 'Claim my spot',
                       thanks: form.text.thanks_message,
                     }}
@@ -284,6 +385,7 @@ export default function SpecialsPage() {
           </div>
         )}
 
+        {items.length > 0 && (
         <section className="mb-8 rounded-2xl border border-line bg-card p-8">
           <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Your specials</p>
           {items.length === 0 ? (
@@ -303,7 +405,9 @@ export default function SpecialsPage() {
             </ul>
           )}
         </section>
+        )}
 
+        {leads.length > 0 && (
         <section className="rounded-2xl border border-line bg-card p-8">
           <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Sign-ups</p>
           {leads.length === 0 ? (
@@ -319,6 +423,23 @@ export default function SpecialsPage() {
               ))}
             </ul>
           )}
+        </section>
+        )}
+
+        <section className="mt-8 rounded-2xl border border-line bg-card p-8">
+          <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Examples</p>
+          <p className="mt-2 text-sm text-ink-soft">Ready-made specials to start from. Pick one and it fills the builder above. Change anything you like.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {EXAMPLES.map((ex) => (
+              <div key={ex.name} className="flex flex-col rounded-2xl border border-line bg-paper p-5">
+                <p className="font-fraunces text-xl font-semibold text-ink">{ex.text.hero_headline}</p>
+                <p className="mt-1 text-sm text-ink-soft">{ex.text.hero_sub}</p>
+                <p className="mt-3 font-fraunces text-lg font-semibold text-twilight">{ex.text.price_line}</p>
+                <p className="mt-1 text-xs text-ink-soft">{ex.text.spots_note}</p>
+                <button type="button" onClick={() => applyExample(ex)} className="mt-4 self-start rounded-full border border-line px-4 py-1.5 text-sm text-ink transition hover:border-twilight">Use this example</button>
+              </div>
+            ))}
+          </div>
         </section>
       </main>
     </div>
