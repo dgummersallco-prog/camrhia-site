@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
-import SpecialView from './SpecialView'
+import SpecialView, { readTheme } from './SpecialView'
 
 export const dynamic = 'force-dynamic'
 
@@ -137,6 +137,7 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
     ) : null
 
   let body: React.ReactNode
+  let bare = false
 
   if (style === 'hormozi') {
     body = (
@@ -185,25 +186,30 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
     )
   } else if (style === 'special') {
     const photos = Array.isArray(c.photos) ? (c.photos as string[]).filter(Boolean).slice(0, 3) : []
+    const theme = readTheme(c)
+    bare = true
     body = (
-      <SpecialView
-        funnelId={page.id}
-        d={{
-          brand: s('brand_name'),
-          headline: s('hero_headline') || 'Special offer',
-          sub: s('hero_sub'),
-          price: s('price_line'),
-          photos,
-          detailsTitle: s('details_title'),
-          details: s('details_body'),
-          spots: s('spots_note'),
-          label,
-          thanks: s('thanks_message') || 'Thank you! You will hear back soon.',
-          formTitle: s('form_title'),
-          whenWhere: s('when_where'),
-          terms: s('terms'),
-        }}
-      />
+      <div className="min-h-screen" style={{ background: theme.bgColor }}>
+        <SpecialView
+          funnelId={page.id}
+          theme={theme}
+          d={{
+            brand: s('brand_name'),
+            headline: s('hero_headline') || 'Special offer',
+            sub: s('hero_sub'),
+            price: s('price_line'),
+            photos,
+            detailsTitle: s('details_title'),
+            details: s('details_body'),
+            spots: s('spots_note'),
+            label,
+            thanks: s('thanks_message') || 'Thank you! You will hear back soon.',
+            formTitle: s('form_title'),
+            whenWhere: s('when_where'),
+            terms: s('terms'),
+          }}
+        />
+      </div>
     )
   } else {
     body = (
@@ -223,6 +229,8 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
       </>
     )
   }
+
+  if (bare) return <>{body}</>
 
   return (
     <main className="min-h-screen bg-paper text-ink">

@@ -4,7 +4,17 @@ import { useState } from 'react'
 
 const inputCls = 'mt-1 w-full rounded-xl border border-line bg-paper px-4 py-3 text-ink outline-none focus:border-twilight'
 
-export default function LeadForm({ funnelId, label, thanks, disabled }: { funnelId: string; label: string; thanks: string; disabled?: boolean }) {
+export default function LeadForm({
+  funnelId, label, thanks, disabled, accent, btnText, radius,
+}: {
+  funnelId: string
+  label: string
+  thanks: string
+  disabled?: boolean
+  accent?: string
+  btnText?: string
+  radius?: string
+}) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -38,7 +48,7 @@ export default function LeadForm({ funnelId, label, thanks, disabled }: { funnel
   if (done) return <p className="text-lg font-medium text-ink">{thanks}</p>
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="space-y-4 text-left">
       <label className="block">
         <span className="text-sm font-medium text-ink">Your name</span>
         <input required value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
@@ -57,7 +67,12 @@ export default function LeadForm({ funnelId, label, thanks, disabled }: { funnel
       </label>
       <input type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} className="hidden" aria-hidden="true" />
       {error && <p className="text-sm text-red-700">{error}</p>}
-      <button type="submit" disabled={sending || disabled} className="w-full rounded-full bg-twilight px-8 py-4 text-base font-medium text-white transition hover:opacity-90 disabled:opacity-50">
+      <button
+        type="submit"
+        disabled={sending || disabled}
+        className="w-full px-8 py-4 text-base font-medium transition hover:opacity-90 disabled:opacity-60"
+        style={{ background: accent || '#A9545F', color: btnText || '#FFFFFF', borderRadius: radius || '999px' }}
+      >
         {sending ? 'Sending…' : label}
       </button>
     </form>
