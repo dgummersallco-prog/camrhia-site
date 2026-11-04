@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
-import SpecialView, { DEFAULT_THEME, readTheme, themeToContent, type Decor, type SpecialData, type SpecialTheme } from '@/app/go/[slug]/SpecialView'
+import SpecialView, { DEFAULT_THEME, readTheme, themeToContent, type Decor, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 const ALL_FONTS_HREF =
@@ -26,7 +26,7 @@ type Funnel = {
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -186,6 +186,7 @@ function toData(text: Record<string, string>, photos: string[], label: string): 
     thanks: text.thanks_message ?? '',
     whenWhere: text.when_where ?? '',
     terms: text.terms ?? '',
+    formTitle: text.form_title ?? '',
   }
 }
 
@@ -225,6 +226,26 @@ function MiniCard({ title, children }: { title: string; children: React.ReactNod
         <span className="text-xl text-ink-soft">{open ? '−' : '+'}</span>
       </button>
       {open && <div className="space-y-4 px-5 pb-5">{children}</div>}
+    </div>
+  )
+}
+
+function SizeField({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
+  const [txt, setTxt] = useState(String(value))
+  useEffect(() => setTxt(String(value)), [value])
+  return (
+    <div className="mt-1 flex items-center gap-3">
+      <input
+        type="number"
+        value={txt}
+        min={min}
+        max={max}
+        onChange={(e) => { setTxt(e.target.value); const n = Number(e.target.value); if (Number.isFinite(n) && n >= min && n <= max) onChange(n) }}
+        onBlur={() => setTxt(String(value))}
+        className="w-20 rounded-xl border border-line bg-card px-3 py-2 text-ink outline-none focus:border-twilight"
+      />
+      <span className="text-sm text-ink-soft">px</span>
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-twilight" />
     </div>
   )
 }
@@ -345,6 +366,12 @@ export default function SpecialsPage() {
 
   const flash = (m: string) => { setMessage(m); setTimeout(() => setMessage(null), 2500) }
   const setTheme = (patch: Partial<SpecialTheme>) => setForm((f) => (f ? { ...f, theme: { ...f.theme, ...patch } } : f))
+  const setBlock = (i: number, patch: Partial<TextBlock>) =>
+    setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)) } } : f))
+  const addBlock = () =>
+    setForm((f) => (f && f.theme.blocks.length < 10 ? { ...f, theme: { ...f.theme, blocks: [...f.theme.blocks, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 20, align: 'center' as const }] } } : f))
+  const removeBlock = (i: number) =>
+    setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.filter((_, j) => j !== i) } } : f))
   const setText = (k: string, v: string) => setForm((f) => (f ? { ...f, text: { ...f.text, [k]: v } } : f))
 
   async function save() {
@@ -504,7 +531,7 @@ export default function SpecialsPage() {
                       <FontPicker label="Font" value={form.theme.headFont} onChange={(k) => setTheme({ headFont: k })} />
                       <div>
                         <Label>Size</Label>
-                        <Chips value={String(form.theme.titleSizePx)} options={TITLE_SIZES} onChange={(v) => setTheme({ titleSizePx: Number(v) })} />
+                        <SizeField value={form.theme.titleSizePx} min={12} max={160} onChange={(n) => setTheme({ titleSizePx: n })} />
                       </div>
                       <div className="max-w-xs">
                         <ColorField label="Color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
@@ -523,7 +550,7 @@ export default function SpecialsPage() {
                       <FontPicker label="Font" value={form.theme.subFont} onChange={(k) => setTheme({ subFont: k })} />
                       <div>
                         <Label>Size</Label>
-                        <Chips value={String(form.theme.subSizePx)} options={SUB_SIZES} onChange={(v) => setTheme({ subSizePx: Number(v) })} />
+                        <SizeField value={form.theme.subSizePx} min={8} max={80} onChange={(n) => setTheme({ subSizePx: n })} />
                       </div>
                       <div className="max-w-xs">
                         <ColorField label="Color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
@@ -531,6 +558,69 @@ export default function SpecialsPage() {
                       <div>
                         <Label>Alignment</Label>
                         <Chips value={form.theme.subAlign} options={ALIGNS} onChange={(v) => setTheme({ subAlign: v })} />
+                      </div>
+                    </MiniCard>
+
+                    <MiniCard title="Text boxes">
+                      {form.theme.blocks.map((b, i) => (
+                        <div key={i} className="space-y-4 rounded-xl border border-line bg-card p-4">
+                          <div className="flex items-center justify-between">
+                            <Label>Text box {i + 1}</Label>
+                            <button type="button" onClick={() => removeBlock(i)} className="text-xs text-ink-soft underline hover:text-red-700">Remove</button>
+                          </div>
+                          <textarea rows={2} value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} className={inputCls} placeholder="Type anything" />
+                          <FontPicker label="Font" value={b.font} onChange={(k) => setBlock(i, { font: k })} />
+                          <div>
+                            <Label>Size</Label>
+                            <SizeField value={b.size} min={8} max={160} onChange={(n) => setBlock(i, { size: n })} />
+                          </div>
+                          <div className="max-w-xs">
+                            <ColorField label="Color" value={b.color} onChange={(v) => setBlock(i, { color: v })} />
+                          </div>
+                          <div>
+                            <Label>Alignment</Label>
+                            <Chips value={b.align} options={ALIGNS} onChange={(v) => setBlock(i, { align: v })} />
+                          </div>
+                        </div>
+                      ))}
+                      <button type="button" onClick={addBlock} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add text box</button>
+                    </MiniCard>
+
+                    <MiniCard title="Button">
+                      <label className="block">
+                        <Label>Words</Label>
+                        <input value={form.cta_label} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} className={inputCls} />
+                      </label>
+                      <div className="max-w-xs">
+                        <ColorField label="Button color" value={form.theme.accent} onChange={(v) => setTheme({ accent: v })} />
+                      </div>
+                      <div className="max-w-xs">
+                        <ColorField label="Button text color" value={form.theme.btnText} onChange={(v) => setTheme({ btnText: v })} />
+                      </div>
+                      <div>
+                        <Label>Text size</Label>
+                        <SizeField value={form.theme.btnSizePx} min={10} max={40} onChange={(n) => setTheme({ btnSizePx: n })} />
+                      </div>
+                      <div>
+                        <Label>Shape</Label>
+                        <Chips value={form.theme.shape} options={[{ id: 'square', label: 'Square' }, { id: 'rounded', label: 'Rounded' }, { id: 'pill', label: 'Pill' }]} onChange={(v) => setTheme({ shape: v })} />
+                      </div>
+                    </MiniCard>
+
+                    <MiniCard title="Claim your spot box">
+                      <label className="block">
+                        <Label>Title words</Label>
+                        <input placeholder="Claim your spot" value={form.text.form_title} onChange={(e) => setText('form_title', e.target.value)} className={inputCls} />
+                      </label>
+                      <div className="max-w-xs">
+                        <ColorField label="Box color" value={form.theme.cardBg} onChange={(v) => setTheme({ cardBg: v })} />
+                      </div>
+                      <div className="max-w-xs">
+                        <ColorField label="Text color" value={form.theme.cardText} onChange={(v) => setTheme({ cardText: v })} />
+                      </div>
+                      <div>
+                        <Label>Corner roundness</Label>
+                        <SizeField value={form.theme.cardRadius} min={0} max={60} onChange={(n) => setTheme({ cardRadius: n })} />
                       </div>
                     </MiniCard>
                   </div>

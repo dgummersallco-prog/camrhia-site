@@ -52,6 +52,8 @@ function patternUrl(decor: string): string | null {
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
+export type TextBlock = { text: string; font: string; color: string; size: number; align: 'left' | 'center' }
+
 export type SpecialTheme = {
   bgImage: string
   overlay: number
@@ -70,6 +72,11 @@ export type SpecialTheme = {
   accent: string
   btnText: string
   shape: 'square' | 'rounded' | 'pill'
+  btnSizePx: number
+  cardBg: string
+  cardText: string
+  cardRadius: number
+  blocks: TextBlock[]
 }
 
 export const DEFAULT_THEME: SpecialTheme = {
@@ -90,6 +97,11 @@ export const DEFAULT_THEME: SpecialTheme = {
   accent: '#A9545F',
   btnText: '#FFFFFF',
   shape: 'pill',
+  btnSizePx: 16,
+  cardBg: '#FFFFFF',
+  cardText: '#2A1F24',
+  cardRadius: 16,
+  blocks: [],
 }
 
 const hexOr = (v: unknown, d: string) => (/^#[0-9a-fA-F]{3,8}$/.test(String(v ?? '')) ? String(v) : d)
@@ -112,18 +124,37 @@ export function readTheme(c: Record<string, unknown>): SpecialTheme {
     decor: pick(c.decor, DECORS, D.decor),
     headFont: fontOr(c.head_font, D.headFont),
     titleColor: hexOr(c.title_color, D.titleColor),
-    titleSizePx: num(c.title_size_px, 24, 96, D.titleSizePx),
+    titleSizePx: num(c.title_size_px, 12, 160, D.titleSizePx),
     titleAlign: pick(c.title_align ?? c.align, ['left', 'center'] as const, D.titleAlign),
     subFont: fontOr(c.sub_font, D.subFont),
     subColor: hexOr(c.sub_color, D.subColor),
-    subSizePx: num(c.sub_size_px, 12, 40, D.subSizePx),
+    subSizePx: num(c.sub_size_px, 8, 80, D.subSizePx),
     subAlign: pick(c.sub_align ?? c.align, ['left', 'center'] as const, D.subAlign),
     bodyFont: fontOr(c.body_font, D.bodyFont),
     textColor: hexOr(c.text_color, D.textColor),
     accent: hexOr(c.accent_color, D.accent),
     btnText: hexOr(c.btn_text, D.btnText),
     shape: pick(c.shape, ['square', 'rounded', 'pill'] as const, D.shape),
+    btnSizePx: num(c.btn_size_px, 10, 40, D.btnSizePx),
+    cardBg: hexOr(c.card_bg, D.cardBg),
+    cardText: hexOr(c.card_text, D.cardText),
+    cardRadius: num(c.card_radius, 0, 60, D.cardRadius),
+    blocks: readBlocks(c.blocks),
   }
+}
+
+function readBlocks(v: unknown): TextBlock[] {
+  if (!Array.isArray(v)) return []
+  return v.slice(0, 10).map((x) => {
+    const o = (x ?? {}) as Record<string, unknown>
+    return {
+      text: String(o.text ?? ''),
+      font: fontOr(o.font, 'montserrat'),
+      color: hexOr(o.color, '#2A1F24'),
+      size: num(o.size, 8, 160, 18),
+      align: pick(o.align, ['left', 'center'] as const, 'center'),
+    }
+  })
 }
 
 export function themeToContent(t: SpecialTheme): Record<string, unknown> {
@@ -145,6 +176,11 @@ export function themeToContent(t: SpecialTheme): Record<string, unknown> {
     accent_color: t.accent,
     btn_text: t.btnText,
     shape: t.shape,
+    btn_size_px: t.btnSizePx,
+    card_bg: t.cardBg,
+    card_text: t.cardText,
+    card_radius: t.cardRadius,
+    blocks: t.blocks,
   }
 }
 
@@ -153,13 +189,13 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
   const headFam = FONT_OPTIONS[t.headFont]?.family ?? 'serif'
   const subFam = FONT_OPTIONS[t.subFont]?.family ?? 'sans-serif'
   const bodyFam = FONT_OPTIONS[t.bodyFont]?.family ?? 'sans-serif'
-  const keys = Array.from(new Set([t.headFont, t.subFont, t.bodyFont])).filter((k) => FONT_OPTIONS[k])
+  const keys = Array.from(new Set([t.headFont, t.subFont, t.bodyFont, ...t.blocks.map((b) => b.font)])).filter((k) => FONT_OPTIONS[k])
   const fontHref = keys.length
     ? 'https://fonts.googleapis.com/css2?' + keys.map((k) => 'family=' + FONT_OPTIONS[k].gf.split(':')[0]).join('&') + '&display=swap'
     : null
   const photos = d.photos.filter(Boolean).slice(0, 3)
   const radius = t.shape === 'square' ? '0px' : t.shape === 'rounded' ? '12px' : '999px'
-  const btnStyle = { background: t.accent, color: t.btnText, borderRadius: radius }
+  const btnStyle = { background: t.accent, color: t.btnText, borderRadius: radius, fontSize: t.btnSizePx }
   const heading = { fontFamily: headFam, fontWeight: 500 as const }
   const heroText = t.bgImage ? '#FFFFFF' : t.textColor
   const emoji = DECOR_EMOJI[t.decor]
@@ -180,7 +216,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
           {d.brand ? <p className="font-mono text-xs uppercase tracking-widest opacity-70" style={{ color: heroText, textAlign: titleAlign }}>{d.brand}</p> : null}
           <h1
             className="mt-4 leading-tight"
-            style={{ ...heading, color: t.titleColor, fontSize: `min(${t.titleSizePx}px, 13vw)`, textAlign: titleAlign }}
+            style={{ ...heading, color: t.titleColor, fontSize: t.titleSizePx, textAlign: titleAlign }}
           >
             {d.headline || 'Your offer title'}
           </h1>
@@ -223,8 +259,12 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
           </section>
         ) : null}
 
+        {t.blocks.filter((b) => b.text.trim()).map((b, i) => (
+          <p key={i} className="mt-8 whitespace-pre-line leading-snug" style={{ fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: b.align }}>{b.text}</p>
+        ))}
+
         <div id="claim">
-          <section className="mt-12 rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.94)', color: '#2A1F24' }}>
+          <section className="mt-12 p-6" style={{ background: t.cardBg, color: t.cardText, borderRadius: t.cardRadius }}>
             <h2 className="text-2xl" style={heading}>{d.formTitle || 'Claim your spot'}</h2>
             <div className="mt-3">
               {d.spots ? <p className="mb-4 font-medium">{d.spots}</p> : null}
