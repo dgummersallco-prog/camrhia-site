@@ -44,12 +44,26 @@ function Field({ label, value, onChange, hint, children }: { label: string; valu
   )
 }
 
+function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="rounded-2xl border border-line bg-card p-5">
+      <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">{label}</p>
+      <p className="mt-2 font-fraunces text-3xl font-semibold leading-none text-ink">{value}</p>
+      <p className="mt-2 text-xs leading-relaxed text-ink-soft">{sub}</p>
+    </div>
+  )
+}
+
 export default function AdminAdsPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
-  const [spendS, setSpendS] = useState('96')
-  const [cpvS, setCpvS] = useState('0.72')
+  const [budgetS, setBudgetS] = useState('66')
+  const [fullS, setFullS] = useState('96')
+  const [spentS, setSpentS] = useState('13.37')
+  const [visitsS, setVisitsS] = useState('23')
   const [netS, setNetS] = useState('51')
+  const [trialsS, setTrialsS] = useState('0')
+  const [payingS, setPayingS] = useState('0')
   const [monthsS, setMonthsS] = useState('6')
 
   useEffect(() => {
@@ -64,13 +78,21 @@ export default function AdminAdsPage() {
 
   if (!ready) return null
 
-  const spend = num(spendS)
-  const cpv = num(cpvS)
-  const visits = cpv > 0 ? spend / cpv : 0
+  const budget = num(budgetS)
+  const full = num(fullS)
+  const spent = num(spentS)
+  const visitsSoFar = num(visitsS)
   const net = num(netS)
+  const trials = num(trialsS)
+  const paying = num(payingS)
   const months = num(monthsS)
-  const be1 = net > 0 ? (cpv / net) * 100 : 0
-  const beN = months > 0 ? be1 / months : 0
+
+  const cpv = visitsSoFar > 0 ? spent / visitsSoFar : 0
+  const projVisits = cpv > 0 ? budget / cpv : 0
+  const goal = net > 0 ? Math.ceil(full / net) : 0
+  const beRate = projVisits > 0 ? (goal / projVisits) * 100 : 0
+  const brokeEven = goal > 0 && paying >= goal
+  const need = Math.max(0, goal - paying)
 
   const thBase = 'px-4 py-3 font-mono text-xs font-normal uppercase tracking-widest text-ink-soft/60'
   const th = `${thBase} text-right`
@@ -79,14 +101,41 @@ export default function AdminAdsPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       <h1 className="font-fraunces text-3xl font-semibold text-ink">Ad math</h1>
-      <p className="mt-2 text-sm text-ink-soft">
-        What an ad is worth at different visit-to-paid rates. Change the numbers and the table updates.
-      </p>
+      <p className="mt-2 text-sm text-ink-soft">Enter what you have so far. Everything else works itself out.</p>
 
-      <div className="mt-6 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Ad spend ($)" value={spendS} onChange={setSpendS} hint="What the ad cost you" />
-        <Field label="Cost per visit ($)" value={cpvS} onChange={setCpvS} hint={`${Math.round(visits)} visits for ${usd(spend)}. Use your real ad spend ÷ visits you got.`} />
-        <Field label="Net per subscriber / month ($)" value={netS} onChange={setNetS} hint="What you keep per month after Apple's 15%. Type any number or tap a plan.">
+      <div className={`mt-6 rounded-2xl border p-6 ${brokeEven ? 'border-emerald-300 bg-emerald-50' : 'border-twilight/30 bg-twilight/5'}`}>
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Your goal</p>
+        <p className="mt-1 font-fraunces text-4xl font-semibold text-twilight">
+          {goal} paying subscriber{goal === 1 ? '' : 's'}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+          You spend {usd(full)} in total and keep about {usd(net)} a month from each subscriber, so {goal} paying subscriber{goal === 1 ? '' : 's'} pay the ad back in the first month. Everything after that is profit.
+        </p>
+        <p className="mt-3 text-sm font-medium text-ink">
+          {brokeEven
+            ? `You have ${paying} paying. You have broken even.`
+            : `${paying} of ${goal} paying so far. You need ${need} more.${trials > 0 ? ` ${trials} free trial${trials === 1 ? '' : 's'} started, and trials turn paid after 14 days.` : ''}`}
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Cost per visit so far" value={cpv > 0 ? usd(cpv) : '-'} sub={`${usd(spent)} spent for ${visitsSoFar} visits`} />
+        <Stat label="Visits at this pace" value={projVisits > 0 ? String(Math.round(projVisits)) : '-'} sub={`What your ${usd(budget)} budget should buy`} />
+        <Stat label="Break-even rate" value={beRate > 0 ? `${beRate.toFixed(1)}%` : '-'} sub={`${goal} subscribers out of about ${Math.round(projVisits)} visits`} />
+        <Stat label="Subscribers vs goal" value={`${paying} / ${goal}`} sub={`${trials} free trial${trials === 1 ? '' : 's'} started`} />
+      </div>
+
+      <h2 className="mt-10 font-mono text-xs uppercase tracking-widest text-ink-soft/50">The ad</h2>
+      <div className="mt-3 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Field label="Ad budget ($)" value={budgetS} onChange={setBudgetS} hint="The budget you set for the ad" />
+        <Field label="Full cost with fees ($)" value={fullS} onChange={setFullS} hint="What you will really pay in total, with Apple's fees added" />
+        <Field label="Spent so far ($)" value={spentS} onChange={setSpentS} hint="What the ad dashboard shows today" />
+        <Field label="Visits so far" value={visitsS} onChange={setVisitsS} hint="Visits or taps the ad dashboard shows today" />
+      </div>
+
+      <h2 className="mt-8 font-mono text-xs uppercase tracking-widest text-ink-soft/50">The results</h2>
+      <div className="mt-3 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Field label="Net per subscriber / month ($)" value={netS} onChange={setNetS} hint="What you keep each month after Apple's 15%. Type a number or tap a plan.">
           <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
             {PLANS.map((p) => (
               <button
@@ -100,19 +149,13 @@ export default function AdminAdsPage() {
             ))}
           </div>
         </Field>
-        <Field label="Months of revenue" value={monthsS} onChange={setMonthsS} hint="Assumes nobody cancels" />
+        <Field label="Free trials started" value={trialsS} onChange={setTrialsS} hint="New photographers who started a trial from the ad" />
+        <Field label="Paying subscribers" value={payingS} onChange={setPayingS} hint="Trials that turned into paid, about 14 days after they start" />
+        <Field label="Months to count" value={monthsS} onChange={setMonthsS} hint="Used in the table below. Assumes nobody cancels" />
       </div>
 
-      <div className="mt-6 rounded-2xl border border-twilight/30 bg-twilight/5 p-5">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Break-even visit-to-paid</p>
-        <p className="mt-1 font-fraunces text-3xl font-semibold text-twilight">{be1.toFixed(2)}%</p>
-        <p className="mt-1 text-sm text-ink-soft">
-          That share of visitors must become paying subscribers for the ad to earn back its {usd(spend)} in the first month.
-          {months > 0 ? ` Counting ${months} months of revenue, ${beN.toFixed(2)}% is enough.` : ''}
-        </p>
-      </div>
-
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-card">
+      <h2 className="mt-10 font-mono text-xs uppercase tracking-widest text-ink-soft/50">What if more visitors subscribed?</h2>
+      <div className="mt-3 overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-line bg-paper">
@@ -121,17 +164,17 @@ export default function AdminAdsPage() {
               <th className={th}>Cost per paying sub</th>
               <th className={th}>Revenue, 1 month</th>
               <th className={th}>Revenue, {months} months</th>
-              <th className={th}>Return on {usd(spend)}</th>
+              <th className={th}>Return on {usd(full)}</th>
             </tr>
           </thead>
           <tbody>
             {RATES.map((rate) => {
-              const subs = (visits * rate) / 100
-              const perSub = subs > 0 ? spend / subs : 0
+              const subs = (projVisits * rate) / 100
+              const perSub = subs > 0 ? full / subs : 0
               const rev1 = subs * net
               const revN = rev1 * months
-              const ratio = spend > 0 ? revN / spend : 0
-              const red = spend > 0 && rev1 < spend
+              const ratio = full > 0 ? revN / full : 0
+              const red = full > 0 && rev1 < full
               return (
                 <tr key={rate} className={`border-b border-line last:border-0 ${red ? 'bg-red-50' : 'transition hover:bg-paper'}`}>
                   <td className="px-4 py-3.5 text-left">
@@ -142,7 +185,7 @@ export default function AdminAdsPage() {
                   <td className={`${td} ${red ? 'text-red-700' : ''}`}>{usd(Math.round(rev1))}</td>
                   <td className={td}>{usd(Math.round(revN))}</td>
                   <td className={`${td} font-fraunces text-lg font-semibold ${red ? 'text-red-700' : 'text-twilight'}`}>
-                    {spend > 0 ? `about ${ratio >= 2 ? Math.round(ratio) : ratio.toFixed(1)}x` : '-'}
+                    {full > 0 ? `about ${ratio >= 2 ? Math.round(ratio) : ratio.toFixed(1)}x` : '-'}
                   </td>
                 </tr>
               )
