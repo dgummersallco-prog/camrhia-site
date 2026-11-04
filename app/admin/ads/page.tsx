@@ -63,7 +63,7 @@ function NumIn({ value, onChange, onBlur, prefix, w = 'w-28' }: { value: number 
         value={value === null || value === 0 ? '' : value}
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         onBlur={onBlur}
-        className={`${w} rounded-xl border border-line bg-paper py-2 pr-3 font-fraunces text-lg font-semibold text-ink outline-none focus:border-twilight ${prefix ? 'pl-7' : 'pl-3'}`}
+        className={`${w} rounded-xl border border-line bg-paper py-3 pr-5 font-fraunces text-lg font-semibold text-ink outline-none focus:border-twilight ${prefix ? 'pl-7' : 'pl-3'}`}
       />
     </span>
   )
@@ -100,7 +100,7 @@ function AdCard({ ad, net, onChange, onSave, onDelete, footer }: { ad: Ad; net: 
   const tone = back >= 3 ? 'text-twilight' : back >= 1 ? 'text-ink' : 'text-red-700'
 
   return (
-    <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+    <section className="mt-8 rounded-2xl border border-line bg-card p-8">
       <div className="flex flex-wrap items-center gap-3">
         <input
           value={ad.name}
@@ -262,7 +262,7 @@ export default function AdminAdsPage() {
   if (!ready) return null
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <main className="mx-auto max-w-5xl px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-fraunces text-3xl font-semibold text-ink">Ads</h1>
@@ -273,34 +273,34 @@ export default function AdminAdsPage() {
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
 
-      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+      <section className="mt-8 rounded-2xl border border-line bg-card p-8">
         <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Before you spend: what it takes to break even</p>
         <p className="mt-2 text-sm text-ink-soft">Visits you get for each ad budget at each cost per visit. You keep {usd(net)} per subscriber.</p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[34rem] text-sm">
+          <table className="w-full min-w-[34rem] text-base">
             <thead>
               <tr className="border-b border-line text-left text-ink-soft">
-                <th className="py-2 pr-3 font-medium">Ad spend</th>
-                <th className="py-2 pr-3 font-medium">Paying subscribers needed</th>
+                <th className="py-3 pr-5 font-medium">Ad spend</th>
+                <th className="py-3 pr-5 font-medium">Paying subscribers needed</th>
                 {CPVS.map((c) => (
-                  <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)} per visit</th>
+                  <th key={c} className="py-3 pr-5 text-right font-medium">{usd(c)} per visit</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {SPENDS.map((sp) => (
                 <tr key={sp} className="border-b border-line">
-                  <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{usd(sp)}</td>
-                  <td className="py-3 pr-3 text-ink">{Math.ceil(sp / net)}</td>
+                  <td className="py-4 pr-5 font-fraunces text-xl font-semibold text-ink">{usd(sp)}</td>
+                  <td className="py-4 pr-5 text-ink">{Math.ceil(sp / net)}</td>
                   {CPVS.map((c) => (
-                    <td key={c} className="py-3 pr-3 text-right text-ink">{Math.round(sp / c).toLocaleString('en-US')} visits</td>
+                    <td key={c} className="py-4 pr-5 text-right text-ink">{Math.round(sp / c).toLocaleString('en-US')} visits</td>
                   ))}
                 </tr>
               ))}
               <tr>
-                <td className="py-3 pr-3 font-medium text-twilight" colSpan={2}>Visits that must become paying</td>
+                <td className="py-4 pr-5 font-medium text-twilight" colSpan={2}>Visits that must become paying</td>
                 {CPVS.map((c) => (
-                  <td key={c} className="py-3 pr-3 text-right font-medium text-twilight">{pct((c / net) * 100)}</td>
+                  <td key={c} className="py-4 pr-5 text-right font-medium text-twilight">{pct((c / net) * 100)}</td>
                 ))}
               </tr>
             </tbody>
@@ -309,7 +309,7 @@ export default function AdminAdsPage() {
         <p className="mt-3 text-xs text-ink-soft">The percentage at the bottom depends only on cost per visit. A bigger budget just means more visits and more subscribers needed.</p>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+      <section className="mt-8 rounded-2xl border border-line bg-card p-8">
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => setView('cac')} className={`rounded-full border px-4 py-1.5 text-sm transition ${view === 'cac' ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}>What a subscriber costs (CAC)</button>
           <button type="button" onClick={() => setView('profit')} className={`rounded-full border px-4 py-1.5 text-sm transition ${view === 'profit' ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}>Profit or loss on a subscriber</button>
@@ -320,27 +320,27 @@ export default function AdminAdsPage() {
             : <>{usd(net)} kept minus the CAC, for the first month. Green is profit. Red is a loss.</>}
         </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[30rem] text-sm">
+          <table className="w-full min-w-[30rem] text-base">
             <thead>
               <tr className="text-left text-ink-soft">
                 <th className="pb-1 pr-3" />
                 <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={CPVS.length}>Cost per visit</th>
               </tr>
               <tr className="border-b border-line text-left text-ink-soft">
-                <th className="py-2 pr-3 font-medium">Conversion (visits that become paying)</th>
+                <th className="py-3 pr-5 font-medium">Conversion (visits that become paying)</th>
                 {CPVS.map((c) => (
-                  <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)}</th>
+                  <th key={c} className="py-3 pr-5 text-right font-medium">{usd(c)}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {CONVS.map((v) => (
                 <tr key={v} className="border-b border-line last:border-0">
-                  <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{pct(v)}</td>
+                  <td className="py-4 pr-5 font-fraunces text-xl font-semibold text-ink">{pct(v)}</td>
                   {CPVS.map((c) => {
                     const cac = c / (v / 100)
                     return (
-                      <td key={c} className={`py-3 pr-3 text-right font-medium ${cac <= net ? 'text-sage' : 'text-red-700'}`}>{view === 'cac' ? usd(Math.round(cac)) : (Math.round(net - cac) > 0 ? '+' : '') + usd(Math.round(net - cac))}</td>
+                      <td key={c} className={`py-4 pr-5 text-right font-medium ${cac <= net ? 'text-sage' : 'text-red-700'}`}>{view === 'cac' ? usd(Math.round(cac)) : (Math.round(net - cac) > 0 ? '+' : '') + usd(Math.round(net - cac))}</td>
                     )
                   })}
                 </tr>
@@ -351,7 +351,7 @@ export default function AdminAdsPage() {
         <p className="mt-3 text-xs text-ink-soft">CAC = cost per visit ÷ conversion. Example: $0.50 ÷ 1% = $50.</p>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+      <section className="mt-8 rounded-2xl border border-line bg-card p-8">
         <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">The one formula</p>
         <p className="mt-2 font-fraunces text-2xl font-semibold text-ink">CAC = cost per visit ÷ conversion rate of paying subscribers</p>
         <p className="mt-2 text-sm text-ink-soft">CAC is what one paying subscriber costs you.</p>
@@ -370,7 +370,7 @@ export default function AdminAdsPage() {
         </div>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+      <section className="mt-8 rounded-2xl border border-line bg-card p-8">
         <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Lifetime value</p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => setLtvView('back')} className={`rounded-full border px-4 py-1.5 text-sm transition ${ltvView === 'back' ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}>Payback on my CAC</button>
@@ -383,17 +383,17 @@ export default function AdminAdsPage() {
         </p>
         <div className="mt-4 overflow-x-auto">
           {ltvView === 'back' ? (
-            <table className="w-full min-w-[36rem] text-sm">
+            <table className="w-full min-w-[36rem] text-base">
               <thead>
                 <tr className="text-left text-ink-soft">
                   <th className="pb-1 pr-3" colSpan={2} />
                   <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={LTV_CACS.length}>CAC: what you paid for one subscriber</th>
                 </tr>
                 <tr className="border-b border-line text-left text-ink-soft">
-                  <th className="py-2 pr-3 font-medium">How long they stay</th>
-                  <th className="py-2 pr-3 text-right font-medium">One subscriber is worth</th>
+                  <th className="py-3 pr-5 font-medium">How long they stay</th>
+                  <th className="py-3 pr-5 text-right font-medium">One subscriber is worth</th>
                   {LTV_CACS.map((c) => (
-                    <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)}</th>
+                    <th key={c} className="py-3 pr-5 text-right font-medium">{usd(c)}</th>
                   ))}
                 </tr>
               </thead>
@@ -402,15 +402,15 @@ export default function AdminAdsPage() {
                   const ltv = net * mo
                   return (
                     <tr key={mo} className="border-b border-line last:border-0">
-                      <td className="py-3 pr-3">
-                        <span className="font-fraunces text-lg font-semibold text-ink">{mo} {mo === 1 ? 'month' : 'months'}</span>
+                      <td className="py-4 pr-5">
+                        <span className="font-fraunces text-xl font-semibold text-ink">{mo} {mo === 1 ? 'month' : 'months'}</span>
                         <span className="ml-2 text-xs text-ink-soft">{pct(100 / mo)} churn</span>
                       </td>
-                      <td className="py-3 pr-3 text-right text-ink">{usd(Math.round(ltv))}</td>
+                      <td className="py-4 pr-5 text-right text-ink">{usd(Math.round(ltv))}</td>
                       {LTV_CACS.map((c) => {
                         const back = ltv / c
                         return (
-                          <td key={c} className={`py-3 pr-3 text-right font-medium ${back >= 3 ? 'text-sage' : back >= 1 ? 'text-ink' : 'text-red-700'}`}>{Number(back.toFixed(1))}x</td>
+                          <td key={c} className={`py-4 pr-5 text-right font-medium ${back >= 3 ? 'text-sage' : back >= 1 ? 'text-ink' : 'text-red-700'}`}>{Number(back.toFixed(1))}x</td>
                         )
                       })}
                     </tr>
@@ -419,28 +419,28 @@ export default function AdminAdsPage() {
               </tbody>
             </table>
           ) : (
-            <table className="w-full min-w-[36rem] text-sm">
+            <table className="w-full min-w-[36rem] text-base">
               <thead>
                 <tr className="text-left text-ink-soft">
                   <th className="pb-1 pr-3" />
                   <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={LTV_SUBS.length}>Paying subscribers</th>
                 </tr>
                 <tr className="border-b border-line text-left text-ink-soft">
-                  <th className="py-2 pr-3 font-medium">How long they stay</th>
+                  <th className="py-3 pr-5 font-medium">How long they stay</th>
                   {LTV_SUBS.map((n) => (
-                    <th key={n} className="py-2 pr-3 text-right font-medium">{n.toLocaleString('en-US')}</th>
+                    <th key={n} className="py-3 pr-5 text-right font-medium">{n.toLocaleString('en-US')}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {LTV_MONTHS.map((mo) => (
                   <tr key={mo} className="border-b border-line last:border-0">
-                    <td className="py-3 pr-3">
-                      <span className="font-fraunces text-lg font-semibold text-ink">{mo} {mo === 1 ? 'month' : 'months'}</span>
+                    <td className="py-4 pr-5">
+                      <span className="font-fraunces text-xl font-semibold text-ink">{mo} {mo === 1 ? 'month' : 'months'}</span>
                       <span className="ml-2 text-xs text-ink-soft">{pct(100 / mo)} churn</span>
                     </td>
                     {LTV_SUBS.map((n) => (
-                      <td key={n} className="py-3 pr-3 text-right font-medium text-ink">{usd(Math.round(net * mo * n))}</td>
+                      <td key={n} className="py-4 pr-5 text-right font-medium text-ink">{usd(Math.round(net * mo * n))}</td>
                     ))}
                   </tr>
                 ))}
@@ -480,30 +480,30 @@ export default function AdminAdsPage() {
         />
       )}
 
-      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+      <section className="mt-8 rounded-2xl border border-line bg-card p-8">
         <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Your ads</p>
         <p className="mt-2 text-sm text-ink-soft">{ads.length === 0 ? 'Placeholders for now. Each ad you submit fills in a row here.' : 'Click a row to open and edit that ad.'}</p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[44rem] text-sm">
+          <table className="w-full min-w-[44rem] text-base">
             <thead>
               <tr className="border-b border-line text-left text-ink-soft">
-                <th className="py-2 pr-3 font-medium">Ad</th>
-                <th className="py-2 pr-3 text-right font-medium">Cost</th>
-                <th className="py-2 pr-3 text-right font-medium">Visits</th>
-                <th className="py-2 pr-3 text-right font-medium">Cost per visit</th>
-                <th className="py-2 pr-3 text-right font-medium">Downloads</th>
-                <th className="py-2 pr-3 text-right font-medium">Trials</th>
-                <th className="py-2 pr-3 text-right font-medium">Paying</th>
-                <th className="py-2 text-right font-medium">CAC</th>
+                <th className="py-3 pr-5 font-medium">Ad</th>
+                <th className="py-3 pr-5 text-right font-medium">Cost</th>
+                <th className="py-3 pr-5 text-right font-medium">Visits</th>
+                <th className="py-3 pr-5 text-right font-medium">Cost per visit</th>
+                <th className="py-3 pr-5 text-right font-medium">Downloads</th>
+                <th className="py-3 pr-5 text-right font-medium">Trials</th>
+                <th className="py-3 pr-5 text-right font-medium">Paying</th>
+                <th className="py-3 text-right font-medium">CAC</th>
               </tr>
             </thead>
             <tbody>
               {ads.length === 0
                 ? [1, 2, 3].map((i) => (
                     <tr key={i} className="border-b border-line text-ink-soft/50 last:border-0">
-                      <td className="py-3 pr-3 font-fraunces text-lg font-semibold">Ad {i}</td>
+                      <td className="py-4 pr-5 font-fraunces text-lg font-semibold">Ad {i}</td>
                       {[0, 1, 2, 3, 4, 5, 6].map((k) => (
-                        <td key={k} className="py-3 pr-3 text-right">—</td>
+                        <td key={k} className="py-4 pr-5 text-right">—</td>
                       ))}
                     </tr>
                   ))
@@ -511,17 +511,17 @@ export default function AdminAdsPage() {
                     const cac = ad.paying > 0 ? ad.cost_total / ad.paying : 0
                     return (
                       <tr key={ad.id} onClick={() => setOpen(ad.id)} className="cursor-pointer border-b border-line last:border-0 hover:bg-paper">
-                        <td className="py-3 pr-3">
-                          <span className="font-fraunces text-lg font-semibold text-ink">{ad.name}</span>
+                        <td className="py-4 pr-5">
+                          <span className="font-fraunces text-xl font-semibold text-ink">{ad.name}</span>
                           {ad.started_on ? <span className="ml-2 text-xs text-ink-soft">{ad.started_on}</span> : null}
                         </td>
-                        <td className="py-3 pr-3 text-right text-ink">{usd(ad.cost_total)}</td>
-                        <td className="py-3 pr-3 text-right text-ink">{ad.visits.toLocaleString('en-US')}</td>
-                        <td className="py-3 pr-3 text-right text-ink">{ad.visits > 0 && ad.cost_total > 0 ? usd(ad.cost_total / ad.visits) : '—'}</td>
-                        <td className="py-3 pr-3 text-right text-ink">{ad.downloads.toLocaleString('en-US')}</td>
-                        <td className="py-3 pr-3 text-right text-ink">{ad.trials.toLocaleString('en-US')}</td>
-                        <td className="py-3 pr-3 text-right text-ink">{ad.paying.toLocaleString('en-US')}</td>
-                        <td className={`py-3 text-right font-medium ${cac === 0 ? 'text-ink-soft' : cac <= net ? 'text-sage' : 'text-red-700'}`}>{cac > 0 ? usd(Math.round(cac)) : '—'}</td>
+                        <td className="py-4 pr-5 text-right text-ink">{usd(ad.cost_total)}</td>
+                        <td className="py-4 pr-5 text-right text-ink">{ad.visits.toLocaleString('en-US')}</td>
+                        <td className="py-4 pr-5 text-right text-ink">{ad.visits > 0 && ad.cost_total > 0 ? usd(ad.cost_total / ad.visits) : '—'}</td>
+                        <td className="py-4 pr-5 text-right text-ink">{ad.downloads.toLocaleString('en-US')}</td>
+                        <td className="py-4 pr-5 text-right text-ink">{ad.trials.toLocaleString('en-US')}</td>
+                        <td className="py-4 pr-5 text-right text-ink">{ad.paying.toLocaleString('en-US')}</td>
+                        <td className={`py-4 text-right font-medium ${cac === 0 ? 'text-ink-soft' : cac <= net ? 'text-sage' : 'text-red-700'}`}>{cac > 0 ? usd(Math.round(cac)) : '—'}</td>
                       </tr>
                     )
                   })}
