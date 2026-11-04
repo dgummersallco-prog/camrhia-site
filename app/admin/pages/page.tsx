@@ -114,6 +114,7 @@ export default function AdminPagesPage() {
   const [form, setForm] = useState<Form | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [previewKey, setPreviewKey] = useState(0)
 
   const load = useCallback(async () => {
     try {
@@ -139,7 +140,7 @@ export default function AdminPagesPage() {
     if (!form) return
     setSaving(true)
     try {
-      await call('save', {
+      const { page: saved } = await call('save', {
         page: {
           id: form.id || undefined,
           slug: form.slug,
@@ -152,7 +153,8 @@ export default function AdminPagesPage() {
         },
       })
       setError(null)
-      setForm(null)
+      setForm(toForm(saved as Row))
+      setPreviewKey((k) => k + 1)
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save')
@@ -273,6 +275,16 @@ export default function AdminPagesPage() {
             <button type="button" onClick={save} disabled={saving} className="rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{saving ? 'Saving…' : 'Save page'}</button>
             <button type="button" onClick={() => setForm(null)} className="text-sm text-ink-soft underline">Cancel</button>
             {form.id && <button type="button" onClick={() => remove(form.id)} className="ml-auto text-xs text-ink-soft underline hover:text-red-700">Delete page</button>}
+          </div>
+        </section>
+      )}
+
+      {form && form.id && (
+        <section className="mt-8 rounded-2xl border border-line bg-card p-8">
+          <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Live preview</p>
+          <p className="mt-2 text-sm text-ink-soft">The saved version at phone size. {form.published ? 'Press Save to refresh it.' : 'This funnel is a draft. Tick Published and save to see it here.'}</p>
+          <div className="mt-4 flex justify-center">
+            <iframe key={previewKey} src={`/go/${form.slug}?v=${previewKey}`} title="Preview" className="h-[720px] w-[390px] max-w-full rounded-2xl border border-line bg-paper" />
           </div>
         </section>
       )}
