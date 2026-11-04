@@ -233,6 +233,11 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
           {renderBlocks('subtitle')}
           {d.price ? <p className="mt-5 text-2xl" style={{ ...heading, color: t.bgImage ? '#FFFFFF' : t.accent, textAlign: titleAlign }}>{d.price}</p> : null}
           {d.whenWhere ? <p className="mt-2 opacity-80" style={{ color: heroText, textAlign: titleAlign }}>{d.whenWhere}</p> : null}
+          {photos.length > 0 ? (
+            <div className="mx-auto mt-8 max-w-[300px]">
+              <Slideshow photos={photos} />
+            </div>
+          ) : null}
           <div className="mt-8" style={{ display: 'flex', justifyContent: 'center' }}>
             {preview ? (
               <span className="inline-block px-8 py-4 text-base font-medium" style={btnStyle}>{d.label}</span>
@@ -244,12 +249,6 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
       </div>
 
       <div className="relative mx-auto max-w-xl px-6 pb-16">
-        {photos.length > 0 && (
-          <div className="mt-10">
-            <Slideshow photos={photos} />
-          </div>
-        )}
-
         {d.details ? (
           <section className="mt-12">
             <h2 className="text-2xl" style={heading}>{d.detailsTitle || 'What is included'}</h2>

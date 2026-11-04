@@ -753,7 +753,7 @@ export default function SpecialsPage() {
                 <div key={ex.name} className="text-center">
                   <div className="mx-auto h-[400px] w-[200px] overflow-y-auto rounded-[1.5rem] border-[3px] border-ink/80" style={{ background: theme.bgColor }}>
                     <div style={{ width: 390, zoom: 0.5 }}>
-                      <SpecialView preview funnelId="preview" theme={theme} d={toData(ex.text, [], ex.cta)} />
+                      <SpecialView preview funnelId="preview" theme={theme} d={toData(ex.text, [`/examples/${ex.name.toLowerCase().replace(/\s+/g, '-')}.jpg`], ex.cta)} />
                     </div>
                   </div>
                   <p className="mt-3 text-sm font-medium text-ink">{ex.name}</p>
