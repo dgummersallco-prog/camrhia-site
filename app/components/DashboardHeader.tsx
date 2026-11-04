@@ -8,9 +8,10 @@ import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
 import { APP_STORE_URL } from '@/lib/appStore'
 
-type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'edit' | 'insights' | 'minis' | 'help' | 'packages' | 'questionnaires'
+type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'edit' | 'insights' | 'minis' | 'help' | 'packages' | 'questionnaires' | 'specials'
 
 const ICONS: Record<string, string> = {
+  specials: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',
   dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
   messages: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
   sessions: 'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
@@ -58,6 +59,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'calendar', href: '/calendar', label: 'Calendar' },
   { tab: 'website', href: '/website', label: 'Your website' },
   { tab: 'portfolio', href: '/portfolio', label: 'App portfolio' },
+  { tab: 'specials', href: '/specials', label: 'Specials' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
   { tab: 'settings', href: '/settings', label: 'Settings' },
   { tab: 'help', href: '/help', label: 'Help' },
@@ -221,7 +223,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
     { label: null, tabs: ['dashboard', 'edit'] },
     { label: 'Clients', tabs: ['clients', 'messages', 'sessions', 'calendar'] },
     { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments', 'team'] },
-    { label: 'Your brand', tabs: ['website', 'portfolio'] },
+    { label: 'Your brand', tabs: ['website', 'specials', 'portfolio'] },
     { label: 'Account', tabs: ['settings', 'help'] },
   ]
   const groupedNav = GROUPS.map((g, gi) => (
