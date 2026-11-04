@@ -168,7 +168,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
 
   return (
     <div style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="relative min-h-full overflow-hidden">
-      {pattern ? <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10" style={{ backgroundImage: pattern, backgroundSize: '260px 260px', opacity: 0.32 }} /> : null}
+      {pattern ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: pattern, backgroundSize: '260px 260px', opacity: 0.32 }} /> : null}
       {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
 
       <div
@@ -199,7 +199,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
         </div>
       </div>
 
-      <div className="mx-auto max-w-xl px-6 pb-16">
+      <div className="relative mx-auto max-w-xl px-6 pb-16">
         {photos.length > 0 && (
           <div className={`mt-10 grid gap-3 ${photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
             {photos.map((u, i) => (
