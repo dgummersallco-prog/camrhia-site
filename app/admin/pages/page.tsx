@@ -18,24 +18,46 @@ type Row = {
 type Form = {
   id: string
   slug: string
+  style: string
   name: string
   published: boolean
   cta_label: string
   cta_url: string
   text: Record<string, string>
   steps: { title: string; body: string }[]
+  items: { title: string; value: string }[]
 }
 
-const TEXT_FIELDS: { key: string; label: string; area?: boolean }[] = [
-  { key: 'hero_headline', label: 'Headline (top of the page)' },
-  { key: 'hero_sub', label: 'Line under the headline', area: true },
-  { key: 'image_url', label: 'Picture link (optional)' },
-  { key: 'problem_title', label: 'The problem: title' },
-  { key: 'problem_body', label: 'The problem: words', area: true },
-  { key: 'guide_title', label: 'You as the guide: title' },
-  { key: 'guide_body', label: 'You as the guide: words', area: true },
-  { key: 'stakes_title', label: 'The stakes: title' },
-  { key: 'stakes_body', label: 'The stakes: words', area: true },
+const ALL = ['miller', 'hormozi', 'brunson', 'priestley']
+const STYLES = [
+  { id: 'miller', label: 'Donald Miller' },
+  { id: 'hormozi', label: 'Alex Hormozi' },
+  { id: 'brunson', label: 'Russell Brunson' },
+  { id: 'priestley', label: 'Daniel Priestley' },
+]
+
+const TEXT_FIELDS: { key: string; label: string; area?: boolean; styles: string[] }[] = [
+  { key: 'hero_headline', label: 'Headline (top of the page)', styles: ALL },
+  { key: 'hero_sub', label: 'Line under the headline', area: true, styles: ALL },
+  { key: 'image_url', label: 'Picture link (optional)', styles: ALL },
+  { key: 'problem_title', label: 'The problem: title', styles: ['miller'] },
+  { key: 'problem_body', label: 'The problem: words', area: true, styles: ['miller'] },
+  { key: 'guide_title', label: 'You as the guide: title', styles: ['miller'] },
+  { key: 'guide_body', label: 'You as the guide: words', area: true, styles: ['miller'] },
+  { key: 'stakes_title', label: 'The stakes: title', styles: ['miller'] },
+  { key: 'stakes_body', label: 'The stakes: words', area: true, styles: ['miller'] },
+  { key: 'stack_total', label: 'Line under the list (total value)', styles: ['hormozi', 'brunson'] },
+  { key: 'guarantee_title', label: 'Risk reversal: title', styles: ['hormozi'] },
+  { key: 'guarantee_body', label: 'Risk reversal: words', area: true, styles: ['hormozi'] },
+  { key: 'story_title', label: 'The story: title', styles: ['brunson'] },
+  { key: 'story_body', label: 'The story: words', area: true, styles: ['brunson'] },
+  { key: 'ps', label: 'P.S. at the bottom', area: true, styles: ['brunson'] },
+  { key: 'for_body', label: 'Who this is for', area: true, styles: ['priestley'] },
+  { key: 'not_for_body', label: 'Who this is NOT for', area: true, styles: ['priestley'] },
+  { key: 'proof_title', label: 'Proof: title (optional)', styles: ['priestley'] },
+  { key: 'proof_body', label: 'Proof: words (leave empty to hide)', area: true, styles: ['priestley'] },
+  { key: 'scarcity_title', label: 'Limited spots: title (optional)', styles: ['hormozi', 'priestley'] },
+  { key: 'scarcity_body', label: 'Limited spots: words (leave empty to hide)', area: true, styles: ['hormozi', 'priestley'] },
 ]
 
 function toForm(r: Row | null): Form {
@@ -44,15 +66,19 @@ function toForm(r: Row | null): Form {
   TEXT_FIELDS.forEach((f) => { text[f.key] = String(c[f.key] ?? '') })
   const src = Array.isArray(c.steps) ? (c.steps as { title?: string; body?: string }[]) : []
   const steps = [0, 1, 2].map((i) => ({ title: String(src[i]?.title ?? ''), body: String(src[i]?.body ?? '') }))
+  const srcItems = Array.isArray(c.items) ? (c.items as { title?: string; value?: string }[]) : []
+  const items = [0, 1, 2, 3, 4].map((i) => ({ title: String(srcItems[i]?.title ?? ''), value: String(srcItems[i]?.value ?? '') }))
   return {
     id: r?.id ?? '',
     slug: r?.slug ?? '',
+    style: r?.style ?? 'miller',
     name: r?.name ?? 'New page',
     published: r?.published ?? false,
     cta_label: r?.cta_label ?? 'Get the app',
     cta_url: r?.cta_url ?? '',
     text,
     steps,
+    items,
   }
 }
 
@@ -60,6 +86,8 @@ function toContent(f: Form) {
   const content: Record<string, unknown> = {}
   TEXT_FIELDS.forEach((t) => { if (f.text[t.key].trim()) content[t.key] = f.text[t.key].trim() })
   if (f.steps.some((s) => s.title.trim() || s.body.trim())) content.steps = f.steps
+  const items = f.items.filter((i) => i.title.trim())
+  if (items.length) content.items = items
   return content
 }
 
@@ -116,7 +144,7 @@ export default function AdminPagesPage() {
           id: form.id || undefined,
           slug: form.slug,
           name: form.name,
-          style: 'miller',
+          style: form.style,
           cta_label: form.cta_label,
           cta_url: form.cta_url.trim() || null,
           published: form.published,
@@ -160,7 +188,21 @@ export default function AdminPagesPage() {
 
       {form && (
         <section className="mt-8 rounded-2xl border border-line bg-card p-8">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <p className="text-sm font-medium text-ink">Style</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {STYLES.map((st) => (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() => setForm({ ...form, style: st.id })}
+                className={`rounded-full border px-4 py-1.5 text-sm transition ${form.style === st.id ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft hover:border-twilight'}`}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-sm font-medium text-ink">Name (just for you)</span>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
@@ -182,7 +224,7 @@ export default function AdminPagesPage() {
           <p className="mt-6 text-sm text-ink-soft">Leave any box empty and the page uses its default Camrhia words.</p>
 
           <div className="mt-4 grid gap-4">
-            {TEXT_FIELDS.map((f) => (
+            {TEXT_FIELDS.filter((f) => f.styles.includes(form.style)).map((f) => (
               <label key={f.key} className="block">
                 <span className="text-sm font-medium text-ink">{f.label}</span>
                 {f.area ? (
@@ -194,6 +236,22 @@ export default function AdminPagesPage() {
             ))}
           </div>
 
+          {(form.style === 'hormozi' || form.style === 'brunson') && (
+            <>
+              <p className="mt-6 text-sm font-medium text-ink">What they get (up to 5 lines, value is optional)</p>
+              <div className="mt-2 grid gap-3">
+                {form.items.map((it, i) => (
+                  <div key={i} className="grid gap-2 sm:grid-cols-[2fr_1fr]">
+                    <input value={it.title} placeholder={`Item ${i + 1}`} onChange={(e) => setForm({ ...form, items: form.items.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)) })} className={inputCls} />
+                    <input value={it.value} placeholder="Value, like $29/mo" onChange={(e) => setForm({ ...form, items: form.items.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)) })} className={inputCls} />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {form.style !== 'hormozi' && (
+          <>
           <p className="mt-6 text-sm font-medium text-ink">The three steps</p>
           <div className="mt-2 grid gap-3">
             {form.steps.map((st, i) => (
@@ -203,6 +261,8 @@ export default function AdminPagesPage() {
               </div>
             ))}
           </div>
+          </>
+          )}
 
           <label className="mt-6 flex items-center gap-2 text-sm text-ink">
             <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="accent-twilight" />
