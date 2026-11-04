@@ -30,12 +30,27 @@ export const DECOR_EMOJI: Record<Decor, string> = {
   sun: '☀️',
 }
 
-const DECOR_POS = [
-  { x: 6, y: 6, s: 30, r: -18 }, { x: 80, y: 5, s: 36, r: 14 }, { x: 44, y: 2, s: 24, r: -6 },
-  { x: 90, y: 38, s: 28, r: 20 }, { x: 3, y: 42, s: 34, r: -12 }, { x: 12, y: 84, s: 30, r: 10 },
-  { x: 70, y: 86, s: 38, r: -16 }, { x: 46, y: 92, s: 24, r: 8 }, { x: 88, y: 70, s: 26, r: -8 },
-  { x: 24, y: 62, s: 22, r: 16 },
+const DECOR_SETS: Record<string, string[]> = {
+  santa: ['🎅', '🎄', '⭐', '❄️', '🎁', '🦌'],
+  leaves: ['🍂', '🍁', '🍃', '🍂', '🍁', '🌰'],
+  flowers: ['🌸', '🌷', '🌼', '🌿', '🌺', '🦋'],
+  pencils: ['✏️', '📚', '🍎', '📏', '🖍️', '🎒'],
+  hearts: ['❤️', '💕', '💗', '🌹', '💘', '💖'],
+  pumpkins: ['🎃', '🍂', '🕯️', '🦇', '🍁', '🎃'],
+  sun: ['☀️', '🌊', '🐚', '🌴', '🏖️', '🦀'],
+}
+const TILE = [
+  [30, 50, 34, -15], [110, 30, 26, 12], [190, 62, 38, -8], [60, 120, 28, 20],
+  [150, 130, 36, -20], [220, 150, 24, 10], [20, 200, 32, 8], [100, 215, 40, -12], [190, 225, 28, 18],
 ]
+function patternUrl(decor: string): string | null {
+  const set = DECOR_SETS[decor]
+  if (!set) return null
+  const items = TILE.map(([x, y, sz, r], i) =>
+    `<text x="${x}" y="${y}" font-size="${sz}" transform="rotate(${r} ${x} ${y})">${set[i % set.length]}</text>`).join('')
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="260" height="260">${items}</svg>`
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
+}
 
 export type SpecialTheme = {
   bgImage: string
@@ -148,10 +163,12 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
   const heading = { fontFamily: headFam, fontWeight: 500 as const }
   const heroText = t.bgImage ? '#FFFFFF' : t.textColor
   const emoji = DECOR_EMOJI[t.decor]
+  const pattern = patternUrl(t.decor)
   const titleAlign = t.titleAlign
 
   return (
-    <div style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="min-h-full">
+    <div style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="relative min-h-full overflow-hidden">
+      {pattern ? <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10" style={{ backgroundImage: pattern, backgroundSize: '260px 260px', opacity: 0.32 }} /> : null}
       {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
 
       <div
@@ -159,18 +176,6 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
         style={t.bgImage ? { backgroundImage: `url(${t.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
       >
         {t.bgImage ? <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${t.overlay / 100})` }} /> : null}
-        {emoji
-          ? DECOR_POS.map((p, i) => (
-              <span
-                key={i}
-                aria-hidden="true"
-                className="pointer-events-none absolute select-none"
-                style={{ left: `${p.x}%`, top: `${p.y}%`, fontSize: p.s, transform: `rotate(${p.r}deg)`, opacity: 0.9 }}
-              >
-                {emoji}
-              </span>
-            ))
-          : null}
         <div className={`relative mx-auto flex max-w-xl flex-col justify-center px-6 py-16 ${t.bgImage ? 'min-h-[520px]' : emoji ? 'min-h-[440px]' : ''}`}>
           {d.brand ? <p className="font-mono text-xs uppercase tracking-widest opacity-70" style={{ color: heroText, textAlign: titleAlign }}>{d.brand}</p> : null}
           <h1

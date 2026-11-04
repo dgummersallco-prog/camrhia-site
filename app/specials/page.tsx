@@ -217,10 +217,14 @@ function StepCard({ n, title, children }: { n: number; title: string; children: 
 }
 
 function MiniCard({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
   return (
-    <div className="rounded-xl border border-line bg-paper p-5">
-      <p className="mb-4 font-fraunces text-lg font-semibold text-ink">{title}</p>
-      <div className="space-y-4">{children}</div>
+    <div className="rounded-xl border border-line bg-paper">
+      <button type="button" onClick={() => setOpen(!open)} className="flex w-full items-center justify-between px-5 py-4 text-left">
+        <span className="font-fraunces text-lg font-semibold text-ink">{title}</span>
+        <span className="text-xl text-ink-soft">{open ? '−' : '+'}</span>
+      </button>
+      {open && <div className="space-y-4 px-5 pb-5">{children}</div>}
     </div>
   )
 }
