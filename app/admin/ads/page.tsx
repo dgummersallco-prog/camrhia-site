@@ -44,11 +44,11 @@ function Field({ label, value, onChange, hint, children }: { label: string; valu
   )
 }
 
-function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
+function Stat({ label, value, sub, tone }: { label: string; value: string; sub: string; tone?: string }) {
   return (
     <div className="rounded-2xl border border-line bg-card p-5">
       <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">{label}</p>
-      <p className="mt-2 font-fraunces text-3xl font-semibold leading-none text-ink">{value}</p>
+      <p className={`mt-2 font-fraunces text-3xl font-semibold leading-none ${tone ?? 'text-ink'}`}>{value}</p>
       <p className="mt-2 text-xs leading-relaxed text-ink-soft">{sub}</p>
     </div>
   )
@@ -65,6 +65,7 @@ export default function AdminAdsPage() {
   const [trialsS, setTrialsS] = useState('0')
   const [payingS, setPayingS] = useState('0')
   const [monthsS, setMonthsS] = useState('6')
+  const [churnS, setChurnS] = useState('100')
 
   useEffect(() => {
     async function check() {
@@ -86,6 +87,10 @@ export default function AdminAdsPage() {
   const trials = num(trialsS)
   const paying = num(payingS)
   const months = num(monthsS)
+  const churn = Math.min(1, Math.max(0, num(churnS) / 100))
+  const life = (n: number) => (n <= 0 ? 0 : churn <= 0 ? n : churn >= 1 ? 1 : (1 - Math.pow(1 - churn, n)) / churn)
+  const lifeMonths = churn > 0 ? 1 / churn : 0
+  const ltv = churn > 0 ? net / churn : 0
 
   const cpv = visitsSoFar > 0 ? spent / visitsSoFar : 0
   const projVisits = cpv > 0 ? budget / cpv : 0
@@ -93,6 +98,9 @@ export default function AdminAdsPage() {
   const beRate = projVisits > 0 ? (goal / projVisits) * 100 : 0
   const brokeEven = goal > 0 && paying >= goal
   const need = Math.max(0, goal - paying)
+  const cacBase = paying > 0 ? paying : goal
+  const cac = cacBase > 0 ? full / cacBase : 0
+  const ltvCac = cac > 0 && ltv > 0 ? ltv / cac : 0
 
   const thBase = 'px-4 py-3 font-mono text-xs font-normal uppercase tracking-widest text-ink-soft/60'
   const th = `${thBase} text-right`
@@ -125,6 +133,25 @@ export default function AdminAdsPage() {
         <Stat label="Subscribers vs goal" value={`${paying} / ${goal}`} sub={`${trials} free trial${trials === 1 ? '' : 's'} started`} />
       </div>
 
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <Stat
+          label="Lifetime value (LTV)"
+          value={ltv > 0 ? usd(ltv) : '-'}
+          sub={churn >= 1 ? 'One month of revenue, because everyone cancels after the first month' : churn > 0 ? `About ${lifeMonths.toFixed(1)} months of revenue per subscriber` : 'Enter a churn above 0%'}
+        />
+        <Stat
+          label="Cost to get one (CAC)"
+          value={cac > 0 ? usd(cac) : '-'}
+          sub={paying > 0 ? `${usd(full)} ÷ ${paying} paying subscribers` : `${usd(full)} ÷ ${goal} subscribers, if you hit your goal`}
+        />
+        <Stat
+          label="LTV : CAC"
+          value={ltvCac > 0 ? `${ltvCac.toFixed(1)}x` : '-'}
+          tone={ltvCac >= 3 ? 'text-twilight' : ltvCac >= 1 ? 'text-ink' : ltvCac > 0 ? 'text-red-700' : 'text-ink'}
+          sub="3x or more is healthy. Under 1x loses money."
+        />
+      </div>
+
       <h2 className="mt-10 font-mono text-xs uppercase tracking-widest text-ink-soft/50">The ad</h2>
       <div className="mt-3 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Ad budget ($)" value={budgetS} onChange={setBudgetS} hint="The budget you set for the ad" />
@@ -134,7 +161,7 @@ export default function AdminAdsPage() {
       </div>
 
       <h2 className="mt-8 font-mono text-xs uppercase tracking-widest text-ink-soft/50">The results</h2>
-      <div className="mt-3 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-3 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Field label="Net per subscriber / month ($)" value={netS} onChange={setNetS} hint="What you keep each month after Apple's 15%. Type a number or tap a plan.">
           <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
             {PLANS.map((p) => (
@@ -151,7 +178,8 @@ export default function AdminAdsPage() {
         </Field>
         <Field label="Free trials started" value={trialsS} onChange={setTrialsS} hint="New photographers who started a trial from the ad" />
         <Field label="Paying subscribers" value={payingS} onChange={setPayingS} hint="Trials that turned into paid, about 14 days after they start" />
-        <Field label="Months to count" value={monthsS} onChange={setMonthsS} hint="Used in the table below. Assumes nobody cancels" />
+        <Field label="Months to count" value={monthsS} onChange={setMonthsS} hint="How many months of revenue the table below shows" />
+        <Field label="Monthly churn (%)" value={churnS} onChange={setChurnS} hint="Share who cancel each month. 100 means one and done, the worst case. Lower it as you learn." />
       </div>
 
       <h2 className="mt-10 font-mono text-xs uppercase tracking-widest text-ink-soft/50">What if more visitors subscribed?</h2>
@@ -172,7 +200,7 @@ export default function AdminAdsPage() {
               const subs = (projVisits * rate) / 100
               const perSub = subs > 0 ? full / subs : 0
               const rev1 = subs * net
-              const revN = rev1 * months
+              const revN = subs * net * life(months)
               const ratio = full > 0 ? revN / full : 0
               const red = full > 0 && rev1 < full
               return (
