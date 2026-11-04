@@ -335,9 +335,22 @@ export default function AdminAdsPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Break-even</p>
-        <p className="mt-2 font-fraunces text-2xl font-semibold text-ink">CAC break even is {usd(net)}</p>
-        <p className="mt-2 text-sm text-ink-soft">$59.99 Solo monthly minus Apple's 15% = about {usd(net)} kept.</p>
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">The one formula</p>
+        <p className="mt-2 font-fraunces text-2xl font-semibold text-ink">CAC = cost per visit ÷ conversion rate of paying subscribers</p>
+        <p className="mt-2 text-sm text-ink-soft">CAC is what one paying subscriber costs you.</p>
+
+        <div className="mt-5 rounded-xl bg-paper p-4">
+          <p className="font-fraunces text-xl font-semibold text-ink">CAC break even is {usd(net)}</p>
+          <p className="mt-1 text-sm text-ink-soft">$59.99 Solo monthly minus Apple's 15% = about {usd(net)} kept. Pay less than {usd(net)} per subscriber and you are ahead after the first month.</p>
+        </div>
+
+        <p className="mt-5 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Examples</p>
+        <div className="mt-2 space-y-2 text-sm text-ink">
+          <p>$0.55 per visit ÷ 1% = <span className="font-medium">$55 CAC</span> <span className="text-red-700">(-$4, a loss)</span></p>
+          <p>$0.55 per visit ÷ 1.1% = <span className="font-medium">$50 CAC</span> <span className="text-sage">(about break even)</span></p>
+          <p>$0.55 per visit ÷ 3% = <span className="font-medium">$18 CAC</span> <span className="text-sage">(+$33 profit)</span></p>
+          <p>$0.25 per visit ÷ 10% = <span className="font-medium">$2.50 CAC</span> <span className="text-sage">(+$48 profit, the dream)</span></p>
+        </div>
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
