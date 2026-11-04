@@ -47,8 +47,8 @@ function Field({ label, value, onChange, hint, children }: { label: string; valu
 export default function AdminAdsPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
-  const [spendS, setSpendS] = useState('72')
-  const [visitsS, setVisitsS] = useState('100')
+  const [spendS, setSpendS] = useState('96')
+  const [cpvS, setCpvS] = useState('0.72')
   const [netS, setNetS] = useState('51')
   const [monthsS, setMonthsS] = useState('6')
 
@@ -65,9 +65,12 @@ export default function AdminAdsPage() {
   if (!ready) return null
 
   const spend = num(spendS)
-  const visits = num(visitsS)
+  const cpv = num(cpvS)
+  const visits = cpv > 0 ? spend / cpv : 0
   const net = num(netS)
   const months = num(monthsS)
+  const be1 = net > 0 ? (cpv / net) * 100 : 0
+  const beN = months > 0 ? be1 / months : 0
 
   const thBase = 'px-4 py-3 font-mono text-xs font-normal uppercase tracking-widest text-ink-soft/60'
   const th = `${thBase} text-right`
@@ -82,7 +85,7 @@ export default function AdminAdsPage() {
 
       <div className="mt-6 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Ad spend ($)" value={spendS} onChange={setSpendS} hint="What the ad cost you" />
-        <Field label="Visits" value={visitsS} onChange={setVisitsS} hint="Visits to the site or App Store page that the spend buys" />
+        <Field label="Cost per visit ($)" value={cpvS} onChange={setCpvS} hint={`${Math.round(visits)} visits for ${usd(spend)}. Use your real ad spend ÷ visits you got.`} />
         <Field label="Net per subscriber / month ($)" value={netS} onChange={setNetS} hint="What you keep per month after Apple's 15%. Type any number or tap a plan.">
           <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
             {PLANS.map((p) => (
@@ -100,7 +103,16 @@ export default function AdminAdsPage() {
         <Field label="Months of revenue" value={monthsS} onChange={setMonthsS} hint="Assumes nobody cancels" />
       </div>
 
-      <div className="mt-8 overflow-x-auto rounded-2xl border border-line bg-card">
+      <div className="mt-6 rounded-2xl border border-twilight/30 bg-twilight/5 p-5">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Break-even visit-to-paid</p>
+        <p className="mt-1 font-fraunces text-3xl font-semibold text-twilight">{be1.toFixed(2)}%</p>
+        <p className="mt-1 text-sm text-ink-soft">
+          That share of visitors must become paying subscribers for the ad to earn back its {usd(spend)} in the first month.
+          {months > 0 ? ` Counting ${months} months of revenue, ${beN.toFixed(2)}% is enough.` : ''}
+        </p>
+      </div>
+
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-line bg-paper">
