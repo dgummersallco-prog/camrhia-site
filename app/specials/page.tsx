@@ -239,13 +239,14 @@ function StepCard({ n, title, children }: { n: number; title: string; children: 
   )
 }
 
-function MiniCard({ title, children }: { title: string; children: React.ReactNode }) {
+function MiniCard({ title, summary, children }: { title: string; summary?: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="rounded-xl border border-line bg-paper">
-      <button type="button" onClick={() => setOpen(!open)} className="flex w-full items-center justify-between px-5 py-4 text-left">
-        <span className="font-fraunces text-lg font-semibold text-ink">{title}</span>
-        <span className="text-xl text-ink-soft">{open ? '−' : '+'}</span>
+      <button type="button" onClick={() => setOpen(!open)} className="flex w-full items-center gap-3 px-5 py-4 text-left">
+        <span className="shrink-0 text-base font-medium text-ink">{title}</span>
+        <span className="min-w-0 flex-1 truncate text-right text-sm text-ink-soft">{summary}</span>
+        <span className={`shrink-0 text-xl leading-none text-ink-soft transition-transform ${open ? 'rotate-90' : ''}`}>›</span>
       </button>
       {open && <div className="space-y-4 px-5 pb-5">{children}</div>}
     </div>
@@ -544,7 +545,7 @@ export default function SpecialsPage() {
               <div className="space-y-6">
                 <StepCard n={3} title="Design your special">
                   <div className="space-y-5">
-                    <MiniCard title="Background">
+                    <MiniCard title="Background" summary={form.theme.bgImage ? 'Photo added' : 'Color'}>
                       <div className="flex flex-wrap items-center gap-4">
                         {form.theme.bgImage ? (
                           <div className="relative">
@@ -573,7 +574,7 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Title">
+                    <MiniCard title="Title" summary={form.text.hero_headline}>
                       <label className="block">
                         <Label>Words</Label>
                         <input placeholder="Holiday mini sessions" value={form.text.hero_headline} onChange={(e) => setText('hero_headline', e.target.value)} className={inputCls} />
@@ -588,7 +589,7 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Subtitle">
+                    <MiniCard title="Subtitle" summary={form.text.hero_sub}>
                       <label className="block">
                         <Label>Words</Label>
                         <textarea rows={2} placeholder="Family portraits by the lake, 20 minutes each" value={form.text.hero_sub} onChange={(e) => setText('hero_sub', e.target.value)} className={inputCls} />
@@ -603,7 +604,7 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Photos">
+                    <MiniCard title="Photos" summary={form.photos.length ? `${form.photos.length} added` : 'None'}>
                       <p className="text-sm text-ink-soft">Add up to 8. One photo stays still. Two or more fade into each other.</p>
                       <div className="flex flex-wrap gap-3">
                         {form.photos.map((u) => (
@@ -622,7 +623,7 @@ export default function SpecialsPage() {
                       <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) uploadPhotos(e.target.files); e.target.value = '' }} />
                     </MiniCard>
 
-                    <MiniCard title="Text boxes">
+                    <MiniCard title="Text boxes" summary={form.theme.blocks.length ? `${form.theme.blocks.length} added` : 'None'}>
                       {form.theme.blocks.map((b, i) => (
                         <div key={i} className="space-y-4 rounded-xl border border-line bg-card p-4">
                           <div className="flex items-center justify-between">
@@ -647,7 +648,7 @@ export default function SpecialsPage() {
                       <button type="button" onClick={addBlock} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add text box</button>
                     </MiniCard>
 
-                    <MiniCard title="Button">
+                    <MiniCard title="Button" summary={form.cta_label}>
                       <label className="block">
                         <Label>Words</Label>
                         <input value={form.cta_label} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} className={inputCls} />
@@ -668,7 +669,7 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Claim your spot box">
+                    <MiniCard title="Claim your spot box" summary={form.text.form_title || 'Claim your spot'}>
                       <label className="block">
                         <Label>Title words</Label>
                         <input placeholder="Claim your spot" value={form.text.form_title} onChange={(e) => setText('form_title', e.target.value)} className={inputCls} />
