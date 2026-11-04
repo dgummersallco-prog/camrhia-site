@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-const RATES = [1.5, 3, 5, 10, 20, 30]
-
 const PLANS = [
   { label: 'Solo monthly', net: '50.99' },
   { label: 'Solo yearly', net: '41.79' },
@@ -21,6 +19,10 @@ function num(s: string): number {
 function usd(n: number): string {
   const r = Math.round(n * 100) / 100
   return '$' + r.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(r) ? 0 : 2, maximumFractionDigits: 2 })
+}
+
+function pct(n: number): string {
+  return `${Number(n.toFixed(2))}%`
 }
 
 function Field({ label, value, onChange, hint, children }: { label: string; value: string; onChange: (v: string) => void; hint: string; children?: React.ReactNode }) {
@@ -54,17 +56,14 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub: 
   )
 }
 
+const XMAX = 10
+
 export default function AdminAdsPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
-  const [budgetS, setBudgetS] = useState('66')
-  const [fullS, setFullS] = useState('96')
-  const [spentS, setSpentS] = useState('13.37')
-  const [visitsS, setVisitsS] = useState('23')
+  const [rate, setRate] = useState(3)
+  const [cpvS, setCpvS] = useState('0.84')
   const [netS, setNetS] = useState('51')
-  const [trialsS, setTrialsS] = useState('0')
-  const [payingS, setPayingS] = useState('0')
-  const [monthsS, setMonthsS] = useState('6')
   const [churnS, setChurnS] = useState('100')
 
   useEffect(() => {
@@ -79,71 +78,102 @@ export default function AdminAdsPage() {
 
   if (!ready) return null
 
-  const budget = num(budgetS)
-  const full = num(fullS)
-  const spent = num(spentS)
-  const visitsSoFar = num(visitsS)
+  const cpv = num(cpvS)
   const net = num(netS)
-  const trials = num(trialsS)
-  const paying = num(payingS)
-  const months = num(monthsS)
   const churn = Math.min(1, Math.max(0, num(churnS) / 100))
-  const life = (n: number) => (n <= 0 ? 0 : churn <= 0 ? n : churn >= 1 ? 1 : (1 - Math.pow(1 - churn, n)) / churn)
-  const lifeMonths = churn > 0 ? 1 / churn : 0
   const ltv = churn > 0 ? net / churn : 0
+  const cost100 = cpv * 100
+  const profitAt = (r: number) => r * ltv - cost100
+  const be = ltv > 0 ? cost100 / ltv : 0
 
-  const cpv = visitsSoFar > 0 ? spent / visitsSoFar : 0
-  const projVisits = cpv > 0 ? budget / cpv : 0
-  const goal = net > 0 ? Math.ceil(full / net) : 0
-  const beRate = projVisits > 0 ? (goal / projVisits) * 100 : 0
-  const brokeEven = goal > 0 && paying >= goal
-  const need = Math.max(0, goal - paying)
-  const cacBase = paying > 0 ? paying : goal
-  const cac = cacBase > 0 ? full / cacBase : 0
+  const subs = rate
+  const worth = subs * ltv
+  const profit = profitAt(rate)
+  const ahead = profit >= 0
+  const cac = subs > 0 ? cost100 / subs : 0
   const ltvCac = cac > 0 && ltv > 0 ? ltv / cac : 0
 
-  const thBase = 'px-4 py-3 font-mono text-xs font-normal uppercase tracking-widest text-ink-soft/60'
-  const th = `${thBase} text-right`
-  const td = 'px-4 py-3.5 text-right tabular-nums text-ink'
+  // chart
+  const W = 640, H = 270, L = 64, R = 16, T = 16, B = 38
+  const p0 = profitAt(0)
+  const pMax = profitAt(XMAX)
+  const yMin = Math.min(p0, 0) * 1.1 - 1
+  const yMax = Math.max(pMax, cost100 * 0.5, 1)
+  const sx = (x: number) => L + (x / XMAX) * (W - L - R)
+  const sy = (y: number) => T + ((yMax - y) / (yMax - yMin)) * (H - T - B)
+  const beIn = be > 0 && be < XMAX
+  const dotY = sy(profit)
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       <h1 className="font-fraunces text-3xl font-semibold text-ink">Ad math</h1>
-      <p className="mt-2 text-sm text-ink-soft">Enter what you have so far. Everything else works itself out.</p>
+      <p className="mt-2 text-sm text-ink-soft">One number to move. Everything else follows.</p>
 
-      <div className={`mt-6 rounded-2xl border p-6 ${brokeEven ? 'border-emerald-300 bg-emerald-50' : 'border-twilight/30 bg-twilight/5'}`}>
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Your goal</p>
-        <p className="mt-1 font-fraunces text-4xl font-semibold text-twilight">
-          {goal} paying subscriber{goal === 1 ? '' : 's'}
+      <div className="mt-6 rounded-2xl border border-twilight/30 bg-twilight/5 p-6">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Move this number</p>
+        <p className="mt-1 text-sm text-ink-soft">Out of every 100 people who visit, how many become paying subscribers?</p>
+        <p className="mt-3 font-fraunces text-5xl font-semibold text-twilight">{pct(rate)}</p>
+        <input
+          type="range"
+          min={0}
+          max={XMAX}
+          step={0.05}
+          value={rate}
+          onChange={(e) => setRate(Number(e.target.value))}
+          className="mt-4 w-full accent-twilight"
+          aria-label="Visit to paid conversion rate"
+        />
+        <div className="mt-1 flex justify-between text-xs text-ink-soft"><span>0%</span><span>5%</span><span>10%</span></div>
+        <p className="mt-4 text-sm leading-relaxed text-ink">
+          At {pct(rate)}, about {Number(subs.toFixed(2))} out of every 100 visitors subscribe. They are worth {usd(worth)} to you. You paid {usd(cost100)} for those 100 visitors.{' '}
+          <span className={`font-medium ${ahead ? 'text-twilight' : 'text-red-700'}`}>
+            {ahead ? `You come out ${usd(profit)} ahead.` : `You are ${usd(-profit)} behind.`}
+          </span>
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-          You spend {usd(full)} in total and keep about {usd(net)} a month from each subscriber, so {goal} paying subscriber{goal === 1 ? '' : 's'} pay the ad back in the first month. Everything after that is profit.
-        </p>
-        <p className="mt-3 text-sm font-medium text-ink">
-          {brokeEven
-            ? `You have ${paying} paying. You have broken even.`
-            : `${paying} of ${goal} paying so far. You need ${need} more.${trials > 0 ? ` ${trials} free trial${trials === 1 ? '' : 's'} started, and trials turn paid after 14 days.` : ''}`}
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-line bg-card p-5">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Profit or loss on every 100 visitors</p>
+        <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label="Profit against conversion rate">
+          {/* zero line */}
+          <line x1={L} x2={W - R} y1={sy(0)} y2={sy(0)} stroke="currentColor" strokeOpacity="0.25" strokeDasharray="4 4" className="text-ink" />
+          <text x={L - 8} y={sy(0) + 4} textAnchor="end" className="fill-ink-soft" fontSize="11">$0</text>
+          <text x={L - 8} y={sy(yMax) + 12} textAnchor="end" className="fill-ink-soft" fontSize="11">{usd(yMax)}</text>
+          <text x={L - 8} y={sy(p0) + 4} textAnchor="end" className="fill-ink-soft" fontSize="11">{usd(p0)}</text>
+          {/* losing part */}
+          <line x1={sx(0)} y1={sy(p0)} x2={sx(beIn ? be : XMAX)} y2={sy(beIn ? 0 : pMax)} stroke="#B83232" strokeWidth="3" strokeLinecap="round" />
+          {/* winning part */}
+          {beIn && <line x1={sx(be)} y1={sy(0)} x2={sx(XMAX)} y2={sy(pMax)} stroke="var(--color-twilight)" strokeWidth="3" strokeLinecap="round" />}
+          {/* break-even marker */}
+          {beIn && (
+            <>
+              <line x1={sx(be)} x2={sx(be)} y1={sy(0)} y2={H - B} stroke="currentColor" strokeOpacity="0.3" strokeDasharray="3 3" className="text-ink" />
+              <circle cx={sx(be)} cy={sy(0)} r="5" fill="white" stroke="currentColor" strokeWidth="2" className="text-ink" />
+              <text x={sx(be)} y={H - B + 28} textAnchor="middle" className="fill-ink" fontSize="12" fontWeight="600">Break-even {pct(be)}</text>
+            </>
+          )}
+          {/* your dot */}
+          <circle cx={sx(rate)} cy={dotY} r="7" fill={ahead ? 'var(--color-twilight)' : '#B83232'} stroke="white" strokeWidth="2" />
+          {/* x axis labels */}
+          {[0, 5, 10].map((t) => (
+            <text key={t} x={sx(t)} y={H - B + 14} textAnchor={t === 0 ? 'start' : t === 10 ? 'end' : 'middle'} className="fill-ink-soft" fontSize="11">{t}%</text>
+          ))}
+        </svg>
+        <p className="mt-2 text-xs leading-relaxed text-ink-soft">
+          Left of the break-even point you lose money (red). Right of it you make money. The dot is the number you picked above.
         </p>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Cost per visit so far" value={cpv > 0 ? usd(cpv) : '-'} sub={`${usd(spent)} spent for ${visitsSoFar} visits`} />
-        <Stat label="Visits at this pace" value={projVisits > 0 ? String(Math.round(projVisits)) : '-'} sub={`What your ${usd(budget)} budget should buy`} />
-        <Stat label="Break-even rate" value={beRate > 0 ? `${beRate.toFixed(1)}%` : '-'} sub={`${goal} subscribers out of about ${Math.round(projVisits)} visits`} />
-        <Stat label="Subscribers vs goal" value={`${paying} / ${goal}`} sub={`${trials} free trial${trials === 1 ? '' : 's'} started`} />
+        <Stat label="You pay" value={usd(cost100)} sub="For 100 visitors" />
+        <Stat label="Subscribers" value={String(Number(subs.toFixed(2)))} sub="Out of those 100 visitors" />
+        <Stat label="They are worth" value={usd(worth)} sub={churn >= 1 ? 'One month each, since everyone cancels' : `About ${(churn > 0 ? 1 / churn : 0).toFixed(1)} months each`} />
+        <Stat label={ahead ? 'You make' : 'You lose'} value={usd(Math.abs(profit))} sub="Worth minus what you paid" tone={ahead ? 'text-twilight' : 'text-red-700'} />
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        <Stat
-          label="Lifetime value (LTV)"
-          value={ltv > 0 ? usd(ltv) : '-'}
-          sub={churn >= 1 ? 'One month of revenue, because everyone cancels after the first month' : churn > 0 ? `About ${lifeMonths.toFixed(1)} months of revenue per subscriber` : 'Enter a churn above 0%'}
-        />
-        <Stat
-          label="Cost to get one (CAC)"
-          value={cac > 0 ? usd(cac) : '-'}
-          sub={paying > 0 ? `${usd(full)} ÷ ${paying} paying subscribers` : `${usd(full)} ÷ ${goal} subscribers, if you hit your goal`}
-        />
+        <Stat label="Break-even conversion" value={be > 0 ? pct(be) : '-'} sub="Cost of 100 visitors ÷ what one subscriber is worth" />
+        <Stat label="Cost per subscriber (CAC)" value={cac > 0 ? usd(cac) : '-'} sub="What you pay for each one at this rate" />
         <Stat
           label="LTV : CAC"
           value={ltvCac > 0 ? `${ltvCac.toFixed(1)}x` : '-'}
@@ -152,16 +182,9 @@ export default function AdminAdsPage() {
         />
       </div>
 
-      <h2 className="mt-10 font-mono text-xs uppercase tracking-widest text-ink-soft/50">The ad</h2>
-      <div className="mt-3 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Ad budget ($)" value={budgetS} onChange={setBudgetS} hint="The budget you set for the ad" />
-        <Field label="Full cost with fees ($)" value={fullS} onChange={setFullS} hint="What you will really pay in total, with Apple's fees added" />
-        <Field label="Spent so far ($)" value={spentS} onChange={setSpentS} hint="What the ad dashboard shows today" />
-        <Field label="Visits so far" value={visitsS} onChange={setVisitsS} hint="Visits or taps the ad dashboard shows today" />
-      </div>
-
-      <h2 className="mt-8 font-mono text-xs uppercase tracking-widest text-ink-soft/50">The results</h2>
-      <div className="mt-3 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <h2 className="mt-10 font-mono text-xs uppercase tracking-widest text-ink-soft/50">Your numbers</h2>
+      <div className="mt-3 grid items-stretch gap-4 sm:grid-cols-3">
+        <Field label="Cost per visit ($)" value={cpvS} onChange={setCpvS} hint="Total you pay, with Apple's fees, ÷ visits you get. Your ad: $96 ÷ 114 visits is about $0.84." />
         <Field label="Net per subscriber / month ($)" value={netS} onChange={setNetS} hint="What you keep each month after Apple's 15%. Type a number or tap a plan.">
           <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
             {PLANS.map((p) => (
@@ -176,69 +199,16 @@ export default function AdminAdsPage() {
             ))}
           </div>
         </Field>
-        <Field label="Free trials started" value={trialsS} onChange={setTrialsS} hint="New photographers who started a trial from the ad" />
-        <Field label="Paying subscribers" value={payingS} onChange={setPayingS} hint="Trials that turned into paid, about 14 days after they start" />
-        <Field label="Months to count" value={monthsS} onChange={setMonthsS} hint="How many months of revenue the table below shows" />
         <Field label="Monthly churn (%)" value={churnS} onChange={setChurnS} hint="Share who cancel each month. 100 means one and done, the worst case. Lower it as you learn." />
       </div>
 
-      <h2 className="mt-10 font-mono text-xs uppercase tracking-widest text-ink-soft/50">What if more visitors subscribed?</h2>
-      <div className="mt-3 overflow-x-auto rounded-2xl border border-line bg-card">
-        <table className="w-full min-w-[720px] text-sm">
-          <thead>
-            <tr className="border-b border-line bg-paper">
-              <th className={`${thBase} text-left`}>Visit to paid</th>
-              <th className={th}>Paying subs</th>
-              <th className={th}>Cost per paying sub</th>
-              <th className={th}>Revenue, 1 month</th>
-              <th className={th}>Revenue, {months} months</th>
-              <th className={th}>Return on {usd(full)}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {RATES.map((rate) => {
-              const subs = (projVisits * rate) / 100
-              const perSub = subs > 0 ? full / subs : 0
-              const rev1 = subs * net
-              const revN = subs * net * life(months)
-              const ratio = full > 0 ? revN / full : 0
-              const red = full > 0 && rev1 < full
-              return (
-                <tr key={rate} className={`border-b border-line last:border-0 ${red ? 'bg-red-50' : 'transition hover:bg-paper'}`}>
-                  <td className="px-4 py-3.5 text-left">
-                    <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${red ? 'bg-red-100 text-red-700' : 'bg-twilight/10 text-twilight'}`}>{rate}%</span>
-                  </td>
-                  <td className={td}>{Number(subs.toFixed(2))}</td>
-                  <td className={`${td} ${red ? 'text-red-700' : ''}`}>{subs > 0 ? usd(perSub) : '-'}</td>
-                  <td className={`${td} ${red ? 'text-red-700' : ''}`}>{usd(Math.round(rev1))}</td>
-                  <td className={td}>{usd(Math.round(revN))}</td>
-                  <td className={`${td} font-fraunces text-lg font-semibold ${red ? 'text-red-700' : 'text-twilight'}`}>
-                    {full > 0 ? `about ${ratio >= 2 ? Math.round(ratio) : ratio.toFixed(1)}x` : '-'}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-      <p className="mt-3 flex items-center gap-2 text-xs text-ink-soft">
-        <span className="inline-block h-3 w-3 rounded-sm bg-red-100 ring-1 ring-red-300" />
-        Red means the ad does not earn back its cost in the first month, so it is not safe to scale.
-      </p>
-
       <div className="mt-8 rounded-2xl border border-line bg-card p-6">
-        <h2 className="font-fraunces text-xl font-semibold text-ink">Can you hit 20% or higher?</h2>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-          It is possible, but not from cold ad traffic. Rough ranges:
-        </p>
+        <h2 className="font-fraunces text-xl font-semibold text-ink">What conversion is realistic?</h2>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed text-ink">
-          <li><span className="font-medium">Cold ads</span> (strangers on Instagram): usually under 1% to 3% visit to paid. 5% would be excellent.</li>
-          <li><span className="font-medium">Warm traffic</span> (your email list, referrals, photographers who already know you): 10% to 30% or more is realistic, because they already trust you.</li>
-          <li><span className="font-medium">Direct outreach</span> to photographers with a personal message: can go higher still.</li>
+          <li><span className="font-medium">Cold ads</span> (strangers on Instagram): usually under 1% to 3%. 5% would be excellent.</li>
+          <li><span className="font-medium">Warm traffic</span> (your email list, referrals, photographers who know you): 10% to 30% or more, because they already trust you.</li>
+          <li><span className="font-medium">Direct outreach</span> with a personal message: can go higher still.</li>
         </ul>
-        <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          To get the big numbers, send warm audiences to the site instead of only buying cold clicks. Your AI NicheNews newsletter and your photographer network are the places to try that.
-        </p>
       </div>
     </main>
   )
