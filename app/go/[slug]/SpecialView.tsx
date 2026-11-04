@@ -204,7 +204,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
 
   return (
     <div style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="relative min-h-full overflow-hidden">
-      {pattern ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: pattern, backgroundSize: '260px 260px', opacity: 0.32 }} /> : null}
+      {pattern ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: pattern, backgroundSize: '260px 260px', opacity: 0.18 }} /> : null}
       {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
 
       <div
