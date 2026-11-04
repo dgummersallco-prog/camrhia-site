@@ -333,6 +333,40 @@ export default function AdminAdsPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-card p-6">
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">What you make or lose on one subscriber (first month)</p>
+        <p className="mt-2 text-sm text-ink-soft">{usd(net)} kept minus the CAC from the chart above. Green is profit. Red is a loss.</p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[30rem] text-sm">
+            <thead>
+              <tr className="text-left text-ink-soft">
+                <th className="pb-1 pr-3" />
+                <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={CPVS.length}>Cost per visit</th>
+              </tr>
+              <tr className="border-b border-line text-left text-ink-soft">
+                <th className="py-2 pr-3 font-medium">Conversion (visits that become paying)</th>
+                {CPVS.map((c) => (
+                  <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {CONVS.map((v) => (
+                <tr key={v} className="border-b border-line last:border-0">
+                  <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{pct(v)}</td>
+                  {CPVS.map((c) => {
+                    const gain = Math.round(net - c / (v / 100))
+                    return (
+                      <td key={c} className={`py-3 pr-3 text-right font-medium ${gain >= 0 ? 'text-sage' : 'text-red-700'}`}>{gain > 0 ? '+' : ''}{usd(gain)}</td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-line bg-card p-6">
         <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Lifetime value</p>
         <p className="mt-2 text-sm text-ink-soft">What one subscriber is worth depends on churn, the share who cancel each month. Compared against a {usd(net)} CAC.</p>
         <div className="mt-4 overflow-x-auto">
