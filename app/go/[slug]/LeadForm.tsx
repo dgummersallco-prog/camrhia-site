@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 const inputCls = 'mt-1 w-full rounded-xl border border-line bg-paper px-4 py-3 text-ink outline-none focus:border-twilight'
 
-export default function LeadForm({ funnelId, label, thanks }: { funnelId: string; label: string; thanks: string }) {
+export default function LeadForm({ funnelId, label, thanks, disabled }: { funnelId: string; label: string; thanks: string; disabled?: boolean }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -16,6 +16,7 @@ export default function LeadForm({ funnelId, label, thanks }: { funnelId: string
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
+    if (disabled) return
     setSending(true)
     setError(null)
     try {
@@ -56,7 +57,7 @@ export default function LeadForm({ funnelId, label, thanks }: { funnelId: string
       </label>
       <input type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} className="hidden" aria-hidden="true" />
       {error && <p className="text-sm text-red-700">{error}</p>}
-      <button type="submit" disabled={sending} className="w-full rounded-full bg-twilight px-8 py-4 text-base font-medium text-white transition hover:opacity-90 disabled:opacity-50">
+      <button type="submit" disabled={sending || disabled} className="w-full rounded-full bg-twilight px-8 py-4 text-base font-medium text-white transition hover:opacity-90 disabled:opacity-50">
         {sending ? 'Sending…' : label}
       </button>
     </form>
