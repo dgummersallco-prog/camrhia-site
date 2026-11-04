@@ -200,6 +200,8 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
           label,
           thanks: s('thanks_message') || 'Thank you! You will hear back soon.',
           formTitle: s('form_title'),
+          whenWhere: s('when_where'),
+          terms: s('terms'),
         }}
       />
     )

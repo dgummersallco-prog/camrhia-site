@@ -12,6 +12,8 @@ export type SpecialData = {
   label: string
   thanks: string
   formTitle?: string
+  whenWhere?: string
+  terms?: string
 }
 
 export default function SpecialView({ d, funnelId, preview }: { d: SpecialData; funnelId: string; preview?: boolean }) {
@@ -23,6 +25,7 @@ export default function SpecialView({ d, funnelId, preview }: { d: SpecialData; 
       <h1 className="mt-4 font-fraunces text-4xl font-semibold leading-tight sm:text-5xl">{d.headline || 'Your offer title'}</h1>
       {d.sub ? <p className="mt-5 text-lg leading-relaxed text-ink-soft">{d.sub}</p> : null}
       {d.price ? <p className="mt-5 font-fraunces text-2xl font-semibold text-twilight">{d.price}</p> : null}
+      {d.whenWhere ? <p className="mt-2 text-ink-soft">{d.whenWhere}</p> : null}
       {photos.length > 0 && (
         <div className={`mt-8 grid gap-3 ${photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
           {photos.map((u, i) => (
@@ -38,6 +41,12 @@ export default function SpecialView({ d, funnelId, preview }: { d: SpecialData; 
         <section className="mt-12">
           <h2 className="font-fraunces text-2xl font-semibold">{d.detailsTitle || 'What is included'}</h2>
           <p className="mt-3 whitespace-pre-line leading-relaxed text-ink-soft">{d.details}</p>
+        </section>
+      ) : null}
+      {d.terms ? (
+        <section className="mt-12">
+          <h2 className="font-fraunces text-2xl font-semibold">Good to know</h2>
+          <p className="mt-3 whitespace-pre-line leading-relaxed text-ink-soft">{d.terms}</p>
         </section>
       ) : null}
       <div id="claim">
