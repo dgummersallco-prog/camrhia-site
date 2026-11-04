@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
+import LeadForm from './LeadForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,7 +85,7 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
 
   const Hero = ({ big }: { big?: boolean }) => (
     <>
-      <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Camrhia</p>
+      <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">{s('brand_name') || 'Camrhia'}</p>
       <h1 className={`mt-4 font-fraunces font-semibold leading-tight ${big ? 'text-5xl sm:text-6xl' : 'text-4xl sm:text-5xl'}`}>{s('hero_headline') || T.headline}</h1>
       <p className="mt-5 text-lg leading-relaxed text-ink-soft">{s('hero_sub') || T.sub}</p>
       {s('image_url') ? (
@@ -180,6 +181,38 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
         <Steps heading="How it works" />
         <Scarcity />
         <div className="mt-10"><Button /></div>
+      </>
+    )
+  } else if (style === 'special') {
+    const photos = Array.isArray(c.photos) ? (c.photos as string[]).filter(Boolean).slice(0, 3) : []
+    body = (
+      <>
+        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">{s('brand_name')}</p>
+        <h1 className="mt-4 font-fraunces text-4xl font-semibold leading-tight sm:text-5xl">{s('hero_headline') || 'Special offer'}</h1>
+        {s('hero_sub') ? <p className="mt-5 text-lg leading-relaxed text-ink-soft">{s('hero_sub')}</p> : null}
+        {s('price_line') ? <p className="mt-5 font-fraunces text-2xl font-semibold text-twilight">{s('price_line')}</p> : null}
+        {photos.length > 0 && (
+          <div className={`mt-8 grid gap-3 ${photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            {photos.map((u, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={i} src={u} alt="" className={`w-full rounded-2xl object-cover ${photos.length === 1 || i === 0 ? 'aspect-[4/5] sm:aspect-[4/3]' : 'aspect-square'} ${photos.length === 3 && i === 0 ? 'col-span-2' : ''}`} />
+            ))}
+          </div>
+        )}
+        <div className="mt-8">
+          <a href="#claim" className="inline-block rounded-full bg-twilight px-8 py-4 text-base font-medium text-white transition hover:opacity-90">{label}</a>
+        </div>
+        {s('details_body') ? (
+          <Section title={s('details_title') || 'What is included'}>
+            <p className="whitespace-pre-line leading-relaxed text-ink-soft">{s('details_body')}</p>
+          </Section>
+        ) : null}
+        <div id="claim">
+          <Section boxed title={s('form_title') || 'Claim your spot'}>
+            {s('spots_note') ? <p className="mb-4 font-medium text-ink">{s('spots_note')}</p> : null}
+            <LeadForm funnelId={page.id} label={label} thanks={s('thanks_message') || 'Thank you! You will hear back soon.'} />
+          </Section>
+        </div>
       </>
     )
   } else {
