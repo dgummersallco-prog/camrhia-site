@@ -233,7 +233,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
           {renderBlocks('subtitle')}
           {d.price ? <p className="mt-5 text-2xl" style={{ ...heading, color: t.bgImage ? '#FFFFFF' : t.accent, textAlign: titleAlign }}>{d.price}</p> : null}
           {d.whenWhere ? <p className="mt-2 opacity-80" style={{ color: heroText, textAlign: titleAlign }}>{d.whenWhere}</p> : null}
-          <div className="mt-8" style={{ display: 'flex', justifyContent: titleAlign === 'center' ? 'center' : 'flex-start' }}>
+          <div className="mt-8" style={{ display: 'flex', justifyContent: 'center' }}>
             {preview ? (
               <span className="inline-block px-8 py-4 text-base font-medium" style={btnStyle}>{d.label}</span>
             ) : (
