@@ -295,23 +295,27 @@ export default function AdminAdsPage() {
         <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">What one paying subscriber costs you (CAC)</p>
         <p className="mt-2 text-sm text-ink-soft">Find your cost per visit on the left and your conversion across the top. Green is {usd(net)} or less (profit). Red is above {usd(net)}.</p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[36rem] text-sm">
+          <table className="w-full min-w-[30rem] text-sm">
             <thead>
+              <tr className="text-left text-ink-soft">
+                <th className="pb-1 pr-3" />
+                <th className="pb-1 text-center font-mono text-xs uppercase tracking-widest" colSpan={CPVS.length}>Cost per visit</th>
+              </tr>
               <tr className="border-b border-line text-left text-ink-soft">
-                <th className="py-2 pr-3 font-medium">Cost per visit</th>
-                {CONVS.map((v) => (
-                  <th key={v} className="py-2 pr-3 text-right font-medium">{pct(v)}</th>
+                <th className="py-2 pr-3 font-medium">Conversion (visits that become paying)</th>
+                {CPVS.map((c) => (
+                  <th key={c} className="py-2 pr-3 text-right font-medium">{usd(c)}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {CPVS.map((c) => (
-                <tr key={c} className="border-b border-line last:border-0">
-                  <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{usd(c)}</td>
-                  {CONVS.map((v) => {
+              {CONVS.map((v) => (
+                <tr key={v} className="border-b border-line last:border-0">
+                  <td className="py-3 pr-3 font-fraunces text-lg font-semibold text-ink">{pct(v)}</td>
+                  {CPVS.map((c) => {
                     const cac = c / (v / 100)
                     return (
-                      <td key={v} className={`py-3 pr-3 text-right font-medium ${cac <= net ? 'text-sage' : 'text-red-700'}`}>{usd(Math.round(cac))}</td>
+                      <td key={c} className={`py-3 pr-3 text-right font-medium ${cac <= net ? 'text-sage' : 'text-red-700'}`}>{usd(Math.round(cac))}</td>
                     )
                   })}
                 </tr>
