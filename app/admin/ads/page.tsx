@@ -1,6 +1,7 @@
 'use client'
 
 import { Fragment, useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -283,12 +284,16 @@ export default function AdminAdsPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
+
+      <div className="mb-6 flex gap-2">
+        <Link href="/admin/ads" className="rounded-full border px-4 py-1.5 text-sm transition border-twilight bg-twilight/10 text-twilight">Summary</Link>
+        <Link href="/admin/ads/my" className="rounded-full border px-4 py-1.5 text-sm transition border-line text-ink-soft hover:border-twilight">My ads</Link>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-fraunces text-3xl font-semibold text-ink">Ads</h1>
           <p className="mt-1 text-sm text-ink-soft">How each ad moves people from a click to a paying subscriber.</p>
         </div>
-        <button type="button" onClick={startNew} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ Add an ad</button>
       </div>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
@@ -470,124 +475,6 @@ export default function AdminAdsPage() {
         </div>
       </section>
 
-      {open === 'new' && (
-        <AdCard
-          ad={draft}
-          net={net}
-          onChange={(p) => setDraft((d) => ({ ...d, ...p }))}
-          onSave={() => {}}
-          footer={
-            <div className="mt-4 flex items-center gap-3">
-              <button type="button" onClick={submitDraft} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90">Submit ad</button>
-              <button type="button" onClick={() => setOpen(null)} className="text-sm text-ink-soft underline">Cancel</button>
-            </div>
-          }
-        />
-      )}
-
-      {open && open !== 'new' && ads.find((a) => a.id === open) && (
-        <AdCard
-          ad={ads.find((a) => a.id === open) as Ad}
-          net={net}
-          onChange={(p) => patch(open, p)}
-          onSave={() => save(open)}
-          onDelete={() => remove(open)}
-          footer={
-            <div className="mt-4">
-              <button type="button" onClick={() => setOpen(null)} className="rounded-full border border-line px-5 py-2 text-sm text-ink transition hover:border-twilight">Close</button>
-            </div>
-          }
-        />
-      )}
-
-      <section className="mt-8 rounded-2xl border border-line bg-card p-8">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Your ads</p>
-        <p className="mt-2 text-sm text-ink-soft">{ads.length === 0 ? 'Placeholders for now. Each ad you submit fills in a row here.' : 'Click a row to open and edit that ad.'}</p>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[44rem] text-base">
-            <thead>
-              <tr className="border-b border-line text-left text-ink-soft">
-                <th className="py-3 pr-5 font-medium">Ad</th>
-                <th className="py-3 pr-5 text-right font-medium">Cost</th>
-                <th className="py-3 pr-5 text-right font-medium">Visits</th>
-                <th className="py-3 pr-5 text-right font-medium">Cost per visit</th>
-                <th className="py-3 pr-5 text-right font-medium">Downloads</th>
-                <th className="py-3 pr-5 text-right font-medium">Trials</th>
-                <th className="py-3 pr-5 text-right font-medium">Paying</th>
-                <th className="py-3 text-right font-medium">CAC</th>
-                <th className="py-3 pl-4 text-center font-medium">Result</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ads.length === 0
-                ? [1, 2, 3].map((i) => (
-                    <tr key={i} className="border-b border-line text-ink-soft/50 last:border-0">
-                      <td className="py-4 pr-5 font-fraunces text-lg font-semibold">Ad {i}</td>
-                      {[0, 1, 2, 3, 4, 5, 6, 7].map((k) => (
-                        <td key={k} className="py-4 pr-5 text-right">—</td>
-                      ))}
-                    </tr>
-                  ))
-                : ads.map((ad) => {
-                    const cac = ad.paying > 0 ? ad.cost_total / ad.paying : 0
-                    const m = adMetrics(ad, net)
-                    return (
-                      <Fragment key={ad.id}>
-                      <tr onClick={() => setOpen(ad.id)} className="cursor-pointer border-b border-line last:border-0 hover:bg-paper">
-                        <td className="py-4 pr-5">
-                          <span className="font-fraunces text-xl font-semibold text-ink">{ad.name}</span>
-                          {ad.started_on ? <span className="ml-2 text-xs text-ink-soft">{ad.started_on}</span> : null}
-                        </td>
-                        <td className="py-4 pr-5 text-right text-ink">{usd(ad.cost_total)}</td>
-                        <td className="py-4 pr-5 text-right text-ink">{ad.visits.toLocaleString('en-US')}</td>
-                        <td className="py-4 pr-5 text-right text-ink">{ad.visits > 0 && ad.cost_total > 0 ? usd(ad.cost_total / ad.visits) : '—'}</td>
-                        <td className="py-4 pr-5 text-right text-ink">{ad.downloads.toLocaleString('en-US')}</td>
-                        <td className="py-4 pr-5 text-right text-ink">{ad.trials.toLocaleString('en-US')}</td>
-                        <td className="py-4 pr-5 text-right text-ink">{ad.paying.toLocaleString('en-US')}</td>
-                        <td className={`py-4 text-right font-medium ${cac === 0 ? 'text-ink-soft' : cac <= net ? 'text-sage' : 'text-red-700'}`}>{cac > 0 ? usd(Math.round(cac)) : '—'}</td>
-                        <td className="py-4 pl-4 text-center">
-                          {m.good || m.bad ? (
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setVerdictId(verdictId === ad.id ? null : ad.id) }}
-                              title="See the numbers"
-                              className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-lg font-bold text-white transition hover:opacity-80 ${m.good ? 'bg-sage' : 'bg-red-700'}`}
-                            >
-                              {m.good ? '✓' : '✗'}
-                            </button>
-                          ) : (
-                            <span className="text-ink-soft/50" title="Waiting on paying subscribers">—</span>
-                          )}
-                        </td>
-                      </tr>
-                      {verdictId === ad.id && (m.good || m.bad) && (
-                        <tr className="border-b border-line bg-paper">
-                          <td colSpan={9} className="px-5 py-5">
-                            <p className={`font-fraunces text-xl font-semibold ${m.good ? 'text-sage' : 'text-red-700'}`}>
-                              {m.good ? 'This ad worked.' : 'This ad has not paid off yet.'}
-                            </p>
-                            <p className="mt-1 text-sm text-ink-soft">
-                              Each paying subscriber cost you {usd(Math.round(m.cac))}. Your break even is {usd(net)}, so you {m.good ? 'make' : 'lose'} {usd(Math.abs(Math.round(net - m.cac)))} on each one in the first month.
-                            </p>
-                            <div className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-                              <div><p className="text-ink-soft">CAC</p><p className="font-fraunces text-xl font-semibold text-ink">{usd(Math.round(m.cac))}</p></div>
-                              <div><p className="text-ink-soft">Cost per visit</p><p className="font-fraunces text-xl font-semibold text-ink">{m.cpv > 0 ? usd(m.cpv) : '—'}</p></div>
-                              <div><p className="text-ink-soft">Visits that became paying</p><p className="font-fraunces text-xl font-semibold text-ink">{ad.visits > 0 ? pct(m.conv) : '—'}</p></div>
-                              <div><p className="text-ink-soft">Lifetime value payback</p><p className="font-fraunces text-xl font-semibold text-ink">{m.back.toFixed(1)}x</p></div>
-                            </div>
-                            <p className="mt-3 text-xs text-ink-soft">
-                              {m.churnKnown ? `Worth about ${usd(Math.round(m.ltv))} per subscriber, based on your first-month retention.` : `Worth ${usd(Math.round(m.ltv))} per subscriber in the worst case (everyone leaves after one month). Fill in "Still paying after 1 month" for a real number.`}
-                            </p>
-                          </td>
-                        </tr>
-                      )}
-                      </Fragment>
-                    )
-                  })}
-            </tbody>
-          </table>
-        </div>
-      </section>
     </main>
   )
 }
