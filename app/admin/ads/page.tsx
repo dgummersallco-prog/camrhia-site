@@ -11,19 +11,19 @@ function usd(n: number): string {
   return '$' + r.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(r) ? 0 : 2, maximumFractionDigits: 2 })
 }
 
-function Field({ label, value, onChange, hint }: { label: string; value: number; onChange: (v: number) => void; hint?: string }) {
+function Field({ label, value, onChange, hint }: { label: string; value: number; onChange: (v: number) => void; hint: string }) {
   return (
-    <label className="block">
-      <span className="mb-2 block font-mono text-xs uppercase tracking-widest text-ink-soft/60">{label}</span>
+    <label className="flex h-full flex-col rounded-2xl border border-line bg-card p-5">
+      <span className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">{label}</span>
       <input
         type="number"
         min={0}
         step="any"
         value={value}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="w-full rounded-xl border border-line bg-card px-3 py-2 text-ink"
+        className="mt-3 w-full rounded-xl border border-line bg-paper px-3 py-2.5 font-fraunces text-2xl font-semibold text-ink outline-none focus:border-twilight"
       />
-      {hint && <span className="mt-1 block text-xs text-ink-soft">{hint}</span>}
+      <span className="mt-3 text-xs leading-relaxed text-ink-soft">{hint}</span>
     </label>
   )
 }
@@ -49,7 +49,7 @@ export default function AdminAdsPage() {
   if (!ready) return null
 
   const th = 'px-4 py-3 text-left font-mono text-xs font-normal uppercase tracking-widest text-ink-soft/60'
-  const td = 'px-4 py-3 text-ink'
+  const td = 'px-4 py-3.5 text-ink tabular-nums'
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -58,8 +58,8 @@ export default function AdminAdsPage() {
         What an ad is worth at different visit-to-paid rates. Change the numbers and the table updates.
       </p>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Ad spend ($)" value={spend} onChange={setSpend} />
+      <div className="mt-6 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Field label="Ad spend ($)" value={spend} onChange={setSpend} hint="What the ad cost you" />
         <Field label="Visits" value={visits} onChange={setVisits} hint="Visits to the site or App Store page that the spend buys" />
         <Field label="Net per subscriber / month ($)" value={net} onChange={setNet} hint="Solo $59.99 minus Apple's 15% is about $51" />
         <Field label="Months of revenue" value={months} onChange={setMonths} hint="Assumes nobody cancels" />
@@ -68,7 +68,7 @@ export default function AdminAdsPage() {
       <div className="mt-8 overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="w-full min-w-[720px] text-sm">
           <thead>
-            <tr className="border-b border-line">
+            <tr className="border-b border-line bg-paper">
               <th className={th}>Visit to paid</th>
               <th className={th}>Paying subs</th>
               <th className={th}>Cost per paying sub</th>
@@ -85,13 +85,13 @@ export default function AdminAdsPage() {
               const revN = rev1 * months
               const ratio = spend > 0 ? revN / spend : 0
               return (
-                <tr key={rate} className="border-b border-line last:border-0">
-                  <td className={`${td} font-medium`}>{rate}%</td>
+                <tr key={rate} className="border-b border-line transition hover:bg-paper last:border-0">
+                  <td className={td}><span className="inline-flex rounded-full bg-twilight/10 px-3 py-1 text-sm font-medium text-twilight">{rate}%</span></td>
                   <td className={td}>{Number(subs.toFixed(2))}</td>
                   <td className={td}>{subs > 0 ? usd(perSub) : '-'}</td>
                   <td className={td}>{usd(Math.round(rev1))}</td>
                   <td className={td}>{usd(Math.round(revN))}</td>
-                  <td className={`${td} font-medium`}>{spend > 0 ? `about ${ratio >= 2 ? Math.round(ratio) : ratio.toFixed(1)}x` : '-'}</td>
+                  <td className={`${td} font-fraunces text-lg font-semibold text-twilight`}>{spend > 0 ? `about ${ratio >= 2 ? Math.round(ratio) : ratio.toFixed(1)}x` : '-'}</td>
                 </tr>
               )
             })}
