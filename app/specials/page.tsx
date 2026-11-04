@@ -586,10 +586,6 @@ export default function SpecialsPage() {
                       <div className="max-w-xs">
                         <ColorField label="Color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
                       </div>
-                      <div>
-                        <Label>Alignment</Label>
-                        <Chips value={form.theme.titleAlign} options={ALIGNS} onChange={(v) => setTheme({ titleAlign: v })} />
-                      </div>
                     </MiniCard>
 
                     <MiniCard title="Subtitle">
@@ -604,10 +600,6 @@ export default function SpecialsPage() {
                       </div>
                       <div className="max-w-xs">
                         <ColorField label="Color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
-                      </div>
-                      <div>
-                        <Label>Alignment</Label>
-                        <Chips value={form.theme.subAlign} options={ALIGNS} onChange={(v) => setTheme({ subAlign: v })} />
                       </div>
                     </MiniCard>
 
@@ -645,10 +637,6 @@ export default function SpecialsPage() {
                           </div>
                           <div className="max-w-xs">
                             <ColorField label="Color" value={b.color} onChange={(v) => setBlock(i, { color: v })} />
-                          </div>
-                          <div>
-                            <Label>Alignment</Label>
-                            <Chips value={b.align} options={ALIGNS} onChange={(v) => setBlock(i, { align: v })} />
                           </div>
                           <div>
                             <Label>Shows</Label>

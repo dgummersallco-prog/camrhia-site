@@ -202,10 +202,10 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
   const heroText = t.bgImage ? '#FFFFFF' : t.textColor
   const emoji = DECOR_EMOJI[t.decor]
   const pattern = patternUrl(t.decor)
-  const titleAlign = t.titleAlign
+  const titleAlign = 'center' as const
   const renderBlocks = (place: 'title' | 'subtitle' | 'claim') =>
     t.blocks.filter((b) => b.place === place && b.text.trim()).map((b, i) => (
-      <p key={i} className="mt-5 whitespace-pre-line leading-snug" style={{ fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: b.align }}>{b.text}</p>
+      <p key={i} className="mt-5 whitespace-pre-line leading-snug" style={{ fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: 'center' }}>{b.text}</p>
     ))
 
   return (
@@ -228,7 +228,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
           </h1>
           {renderBlocks('title')}
           {d.sub ? (
-            <p className="mt-5 leading-relaxed" style={{ fontFamily: subFam, color: t.subColor, fontSize: t.subSizePx, textAlign: t.subAlign }}>{d.sub}</p>
+            <p className="mt-5 leading-relaxed" style={{ fontFamily: subFam, color: t.subColor, fontSize: t.subSizePx, textAlign: 'center' }}>{d.sub}</p>
           ) : null}
           {renderBlocks('subtitle')}
           {d.price ? <p className="mt-5 text-2xl" style={{ ...heading, color: t.bgImage ? '#FFFFFF' : t.accent, textAlign: titleAlign }}>{d.price}</p> : null}
