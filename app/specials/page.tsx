@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import DesignGroup from '@/app/components/DesignGroup'
 import SpecialView, { DEFAULT_THEME, readTheme, themeToContent, type Decor, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
@@ -242,17 +243,22 @@ function StepCard({ n, title, children }: { n: number; title: string; children: 
   )
 }
 
-function MiniCard({ title, summary, children }: { title: string; summary?: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false)
+function scrollPreviewTo(key: string) {
+  const el = document.getElementById('special-preview')
+  if (!el) return
+  if (key === 'claim') {
+    const c = el.querySelector('#claim') as HTMLElement | null
+    if (c) el.scrollTo({ top: c.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - 40, behavior: 'smooth' })
+  } else {
+    el.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+function MiniCard({ title, children }: { title: string; summary?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-paper">
-      <button type="button" onClick={() => setOpen(!open)} className="flex w-full items-center gap-3 px-5 py-4 text-left">
-        <span className="shrink-0 text-base font-medium text-ink">{title}</span>
-        <span className="min-w-0 flex-1 truncate text-right text-sm text-ink-soft">{summary}</span>
-        <span className={`shrink-0 text-xl leading-none text-ink-soft transition-transform ${open ? 'rotate-90' : ''}`}>›</span>
-      </button>
-      {open && <div className="space-y-4 px-5 pb-5">{children}</div>}
-    </div>
+    <DesignGroup title={title} onOpen={() => scrollPreviewTo(title === 'Sign-up form' || title === 'Summary' ? 'claim' : 'top')}>
+      {children}
+    </DesignGroup>
   )
 }
 
@@ -781,7 +787,7 @@ export default function SpecialsPage() {
 
               <div className="lg:sticky lg:top-6 lg:self-start">
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Live preview</p>
-                <div className="mx-auto h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[2rem] border-4 border-ink/80" style={{ background: form.theme.bgColor }}>
+                <div id="special-preview" className="mx-auto h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[2rem] border-4 border-ink/80" style={{ background: form.theme.bgColor }}>
                   <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label)} />
                 </div>
               </div>
