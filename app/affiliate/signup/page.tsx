@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import Wordmark from '@/app/components/Wordmark'
 
 const ROSE = '#A9545F'
 const inputCls =
@@ -99,7 +100,7 @@ export default function AffiliateSignupPage() {
 
   const header = (
     <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-      <Link href="/" className="font-fraunces text-xl font-semibold text-ink transition-colors hover:text-twilight">Camrhia</Link>
+      <Link href="/" aria-label="Camrhia home"><Wordmark className="text-3xl" /></Link>
       <Link href="/affiliate/login" className="text-sm text-ink-soft transition-colors hover:text-ink">Sign in</Link>
     </header>
   )
@@ -155,23 +156,32 @@ export default function AffiliateSignupPage() {
         </section>
 
         <section className="px-6 pb-16">
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="font-fraunces text-3xl font-semibold text-ink">The road to $5,000 a month starts here</h2>
-            <p className="mx-auto mt-2 max-w-xl text-ink-soft">Part of the program is helping you win. We train you on the marketing, so your posts turn into subscribers.</p>
-            <div className="mt-8 grid gap-4 text-left sm:grid-cols-2">
+          <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-line p-8 sm:p-12" style={{ background: 'linear-gradient(135deg, #FBF3EE 0%, #F3DDDD 100%)' }}>
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.25em]" style={{ color: ROSE }}>A Camrhia program</p>
+            <h2 className="mt-3 text-center font-fraunces text-4xl font-semibold leading-tight text-ink sm:text-5xl">
+              The Road to <span style={{ color: ROSE }}>$5K</span> a Month
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-soft">
+              You are not doing this alone. Join the Camrhia team and we help you get there, step by step.
+            </p>
+            <ol className="relative mx-auto mt-10 max-w-xl space-y-8">
+              <span aria-hidden="true" className="absolute bottom-3 left-5 top-3 w-px" style={{ backgroundColor: ROSE, opacity: 0.35 }} />
               {[
-                { t: 'What to post', d: 'Ready-to-use scripts, captions and post ideas.' },
-                { t: 'What to say', d: 'How to talk about Camrhia so photographers get it in seconds.' },
-                { t: 'Followers to subscribers', d: 'Simple steps from your first post to your first sale.' },
-                { t: 'Help from us', d: 'We call you, get you set up, and help you land your first photographers.' },
-              ].map((x) => (
-                <div key={x.t} className="rounded-2xl border border-line bg-card p-6">
-                  <p className="text-lg font-semibold text-ink">{x.t}</p>
-                  <p className="mt-1 text-sm text-ink-soft">{x.d}</p>
-                </div>
+                { t: 'A welcome call', d: 'We call you, get you set up, and map out your first month together.' },
+                { t: 'Team Zoom meetings', d: 'Join the Camrhia team on Zoom. We walk you through the marketing techniques that turn posts into subscribers.' },
+                { t: 'Your content kit', d: 'Scripts, captions and post ideas you can use today.' },
+                { t: 'Grow as a team', d: 'Share what is working, learn from the others, and keep climbing together.' },
+              ].map((x, i) => (
+                <li key={x.t} className="relative flex gap-5">
+                  <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-fraunces text-lg font-semibold text-white" style={{ backgroundColor: ROSE }}>{i + 1}</span>
+                  <div>
+                    <p className="text-lg font-semibold text-ink">{x.t}</p>
+                    <p className="mt-1 text-sm text-ink-soft">{x.d}</p>
+                  </div>
+                </li>
               ))}
-            </div>
-            <p className="mx-auto mt-5 max-w-xl text-xs text-ink-soft">Results depend on your audience and your effort. No income is guaranteed.</p>
+            </ol>
+            <p className="mx-auto mt-8 max-w-xl text-center text-xs text-ink-soft">Results depend on your audience and your effort. No income is guaranteed.</p>
           </div>
         </section>
 
