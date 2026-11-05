@@ -599,19 +599,23 @@ export default function SpecialsPage() {
           <>
             <link rel="stylesheet" href={ALL_FONTS_HREF} />
 
+                                <div className="mb-6 rounded-2xl border border-line bg-card p-5">
+                      <p className="font-fraunces text-lg font-semibold text-ink">Make it for me</p>
+                      <p className="mt-1 text-sm text-ink-soft">Pick the occasion. I fill in the look, the words, your studio name, your mini-session and your photos. Change anything after.</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {EXAMPLES.map((ex) => (
+                          <button key={ex.name} type="button" onClick={() => makeItForMe(ex.name)} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{DECOR_EMOJI[ex.theme.decor ?? 'none']} {ex.name}</button>
+                        ))}
+                      </div>
+                    </div>
+
             <div className="mb-6 grid gap-6 md:grid-cols-2">
-              <StepCard n={1} title="Design a post for Instagram, TikTok or Facebook">
-                <p className="text-sm leading-relaxed text-ink-soft">Here is the plan. You run one limited offer, show it to people in your area, and send them to this special page. Your main website stays untouched, so your regular pricing never changes. The goal is simple: fill a day.</p>
-                <p className="mt-3 text-sm leading-relaxed text-ink-soft">Make your post in any app you like, such as Canva, CapCut or Instagram itself. Keep it to three things:</p>
-                <ul className="mt-3 space-y-2 text-sm text-ink">
-                  <li>• A photo that stops the scroll</li>
-                  <li>• Your offer in one line, like “Holiday mini sessions, $250”</li>
-                  <li>• A call to action: “Tap the link to claim your spot”</li>
-                </ul>
-                <p className="mt-3 text-sm leading-relaxed text-ink-soft">Then post it or boost it to people near you. On Instagram or Facebook, tap Boost, set your location to a 10 to 25 mile radius around you, and start small, like $5 to $10 a day.</p>
+              <StepCard n={1} title="Make a post">
+                <p className="text-sm leading-relaxed text-ink-soft">Make it in Canva, CapCut or Instagram: a photo, your offer in one line, and “Tap the link to claim your spot”.</p>
+                <p className="mt-3 text-sm leading-relaxed text-ink-soft">Then boost it to people near you. Start with $5 to $10 a day and a 10 to 25 mile radius.</p>
               </StepCard>
               <StepCard n={2} title="Send your ad to this address">
-                <p className="text-sm leading-relaxed text-ink-soft">Use this link as the button on your post or boost. It sends people straight to this special, not your main site, so they see one offer and one sign-up form. Every sign-up lands in your app inquiries. When your spots are full, pause the ad.</p>
+                <p className="text-sm leading-relaxed text-ink-soft">Use this link as the button on your post. It sends people to this special, not your main site.</p>
                 <p className="mt-3 break-all rounded-xl bg-paper px-4 py-3 text-sm font-medium text-ink">{linkFor(form.slug)}</p>
                 <button type="button" onClick={() => { navigator.clipboard.writeText(linkFor(form.slug)); flash('Link copied') }} className="mt-3 rounded-full border border-line px-4 py-2 text-sm text-ink transition hover:border-twilight">Copy link</button>
                 {!form.id && <p className="mt-2 text-xs text-ink-soft">The link starts working once you save and publish in step 4.</p>}
@@ -622,16 +626,6 @@ export default function SpecialsPage() {
               <div className="space-y-6">
                 <StepCard n={3} title="Design your special">
                   <div className="space-y-5">
-                    <div className="rounded-2xl border border-line bg-paper p-5">
-                      <p className="font-fraunces text-lg font-semibold text-ink">Make it for me</p>
-                      <p className="mt-1 text-sm text-ink-soft">Pick the occasion. I fill in the look, the words, your studio name, your mini-session and your photos. Change anything after.</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {EXAMPLES.map((ex) => (
-                          <button key={ex.name} type="button" onClick={() => makeItForMe(ex.name)} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{DECOR_EMOJI[ex.theme.decor ?? 'none']} {ex.name}</button>
-                        ))}
-                      </div>
-                    </div>
-
                     <MiniCard title="Background" summary={form.theme.bgImage ? 'Photo added' : 'Color'}>
                       <div className="flex flex-wrap items-center gap-4">
                         {form.theme.bgImage ? (
