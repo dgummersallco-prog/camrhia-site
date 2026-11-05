@@ -64,6 +64,13 @@ function Section({ title, children, boxed }: { title?: string; children: React.R
 
 const P = ({ children }: { children: React.ReactNode }) => <p className="leading-relaxed text-ink-soft">{children}</p>
 
+async function getMini(id: string) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null
+  const sbm = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  const { data } = await sbm.rpc('get_mini_page', { p_mini_id: id })
+  return (data as any) ?? null
+}
+
 export default async function FunnelPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const page = await getPage(slug)
@@ -185,8 +192,10 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
       </>
     )
   } else if (style === 'special') {
-    const photos = Array.isArray(c.photos) ? (c.photos as string[]).filter(Boolean).slice(0, 3) : []
+    const photos = Array.isArray(c.photos) ? (c.photos as string[]).filter(Boolean).slice(0, 8) : []
     const theme = readTheme(c)
+    const miniId = s('mini_id')
+    const mini = miniId ? await getMini(miniId) : null
     bare = true
     body = (
       <div className="min-h-screen" style={{ background: theme.bgColor }}>
@@ -207,6 +216,9 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
             formTitle: s('form_title'),
             whenWhere: s('when_where'),
             terms: s('terms'),
+            termsTitle: s('terms_title'),
+            miniId: miniId || undefined,
+            mini,
           }}
         />
       </div>

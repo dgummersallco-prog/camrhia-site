@@ -2,6 +2,8 @@ import LeadForm from './LeadForm'
 import Slideshow from './Slideshow'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 
+export type MiniInfo = { id: string; title: string; price: number; duration_min: number | null; location: string | null; tz: string; slots: { id: string; starts_at: string }[] }
+
 export type SpecialData = {
   brand: string
   headline: string
@@ -17,6 +19,8 @@ export type SpecialData = {
   whenWhere?: string
   terms?: string
   termsTitle?: string
+  miniId?: string
+  mini?: MiniInfo | null
 }
 
 export const DECORS = ['none', 'santa', 'leaves', 'flowers', 'pencils', 'hearts', 'pumpkins', 'sun'] as const
@@ -216,6 +220,29 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
   const emoji = DECOR_EMOJI[t.decor]
   const pattern = patternUrl(t.decor)
   const titleAlign = 'center' as const
+  const m = d.mini
+  const fmtSlot = (iso: string, tz: string) => new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: tz }).format(new Date(iso))
+  const miniBlock = !d.miniId ? null : !m ? (
+    <p className="font-medium">These sessions are no longer available.</p>
+  ) : m.slots.length === 0 ? (
+    <p className="font-medium">All spots are booked.</p>
+  ) : (
+    <div>
+      <p className="mb-3 text-sm opacity-80">{m.slots.length} {m.slots.length === 1 ? 'time' : 'times'} left</p>
+      <div className="flex flex-wrap gap-2">
+        {m.slots.slice(0, 8).map((sl) => (
+          <span key={sl.id} className="rounded-full border border-current px-3 py-1 text-sm opacity-80">{fmtSlot(sl.starts_at, m.tz)}</span>
+        ))}
+      </div>
+      <div className="mt-5">
+        {preview ? (
+          <span className="block px-8 py-4 text-center font-medium" style={btnStyle}>{d.label}</span>
+        ) : (
+          <a href={`/mini/${m.id}`} className="block px-8 py-4 text-center font-medium transition hover:opacity-90" style={btnStyle}>{d.label}</a>
+        )}
+      </div>
+    </div>
+  )
   const renderBlocks = (place: 'title' | 'subtitle' | 'claim') =>
     t.blocks.filter((b) => b.place === place && b.text.trim()).map((b, i) => (
       <p key={i} className="mt-5 whitespace-pre-line leading-snug" style={{ fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: 'center' }}>{b.text}</p>
@@ -283,7 +310,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
             <h2 className="text-2xl" style={heading}>{d.formTitle || 'Claim your spot'}</h2>
             <div className="mt-3">
               {d.spots ? <p className="mb-4 font-medium">{d.spots}</p> : null}
-              <LeadForm funnelId={funnelId} label={d.label} thanks={d.thanks} disabled={preview} accent={t.accent} btnText={t.btnText} radius={radius} textColor={t.cardText} />
+              {d.miniId ? miniBlock : <LeadForm funnelId={funnelId} label={d.label} thanks={d.thanks} disabled={preview} accent={t.accent} btnText={t.btnText} radius={radius} textColor={t.cardText} />}
             </div>
           </section>
         </div>

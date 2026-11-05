@@ -24,11 +24,11 @@ type Funnel = {
   cta_label: string
   published: boolean
 }
-type Pkg = { id: string; name: string; price: string | null; detail: string | null; covers: string | null }
+type MiniOpt = { id: string; title: string; description: string | null; location: string | null; price: number; duration_min: number | null; tz: string; slots: { id: string; starts_at: string }[] }
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -197,7 +197,8 @@ const inputCls = 'mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2 t
 const rand = () => Math.random().toString(36).slice(2, 8)
 const makeSlug = () => `special-${rand()}`
 
-function toData(text: Record<string, string>, photos: string[], label: string): SpecialData {
+function toData(text: Record<string, string>, photos: string[], label: string, minis?: MiniOpt[]): SpecialData {
+  const m = minis?.find((x) => x.id === text.mini_id)
   return {
     brand: text.brand_name ?? '',
     headline: text.hero_headline ?? '',
@@ -213,6 +214,8 @@ function toData(text: Record<string, string>, photos: string[], label: string): 
     formTitle: text.form_title ?? '',
     detailsTitle: text.details_title ?? '',
     termsTitle: text.terms_title ?? '',
+    miniId: text.mini_id || undefined,
+    mini: m ? { id: m.id, title: m.title, price: m.price, duration_min: m.duration_min, location: m.location, tz: m.tz, slots: m.slots } : null,
   }
 }
 
@@ -368,7 +371,7 @@ export default function SpecialsPage() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const bgInput = useRef<HTMLInputElement>(null)
-  const [packages, setPackages] = useState<Pkg[]>([])
+  const [minis, setMinis] = useState<MiniOpt[]>([])
   const photoInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async (uid: string) => {
@@ -393,7 +396,16 @@ export default function SpecialsPage() {
       if (!sess.session) { router.replace('/login?next=/specials'); return }
       setUserId(sess.session.user.id)
       setForm((f) => f ?? toForm(null))
-      sb.from('packages').select('id,name,price,detail,covers').eq('owner_id', sess.session.user.id).order('sort_order').then(({ data }) => setPackages((data ?? []) as Pkg[]))
+      ;(async () => {
+        const { data: m } = await sb.from('mini_sessions').select('id,title,description,location,price,duration_min,tz').eq('owner_id', sess.session.user.id).eq('active', true).order('created_at', { ascending: false })
+        const list = (m ?? []) as Omit<MiniOpt, 'slots'>[]
+        let slots: { id: string; mini_id: string; starts_at: string }[] = []
+        if (list.length) {
+          const { data: sl } = await sb.from('mini_slots').select('id,mini_id,starts_at').in('mini_id', list.map((x) => x.id)).eq('status', 'open').order('starts_at')
+          slots = (sl ?? []) as typeof slots
+        }
+        setMinis(list.map((x) => ({ ...x, slots: slots.filter((y) => y.mini_id === x.id) })))
+      })()
       load(sess.session.user.id)
     }
     init()
@@ -401,14 +413,15 @@ export default function SpecialsPage() {
 
   const flash = (m: string) => { setMessage(m); setTimeout(() => setMessage(null), 2500) }
   const setTheme = (patch: Partial<SpecialTheme>) => setForm((f) => (f ? { ...f, theme: { ...f.theme, ...patch } } : f))
-  const pickPackage = (id: string) =>
+  const pickMini = (id: string) =>
     setForm((f) => {
       if (!f) return f
-      const p = packages.find((x) => x.id === id)
-      const text: Record<string, string> = { ...f.text, package_id: id }
-      if (p) {
-        text.price_line = [p.price, p.covers].filter(Boolean).join(' · ')
-        if (!text.details_body.trim() && p.detail) text.details_body = p.detail
+      const m = minis.find((x) => x.id === id)
+      const text: Record<string, string> = { ...f.text, mini_id: id }
+      if (m) {
+        text.price_line = '$' + Number(m.price).toLocaleString(undefined, { maximumFractionDigits: 2 }) + (m.duration_min ? ' · ' + m.duration_min + ' min' : '')
+        if (!text.when_where.trim() && m.location) text.when_where = m.location
+        if (!text.details_body.trim() && m.description) text.details_body = m.description
       } else {
         text.price_line = ''
       }
@@ -668,21 +681,21 @@ export default function SpecialsPage() {
                       <button type="button" onClick={addBlock} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add text box</button>
                     </MiniCard>
 
-                    <MiniCard title="Mini session" summary={packages.find((x) => x.id === form.text.package_id)?.name || 'None'}>
-                      {packages.length === 0 ? (
-                        <p className="text-sm text-ink-soft">You have no packages yet. Add a package in the app first, then come back and pick it here.</p>
+                    <MiniCard title="Mini session">
+                      {minis.length === 0 ? (
+                        <p className="text-sm text-ink-soft">You have no live mini-sessions yet. <a href="/minis" className="text-twilight underline">Create one on the Mini-sessions page</a>, then come back and pick it here.</p>
                       ) : (
                         <>
                           <label className="block">
-                            <Label>Pick the package for this special</Label>
-                            <select value={form.text.package_id} onChange={(e) => pickPackage(e.target.value)} className={inputCls}>
-                              <option value="">Pick a package</option>
-                              {packages.map((p) => (
-                                <option key={p.id} value={p.id}>{p.name}{p.price ? ` · ${p.price}` : ''}</option>
+                            <Label>Pick the mini-session for this special</Label>
+                            <select value={form.text.mini_id} onChange={(e) => pickMini(e.target.value)} className={inputCls}>
+                              <option value="">None (use the sign-up form)</option>
+                              {minis.map((m) => (
+                                <option key={m.id} value={m.id}>{m.title} · ${Number(m.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} · {m.slots.length} open</option>
                               ))}
                             </select>
                           </label>
-                          <p className="text-sm text-ink-soft">Sign-ups land in your app inquiries with this package attached. The price and details come from the package.</p>
+                          <p className="text-sm text-ink-soft">People pick a time and pay on your mini-session booking page. The price, length and location come from the mini-session.</p>
                         </>
                       )}
                     </MiniCard>
@@ -788,7 +801,7 @@ export default function SpecialsPage() {
               <div className="lg:sticky lg:top-6 lg:self-start">
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Live preview</p>
                 <div id="special-preview" className="mx-auto h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[2rem] border-4 border-ink/80" style={{ background: form.theme.bgColor }}>
-                  <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label)} />
+                  <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label, minis)} />
                 </div>
               </div>
             </div>
