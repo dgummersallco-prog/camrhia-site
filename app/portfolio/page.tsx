@@ -182,6 +182,64 @@ function ColorField({ title, value, fallback, onChange, swatches }: { title: str
   )
 }
 
+type Look = { label: string; bg: string; text: string; heading: string; para: string; bold: boolean; s: number; l: number; bio: string }
+const LOOKS: Record<string, Look> = {
+  airy: { label: 'Light and airy', bg: '#FAF6EF', text: '#2A1F24', heading: 'cormorant_garamond', para: 'montserrat', bold: false, s: 0.35, l: 0.62, bio: 'I photograph real moments in soft, natural light.{where} My goal is a relaxed session you actually enjoy, and photos you will treasure for years.' },
+  moody: { label: 'Dark and moody', bg: '#1E1A1C', text: '#F3ECE4', heading: 'playfair_display', para: 'lora', bold: false, s: 0.35, l: 0.5, bio: 'I create rich, cinematic photographs full of depth and emotion.{where} Every session is planned around your story, so the images feel like you.' },
+  classic: { label: 'Classic', bg: '#FFFFFF', text: '#1A1A1A', heading: 'libre_baskerville', para: 'work_sans', bold: false, s: 0.3, l: 0.42, bio: 'Timeless portraits and heartfelt storytelling, delivered with care.{where} From your first message to your final gallery, I make the process simple.' },
+  bold: { label: 'Bold', bg: '#FFFFFF', text: '#111111', heading: 'montserrat', para: 'poppins', bold: true, s: 0.7, l: 0.45, bio: 'Big personality, bold color and photos with energy.{where} I bring the fun, you bring yourself, and we make something people stop scrolling for.' },
+}
+
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  r /= 255; g /= 255; b /= 255
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b)
+  const l = (mx + mn) / 2
+  if (mx === mn) return [0, 0, l]
+  const d = mx - mn
+  const sat = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn)
+  let h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4
+  h *= 60
+  return [h, sat, l]
+}
+function hslToHex(h: number, sat: number, l: number): string {
+  const a = sat * Math.min(l, 1 - l)
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12
+    const v = l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))
+    return Math.round(255 * v).toString(16).padStart(2, '0')
+  }
+  return '#' + f(0) + f(8) + f(4)
+}
+function readableOn(hex: string): string {
+  const n = parseInt(hex.slice(1), 16)
+  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+  return lum > 0.6 ? '#1A1A1A' : '#FFFFFF'
+}
+async function extractPalette(url: string): Promise<[number, number, number][]> {
+  try {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(new Error('image')); img.src = url })
+    const c = document.createElement('canvas')
+    c.width = 48; c.height = 48
+    const ctx = c.getContext('2d')
+    if (!ctx) return []
+    ctx.drawImage(img, 0, 0, 48, 48)
+    const px = ctx.getImageData(0, 0, 48, 48).data
+    const buckets = Array.from({ length: 12 }, () => ({ w: 0, h: 0, s: 0, l: 0 }))
+    for (let i = 0; i < px.length; i += 4) {
+      const [h, sat, l] = rgbToHsl(px[i], px[i + 1], px[i + 2])
+      if (sat < 0.18 || l < 0.15 || l > 0.88) continue
+      const b = buckets[Math.floor(h / 30) % 12]
+      const w = sat * (1 - Math.abs(l - 0.5))
+      b.w += w; b.h += h * w; b.s += sat * w; b.l += l * w
+    }
+    return buckets.filter((b) => b.w > 0).sort((a, b) => b.w - a.w).slice(0, 3).map((b) => [b.h / b.w, b.s / b.w, b.l / b.w] as [number, number, number])
+  } catch {
+    return []
+  }
+}
+
 export default function PortfolioEditorPage() {
   const router = useRouter()
   const [form, setForm] = useState<Profile | null>(null)
@@ -230,6 +288,7 @@ export default function PortfolioEditorPage() {
   const logoInput = useRef<HTMLInputElement>(null)
   const avatarInput = useRef<HTMLInputElement>(null)
   const aboutInput = useRef<HTMLInputElement>(null)
+  const [genBusy, setGenBusy] = useState(false)
   const [brandBusy, setBrandBusy] = useState<string | null>(null)
   const latest = useRef<{ save: () => void; dirty: boolean }>({ save: () => {}, dirty: false })
   const sensors = useSensors(
@@ -588,6 +647,38 @@ export default function PortfolioEditorPage() {
         {open === key ? editorBody(key) : null}
       </DesignGroup>
     )
+  }
+
+  async function generatePortfolio(styleKey: string) {
+    if (!form) return
+    const look = LOOKS[styleKey]
+    if (!look) return
+    setGenBusy(true)
+    const set = (k: keyof Profile, v: unknown) => setField(k, v as never)
+    const paths = form.cover_paths?.length ? form.cover_paths : form.cover_path ? [form.cover_path] : []
+    const pal = paths[0] ? await extractPalette(`${STORAGE_BASE}${paths[0]}`) : []
+    const h1 = pal[0]?.[0] ?? 351
+    const primary = hslToHex(h1, look.s, look.l)
+    const accent = hslToHex(pal[1]?.[0] ?? (h1 + 25) % 360, look.s, Math.max(0.3, look.l - 0.05))
+    const secondary = hslToHex(pal[2]?.[0] ?? (h1 + 140) % 360, look.s * 0.8, look.l)
+    set('brand_colors_named', { primary, secondary, accent, neutral1: look.bg, neutral2: look.text })
+    set('accent_color', primary)
+    set('portfolio_bg_color', look.bg)
+    set('title_color', look.text)
+    set('paragraph_color', look.text)
+    set('location_color', look.text)
+    set('title_font', look.heading)
+    set('paragraph_font', look.para)
+    set('title_bold', look.bold)
+    set('title_italic', false)
+    set('message_btn_bg_color', accent)
+    set('message_btn_color', readableOn(accent))
+    if (!(form.bio ?? '').trim()) {
+      const where = [form.service_city, form.service_state].filter(Boolean).join(', ')
+      set('bio', look.bio.replace('{where}', where ? ` Based in ${where}.` : ''))
+    }
+    setGenBusy(false)
+    flash('Done. Check the preview, change anything, then press Save changes.')
   }
 
   function groupHeading(text: string, sub: string) {
@@ -1208,6 +1299,16 @@ export default function PortfolioEditorPage() {
 
             <div className="mb-6 rounded-2xl border border-line bg-card p-4 text-sm text-ink-soft">
               <span className="font-medium text-ink">This is your app profile.</span> It&apos;s what clients see when they shop for photographers on Camrhia, so it&apos;s kept short and quick on purpose. For galleries, your story and more, build your <a href="/website" className="text-twilight underline">website</a>.
+            </div>
+
+            <div className="mb-6 rounded-2xl border border-line bg-card p-5">
+              <p className="font-fraunces text-lg font-semibold text-ink">Generate for me</p>
+              <p className="mt-1 text-sm text-ink-soft">Pick a style. I set your five brand colors from your cover photo, your fonts, text colors and button color, and write a short bio if you do not have one. Check the preview, then press Save changes.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {Object.keys(LOOKS).map((k) => (
+                  <button key={k} type="button" disabled={genBusy} onClick={() => generatePortfolio(k)} className="rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink transition hover:border-twilight disabled:opacity-50">{genBusy ? 'Working…' : LOOKS[k].label}</button>
+                ))}
+              </div>
             </div>
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,540px)_1fr]">
