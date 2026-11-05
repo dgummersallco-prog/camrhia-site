@@ -167,7 +167,6 @@ export default function AffiliateSignupPage() {
               <span aria-hidden="true" className="absolute bottom-3 left-5 top-3 w-px" style={{ backgroundColor: ROSE, opacity: 0.35 }} />
               {[
                 { t: 'A welcome call', d: 'We call you, get you set up, and map out your first month together.' },
-                { t: 'Team Zoom meetings', d: 'Join the Camrhia team on Zoom. We walk you through the marketing techniques that turn posts into subscribers.' },
                 { t: 'Your content kit', d: 'Scripts, captions and post ideas you can use today.' },
                 { t: 'Grow as a team', d: 'Share what is working, learn from the others, and keep climbing together.' },
               ].map((x, i) => (
