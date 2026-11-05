@@ -19,6 +19,10 @@ type Row = {
   active_referrals: number
   total_referrals: number
   created_at: string
+  phone: string | null
+  handle: string | null
+  followers: string | null
+  best_reach: string | null
 }
 
 export default function AdminAffiliatesPage() {
@@ -145,6 +149,14 @@ export default function AdminAffiliatesPage() {
                   ) : null}
                 </div>
                 <p className="text-sm text-ink-soft">{r.email}</p>
+                {r.phone || r.handle || r.followers || r.best_reach ? (
+                  <p className="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-ink">
+                    {r.phone ? <a href={`tel:${r.phone}`} className="font-medium underline">{r.phone}</a> : null}
+                    {r.handle ? <span>{r.handle}</span> : null}
+                    {r.followers ? <span>{r.followers} followers</span> : null}
+                    {r.best_reach ? <span>best post reach {r.best_reach}</span> : null}
+                  </p>
+                ) : null}
                 <p className="mt-1 text-xs text-ink-soft">
                   Code {r.referral_code} · {r.active_referrals} active / {r.total_referrals} referrals
                   {r.recruited_by ? ` · recruited by ${r.recruited_by}` : ''}

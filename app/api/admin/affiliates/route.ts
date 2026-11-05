@@ -56,6 +56,10 @@ export async function POST(request: Request) {
     const refs = (refData ?? []) as { affiliate_id: string; status: string }[]
     const nameById = new Map(affs.map((a) => [a.id, a.name ?? a.email ?? 'Unknown']))
 
+    const { data: ul } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    const meta = new Map((ul?.users ?? []).map((u) => [u.id, (u.user_metadata ?? {}) as Record<string, unknown>]))
+    const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null)
+
     const rows = affs.map((a) => ({
       id: a.id,
       name: a.name,
@@ -69,6 +73,10 @@ export async function POST(request: Request) {
       active_referrals: refs.filter((r) => r.affiliate_id === a.id && r.status === 'active').length,
       total_referrals: refs.filter((r) => r.affiliate_id === a.id).length,
       created_at: a.created_at,
+      phone: str(meta.get(a.id)?.phone),
+      handle: str(meta.get(a.id)?.social_handle),
+      followers: str(meta.get(a.id)?.followers),
+      best_reach: str(meta.get(a.id)?.best_reach),
     }))
     return Response.json({ rows })
   }
