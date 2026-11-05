@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 
 type Msg = {
   id: string

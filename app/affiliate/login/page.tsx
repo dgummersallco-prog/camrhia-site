@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 import Wordmark from "@/app/components/Wordmark"
 
 export default function AffiliateLoginPage() {

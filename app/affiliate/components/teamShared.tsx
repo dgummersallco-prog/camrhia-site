@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 
 export type Recruit = { id: string; name: string | null; joined: string; active: number; trial: number; churned: number; earned: number }
 export type Month = { month: string; direct: number; team: number }

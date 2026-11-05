@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 import Wordmark from "@/app/components/Wordmark"
 import AffiliateTabs from './AffiliateTabs'
 

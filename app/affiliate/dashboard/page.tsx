@@ -6,7 +6,7 @@ import { Select } from '@/app/components/Select'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 import Wordmark from "@/app/components/Wordmark"
 
 // ── Types ─────────────────────────────────────────────────────────────────────

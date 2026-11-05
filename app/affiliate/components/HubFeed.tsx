@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { supabaseAffiliate as defaultClient } from '@/lib/supabaseAffiliate'
 
 type Post = { id: string; author_id: string; author_name: string; body: string; link_url: string | null; pinned: boolean; created_at: string }
 type Comment = { id: string; post_id: string; author_id: string; author_name: string; body: string; created_at: string }
@@ -20,7 +21,8 @@ function ago(iso: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
-export default function HubFeed() {
+export default function HubFeed({ client }: { client?: SupabaseClient | null }) {
+  const supabase = client ?? defaultClient
   const [uid, setUid] = useState<string | null>(null)
   const [member, setMember] = useState<boolean | null>(null)
   const [admin, setAdmin] = useState(false)
