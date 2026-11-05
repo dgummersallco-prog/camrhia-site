@@ -159,7 +159,7 @@ I'm putting together a small team of people who recommend Camrhia (the app I use
         body: (link) =>
           `awesome. here's how it works: you get your own link, and when a photographer signs up through it and subscribes, you get paid every month they stay.
 
-it starts at 20% and goes up to 30% as you bring in more people. that's about $10 a month for each photographer on the Solo plan. there's no cost to join.
+it's 30% from your very first referral, with no cap. that's about $15 a month for each photographer on the Solo plan. there's no cost to join.
 
 if you wanna join my team, sign up here and my team code gets filled in for you: ${link}`,
       },
@@ -234,7 +234,7 @@ Stop talking and let them answer.`,
   },
   {
     title: "Explain it simply",
-    say: `"I'm building a small team of people who recommend Camrhia. You get your own link, and when a photographer you refer subscribes, you get paid every month they stay. It starts at 20% and goes up to 30%. That's about $10 a month for each photographer on Solo. It's free to join."`,
+    say: `"I'm building a small team of people who recommend Camrhia. You get your own link, and when a photographer you refer subscribes, you get paid every month they stay. It's 30% from your first referral, with no cap. That's about $15 a month for each photographer on Solo. It's free to join."`,
     why: "Short and plain, with one real number. No hype.",
   },
   {
