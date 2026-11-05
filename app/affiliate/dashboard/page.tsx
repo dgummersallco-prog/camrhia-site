@@ -26,6 +26,7 @@ type Referral = {
   created_at: string
   monthly_value: number | null
   masked?: string | null
+  lifetime_value?: number | null
 }
 
 type LedgerEntry = {
@@ -146,6 +147,7 @@ export default function AffiliateDashboardPage() {
             created_at: r.created_at,
             monthly_value: r.monthly_commission != null ? Number(r.monthly_commission) : null,
             masked: r.masked ?? null,
+            lifetime_value: r.lifetime_commission != null ? Number(r.lifetime_commission) : 0,
           })),
         )
       } catch {
@@ -472,37 +474,6 @@ export default function AffiliateDashboardPage() {
           </details>
         </section>
 
-        {/* Commission */}
-        {(() => {
-          const road = [{ n: 4, pay: '$60' }, { n: 33, pay: '$500' }, { n: 65, pay: '$1,000' }, { n: 327, pay: '$5,000' }]
-          const paying = referrals.filter((r) => r.status === 'active').length
-          const next = road.find((m) => m.n > paying)
-          const prev = [...road].reverse().find((m) => m.n <= paying)?.n ?? 0
-          const fill = next ? (paying - prev) / (next.n - prev) : 1
-          return (
-            <section className="rounded-2xl border border-line bg-card p-6">
-              <div className="mb-5">
-                <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/60 mb-1">Your commission</p>
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-fraunces text-4xl font-semibold leading-none" style={{ color: '#A9545F' }}>30%</span>
-                  <span className="text-sm text-ink-soft">of every subscription after Apple’s 15% fee, every month, no cap · <Link href="/affiliate/dashboard/pay" className="text-twilight underline">see the full breakdown</Link></span>
-                </div>
-              </div>
-              <div className="h-1.5 w-full rounded-full bg-line mb-2 overflow-hidden">
-                <div className="h-1.5 rounded-full transition-all duration-300" style={{ width: `${Math.min(fill * 100, 100)}%`, backgroundColor: '#A9545F' }} />
-              </div>
-              <p className="text-xs text-ink-soft">
-                {paying} paying photographer{paying !== 1 ? 's' : ''} so far.{' '}
-                {next ? (
-                  <span className="font-medium text-ink">{next.n - paying} more to reach about {next.pay} a month.</span>
-                ) : (
-                  <span className="font-medium text-ink">You are at the top of the road.</span>
-                )}
-              </p>
-            </section>
-          )
-        })()}
-
         {/* Referrals table */}
         <section>
           <h2 className="font-fraunces text-xl font-semibold text-ink mb-4">
@@ -517,12 +488,13 @@ export default function AffiliateDashboardPage() {
                     <th className="text-left px-5 py-3 font-medium text-ink-soft">Joined</th>
                     <th className="text-left px-5 py-3 font-medium text-ink-soft">Status</th>
                     <th className="text-right px-5 py-3 font-medium text-ink-soft">Monthly value</th>
+                    <th className="text-right px-5 py-3 font-medium text-ink-soft">Lifetime value</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line bg-card">
                   {referrals.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-5 py-10 text-center">
+                      <td colSpan={5} className="px-5 py-10 text-center">
                         <p className="font-fraunces text-lg italic text-ink-soft">No referrals yet.</p>
                         <p className="mt-1 text-sm text-ink-soft">Share your link above to start earning.</p>
                       </td>
@@ -545,6 +517,9 @@ export default function AffiliateDashboardPage() {
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono text-xs text-ink">
                         {r.monthly_value != null ? fmt(r.monthly_value) : '—'}
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-mono text-xs text-ink">
+                        {fmt(r.lifetime_value ?? 0)}
                       </td>
                     </tr>
                   ))}
