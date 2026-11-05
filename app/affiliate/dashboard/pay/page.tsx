@@ -190,14 +190,12 @@ function monthlyEarn(n: number, price: number, customRate: number | null) {
 }
 
 function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
-  const tiers = [
-    { label: 'Every referral', rt: 0.3 },
-  ]
   const plans = [
     { label: 'Solo', price: 59.99 },
     { label: 'Studio', price: 149 },
   ]
   const custom = a.commission_rate != null && ![0.2, 0.25, 0.3].includes(Number(a.commission_rate))
+  const rate = custom ? Number(a.commission_rate) : 0.3
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-line bg-card p-6">
@@ -210,26 +208,29 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
             <thead>
               <tr>
                 <th className={th}>Plan</th>
-                <th className={th}>Your referrals</th>
-                <th className={th}>Rate</th>
+                <th className={th}>Apple takes ({pct(APPLE_RATE)})</th>
+                <th className={th}>After Apple</th>
+                <th className={th}>Your rate</th>
                 <th className={th}>You earn / month</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line border-t border-line">
-              {plans.flatMap((p) =>
-                tiers.map((t) => (
-                  <tr key={p.label + t.rt}>
+              {plans.map((p) => {
+                const base = r2(p.price * (1 - APPLE_RATE))
+                return (
+                  <tr key={p.label}>
                     <td className={td + ' text-ink font-medium'}>{p.label} ({usd(p.price)})</td>
-                    <td className={td + ' text-ink-soft'}>{t.label}</td>
-                    <td className={td + ' text-ink'}>{pct(t.rt)}</td>
-                    <td className={td + ' text-ink font-semibold'}>{usd(r2(r2(p.price * (1 - APPLE_RATE)) * t.rt))}</td>
+                    <td className={td + ' text-ink-soft'}>-{usd(r2(p.price - base))}</td>
+                    <td className={td + ' text-ink'}>{usd(base)}</td>
+                    <td className={td + ' text-ink'}>{pct(rate)}</td>
+                    <td className={td + ' text-ink font-semibold'}>{usd(r2(base * rate))}</td>
                   </tr>
-                ))
-              )}
+                )
+              })}
             </tbody>
           </table>
         </div>
-        <p className="mt-4 text-sm text-ink-soft">Amounts are after the App Store fee. Yearly plans pay the same percentage once a year.</p>
+        <p className="mt-4 text-sm text-ink-soft">Apple takes its fee first. Your rate is then applied to what is left. Yearly plans pay the same percentage once a year.</p>
       </section>
 
       <section className="rounded-2xl border border-line bg-card p-6">
@@ -258,7 +259,7 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
           </table>
         </div>
         <p className="mt-4 text-sm text-ink-soft">
-          Your rate rises as you grow, so these totals include the step-ups at 11 and 26 referrals. Each total assumes everyone is on that one plan; a mix of plans lands in between.
+          Each total assumes everyone is on that one plan; a mix of plans lands in between.
         </p>
       </section>
 
