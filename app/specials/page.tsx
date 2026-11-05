@@ -26,7 +26,7 @@ type Funnel = {
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -209,6 +209,8 @@ function toData(text: Record<string, string>, photos: string[], label: string): 
     whenWhere: text.when_where ?? '',
     terms: text.terms ?? '',
     formTitle: text.form_title ?? '',
+    detailsTitle: text.details_title ?? '',
+    termsTitle: text.terms_title ?? '',
   }
 }
 
@@ -574,53 +576,47 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Title" summary={form.text.hero_headline}>
+                    <MiniCard title="Studio name" summary={form.text.brand_name}>
                       <label className="block">
                         <Label>Words</Label>
-                        <input placeholder="Holiday mini sessions" value={form.text.hero_headline} onChange={(e) => setText('hero_headline', e.target.value)} className={inputCls} />
+                        <input placeholder="Your studio name" value={form.text.brand_name} onChange={(e) => setText('brand_name', e.target.value)} className={inputCls} />
                       </label>
-                      <FontPicker label="Font" value={form.theme.headFont} onChange={(k) => setTheme({ headFont: k })} />
+                      <FontPicker label="Font" value={form.theme.nameFont} onChange={(k) => setTheme({ nameFont: k })} />
                       <div>
                         <Label>Size</Label>
+                        <SizeField value={form.theme.nameSizePx} min={8} max={60} onChange={(n) => setTheme({ nameSizePx: n })} />
+                      </div>
+                      <div className="max-w-xs">
+                        <ColorField label="Color" value={form.theme.nameColor || form.theme.textColor} onChange={(v) => setTheme({ nameColor: v })} />
+                      </div>
+                    </MiniCard>
+
+                    <MiniCard title="Special title" summary={form.text.hero_headline}>
+                      <label className="block">
+                        <Label>Main title</Label>
+                        <input placeholder="Holiday mini sessions" value={form.text.hero_headline} onChange={(e) => setText('hero_headline', e.target.value)} className={inputCls} />
+                      </label>
+                      <FontPicker label="Title font" value={form.theme.headFont} onChange={(k) => setTheme({ headFont: k })} />
+                      <div>
+                        <Label>Title size</Label>
                         <SizeField value={form.theme.titleSizePx} min={12} max={160} onChange={(n) => setTheme({ titleSizePx: n })} />
                       </div>
                       <div className="max-w-xs">
-                        <ColorField label="Color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
+                        <ColorField label="Title color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
                       </div>
-                    </MiniCard>
-
-                    <MiniCard title="Subtitle" summary={form.text.hero_sub}>
+                      <div className="border-t border-line" />
                       <label className="block">
-                        <Label>Words</Label>
+                        <Label>Subtitle</Label>
                         <textarea rows={2} placeholder="Family portraits by the lake, 20 minutes each" value={form.text.hero_sub} onChange={(e) => setText('hero_sub', e.target.value)} className={inputCls} />
                       </label>
-                      <FontPicker label="Font" value={form.theme.subFont} onChange={(k) => setTheme({ subFont: k })} />
+                      <FontPicker label="Subtitle font" value={form.theme.subFont} onChange={(k) => setTheme({ subFont: k })} />
                       <div>
-                        <Label>Size</Label>
+                        <Label>Subtitle size</Label>
                         <SizeField value={form.theme.subSizePx} min={8} max={80} onChange={(n) => setTheme({ subSizePx: n })} />
                       </div>
                       <div className="max-w-xs">
-                        <ColorField label="Color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
+                        <ColorField label="Subtitle color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
                       </div>
-                    </MiniCard>
-
-                    <MiniCard title="Photos" summary={form.photos.length ? `${form.photos.length} added` : 'None'}>
-                      <p className="text-sm text-ink-soft">Add up to 8. One photo stays still. Two or more fade into each other.</p>
-                      <div className="flex flex-wrap gap-3">
-                        {form.photos.map((u) => (
-                          <div key={u} className="relative">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={u} alt="" className="h-24 w-20 rounded-xl object-cover" />
-                            <button type="button" onClick={() => removePhoto(u)} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-white">×</button>
-                          </div>
-                        ))}
-                      </div>
-                      {form.photos.length < 8 && (
-                        <button type="button" disabled={uploading} onClick={() => photoInput.current?.click()} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight disabled:opacity-50">
-                          {uploading ? 'Uploading…' : '+ Add photos'}
-                        </button>
-                      )}
-                      <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) uploadPhotos(e.target.files); e.target.value = '' }} />
                     </MiniCard>
 
                     <MiniCard title="Text boxes" summary={form.theme.blocks.length ? `${form.theme.blocks.length} added` : 'None'}>
@@ -648,6 +644,32 @@ export default function SpecialsPage() {
                       <button type="button" onClick={addBlock} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add text box</button>
                     </MiniCard>
 
+                    <MiniCard title="When and where (optional)" summary={form.text.when_where || 'None'}>
+                      <label className="block">
+                        <Label>Words</Label>
+                        <input placeholder="Saturday, December 5 · Pine Hollow Lodge, Park City, UT" value={form.text.when_where} onChange={(e) => setText('when_where', e.target.value)} className={inputCls} />
+                      </label>
+                    </MiniCard>
+
+                    <MiniCard title="Photos" summary={form.photos.length ? `${form.photos.length} added` : 'None'}>
+                      <p className="text-sm text-ink-soft">Add up to 8. One photo stays still. Two or more fade into each other.</p>
+                      <div className="flex flex-wrap gap-3">
+                        {form.photos.map((u) => (
+                          <div key={u} className="relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={u} alt="" className="h-24 w-20 rounded-xl object-cover" />
+                            <button type="button" onClick={() => removePhoto(u)} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-white">×</button>
+                          </div>
+                        ))}
+                      </div>
+                      {form.photos.length < 8 && (
+                        <button type="button" disabled={uploading} onClick={() => photoInput.current?.click()} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight disabled:opacity-50">
+                          {uploading ? 'Uploading…' : '+ Add photos'}
+                        </button>
+                      )}
+                      <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) uploadPhotos(e.target.files); e.target.value = '' }} />
+                    </MiniCard>
+
                     <MiniCard title="Button" summary={form.cta_label}>
                       <label className="block">
                         <Label>Words</Label>
@@ -669,7 +691,27 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Claim your spot box" summary={form.text.form_title || 'Claim your spot'}>
+                    <MiniCard title="Summary" summary={form.text.details_body || form.text.terms ? 'Added' : 'None'}>
+                      <label className="block">
+                        <Label>First title</Label>
+                        <input placeholder="What is included" value={form.text.details_title} onChange={(e) => setText('details_title', e.target.value)} className={inputCls} />
+                      </label>
+                      <label className="block">
+                        <Label>First paragraph</Label>
+                        <textarea rows={4} value={form.text.details_body} onChange={(e) => setText('details_body', e.target.value)} className={inputCls} />
+                      </label>
+                      <div className="border-t border-line" />
+                      <label className="block">
+                        <Label>Second title</Label>
+                        <input placeholder="Good to know" value={form.text.terms_title} onChange={(e) => setText('terms_title', e.target.value)} className={inputCls} />
+                      </label>
+                      <label className="block">
+                        <Label>Second paragraph</Label>
+                        <textarea rows={4} value={form.text.terms} onChange={(e) => setText('terms', e.target.value)} className={inputCls} />
+                      </label>
+                    </MiniCard>
+
+                    <MiniCard title="Sign-up form" summary={form.text.form_title || 'Sign up'}>
                       <label className="block">
                         <Label>Title words</Label>
                         <input placeholder="Claim your spot" value={form.text.form_title} onChange={(e) => setText('form_title', e.target.value)} className={inputCls} />

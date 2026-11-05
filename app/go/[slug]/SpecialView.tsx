@@ -16,6 +16,7 @@ export type SpecialData = {
   formTitle?: string
   whenWhere?: string
   terms?: string
+  termsTitle?: string
 }
 
 export const DECORS = ['none', 'santa', 'leaves', 'flowers', 'pencils', 'hearts', 'pumpkins', 'sun'] as const
@@ -73,6 +74,9 @@ export type SpecialTheme = {
   accent: string
   btnText: string
   shape: 'square' | 'rounded' | 'pill'
+  nameFont: string
+  nameColor: string
+  nameSizePx: number
   btnSizePx: number
   cardBg: string
   cardText: string
@@ -98,6 +102,9 @@ export const DEFAULT_THEME: SpecialTheme = {
   accent: '#A9545F',
   btnText: '#FFFFFF',
   shape: 'pill',
+  nameFont: 'montserrat',
+  nameColor: '',
+  nameSizePx: 13,
   btnSizePx: 16,
   cardBg: '#FFFFFF',
   cardText: '#2A1F24',
@@ -136,6 +143,9 @@ export function readTheme(c: Record<string, unknown>): SpecialTheme {
     accent: hexOr(c.accent_color, D.accent),
     btnText: hexOr(c.btn_text, D.btnText),
     shape: pick(c.shape, ['square', 'rounded', 'pill'] as const, D.shape),
+    nameFont: fontOr(c.name_font, D.nameFont),
+    nameColor: typeof c.name_color === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c.name_color) ? c.name_color : '',
+    nameSizePx: num(c.name_size_px, 8, 60, D.nameSizePx),
     btnSizePx: num(c.btn_size_px, 10, 40, D.btnSizePx),
     cardBg: hexOr(c.card_bg, D.cardBg),
     cardText: hexOr(c.card_text, D.cardText),
@@ -178,6 +188,9 @@ export function themeToContent(t: SpecialTheme): Record<string, unknown> {
     accent_color: t.accent,
     btn_text: t.btnText,
     shape: t.shape,
+    name_font: t.nameFont,
+    name_color: t.nameColor,
+    name_size_px: t.nameSizePx,
     btn_size_px: t.btnSizePx,
     card_bg: t.cardBg,
     card_text: t.cardText,
@@ -191,7 +204,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
   const headFam = FONT_OPTIONS[t.headFont]?.family ?? 'serif'
   const subFam = FONT_OPTIONS[t.subFont]?.family ?? 'sans-serif'
   const bodyFam = FONT_OPTIONS[t.bodyFont]?.family ?? 'sans-serif'
-  const keys = Array.from(new Set([t.headFont, t.subFont, t.bodyFont, ...t.blocks.map((b) => b.font)])).filter((k) => FONT_OPTIONS[k])
+  const keys = Array.from(new Set([t.headFont, t.subFont, t.bodyFont, t.nameFont, ...t.blocks.map((b) => b.font)])).filter((k) => FONT_OPTIONS[k])
   const fontHref = keys.length
     ? 'https://fonts.googleapis.com/css2?' + keys.map((k) => 'family=' + FONT_OPTIONS[k].gf.split(':')[0]).join('&') + '&display=swap'
     : null
@@ -219,7 +232,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
       >
         {t.bgImage ? <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${t.overlay / 100})` }} /> : null}
         <div className={`relative mx-auto flex max-w-xl flex-col justify-center px-6 py-16 ${t.bgImage ? 'min-h-[520px]' : emoji ? 'min-h-[440px]' : ''}`}>
-          {d.brand ? <p className="font-mono text-xs uppercase tracking-widest opacity-70" style={{ color: heroText, textAlign: titleAlign }}>{d.brand}</p> : null}
+          {d.brand ? <p className="uppercase" style={{ fontFamily: FONT_OPTIONS[t.nameFont]?.family ?? 'sans-serif', letterSpacing: '0.2em', color: t.nameColor || heroText, fontSize: t.nameSizePx, textAlign: titleAlign }}>{d.brand}</p> : null}
           <h1
             className="mt-4 leading-tight"
             style={{ ...heading, color: t.titleColor, fontSize: t.titleSizePx, textAlign: titleAlign }}
@@ -258,7 +271,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
 
         {d.terms ? (
           <section className="mt-12">
-            <h2 className="text-2xl" style={heading}>Good to know</h2>
+            <h2 className="text-2xl" style={heading}>{d.termsTitle || 'Good to know'}</h2>
             <p className="mt-3 whitespace-pre-line leading-relaxed opacity-80">{d.terms}</p>
           </section>
         ) : null}
