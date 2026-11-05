@@ -573,7 +573,7 @@ export default function PortfolioEditorPage() {
     )
   }
 
-  function card(key: string, extra?: ReactNode, dim?: boolean, lead?: ReactNode) {
+  function accCard(key: string, extra?: ReactNode, dim?: boolean, lead?: ReactNode) {
     return (
       <DesignGroup
         key={key}
@@ -660,7 +660,7 @@ export default function PortfolioEditorPage() {
       )
     }
     if (!form) return null
-    const sec = (children: ReactNode) => <section className={`${card} space-y-4`}>{children}</section>
+    const sec = (children: ReactNode) => <div className="space-y-4">{children}</div>
     switch (key) {
       case 'brand': {
         const named = form.brand_colors_named ?? {}
@@ -1215,10 +1215,10 @@ export default function PortfolioEditorPage() {
               <div className="space-y-5">
                 <div data-accordion>
                   {groupHeading('Portfolio', 'What clients see first.')}
-                  <div className="space-y-2.5">{['cover', 'name', 'location'].map((k) => card(k))}</div>
+                  <div className="space-y-2.5">{['cover', 'name', 'location'].map((k) => accCard(k))}</div>
 
                   {groupHeading('Portfolio style', 'The look and feel of your site.')}
-                  <div className="space-y-2.5">{['brand', 'master', 'background', 'spacing', 'message'].map((k) => card(k))}</div>
+                  <div className="space-y-2.5">{['brand', 'master', 'background', 'spacing', 'message'].map((k) => accCard(k))}</div>
 
                   {groupHeading('Sections', 'Use the switch to show or hide a section on your site. Drag the dots up or down to change the order. Your changes apply to your website and to the Camrhia app.')}
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
@@ -1232,7 +1232,7 @@ export default function PortfolioEditorPage() {
                               key={key}
                               id={key}
                               render={(h) =>
-                                card(
+                                accCard(
                                   key,
                                   toggle ? (
                                     <Toggle on={on} onChange={(v) => setField(toggle, v as never)} label={`Show ${LABELS[key]}`} />
@@ -1263,7 +1263,7 @@ export default function PortfolioEditorPage() {
                   </DndContext>
 
                   {groupHeading('Visibility', 'Who can find you.')}
-                  <div className="space-y-2.5">{card('listed')}</div>
+                  <div className="space-y-2.5">{accCard('listed')}</div>
                 </div>
 
                 <p className="text-xs text-ink-soft">
