@@ -283,7 +283,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
             <h2 className="text-2xl" style={heading}>{d.formTitle || 'Claim your spot'}</h2>
             <div className="mt-3">
               {d.spots ? <p className="mb-4 font-medium">{d.spots}</p> : null}
-              <LeadForm funnelId={funnelId} label={d.label} thanks={d.thanks} disabled={preview} accent={t.accent} btnText={t.btnText} radius={radius} />
+              <LeadForm funnelId={funnelId} label={d.label} thanks={d.thanks} disabled={preview} accent={t.accent} btnText={t.btnText} radius={radius} textColor={t.cardText} />
             </div>
           </section>
         </div>

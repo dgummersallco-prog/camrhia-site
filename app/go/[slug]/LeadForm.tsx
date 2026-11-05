@@ -5,7 +5,7 @@ import { useState } from 'react'
 const inputCls = 'mt-1 w-full rounded-xl border border-line bg-paper px-4 py-3 text-ink outline-none focus:border-twilight'
 
 export default function LeadForm({
-  funnelId, label, thanks, disabled, accent, btnText, radius,
+  funnelId, label, thanks, disabled, accent, btnText, radius, textColor,
 }: {
   funnelId: string
   label: string
@@ -14,6 +14,7 @@ export default function LeadForm({
   accent?: string
   btnText?: string
   radius?: string
+  textColor?: string
 }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -45,24 +46,24 @@ export default function LeadForm({
     }
   }
 
-  if (done) return <p className="text-lg font-medium text-ink">{thanks}</p>
+  if (done) return <p className="text-lg font-medium" style={{ color: textColor }}>{thanks}</p>
 
   return (
     <form onSubmit={submit} className="space-y-4 text-left">
       <label className="block">
-        <span className="text-sm font-medium text-ink">Your name</span>
+        <span className="text-sm font-medium" style={{ color: textColor }}>Your name</span>
         <input required value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-ink">Email</span>
+        <span className="text-sm font-medium" style={{ color: textColor }}>Email</span>
         <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-ink">Phone (optional)</span>
+        <span className="text-sm font-medium" style={{ color: textColor }}>Phone (optional)</span>
         <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-ink">Anything you want us to know (optional)</span>
+        <span className="text-sm font-medium" style={{ color: textColor }}>Anything you want us to know (optional)</span>
         <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} className={inputCls} />
       </label>
       <input type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} className="hidden" aria-hidden="true" />
