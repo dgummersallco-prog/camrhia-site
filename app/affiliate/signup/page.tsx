@@ -175,6 +175,32 @@ export default function AffiliateSignupPage() {
           </div>
         </section>
 
+        <section className="px-6 pb-16">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-center font-fraunces text-3xl font-semibold text-ink">Most affiliate programs pay once. We pay every month.</h2>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-line bg-card p-6 text-center">
+                <p className="text-sm text-ink-soft">Typical affiliate program</p>
+                <p className="mt-1 font-fraunces text-4xl font-semibold text-ink">5 to 15%</p>
+                <p className="mt-2 text-sm text-ink-soft">on one sale. Paid once.</p>
+              </div>
+              <div className="rounded-2xl border border-line bg-card p-6 text-center">
+                <p className="text-sm text-ink-soft">Photographer apps like HoneyBook and Dubsado</p>
+                <p className="mt-1 font-fraunces text-4xl font-semibold text-ink">$35 to $50</p>
+                <p className="mt-2 text-sm text-ink-soft">per referral. One and done.</p>
+              </div>
+              <div className="rounded-2xl p-6 text-center text-white" style={{ backgroundColor: ROSE }}>
+                <p className="text-sm text-white/85">Camrhia</p>
+                <p className="mt-1 font-fraunces text-4xl font-semibold">30%</p>
+                <p className="mt-2 text-sm font-semibold">EVERY SINGLE MONTH. You join the team and keep earning for as long as your photographers stay.</p>
+              </div>
+            </div>
+            <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-ink-soft">
+              Sources: <a className="underline" href="https://refgrow.com/blog/affiliate-program-benchmarks-2026" target="_blank" rel="noopener noreferrer">Refgrow, Affiliate Program Benchmarks 2026</a>, <a className="underline" href="https://growsurf.com/statistics/affiliate-marketing-statistics/" target="_blank" rel="noopener noreferrer">GrowSurf, Affiliate Marketing Statistics</a>, <a className="underline" href="https://honeybook.com/lp/affiliates" target="_blank" rel="noopener noreferrer">HoneyBook affiliates</a>, <a className="underline" href="https://www.dubsado.com/affiliate-program" target="_blank" rel="noopener noreferrer">Dubsado affiliate program</a>. Typical online-store programs pay 5 to 15% on a single sale. Software programs often pay 20 to 30% recurring. Camrhia starts you at 30%. Programs change their terms.
+            </p>
+          </div>
+        </section>
+
         <section className="px-6 pb-12">
           <div className="mx-auto max-w-3xl rounded-3xl p-8 text-center text-white sm:p-10" style={{ backgroundColor: ROSE }}>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Founding affiliate offer</p>
