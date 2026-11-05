@@ -802,6 +802,41 @@ export default function WebsitePage() {
       return { ...f, site_settings: s }
     })
   }
+  const [genBusy, setGenBusy] = useState(false)
+  async function generateSite(styleKey: string) {
+    if (!form) return
+    const looks: Record<string, { tpl: string; pair: string; bg: string; text: string; tint: string; shape: string }> = {
+      airy: { tpl: 'minimal', pair: 'serif', bg: '#FAF6EF', text: '#2A1F24', tint: '#F0EAE1', shape: 'pill' },
+      moody: { tpl: 'editorial', pair: 'romantic', bg: '#1E1A1C', text: '#F3ECE4', tint: '#2A2427', shape: 'square' },
+      classic: { tpl: 'framed', pair: 'serif', bg: '#FFFFFF', text: '#1A1A1A', tint: '#F5F2EE', shape: 'rounded' },
+      bold: { tpl: 'magazine', pair: 'modern', bg: '#FFFFFF', text: '#111111', tint: '#F2F2F2', shape: 'square' },
+    }
+    const look = looks[styleKey]
+    if (!look) return
+    setGenBusy(true)
+    const accent = form.brand_colors_named?.primary || form.accent_color || '#A9545F'
+    const n = parseInt(accent.slice(1), 16)
+    const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+    set('site_template', look.tpl)
+    set('site_font_pair', look.pair)
+    set('site_accent', accent)
+    upd((st) => {
+      st.fonts = { ...(st.fonts ?? {}) }
+      delete st.fonts.head
+      delete st.fonts.body
+      st.colors = { ...(st.colors ?? {}), bg: look.bg, text: look.text, tint: look.tint }
+      st.button = { ...(st.button ?? {}), shape: look.shape, text: lum > 0.6 ? '#1A1A1A' : '#FFFFFF' }
+    })
+    if (!(form.site_headline ?? '').trim() || !(form.site_subhead ?? '').trim()) {
+      const sb = supabase
+      const { data } = sb ? await sb.from('profiles').select('studio_name, service_city, service_state').eq('id', form.id).single() : { data: null }
+      const where = [data?.service_city, data?.service_state].filter(Boolean).join(', ')
+      if (!(form.site_headline ?? '').trim()) set('site_headline', data?.studio_name ? String(data.studio_name) : 'Photography that feels like you')
+      if (!(form.site_subhead ?? '').trim()) set('site_subhead', where ? `Photographer in ${where}` : 'Photographer')
+    }
+    setGenBusy(false)
+    setMessage('Done. Check the preview, change anything you like.')
+  }
   function pickPair(k: string) {
     setForm((f) => {
       if (!f) return f
@@ -1626,6 +1661,16 @@ export default function WebsitePage() {
                 <button className={btn} disabled={!dirty || saving} onClick={save}>
                   {saving ? 'Saving…' : saveErr ? 'Retry save' : dirty ? 'Save now' : 'All changes saved'}
                 </button>
+              </div>
+            </div>
+
+            <div className="mb-6 rounded-2xl border border-line bg-card p-5">
+              <p className="font-fraunces text-lg font-semibold text-ink">Generate for me</p>
+              <p className="mt-1 text-sm text-ink-soft">Pick a style. I choose the layout, fonts, colors and button shape, and write a headline if you do not have one. Then change anything you like.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[['airy', 'Light and airy'], ['moody', 'Dark and moody'], ['classic', 'Classic'], ['bold', 'Bold']].map(([k, l]) => (
+                  <button key={k} type="button" disabled={genBusy} onClick={() => generateSite(k)} className="rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink transition hover:border-twilight disabled:opacity-50">{genBusy ? 'Working…' : l}</button>
+                ))}
               </div>
             </div>
 
