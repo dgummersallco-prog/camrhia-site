@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import DesignGroup from '@/app/components/DesignGroup'
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -569,6 +570,23 @@ export default function PortfolioEditorPage() {
         </button>
         {extra}
       </div>
+    )
+  }
+
+  function card(key: string, extra?: ReactNode, dim?: boolean, lead?: ReactNode) {
+    return (
+      <DesignGroup
+        key={key}
+        title={EDITOR_TITLES[key]}
+        hint={summary(key)}
+        left={lead}
+        right={extra}
+        dim={dim}
+        onOpen={() => setOpen(key)}
+        onClose={() => setOpen((o) => (o === key ? null : o))}
+      >
+        {open === key ? editorBody(key) : null}
+      </DesignGroup>
     )
   }
 
@@ -1195,67 +1213,58 @@ export default function PortfolioEditorPage() {
             <div className="grid gap-8 lg:grid-cols-[minmax(0,540px)_1fr]">
               {/* Form */}
               <div className="space-y-5">
-                {open === null ? (
-                  <div>
-                    {groupHeading('Portfolio', 'What clients see first.')}
-                    <div className="space-y-2.5">{['cover', 'name', 'location'].map((k) => hubRow(k))}</div>
+                <div data-accordion>
+                  {groupHeading('Portfolio', 'What clients see first.')}
+                  <div className="space-y-2.5">{['cover', 'name', 'location'].map((k) => card(k))}</div>
 
-                    {groupHeading('Portfolio style', 'The look and feel of your site.')}
-                    <div className="space-y-2.5">{['brand', 'master', 'background', 'spacing', 'message'].map((k) => hubRow(k))}</div>
+                  {groupHeading('Portfolio style', 'The look and feel of your site.')}
+                  <div className="space-y-2.5">{['brand', 'master', 'background', 'spacing', 'message'].map((k) => card(k))}</div>
 
-                    {groupHeading('Sections', 'Use the switch to show or hide a section on your site. Drag the dots up or down to change the order. Your changes apply to your website and to the Camrhia app.')}
-                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-                      <SortableContext items={form.section_order ?? []} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-2.5">
-                          {(form.section_order ?? []).map((key) => {
-                            const toggle = TOGGLE[key]
-                            const on = toggle ? form[toggle] !== false : true
-                            return (
-                              <SortableRow
-                                key={key}
-                                id={key}
-                                render={(h) =>
-                                  hubRow(
-                                    key,
-                                    toggle ? (
-                                      <Toggle on={on} onChange={(v) => setField(toggle, v as never)} label={`Show ${LABELS[key]}`} />
-                                    ) : (
-                                      <span className="text-xs text-ink-soft">Auto</span>
-                                    ),
-                                    !on,
-                                    <button
-                                      type="button"
-                                      aria-label={`Drag ${LABELS[key]} to reorder`}
-                                      className="cursor-grab touch-none py-4 pl-3 pr-1 text-ink-soft hover:text-ink active:cursor-grabbing"
-                                      {...(h.attributes as object)}
-                                      {...(h.listeners as object)}
-                                    >
-                                      <svg width="14" height="18" viewBox="0 0 14 18" fill="currentColor" aria-hidden="true">
-                                        <circle cx="4" cy="3" r="1.5" /><circle cx="10" cy="3" r="1.5" />
-                                        <circle cx="4" cy="9" r="1.5" /><circle cx="10" cy="9" r="1.5" />
-                                        <circle cx="4" cy="15" r="1.5" /><circle cx="10" cy="15" r="1.5" />
-                                      </svg>
-                                    </button>,
-                                  )
-                                }
-                              />
-                            )
-                          })}
-                        </div>
-                      </SortableContext>
-                    </DndContext>
+                  {groupHeading('Sections', 'Use the switch to show or hide a section on your site. Drag the dots up or down to change the order. Your changes apply to your website and to the Camrhia app.')}
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                    <SortableContext items={form.section_order ?? []} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-2.5">
+                        {(form.section_order ?? []).map((key) => {
+                          const toggle = TOGGLE[key]
+                          const on = toggle ? form[toggle] !== false : true
+                          return (
+                            <SortableRow
+                              key={key}
+                              id={key}
+                              render={(h) =>
+                                card(
+                                  key,
+                                  toggle ? (
+                                    <Toggle on={on} onChange={(v) => setField(toggle, v as never)} label={`Show ${LABELS[key]}`} />
+                                  ) : (
+                                    <span className="text-xs text-ink-soft">Auto</span>
+                                  ),
+                                  !on,
+                                  <button
+                                    type="button"
+                                    aria-label={`Drag ${LABELS[key]} to reorder`}
+                                    className="cursor-grab touch-none pr-1 text-ink-soft hover:text-ink active:cursor-grabbing"
+                                    {...(h.attributes as object)}
+                                    {...(h.listeners as object)}
+                                  >
+                                    <svg width="14" height="18" viewBox="0 0 14 18" fill="currentColor" aria-hidden="true">
+                                      <circle cx="4" cy="3" r="1.5" /><circle cx="10" cy="3" r="1.5" />
+                                      <circle cx="4" cy="9" r="1.5" /><circle cx="10" cy="9" r="1.5" />
+                                      <circle cx="4" cy="15" r="1.5" /><circle cx="10" cy="15" r="1.5" />
+                                    </svg>
+                                  </button>,
+                                )
+                              }
+                            />
+                          )
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
 
-                    {groupHeading('Visibility', 'Who can find you.')}
-                    <div className="space-y-2.5">{hubRow('listed')}</div>
-                  </div>
-                ) : (
-                  <div className="space-y-5">
-                    <button type="button" className="text-sm text-ink-soft hover:text-ink" onClick={goBack}>← All sections</button>
-                    <h2 className="font-fraunces text-2xl font-semibold text-ink">{EDITOR_TITLES[open]}</h2>
-                    {editorBody(open)}
-                    <button type="button" className={btn} onClick={goBack}>Done</button>
-                  </div>
-                )}
+                  {groupHeading('Visibility', 'Who can find you.')}
+                  <div className="space-y-2.5">{card('listed')}</div>
+                </div>
 
                 <p className="text-xs text-ink-soft">
                   Photo layouts and packages are edited in the Camrhia app for now. Anything you change here shows up there too.
