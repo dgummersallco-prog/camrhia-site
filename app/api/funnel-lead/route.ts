@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
-  const { error } = await sb.from('funnel_leads').insert({ funnel_id, name, email, phone, note })
+  const { error } = await sb.rpc('submit_special_signup', { p_funnel_id: funnel_id, p_name: name, p_email: email, p_phone: phone, p_note: note })
   if (error) return Response.json({ error: 'Could not send. Please try again.' }, { status: 500 })
   return Response.json({ ok: true })
 }

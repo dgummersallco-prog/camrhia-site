@@ -23,10 +23,11 @@ type Funnel = {
   cta_label: string
   published: boolean
 }
+type Pkg = { id: string; name: string; price: string | null; detail: string | null; covers: string | null }
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -361,6 +362,7 @@ export default function SpecialsPage() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const bgInput = useRef<HTMLInputElement>(null)
+  const [packages, setPackages] = useState<Pkg[]>([])
   const photoInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async (uid: string) => {
@@ -385,6 +387,7 @@ export default function SpecialsPage() {
       if (!sess.session) { router.replace('/login?next=/specials'); return }
       setUserId(sess.session.user.id)
       setForm((f) => f ?? toForm(null))
+      sb.from('packages').select('id,name,price,detail,covers').eq('owner_id', sess.session.user.id).order('sort_order').then(({ data }) => setPackages((data ?? []) as Pkg[]))
       load(sess.session.user.id)
     }
     init()
@@ -392,6 +395,19 @@ export default function SpecialsPage() {
 
   const flash = (m: string) => { setMessage(m); setTimeout(() => setMessage(null), 2500) }
   const setTheme = (patch: Partial<SpecialTheme>) => setForm((f) => (f ? { ...f, theme: { ...f.theme, ...patch } } : f))
+  const pickPackage = (id: string) =>
+    setForm((f) => {
+      if (!f) return f
+      const p = packages.find((x) => x.id === id)
+      const text: Record<string, string> = { ...f.text, package_id: id }
+      if (p) {
+        text.price_line = [p.price, p.covers].filter(Boolean).join(' · ')
+        if (!text.details_body.trim() && p.detail) text.details_body = p.detail
+      } else {
+        text.price_line = ''
+      }
+      return { ...f, text }
+    })
   const setBlock = (i: number, patch: Partial<TextBlock>) =>
     setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)) } } : f))
   const addBlock = () =>
@@ -642,6 +658,25 @@ export default function SpecialsPage() {
                         </div>
                       ))}
                       <button type="button" onClick={addBlock} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add text box</button>
+                    </MiniCard>
+
+                    <MiniCard title="Mini session" summary={packages.find((x) => x.id === form.text.package_id)?.name || 'None'}>
+                      {packages.length === 0 ? (
+                        <p className="text-sm text-ink-soft">You have no packages yet. Add a package in the app first, then come back and pick it here.</p>
+                      ) : (
+                        <>
+                          <label className="block">
+                            <Label>Pick the package for this special</Label>
+                            <select value={form.text.package_id} onChange={(e) => pickPackage(e.target.value)} className={inputCls}>
+                              <option value="">Pick a package</option>
+                              {packages.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}{p.price ? ` · ${p.price}` : ''}</option>
+                              ))}
+                            </select>
+                          </label>
+                          <p className="text-sm text-ink-soft">Sign-ups land in your app inquiries with this package attached. The price and details come from the package.</p>
+                        </>
+                      )}
                     </MiniCard>
 
                     <MiniCard title="When and where (optional)" summary={form.text.when_where || 'None'}>
