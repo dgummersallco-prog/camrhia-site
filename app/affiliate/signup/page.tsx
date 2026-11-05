@@ -23,13 +23,6 @@ async function uniqueReferralCode(name: string): Promise<string> {
   return `${baseCode(name)}${Date.now().toString().slice(-4)}`
 }
 
-const ROAD = [
-  { n: 4, pay: '$60', line: 'Your own Camrhia is paid for.' },
-  { n: 33, pay: '$500', line: 'A real side income.' },
-  { n: 65, pay: '$1,000', line: 'Every single month.' },
-  { n: 327, pay: '$5,000', line: 'Replace a full-time paycheck.' },
-]
-
 const STEPS = [
   { t: 'Make a post', d: 'Show Camrhia to your followers with your personal link.' },
   { t: 'A photographer subscribes', d: 'They sign up through your link and start paying.' },
@@ -162,73 +155,23 @@ export default function AffiliateSignupPage() {
         </section>
 
         <section className="px-6 pb-16">
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-center font-fraunces text-3xl font-semibold text-ink">The road to $5,000 a month</h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-ink-soft">What you earn each month when you have this many photographers subscribed through you.</p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {ROAD.map((r) => (
-                <div key={r.n} className="rounded-2xl border border-line bg-card p-6 text-center">
-                  <p className="text-sm text-ink-soft">{r.n} photographers</p>
-                  <p className="mt-1 font-fraunces text-4xl font-semibold" style={{ color: ROSE }}>{r.pay}</p>
-                  <p className="text-xs text-ink-soft">every month</p>
-                  <p className="mt-3 text-sm font-medium text-ink">{r.line}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-ink-soft">
-              Examples, not typical results. Based on 30% of the Solo monthly plan ($59.99) after Apple&apos;s 15% fee, about $15.30 per photographer per month. Your results depend on the photographers you sign.
-            </p>
-          </div>
-        </section>
-
-        <section className="px-6 pb-16">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-center font-fraunces text-3xl font-semibold text-ink">Put us next to everyone else</h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-ink-soft">Same photographers. Very different payouts.</p>
-
-            <div className="mt-8 rounded-2xl border border-line bg-card p-6">
-              <p className="text-sm font-semibold text-ink">Commission rate</p>
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="font-fraunces text-3xl font-semibold text-ink">The road to $5,000 a month starts here</h2>
+            <p className="mx-auto mt-2 max-w-xl text-ink-soft">Part of the program is helping you win. We train you on the marketing, so your posts turn into subscribers.</p>
+            <div className="mt-8 grid gap-4 text-left sm:grid-cols-2">
               {[
-                { name: 'Typical software affiliate program', label: 'about 25%', w: 62.5, note: 'recurring, the middle of the 20 to 30% industry range', hi: false },
-                { name: 'Narrative (AI culling and editing)', label: '30%', w: 75, note: 'stops after 12 months', hi: false },
-                { name: 'Camrhia', label: '30%', w: 75, note: 'EVERY SINGLE MONTH. Never stops. No cap. No ladder.', hi: true },
-              ].map((r) => (
-                <div key={r.name} className="mt-4">
-                  <div className="flex items-baseline justify-between gap-3 text-sm">
-                    <span className={r.hi ? 'font-semibold text-ink' : 'text-ink-soft'}>{r.name}</span>
-                    <span className="font-fraunces text-xl font-semibold text-ink">{r.label}</span>
-                  </div>
-                  <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-line">
-                    <div className="h-3 rounded-full" style={{ width: `${r.w}%`, backgroundColor: r.hi ? ROSE : '#CFC3BB' }} />
-                  </div>
-                  <p className={r.hi ? 'mt-1 text-xs font-semibold' : 'mt-1 text-xs text-ink-soft'} style={r.hi ? { color: ROSE } : undefined}>{r.note}</p>
+                { t: 'What to post', d: 'Ready-to-use scripts, captions and post ideas.' },
+                { t: 'What to say', d: 'How to talk about Camrhia so photographers get it in seconds.' },
+                { t: 'Followers to subscribers', d: 'Simple steps from your first post to your first sale.' },
+                { t: 'Help from us', d: 'We call you, get you set up, and help you land your first photographers.' },
+              ].map((x) => (
+                <div key={x.t} className="rounded-2xl border border-line bg-card p-6">
+                  <p className="text-lg font-semibold text-ink">{x.t}</p>
+                  <p className="mt-1 text-sm text-ink-soft">{x.d}</p>
                 </div>
               ))}
             </div>
-
-            <div className="mt-4 rounded-2xl border border-line bg-card p-6">
-              <p className="text-sm font-semibold text-ink">What ONE photographer pays you in their first 12 months</p>
-              {[
-                { name: 'Camrhia (Solo plan)', label: 'about $184', w: 100, note: 'and it keeps coming every month after that', hi: true },
-                { name: 'HoneyBook', label: '$50', w: 27, note: 'one payment, after 100 days', hi: false },
-                { name: 'Dubsado (base tier)', label: '$35', w: 19, note: 'one payment, after 60 days', hi: false },
-              ].map((r) => (
-                <div key={r.name} className="mt-4">
-                  <div className="flex items-baseline justify-between gap-3 text-sm">
-                    <span className={r.hi ? 'font-semibold text-ink' : 'text-ink-soft'}>{r.name}</span>
-                    <span className="font-fraunces text-xl font-semibold text-ink">{r.label}</span>
-                  </div>
-                  <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-line">
-                    <div className="h-3 rounded-full" style={{ width: `${r.w}%`, backgroundColor: r.hi ? ROSE : '#CFC3BB' }} />
-                  </div>
-                  <p className={r.hi ? 'mt-1 text-xs font-semibold' : 'mt-1 text-xs text-ink-soft'} style={r.hi ? { color: ROSE } : undefined}>{r.note}</p>
-                </div>
-              ))}
-            </div>
-
-            <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-ink-soft">
-              Sources: <a className="underline" href="https://refgrow.com/blog/affiliate-program-benchmarks-2026" target="_blank" rel="noopener noreferrer">Refgrow, Affiliate Program Benchmarks 2026</a>, <a className="underline" href="https://www.track360.io/blog/saas-affiliate-commission-rates-benchmark-2026" target="_blank" rel="noopener noreferrer">Track360, SaaS Affiliate Commission Rates 2026</a>, <a className="underline" href="https://narrative.so/ambassador-program" target="_blank" rel="noopener noreferrer">Narrative ambassador program</a>, <a className="underline" href="https://honeybook.com/lp/affiliates" target="_blank" rel="noopener noreferrer">HoneyBook affiliates</a>, <a className="underline" href="https://www.dubsado.com/affiliate-program" target="_blank" rel="noopener noreferrer">Dubsado affiliate program</a>. About 25% is the middle of the 20 to 30% range the benchmarks report, not an exact average. Camrhia figure is 30% of the $59.99 Solo plan after Apple&apos;s 15% fee, about $15.30 a month, for 12 months. Programs change their terms.
-            </p>
+            <p className="mx-auto mt-5 max-w-xl text-xs text-ink-soft">Results depend on your audience and your effort. No income is guaranteed.</p>
           </div>
         </section>
 
