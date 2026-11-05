@@ -144,7 +144,7 @@ export default function AffiliateSignupPage() {
             <a href="#apply" className="mt-8 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>
               Apply now
             </a>
-            <p className="mt-3 text-sm text-white/75">Free to join. Free Camrhia account when you are approved.</p>
+            <p className="mt-5 inline-block rounded-full bg-white/15 px-5 py-2 text-sm font-semibold text-white">Free to join. Approved affiliates get Camrhia free for life, our gift to you.</p>
           </div>
         </section>
 
@@ -177,6 +177,36 @@ export default function AffiliateSignupPage() {
             </div>
             <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-ink-soft">
               Examples, not typical results. Based on 30% of the Solo monthly plan ($59.99) after Apple&apos;s 15% fee, about $15.30 per photographer per month. Your results depend on the photographers you sign.
+            </p>
+          </div>
+        </section>
+
+        <section className="px-6 pb-16">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="text-center font-fraunces text-3xl font-semibold text-ink">30% is the top of the range</h2>
+            <p className="mx-auto mt-2 max-w-xl text-center text-ink-soft">Most recurring software affiliate programs pay 20 to 30%. We start you at the top, from your first referral.</p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-line bg-card p-6 text-center">
+                <p className="text-sm text-ink-soft">Typical software affiliate program</p>
+                <p className="mt-1 font-fraunces text-4xl font-semibold text-ink">20 to 30%</p>
+                <p className="mt-2 text-sm text-ink-soft">recurring, industry benchmark</p>
+              </div>
+              <div className="rounded-2xl p-6 text-center text-white" style={{ backgroundColor: ROSE }}>
+                <p className="text-sm text-white/85">Camrhia</p>
+                <p className="mt-1 font-fraunces text-4xl font-semibold">30%</p>
+                <p className="mt-2 text-sm font-semibold">EVERY SINGLE MONTH. No cap. No ladder.</p>
+              </div>
+              <div className="rounded-2xl border border-line bg-card p-6 text-center">
+                <p className="text-sm text-ink-soft">Dubsado, a photographer CRM (base tier)</p>
+                <p className="mt-1 font-fraunces text-4xl font-semibold text-ink">$35 once</p>
+                <p className="mt-2 text-sm text-ink-soft">one payment per referral, after 60 days</p>
+              </div>
+            </div>
+            <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-ink">
+              On Camrhia, one Solo subscriber pays you about $15.30 a month. You pass that $35 in your third month, then keep getting paid.
+            </p>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-xs text-ink-soft">
+              Sources: <a className="underline" href="https://refgrow.com/blog/affiliate-program-benchmarks-2026" target="_blank" rel="noopener noreferrer">Refgrow, Affiliate Program Benchmarks 2026</a>, <a className="underline" href="https://www.track360.io/blog/saas-affiliate-commission-rates-benchmark-2026" target="_blank" rel="noopener noreferrer">Track360, SaaS Affiliate Commission Rates 2026</a>, <a className="underline" href="https://www.dubsado.com/affiliate-program" target="_blank" rel="noopener noreferrer">Dubsado affiliate program</a>. Industry ranges are published estimates and vary by program.
             </p>
           </div>
         </section>
