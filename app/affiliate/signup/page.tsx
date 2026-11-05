@@ -101,7 +101,6 @@ export default function AffiliateSignupPage() {
   const header = (
     <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
       <Link href="/" aria-label="Camrhia home"><Wordmark className="text-3xl" /></Link>
-      <Link href="/affiliate/login" className="text-sm text-ink-soft transition-colors hover:text-ink">Sign in</Link>
     </header>
   )
 
@@ -268,7 +267,6 @@ export default function AffiliateSignupPage() {
               <button type="submit" disabled={loading} className="mt-2 w-full rounded-full py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: ROSE }}>
                 {loading ? 'Sending…' : 'Lock in my 30%'}
               </button>
-              <p className="text-center text-xs text-ink-soft">Already applied? <Link href="/affiliate/login" className="underline">Sign in</Link></p>
             </form>
           </div>
         </section>
