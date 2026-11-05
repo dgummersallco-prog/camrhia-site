@@ -234,7 +234,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
           {d.price ? <p className="mt-5 text-2xl" style={{ ...heading, color: t.bgImage ? '#FFFFFF' : t.accent, textAlign: titleAlign }}>{d.price}</p> : null}
           {d.whenWhere ? <p className="mt-2 opacity-80" style={{ color: heroText, textAlign: titleAlign }}>{d.whenWhere}</p> : null}
           {photos.length > 0 ? (
-            <div className="mx-auto mt-8 max-w-[300px]">
+            <div style={{ width: '100%', maxWidth: 300, margin: '32px auto 0' }}>
               <Slideshow photos={photos} />
             </div>
           ) : null}
