@@ -416,7 +416,7 @@ export default function AffiliateDashboardPage() {
               <p className="font-mono text-xs text-ink-soft">3</p>
               <p className="mt-1 font-medium text-ink">You earn every month</p>
               <p className="mt-1 text-ink-soft">
-                Once they pay, you earn 20% (growing to 25% and 30%) of each payment after Apple&apos;s fee, for as long as they stay subscribed.{' '}
+                Once they pay, you earn 30% of each payment after Apple&apos;s fee, every month, for as long as they stay subscribed. No cap.{' '}
                 <Link href="/affiliate/dashboard/pay" className="text-twilight underline">See the full breakdown</Link>
               </p>
             </li>
@@ -550,76 +550,33 @@ export default function AffiliateDashboardPage() {
           ))}
         </div>
 
-        {/* Commission tier */}
+        {/* Commission */}
         {(() => {
-          // Count referrals that have been or are paying — determines next position
-          const completedCount = referrals.filter(
-            (r) => r.status === 'active' || r.status === 'churned'
-          ).length
-          const nextPosition = completedCount + 1
-          const nextRate =
-            nextPosition <= 10 ? 0.20 :
-            nextPosition <= 25 ? 0.25 :
-            0.30
-
-          // Progress toward the next tier threshold
-          type TierInfo =
-            | { atMax: false; currentPct: number; nextPct: number; label: string; toNext: number; barFill: number }
-            | { atMax: true }
-
-          const tierInfo: TierInfo =
-            completedCount < 10
-              ? { atMax: false, currentPct: 20, nextPct: 25, label: 'Tier 1', toNext: 10 - completedCount, barFill: completedCount / 10 }
-              : completedCount < 25
-              ? { atMax: false, currentPct: 25, nextPct: 30, label: 'Tier 2', toNext: 25 - completedCount, barFill: (completedCount - 10) / 15 }
-              : { atMax: true }
-
+          const road = [{ n: 4, pay: '$60' }, { n: 33, pay: '$500' }, { n: 65, pay: '$1,000' }, { n: 327, pay: '$5,000' }]
+          const paying = referrals.filter((r) => r.status === 'active').length
+          const next = road.find((m) => m.n > paying)
+          const prev = [...road].reverse().find((m) => m.n <= paying)?.n ?? 0
+          const fill = next ? (paying - prev) / (next.n - prev) : 1
           return (
             <section className="rounded-2xl border border-line bg-card p-6">
-              <div className="flex items-start justify-between gap-4 flex-wrap mb-5">
-                <div>
-                  <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/60 mb-1">
-                    Commission tier
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-fraunces text-4xl font-semibold text-twilight leading-none" style={{ color: '#A9545F' }}>
-                      {Math.round(nextRate * 100)}%
-                    </span>
-                    <span className="text-sm text-ink-soft">of each subscription after Apple’s 15% fee · <Link href="/affiliate/dashboard/pay" className="text-twilight underline">see the full breakdown</Link></span>
-                  </div>
+              <div className="mb-5">
+                <p className="font-mono text-xs tracking-widest uppercase text-ink-soft/60 mb-1">Your commission</p>
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="font-fraunces text-4xl font-semibold leading-none" style={{ color: '#A9545F' }}>30%</span>
+                  <span className="text-sm text-ink-soft">of every subscription after Apple’s 15% fee, every month, no cap · <Link href="/affiliate/dashboard/pay" className="text-twilight underline">see the full breakdown</Link></span>
                 </div>
-                {!tierInfo.atMax && (
-                  <span className="inline-flex items-center rounded-full bg-paper-deep border border-line px-3 py-1 text-xs font-medium text-ink-soft">
-                    {tierInfo.label}
-                  </span>
-                )}
               </div>
-
-              {tierInfo.atMax ? (
-                <div>
-                  <div className="h-1.5 w-full rounded-full bg-twilight/20 mb-2">
-                    <div className="h-1.5 rounded-full bg-twilight w-full" style={{ backgroundColor: '#A9545F' }} />
-                  </div>
-                  <p className="text-xs text-ink-soft">
-                    Maximum tier — 30% on every referral, for life.
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <div className="h-1.5 w-full rounded-full bg-line mb-2 overflow-hidden">
-                    <div
-                      className="h-1.5 rounded-full bg-twilight transition-all duration-300"
-                      style={{ width: `${Math.min(tierInfo.barFill * 100, 100)}%`, backgroundColor: '#A9545F' }}
-                    />
-                  </div>
-                  <p className="text-xs text-ink-soft">
-                    {completedCount} paid referral{completedCount !== 1 ? 's' : ''} so far —{' '}
-                    <span className="font-medium text-ink">
-                      {tierInfo.toNext} more to unlock {tierInfo.nextPct}%
-                    </span>
-                  </p>
-                </div>
-              )}
+              <div className="h-1.5 w-full rounded-full bg-line mb-2 overflow-hidden">
+                <div className="h-1.5 rounded-full transition-all duration-300" style={{ width: `${Math.min(fill * 100, 100)}%`, backgroundColor: '#A9545F' }} />
+              </div>
+              <p className="text-xs text-ink-soft">
+                {paying} paying photographer{paying !== 1 ? 's' : ''} so far.{' '}
+                {next ? (
+                  <span className="font-medium text-ink">{next.n - paying} more to reach about {next.pay} a month.</span>
+                ) : (
+                  <span className="font-medium text-ink">You are at the top of the road.</span>
+                )}
+              </p>
             </section>
           )
         })()}

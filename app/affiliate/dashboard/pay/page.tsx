@@ -98,8 +98,8 @@ function MasterBreakdown({ a }: { a: ShellAffiliate }) {
         <ol className="mt-4 space-y-2 text-sm text-ink list-decimal list-inside">
           <li>Apple takes <span className="font-medium">15%</span> of the subscription price.</li>
           <li>
-            The affiliate who referred the photographer gets <span className="font-medium">20%, 25% or 30%</span> of what&apos;s left,
-            based on how many referrals they have (1&ndash;10: 20%, 11&ndash;25: 25%, 26+: 30%).
+            The affiliate who referred the photographer gets <span className="font-medium">30%</span> of what&apos;s left,
+            on every photographer they sign, every month, with no cap.
           </li>
           <li>
             If that affiliate is on a master&apos;s team, the master gets <span className="font-medium">a share of what&apos;s left after the affiliate is paid</span>.
@@ -183,22 +183,15 @@ function MasterBreakdown({ a }: { a: ShellAffiliate }) {
   )
 }
 
-// Monthly earnings for n active subscribers on one plan. Each referral's rate is set by its
-// position (1-10: 20%, 11-25: 25%, 26+: 30%), unless the affiliate has a custom flat rate.
+// Monthly earnings for n active subscribers on one plan: a flat rate (30% unless custom).
 function monthlyEarn(n: number, price: number, customRate: number | null) {
   const base = r2(price * (1 - APPLE_RATE))
-  if (customRate != null) return r2(base * customRate * n)
-  const t1 = Math.min(n, 10)
-  const t2 = Math.max(0, Math.min(n, 25) - 10)
-  const t3 = Math.max(0, n - 25)
-  return r2(r2(base * 0.2) * t1 + r2(base * 0.25) * t2 + r2(base * 0.3) * t3)
+  return r2(r2(base * (customRate ?? 0.3)) * n)
 }
 
 function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
   const tiers = [
-    { label: '1\u201310 referrals', rt: 0.2 },
-    { label: '11\u201325 referrals', rt: 0.25 },
-    { label: '26+ referrals', rt: 0.3 },
+    { label: 'Every referral', rt: 0.3 },
   ]
   const plans = [
     { label: 'Solo', price: 59.99 },
