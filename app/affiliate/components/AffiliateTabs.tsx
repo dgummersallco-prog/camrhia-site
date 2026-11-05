@@ -48,7 +48,7 @@ export default function AffiliateTabs() {
     return () => { cancelled = true }
   }, [])
 
-  const tabs = [{ href: '/affiliate/dashboard', label: 'Overview' }]
+  const tabs = [{ href: '/affiliate/dashboard', label: 'Overview' }, { href: '/affiliate/dashboard/hub', label: 'Team Hub' }]
   if (isMaster || onTeam) tabs.push({ href: '/affiliate/dashboard/team', label: 'Team' })
   if (isMaster) {
     tabs.push({ href: '/affiliate/dashboard/numbers', label: 'Numbers' })
