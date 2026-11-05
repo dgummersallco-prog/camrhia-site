@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     }
     const patch = isMaster
       ? { is_master: true, commission_rate: 0.5, override_rate: 0.5 }
-      : { is_master: false, commission_rate: null, override_rate: 0 }
+      : { is_master: false, commission_rate: 0.3, override_rate: 0 }
     const { error } = await supabase.from('affiliates').update(patch).eq('id', affiliateId)
     if (error) return Response.json({ error: error.message }, { status: 500 })
     return Response.json({ ok: true })
