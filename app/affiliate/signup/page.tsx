@@ -204,9 +204,16 @@ export default function AffiliateSignupPage() {
                 <p className="mt-2 text-sm font-semibold">EVERY SINGLE MONTH. You join the team and keep earning for as long as your photographers stay.</p>
               </div>
             </div>
-            <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-ink-soft">
-              Sources: <a className="underline" href="https://refgrow.com/blog/affiliate-program-benchmarks-2026" target="_blank" rel="noopener noreferrer">Refgrow, Affiliate Program Benchmarks 2026</a>, <a className="underline" href="https://growsurf.com/statistics/affiliate-marketing-statistics/" target="_blank" rel="noopener noreferrer">GrowSurf, Affiliate Marketing Statistics</a>, <a className="underline" href="https://honeybook.com/lp/affiliates" target="_blank" rel="noopener noreferrer">HoneyBook affiliates</a>, <a className="underline" href="https://www.dubsado.com/affiliate-program" target="_blank" rel="noopener noreferrer">Dubsado affiliate program</a>. Typical online-store programs pay 5 to 15% on a single sale. Software programs often pay 20 to 30% recurring. Camrhia starts you at 30%. Programs change their terms.
-            </p>
+            <details className="mx-auto mt-4 max-w-2xl text-center text-xs text-ink-soft">
+              <summary className="cursor-pointer">Based on published program terms. See sources</summary>
+              <ul className="mt-3 space-y-1">
+                <li><a className="underline" href="https://refgrow.com/blog/affiliate-program-benchmarks-2026" target="_blank" rel="noopener noreferrer">Refgrow, Affiliate Program Benchmarks 2026</a></li>
+                <li><a className="underline" href="https://growsurf.com/statistics/affiliate-marketing-statistics/" target="_blank" rel="noopener noreferrer">GrowSurf, Affiliate Marketing Statistics</a></li>
+                <li><a className="underline" href="https://honeybook.com/lp/affiliates" target="_blank" rel="noopener noreferrer">HoneyBook affiliates</a></li>
+                <li><a className="underline" href="https://www.dubsado.com/affiliate-program" target="_blank" rel="noopener noreferrer">Dubsado affiliate program</a></li>
+              </ul>
+              <p className="mt-3">Typical online-store programs pay 5 to 15% on a single sale. Software programs often pay 20 to 30% recurring. Camrhia starts you at 30%. Programs change their terms.</p>
+            </details>
           </div>
         </section>
 
