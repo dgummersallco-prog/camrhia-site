@@ -4,7 +4,7 @@ import RecruitCapture from './RecruitCapture'
 
 export const metadata: Metadata = {
   title: `Become an Affiliate — ${BRAND_NAME}`,
-  description: `Earn recurring commissions by referring photographers to ${BRAND_NAME}. Tiered rates that grow as you do.`,
+  description: `Earn recurring commissions by referring photographers to ${BRAND_NAME}. 30% recurring on every photographer you sign. No cap.`,
 }
 
 export default function AffiliateSignupLayout({ children }: { children: React.ReactNode }) {
