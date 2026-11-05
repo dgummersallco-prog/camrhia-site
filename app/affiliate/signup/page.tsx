@@ -127,7 +127,7 @@ export default function AffiliateSignupPage() {
       <main>
         <section className="px-6 pb-16 pt-6 text-center" style={{ backgroundColor: ROSE }}>
           <div className="mx-auto max-w-3xl pt-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Founding affiliate offer. This will not last forever.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Limited founding spots. Apply before they are gone.</p>
             <h1 className="mt-4 font-fraunces text-5xl font-semibold leading-[1.05] text-white sm:text-6xl">
               Make a post. Sign a photographer. Get paid 30%.
             </h1>
@@ -222,7 +222,7 @@ export default function AffiliateSignupPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Founding affiliate offer</p>
             <h2 className="mt-3 font-fraunces text-3xl font-semibold leading-tight sm:text-4xl">Every month you wait is commission you never get back.</h2>
             <p className="mx-auto mt-4 max-w-xl text-white/90">
-              Founding affiliates lock in 30% every single month and a free Camrhia account for life. We may change the rate or the gift for affiliates who join later, so the best deal is the one you take now.
+              Founding spots are limited, and we are capping the program. Founding affiliates lock in 30% every single month and a free Camrhia account for life. When the spots are gone, they are gone.
             </p>
             <a href="#apply" className="mt-6 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>Lock in my 30%</a>
           </div>
