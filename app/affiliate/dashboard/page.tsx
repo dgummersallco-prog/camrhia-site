@@ -25,6 +25,7 @@ type Referral = {
   status: 'active' | 'trial' | 'churned'
   created_at: string
   monthly_value: number | null
+  masked?: string | null
 }
 
 type LedgerEntry = {
@@ -137,12 +138,16 @@ export default function AffiliateDashboardPage() {
 
       // Referrals
       try {
-        const { data: referralData } = await supabase
-          .from('referrals')
-          .select('id, status, created_at, monthly_value')
-          .eq('affiliate_id', userId)
-          .order('created_at', { ascending: false })
-        setReferrals(referralData ?? [])
+        const { data: referralData } = await supabase.rpc('get_my_referrals')
+        setReferrals(
+          ((referralData ?? []) as any[]).map((r) => ({
+            id: r.id,
+            status: r.status,
+            created_at: r.created_at,
+            monthly_value: r.monthly_commission != null ? Number(r.monthly_commission) : null,
+            masked: r.masked ?? null,
+          })),
+        )
       } catch {
         setReferrals([])
       }
@@ -528,7 +533,7 @@ export default function AffiliateDashboardPage() {
                   {referrals.map((r, i) => (
                     <tr key={r.id} className="hover:bg-paper-deep/50 transition-colors">
                       <td className="px-5 py-3.5 text-ink font-medium">
-                        Photographer #{i + 1}
+                        {r.masked ?? `Photographer #${i + 1}`}
                       </td>
                       <td className="px-5 py-3.5 text-ink-soft font-mono text-xs">
                         {fmtDate(r.created_at)}
