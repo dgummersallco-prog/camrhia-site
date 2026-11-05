@@ -129,51 +129,6 @@ export default function SettingsPage() {
                 <button type="submit" className={btn} disabled={pwBusy || !pw1}>{pwBusy ? 'Saving…' : 'Update password'}</button>
               </form>
             </Card>
-
-            <Card title="Automatic messages" hint="Camrhia sends these to your clients for you, as notifications in the app.">
-              <form onSubmit={saveAutomation} className="space-y-4">
-                <label className="flex items-start gap-3 text-sm text-ink">
-                  <input type="checkbox" className="mt-0.5 h-4 w-4" checked={autoPay} onChange={(e) => setAutoPay(e.target.checked)} />
-                  <span><span className="font-medium">Payment reminders</span><span className="block text-ink-soft">Sent once, when a payment is due within 3 days.</span></span>
-                </label>
-                <label className="flex items-start gap-3 text-sm text-ink">
-                  <input type="checkbox" className="mt-0.5 h-4 w-4" checked={autoReview} onChange={(e) => setAutoReview(e.target.checked)} />
-                  <span><span className="font-medium">Review request</span><span className="block text-ink-soft">Sent 3 days after you deliver a gallery.</span></span>
-                </label>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-ink">Google review link</label>
-                  <input className={input} placeholder="https://g.page/r/..." value={reviewUrl} onChange={(e) => setReviewUrl(e.target.value)} />
-                </div>
-                {autoMsg && <p className={'text-sm ' + (autoMsg.ok ? 'text-emerald-700' : 'text-red-700')}>{autoMsg.text}</p>}
-                <button type="submit" disabled={autoBusy} className={btn}>{autoBusy ? 'Saving…' : 'Save'}</button>
-              </form>
-            </Card>
-
-            <Card title="Payouts & tax" hint="Card payments from your clients go to your bank through Stripe.">
-              {stErr ? (
-                <p className="text-sm text-red-700">{stErr}</p>
-              ) : !st ? (
-                <p className="text-sm text-ink-soft">Checking your payout setup…</p>
-              ) : st.ready ? (
-                <>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Payouts connected</span>
-                    {st.bank?.last4 && <span className="text-sm text-ink-soft">{st.bank.name ? st.bank.name + ' ' : ''}ending {st.bank.last4}</span>}
-                  </div>
-                  <p className="text-sm leading-relaxed text-ink-soft">Your tax details were collected securely by Stripe when you set up payouts. Camrhia never sees or stores your tax ID. Open your Stripe dashboard to review your details or find tax documents.</p>
-                  {st.dashboardUrl && <a href={st.dashboardUrl} target="_blank" rel="noreferrer" className={btnGhost}>Open Stripe dashboard</a>}
-                </>
-              ) : (
-                <>
-                  <p className="text-sm leading-relaxed text-ink-soft">{st.connected ? 'Your payout setup is not finished yet.' : 'You have not set up payouts yet.'} Stripe collects your bank and tax details securely, and Camrhia never stores your tax ID.</p>
-                  <Link href="/payments" className={btn + ' inline-block'}>{st.connected ? 'Finish setup' : 'Set up payouts'}</Link>
-                </>
-              )}
-            </Card>
-
-            <Card title="AI photo editing" hint="Edit, enhance and retouch your photos right inside your galleries." badge="Coming soon">
-              <p className="text-sm text-ink-soft">We are building this now.</p>
-            </Card>
           </div>
         )}
       </main>
