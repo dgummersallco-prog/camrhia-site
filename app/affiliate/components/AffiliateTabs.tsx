@@ -48,8 +48,8 @@ export default function AffiliateTabs() {
     return () => { cancelled = true }
   }, [])
 
-  const tabs = [{ href: '/affiliate/dashboard', label: 'Overview' }, { href: '/affiliate/dashboard/hub', label: 'Team Hub' }]
-  if (isMaster || onTeam) tabs.push({ href: '/affiliate/dashboard/team', label: 'Team' })
+  const tabs = [{ href: '/affiliate/dashboard', label: 'Home' }, { href: '/affiliate/dashboard/hub', label: 'Team Hub' }]
+  if (isMaster) tabs.push({ href: '/affiliate/dashboard/team', label: 'Team' })
   if (isMaster) {
     tabs.push({ href: '/affiliate/dashboard/numbers', label: 'Numbers' })
     tabs.push({ href: '/affiliate/dashboard/recruit', label: 'Recruit' })
@@ -58,7 +58,7 @@ export default function AffiliateTabs() {
   tabs.push({ href: '/affiliate/dashboard/pay', label: 'Pay breakdown' })
 
   return (
-    <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+    <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap lg:sticky lg:top-24 lg:flex-col lg:items-stretch lg:overflow-visible">
       {tabs.map((t) => {
         const active = t.href === '/affiliate/dashboard' ? pathname === t.href : pathname.startsWith(t.href)
         return (
@@ -67,8 +67,8 @@ export default function AffiliateTabs() {
             href={t.href}
             className={
               active
-                ? 'rounded-full bg-ink px-4 py-1.5 text-sm font-medium text-white'
-                : 'rounded-full border border-line px-4 py-1.5 text-sm text-ink-soft hover:text-ink'
+                ? 'rounded-full bg-ink px-4 py-1.5 text-sm font-medium text-white lg:rounded-xl lg:py-2.5'
+                : 'rounded-full border border-line px-4 py-1.5 text-sm text-ink-soft hover:text-ink lg:rounded-xl lg:py-2.5'
             }
           >
             {t.label}

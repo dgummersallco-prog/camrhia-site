@@ -333,7 +333,7 @@ export default function AffiliateDashboardPage() {
     )
   }
 
-  if (pending) return <AffiliateShell title="Overview">{() => null}</AffiliateShell>
+  if (pending) return <AffiliateShell title="Home">{() => null}</AffiliateShell>
 
   if (needsActivation && !affiliate) {
     return (
@@ -374,7 +374,7 @@ export default function AffiliateDashboardPage() {
     <div className="min-h-screen bg-paper flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between gap-4">
+        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
           <Link
             href="/"
             className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors"
@@ -394,161 +394,78 @@ export default function AffiliateDashboardPage() {
         </div>
       </header>
 
-      <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-10 space-y-8">
+      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-8 lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10">
+        <aside>
+          <AffiliateTabs />
+        </aside>
+        <div className="min-w-0 space-y-6 pt-6 lg:pt-0">
 
-        <AffiliateTabs />
+        {/* Greeting */}
+        <h1 className="font-fraunces text-3xl font-semibold text-ink">Welcome back, {(affiliate.name ?? '').split(' ')[0] || 'there'}</h1>
 
-        {/* How it works */}
-        <section className="rounded-2xl border border-line bg-card p-6">
-          <h2 className="font-fraunces text-xl font-semibold text-ink">How you earn</h2>
-          <ol className="mt-4 grid gap-4 sm:grid-cols-3 text-sm">
-            <li>
-              <p className="font-mono text-xs text-ink-soft">1</p>
-              <p className="mt-1 font-medium text-ink">Share your referral link</p>
-              <p className="mt-1 text-ink-soft">Send it to photographers: friends, groups, your audience. It&apos;s the link just below.</p>
-            </li>
-            <li>
-              <p className="font-mono text-xs text-ink-soft">2</p>
-              <p className="mt-1 font-medium text-ink">They sign up for Camrhia</p>
-              <p className="mt-1 text-ink-soft">They start with a 14-day free trial. You don&apos;t earn during the trial.</p>
-            </li>
-            <li>
-              <p className="font-mono text-xs text-ink-soft">3</p>
-              <p className="mt-1 font-medium text-ink">You earn every month</p>
-              <p className="mt-1 text-ink-soft">
-                Once they pay, you earn 30% of each payment after Apple&apos;s fee, every month, for as long as they stay subscribed. No cap.{' '}
-                <Link href="/affiliate/dashboard/pay" className="text-twilight underline">See the full breakdown</Link>
-              </p>
-            </li>
-          </ol>
-        </section>
-
-        {/* Dark referral card */}
-        <div className="rounded-2xl bg-ink p-8">
-          <p className="font-mono text-xs tracking-widest uppercase text-white/40 mb-3">
-            Your referral link (for photographers)
-          </p>
-          <p className="font-fraunces text-3xl font-semibold text-white mb-2 tracking-tight">
-            {affiliate.referral_code}
-          </p>
-          <p className="text-sm text-white/70 max-w-xl">
-            This is the link you share with <span className="text-white">photographers</span>. When someone signs up for Camrhia through it and becomes a paying subscriber, you earn commission every month they stay.
-          </p>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
-            <span className="font-mono text-sm text-white/60 bg-white/5 px-3 py-1.5 rounded-lg truncate">
-              camrhia.com/r/{affiliate.referral_code}
-            </span>
-            <button
-              onClick={copyLink}
-              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1.5 text-sm font-medium text-white hover:bg-white/10 transition-colors shrink-0"
-            >
-              {copied ? (
-                <>
-                  <svg viewBox="0 0 12 12" className="w-3.5 h-3.5" fill="none">
-                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <svg viewBox="0 0 12 12" className="w-3.5 h-3.5" fill="none">
-                    <rect x="1" y="3" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-                    <path d="M3 3V2.5A1.5 1.5 0 0 1 4.5 1h5A1.5 1.5 0 0 1 11 2.5v5A1.5 1.5 0 0 1 9.5 9H9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                  </svg>
-                  Copy link
-                </>
-              )}
-            </button>
-            <button
-              onClick={sendLink}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-medium text-ink hover:bg-white/90 transition-colors shrink-0"
-            >
-              Send link
-            </button>
-          </div>
-        </div>
-
-        {/* Customize referral link */}
-        <section className="rounded-2xl border border-line bg-card p-6">
-          <h2 className="font-fraunces text-xl font-semibold text-ink mb-1">Customize your link</h2>
-          <p className="font-mono text-sm text-ink-soft mb-5">
-            camrhia.com/r/
-            <span className={`font-medium ${codeInput ? 'text-ink' : 'text-ink-soft/40'}`}>
-              {codeInput || '…'}
-            </span>
-          </p>
-
-          {/* Break-old-links warning — always visible */}
-          <div className="flex gap-2.5 rounded-xl bg-brass/8 border border-brass/20 px-4 py-3 mb-5">
-            <svg viewBox="0 0 16 16" className="w-4 h-4 text-brass shrink-0 mt-0.5" fill="none">
-              <path d="M8 2L14.5 13H1.5L8 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-              <path d="M8 6v3.5M8 11v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-            <p className="text-xs text-ink-soft leading-relaxed">
-              Changing your link will break any links you&apos;ve already shared using your current code:{' '}
-              <span className="font-mono font-medium text-ink">camrhia.com/r/{affiliate.referral_code}</span>
-            </p>
-          </div>
-
-          {/* Input row */}
-          <div className="flex items-stretch gap-2 mb-3">
-            <input
-              type="text"
-              value={codeInput}
-              onChange={(e) =>
-                setCodeInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
-              }
-              maxLength={30}
-              spellCheck={false}
-              placeholder={affiliate.referral_code}
-              className="flex-1 rounded-xl border border-line bg-paper px-4 py-2.5 text-sm font-mono text-ink placeholder:text-ink-soft/40 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition"
-            />
-            <button
-              onClick={saveCode}
-              disabled={codeStatus !== 'available' || codeSaving || codeInput === affiliate.referral_code}
-              className="rounded-xl bg-twilight px-5 py-2.5 text-sm font-semibold text-white hover:bg-twilight/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-              style={{ backgroundColor: '#A9545F', color: '#ffffff' }}
-            >
-              {codeSaving ? 'Saving…' : 'Save'}
-            </button>
-          </div>
-
-          {/* Inline feedback */}
-          <div className="min-h-[1.25rem]">
-            {codeStatus === 'checking' && (
-              <p className="text-xs text-ink-soft/60 animate-pulse">Checking availability…</p>
-            )}
-            {codeStatus === 'available' && (
-              <p className="text-xs text-sage font-medium">✓ Available</p>
-            )}
-            {codeStatus === 'taken' && (
-              <p className="text-xs text-red-500 font-medium">✗ Already taken</p>
-            )}
-            {codeStatus === 'invalid' && codeError && (
-              <p className="text-xs text-red-500">{codeError}</p>
-            )}
-            {codeSaved && (
-              <p className="text-xs text-sage font-medium">Link updated.</p>
-            )}
-          </div>
-        </section>
-
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[
             { label: 'Active referrals', value: activeCount.toString() },
             { label: "This month's earnings", value: fmt(thisMonthEarnings) },
             { label: 'Lifetime earned', value: fmt(lifetimeEarnings) },
             { label: 'Total referred', value: totalCount.toString() },
-          ].map(({ label, value }) => (
-            <div key={label} className="rounded-xl bg-card border border-line p-5">
-              <p className="text-xs text-ink-soft mb-2">{label}</p>
-              <p className="font-fraunces text-2xl font-semibold text-ink tracking-tight">
-                {value}
-              </p>
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl border border-line bg-card p-5">
+              <p className="text-xs text-ink-soft">{s.label}</p>
+              <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{s.value}</p>
             </div>
           ))}
         </div>
+
+        {/* Referral link */}
+        <section className="rounded-2xl bg-ink p-6 sm:p-8">
+          <p className="font-mono text-xs uppercase tracking-widest text-white/50">Your referral link</p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <span className="min-w-0 flex-1 truncate rounded-xl bg-white/10 px-4 py-3 font-mono text-sm text-white">camrhia.com/r/{affiliate.referral_code}</span>
+            <div className="flex shrink-0 gap-2">
+              <button onClick={copyLink} className="rounded-full border border-white/25 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10">{copied ? 'Copied!' : 'Copy link'}</button>
+              <button onClick={sendLink} className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-white/90">Send link</button>
+            </div>
+          </div>
+          <p className="mt-4 text-sm text-white/70">
+            Share it with photographers. They start with a 14-day free trial. When one subscribes through your link, you earn 30% every month they stay, after Apple&apos;s fee.{' '}
+            <Link href="/affiliate/dashboard/pay" className="text-white underline">See the breakdown</Link>
+          </p>
+
+          <details className="mt-5 border-t border-white/15 pt-4">
+            <summary className="cursor-pointer text-sm text-white/80">Customize your link</summary>
+            <p className="mt-3 text-xs text-white/60">
+              Changing it breaks links you have already shared using <span className="font-mono text-white">camrhia.com/r/{affiliate.referral_code}</span>.
+            </p>
+            <div className="mt-3 flex items-stretch gap-2">
+              <input
+                type="text"
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                maxLength={30}
+                spellCheck={false}
+                placeholder={affiliate.referral_code}
+                className="flex-1 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 font-mono text-sm text-white placeholder:text-white/40 focus:border-white/50 focus:outline-none"
+              />
+              <button
+                onClick={saveCode}
+                disabled={codeStatus !== 'available' || codeSaving || codeInput === affiliate.referral_code}
+                className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                style={{ backgroundColor: '#A9545F', color: '#ffffff' }}
+              >
+                {codeSaving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+            <div className="mt-2 min-h-[1.25rem]">
+              {codeStatus === 'checking' && <p className="animate-pulse text-xs text-white/60">Checking availability…</p>}
+              {codeStatus === 'available' && <p className="text-xs font-medium text-green-300">✓ Available</p>}
+              {codeStatus === 'taken' && <p className="text-xs font-medium text-red-300">✗ Already taken</p>}
+              {codeStatus === 'invalid' && codeError && <p className="text-xs text-red-300">{codeError}</p>}
+              {codeSaved && <p className="text-xs font-medium text-green-300">Link updated.</p>}
+            </div>
+          </details>
+        </section>
 
         {/* Commission */}
         {(() => {
@@ -705,6 +622,7 @@ export default function AffiliateDashboardPage() {
             </form>
           )}
         </section>
+        </div>
       </main>
     </div>
   )

@@ -73,7 +73,7 @@ export default function AffiliateShell({
   return (
     <div className="min-h-screen bg-paper flex flex-col">
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between gap-4">
+        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
           <Link href="/" className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors">
             <Wordmark className="text-3xl" /> <span className="text-ink-soft font-normal">/ affiliate</span>
           </Link>
@@ -84,8 +84,11 @@ export default function AffiliateShell({
         </div>
       </header>
 
-      <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-10 space-y-8">
-        <AffiliateTabs />
+      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-8 lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10">
+        <aside>
+          <AffiliateTabs />
+        </aside>
+        <div className="min-w-0 space-y-6 pt-6 lg:pt-0">
         {affiliate && (affiliate.is_master || teamName) ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {affiliate.is_master ? (
@@ -116,6 +119,7 @@ export default function AffiliateShell({
             No affiliate account found. <Link href="/affiliate/dashboard" className="text-twilight underline">Go to Overview</Link> to activate it.
           </p>
         )}
+        </div>
       </main>
     </div>
   )
