@@ -134,7 +134,7 @@ export default function AffiliateSignupPage() {
       <main>
         <section className="px-6 pb-16 pt-6 text-center" style={{ backgroundColor: ROSE }}>
           <div className="mx-auto max-w-3xl pt-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">The Camrhia affiliate program</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Founding affiliate offer. This will not last forever.</p>
             <h1 className="mt-4 font-fraunces text-5xl font-semibold leading-[1.05] text-white sm:text-6xl">
               Make a post. Sign a photographer. Get paid 30%.
             </h1>
@@ -182,32 +182,64 @@ export default function AffiliateSignupPage() {
         </section>
 
         <section className="px-6 pb-16">
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-center font-fraunces text-3xl font-semibold text-ink">30% is the top of the range</h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-ink-soft">Most recurring software affiliate programs pay 20 to 30%. We start you at the top, from your first referral.</p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-line bg-card p-6 text-center">
-                <p className="text-sm text-ink-soft">Typical software affiliate program</p>
-                <p className="mt-1 font-fraunces text-4xl font-semibold text-ink">20 to 30%</p>
-                <p className="mt-2 text-sm text-ink-soft">recurring, industry benchmark</p>
-              </div>
-              <div className="rounded-2xl p-6 text-center text-white" style={{ backgroundColor: ROSE }}>
-                <p className="text-sm text-white/85">Camrhia</p>
-                <p className="mt-1 font-fraunces text-4xl font-semibold">30%</p>
-                <p className="mt-2 text-sm font-semibold">EVERY SINGLE MONTH. No cap. No ladder.</p>
-              </div>
-              <div className="rounded-2xl border border-line bg-card p-6 text-center">
-                <p className="text-sm text-ink-soft">Dubsado, a photographer CRM (base tier)</p>
-                <p className="mt-1 font-fraunces text-4xl font-semibold text-ink">$35 once</p>
-                <p className="mt-2 text-sm text-ink-soft">one payment per referral, after 60 days</p>
-              </div>
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-center font-fraunces text-3xl font-semibold text-ink">Put us next to everyone else</h2>
+            <p className="mx-auto mt-2 max-w-xl text-center text-ink-soft">Same photographers. Very different payouts.</p>
+
+            <div className="mt-8 rounded-2xl border border-line bg-card p-6">
+              <p className="text-sm font-semibold text-ink">Commission rate</p>
+              {[
+                { name: 'Typical software affiliate program', label: 'about 25%', w: 62.5, note: 'recurring, the middle of the 20 to 30% industry range', hi: false },
+                { name: 'Narrative (AI culling and editing)', label: '30%', w: 75, note: 'stops after 12 months', hi: false },
+                { name: 'Camrhia', label: '30%', w: 75, note: 'EVERY SINGLE MONTH. Never stops. No cap. No ladder.', hi: true },
+              ].map((r) => (
+                <div key={r.name} className="mt-4">
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className={r.hi ? 'font-semibold text-ink' : 'text-ink-soft'}>{r.name}</span>
+                    <span className="font-fraunces text-xl font-semibold text-ink">{r.label}</span>
+                  </div>
+                  <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-line">
+                    <div className="h-3 rounded-full" style={{ width: `${r.w}%`, backgroundColor: r.hi ? ROSE : '#CFC3BB' }} />
+                  </div>
+                  <p className={r.hi ? 'mt-1 text-xs font-semibold' : 'mt-1 text-xs text-ink-soft'} style={r.hi ? { color: ROSE } : undefined}>{r.note}</p>
+                </div>
+              ))}
             </div>
-            <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-ink">
-              On Camrhia, one Solo subscriber pays you about $15.30 a month. You pass that $35 in your third month, then keep getting paid.
+
+            <div className="mt-4 rounded-2xl border border-line bg-card p-6">
+              <p className="text-sm font-semibold text-ink">What ONE photographer pays you in their first 12 months</p>
+              {[
+                { name: 'Camrhia (Solo plan)', label: 'about $184', w: 100, note: 'and it keeps coming every month after that', hi: true },
+                { name: 'HoneyBook', label: '$50', w: 27, note: 'one payment, after 100 days', hi: false },
+                { name: 'Dubsado (base tier)', label: '$35', w: 19, note: 'one payment, after 60 days', hi: false },
+              ].map((r) => (
+                <div key={r.name} className="mt-4">
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className={r.hi ? 'font-semibold text-ink' : 'text-ink-soft'}>{r.name}</span>
+                    <span className="font-fraunces text-xl font-semibold text-ink">{r.label}</span>
+                  </div>
+                  <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-line">
+                    <div className="h-3 rounded-full" style={{ width: `${r.w}%`, backgroundColor: r.hi ? ROSE : '#CFC3BB' }} />
+                  </div>
+                  <p className={r.hi ? 'mt-1 text-xs font-semibold' : 'mt-1 text-xs text-ink-soft'} style={r.hi ? { color: ROSE } : undefined}>{r.note}</p>
+                </div>
+              ))}
+            </div>
+
+            <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-ink-soft">
+              Sources: <a className="underline" href="https://refgrow.com/blog/affiliate-program-benchmarks-2026" target="_blank" rel="noopener noreferrer">Refgrow, Affiliate Program Benchmarks 2026</a>, <a className="underline" href="https://www.track360.io/blog/saas-affiliate-commission-rates-benchmark-2026" target="_blank" rel="noopener noreferrer">Track360, SaaS Affiliate Commission Rates 2026</a>, <a className="underline" href="https://narrative.so/ambassador-program" target="_blank" rel="noopener noreferrer">Narrative ambassador program</a>, <a className="underline" href="https://honeybook.com/lp/affiliates" target="_blank" rel="noopener noreferrer">HoneyBook affiliates</a>, <a className="underline" href="https://www.dubsado.com/affiliate-program" target="_blank" rel="noopener noreferrer">Dubsado affiliate program</a>. About 25% is the middle of the 20 to 30% range the benchmarks report, not an exact average. Camrhia figure is 30% of the $59.99 Solo plan after Apple&apos;s 15% fee, about $15.30 a month, for 12 months. Programs change their terms.
             </p>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-xs text-ink-soft">
-              Sources: <a className="underline" href="https://refgrow.com/blog/affiliate-program-benchmarks-2026" target="_blank" rel="noopener noreferrer">Refgrow, Affiliate Program Benchmarks 2026</a>, <a className="underline" href="https://www.track360.io/blog/saas-affiliate-commission-rates-benchmark-2026" target="_blank" rel="noopener noreferrer">Track360, SaaS Affiliate Commission Rates 2026</a>, <a className="underline" href="https://www.dubsado.com/affiliate-program" target="_blank" rel="noopener noreferrer">Dubsado affiliate program</a>. Industry ranges are published estimates and vary by program.
+          </div>
+        </section>
+
+        <section className="px-6 pb-12">
+          <div className="mx-auto max-w-3xl rounded-3xl p-8 text-center text-white sm:p-10" style={{ backgroundColor: ROSE }}>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Founding affiliate offer</p>
+            <h2 className="mt-3 font-fraunces text-3xl font-semibold leading-tight sm:text-4xl">Every month you wait is commission you never get back.</h2>
+            <p className="mx-auto mt-4 max-w-xl text-white/90">
+              Founding affiliates lock in 30% every single month and a free Camrhia account for life. We may change the rate or the gift for affiliates who join later, so the best deal is the one you take now.
             </p>
+            <a href="#apply" className="mt-6 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>Lock in my 30%</a>
           </div>
         </section>
 
@@ -255,7 +287,7 @@ export default function AffiliateSignupPage() {
               {error && <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
               <button type="submit" disabled={loading} className="mt-2 w-full rounded-full py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: ROSE }}>
-                {loading ? 'Sending…' : 'Apply to become an affiliate'}
+                {loading ? 'Sending…' : 'Lock in my 30%'}
               </button>
               <p className="text-center text-xs text-ink-soft">Already applied? <Link href="/affiliate/login" className="underline">Sign in</Link></p>
             </form>
