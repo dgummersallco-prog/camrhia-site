@@ -8,7 +8,7 @@ import { makeVersions } from '@/lib/galleryImages'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import DesignGroup from '@/app/components/DesignGroup'
-import SpecialView, { DEFAULT_THEME, readTheme, themeToContent, type Decor, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
+import SpecialView, { DECOR_EMOJI, DEFAULT_THEME, readTheme, themeToContent, type Decor, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 const ALL_FONTS_HREF =
@@ -372,6 +372,7 @@ export default function SpecialsPage() {
   const [uploading, setUploading] = useState(false)
   const bgInput = useRef<HTMLInputElement>(null)
   const [minis, setMinis] = useState<MiniOpt[]>([])
+  const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
   const photoInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async (uid: string) => {
@@ -406,6 +407,10 @@ export default function SpecialsPage() {
         }
         setMinis(list.map((x) => ({ ...x, slots: slots.filter((y) => y.mini_id === x.id) })))
       })()
+      ;(async () => {
+        const { data: pr } = await sb.from('profiles').select('*').eq('id', sess.session.user.id).maybeSingle()
+        setProfile((pr ?? null) as Record<string, unknown> | null)
+      })()
       load(sess.session.user.id)
     }
     init()
@@ -427,6 +432,37 @@ export default function SpecialsPage() {
       }
       return { ...f, text }
     })
+  const makeItForMe = (name: string) => {
+    const ex = EXAMPLES.find((e) => e.name === name)
+    if (!ex || !form) return
+    const prof = (profile ?? {}) as Record<string, unknown>
+    const studio = String(prof.studio_name ?? '').trim()
+    const city = [prof.service_city, prof.service_state].filter(Boolean).join(', ')
+    const pick = minis.find((m) => m.id === form.text.mini_id) ?? minis.find((m) => m.slots.length > 0) ?? null
+    const text: Record<string, string> = { ...form.text, ...ex.text }
+    text.brand_name = studio
+    let where = pick?.location || city
+    const first = pick?.slots[0]
+    if (pick && first) {
+      const d = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: pick.tz }).format(new Date(first.starts_at))
+      where = where ? d + ' · ' + where : d
+    }
+    text.when_where = where || ''
+    text.price_line = ''
+    text.spots_note = ''
+    text.mini_id = ''
+    if (pick) {
+      text.mini_id = pick.id
+      text.price_line = '$' + Number(pick.price).toLocaleString(undefined, { maximumFractionDigits: 2 }) + (pick.duration_min ? ' · ' + pick.duration_min + ' min' : '')
+      text.spots_note = pick.slots.length + (pick.slots.length === 1 ? ' spot left' : ' spots left')
+      if (pick.description) text.details_body = pick.description
+    }
+    const rawPaths = Array.isArray(prof.cover_paths) && prof.cover_paths.length ? (prof.cover_paths as unknown[]) : prof.cover_path ? [prof.cover_path] : []
+    const photos = rawPaths.filter((x): x is string => typeof x === 'string' && !!x).slice(0, 3).map((x) => STORAGE_BASE + x)
+    setForm({ ...form, cta_label: ex.cta, text, photos, theme: { ...DEFAULT_THEME, ...ex.theme } })
+    scrollPreviewTo('top')
+    flash('Filled in. Change anything below, then publish.')
+  }
   const setBlock = (i: number, patch: Partial<TextBlock>) =>
     setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)) } } : f))
   const addBlock = () =>
@@ -478,6 +514,8 @@ export default function SpecialsPage() {
     }
   }
 
+  const ownUpload = (u: string) => !!userId && u.startsWith(STORAGE_BASE + userId + '/special_')
+
   async function uploadBackground(file: File) {
     const sb = supabase
     if (!sb || !form || !userId) return
@@ -489,7 +527,7 @@ export default function SpecialsPage() {
       if (up.error) throw up.error
       const old = form.theme.bgImage
       setTheme({ bgImage: STORAGE_BASE + path, titleColor: '#FFFFFF', subColor: '#FFFFFF' })
-      if (old.startsWith(STORAGE_BASE)) await sb.storage.from('portfolio').remove([old.slice(STORAGE_BASE.length)])
+      if (ownUpload(old)) await sb.storage.from('portfolio').remove([old.slice(STORAGE_BASE.length)])
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Could not upload that photo.')
     } finally {
@@ -521,14 +559,14 @@ export default function SpecialsPage() {
   async function removePhoto(url: string) {
     const sb = supabase
     setForm((f) => (f ? { ...f, photos: f.photos.filter((u) => u !== url) } : f))
-    if (sb && url.startsWith(STORAGE_BASE)) await sb.storage.from('portfolio').remove([url.slice(STORAGE_BASE.length)])
+    if (sb && ownUpload(url)) await sb.storage.from('portfolio').remove([url.slice(STORAGE_BASE.length)])
   }
 
   async function removeBackground() {
     const sb = supabase
     const url = form?.theme.bgImage ?? ''
     setTheme({ bgImage: '' })
-    if (sb && url.startsWith(STORAGE_BASE)) await sb.storage.from('portfolio').remove([url.slice(STORAGE_BASE.length)])
+    if (sb && ownUpload(url)) await sb.storage.from('portfolio').remove([url.slice(STORAGE_BASE.length)])
   }
 
   async function remove(id: string) {
@@ -584,6 +622,16 @@ export default function SpecialsPage() {
               <div className="space-y-6">
                 <StepCard n={3} title="Design your special">
                   <div className="space-y-5">
+                    <div className="rounded-2xl border border-line bg-paper p-5">
+                      <p className="font-fraunces text-lg font-semibold text-ink">Make it for me</p>
+                      <p className="mt-1 text-sm text-ink-soft">Pick the occasion. I fill in the look, the words, your studio name, your mini-session and your photos. Change anything after.</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {EXAMPLES.map((ex) => (
+                          <button key={ex.name} type="button" onClick={() => makeItForMe(ex.name)} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{DECOR_EMOJI[ex.theme.decor ?? 'none']} {ex.name}</button>
+                        ))}
+                      </div>
+                    </div>
+
                     <MiniCard title="Background" summary={form.theme.bgImage ? 'Photo added' : 'Color'}>
                       <div className="flex flex-wrap items-center gap-4">
                         {form.theme.bgImage ? (
