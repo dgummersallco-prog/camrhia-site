@@ -509,16 +509,6 @@ export default function AffiliateDashboardPage() {
             Your referrals
           </h2>
 
-          {referrals.length === 0 ? (
-            <div className="rounded-2xl border border-line bg-card p-10 text-center">
-              <p className="font-fraunces text-lg italic text-ink-soft mb-1">
-                No referrals yet.
-              </p>
-              <p className="text-sm text-ink-soft">
-                Share your link above to start earning.
-              </p>
-            </div>
-          ) : (
             <div className="rounded-2xl border border-line overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
@@ -530,6 +520,14 @@ export default function AffiliateDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line bg-card">
+                  {referrals.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-5 py-10 text-center">
+                        <p className="font-fraunces text-lg italic text-ink-soft">No referrals yet.</p>
+                        <p className="mt-1 text-sm text-ink-soft">Share your link above to start earning.</p>
+                      </td>
+                    </tr>
+                  ) : null}
                   {referrals.map((r, i) => (
                     <tr key={r.id} className="hover:bg-paper-deep/50 transition-colors">
                       <td className="px-5 py-3.5 text-ink font-medium">
@@ -553,7 +551,6 @@ export default function AffiliateDashboardPage() {
                 </tbody>
               </table>
             </div>
-          )}
         </section>
 
         {/* Payouts */}
