@@ -97,7 +97,7 @@ export default function AffiliateSignupPage() {
         <main className="mx-auto max-w-xl px-6 py-20 text-center">
           <h1 className="font-fraunces text-4xl font-semibold text-ink">Thank you for applying.</h1>
           <p className="mt-4 text-ink-soft">
-            We got your application and will reach out soon at the number you gave us.
+            We got your application and will reach out within 48 hours at the number you gave us.
           </p>
         </main>
       </div>
