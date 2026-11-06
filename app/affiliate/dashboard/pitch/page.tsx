@@ -734,6 +734,35 @@ function ScriptsCompact({ a }: { a: ShellAffiliate }) {
   )
 }
 
+function StartHere({ a }: { a: ShellAffiliate }) {
+  const [copied, setCopied] = useState<string | null>(null)
+  const link = `https://camrhia.com/r/${a.referral_code}`
+  const steps = [
+    'Copy your link.',
+    'Pick one idea below and tap Copy.',
+    'Post it, with your link in your bio.',
+    'Answer every comment and DM. Use the scripts and send your link.',
+  ]
+  return (
+    <section className="rounded-2xl bg-ink p-6 sm:p-8">
+      <p className="font-mono text-xs tracking-widest uppercase text-white/40">Start here</p>
+      <ol className="mt-4 space-y-3">
+        {steps.map((t, i) => (
+          <li key={t} className="flex gap-3 text-white">
+            <span className="font-fraunces text-xl leading-none text-white/50">{i + 1}</span>
+            <span className="text-sm sm:text-base">{t}</span>
+          </li>
+        ))}
+      </ol>
+      <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3">
+        <span className="font-mono text-sm text-white/60 bg-white/5 px-3 py-1.5 rounded-lg truncate">{link.replace('https://', '')}</span>
+        <CopyButton text={link} id="start-link" copied={copied} setCopied={setCopied} />
+      </div>
+      <p className="mt-5 text-sm text-white/70">Post 3 times this week. That&apos;s it.</p>
+    </section>
+  )
+}
+
 export default function PitchPage() {
   const [view, setView] = useState<'ideas' | 'scripts'>('ideas')
   const pill = (on: boolean) =>
@@ -743,6 +772,7 @@ export default function PitchPage() {
     <AffiliateShell title="Marketing HQ" subtitle="Post ideas and scripts to help you sign photographers.">
       {(a) => (
         <div className="space-y-8">
+          <StartHere a={a} />
           <div className="flex gap-2">
             <button onClick={() => setView('ideas')} className={pill(view === 'ideas')} style={view === 'ideas' ? { backgroundColor: '#A9545F', color: '#ffffff' } : undefined}>Post ideas</button>
             <button onClick={() => setView('scripts')} className={pill(view === 'scripts')} style={view === 'scripts' ? { backgroundColor: '#A9545F', color: '#ffffff' } : undefined}>DM and call scripts</button>
