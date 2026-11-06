@@ -622,6 +622,118 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
   )
 }
 
+function ScriptSet({
+  msgs, steps, objections, voicemail, link, fill, copied, setCopied, prefix,
+}: {
+  msgs: Msg[]
+  steps: { title: string; say: string }[]
+  objections: { title: string; say: string }[]
+  voicemail?: string
+  link: string
+  fill: (t: string) => string
+  copied: string | null
+  setCopied: (v: string | null) => void
+  prefix: string
+}) {
+  const box = 'rounded-2xl border border-line bg-card'
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        {msgs.map((m, i) => {
+          const text = fill(m.body(link))
+          return (
+            <div key={prefix + i} className={`${box} p-5 flex flex-col`}>
+              <p className="font-mono text-[10px] tracking-widest uppercase text-twilight">{m.label}</p>
+              <p className="mt-2 text-sm text-ink leading-relaxed whitespace-pre-wrap"><Highlight text={text} /></p>
+              <div className="mt-auto pt-4">
+                <CopyButton text={text} id={`${prefix}m${i}`} copied={copied} setCopied={setCopied} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <details className={`${box} p-5`}>
+        <summary className="cursor-pointer font-medium text-ink">Phone call script</summary>
+        <ol className="mt-4 space-y-3 text-sm">
+          {steps.map((st, i) => (
+            <li key={st.title} className="flex gap-3">
+              <span className="font-semibold text-twilight">{i + 1}.</span>
+              <span className="text-ink"><span className="font-medium">{st.title}:</span> <Highlight text={fill(st.say)} /></span>
+            </li>
+          ))}
+        </ol>
+        {voicemail ? (
+          <div className="mt-4 rounded-xl bg-paper border border-line p-4 text-sm text-ink leading-relaxed whitespace-pre-wrap">
+            <p className="font-mono text-[10px] tracking-widest uppercase text-twilight mb-1">No answer? Voicemail</p>
+            <Highlight text={voicemail} />
+            <div className="mt-3"><CopyButton text={voicemail} id={`${prefix}vm`} copied={copied} setCopied={setCopied} /></div>
+          </div>
+        ) : null}
+      </details>
+      <details className={`${box} p-5`}>
+        <summary className="cursor-pointer font-medium text-ink">When they push back</summary>
+        <div className="mt-4 grid gap-3 md:grid-cols-3 text-sm">
+          {objections.map((o) => (
+            <div key={o.title} className="rounded-xl bg-paper border border-line p-4">
+              <p className="font-medium text-ink">{o.title}</p>
+              <p className="mt-1 text-ink-soft leading-relaxed"><Highlight text={fill(o.say)} /></p>
+            </div>
+          ))}
+        </div>
+      </details>
+    </div>
+  )
+}
+
+function ScriptsCompact({ a }: { a: ShellAffiliate }) {
+  const [copied, setCopied] = useState<string | null>(null)
+  const [theirName, setTheirName] = useState('')
+  const [myName, setMyName] = useState((a.name ?? '').split(' ')[0] || '')
+  const link = `https://camrhia.com/r/${a.referral_code}`
+  const teamLink = `https://camrhia.com/t/${a.team_code || a.referral_code}`
+  const fill = (t: string) => {
+    let out = t
+    if (theirName.trim()) out = out.replace(/\[Name\]/g, theirName.trim())
+    if (myName.trim()) out = out.replace(/\[your name\]/g, myName.trim())
+    return out
+  }
+  const inputCls = 'w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink'
+  return (
+    <div className="space-y-10">
+      <div className="grid sm:grid-cols-2 gap-3 max-w-xl">
+        <input className={inputCls} value={theirName} onChange={(e) => setTheirName(e.target.value)} placeholder="Their first name" />
+        <input className={inputCls} value={myName} onChange={(e) => setMyName(e.target.value)} placeholder="Your name" />
+      </div>
+      <ScriptSet
+        msgs={PHOTOG_GROUPS.flatMap((g) => g.msgs)}
+        steps={CALL_STEPS}
+        objections={OBJECTIONS}
+        voicemail={fill(VOICEMAIL(link))}
+        link={link}
+        fill={fill}
+        copied={copied}
+        setCopied={setCopied}
+        prefix="p"
+      />
+      {a.is_master ? (
+        <div className="space-y-4">
+          <h2 className="font-fraunces text-2xl font-semibold text-ink">Recruiting affiliates</h2>
+          <ScriptSet
+            msgs={RECRUIT_GROUPS.flatMap((g) => g.msgs)}
+            steps={RECRUIT_CALL}
+            objections={RECRUIT_OBJECTIONS}
+            link={teamLink}
+            fill={fill}
+            copied={copied}
+            setCopied={setCopied}
+            prefix="r"
+          />
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export default function PitchPage() {
   const [view, setView] = useState<'ideas' | 'scripts'>('ideas')
   const pill = (on: boolean) =>
@@ -635,7 +747,7 @@ export default function PitchPage() {
             <button onClick={() => setView('ideas')} className={pill(view === 'ideas')} style={view === 'ideas' ? { backgroundColor: '#A9545F', color: '#ffffff' } : undefined}>Post ideas</button>
             <button onClick={() => setView('scripts')} className={pill(view === 'scripts')} style={view === 'scripts' ? { backgroundColor: '#A9545F', color: '#ffffff' } : undefined}>DM and call scripts</button>
           </div>
-          {view === 'ideas' ? <IdeaBank /> : <PitchBody a={a} />}
+          {view === 'ideas' ? <IdeaBank /> : <ScriptsCompact a={a} />}
         </div>
       )}
     </AffiliateShell>
