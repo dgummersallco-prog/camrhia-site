@@ -400,6 +400,7 @@ export default function SpecialsPage() {
   const [ssBusy, setSsBusy] = useState(false)
   const [ssErr, setSsErr] = useState<string | null>(null)
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
+  const [ready, setReady] = useState(false)
   const photoInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async (uid: string) => {
@@ -438,7 +439,8 @@ export default function SpecialsPage() {
         const { data: pr } = await sb.from('profiles').select('*').eq('id', sess.session.user.id).maybeSingle()
         setProfile((pr ?? null) as Record<string, unknown> | null)
       })()
-      load(sess.session.user.id)
+      await load(sess.session.user.id)
+      setReady(true)
     }
     init()
   }, [router, load])
@@ -955,7 +957,7 @@ export default function SpecialsPage() {
           </section>
         )}
 
-        <section className="rounded-2xl border border-line bg-card p-8">
+        <section className={`${ready ? '' : 'hidden'} rounded-2xl border border-line bg-card p-8`}>
           <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Examples</p>
           <p className="mt-2 text-sm text-ink-soft">Ideas to look at. Scroll inside any phone to see the whole page.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-8">
