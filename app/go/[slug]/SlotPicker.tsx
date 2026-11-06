@@ -39,7 +39,8 @@ export default function SlotPicker({ mini, preview, label, btnStyle }: { mini: M
 
   async function pay(e: React.FormEvent) {
     e.preventDefault()
-    if (!pick) return
+    if (preview) return
+    if (!pick) { setErr('Pick a time first.'); return }
     setBusy(true)
     setErr(null)
     try {
@@ -65,6 +66,7 @@ export default function SlotPicker({ mini, preview, label, btnStyle }: { mini: M
 
   const input = 'w-full rounded-xl border px-4 py-3 text-sm outline-none'
   const inputStyle = { background: '#FFFFFF', color: '#2A1F24', borderColor: '#E5DCD5' }
+  const slotCls = 'w-full rounded-full border border-current px-2 py-2 text-center text-sm'
 
   return (
     <div>
@@ -72,17 +74,17 @@ export default function SlotPicker({ mini, preview, label, btnStyle }: { mini: M
       {days.map(([day, list]) => (
         <div key={day} className="mb-3">
           {days.length > 1 ? <p className="mb-2 text-sm font-medium">{day}</p> : null}
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {list.map((s) =>
               s.taken ? (
-                <span key={s.id} aria-disabled="true" title="Taken" className="cursor-not-allowed select-none rounded-full border border-current px-4 py-2 text-sm opacity-35" style={{ backgroundImage: slash, filter: 'grayscale(1)' }}>{time(s.starts_at)}</span>
+                <span key={s.id} aria-disabled="true" title="Taken" className={`${slotCls} cursor-not-allowed select-none opacity-35`} style={{ backgroundImage: slash, filter: 'grayscale(1)' }}>{time(s.starts_at)}</span>
               ) : (
                 <button
                   key={s.id}
                   type="button"
                   disabled={preview}
                   onClick={() => { setPick(s.id); setErr(null) }}
-                  className="rounded-full border border-current px-4 py-2 text-sm transition hover:opacity-80"
+                  className={`${slotCls} transition hover:opacity-80`}
                   style={pick === s.id ? { background: btnStyle.background, color: btnStyle.color, borderColor: String(btnStyle.background) } : undefined}
                 >
                   {time(s.starts_at)}
@@ -93,20 +95,16 @@ export default function SlotPicker({ mini, preview, label, btnStyle }: { mini: M
         </div>
       ))}
 
-      {preview ? (
-        <span className="mt-5 block px-8 py-4 text-center font-medium" style={btnStyle}>{label}</span>
-      ) : pick ? (
-        <form onSubmit={pay} className="mt-5 space-y-3">
-          <input className={input} style={inputStyle} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} autoComplete="name" />
-          <input className={input} style={inputStyle} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={200} autoComplete="email" />
-          <input className={input} style={inputStyle} type="tel" placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} autoComplete="tel" />
-          {err && <p className="text-sm text-red-700">{err}</p>}
-          <button type="submit" disabled={busy} className="w-full px-8 py-4 font-medium transition hover:opacity-90 disabled:opacity-50" style={btnStyle}>{busy ? 'One moment…' : `Pay ${money(mini.price)} to reserve`}</button>
-          <p className="text-center text-xs opacity-70">Your time is held for 30 minutes while you pay.</p>
-        </form>
-      ) : err ? (
-        <p className="mt-4 text-sm text-red-700">{err}</p>
-      ) : null}
+      <form onSubmit={pay} className="mt-5 space-y-3">
+        <input className={input} style={inputStyle} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required={!preview} disabled={preview} maxLength={100} autoComplete="name" />
+        <input className={input} style={inputStyle} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required={!preview} disabled={preview} maxLength={200} autoComplete="email" />
+        <input className={input} style={inputStyle} type="tel" placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={preview} maxLength={40} autoComplete="tel" />
+        {err && <p className="text-sm text-red-700">{err}</p>}
+        <button type="submit" disabled={busy || (!preview && !pick)} className="w-full px-8 py-4 font-medium transition hover:opacity-90 disabled:opacity-50" style={btnStyle}>
+          {preview ? label : busy ? 'One moment…' : pick ? `Pay ${money(mini.price)} to reserve` : 'Pick a time above'}
+        </button>
+        <p className="text-center text-xs opacity-70">Your time is held for 30 minutes while you pay.</p>
+      </form>
     </div>
   )
 }
