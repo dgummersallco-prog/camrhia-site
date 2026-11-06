@@ -53,6 +53,17 @@ const PLACES: { id: TextBlock['place']; label: string }[] = [
   { id: 'claim', label: 'Above the sign-up box' },
 ]
 
+const PACKAGES: Record<string, { price: string; mins: string; photos: string }> = {
+  'Holiday': { price: '250', mins: '20', photos: '10' },
+  'Fall family': { price: '250', mins: '20', photos: '10' },
+  'Spring blossom': { price: '250', mins: '15', photos: '7' },
+  'Back to school': { price: '65', mins: '15', photos: '5' },
+  'Valentine': { price: '225', mins: '20', photos: '5' },
+  'Pumpkin patch': { price: '200', mins: '20', photos: '10' },
+  'Summer beach': { price: '250', mins: '15', photos: '10' },
+  'Branding': { price: '200', mins: '30', photos: '10' },
+}
+
 type Example = { name: string; cta: string; text: Record<string, string>; theme: Partial<SpecialTheme> }
 const EXAMPLES: Example[] = [
   {
@@ -63,9 +74,9 @@ const EXAMPLES: Example[] = [
       hero_headline: 'Holiday Mini Sessions',
       brand_name: 'Juniper & Pine Photography',
       hero_sub: 'Twenty minutes by the tree, and your holiday cards are done.',
-      price_line: '$225 · 20 minutes · 8 edited photos',
+      price_line: '$250 · 20 minutes · 10 edited photos',
       when_where: 'Saturday, December 5 · The Lodge at Pine Hollow, Park City, UT',
-      details_body: '20 minute session for your family\n8 edited photos in an online gallery\nA cozy holiday set with warm lights\nExtra photos and prints available',
+      details_body: '20 minute session for your family\n10 edited photos in an online gallery\nA cozy holiday set with warm lights\nExtra photos and prints available',
       spots_note: 'Only 6 spots available',
       terms: 'Bookings are final and non-refundable, but you can pass your spot to a friend.',
       form_title: 'Save your holiday spot',
@@ -80,9 +91,9 @@ const EXAMPLES: Example[] = [
       hero_headline: 'Fall Family Minis',
       brand_name: 'Marigold Lane Studio',
       hero_sub: 'Golden light, a short session, and no stress.',
-      price_line: '$195 · 15 minutes · 8 edited photos',
+      price_line: '$250 · 20 minutes · 10 edited photos',
       when_where: 'October 10 & 11 · Harlow Farm, Rhinebeck, NY',
-      details_body: '15 minute outdoor session\n8 edited photos in an online gallery\nKids and pets welcome\nPrints and albums available',
+      details_body: '20 minute outdoor session\n10 edited photos in an online gallery\nKids and pets welcome\nPrints and albums available',
       spots_note: 'Only 8 spots per day',
       terms: 'Rain date included. Bookings are final and non-refundable.',
       form_title: 'Pick your fall day',
@@ -97,9 +108,9 @@ const EXAMPLES: Example[] = [
       hero_headline: 'Spring Blossom Minis',
       brand_name: 'Wren & Willow Photo',
       hero_sub: 'Soft light, fresh blooms, and photos you will want on your wall.',
-      price_line: '$175 · 15 minutes · 6 edited photos',
+      price_line: '$250 · 15 minutes · 7 edited photos',
       when_where: 'Saturday, April 11 · Bloom Hill Gardens, Santa Barbara, CA',
-      details_body: '15 minute session among the blossoms\n6 edited photos in an online gallery\nGreat for families, couples and moms\nExtra photos available',
+      details_body: '15 minute session among the blossoms\n7 edited photos in an online gallery\nGreat for families, couples and moms\nExtra photos available',
       spots_note: 'Blossoms are short lived, so spots are limited',
       terms: 'Bookings are final and non-refundable. Weather dates are announced by email.',
       form_title: 'Join the blossom list',
@@ -114,9 +125,9 @@ const EXAMPLES: Example[] = [
       hero_headline: 'Back-to-School Portraits',
       brand_name: 'Penny Lane Portraits',
       hero_sub: 'A quick portrait to remember this grade.',
-      price_line: '$85 · 10 minutes · 5 edited photos',
+      price_line: '$65 · 15 minutes · 5 edited photos',
       when_where: 'Saturday, August 8 · Lincoln Park Pavilion, Austin, TX',
-      details_body: '10 minute portrait session per child\n5 edited photos in an online gallery\nSiblings can share one slot\nPrints ready for grandparents',
+      details_body: '15 minute portrait session per child\n5 edited photos in an online gallery\nSiblings can share one slot\nPrints ready for grandparents',
       spots_note: 'Limited time slots',
       terms: 'Bookings are final and non-refundable.',
       form_title: 'Sign up for a time slot',
@@ -131,9 +142,9 @@ const EXAMPLES: Example[] = [
       hero_headline: 'Valentine Couples Minis',
       brand_name: 'Rosewood Collective',
       hero_sub: 'A short, relaxed session just for the two of you.',
-      price_line: '$150 · 20 minutes · 8 edited photos',
+      price_line: '$225 · 20 minutes · 5 edited photos',
       when_where: 'Saturday, February 6 · The Glass House Loft, Chicago, IL',
-      details_body: '20 minute couples session\n8 edited photos in an online gallery\nPosing help, so no experience needed\nPrints available',
+      details_body: '20 minute couples session\n5 edited photos in an online gallery\nPosing help, so no experience needed\nPrints available',
       spots_note: 'Only 5 spots',
       terms: 'Bookings are final and non-refundable, but can be gifted.',
       form_title: 'Reserve your date night',
@@ -148,9 +159,9 @@ const EXAMPLES: Example[] = [
       hero_headline: 'Pumpkin Patch Minis',
       brand_name: 'Hollow Oak Photography',
       hero_sub: 'Hay bales, pumpkins and the cutest fall photos.',
-      price_line: '$185 · 15 minutes · 8 edited photos',
+      price_line: '$200 · 20 minutes · 10 edited photos',
       when_where: 'Saturday, October 17 · Miller Family Pumpkin Patch, Marietta, GA',
-      details_body: '15 minute session at the patch\n8 edited photos in an online gallery\nCostumes welcome\nPrints available',
+      details_body: '20 minute session at the patch\n10 edited photos in an online gallery\nCostumes welcome\nPrints available',
       spots_note: 'Only 10 spots',
       terms: 'Bookings are final and non-refundable.',
       form_title: 'Choose your patch time',
@@ -165,9 +176,9 @@ const EXAMPLES: Example[] = [
       hero_headline: 'Summer Beach Minis',
       brand_name: 'Salt & Sun Studio',
       hero_sub: 'Sand, sun and sunset light for the whole family.',
-      price_line: '$200 · 20 minutes · 10 edited photos',
+      price_line: '$250 · 15 minutes · 10 edited photos',
       when_where: 'Saturday, July 11 · Pebble Cove Beach, Clearwater, FL',
-      details_body: '20 minute sunset session\n10 edited photos in an online gallery\nFamilies and couples welcome\nPrints available',
+      details_body: '15 minute sunset session\n10 edited photos in an online gallery\nFamilies and couples welcome\nPrints available',
       spots_note: 'Only 6 spots',
       terms: 'Bookings are final and non-refundable. Weather dates by email.',
       form_title: 'Book your golden hour',
@@ -182,7 +193,7 @@ const EXAMPLES: Example[] = [
       hero_headline: 'Branding Mini Sessions',
       brand_name: 'Atelier North',
       hero_sub: 'Fresh photos for your website and social media, in one short visit.',
-      price_line: '$250 · 30 minutes · 10 edited photos',
+      price_line: '$200 · 30 minutes · 10 edited photos',
       when_where: 'First Friday of the month · Downtown studio, Scottsdale, AZ',
       details_body: '30 minute session with two outfit changes\n10 edited photos for web and social\nPlanning call before the session\nFull usage for your business',
       spots_note: 'Only 4 spots this month',
@@ -521,6 +532,8 @@ export default function SpecialsPage() {
     const rawPaths = Array.isArray(prof.cover_paths) && prof.cover_paths.length ? (prof.cover_paths as unknown[]) : prof.cover_path ? [prof.cover_path] : []
     const photos = rawPaths.filter((x): x is string => typeof x === 'string' && !!x).slice(0, 3).map((x) => STORAGE_BASE + x)
     setForm({ ...form, cta_label: ex.cta, text, photos, theme: { ...DEFAULT_THEME, ...ex.theme } })
+    const pk = PACKAGES[name]
+    if (pk) { setSsPrice(pk.price); setSsMins(pk.mins); setSsPhotos(pk.photos) }
     scrollPreviewTo('top')
     flash('Filled in. Change anything below, then publish.')
   }
