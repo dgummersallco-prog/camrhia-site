@@ -61,3 +61,11 @@ export function AvatarPicker({
     </div>
   )
 }
+
+export async function fetchAvatars(client: SupabaseClient, ids: string[]): Promise<Record<string, string>> {
+  const m: Record<string, string> = {}
+  if (!ids.length) return m
+  const { data } = await client.rpc('hub_avatars', { p_ids: ids })
+  for (const r of (data ?? []) as { user_id: string; avatar_url: string | null }[]) if (r.avatar_url) m[r.user_id] = r.avatar_url
+  return m
+}
