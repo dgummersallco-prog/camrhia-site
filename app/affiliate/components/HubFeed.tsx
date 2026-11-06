@@ -1,14 +1,19 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabaseAffiliate as defaultClient } from '@/lib/supabaseAffiliate'
 
-type Post = { id: string; author_id: string; author_name: string; body: string; link_url: string | null; pinned: boolean; created_at: string }
+type Post = {
+  id: string; author_id: string; author_name: string; body: string; link_url: string | null; pinned: boolean; created_at: string
+  platform: string | null; views: number | null; ig_likes: number | null; shares: number | null; saves: number | null; signed: number | null; image_url: string | null
+}
 type Comment = { id: string; post_id: string; author_id: string; author_name: string; body: string; created_at: string }
 type Like = { post_id: string; user_id: string }
+type Nums = { views: string; ig_likes: string; shares: string; saves: string; signed: string }
 
 const ROSE = '#A9545F'
+const PLATFORMS = ['Instagram', 'TikTok', 'YouTube']
 const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight'
 
 function ago(iso: string) {
@@ -21,6 +26,9 @@ function ago(iso: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
+const fmt = (n: number | null) => (n == null ? '—' : n.toLocaleString())
+const toNum = (v: string) => { const n = parseInt(v.replace(/[^0-9]/g, ''), 10); return Number.isFinite(n) ? n : null }
+
 export default function HubFeed({ client }: { client?: SupabaseClient | null }) {
   const supabase = client ?? defaultClient
   const [uid, setUid] = useState<string | null>(null)
@@ -31,10 +39,14 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   const [likes, setLikes] = useState<Like[]>([])
   const [body, setBody] = useState('')
   const [link, setLink] = useState('')
+  const [platform, setPlatform] = useState('')
+  const [file, setFile] = useState<File | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const [sort, setSort] = useState<'new' | 'signed'>('new')
+  const [editing, setEditing] = useState<Record<string, Nums | undefined>>({})
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -62,9 +74,19 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
       setComments([])
       setLikes([])
     }
-  }, [])
+  }, [supabase])
 
   useEffect(() => { load() }, [load])
+
+  const shown = useMemo(() => {
+    const list = [...posts]
+    list.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+      if (sort === 'signed') return (b.signed ?? -1) - (a.signed ?? -1) || +new Date(b.created_at) - +new Date(a.created_at)
+      return +new Date(b.created_at) - +new Date(a.created_at)
+    })
+    return list
+  }, [posts, sort])
 
   async function submitPost() {
     const sb = supabase
@@ -82,13 +104,43 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         return
       }
     }
+    if (file) {
+      if (!file.type.startsWith('image/')) { setErr('Pick an image of your post.'); return }
+      if (file.size > 6 * 1024 * 1024) { setErr('That image is over 6 MB.'); return }
+    }
     setBusy(true)
     setErr(null)
-    const { error } = await sb.from('hub_posts').insert({ author_id: uid, body: text, link_url: url })
+    let imageUrl: string | null = null
+    if (file) {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '')
+      const path = `${uid}/${Date.now()}.${ext || 'jpg'}`
+      const up = await sb.storage.from('hub-posts').upload(path, file, { contentType: file.type })
+      if (up.error) { setBusy(false); setErr(up.error.message); return }
+      imageUrl = sb.storage.from('hub-posts').getPublicUrl(path).data.publicUrl
+    }
+    const { error } = await sb.from('hub_posts').insert({ author_id: uid, body: text, link_url: url, platform: platform || null, image_url: imageUrl })
     setBusy(false)
     if (error) { setErr(error.message); return }
     setBody('')
     setLink('')
+    setPlatform('')
+    setFile(null)
+    load()
+  }
+
+  function startEdit(p: Post) {
+    setEditing((e) => ({
+      ...e,
+      [p.id]: { views: p.views == null ? '' : String(p.views), ig_likes: p.ig_likes == null ? '' : String(p.ig_likes), shares: p.shares == null ? '' : String(p.shares), saves: p.saves == null ? '' : String(p.saves), signed: p.signed == null ? '' : String(p.signed) },
+    }))
+  }
+
+  async function saveNums(p: Post) {
+    const n = editing[p.id]
+    if (!n || !supabase) return
+    const { error } = await supabase.from('hub_posts').update({ views: toNum(n.views), ig_likes: toNum(n.ig_likes), shares: toNum(n.shares), saves: toNum(n.saves), signed: toNum(n.signed) }).eq('id', p.id)
+    if (error) { setErr(error.message); return }
+    setEditing((e) => ({ ...e, [p.id]: undefined }))
     load()
   }
 
@@ -138,8 +190,20 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   return (
     <div className="space-y-5">
       <div className="rounded-2xl border border-line bg-card p-5">
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} maxLength={2000} placeholder="Share a post that is working, an idea, or a question for the team…" className={field} />
+        <div className="mb-3 flex flex-wrap gap-2">
+          {PLATFORMS.map((pl) => (
+            <button key={pl} type="button" onClick={() => setPlatform(platform === pl ? '' : pl)} className={`rounded-full border px-4 py-1.5 text-sm transition ${platform === pl ? 'text-white' : 'border-line text-ink hover:border-twilight'}`} style={platform === pl ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
+              {pl}
+            </button>
+          ))}
+        </div>
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} maxLength={2000} placeholder="The hook or caption you used…" className={field} />
         <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Link to your post (optional)" className={`${field} mt-3`} />
+        <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-line bg-white px-4 py-3 text-sm text-ink-soft hover:border-twilight">
+          <span className="truncate">{file ? file.name : 'Add a screenshot of your post'}</span>
+          <span className="shrink-0 font-semibold" style={{ color: ROSE }}>{file ? 'Change' : 'Choose image'}</span>
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        </label>
         {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
         <div className="mt-3 flex justify-end">
           <button onClick={submitPost} disabled={busy || !body.trim()} className="rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: ROSE }}>
@@ -148,35 +212,87 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         </div>
       </div>
 
+      {posts.length > 1 && (
+        <div className="flex gap-2 text-sm">
+          {([['new', 'Newest'], ['signed', 'Most signed']] as const).map(([k, label]) => (
+            <button key={k} onClick={() => setSort(k)} className={`rounded-full border px-4 py-1.5 transition ${sort === k ? 'text-white' : 'border-line text-ink hover:border-twilight'}`} style={sort === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {posts.length === 0 && (
         <div className="rounded-2xl border border-line bg-card p-8 text-center">
           <p className="font-fraunces text-lg italic text-ink-soft">No posts yet. Be the first to share something.</p>
         </div>
       )}
 
-      {posts.map((p) => {
+      {shown.map((p) => {
         const pl = likes.filter((l) => l.post_id === p.id)
         const liked = !!uid && pl.some((l) => l.user_id === uid)
         const pc = comments.filter((c) => c.post_id === p.id)
+        const mine = p.author_id === uid
+        const ed = editing[p.id]
+        const hasNums = p.views != null || p.ig_likes != null || p.shares != null || p.saves != null || p.signed != null
         return (
           <article key={p.id} className="rounded-2xl border bg-card p-5" style={{ borderColor: p.pinned ? ROSE : undefined }}>
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-ink">
                   {p.author_name}
+                  {p.platform && <span className="ml-2 rounded-full bg-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">{p.platform}</span>}
                   {p.pinned && <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white" style={{ backgroundColor: ROSE }}>Pinned</span>}
                 </p>
                 <p className="text-xs text-ink-soft">{ago(p.created_at)}</p>
               </div>
               <div className="flex gap-3 text-xs text-ink-soft">
                 {admin && <button onClick={() => togglePin(p)} className="hover:text-ink">{p.pinned ? 'Unpin' : 'Pin'}</button>}
-                {(admin || p.author_id === uid) && <button onClick={() => removePost(p)} className="hover:text-red-700">Delete</button>}
+                {(admin || mine) && <button onClick={() => removePost(p)} className="hover:text-red-700">Delete</button>}
               </div>
             </div>
             <p className="mt-3 whitespace-pre-wrap text-sm text-ink">{p.body}</p>
+            {p.image_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={p.image_url} alt="Post" className="mt-3 max-h-[28rem] w-full rounded-xl border border-line object-contain bg-white" />
+            )}
             {p.link_url && (
               <a href={p.link_url} target="_blank" rel="noopener noreferrer" className="mt-2 block truncate text-sm underline" style={{ color: ROSE }}>{p.link_url}</a>
             )}
+
+            {(hasNums || mine) && !ed && (
+              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-paper-deep p-3">
+                <div className="rounded-lg px-4 py-2 text-center text-white" style={{ backgroundColor: ROSE }}>
+                  <p className="font-fraunces text-2xl font-semibold leading-none">{fmt(p.signed)}</p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-white/85">Signed</p>
+                </div>
+                {([['Views', p.views], ['Likes', p.ig_likes], ['Shares', p.shares], ['Saves', p.saves]] as const).map(([label, v]) => (
+                  <div key={label} className="px-2 text-center">
+                    <p className="text-base font-semibold text-ink">{fmt(v)}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-ink-soft">{label}</p>
+                  </div>
+                ))}
+                {mine && <button onClick={() => startEdit(p)} className="ml-auto text-xs font-semibold" style={{ color: ROSE }}>{hasNums ? 'Update numbers' : 'Add your numbers'}</button>}
+              </div>
+            )}
+
+            {ed && (
+              <div className="mt-4 rounded-xl bg-paper-deep p-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  {([['signed', 'Signed'], ['views', 'Views'], ['ig_likes', 'Likes'], ['shares', 'Shares'], ['saves', 'Saves']] as const).map(([k, label]) => (
+                    <label key={k} className="block text-[10px] uppercase tracking-wider text-ink-soft">
+                      {label}
+                      <input inputMode="numeric" value={ed[k]} onChange={(e) => setEditing((s) => ({ ...s, [p.id]: { ...ed, [k]: e.target.value } }))} className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-twilight" />
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button onClick={() => saveNums(p)} className="rounded-full px-5 py-2 text-sm font-semibold text-white" style={{ backgroundColor: ROSE }}>Save</button>
+                  <button onClick={() => setEditing((s) => ({ ...s, [p.id]: undefined }))} className="rounded-full border border-line px-5 py-2 text-sm text-ink-soft hover:text-ink">Cancel</button>
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 flex items-center gap-5 text-sm">
               <button onClick={() => toggleLike(p)} className={liked ? 'font-semibold' : 'text-ink-soft hover:text-ink'} style={liked ? { color: ROSE } : undefined}>
                 {liked ? '♥' : '♡'} {pl.length}
