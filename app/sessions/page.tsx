@@ -29,6 +29,10 @@ type Session = {
   paid_in_full: boolean | null
 }
 
+type MiniRow = { id: string; title: string; price: number; duration_min: number | null; location: string | null; tz: string; active: boolean }
+type MiniSlotRow = { id: string; mini_id: string; starts_at: string; status: 'open' | 'held' | 'booked'; hold_expires_at: string | null; client_name: string | null; client_email: string | null; client_phone: string | null }
+type Item = { kind: 'session'; s: Session } | { kind: 'mini'; date: string; m: MiniRow; slots: MiniSlotRow[] }
+
 function todayStr(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -85,6 +89,8 @@ export default function SessionsPage() {
   const [promptMode, setPromptMode] = useState<'ask' | 'reschedule' | 'cancel'>('ask')
   const [newDate, setNewDate] = useState('')
   const [promptBusy, setPromptBusy] = useState(false)
+  const [minis, setMinis] = useState<MiniRow[]>([])
+  const [miniSlots, setMiniSlots] = useState<MiniSlotRow[]>([])
 
   useEffect(() => {
     async function load() {
@@ -234,6 +240,25 @@ export default function SessionsPage() {
     return Array.from(set).sort()
   }, [rows])
 
+  useEffect(() => {
+    const sb = supabase
+    if (!sb) return
+    let cancelled = false
+    ;(async () => {
+      const { data: sess } = await sb.auth.getSession()
+      if (!sess.session) return
+      const { data: m } = await sb.from('mini_sessions').select('id, title, price, duration_min, location, tz, active').eq('owner_id', sess.session.user.id).order('created_at', { ascending: false })
+      const list = (m ?? []) as MiniRow[]
+      if (cancelled) return
+      setMinis(list)
+      if (list.length) {
+        const { data: sl } = await sb.from('mini_slots').select('id, mini_id, starts_at, status, hold_expires_at, client_name, client_email, client_phone').in('mini_id', list.map((x) => x.id)).order('starts_at')
+        if (!cancelled) setMiniSlots((sl ?? []) as MiniSlotRow[])
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
+
   const shown = useMemo(() => {
     if (!rows) return []
     const needle = q.trim().toLowerCase()
@@ -252,6 +277,23 @@ export default function SessionsPage() {
     if (filter === 'upcoming') list = [...list].sort((a, b) => (a.wedding_date ?? '').localeCompare(b.wedding_date ?? ''))
     return list
   }, [rows, filter, typeFilter, q, today])
+
+  const items: Item[] = useMemo(() => {
+    const base: Item[] = shown.map((s) => ({ kind: 'session' as const, s }))
+    if (filter !== 'upcoming' || typeFilter) return base
+    const needle = q.trim().toLowerCase()
+    const now = Date.now()
+    const minisIn: Item[] = minis.flatMap((m) => {
+      const mine = miniSlots.filter((x) => x.mini_id === m.id)
+      if (mine.length === 0) return []
+      if (!mine.some((x) => new Date(x.starts_at).getTime() > now)) return []
+      if (needle && !`${m.title} ${m.location ?? ''}`.toLowerCase().includes(needle)) return []
+      const date = new Intl.DateTimeFormat('en-CA', { timeZone: m.tz }).format(new Date(mine[0].starts_at))
+      return [{ kind: 'mini' as const, date, m, slots: mine }]
+    })
+    const key = (it: Item) => (it.kind === 'mini' ? it.date : it.s.wedding_date ?? '')
+    return [...base, ...minisIn].sort((a, b) => key(a).localeCompare(key(b)))
+  }, [shown, minis, miniSlots, filter, typeFilter, q])
 
   const pastCount = (rows ?? []).filter((r) => isPastDue(r, today)).length
   const tab = (key: typeof filter, label: string) => (
@@ -330,7 +372,7 @@ export default function SessionsPage() {
 
         {rows === null ? (
           <p className="text-sm text-ink-soft">Loading…</p>
-        ) : shown.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-line bg-card px-6 py-16 text-center">
             <p className="font-fraunces text-xl text-ink">
               {filter === 'upcoming' ? 'No upcoming sessions' : filter === 'update' ? 'Nothing needs an update' : filter === 'editing' ? 'Nothing in editing' : filter === 'delivered' ? 'No delivered sessions' : 'No sessions here'}
@@ -339,10 +381,71 @@ export default function SessionsPage() {
           </div>
         ) : (
           <div>
-            {shown.map((s, i) => {
-              const prev = i > 0 ? shown[i - 1] : null
-              const heading = monthLabel(s.wedding_date)
-              const showHeading = !prev || monthLabel(prev.wedding_date) !== heading
+            {items.map((it, i) => {
+              const prev = i > 0 ? items[i - 1] : null
+              const itDate = it.kind === 'mini' ? it.date : it.s.wedding_date
+              const prevDate = prev ? (prev.kind === 'mini' ? prev.date : prev.s.wedding_date) : null
+              const heading = monthLabel(itDate)
+              const showHeading = !prev || monthLabel(prevDate) !== heading
+              if (it.kind === 'mini') {
+                const m = it.m
+                const mine = it.slots
+                const nowMs = Date.now()
+                const booked = mine.filter((x) => x.status === 'booked')
+                const pending = mine.filter((x) => x.status === 'held' && !!x.hold_expires_at && new Date(x.hold_expires_at).getTime() > nowMs)
+                const openCount = mine.length - booked.length - pending.length
+                const mdt = toDate(it.date)
+                const mn = daysFrom(it.date, today)
+                const clock = (iso: string) => new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: m.tz }).format(new Date(iso))
+                const people = [...booked.map((x) => ({ x, paid: true })), ...pending.map((x) => ({ x, paid: false }))].sort((a, b) => Date.parse(a.x.starts_at) - Date.parse(b.x.starts_at))
+                const collected = '$' + (booked.length * Number(m.price)).toLocaleString(undefined, { maximumFractionDigits: 2 })
+                return (
+                  <div key={'mini-' + m.id}>
+                    {showHeading && (
+                      <p className={`mb-3 font-mono text-xs uppercase tracking-widest text-ink-soft ${i > 0 ? 'mt-8' : ''}`}>{heading}</p>
+                    )}
+                    <div className="mb-3 rounded-2xl border border-line bg-card px-5 py-4">
+                      <Link href="/minis" className="flex flex-wrap items-center gap-4">
+                        <div className="flex min-w-[3rem] shrink-0 flex-col items-center justify-center border-r border-line pr-4">
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-brass">{mdt.toLocaleDateString(undefined, { month: 'short' })}</span>
+                          <span className="font-fraunces text-2xl font-semibold leading-none text-ink">{mdt.getDate()}</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-fraunces text-lg font-semibold text-ink">{m.title}</p>
+                          <p className="mt-0.5 text-sm text-ink-soft">
+                            {countdown(mn)}
+                            {m.location && ` · ${m.location}`}
+                            {m.duration_min ? ` · ${m.duration_min} min each` : ''}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          {chip('Mini session', 'bg-twilight/10 text-twilight')}
+                          {!m.active && chip('Paused', 'bg-line text-ink-soft')}
+                        </div>
+                      </Link>
+                      <p className="mt-3 border-t border-line/70 pt-3 text-xs text-ink-soft">
+                        {mine.length} times · {booked.length} booked · {collected} collected{openCount > 0 ? ` · ${openCount} still open` : ''}
+                      </p>
+                      {people.length === 0 ? (
+                        <p className="mt-2 text-sm text-ink-soft">No bookings yet. Share your special&apos;s link.</p>
+                      ) : (
+                        <div className="mt-2 divide-y divide-line/70">
+                          {people.map(({ x, paid }) => (
+                            <div key={x.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                              <div className="min-w-0">
+                                <p className="text-sm text-ink"><span className="font-medium">{clock(x.starts_at)}</span> · {x.client_name || 'Client'}</p>
+                                {(x.client_phone || x.client_email) && <p className="truncate text-xs text-ink-soft">{[x.client_phone, x.client_email].filter(Boolean).join(' · ')}</p>}
+                              </div>
+                              {chip(paid ? 'Paid' : 'Payment pending', paid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              }
+              const s = it.s
               const dt = s.wedding_date ? toDate(s.wedding_date) : null
               const n = s.wedding_date ? daysFrom(s.wedding_date, today) : null
               const where = [s.venue, [s.city, s.state].filter(Boolean).join(', ')].filter(Boolean).join(', ')
