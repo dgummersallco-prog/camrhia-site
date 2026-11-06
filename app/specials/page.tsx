@@ -677,7 +677,7 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Special title" summary={form.text.hero_headline}>
+                    <MiniCard title="Title and subtitle" summary={form.text.hero_headline}>
                       <label className="block">
                         <Label>Main title</Label>
                         <input placeholder="Holiday mini sessions" value={form.text.hero_headline} onChange={(e) => setText('hero_headline', e.target.value)} className={inputCls} />
