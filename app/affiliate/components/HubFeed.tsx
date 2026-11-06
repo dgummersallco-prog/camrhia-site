@@ -27,6 +27,19 @@ function ago(iso: string) {
 }
 
 const fmt = (n: number | null) => (n == null ? '—' : n.toLocaleString())
+function embedFor(url: string | null): { src: string; kind: 'tall' | 'wide'; h?: number } | null {
+  if (!url) return null
+  let m = url.match(/instagram\.com\/(?:[^/?#]+\/)?(p|reel|tv)\/([A-Za-z0-9_-]+)/i)
+  if (m) return { src: `https://www.instagram.com/${m[1].toLowerCase()}/${m[2]}/embed`, kind: 'tall', h: 620 }
+  m = url.match(/tiktok\.com\/@[^/?#]+\/video\/(\d+)/i)
+  if (m) return { src: `https://www.tiktok.com/embed/v2/${m[1]}`, kind: 'tall', h: 740 }
+  m = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/i)
+  if (m) return { src: `https://www.youtube.com/embed/${m[1]}`, kind: 'tall', h: 600 }
+  m = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?(?:[^#]*&)?v=)([A-Za-z0-9_-]{6,})/i)
+  if (m) return { src: `https://www.youtube.com/embed/${m[1]}`, kind: 'wide' }
+  return null
+}
+
 const toNum = (v: string) => { const n = parseInt(v.replace(/[^0-9]/g, ''), 10); return Number.isFinite(n) ? n : null }
 
 export default function HubFeed({ client }: { client?: SupabaseClient | null }) {
@@ -198,15 +211,10 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
           ))}
         </div>
         <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} maxLength={2000} placeholder="The hook or caption you used…" className={field} />
-        <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Link to your post (optional)" className={`${field} mt-3`} />
-        <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-line bg-white px-4 py-3 text-sm text-ink-soft hover:border-twilight">
-          <span className="truncate">{file ? file.name : 'Add a screenshot of your post'}</span>
-          <span className="shrink-0 font-semibold" style={{ color: ROSE }}>{file ? 'Change' : 'Choose image'}</span>
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        </label>
+        <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste the link to your post (Instagram, TikTok or YouTube)" className={`${field} mt-3`} />
         {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
         <div className="mt-3 flex justify-end">
-          <button onClick={submitPost} disabled={busy || !body.trim()} className="rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: ROSE }}>
+          <button onClick={submitPost} disabled={busy || !body.trim() || !link.trim()} className="rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: ROSE }}>
             {busy ? 'Posting…' : 'Post to the team'}
           </button>
         </div>
@@ -256,6 +264,15 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               // eslint-disable-next-line @next/next/no-img-element
               <img src={p.image_url} alt="Post" className="mt-3 max-h-[28rem] w-full rounded-xl border border-line object-contain bg-white" />
             )}
+            {(() => {
+              const em = embedFor(p.link_url)
+              if (!em) return null
+              return (
+                <div className={em.kind === 'tall' ? 'mx-auto mt-3 w-full max-w-[420px]' : 'mt-3'}>
+                  <iframe src={em.src} title="Post" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen className={`w-full rounded-xl border border-line bg-white ${em.kind === 'wide' ? 'aspect-video' : ''}`} style={em.h ? { height: em.h } : undefined} />
+                </div>
+              )
+            })()}
             {p.link_url && (
               <a href={p.link_url} target="_blank" rel="noopener noreferrer" className="mt-2 block truncate text-sm underline" style={{ color: ROSE }}>{p.link_url}</a>
             )}
