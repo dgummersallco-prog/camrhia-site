@@ -123,6 +123,33 @@ export default function SessionDetailPage() {
   const [sendPin, setSendPin] = useState('')
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
+  const [pkgOpts, setPkgOpts] = useState<{ id: string; name: string; price: string | null; session_type: string }[]>([])
+
+  useEffect(() => {
+    const sb = supabase
+    if (!sb) return
+    sb.auth.getSession().then(({ data }) => {
+      const uid = data.session?.user.id
+      if (!uid) return
+      sb.from('packages').select('id, name, price, session_type').eq('owner_id', uid).order('sort_order', { ascending: true }).then(({ data: rows }) => setPkgOpts((rows ?? []) as { id: string; name: string; price: string | null; session_type: string }[]))
+    })
+  }, [])
+
+  async function pickPackage(pid: string) {
+    const sb = supabase
+    const pk = pkgOpts.find((x) => x.id === pid)
+    if (!sb || !w || !pk) return
+    const upd: Record<string, string | number | null> = { package_name: pk.name }
+    const n = parseFloat((pk.price ?? '').replace(/[^0-9.]/g, ''))
+    const hasTotal = Number(df.total_price) > 0
+    if (!hasTotal && Number.isFinite(n)) upd.total_price = n
+    const { error: e } = await sb.from('weddings').update(upd).eq('id', id)
+    if (e) { setError(e.message); return }
+    setW((prev) => (prev ? { ...prev, ...upd } : prev))
+    setDf((f) => ({ ...f, package_name: pk.name, ...(upd.total_price != null ? { total_price: String(upd.total_price) } : {}) }))
+    setNote('Saved.')
+    setTimeout(() => setNote(null), 2000)
+  }
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -414,27 +441,7 @@ export default function SessionDetailPage() {
                     {w.names || 'Untitled session'}
                     <Pen onClick={() => startEdit('header')} label="Edit name, date and location" />
                   </h1>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-ink-soft">
-                    <input
-                      type="time"
-                      aria-label="Start time"
-                      value={to24(df.session_start_time ?? '')}
-                      onChange={(e) => { const v = to12(e.target.value); setDf((f) => ({ ...f, session_start_time: v })) }}
-                      onBlur={() => saveDetail('session_start_time', 'text')}
-                      className="bg-transparent text-lg text-ink focus:outline-none"
-                    />
-                    <span>·</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      aria-label="Length in hours"
-                      value={df.session_length_hours ?? ''}
-                      onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, session_length_hours: v })) }}
-                      onBlur={() => saveDetail('session_length_hours', 'num')}
-                      className="w-14 bg-transparent text-lg text-ink focus:outline-none"
-                    />
-                    <span className="text-sm">hours</span>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                     {w.status && <span className="ml-2 rounded-full bg-twilight/10 px-3 py-1 text-xs text-twilight">{w.status}</span>}
                     {w.paid_in_full && <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-700">Paid in full</span>}
                   </div>
@@ -444,12 +451,56 @@ export default function SessionDetailPage() {
 
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
               {/* Details */}
+              <div className="space-y-6">
+              <section className={card}>
+                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Session time</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-line bg-paper p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Start time</p>
+                    <input
+                      type="time"
+                      value={to24(df.session_start_time ?? '')}
+                      onChange={(e) => { const v = to12(e.target.value); setDf((f) => ({ ...f, session_start_time: v })) }}
+                      onBlur={() => saveDetail('session_start_time', 'text')}
+                      className="mt-1 w-full bg-transparent font-fraunces text-xl font-semibold text-ink focus:outline-none"
+                    />
+                  </div>
+                  <div className="rounded-xl border border-line bg-paper p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Length</p>
+                    <div className="mt-1 flex items-baseline gap-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={df.session_length_hours ?? ''}
+                        onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, session_length_hours: v })) }}
+                        onBlur={() => saveDetail('session_length_hours', 'num')}
+                        className="w-16 bg-transparent font-fraunces text-xl font-semibold text-ink focus:outline-none"
+                      />
+                      <span className="text-sm text-ink-soft">hours</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               <section className={card}>
                 <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Details</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2 rounded-xl border border-line bg-paper p-3">
                     <p className="text-[11px] uppercase tracking-wider text-ink-soft">Package</p>
                     <input className="mt-1 w-full bg-transparent font-fraunces text-xl font-semibold text-ink focus:outline-none" value={df.package_name ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, package_name: v })) }} onBlur={() => saveDetail('package_name', 'text')} />
+                    {pkgOpts.length > 0 && (
+                      <Select
+                        value=""
+                        onChange={(e) => { if (e.target.value) pickPackage(e.target.value) }}
+                        className="mt-2 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink"
+                      >
+                        <option value="">Choose from my packages…</option>
+                        {(pkgOpts.some((x) => x.session_type === w.session_type) ? pkgOpts.filter((x) => x.session_type === w.session_type) : pkgOpts).map((x) => (
+                          <option key={x.id} value={x.id}>{x.name}{x.price ? ` · ${x.price}` : ''}</option>
+                        ))}
+                      </Select>
+                    )}
                   </div>
                   <div className="rounded-xl border border-line bg-paper p-3">
                     <p className="text-[11px] uppercase tracking-wider text-ink-soft">Number of people</p>
@@ -468,6 +519,7 @@ export default function SessionDetailPage() {
                   </div>
                 </div>
               </section>
+              </div>
 
               {/* Contract, questionnaire, payments, gallery */}
               {(() => {
