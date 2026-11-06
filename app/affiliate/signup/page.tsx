@@ -34,7 +34,6 @@ export default function AffiliateSignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [password, setPassword] = useState('')
   const [handle, setHandle] = useState('')
   const [followers, setFollowers] = useState('')
   const [reach, setReach] = useState('')
@@ -59,12 +58,12 @@ export default function AffiliateSignupPage() {
     setLoading(true)
     setError(null)
     try {
-      const code = teamCode.trim().toLowerCase()
+      let code = teamCode.trim().toLowerCase()
       if (code) {
         const { data: validTeam } = await supabase.rpc('check_team_code', { p_code: code })
-        if (!validTeam) throw new Error('That team code was not found. Check it with whoever invited you, or clear it.')
-        try { window.localStorage.setItem('camrhia_recruit', code) } catch {}
+        if (!validTeam) code = ''
       }
+      const password = `${crypto.randomUUID()}${crypto.randomUUID()}`
 
       const referral_code = await uniqueReferralCode(name)
 
@@ -109,13 +108,10 @@ export default function AffiliateSignupPage() {
       <div className="min-h-screen bg-paper">
         {header}
         <main className="mx-auto max-w-xl px-6 py-20 text-center">
-          <h1 className="font-fraunces text-4xl font-semibold text-ink">You are in. Now confirm your email.</h1>
+          <h1 className="font-fraunces text-4xl font-semibold text-ink">Thank you for applying.</h1>
           <p className="mt-4 text-ink-soft">
-            We sent a confirmation link to <span className="font-medium text-ink">{email}</span>. Tap it, then sign in on the affiliate login page. We will also call you at the number you gave us to get you started.
+            We got your application and will reach out soon at the number you gave us.
           </p>
-          <Link href="/affiliate/login" className="mt-8 inline-block rounded-full px-7 py-3.5 text-sm font-semibold text-white" style={{ backgroundColor: ROSE }}>
-            Go to affiliate login
-          </Link>
         </main>
       </div>
     )
@@ -258,15 +254,6 @@ export default function AffiliateSignupPage() {
                 <label className="mb-1.5 block text-sm font-medium text-ink">Email</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="jane@example.com" className={inputCls} />
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink">Password</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} placeholder="At least 8 characters" className={inputCls} />
-              </div>
-
-              <details open={teamCode ? true : undefined} className="text-sm text-ink-soft">
-                <summary className="cursor-pointer">Have a team code?</summary>
-                <input type="text" value={teamCode} onChange={(e) => setTeamCode(e.target.value)} placeholder="Team code" autoCapitalize="none" className={`${inputCls} mt-2`} />
-              </details>
 
               {error && <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
