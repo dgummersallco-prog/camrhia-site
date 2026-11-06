@@ -663,9 +663,9 @@ export default function SpecialsPage() {
                                 <div className="mb-6 rounded-2xl border border-line bg-card p-5">
                       <p className="font-fraunces text-lg font-semibold text-ink">Use a preset to start</p>
                       <p className="mt-1 text-sm text-ink-soft">Pick the occasion. I fill in the look, the words, your studio name, your mini-session and your photos. Change anything after.</p>
-                      <div className="mt-3 flex flex-wrap justify-center gap-2">
+                      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {EXAMPLES.map((ex) => (
-                          <button key={ex.name} type="button" onClick={() => makeItForMe(ex.name)} className="flex w-[calc(50%-4px)] items-center justify-center gap-1.5 rounded-full border border-line bg-card px-3 py-2.5 text-sm text-ink transition hover:border-twilight sm:w-44">{DECOR_EMOJI[ex.theme.decor ?? 'none']} {ex.name}</button>
+                          <button key={ex.name} type="button" onClick={() => makeItForMe(ex.name)} className="flex w-full items-center justify-center gap-1.5 rounded-full border border-line bg-card px-3 py-2.5 text-sm text-ink transition hover:border-twilight">{DECOR_EMOJI[ex.theme.decor ?? 'none']} {ex.name}</button>
                         ))}
                       </div>
                     </div>
