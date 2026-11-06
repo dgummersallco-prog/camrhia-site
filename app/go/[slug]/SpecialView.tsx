@@ -154,7 +154,7 @@ export function readTheme(c: Record<string, unknown>): SpecialTheme {
     cardBg: hexOr(c.card_bg, D.cardBg),
     cardText: hexOr(c.card_text, D.cardText),
     cardRadius: num(c.card_radius, 0, 60, D.cardRadius),
-    blocks: readBlocks(c.blocks),
+    blocks: [],
   }
 }
 

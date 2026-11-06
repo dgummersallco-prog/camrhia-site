@@ -698,31 +698,6 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Text boxes" summary={form.theme.blocks.length ? `${form.theme.blocks.length} added` : 'None'}>
-                      {form.theme.blocks.map((b, i) => (
-                        <div key={i} className="space-y-4 rounded-xl border border-line bg-card p-4">
-                          <div className="flex items-center justify-between">
-                            <Label>Text box {i + 1}</Label>
-                            <button type="button" onClick={() => removeBlock(i)} className="text-xs text-ink-soft underline hover:text-red-700">Remove</button>
-                          </div>
-                          <textarea rows={2} value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} className={inputCls} placeholder="Type anything" />
-                          <FontPicker label="Font" value={b.font} onChange={(k) => setBlock(i, { font: k })} />
-                          <div>
-                            <Label>Size</Label>
-                            <SizeField value={b.size} min={8} max={160} onChange={(n) => setBlock(i, { size: n })} />
-                          </div>
-                          <div className="max-w-xs">
-                            <ColorField label="Color" value={b.color} onChange={(v) => setBlock(i, { color: v })} />
-                          </div>
-                          <div>
-                            <Label>Shows</Label>
-                            <Chips value={b.place} options={PLACES} onChange={(v) => setBlock(i, { place: v })} />
-                          </div>
-                        </div>
-                      ))}
-                      <button type="button" onClick={addBlock} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add text box</button>
-                    </MiniCard>
-
                     <MiniCard title="Mini session">
                       {minis.length === 0 ? (
                         <p className="text-sm text-ink-soft">You have no live mini-sessions yet. <a href="/minis" className="text-twilight underline">Create one on the Mini-sessions page</a>, then come back and pick it here.</p>
