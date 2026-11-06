@@ -24,7 +24,7 @@ type Funnel = {
   cta_label: string
   published: boolean
 }
-type MiniOpt = { id: string; title: string; description: string | null; location: string | null; price: number; duration_min: number | null; tz: string; slots: { id: string; starts_at: string }[] }
+type MiniOpt = { id: string; title: string; description: string | null; location: string | null; price: number; duration_min: number | null; tz: string; photos_included?: number | null; slots: { id: string; starts_at: string }[] }
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
@@ -379,6 +379,15 @@ export default function SpecialsPage() {
   const [uploading, setUploading] = useState(false)
   const bgInput = useRef<HTMLInputElement>(null)
   const [minis, setMinis] = useState<MiniOpt[]>([])
+  const [ssDate, setSsDate] = useState('')
+  const [ssWhere, setSsWhere] = useState('')
+  const [ssStart, setSsStart] = useState('17:00')
+  const [ssEnd, setSsEnd] = useState('20:00')
+  const [ssMins, setSsMins] = useState('20')
+  const [ssPrice, setSsPrice] = useState('')
+  const [ssPhotos, setSsPhotos] = useState('')
+  const [ssBusy, setSsBusy] = useState(false)
+  const [ssErr, setSsErr] = useState<string | null>(null)
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
   const photoInput = useRef<HTMLInputElement>(null)
 
@@ -405,7 +414,7 @@ export default function SpecialsPage() {
       setUserId(sess.session.user.id)
       setForm((f) => f ?? toForm(null))
       ;(async () => {
-        const { data: m } = await sb.from('mini_sessions').select('id,title,description,location,price,duration_min,tz').eq('owner_id', sess.session.user.id).eq('active', true).order('created_at', { ascending: false })
+        const { data: m } = await sb.from('mini_sessions').select('id,title,description,location,price,duration_min,tz,photos_included').eq('owner_id', sess.session.user.id).eq('active', true).order('created_at', { ascending: false })
         const list = (m ?? []) as Omit<MiniOpt, 'slots'>[]
         let slots: { id: string; mini_id: string; starts_at: string }[] = []
         if (list.length) {
@@ -439,6 +448,51 @@ export default function SpecialsPage() {
       }
       return { ...f, text }
     })
+  const linkedMini = form ? minis.find((x) => x.id === form.text.mini_id) : undefined
+  const ssSlots = (() => {
+    const mins = parseInt(ssMins, 10)
+    const out: Date[] = []
+    if (!ssDate || !ssStart || !ssEnd || !(mins >= 5)) return out
+    const start = new Date(`${ssDate}T${ssStart}`).getTime()
+    const end = new Date(`${ssDate}T${ssEnd}`).getTime()
+    for (let t = start; t + mins * 60000 <= end && out.length < 41; t += mins * 60000) out.push(new Date(t))
+    return out
+  })()
+  const clock = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  const buildSlots = async () => {
+    setSsErr(null)
+    const sb = supabase
+    if (!sb || !userId || !form) return
+    const pr = parseFloat(ssPrice)
+    const mins = parseInt(ssMins, 10)
+    const photosN = parseInt(ssPhotos, 10)
+    if (!ssDate) { setSsErr('Pick the day.'); return }
+    if (!(pr >= 0.5)) { setSsErr('Enter a price of at least $0.50.'); return }
+    if (ssSlots.length === 0) { setSsErr('Make the end time later than the start time.'); return }
+    if (ssSlots.length > 40) { setSsErr('That makes more than 40 times. Shorten the window or make each session longer.'); return }
+    setSsBusy(true)
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Denver'
+      const title = (form.text.hero_headline || 'Mini session').trim()
+      const where = ssWhere.trim()
+      const { data: mini, error: me } = await sb.from('mini_sessions').insert({ owner_id: userId, title, location: where || null, price: pr, duration_min: mins, tz, photos_included: photosN >= 0 ? photosN : null }).select('id').single()
+      if (me || !mini) throw new Error(me?.message || 'Could not save.')
+      const rows = ssSlots.map((d) => ({ mini_id: mini.id, owner_id: userId, starts_at: d.toISOString() }))
+      const { data: sl, error: se } = await sb.from('mini_slots').insert(rows).select('id,starts_at')
+      if (se) { await sb.from('mini_sessions').delete().eq('id', mini.id); throw new Error(se.message) }
+      const slots = ((sl ?? []) as { id: string; starts_at: string }[]).sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+      const opt: MiniOpt = { id: mini.id, title, description: null, location: where || null, price: pr, duration_min: mins, tz, photos_included: photosN >= 0 ? photosN : null, slots }
+      setMinis((prev) => [opt, ...prev])
+      const day = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(ssSlots[0])
+      const priceLine = '$' + pr.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' · ' + mins + ' min' + (photosN >= 0 ? ' · ' + photosN + ' photos' : '')
+      setForm((f) => (f ? { ...f, text: { ...f.text, mini_id: mini.id, price_line: priceLine, when_where: where ? day + ' · ' + where : day, spots_note: slots.length + (slots.length === 1 ? ' spot left' : ' spots left') } } : f))
+      flash('Time slots built.')
+    } catch (e) {
+      setSsErr(e instanceof Error ? e.message : 'Could not build the time slots.')
+    } finally {
+      setSsBusy(false)
+    }
+  }
   const makeItForMe = (name: string) => {
     const ex = EXAMPLES.find((e) => e.name === name)
     if (!ex || !form) return
@@ -705,21 +759,44 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Mini session">
-                      {minis.length === 0 ? (
-                        <p className="text-sm text-ink-soft">You have no live mini-sessions yet. <a href="/minis" className="text-twilight underline">Create one on the Mini-sessions page</a>, then come back and pick it here.</p>
+                    <MiniCard title="Session settings">
+                      {linkedMini ? (
+                        <>
+                          <p className="text-sm text-ink">
+                            ${Number(linkedMini.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            {linkedMini.duration_min ? ' · ' + linkedMini.duration_min + ' min' : ''}
+                            {linkedMini.photos_included != null ? ' · ' + linkedMini.photos_included + ' photos' : ''}
+                            {linkedMini.location ? ' · ' + linkedMini.location : ''}
+                          </p>
+                          <p className="text-sm text-ink-soft">{linkedMini.slots.length} {linkedMini.slots.length === 1 ? 'time' : 'times'} open. Clients pick a time on your special, then pay.</p>
+                          <button type="button" onClick={() => pickMini('')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">Build different times</button>
+                        </>
                       ) : (
                         <>
-                          <label className="block">
-                            <Label>Pick the mini-session for this special</Label>
-                            <select value={form.text.mini_id} onChange={(e) => pickMini(e.target.value)} className={inputCls}>
-                              <option value="">None (use the sign-up form)</option>
-                              {minis.map((m) => (
-                                <option key={m.id} value={m.id}>{m.title} · ${Number(m.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} · {m.slots.length} open</option>
-                              ))}
-                            </select>
-                          </label>
-                          <p className="text-sm text-ink-soft">People pick a time and pay on your mini-session booking page. The price, length and location come from the mini-session.</p>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <label className="block"><Label>Day</Label><input type="date" value={ssDate} onChange={(e) => setSsDate(e.target.value)} className={inputCls} /></label>
+                            <label className="block"><Label>Where</Label><input placeholder="Pine Hollow Lodge, Park City, UT" value={ssWhere} onChange={(e) => setSsWhere(e.target.value)} className={inputCls} /></label>
+                            <label className="block"><Label>Start time</Label><input type="time" value={ssStart} onChange={(e) => setSsStart(e.target.value)} className={inputCls} /></label>
+                            <label className="block"><Label>End time</Label><input type="time" value={ssEnd} onChange={(e) => setSsEnd(e.target.value)} className={inputCls} /></label>
+                            <label className="block"><Label>Price ($)</Label><input inputMode="decimal" placeholder="150" value={ssPrice} onChange={(e) => setSsPrice(e.target.value)} className={inputCls} /></label>
+                            <label className="block"><Label>Photos included</Label><input inputMode="numeric" placeholder="10" value={ssPhotos} onChange={(e) => setSsPhotos(e.target.value)} className={inputCls} /></label>
+                          </div>
+                          <div>
+                            <Label>Minutes per session</Label>
+                            <Chips value={ssMins} options={[{ id: '10', label: '10' }, { id: '15', label: '15' }, { id: '20', label: '20' }, { id: '30', label: '30' }, { id: '45', label: '45' }, { id: '60', label: '60' }]} onChange={setSsMins} />
+                          </div>
+                          {ssSlots.length > 0 && (
+                            <div>
+                              <p className="mb-2 text-sm text-ink-soft">{ssSlots.length} {ssSlots.length === 1 ? 'time' : 'times'} will be built:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {ssSlots.slice(0, 40).map((d) => (
+                                  <span key={d.getTime()} className="rounded-full border border-line bg-card px-3 py-1 text-xs text-ink">{clock(d)}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {ssErr && <p className="text-sm text-red-700">{ssErr}</p>}
+                          <button type="button" disabled={ssBusy} onClick={buildSlots} className="rounded-full px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#A9545F' }}>{ssBusy ? 'Building…' : 'Build my time slots'}</button>
                         </>
                       )}
                     </MiniCard>
