@@ -408,6 +408,126 @@ function CallScript({
   )
 }
 
+type Idea = { hook: string; value: string; end: string }
+type IdeaSet = { title: string; why: string; ideas: Idea[] }
+
+const IDEA_SETS: IdeaSet[] = [
+  {
+    title: "Loss Aversion",
+    why: "People hate losing more than they like winning. Show what photographers are losing right now.",
+    ideas: [
+      { hook: "Every weekend you spend chasing a late payment is a weekend you didn't spend shooting.", value: "I stopped chasing. Camrhia keeps the contract, payments and timeline in one spot, so clients pay on time and stop texting me.", end: "Try it free for 14 days. Link in bio." },
+      { hook: "A client finds you, opens a half-finished website, and leaves. You never even know.", value: "Camrhia builds a clean site from your portfolio in minutes, so your first impression works for you.", end: "Don't lose the next one. Link in bio." },
+      { hook: "Your best photos are sitting on your phone doing nothing for your business.", value: "Camrhia turns them into a portfolio and site people can find you through.", end: "Put your work to work. Free for 14 days, link in bio." },
+    ],
+  },
+  {
+    title: "Social Proof",
+    why: "People follow the crowd. Use real names and real results, never made-up ones.",
+    ideas: [
+      { hook: "[Number] photographers I know have moved their business into one app.", value: "[Name] told me she got her weekends back after putting her contracts and payments in Camrhia.", end: "See why. Free for 14 days, link in bio." },
+      { hook: "I just got my first Camrhia payout.", value: "[Show a screenshot.] All I did was share a link to an app I actually use.", end: "Want to try it? Link in bio." },
+      { hook: "What [Name] said after her first week on Camrhia:", value: "[Paste her real message, with her OK.]", end: "Try it free for 14 days. Link in bio." },
+    ],
+  },
+  {
+    title: "Authority",
+    why: "People listen to experts. You are one, so say it up front.",
+    ideas: [
+      { hook: "I've shot [number] [weddings / sessions]. This is the one tool I wouldn't run my business without.", value: "Camrhia holds my contract, payments and timeline in one place.", end: "Free for 14 days. Link in bio." },
+      { hook: "Here's what I tell every new photographer I mentor.", value: "[Your best tip.] And get your paperwork out of your DMs. I use Camrhia for that.", end: "Try it free. Link in bio." },
+      { hook: "After [number] years of photography, this is what I'd set up first.", value: "A clean website, and contracts and payments in one app. Camrhia does both.", end: "Start free for 14 days. Link in bio." },
+    ],
+  },
+  {
+    title: "Scarcity",
+    why: "Real scarcity only: a photographer's time and weekends are limited, and that is true.",
+    ideas: [
+      { hook: "You only get so many weekends a year.", value: "Spend them shooting, not chasing paperwork. Camrhia handles contracts, payments and client updates.", end: "Take your weekends back. Free for 14 days." },
+      { hook: "Your calendar fills up. Your system shouldn't fall behind.", value: "Set up Camrhia before your busy season hits, not in the middle of it.", end: "Start your free trial today. Link in bio." },
+      { hook: "Your next booking depends on how easy you are to book.", value: "A clean site and a simple contract make saying yes easy.", end: "Set it up this week. Free for 14 days." },
+    ],
+  },
+  {
+    title: "Identity",
+    why: "People act like the person they see themselves as. Speak to the pro they want to be.",
+    ideas: [
+      { hook: "Professional photographers don't run their business out of their DMs.", value: "They have a site, a contract and a clear payment trail. Camrhia gives you all three.", end: "Run it like a pro. Link in bio." },
+      { hook: "You're not a hobbyist anymore. Your business shouldn't look like one.", value: "Camrhia gives your business a real home: your site, your contracts, your payments.", end: "Free for 14 days. Link in bio." },
+      { hook: "The photographers who stay booked are the organised ones.", value: "Everything for each client lives in one place, so nothing slips.", end: "Be that photographer. Try Camrhia free." },
+    ],
+  },
+  {
+    title: "Reciprocity",
+    why: "Give something useful for free first. People want to give back.",
+    ideas: [
+      { hook: "Free tip: send your client the timeline before the day, not the morning of.", value: "I keep mine in Camrhia, so my client can check it any time.", end: "Try it free for 14 days. Link in bio." },
+      { hook: "Here's my free [checklist / tip] for your next session.", value: "[Share one real tip.] I run my business on Camrhia and I'm happy to show you how.", end: "Comment 'info' and I'll send you the link." },
+      { hook: "I'll help you set up your first booking, for free.", value: "Camrhia is free for 14 days, so you have nothing to lose.", end: "DM me 'setup' and we'll do it together." },
+    ],
+  },
+  {
+    title: "Framing",
+    why: "The same price lands differently depending on how you say it.",
+    ideas: [
+      { hook: "Camrhia costs less than [one hour of your session rate].", value: "And it holds your contracts, payments and website in one place.", end: "Free for 14 days first. Link in bio." },
+      { hook: "$59.99 a month is about $2 a day.", value: "For your website, contracts and payments, all in one app.", end: "Try it free for 14 days. Link in bio." },
+      { hook: "It's not another app to manage.", value: "It's where your contracts, payments, timeline and website live.", end: "See it for yourself. Free for 14 days." },
+    ],
+  },
+  {
+    title: "Commitment",
+    why: "A small yes comes first. Make the first step tiny and risk free.",
+    ideas: [
+      { hook: "Don't switch your whole business. Just try it on one booking.", value: "Run your next client through Camrhia and see the difference.", end: "Free for 14 days. Link in bio." },
+      { hook: "Step one is a free 14-day trial. That's it.", value: "No big decision today. Just see if it makes your life easier.", end: "Start free. Link in bio." },
+      { hook: "Want the link? Just comment 'yes'.", value: "I'll DM it to you. No pressure, and it's free for 14 days.", end: "Comment 'yes' below." },
+    ],
+  },
+]
+
+function IdeaBank() {
+  const [copied, setCopied] = useState<string | null>(null)
+  return (
+    <div className="space-y-12">
+      <p className="text-sm text-ink-soft max-w-2xl">
+        Each card is a post you can make today. The hook is your first line, the value is the middle, the ending tells people what to do. Fill in anything{' '}
+        <span className="rounded bg-brass/20 px-1 text-brass font-medium">[in brackets]</span> with something real, and only post what is true.
+      </p>
+      {IDEA_SETS.map((set, si) => (
+        <section key={set.title} className="space-y-4">
+          <div>
+            <h2 className="font-fraunces text-3xl font-semibold text-ink">{set.title}</h2>
+            <p className="mt-1 text-sm text-ink-soft">{set.why}</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {set.ideas.map((idea, i) => {
+              const id = `idea-${si}-${i}`
+              const text = `${idea.hook}\n\n${idea.value}\n\n${idea.end}`
+              const parts: [string, string][] = [['Hook', idea.hook], ['Value', idea.value], ['Ending', idea.end]]
+              return (
+                <div key={id} className="flex flex-col rounded-2xl border border-line bg-card p-5">
+                  <div className="space-y-4">
+                    {parts.map(([label, t]) => (
+                      <div key={label}>
+                        <p className="font-mono text-[10px] tracking-widest uppercase text-twilight">{label}</p>
+                        <p className="mt-1 text-sm text-ink leading-relaxed"><Highlight text={t} /></p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-auto pt-5">
+                    <CopyButton text={text} id={id} copied={copied} setCopied={setCopied} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
+
 function PitchBody({ a }: { a: ShellAffiliate }) {
   const [copied, setCopied] = useState<string | null>(null)
   const [theirName, setTheirName] = useState('')
@@ -503,9 +623,21 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
 }
 
 export default function PitchPage() {
+  const [view, setView] = useState<'ideas' | 'scripts'>('ideas')
+  const pill = (on: boolean) =>
+    'rounded-full px-5 py-2 text-sm font-medium transition-colors ' +
+    (on ? 'bg-twilight text-white' : 'border border-line text-ink-soft hover:text-ink')
   return (
-    <AffiliateShell title="Pitch kit" subtitle="Copy, paste, send. Everything you need to talk to photographers.">
-      {(a) => <PitchBody a={a} />}
+    <AffiliateShell title="Marketing HQ" subtitle="Post ideas and scripts to help you sign photographers.">
+      {(a) => (
+        <div className="space-y-8">
+          <div className="flex gap-2">
+            <button onClick={() => setView('ideas')} className={pill(view === 'ideas')} style={view === 'ideas' ? { backgroundColor: '#A9545F', color: '#ffffff' } : undefined}>Post ideas</button>
+            <button onClick={() => setView('scripts')} className={pill(view === 'scripts')} style={view === 'scripts' ? { backgroundColor: '#A9545F', color: '#ffffff' } : undefined}>DM and call scripts</button>
+          </div>
+          {view === 'ideas' ? <IdeaBank /> : <PitchBody a={a} />}
+        </div>
+      )}
     </AffiliateShell>
   )
 }
