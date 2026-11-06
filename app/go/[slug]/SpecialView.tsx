@@ -1,8 +1,9 @@
 import LeadForm from './LeadForm'
 import Slideshow from './Slideshow'
+import SlotPicker from './SlotPicker'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 
-export type MiniInfo = { id: string; title: string; price: number; duration_min: number | null; location: string | null; tz: string; slots: { id: string; starts_at: string }[] }
+export type MiniInfo = { id: string; title: string; price: number; duration_min: number | null; location: string | null; tz: string; photos_included?: number | null; slots: { id: string; starts_at: string }[]; taken_slots?: { id: string; starts_at: string }[] }
 
 export type SpecialData = {
   brand: string
@@ -224,24 +225,10 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
   const fmtSlot = (iso: string, tz: string) => new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: tz }).format(new Date(iso))
   const miniBlock = !d.miniId ? null : !m ? (
     <p className="font-medium">These sessions are no longer available.</p>
-  ) : m.slots.length === 0 ? (
+  ) : m.slots.length === 0 && !(m.taken_slots && m.taken_slots.length) ? (
     <p className="font-medium">All spots are booked.</p>
   ) : (
-    <div>
-      <p className="mb-3 text-sm opacity-80">{m.slots.length} {m.slots.length === 1 ? 'time' : 'times'} left</p>
-      <div className="flex flex-wrap gap-2">
-        {m.slots.slice(0, 8).map((sl) => (
-          <span key={sl.id} className="rounded-full border border-current px-3 py-1 text-sm opacity-80">{fmtSlot(sl.starts_at, m.tz)}</span>
-        ))}
-      </div>
-      <div className="mt-5">
-        {preview ? (
-          <span className="block px-8 py-4 text-center font-medium" style={btnStyle}>{d.label}</span>
-        ) : (
-          <a href={`/mini/${m.id}`} className="block px-8 py-4 text-center font-medium transition hover:opacity-90" style={btnStyle}>{d.label}</a>
-        )}
-      </div>
-    </div>
+    <SlotPicker mini={m} preview={preview} label={d.label} btnStyle={btnStyle} />
   )
   const renderBlocks = (place: 'title' | 'subtitle' | 'claim') =>
     t.blocks.filter((b) => b.place === place && b.text.trim()).map((b, i) => (
