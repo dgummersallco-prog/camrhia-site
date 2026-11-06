@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabaseAffiliate as defaultClient } from '@/lib/supabaseAffiliate'
+import { Avatar, AvatarPicker } from './Avatar'
 
 type Post = {
   id: string; author_id: string; author_name: string; body: string; link_url: string | null; pinned: boolean; created_at: string
@@ -60,6 +61,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [sort, setSort] = useState<'new' | 'signed'>('new')
   const [editing, setEditing] = useState<Record<string, Nums | undefined>>({})
+  const [avatars, setAvatars] = useState<Record<string, string>>({})
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -90,6 +92,17 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   }, [supabase])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    const sb = supabase
+    if (!sb || !uid) return
+    const ids = Array.from(new Set([uid, ...posts.map((x) => x.author_id), ...comments.map((x) => x.author_id)]))
+    sb.rpc('hub_avatars', { p_ids: ids }).then(({ data }) => {
+      const m: Record<string, string> = {}
+      for (const r of (data ?? []) as { user_id: string; avatar_url: string | null }[]) if (r.avatar_url) m[r.user_id] = r.avatar_url
+      setAvatars(m)
+    })
+  }, [supabase, uid, posts, comments])
 
   const shown = useMemo(() => {
     const list = [...posts]
@@ -202,7 +215,12 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-line bg-card p-5">
+      <div className="max-w-2xl rounded-2xl border border-line bg-card p-5">
+        {uid && (
+          <div className="mb-4">
+            <AvatarPicker client={supabase} uid={uid} url={avatars[uid]} name="Me" onDone={(u) => setAvatars((a) => ({ ...a, [uid]: u }))} />
+          </div>
+        )}
         <div className="mb-3 flex flex-wrap gap-2">
           {PLATFORMS.map((pl) => (
             <button key={pl} type="button" onClick={() => setPlatform(platform === pl ? '' : pl)} className={`rounded-full border px-4 py-1.5 text-sm transition ${platform === pl ? 'text-white' : 'border-line text-ink hover:border-twilight'}`} style={platform === pl ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
@@ -236,6 +254,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         </div>
       )}
 
+      <div className="columns-1 gap-5 md:columns-2 xl:columns-3">
       {shown.map((p) => {
         const pl = likes.filter((l) => l.post_id === p.id)
         const liked = !!uid && pl.some((l) => l.user_id === uid)
@@ -244,15 +263,18 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         const ed = editing[p.id]
         const hasNums = p.views != null || p.ig_likes != null || p.shares != null || p.saves != null || p.signed != null
         return (
-          <article key={p.id} className="rounded-2xl border bg-card p-5" style={{ borderColor: p.pinned ? ROSE : undefined }}>
+          <article key={p.id} className="mb-5 break-inside-avoid rounded-2xl border bg-card p-5" style={{ borderColor: p.pinned ? ROSE : undefined }}>
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="flex items-center gap-3">
+                <Avatar url={avatars[p.author_id]} name={p.author_name} />
+                <div>
                 <p className="text-sm font-semibold text-ink">
                   {p.author_name}
                   {p.platform && <span className="ml-2 rounded-full bg-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">{p.platform}</span>}
                   {p.pinned && <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white" style={{ backgroundColor: ROSE }}>Pinned</span>}
                 </p>
                 <p className="text-xs text-ink-soft">{ago(p.created_at)}</p>
+                </div>
               </div>
               <div className="flex gap-3 text-xs text-ink-soft">
                 {admin && <button onClick={() => togglePin(p)} className="hover:text-ink">{p.pinned ? 'Unpin' : 'Pin'}</button>}
@@ -322,7 +344,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               <div className="mt-4 space-y-3 border-t border-line pt-4">
                 {pc.map((c) => (
                   <div key={c.id} className="text-sm">
-                    <p className="text-ink"><span className="font-semibold">{c.author_name}</span> <span className="text-xs text-ink-soft">{ago(c.created_at)}</span></p>
+                    <p className="flex items-center gap-2 text-ink"><Avatar url={avatars[c.author_id]} name={c.author_name} size={22} /><span className="font-semibold">{c.author_name}</span> <span className="text-xs text-ink-soft">{ago(c.created_at)}</span></p>
                     <p className="whitespace-pre-wrap text-ink-soft">{c.body}</p>
                     {(admin || c.author_id === uid) && <button onClick={() => removeComment(c)} className="text-xs text-ink-soft hover:text-red-700">Delete</button>}
                   </div>
@@ -336,6 +358,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
           </article>
         )
       })}
+      </div>
     </div>
   )
 }
