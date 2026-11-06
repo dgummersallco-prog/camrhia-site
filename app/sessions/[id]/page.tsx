@@ -123,7 +123,6 @@ export default function SessionDetailPage() {
   const [sendPin, setSendPin] = useState('')
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
-  const [notes, setNotes] = useState('')
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -150,7 +149,6 @@ export default function SessionDetailPage() {
       venue: wd.venue ?? '',
       gallery_due_date: wd.gallery_due_date ?? '',
     })
-    setNotes(((wr.data as Wedding).private_notes as string | null) ?? '')
     setEvents((ev.data ?? []) as Ev[])
     setContract(((ct.data ?? [])[0] as Contract | undefined) ?? null)
     setMsgs((ms.data ?? []) as Msg[])
@@ -320,18 +318,6 @@ export default function SessionDetailPage() {
     load()
   }
 
-  async function saveNotes() {
-    const sb = supabase
-    if (!sb || !w) return
-    const next = notes.trim() || null
-    if (next === ((w.private_notes as string | null) ?? null)) return
-    const { error: e } = await sb.from('weddings').update({ private_notes: next }).eq('id', id)
-    if (e) { setError(e.message); return }
-    setW((prev) => (prev ? { ...prev, private_notes: next } : prev))
-    setNote('Notes saved.')
-    setTimeout(() => setNote(null), 2000)
-  }
-
   const cityState = w ? [w.city, w.state].filter(Boolean).join(', ') : ''
 
   const field = (k: string, type = 'text', cls = '', ph = '', focus = false) => (
@@ -394,13 +380,8 @@ export default function SessionDetailPage() {
         ) : (
           <>
             <div className="mb-8 mt-4">
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="rounded-full bg-line px-3 py-1 text-ink-soft">{prettyType(w.session_type)}</span>
-                {w.status && <span className="rounded-full bg-twilight/10 px-3 py-1 text-twilight">{w.status}</span>}
-                {w.paid_in_full && <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Paid in full</span>}
-              </div>
               {editKey === 'header' ? (
-                <div className="mt-3 rounded-2xl border border-line bg-card p-4">
+                <div className="rounded-2xl border border-line bg-card p-4">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <label className={lblCls}>Name</label>
@@ -428,114 +409,73 @@ export default function SessionDetailPage() {
                 </div>
               ) : (
                 <>
-                  <h1 className="mt-3 flex items-center gap-1 font-fraunces text-3xl font-semibold text-ink md:text-4xl">
+                  <p className="font-mono text-xs uppercase tracking-widest text-brass">{fmtDate(w.wedding_date)} · {prettyType(w.session_type)}</p>
+                  <h1 className="mt-2 flex items-center gap-1 font-fraunces text-3xl font-semibold text-ink md:text-4xl">
                     {w.names || 'Untitled session'}
                     <Pen onClick={() => startEdit('header')} label="Edit name, date and location" />
                   </h1>
-                  <p className="mt-1 text-ink-soft">{fmtDate(w.wedding_date)}{cityState ? ` · ${cityState}` : ''}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-ink-soft">
+                    <input
+                      type="time"
+                      aria-label="Start time"
+                      value={to24(df.session_start_time ?? '')}
+                      onChange={(e) => { const v = to12(e.target.value); setDf((f) => ({ ...f, session_start_time: v })) }}
+                      onBlur={() => saveDetail('session_start_time', 'text')}
+                      className="bg-transparent text-lg text-ink focus:outline-none"
+                    />
+                    <span>·</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      aria-label="Length in hours"
+                      value={df.session_length_hours ?? ''}
+                      onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, session_length_hours: v })) }}
+                      onBlur={() => saveDetail('session_length_hours', 'num')}
+                      className="w-14 bg-transparent text-lg text-ink focus:outline-none"
+                    />
+                    <span className="text-sm">hours</span>
+                    {w.status && <span className="ml-2 rounded-full bg-twilight/10 px-3 py-1 text-xs text-twilight">{w.status}</span>}
+                    {w.paid_in_full && <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-700">Paid in full</span>}
+                  </div>
                 </>
               )}
             </div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
               {/* Details */}
               <section className={card}>
                 <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Details</p>
-                <div className="grid grid-cols-2 divide-x divide-line overflow-hidden rounded-xl border border-line bg-paper">
-                  <div className="p-3">
-                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Start time</p>
-                    <input
-                      type="time"
-                      value={to24(df.session_start_time ?? '')}
-                      onChange={(e) => { const v = to12(e.target.value); setDf((f) => ({ ...f, session_start_time: v })) }}
-                      onBlur={() => saveDetail('session_start_time', 'text')}
-                      className="mt-1 w-full bg-transparent font-fraunces text-2xl font-semibold text-ink focus:outline-none"
-                    />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2 rounded-xl border border-line bg-paper p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Package</p>
+                    <input className="mt-1 w-full bg-transparent font-fraunces text-xl font-semibold text-ink focus:outline-none" value={df.package_name ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, package_name: v })) }} onBlur={() => saveDetail('package_name', 'text')} />
                   </div>
-                  <div className="p-3">
-                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Length</p>
-                    <div className="mt-1 flex items-baseline gap-1.5">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={df.session_length_hours ?? ''}
-                        onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, session_length_hours: v })) }}
-                        onBlur={() => saveDetail('session_length_hours', 'num')}
-                        className="w-16 bg-transparent font-fraunces text-2xl font-semibold text-ink focus:outline-none"
-                      />
-                      <span className="text-sm text-ink-soft">hours</span>
+                  <div className="rounded-xl border border-line bg-paper p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Number of people</p>
+                    <input type="number" min="0" className="mt-1 w-full bg-transparent font-fraunces text-xl font-semibold text-ink focus:outline-none" value={df.guests ?? (w.guests == null ? '' : String(w.guests))} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, guests: v })) }} onBlur={() => saveDetail('guests', 'num')} />
+                  </div>
+                  <div className="rounded-xl border border-line bg-paper p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Venue</p>
+                    <input className="mt-1 w-full bg-transparent font-fraunces text-xl font-semibold text-ink focus:outline-none" value={df.venue ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, venue: v })) }} onBlur={() => saveDetail('venue', 'text')} />
+                  </div>
+                  <div className="col-span-2 rounded-xl border border-line bg-paper p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-ink-soft">Total</p>
+                    <div className="mt-1 flex items-baseline gap-1">
+                      <span className="font-fraunces text-xl font-semibold text-ink-soft">$</span>
+                      <input type="number" className="w-full bg-transparent font-fraunces text-xl font-semibold text-ink focus:outline-none" value={df.total_price ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, total_price: v })) }} onBlur={() => saveDetail('total_price', 'num')} />
                     </div>
                   </div>
-                </div>
-
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <label className={lblCls}>Package</label>
-                    <input className={inCls} value={df.package_name ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, package_name: v })) }} onBlur={() => saveDetail('package_name', 'text')} />
-                  </div>
-                  <div>
-                    <label className={lblCls}>Total</label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-soft">$</span>
-                      <input type="number" className={`${inCls} pl-7`} value={df.total_price ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, total_price: v })) }} onBlur={() => saveDetail('total_price', 'num')} />
-                    </div>
-                  </div>
-                  <div>
-                    <label className={lblCls}>Venue / location</label>
-                    <input className={inCls} value={df.venue ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, venue: v })) }} onBlur={() => saveDetail('venue', 'text')} />
-                  </div>
-                  <div>
-                    <label className={lblCls}>Gallery due</label>
-                    <div className="mb-2 flex flex-wrap gap-2">
-                      {[7, 14, 21, 30, 45, 60].map((n) => (
-                        <button key={n} type="button" onClick={() => pickDays(n)}
-                          className={`rounded-full border px-3.5 py-1 text-sm transition ${Number(w.delivery_days) === n ? 'border-twilight bg-blush-wash text-twilight' : 'border-line text-ink hover:border-twilight'}`}>
-                          {n} days
-                        </button>
-                      ))}
-                    </div>
-                    <input type="date" className={inCls} value={df.gallery_due_date ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, gallery_due_date: v })) }} onBlur={saveDue} />
-                    <p className="mt-1 text-xs text-ink-soft">Your client sees this date as their delivery date.</p>
-                  </div>
-                </div>
-
-                <div className="mt-3 divide-y divide-line">
-                  <Row label="Coverage" value={w.coverage} />
-                  <Row label="Deliverables" value={w.deliverables} />
-                  <Row label="Guests" value={w.guests} />
-                  <Row label="Balance" value={w.balance} />
-                </div>
-
-                <div className="mt-4">
-                  <p className="mb-1 text-xs uppercase tracking-wider text-ink-soft">Private notes (only you see these)</p>
-                  <textarea
-                    rows={3}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    onBlur={saveNotes}
-                    placeholder="Add notes about this client"
-                    className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
-                  />
                 </div>
               </section>
 
-              {/* Contract + timeline */}
+              {/* Contract, questionnaire, payments, gallery */}
               {(() => {
                 const wr = w as unknown as Record<string, any>
                 const done = !!wr.shoot_completed_at
-                if (!done) {
-                  return (
-                    <div className="space-y-6">
-                      <ContractPanel weddingId={id} w={wr} onChanged={load} />
-                      <PaymentsPanel weddingId={id} w={wr} />
-                      <QuestionnairePanel weddingId={id} />
-                    </div>
-                  )
-                }
                 return (
                   <div className="space-y-6">
-                    {!wr.delivered && (
+                    {done && !wr.delivered && (
                       <section className={card}>
                         <p className="font-fraunces text-xl font-semibold text-ink">Shoot complete</p>
                         <p className="mt-1 text-sm text-ink-soft">Now it&apos;s editing time. Deliver the gallery when it&apos;s ready.</p>
@@ -548,31 +488,10 @@ export default function SessionDetailPage() {
                         </button>
                       </section>
                     )}
+                    <ContractPanel weddingId={id} w={wr} onChanged={load} />
+                    <QuestionnairePanel weddingId={id} />
                     <PaymentsPanel weddingId={id} w={wr} />
-                    <button
-                      type="button"
-                      onClick={() => setPaperOpen((o) => !o)}
-                      className={`${card} flex w-full items-center justify-between text-left`}
-                    >
-                      <span>
-                        <span className="block font-fraunces text-xl font-semibold text-ink">Paperwork</span>
-                        <span className="block text-sm text-ink-soft">{paperOpen ? 'Hide contract and questionnaire' : 'Contract and questionnaire'}</span>
-                      </span>
-                      <span className="text-ink-soft">{paperOpen ? '−' : '+'}</span>
-                    </button>
-                    {paperOpen && (
-                      <>
-                        <ContractPanel weddingId={id} w={wr} onChanged={load} />
-                        <QuestionnairePanel weddingId={id} />
-                      </>
-                    )}
-                  </div>
-                )
-              })()}
-            </div>
-
-            {/* Galleries */}
-            <section id="galleries" className={`${card} mt-6`}>
+                        <section id="galleries" className={card}>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="font-fraunces text-xl font-semibold text-ink">Galleries</p>
                 <div className="flex flex-wrap items-center gap-2">
@@ -591,6 +510,19 @@ export default function SessionDetailPage() {
                   )}
                   <button className={btn} disabled={busy} onClick={createGallery}>New gallery for this session</button>
                 </div>
+              </div>
+              <div className="mb-4 border-b border-line pb-4">
+                <label className={lblCls}>Gallery due</label>
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {[7, 14, 21, 30, 45, 60].map((n) => (
+                    <button key={n} type="button" onClick={() => pickDays(n)}
+                      className={`rounded-full border px-3.5 py-1 text-sm transition ${Number(w.delivery_days) === n ? 'border-twilight bg-blush-wash text-twilight' : 'border-line text-ink hover:border-twilight'}`}>
+                      {n} days
+                    </button>
+                  ))}
+                </div>
+                <input type="date" className={inCls} value={df.gallery_due_date ?? ''} onChange={(e) => { const v = e.target.value; setDf((f) => ({ ...f, gallery_due_date: v })) }} onBlur={saveDue} />
+                <p className="mt-1 text-xs text-ink-soft">Your client sees this date as their delivery date.</p>
               </div>
               {gals.length === 0 ? (
                 <p className="text-sm text-ink-soft">No galleries attached to this session yet.</p>
@@ -639,6 +571,10 @@ export default function SessionDetailPage() {
                 </ul>
               )}
             </section>
+                  </div>
+                )
+              })()}
+            </div>
 
             {/* Messages */}
             <section className={`${card} mt-6`}>
