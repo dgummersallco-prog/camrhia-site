@@ -63,31 +63,18 @@ export default function AffiliateSignupPage() {
         const { data: validTeam } = await supabase.rpc('check_team_code', { p_code: code })
         if (!validTeam) code = ''
       }
-      const password = `${crypto.randomUUID()}${crypto.randomUUID()}`
-
       const referral_code = await uniqueReferralCode(name)
-
-      const { data: signUpData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            account_kind: 'affiliate',
-            name,
-            referral_code,
-            phone: phone.trim(),
-            social_handle: handle.trim(),
-            followers: followers.trim(),
-            best_reach: reach.trim(),
-            ...(code ? { recruit_code: code } : {}),
-          },
-        },
+      const { error: appErr } = await supabase.rpc('submit_affiliate_application', {
+        p_name: name.trim(),
+        p_email: email.trim().toLowerCase(),
+        p_phone: phone.trim(),
+        p_handle: handle.trim(),
+        p_followers: followers.trim(),
+        p_reach: reach.trim(),
+        p_recruit: code,
+        p_referral: referral_code,
       })
-      if (authError) throw authError
-
-      if (signUpData?.user && (signUpData.user.identities?.length ?? 0) === 0) {
-        throw new Error('That email already has a Camrhia account. Sign in on the affiliate login page with it, and you can activate your affiliate account there.')
-      }
+      if (appErr) throw appErr
 
       setConfirmed(true)
     } catch (err: unknown) {

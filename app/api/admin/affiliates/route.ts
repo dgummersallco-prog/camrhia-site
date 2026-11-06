@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { action, affiliateId, isMaster, approved } = await request.json()
+  const { action, affiliateId, isMaster, approved, applicationId } = await request.json()
   const supabase = adminClient()
 
   if (action === 'list') {
@@ -78,7 +78,12 @@ export async function POST(request: Request) {
       followers: str(meta.get(a.id)?.followers),
       best_reach: str(meta.get(a.id)?.best_reach),
     }))
-    return Response.json({ rows })
+    const { data: appData } = await supabase
+      .from('affiliate_applications')
+      .select('id, name, email, phone, handle, followers, best_reach, created_at')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+    return Response.json({ rows, applications: appData ?? [] })
   }
 
   if (action === 'masters') {
@@ -145,13 +150,64 @@ export async function POST(request: Request) {
     return Response.json({ ok: true })
   }
 
+  if (action === 'approve_application') {
+    if (typeof applicationId !== 'string') return Response.json({ error: 'applicationId is required' }, { status: 400 })
+    const { data: appRow } = await supabase.from('affiliate_applications').select('*').eq('id', applicationId).maybeSingle()
+    if (!appRow) return Response.json({ error: 'Application not found' }, { status: 404 })
+    const a = appRow as { name: string; email: string; phone: string | null; handle: string | null; followers: string | null; best_reach: string | null; recruit_code: string | null; referral_code: string | null }
+    const { data: inv, error: invErr } = await supabase.auth.admin.inviteUserByEmail(a.email, {
+      redirectTo: 'https://camrhia.com/affiliate/set-password',
+      data: {
+        account_kind: 'affiliate',
+        name: a.name,
+        referral_code: a.referral_code,
+        phone: a.phone ?? '',
+        social_handle: a.handle ?? '',
+        followers: a.followers ?? '',
+        best_reach: a.best_reach ?? '',
+        ...(a.recruit_code ? { recruit_code: a.recruit_code } : {}),
+      },
+    })
+    if (invErr) {
+      const msg = /already|registered|exists/i.test(invErr.message) ? 'That email already has a Camrhia account, so it cannot be invited again.' : invErr.message
+      return Response.json({ error: msg }, { status: 400 })
+    }
+    const uid = inv?.user?.id
+    if (uid) await supabase.from('affiliates').update({ approved: true }).eq('id', uid)
+    await supabase.from('affiliate_applications').update({ status: 'approved' }).eq('id', applicationId)
+    return Response.json({ ok: true })
+  }
+
+  if (action === 'decline_application') {
+    if (typeof applicationId !== 'string') return Response.json({ error: 'applicationId is required' }, { status: 400 })
+    const { error } = await supabase.from('affiliate_applications').delete().eq('id', applicationId)
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    return Response.json({ ok: true })
+  }
+
+  if (action === 'remove_affiliate') {
+    if (typeof affiliateId !== 'string') return Response.json({ error: 'affiliateId is required' }, { status: 400 })
+    const { error } = await supabase.from('affiliates').delete().eq('id', affiliateId)
+    if (error) return Response.json({ error: error.code === '23503' ? 'This affiliate has referrals or commission records, so they cannot be deleted outright.' : error.message }, { status: 500 })
+    return Response.json({ ok: true })
+  }
+
   if (action === 'set_approved') {
     if (typeof affiliateId !== 'string' || typeof approved !== 'boolean') {
       return Response.json({ error: 'affiliateId and approved are required' }, { status: 400 })
     }
     const { error } = await supabase.from('affiliates').update({ approved }).eq('id', affiliateId)
     if (error) return Response.json({ error: error.message }, { status: 500 })
-    return Response.json({ ok: true })
+    let emailed = false
+    if (approved) {
+      const { data: row } = await supabase.from('affiliates').select('email').eq('id', affiliateId).maybeSingle()
+      const to = (row as { email: string | null } | null)?.email
+      if (to) {
+        const { error: mailErr } = await supabase.auth.resetPasswordForEmail(to, { redirectTo: 'https://camrhia.com/affiliate/set-password' })
+        emailed = !mailErr
+      }
+    }
+    return Response.json({ ok: true, emailed })
   }
 
   return Response.json({ error: 'Unknown action' }, { status: 400 })

@@ -25,6 +25,8 @@ type Row = {
   best_reach: string | null
 }
 
+type App = { id: string; name: string; email: string; phone: string | null; handle: string | null; followers: string | null; best_reach: string | null; created_at: string }
+
 export default function AdminAffiliatesPage() {
   const router = useRouter()
   const [token, setToken] = useState<string | null>(null)
@@ -32,6 +34,7 @@ export default function AdminAffiliatesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [apps, setApps] = useState<App[]>([])
 
   useEffect(() => {
     async function init() {
@@ -70,6 +73,7 @@ export default function AdminAffiliatesPage() {
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Failed to load')
       setRows(json.rows ?? [])
+      setApps(json.applications ?? [])
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
@@ -116,6 +120,40 @@ export default function AdminAffiliatesPage() {
     }
   }
 
+  async function appAction(a: App, action: 'approve_application' | 'decline_application') {
+    if (action === 'decline_application' && !window.confirm(`Delete the application from ${a.name}?`)) return
+    if (action === 'approve_application' && !window.confirm(`Approve ${a.name}? This creates their account and emails ${a.email} a link to set their password.`)) return
+    setBusyId(a.id)
+    setError(null)
+    try {
+      const res = await callApi({ action, applicationId: a.id })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Update failed')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Update failed')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function removeAffiliate(row: Row) {
+    const who = row.name || row.email || 'this affiliate'
+    if (!window.confirm(`Remove ${who} as an affiliate?\n\nTheir Camrhia login stays, but they lose their affiliate account.`)) return
+    setBusyId(row.id)
+    setError(null)
+    try {
+      const res = await callApi({ action: 'remove_affiliate', affiliateId: row.id })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Remove failed')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Remove failed')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   async function handleSignOut() {
     if (!supabase) return
     await supabase.auth.signOut()
@@ -133,6 +171,36 @@ export default function AdminAffiliatesPage() {
 
         {!loading && rows.length === 0 ? (
           <p className="mt-6 text-sm text-ink-soft">No affiliates yet.</p>
+        ) : null}
+
+        {apps.length > 0 ? (
+          <div className="mt-6">
+            <h2 className="font-fraunces text-xl text-ink">Applications <span className="text-sm text-ink-soft">· {apps.length}</span></h2>
+            <div className="mt-3 space-y-3">
+              {apps.map((a) => (
+                <div key={a.id} className="rounded-2xl border border-line bg-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <p className="font-medium text-ink">{a.name}</p>
+                    <p className="text-sm text-ink-soft">{a.email}</p>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-ink">
+                      {a.phone ? <a href={`tel:${a.phone}`} className="font-medium underline">{a.phone}</a> : null}
+                      {a.handle ? <span>{a.handle}</span> : null}
+                      {a.followers ? <span>{a.followers} followers</span> : null}
+                      {a.best_reach ? <span>best post reach {a.best_reach}</span> : null}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => appAction(a, 'approve_application')} disabled={busyId === a.id} className="rounded-full px-5 py-2 text-sm font-medium text-white disabled:opacity-60" style={{ backgroundColor: '#A9545F' }}>
+                      {busyId === a.id ? 'Saving…' : 'Approve'}
+                    </button>
+                    <button onClick={() => appAction(a, 'decline_application')} disabled={busyId === a.id} className="rounded-full border border-line px-5 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-60">
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : null}
 
         <div className="mt-6 space-y-3">
@@ -184,6 +252,13 @@ export default function AdminAffiliatesPage() {
                 style={r.is_master ? undefined : { backgroundColor: '#A9545F' }}
               >
                 {busyId === r.id ? 'Saving…' : r.is_master ? 'Remove master' : 'Promote to master'}
+              </button>
+              <button
+                onClick={() => removeAffiliate(r)}
+                disabled={busyId === r.id}
+                className="rounded-full border border-line px-5 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-60"
+              >
+                Remove
               </button>
               </div>
             </div>
