@@ -3,7 +3,7 @@
 // Cards like "Design your website": closed by default, opening one closes the
 // others, smooth open, and the opened card scrolls to the top.
 export default function DesignGroup({
-  title, hint, left, right, dim, onOpen, onClose, children,
+  title, hint, left, right, dim, onOpen, onClose, stay, children,
 }: {
   title: string
   hint?: string
@@ -12,6 +12,7 @@ export default function DesignGroup({
   dim?: boolean
   onOpen?: () => void
   onClose?: () => void
+  stay?: boolean
   children: React.ReactNode
 }) {
   const fancy = !!(hint || left || right)
@@ -21,11 +22,16 @@ export default function DesignGroup({
       onToggle={(e) => {
         const el = e.currentTarget as HTMLDetailsElement
         if (!el.open) { onClose?.(); return }
+        const before = el.getBoundingClientRect().top
         const root = el.closest('[data-accordion]') ?? el.parentElement
         root?.querySelectorAll('details[data-group]').forEach((d) => { if (d !== el) (d as HTMLDetailsElement).open = false })
+        if (stay) {
+          const after = el.getBoundingClientRect().top
+          if (after !== before) window.scrollBy({ top: after - before, behavior: 'instant' as ScrollBehavior })
+        }
         const body = el.querySelector(':scope > div') as HTMLElement | null
         body?.animate?.([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'ease-out' })
-        requestAnimationFrame(() => {
+        if (!stay) requestAnimationFrame(() => {
           const y = el.getBoundingClientRect().top + window.scrollY - 16
           window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' })
         })

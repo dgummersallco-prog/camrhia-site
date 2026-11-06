@@ -259,7 +259,7 @@ function scrollPreviewTo(key: string) {
 
 function MiniCard({ title, children }: { title: string; summary?: string; children: React.ReactNode }) {
   return (
-    <DesignGroup title={title} onOpen={() => scrollPreviewTo(title === 'Sign-up form' || title === 'Summary' ? 'claim' : 'top')}>
+    <DesignGroup title={title} stay onOpen={() => scrollPreviewTo(title === 'Sign-up form' || title === 'Summary' ? 'claim' : 'top')}>
       {children}
     </DesignGroup>
   )
@@ -301,10 +301,17 @@ function Chips<T extends string>({ value, options, onChange }: { value: T; optio
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false)
+  const boxRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const down = (e: PointerEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('pointerdown', down)
+    return () => document.removeEventListener('pointerdown', down)
+  }, [open])
   const [txt, setTxt] = useState(value)
   useEffect(() => setTxt(value), [value])
   return (
-    <div>
+    <div ref={boxRef}>
       <Label>{label}</Label>
       <button type="button" onClick={() => setOpen(!open)} className="mt-1 flex w-full items-center gap-2 rounded-xl border border-line bg-card px-3 py-2">
         <span className="h-5 w-5 rounded border border-line" style={{ background: value }} />
