@@ -629,7 +629,7 @@ export default function EditWalkthrough() {
 
   return (
     <div className="min-h-screen bg-[#0c0c0e] text-[#ececf0]">
-      <div className="mx-auto max-w-5xl px-6 py-8">
+      <div className={`mx-auto px-6 py-8 ${editTab === 'each' && !dev.busy ? 'max-w-[2400px]' : 'max-w-5xl'}`}>
         <div className="flex items-center justify-between gap-4">
           <Link href="/edit" className="text-sm text-white/50 transition hover:text-white">← Editing room</Link>
           <p className="truncate font-fraunces text-lg text-white">{gallery?.title}</p>

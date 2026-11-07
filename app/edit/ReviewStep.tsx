@@ -702,7 +702,7 @@ export default function ReviewStep({
             {!checked && <span className="text-xs text-white/40">Checking your photos…</span>}
           </div>
 
-          <div ref={wrapRef} className="mt-4 grid scroll-mt-4 gap-4 lg:h-[calc(100vh-2rem)] lg:grid-cols-[17rem_minmax(0,1fr)_17rem]">
+          <div ref={wrapRef} className="mt-4 grid scroll-mt-4 gap-4 lg:h-[calc(100vh-2rem)] lg:grid-cols-[17rem_minmax(0,1fr)_17rem] xl:grid-cols-[20rem_minmax(0,1fr)_20rem]">
             {/* LEFT: light and color */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
               <Panel title="Light">{tools(LIGHT)}</Panel>
