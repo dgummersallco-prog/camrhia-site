@@ -10,6 +10,9 @@ import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { SubTabs } from '@/app/components/SubTabs'
 
+import { MINI_PACKS } from '@/lib/miniPackages'
+const MINI_NAMES = new Set(MINI_PACKS.map((m) => m.name))
+
 type Pkg = {
   id: string
   name: string
@@ -21,6 +24,7 @@ type Pkg = {
   category: string | null
   delivery_days: number | null
   sort_order: number | null
+  is_mini?: boolean | null
 }
 type SType = { key: string; label: string }
 type Draft = { id: string | null; name: string; price: string; covers: string; detail: string; session_type: string; delivery_days: string; show_public: boolean }
@@ -87,11 +91,11 @@ export default function PackagesEditor() {
     const id = sess.session.user.id
     setUid(id)
     const [p, t] = await Promise.all([
-      sb.from('packages').select('id, name, detail, price, covers, session_type, show_public, category, delivery_days, sort_order').eq('owner_id', id).order('sort_order', { ascending: true }),
+      sb.from('packages').select('id, name, detail, price, covers, session_type, show_public, category, delivery_days, sort_order, is_mini').eq('owner_id', id).order('sort_order', { ascending: true }),
       sb.from('session_types').select('key, label'),
     ])
     if (p.error) setMsg(p.error.message)
-    setPkgs((p.data ?? []) as Pkg[])
+    setPkgs(((p.data ?? []) as Pkg[]).filter((x) => !x.is_mini && !MINI_NAMES.has(x.name)))
     setTypes((t.data ?? []) as SType[])
   }, [router])
 
