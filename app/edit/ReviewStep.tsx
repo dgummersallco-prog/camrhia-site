@@ -6,6 +6,7 @@ import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjus
 import { briefAdjust, type Brief } from '@/lib/brief'
 import type { Crop } from '@/lib/crop'
 import ColorMixer from '@/app/edit/ColorMixer'
+import { camiRead, camiFix } from '@/lib/cami'
 
 const BUCKET = 'galleries'
 
@@ -161,6 +162,9 @@ export default function ReviewStep({
   const [srcTick, setSrcTick] = useState(0)
   const [flags, setFlags] = useState<Record<string, string>>({})
   const [checked, setChecked] = useState(false)
+  const [camiBusy, setCamiBusy] = useState(false)
+  const [camiNote, setCamiNote] = useState<{ id: string; notes: string[] } | null>(null)
+  const camiPrev = useRef<{ adj: Adjust } | null>(null)
   const [filter, setFilter] = useState<'flagged' | 'all'>('all')
   const [dirty, setDirty] = useState(0)
   const [naming, setNaming] = useState(false)
@@ -189,6 +193,30 @@ export default function ReviewStep({
   function bump() {
     dirtyRef.current += 1
     setDirty(dirtyRef.current)
+  }
+  async function camiScanThis() {
+    const sb = supabase
+    if (!sb || !row || camiBusy) return
+    setCamiBusy(true)
+    try {
+      const path = row.pre_full_path ?? row.full_path ?? row.web_path ?? row.thumb_path
+      if (!path) throw new Error('no photo')
+      const dl = await sb.storage.from(BUCKET).download(path)
+      if (dl.error || !dl.data) throw new Error('no photo')
+      const fix = camiFix(await camiRead(dl.data))
+      camiPrev.current = { adj: manual }
+      editManual(fix.adjust)
+      setCamiNote({ id: row.id, notes: fix.notes })
+    } catch {
+      setCamiNote({ id: row.id, notes: ['Cami could not read this photo.'] })
+    }
+    setCamiBusy(false)
+  }
+  function camiUndo() {
+    if (!camiPrev.current) return
+    editManual(camiPrev.current.adj)
+    camiPrev.current = null
+    setCamiNote(null)
   }
   function editManual(m: Adjust) {
     setManual(m)
@@ -705,6 +733,15 @@ export default function ReviewStep({
           <div ref={wrapRef} className="mt-4 grid scroll-mt-4 gap-4 lg:h-[calc(100vh-2rem)] lg:grid-cols-[17rem_minmax(0,1fr)_17rem] xl:grid-cols-[20rem_minmax(0,1fr)_20rem]">
             {/* LEFT: light and color */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
+              <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <button className={tab(true)} disabled={camiBusy} onClick={camiScanThis}>{camiBusy ? 'Cami is looking…' : 'Use Cami to scan & fix'}</button>
+                {camiNote && camiNote.id === row.id && (
+                  <div className="mt-2 space-y-1 text-xs text-white/60">
+                    {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
+                    {camiPrev.current && <button className="underline" onClick={camiUndo}>Undo Cami</button>}
+                  </div>
+                )}
+              </div>
               <Panel title="Light">{tools(LIGHT)}</Panel>
               <Panel title="Color">
                 {tools(COLOR)}
