@@ -364,7 +364,7 @@ export function camiGuessLight(rds: CamiReading[]): string {
 
 // The colour band whose centre is closest to this hue, as a brightness key.
 function lKey(hue: number): string {
-  let best = BANDS[0]
+  let best: { id: string; center: number } = BANDS[0]
   let bd = 999
   for (const b of BANDS) {
     const d = Math.abs(((hue - b.center + 540) % 360) - 180)
