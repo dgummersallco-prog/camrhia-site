@@ -302,6 +302,17 @@ export default function EditWalkthrough() {
     setSplitAt(null)
   }
 
+  async function sceneByPhoto(): Promise<Record<string, string>> {
+    const sc = brief.scenes ?? []
+    if (sc.length === 0) return {}
+    const tm = Object.keys(times).length > 0 ? times : await fetchTimes()
+    const list = orderPhotos(photos.filter((p) => p.cull_label !== 'reject'), tm)
+    const members = groupByScene(list, normalizeScenes(sc, list)) as unknown as Record<string, { id: string }[]>
+    const out: Record<string, string> = {}
+    for (const sid of Object.keys(members)) for (const ph of members[sid]) out[ph.id] = sid
+    return out
+  }
+
   async function lightByPhoto(): Promise<Record<string, string>> {
     const sc = brief.scenes ?? []
     if (sc.length === 0) return {}
@@ -1030,6 +1041,7 @@ export default function EditWalkthrough() {
                 strength={strength}
                 brief={brief}
                 getLightMap={lightByPhoto}
+                getSceneMap={sceneByPhoto}
                 baseTweak={tweak}
                 onBack={() => setEditTab('shoot')}
                 onDone={async () => { await loadPhotos(); goTo(3) }}

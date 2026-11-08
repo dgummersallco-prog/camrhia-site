@@ -6,7 +6,7 @@ import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjus
 import { briefAdjust, type Brief } from '@/lib/brief'
 import type { Crop } from '@/lib/crop'
 import ColorMixer from '@/app/edit/ColorMixer'
-import { camiRead, camiFix } from '@/lib/cami'
+import { camiRead, camiFix, camiBaselines, camiPickBW, type CamiReading, type Baseline } from '@/lib/cami'
 
 const BUCKET = 'galleries'
 
@@ -125,6 +125,7 @@ export default function ReviewStep({
   strength,
   brief,
   getLightMap,
+  getSceneMap,
   baseTweak,
   onSaveStyle,
   onBack,
@@ -137,6 +138,7 @@ export default function ReviewStep({
   strength: number
   brief: Brief
   getLightMap: () => Promise<Record<string, string>>
+  getSceneMap?: () => Promise<Record<string, string>>
   baseTweak: Adjust
   onSaveStyle?: (name: string, tweak: Adjust) => Promise<void>
   onBack: () => void
@@ -163,7 +165,9 @@ export default function ReviewStep({
   const [flags, setFlags] = useState<Record<string, string>>({})
   const [checked, setChecked] = useState(false)
   const [camiBusy, setCamiBusy] = useState(false)
-  const [camiNote, setCamiNote] = useState<{ id: string; notes: string[] } | null>(null)
+  const [camiNote, setCamiNote] = useState<{ id: string; notes: string[]; bw: boolean } | null>(null)
+  const [camiProgress, setCamiProgress] = useState(0)
+  const camiShoot = useRef<{ readings: Record<string, CamiReading>; sceneOf: Record<string, string>; bases: Record<string, Baseline>; bw: Set<string> } | null>(null)
   const camiPrev = useRef<{ adj: Adjust } | null>(null)
   const [filter, setFilter] = useState<'flagged' | 'all'>('all')
   const [dirty, setDirty] = useState(0)
@@ -194,23 +198,58 @@ export default function ReviewStep({
     dirtyRef.current += 1
     setDirty(dirtyRef.current)
   }
-  async function camiScanThis() {
+  async function camiStudy() {
+    if (camiShoot.current) return camiShoot.current
     const sb = supabase
-    if (!sb || !row || camiBusy) return
-    setCamiBusy(true)
-    try {
-      const path = row.pre_full_path ?? row.full_path ?? row.web_path ?? row.thumb_path
-      if (!path) throw new Error('no photo')
-      const dl = await sb.storage.from(BUCKET).download(path)
-      if (dl.error || !dl.data) throw new Error('no photo')
-      const fix = camiFix(await camiRead(dl.data))
-      camiPrev.current = { adj: manual }
-      editManual(fix.adjust)
-      setCamiNote({ id: row.id, notes: fix.notes })
-    } catch {
-      setCamiNote({ id: row.id, notes: ['Cami could not read this photo.'] })
+    if (!sb) throw new Error('no connection')
+    const readings: Record<string, CamiReading> = {}
+    let next = 0
+    let done = 0
+    async function worker() {
+      while (true) {
+        const r = rows[next++]
+        if (!r) return
+        const path = r.thumb_path ?? r.web_path
+        if (path && sb) {
+          try {
+            const dl = await sb.storage.from(BUCKET).download(path)
+            if (dl.data) readings[r.id] = await camiRead(dl.data)
+          } catch { /* skip this one */ }
+        }
+        done++
+        setCamiProgress(done)
+      }
     }
+    await Promise.all(Array.from({ length: 6 }, () => worker()))
+    let sceneOf: Record<string, string> = {}
+    try { sceneOf = getSceneMap ? await getSceneMap() : {} } catch { /* no scenes */ }
+    camiShoot.current = { readings, sceneOf, bases: camiBaselines(readings, sceneOf), bw: camiPickBW(readings) }
+    return camiShoot.current
+  }
+  async function camiScanThis() {
+    if (!row || camiBusy) return
+    setCamiBusy(true)
+    setCamiProgress(0)
+    try {
+      const shoot = await camiStudy()
+      const rd = shoot.readings[row.id]
+      if (!rd) throw new Error('no reading')
+      const sid = shoot.sceneOf[row.id]
+      const fix = camiFix(rd, sid ? shoot.bases[sid] ?? null : null)
+      camiPrev.current = { adj: manual }
+      editManual({ ...manual, ...fix.adjust })
+      setCamiNote({ id: row.id, notes: fix.notes, bw: shoot.bw.has(row.id) })
+    } catch {
+      setCamiNote({ id: row.id, notes: ['Cami could not read this photo.'], bw: false })
+    }
+    setCamiProgress(0)
     setCamiBusy(false)
+  }
+  function camiTryBW() {
+    if (!row) return
+    camiPrev.current = { adj: manual }
+    editManual({ ...manual, bw: 1, contrast: Math.round(((manual.contrast ?? 0) + 0.15) * 100) / 100 })
+    setCamiNote({ id: row.id, notes: ['Switched to black and white with a little extra contrast.'], bw: false })
   }
   function camiUndo() {
     if (!camiPrev.current) return
@@ -734,11 +773,14 @@ export default function ReviewStep({
             {/* LEFT: light and color */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
               <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <button className={tab(true)} disabled={camiBusy} onClick={camiScanThis}>{camiBusy ? 'Cami is looking…' : 'Use Cami to scan & fix'}</button>
+                <button className={tab(true)} disabled={camiBusy} onClick={camiScanThis}>
+                  {camiBusy ? (camiProgress > 0 ? 'Cami is studying this shoot… ' + camiProgress + '/' + rows.length : 'Cami is looking…') : 'Use Cami to scan & fix'}
+                </button>
                 {camiNote && camiNote.id === row.id && (
                   <div className="mt-2 space-y-1 text-xs text-white/60">
                     {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
-                    {camiPrev.current && <button className="underline" onClick={camiUndo}>Undo Cami</button>}
+                    {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Cami thinks this could be black &amp; white. Try it</button>}
+                    {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Cami</button>}
                   </div>
                 )}
               </div>
