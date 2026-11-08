@@ -6,7 +6,7 @@ import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjus
 import { briefAdjust, type Brief } from '@/lib/brief'
 import type { Crop } from '@/lib/crop'
 import ColorMixer from '@/app/edit/ColorMixer'
-import { camiRead, camiFix, camiBaselines, camiPickBW, camiLearn, camiDelta, type CamiReading, type Baseline, type CamiBias, type FeedbackRow } from '@/lib/cami'
+import { camiRead, camiFix, camiBaselines, camiPickBW, camiLearn, camiDelta, camiFlag, type CamiReading, type Baseline, type CamiBias, type FeedbackRow } from '@/lib/cami'
 
 const BUCKET = 'galleries'
 
@@ -169,6 +169,7 @@ export default function ReviewStep({
   const [camiProgress, setCamiProgress] = useState(0)
   const [sceneBusy, setSceneBusy] = useState<{ done: number; total: number } | null>(null)
   const sceneStop = useRef(false)
+  const camiPromise = useRef<Promise<NonNullable<typeof camiShoot.current>> | null>(null)
   const camiApplied = useRef<Record<string, { reading: CamiReading; suggested: Adjust; studyAdj: Adjust }>>({})
   const camiShoot = useRef<{ readings: Record<string, CamiReading>; sceneOf: Record<string, string>; bases: Record<string, Baseline>; bw: Set<string>; bias: CamiBias | null; studyAdj: Record<string, Adjust> } | null>(null)
   const camiPrev = useRef<{ adj: Adjust } | null>(null)
@@ -201,7 +202,35 @@ export default function ReviewStep({
     dirtyRef.current += 1
     setDirty(dirtyRef.current)
   }
-  async function camiStudy() {
+  function camiStudy() {
+    if (!camiPromise.current) {
+      camiPromise.current = camiStudyRun().catch((e) => { camiPromise.current = null; throw e })
+    }
+    return camiPromise.current
+  }
+  // Study the whole shoot in the background and flag photos Cami would fix in a big way
+  useEffect(() => {
+    if (!checked || rows.length === 0) return
+    let off = false
+    void (async () => {
+      try {
+        const shoot = await camiStudy()
+        if (off) return
+        const extra: Record<string, string> = {}
+        for (const r of rows) {
+          const rd = shoot.readings[r.id]
+          if (!rd || (shoot.studyAdj[r.id] ?? {}).bw) continue
+          const sid = shoot.sceneOf[r.id]
+          const label = camiFlag(camiFix(rd, sid ? shoot.bases[sid] ?? null : null, null, lookId).adjust)
+          if (label) extra[r.id] = label
+        }
+        setFlags((prev) => ({ ...extra, ...prev }))
+      } catch { /* flags stay as they were */ }
+    })()
+    return () => { off = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checked])
+  async function camiStudyRun() {
     if (camiShoot.current) return camiShoot.current
     const sb = supabase
     if (!sb) throw new Error('no connection')
@@ -880,22 +909,6 @@ export default function ReviewStep({
           <div ref={wrapRef} className="mt-4 grid scroll-mt-4 gap-4 lg:h-[calc(100vh-2rem)] lg:grid-cols-[17rem_minmax(0,1fr)_17rem] xl:grid-cols-[20rem_minmax(0,1fr)_20rem]">
             {/* LEFT: light and color */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
-              <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
-                  {camiBusy ? (camiProgress > 0 ? 'Cami is studying this shoot… ' + camiProgress + '/' + rows.length : 'Cami is looking…') : 'Use Cami to scan & fix'}
-                </button>
-                <button className={tab(false) + ' mt-2'} disabled={camiBusy || !!sceneBusy} onClick={camiScanScene}>
-                  {sceneBusy ? 'Cami is fixing this scene… ' + sceneBusy.done + '/' + sceneBusy.total : 'Scan the whole scene'}
-                </button>
-                {sceneBusy && <button className="mt-2 block text-xs text-white/60 underline" onClick={() => { sceneStop.current = true }}>Stop</button>}
-                {camiNote && camiNote.id === row.id && (
-                  <div className="mt-2 space-y-1 text-xs text-white/60">
-                    {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
-                    {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Cami thinks this could be black &amp; white. Try it</button>}
-                    {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Cami</button>}
-                  </div>
-                )}
-              </div>
               <Panel title="Light">{tools(LIGHT)}</Panel>
               <Panel title="Color">
                 {tools(COLOR)}
@@ -1020,6 +1033,22 @@ export default function ReviewStep({
               </Panel>
               <div className="py-3">
                 <button className={tab(false)} onClick={() => { editManual({}); editCrop(null) }}>Reset this photo</button>
+              </div>
+              <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
+                  {camiBusy ? (camiProgress > 0 ? 'Cami is studying this shoot… ' + camiProgress + '/' + rows.length : 'Cami is looking…') : 'Use Cami to scan & fix'}
+                </button>
+                <button className={tab(false) + ' mt-2'} disabled={camiBusy || !!sceneBusy} onClick={camiScanScene}>
+                  {sceneBusy ? 'Cami is fixing this scene… ' + sceneBusy.done + '/' + sceneBusy.total : 'Scan the whole scene'}
+                </button>
+                {sceneBusy && <button className="mt-2 block text-xs text-white/60 underline" onClick={() => { sceneStop.current = true }}>Stop</button>}
+                {camiNote && camiNote.id === row.id && (
+                  <div className="mt-2 space-y-1 text-xs text-white/60">
+                    {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
+                    {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Cami thinks this could be black &amp; white. Try it</button>}
+                    {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Cami</button>}
+                  </div>
+                )}
               </div>
               <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                 <p className="text-xs uppercase tracking-[0.18em] text-white/50">Your style</p>
