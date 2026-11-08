@@ -816,13 +816,6 @@ export default function SpecialsPage() {
                       )}
                     </MiniCard>
 
-                    <MiniCard title="When and where (optional)" summary={form.text.when_where || 'None'}>
-                      <label className="block">
-                        <Label>Words</Label>
-                        <input placeholder="Saturday, December 5 · Pine Hollow Lodge, Park City, UT" value={form.text.when_where} onChange={(e) => setText('when_where', e.target.value)} className={inputCls} />
-                      </label>
-                    </MiniCard>
-
                     <MiniCard title="Photos" summary={form.photos.length ? `${form.photos.length} added` : 'None'}>
                       <p className="text-sm text-ink-soft">Add up to 8. One photo stays still. Two or more fade into each other.</p>
                       <div className="flex flex-wrap gap-3">
