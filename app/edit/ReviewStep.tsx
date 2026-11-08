@@ -6,7 +6,7 @@ import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjus
 import { briefAdjust, type Brief } from '@/lib/brief'
 import type { Crop } from '@/lib/crop'
 import ColorMixer from '@/app/edit/ColorMixer'
-import { camiRead, camiFix, camiBaselines, camiPickBW, type CamiReading, type Baseline } from '@/lib/cami'
+import { camiRead, camiFix, camiBaselines, camiPickBW, camiLearn, camiDelta, type CamiReading, type Baseline, type CamiBias, type FeedbackRow } from '@/lib/cami'
 
 const BUCKET = 'galleries'
 
@@ -167,7 +167,8 @@ export default function ReviewStep({
   const [camiBusy, setCamiBusy] = useState(false)
   const [camiNote, setCamiNote] = useState<{ id: string; notes: string[]; bw: boolean } | null>(null)
   const [camiProgress, setCamiProgress] = useState(0)
-  const camiShoot = useRef<{ readings: Record<string, CamiReading>; sceneOf: Record<string, string>; bases: Record<string, Baseline>; bw: Set<string> } | null>(null)
+  const camiApplied = useRef<Record<string, { reading: CamiReading; suggested: Adjust; studyAdj: Adjust }>>({})
+  const camiShoot = useRef<{ readings: Record<string, CamiReading>; sceneOf: Record<string, string>; bases: Record<string, Baseline>; bw: Set<string>; bias: CamiBias | null; studyAdj: Record<string, Adjust> } | null>(null)
   const camiPrev = useRef<{ adj: Adjust } | null>(null)
   const [filter, setFilter] = useState<'flagged' | 'all'>('all')
   const [dirty, setDirty] = useState(0)
@@ -223,7 +224,16 @@ export default function ReviewStep({
     await Promise.all(Array.from({ length: 6 }, () => worker()))
     let sceneOf: Record<string, string> = {}
     try { sceneOf = getSceneMap ? await getSceneMap() : {} } catch { /* no scenes */ }
-    camiShoot.current = { readings, sceneOf, bases: camiBaselines(readings, sceneOf), bw: camiPickBW(readings) }
+    let bias: CamiBias | null = null
+    if (userId) {
+      try {
+        const { data } = await sb.from('cami_feedback').select('features, suggested, final').eq('owner_id', userId).order('created_at', { ascending: false }).limit(300)
+        if (data && data.length > 0) bias = camiLearn(data as FeedbackRow[])
+      } catch { /* no learning yet */ }
+    }
+    const studyAdj: Record<string, Adjust> = {}
+    for (const r of rows) studyAdj[r.id] = r.review_adj ?? {}
+    camiShoot.current = { readings, sceneOf, bases: camiBaselines(readings, sceneOf), bw: camiPickBW(readings), bias, studyAdj }
     return camiShoot.current
   }
   async function camiScanThis() {
@@ -235,10 +245,16 @@ export default function ReviewStep({
       const rd = shoot.readings[row.id]
       if (!rd) throw new Error('no reading')
       const sid = shoot.sceneOf[row.id]
-      const fix = camiFix(rd, sid ? shoot.bases[sid] ?? null : null)
-      camiPrev.current = { adj: manual }
-      editManual({ ...manual, ...fix.adjust })
-      setCamiNote({ id: row.id, notes: fix.notes, bw: shoot.bw.has(row.id) })
+      const before = shoot.studyAdj[row.id] ?? {}
+      if (before.bw) {
+        setCamiNote({ id: row.id, notes: ['This one is black and white, so Cami left it alone.'], bw: false })
+      } else {
+        const fix = camiFix(rd, sid ? shoot.bases[sid] ?? null : null, shoot.bias)
+        camiPrev.current = { adj: manual }
+        camiApplied.current[row.id] = { reading: rd, suggested: fix.raw, studyAdj: before }
+        editManual(addAdj(before, fix.adjust))
+        setCamiNote({ id: row.id, notes: fix.notes, bw: shoot.bw.has(row.id) })
+      }
     } catch {
       setCamiNote({ id: row.id, notes: ['Cami could not read this photo.'], bw: false })
     }
@@ -534,6 +550,10 @@ export default function ReviewStep({
       const { error } = await sb.from('gallery_photos').update(patch).eq('id', row.id)
       if (error) throw error
       if (oldPaths.length > 0) await sb.storage.from(BUCKET).remove(oldPaths)
+      const ca = camiApplied.current[row.id]
+      if (ca && userId) {
+        await sb.from('cami_feedback').upsert({ owner_id: userId, gallery_id: galleryId, photo_id: row.id, features: ca.reading, suggested: ca.suggested, final: camiDelta(mine, ca.studyAdj) }, { onConflict: 'photo_id' })
+      }
       if (userId) {
         await sb.from('edit_corrections').insert({
           owner_id: userId,

@@ -19,7 +19,7 @@ export type CamiReading = {
   hueBins: number
 }
 export type Baseline = { median: number; warmth: number }
-export type CamiFix = { adjust: Adjust; notes: string[]; reading: CamiReading }
+export type CamiFix = { adjust: Adjust; notes: string[]; reading: CamiReading; raw: Adjust }
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
@@ -147,7 +147,7 @@ export function camiPickBW(readings: Record<string, CamiReading>): Set<string> {
 
 // Turns a reading into slider changes, with a plain reason for each.
 // With a scene baseline, every photo in the scene is pulled toward the same brightness and color.
-export function camiFix(rd: CamiReading, base: Baseline | null = null): CamiFix {
+export function camiFix(rd: CamiReading, base: Baseline | null = null, bias: CamiBias | null = null): CamiFix {
   const a: Adjust = {}
   const notes: string[] = []
   const set = (k: keyof Adjust, v: number) => { if (Math.abs(v) >= 0.03) (a as Record<string, number>)[k as string] = r2(v) }
@@ -247,6 +247,70 @@ export function camiFix(rd: CamiReading, base: Baseline | null = null): CamiFix 
     }
   }
 
+  const raw: Adjust = { ...a }
+  const b = bias ? biasFor(bias, rd) : null
+  if (b) {
+    const am = a as Record<string, number>
+    let used = false
+    for (const k of Object.keys(b)) {
+      if (Math.abs(b[k]) >= 0.03) used = true
+      am[k] = r2(clamp((am[k] ?? 0) + b[k], -1, 1))
+    }
+    for (const k of Object.keys(am)) if (Math.abs(am[k]) < 0.03) delete am[k]
+    if (used) notes.push('Adjusted to match how you usually edit.')
+  }
   if (notes.length === 0) notes.push('This one already looks good. Cami left it alone.')
-  return { adjust: a, notes, reading: rd }
+  return { adjust: a, notes, reading: rd, raw }
+}
+
+// ---- Learning from the photographer's final edits ----
+const LEARN_KEYS = ['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'temp', 'tint', 'vibrance', 'saturation']
+export type CamiBias = Record<string, { n: number; sum: Record<string, number> }>
+export type FeedbackRow = { features: CamiReading | null; suggested: Adjust | null; final: Adjust | null }
+
+export function camiBucket(rd: CamiReading): string {
+  return (rd.median < 90 ? 'dark' : rd.median > 150 ? 'bright' : 'mid') + '|' + (rd.skinShare > 0.02 ? 'skin' : 'noskin')
+}
+
+// Averages how far the photographer moved each slider away from what Cami suggested.
+export function camiLearn(rows: FeedbackRow[]): CamiBias {
+  const out: CamiBias = {}
+  const add = (key: string, sug: Record<string, number>, fin: Record<string, number>) => {
+    if (!out[key]) out[key] = { n: 0, sum: {} }
+    const e = out[key]
+    e.n++
+    for (const k of LEARN_KEYS) e.sum[k] = (e.sum[k] ?? 0) + ((fin[k] ?? 0) - (sug[k] ?? 0))
+  }
+  for (const r of rows) {
+    if (!r.features || !r.final) continue
+    const sug = (r.suggested ?? {}) as Record<string, number>
+    const fin = r.final as Record<string, number>
+    add(camiBucket(r.features), sug, fin)
+    add('all', sug, fin)
+  }
+  return out
+}
+
+function biasFor(bias: CamiBias, rd: CamiReading): Record<string, number> | null {
+  const own = bias[camiBucket(rd)]
+  const e = own && own.n >= 5 ? own : bias['all']
+  if (!e || e.n < 5) return null
+  const out: Record<string, number> = {}
+  for (const k of LEARN_KEYS) {
+    const v = (0.7 * (e.sum[k] ?? 0)) / e.n
+    if (Math.abs(v) >= 0.02) out[k] = v
+  }
+  return Object.keys(out).length > 0 ? out : null
+}
+
+// What the photographer changed on top of the starting point.
+export function camiDelta(final: Adjust, before: Adjust): Adjust {
+  const f = final as Record<string, number>
+  const bf = before as Record<string, number>
+  const out: Record<string, number> = {}
+  for (const k of LEARN_KEYS) {
+    const v = (f[k] ?? 0) - (bf[k] ?? 0)
+    if (Math.abs(v) >= 0.005) out[k] = r2(v)
+  }
+  return out as Adjust
 }
