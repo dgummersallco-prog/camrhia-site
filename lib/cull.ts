@@ -1,10 +1,10 @@
-import { eyesClosed, faceEyesReady } from '@/lib/faces'
+import { faceReport, faceEyesReady, type FaceReport } from '@/lib/faces'
 
 export type CullLabel = 'pick' | 'maybe' | 'reject'
 export type CullInput = { id: string; url: string; webUrl?: string }
 export type CullResult = { id: string; score: number; label: CullLabel; group: string | null; reason: string | null }
 
-type Analysis = { sharp: number; hash: boolean[] } | null
+type Analysis = { sharp: number; hash: boolean[]; mean: number; clipHi: number } | null
 
 // How sharp the sharpest part of the picture is. Uses the 90th-percentile block, so a sharp
 // subject with a soft background still scores well.
@@ -71,12 +71,32 @@ function hamming(a: boolean[], b: boolean[]): number {
   return n
 }
 
+// Average brightness and how much of the picture is blown out to pure white.
+function lumaStats(bmp: ImageBitmap): { mean: number; clipHi: number } {
+  const c = document.createElement('canvas')
+  c.width = 64
+  c.height = 64
+  const ctx = c.getContext('2d', { willReadFrequently: true })
+  if (!ctx) throw new Error('Your browser cannot process photos.')
+  ctx.drawImage(bmp, 0, 0, 64, 64)
+  const d = ctx.getImageData(0, 0, 64, 64).data
+  let sum = 0
+  let hi = 0
+  const n = d.length / 4
+  for (let i = 0; i < d.length; i += 4) {
+    const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+    sum += l
+    if (l >= 250) hi++
+  }
+  return { mean: sum / n, clipHi: hi / n }
+}
+
 async function analyse(url: string): Promise<Analysis> {
   const res = await fetch(url)
   if (!res.ok) return null
   const bmp = await createImageBitmap(await res.blob(), { imageOrientation: 'from-image' })
   try {
-    return { sharp: sharpness(bmp), hash: dhash(bmp) }
+    return { sharp: sharpness(bmp), hash: dhash(bmp), ...lumaStats(bmp) }
   } finally {
     bmp.close()
   }
@@ -90,6 +110,11 @@ async function fetchBlob(url: string | undefined): Promise<Blob | null> {
   } catch {
     return null
   }
+}
+
+const median = (a: number[]) => {
+  const q = [...a].sort((x, y) => x - y)
+  return q.length ? q[Math.floor(q.length / 2)] : 0
 }
 
 // Photos must be passed in shoot order so bursts sit next to each other.
@@ -119,8 +144,8 @@ export async function cullPhotos(
   }
   await Promise.all(Array.from({ length: 6 }, () => worker()))
 
-  // Closed-eye check on the bigger web copies, one at a time, fetching the next while the model works.
-  const eyes: (boolean | null)[] = items.map(() => null)
+  // Face check on the bigger web copies: closed eyes and how sharp the main face is.
+  const reports: (FaceReport | null)[] = items.map(() => null)
   let eyesOk = false
   if (opts.eyes) {
     eyesOk = await faceEyesReady()
@@ -133,7 +158,7 @@ export async function cullPhotos(
           try {
             const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' })
             try {
-              eyes[i] = await eyesClosed(bmp)
+              reports[i] = await faceReport(bmp)
             } finally {
               bmp.close()
             }
@@ -144,11 +169,15 @@ export async function cullPhotos(
       }
     }
   }
-  const closed = eyes.map((e) => e === true)
+  const closedN = reports.map((r) => (r ? r.closed : 0))
+  const faceN = reports.map((r) => (r ? r.count : 0))
+  const closed = closedN.map((n) => n > 0)
+  const faceVals = reports.map((r) => (r ? r.faceSharp : null))
 
-  const valid = analyses.filter((a): a is NonNullable<Analysis> => !!a).map((a) => a.sharp).sort((a, b) => a - b)
-  const median = valid.length ? valid[Math.floor(valid.length / 2)] : 1
-  const med = median > 0 ? median : 1
+  const valid = analyses.filter((a): a is NonNullable<Analysis> => !!a)
+  const med = median(valid.map((a) => a.sharp)) > 0 ? median(valid.map((a) => a.sharp)) : 1
+  const medMean = median(valid.map((a) => a.mean))
+  const medFace = median(faceVals.filter((v): v is number => v !== null))
   const single = (s: number): CullLabel => {
     const rel = s / med
     return rel < 0.35 ? 'reject' : rel < 0.6 ? 'maybe' : 'pick'
@@ -159,37 +188,60 @@ export async function cullPhotos(
   const scores: number[] = analyses.map((a) => (a ? a.sharp : 0))
   analyses.forEach((a, i) => {
     if (!a) return
-    const l = single(a.sharp)
+    let l = single(a.sharp)
+    let why: string | null = l === 'reject' ? 'Soft' : l === 'maybe' ? 'Slightly soft' : null
+    // The face matters most: a sharp face rescues a soft frame, a soft face sinks a sharp one.
+    const fs = faceVals[i]
+    if (fs !== null && medFace > 0) {
+      const rel = fs / medFace
+      if (rel >= 0.8 && l !== 'pick') { l = 'pick'; why = null }
+      else if (rel < 0.25) { l = 'reject'; why = 'Face is soft' }
+      else if (rel < 0.5 && l === 'pick') { l = 'maybe'; why = 'Face slightly soft' }
+    }
+    if (l === 'pick' && a.clipHi > 0.2) { l = 'maybe'; why = 'Blown out' }
+    else if (l === 'pick' && medMean > 0 && a.mean < 40 && a.mean < medMean * 0.5) { l = 'maybe'; why = 'Very dark' }
     labels[i] = l
-    reasons[i] = l === 'reject' ? 'Soft' : l === 'maybe' ? 'Slightly soft' : null
+    reasons[i] = why
   })
   items.forEach((_, i) => {
     if (closed[i] && labels[i] !== 'reject') {
       labels[i] = 'maybe'
-      reasons[i] = 'Eyes closed'
+      reasons[i] = faceN[i] > 1 ? `${closedN[i]} of ${faceN[i]} people have closed eyes` : 'Eyes closed'
     }
   })
 
-  // Group near-identical frames that sit next to each other.
-  const groups: number[][] = []
-  const st = { cur: [] as number[], ref: null as boolean[] | null }
-  const flush = () => {
-    if (st.cur.length > 1) groups.push(st.cur)
-    st.cur = []
-    st.ref = null
+  // Group near-identical frames anywhere in the shoot. Close neighbors can differ a bit more than far-apart ones.
+  const parent = items.map((_, i) => i)
+  const find = (x: number): number => {
+    while (parent[x] !== x) {
+      parent[x] = parent[parent[x]]
+      x = parent[x]
+    }
+    return x
   }
   for (let i = 0; i < items.length; i++) {
     const a = analyses[i]
-    if (!a) { flush(); continue }
-    if (st.ref && hamming(st.ref, a.hash) <= 10) {
-      st.cur.push(i)
-    } else {
-      flush()
-      st.cur = [i]
-      st.ref = a.hash
+    if (!a) continue
+    for (let j = Math.max(0, i - 60); j < i; j++) {
+      const b = analyses[j]
+      if (!b) continue
+      const lim = i - j <= 4 ? 10 : 6
+      if (hamming(a.hash, b.hash) <= lim) {
+        const ra = find(j)
+        const rb = find(i)
+        if (ra !== rb) parent[rb] = ra
+      }
     }
   }
-  flush()
+  const buckets = new Map<number, number[]>()
+  items.forEach((_, i) => {
+    if (!analyses[i]) return
+    const r = find(i)
+    const arr = buckets.get(r) ?? []
+    arr.push(i)
+    buckets.set(r, arr)
+  })
+  const groups = Array.from(buckets.values()).filter((g) => g.length > 1).map((g) => g.sort((x, y) => x - y))
 
   const groupId: (string | null)[] = items.map(() => null)
   groups.forEach((members, k) => {

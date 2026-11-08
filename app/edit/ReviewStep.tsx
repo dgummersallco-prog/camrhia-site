@@ -6,7 +6,7 @@ import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjus
 import { briefAdjust, type Brief } from '@/lib/brief'
 import type { Crop } from '@/lib/crop'
 import ColorMixer from '@/app/edit/ColorMixer'
-import { camiRead, camiFix, camiBaselines, camiPickBW, camiLearn, camiDelta, camiFlag, type CamiReading, type Baseline, type CamiBias, type FeedbackRow } from '@/lib/cami'
+import { camiRead, camiFix, camiBaselines, camiPickBW, camiBWAdjust, camiLearn, camiDelta, camiFlag, type CamiReading, type Baseline, type CamiBias, type FeedbackRow } from '@/lib/cami'
 
 const BUCKET = 'galleries'
 
@@ -265,7 +265,7 @@ export default function ReviewStep({
     }
     const studyAdj: Record<string, Adjust> = {}
     for (const r of rows) studyAdj[r.id] = r.review_adj ?? {}
-    camiShoot.current = { readings, sceneOf, bases: camiBaselines(readings, sceneOf), bw: camiPickBW(readings), bias, studyAdj }
+    camiShoot.current = { readings, sceneOf, bases: camiBaselines(readings, sceneOf), bw: camiPickBW(readings, sceneOf), bias, studyAdj }
     return camiShoot.current
   }
   async function camiScanThis() {
@@ -382,7 +382,8 @@ export default function ReviewStep({
   function camiTryBW() {
     if (!row) return
     camiPrev.current = { adj: manual }
-    editManual({ ...manual, bw: 1, contrast: Math.round(((manual.contrast ?? 0) + 0.15) * 100) / 100 })
+    const rdBw = camiShoot.current?.readings[row.id]
+    editManual({ ...manual, ...(rdBw ? camiBWAdjust(rdBw) : { bw: 1 }), contrast: Math.round(((manual.contrast ?? 0) + 0.15) * 100) / 100 })
     setCamiNote({ id: row.id, notes: ['Switched to black and white with a little extra contrast.'], bw: false })
   }
   function camiUndo() {

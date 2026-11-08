@@ -1,4 +1,5 @@
 import type { Adjust } from '@/lib/enhance'
+import { BANDS } from '@/lib/hsl'
 
 export type CamiReading = {
   median: number
@@ -17,6 +18,7 @@ export type CamiReading = {
   skinWarmth: number
   skinTint: number
   hueBins: number
+  blueShare: number
 }
 export type Baseline = { median: number; warmth: number }
 export type CamiFix = { adjust: Adjust; notes: string[]; reading: CamiReading; raw: Adjust }
@@ -100,6 +102,7 @@ export async function camiRead(blob: Blob): Promise<CamiReading> {
       skinWarmth: skN && skR + skB > 0 ? (skR - skB) / (skR + skB) : 0,
       skinTint: skN && skAvg > 0 ? (skG / skN - (skR / skN + skB / skN) / 2) / skAvg : 0,
       hueBins: bins,
+      blueShare: hueTotal > n * 0.01 ? (hueCount[7] + hueCount[8]) / hueTotal : 0,
     }
   } finally {
     bmp.close()
@@ -132,17 +135,27 @@ function bwScore(rd: CamiReading): number {
   if (rd.p95 - rd.p5 >= 170 && rd.clipHi < 0.03) s++
   if (rd.sat < 0.2) s++
   if (rd.hueBins <= 2) s++
+  if (rd.skinShare > 0.03) s++
   if (Math.abs(rd.warmth) > 0.15 || Math.abs(rd.greenCast) > 0.06) s++
   return s
 }
 
 // Only the best few: about 3% of the shoot, and none on small shoots.
-export function camiPickBW(readings: Record<string, CamiReading>): Set<string> {
+export function camiPickBW(readings: Record<string, CamiReading>, sceneOf: Record<string, string> = {}): Set<string> {
   const ids = Object.keys(readings)
   const cap = ids.length < 10 ? 0 : Math.max(1, Math.floor(ids.length * 0.03))
   const scored = ids.map((id) => ({ id, rd: readings[id], s: bwScore(readings[id]) })).filter((x) => x.s >= 3)
   scored.sort((a, b) => b.s - a.s || b.rd.p95 - b.rd.p5 - (a.rd.p95 - a.rd.p5))
-  return new Set(scored.slice(0, cap).map((x) => x.id))
+  const perScene: Record<string, number> = {}
+  const out = new Set<string>()
+  for (const x of scored) {
+    if (out.size >= cap) break
+    const sc = sceneOf[x.id] ?? 'none'
+    if ((perScene[sc] ?? 0) >= 2) continue
+    perScene[sc] = (perScene[sc] ?? 0) + 1
+    out.add(x.id)
+  }
+  return out
 }
 
 // Turns a reading into slider changes, with a plain reason for each.
@@ -347,4 +360,29 @@ export function camiGuessLight(rds: CamiReading[]): string {
   if (warm !== null && warm < 0 && bright >= 110 && bright <= 170) return 'open_shade'
   if (spread < 130 && bright >= 100 && (warm === null || Math.abs(warm) < 0.12)) return 'overcast'
   return ''
+}
+
+// The colour band whose centre is closest to this hue, as a brightness key.
+function lKey(hue: number): string {
+  let best = BANDS[0]
+  let bd = 999
+  for (const b of BANDS) {
+    const d = Math.abs(((hue - b.center + 540) % 360) - 180)
+    if (d < bd) { bd = d; best = b }
+  }
+  return 'l_' + best.id
+}
+
+// A proper black and white conversion: brighter, smoother skin and darker blue skies.
+export function camiBWAdjust(rd: CamiReading): Adjust {
+  const a: Record<string, number> = { bw: 1 }
+  if (rd.skinShare > 0.03) {
+    a[lKey(0)] = 0.4
+    a[lKey(30)] = 0.6
+  }
+  if (rd.blueShare > 0.25) {
+    a[lKey(230)] = -0.6
+    a[lKey(190)] = -0.3
+  }
+  return a as Adjust
 }

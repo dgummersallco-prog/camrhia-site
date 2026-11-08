@@ -761,7 +761,7 @@ export default function EditWalkthrough() {
                 </div>
                 <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-white/70">
                   <input type="checkbox" checked={cullEyes} onChange={(e) => setCullEyes(e.target.checked)} className="h-4 w-4" />
-                  Also check for closed eyes (slower)
+                  Also check faces for closed eyes and soft focus (slower)
                 </label>
                 <div className="mt-8">
                   <button className={btnPrimary} onClick={runCull}>Start</button>
@@ -771,7 +771,7 @@ export default function EditWalkthrough() {
 
             {cull.busy && (
               <div className={`${panel} mt-8 text-center`}>
-                <p className="text-sm uppercase tracking-[0.18em] text-white/40">{cull.phase === 'eyes' ? 'Checking eyes' : 'Checking sharpness'}</p>
+                <p className="text-sm uppercase tracking-[0.18em] text-white/40">{cull.phase === 'eyes' ? 'Checking faces' : 'Checking sharpness'}</p>
                 <p className="mt-4 font-fraunces text-6xl text-white">
                   {cull.done}
                   <span className="text-white/25"> / {cull.total}</span>
