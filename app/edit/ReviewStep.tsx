@@ -167,6 +167,8 @@ export default function ReviewStep({
   const [camiBusy, setCamiBusy] = useState(false)
   const [camiNote, setCamiNote] = useState<{ id: string; notes: string[]; bw: boolean } | null>(null)
   const [camiProgress, setCamiProgress] = useState(0)
+  const [sceneBusy, setSceneBusy] = useState<{ done: number; total: number } | null>(null)
+  const sceneStop = useRef(false)
   const camiApplied = useRef<Record<string, { reading: CamiReading; suggested: Adjust; studyAdj: Adjust }>>({})
   const camiShoot = useRef<{ readings: Record<string, CamiReading>; sceneOf: Record<string, string>; bases: Record<string, Baseline>; bw: Set<string>; bias: CamiBias | null; studyAdj: Record<string, Adjust> } | null>(null)
   const camiPrev = useRef<{ adj: Adjust } | null>(null)
@@ -260,6 +262,92 @@ export default function ReviewStep({
     }
     setCamiProgress(0)
     setCamiBusy(false)
+  }
+  async function camiScanScene() {
+    const sb = supabase
+    if (!sb || !row || camiBusy || sceneBusy) return
+    setCamiBusy(true)
+    setCamiProgress(0)
+    let shoot: NonNullable<typeof camiShoot.current>
+    try {
+      shoot = await camiStudy()
+    } catch {
+      setCamiNote({ id: row.id, notes: ['Cami could not read this shoot.'], bw: false })
+      setCamiProgress(0)
+      setCamiBusy(false)
+      return
+    }
+    setCamiProgress(0)
+    setCamiBusy(false)
+    const sid = shoot.sceneOf[row.id]
+    if (!sid) {
+      setCamiNote({ id: row.id, notes: ['Split this shoot into scenes first, so Cami knows which photos belong together.'], bw: false })
+      return
+    }
+    const targets = rows.filter((r) => r.id !== row.id && !r.reviewed && shoot.sceneOf[r.id] === sid && shoot.readings[r.id] && !(shoot.studyAdj[r.id] ?? {}).bw)
+    if (targets.length === 0) {
+      setCamiNote({ id: row.id, notes: ['Nothing else in this scene needs Cami.'], bw: false })
+      return
+    }
+    sceneStop.current = false
+    setSceneBusy({ done: 0, total: targets.length })
+    const updated: Record<string, Partial<Row>> = {}
+    let fixedCount = 0
+    let failed = 0
+    for (let i = 0; i < targets.length; i++) {
+      if (sceneStop.current) break
+      const r = targets[i]
+      try {
+        const cur = await sb.from('gallery_photos').select('reviewed').eq('id', r.id).maybeSingle()
+        if (!cur.data || cur.data.reviewed) { setSceneBusy({ done: i + 1, total: targets.length }); continue }
+        const fix = camiFix(shoot.readings[r.id], shoot.bases[sid] ?? null, shoot.bias)
+        if (Object.keys(fix.adjust).length > 0) {
+          const before = shoot.studyAdj[r.id] ?? {}
+          const mine = cleanAdj(addAdj(before, fix.adjust))
+          const srcPath = r.pre_full_path ?? r.orig_path
+          const dl = await sb.storage.from(BUCKET).download(srcPath)
+          if (dl.error || !dl.data) throw new Error('download')
+          const lg = light[r.id]
+          const b = briefAdjust(lg ? { ...brief, light: lg } : brief)
+          const tot = addAdj(addAdj(b.adjust, baseTweak), mine)
+          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: tot, skin: b.skin, crop: r.crop ?? undefined })
+          const dir = r.orig_path.slice(0, r.orig_path.lastIndexOf('/'))
+          const v = Date.now().toString(36) + i
+          const np = { full: `${dir}/enh-full-${v}.jpg`, web: `${dir}/enh-web-${v}.jpg`, thumb: `${dir}/enh-thumb-${v}.jpg` }
+          const ups = await Promise.all([
+            sb.storage.from(BUCKET).upload(np.full, out.full, { contentType: 'image/jpeg', upsert: true }),
+            sb.storage.from(BUCKET).upload(np.web, out.web.blob, { contentType: 'image/jpeg', upsert: true }),
+            sb.storage.from(BUCKET).upload(np.thumb, out.thumb.blob, { contentType: 'image/jpeg', upsert: true }),
+          ])
+          const bad = ups.find((u) => u.error)
+          if (bad?.error) throw bad.error
+          const patch = {
+            review_adj: Object.keys(mine).length > 0 ? mine : null,
+            full_path: np.full,
+            web_path: np.web,
+            thumb_path: np.thumb,
+            enh_bytes: out.full.size + out.web.blob.size + out.thumb.blob.size,
+          }
+          const { error } = await sb.from('gallery_photos').update(patch).eq('id', r.id)
+          if (error) throw error
+          const oldPaths = [r.full_path, r.web_path, r.thumb_path].filter((x): x is string => !!x && x.startsWith(`${dir}/enh-`))
+          if (oldPaths.length > 0) await sb.storage.from(BUCKET).remove(oldPaths)
+          updated[r.id] = patch as unknown as Partial<Row>
+          camiApplied.current[r.id] = { reading: shoot.readings[r.id], suggested: fix.raw, studyAdj: before }
+          fixedCount++
+        }
+      } catch {
+        failed++
+      }
+      setSceneBusy({ done: i + 1, total: targets.length })
+    }
+    setRows((prev) => prev.map((x) => (updated[x.id] ? { ...x, ...updated[x.id] } : x)))
+    setSceneBusy(null)
+    setCamiNote({
+      id: row.id,
+      notes: [`Cami fixed ${fixedCount} other ${fixedCount === 1 ? 'photo' : 'photos'} in this scene. They still show as unchecked so you can look them over.` + (failed > 0 ? ` ${failed} could not be fixed.` : '')],
+      bw: false,
+    })
   }
   function camiTryBW() {
     if (!row) return
@@ -793,9 +881,13 @@ export default function ReviewStep({
             {/* LEFT: light and color */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
               <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <button className={tab(true)} disabled={camiBusy} onClick={camiScanThis}>
+                <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
                   {camiBusy ? (camiProgress > 0 ? 'Cami is studying this shoot… ' + camiProgress + '/' + rows.length : 'Cami is looking…') : 'Use Cami to scan & fix'}
                 </button>
+                <button className={tab(false) + ' mt-2'} disabled={camiBusy || !!sceneBusy} onClick={camiScanScene}>
+                  {sceneBusy ? 'Cami is fixing this scene… ' + sceneBusy.done + '/' + sceneBusy.total : 'Scan the whole scene'}
+                </button>
+                {sceneBusy && <button className="mt-2 block text-xs text-white/60 underline" onClick={() => { sceneStop.current = true }}>Stop</button>}
                 {camiNote && camiNote.id === row.id && (
                   <div className="mt-2 space-y-1 text-xs text-white/60">
                     {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
