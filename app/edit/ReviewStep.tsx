@@ -55,6 +55,7 @@ const PHRASE: Record<string, [string, string]> = {
   saturation: ['Boost color', 'Mute color'],
   sharpen: ['Sharpen', 'Soften'],
   noise: ['Reduce noise', 'Add grain'],
+  raw: ['Start from the original', 'Start from the original'],
 }
 
 function addAdj(a: Adjust | undefined, b: Adjust): Adjust {
@@ -196,7 +197,7 @@ export default function ReviewStep({
     return briefAdjust(lg ? { ...brief, light: lg } : brief)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row?.id, light, brief])
-  const total = useMemo(() => addAdj(addAdj(base.adjust, baseTweak), manual), [base, manual, baseTweak])
+  const total = useMemo(() => (manual.raw ? manual : addAdj(addAdj(base.adjust, baseTweak), manual)), [base, manual, baseTweak])
 
   function bump() {
     dirtyRef.current += 1
@@ -313,7 +314,7 @@ export default function ReviewStep({
       setCamiNote({ id: row.id, notes: ['Split this shoot into scenes first, so Cami knows which photos belong together.'], bw: false })
       return
     }
-    const targets = rows.filter((r) => r.id !== row.id && !r.reviewed && shoot.sceneOf[r.id] === sid && shoot.readings[r.id] && !(shoot.studyAdj[r.id] ?? {}).bw)
+    const targets = rows.filter((r) => r.id !== row.id && !r.reviewed && shoot.sceneOf[r.id] === sid && shoot.readings[r.id] && !(shoot.studyAdj[r.id] ?? {}).bw && !(shoot.studyAdj[r.id] ?? {}).raw)
     if (targets.length === 0) {
       setCamiNote({ id: row.id, notes: ['Nothing else in this scene needs Cami.'], bw: false })
       return
@@ -338,7 +339,7 @@ export default function ReviewStep({
           if (dl.error || !dl.data) throw new Error('download')
           const lg = light[r.id]
           const b = briefAdjust(lg ? { ...brief, light: lg } : brief)
-          const tot = addAdj(addAdj(b.adjust, baseTweak), mine)
+          const tot = mine.raw ? mine : addAdj(addAdj(b.adjust, baseTweak), mine)
           const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: tot, skin: b.skin, crop: r.crop ?? undefined })
           const dir = r.orig_path.slice(0, r.orig_path.lastIndexOf('/'))
           const v = Date.now().toString(36) + i
@@ -1032,7 +1033,8 @@ export default function ReviewStep({
                 <ColorMixer value={manual} onChange={editManual} />
               </Panel>
               <div className="py-3">
-                <button className={tab(false)} onClick={() => { editManual({}); editCrop(null) }}>Reset this photo</button>
+                <button className={tab(false)} onClick={() => { editManual({ raw: 1 }); editCrop(null) }}>Reset this photo</button>
+                {manual.raw ? <button className="ml-3 text-xs text-white/55 underline" onClick={() => editManual({})}>Back to the shoot&apos;s look</button> : null}
               </div>
               <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                 <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>

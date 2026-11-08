@@ -22,7 +22,7 @@ export type LookParams = {
   splitHigh: [number, number, number]
 }
 export type Look = { id: string; label: string; blurb: string; params: LookParams }
-export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>> & { sharpen?: number; noise?: number } & Partial<Record<HslKey, number>>
+export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>> & { sharpen?: number; noise?: number; raw?: number } & Partial<Record<HslKey, number>>
 export type LookChoice = { id: string; strength: number; adjust?: Adjust; skin?: boolean; crop?: Crop }
 
 const Z: LookParams = {
@@ -93,6 +93,12 @@ function buildK(look: LookParams | null, strength: number, adjust?: Adjust, skin
 }
 
 function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | null, strength: number, adjust?: Adjust, skin?: boolean) {
+  // Original mode: no look, no automatic fix. Only the sliders apply.
+  const raw = !!adjust?.raw
+  if (raw) {
+    look = null
+    skin = false
+  }
   const hist = new Uint32Array(256)
   let n = 0
   let sr = 0
@@ -123,16 +129,16 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
   }
   const lo = Math.min(pct(0.005), 24)
   const hi = Math.max(pct(0.995), 215)
-  const black = lo * 0.8
-  const white = hi + (255 - hi) * 0.2
+  const black = raw ? 0 : lo * 0.8
+  const white = raw ? 255 : hi + (255 - hi) * 0.2
   const span = Math.max(1, white - black)
   const m = clamp((pct(0.5) - black) / span, 0.05, 0.95)
   const gammaFull = Math.log(0.46) / Math.log(m)
-  const gamma = 1 + (clamp(gammaFull, 0.65, 1.35) - 1) * 0.75
+  const gamma = raw ? 1 : 1 + (clamp(gammaFull, 0.65, 1.35) - 1) * 0.75
 
   let gainR = 1
   let gainB = 1
-  if (nm > 1000) {
+  if (!raw && nm > 1000) {
     const mr = sr / nm
     const mg = sg / nm
     const mb = sb / nm
@@ -149,7 +155,7 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
       let v = clamp((x * gain - black) / span, 0, 1)
       v = Math.pow(v, gamma)
       const sm = v * v * (3 - 2 * v)
-      v = v + (sm - v) * 0.35
+      v = v + (sm - v) * (raw ? 0 : 0.35)
       if (k) {
         v = v * Math.pow(2, k.exposure)
         v = v + k.shadows * 0.25 * Math.pow(1 - clamp(v, 0, 1), 2)
@@ -169,7 +175,7 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
   const lutR = lut(gainR, 0)
   const lutG = lut(1, 1)
   const lutB = lut(gainB, 2)
-  const sat = 1.07 + (k ? k.saturation : 0)
+  const sat = (raw ? 1 : 1.07) + (k ? k.saturation : 0)
   const bwA = k ? k.bw : 0
   const vib = k ? k.vibrance : 0
   const sh = k ? k.splitShadow : null
