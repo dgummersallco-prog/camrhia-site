@@ -1,5 +1,7 @@
 'use client'
 
+import { Fragment } from 'react'
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useParams } from 'next/navigation'
@@ -255,6 +257,16 @@ export default function GalleryViewPage() {
 
   if (!data) return null
   const cover = data.photos.find((p) => p.id === data.coverId) ?? data.photos[0]
+  const momentMeta = (data as unknown as { moments?: { id: string; name: string }[] }).moments ?? []
+  const momentHead = (p: unknown, i: number) => {
+    if (momentMeta.length === 0) return null
+    const m = (p as { moment?: string | null }).moment ?? null
+    const prev = i > 0 ? ((list[i - 1] as unknown as { moment?: string | null }).moment ?? null) : undefined
+    if (i > 0 && m === prev) return null
+    const name = m ? momentMeta.find((x) => x.id === m)?.name : null
+    if (!name) return null
+    return <h2 className="mb-4 mt-8 font-fraunces text-2xl text-ink first:mt-0 [column-span:all]">{name}</h2>
+  }
   const current = openIndex !== null ? list[openIndex] : null
   const heart = brand?.accent || '#fb7185'
 
@@ -317,7 +329,9 @@ export default function GalleryViewPage() {
         ) : (
           <div className="columns-2 gap-3 md:columns-3 lg:columns-4">
             {list.map((p, i) => (
-              <div key={p.id} className="group relative mb-3 break-inside-avoid overflow-hidden rounded-lg bg-line">
+              <Fragment key={p.id}>
+              {momentHead(p, i)}
+              <div className="group relative mb-3 break-inside-avoid overflow-hidden rounded-lg bg-line">
                 {p.thumb && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -338,6 +352,7 @@ export default function GalleryViewPage() {
                   <Heart filled={favs.has(p.id)} className="h-4 w-4" />
                 </button>
               </div>
+              </Fragment>
             ))}
           </div>
         )}

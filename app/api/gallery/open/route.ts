@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   const { data: g } = await sb
     .from('galleries')
-    .select('id, owner_id, session_id, title, pin_hash, allow_downloads, expires_at, status, cover_photo_id, audience')
+    .select('id, owner_id, session_id, title, pin_hash, allow_downloads, expires_at, status, cover_photo_id, audience, moments')
     .eq('token', token)
     .maybeSingle()
   if (!g) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -98,6 +98,10 @@ export async function POST(req: Request) {
     } catch { /* tracking must never block the gallery */ }
   }
 
+  const momentList = (Array.isArray(g.moments) ? g.moments : []) as { id: string; name: string; startId: string }[]
+  const startMap = new Map(momentList.map((m) => [m.startId, m.id]))
+  const momentOf: Record<string, string | null> = {}
+  let curMoment: string | null = null
   const photos: { id: string; filename: string | null; width: number | null; height: number | null; web_path: string | null; thumb_path: string | null }[] = []
   for (let from = 0; ; from += 1000) {
     const { data } = await sb
@@ -107,6 +111,11 @@ export async function POST(req: Request) {
       .order('sort_order', { ascending: true })
       .range(from, from + 999)
     const batch = data ?? []
+    for (const bp of batch as { id: string }[]) {
+      const mid = startMap.get(bp.id)
+      if (mid) curMoment = mid
+      momentOf[bp.id] = curMoment
+    }
     photos.push(...batch.filter((p: { cull_label: string | null }) => isVisible(p.cull_label, g.audience)))
     if (batch.length < 1000) break
   }
@@ -131,8 +140,10 @@ export async function POST(req: Request) {
     coverId: g.cover_photo_id,
     access: signAccess(g.id),
     favorites,
+    moments: momentList.map((m) => ({ id: m.id, name: m.name })),
     photos: photos.map((p) => ({
       id: p.id,
+      moment: momentOf[p.id] ?? null,
       filename: p.filename,
       width: p.width,
       height: p.height,

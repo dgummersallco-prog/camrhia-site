@@ -11,6 +11,7 @@ import EditPanel from '@/app/edit/EditPanel'
 import { sendGalleryToClient } from '@/lib/sendGallery'
 import BriefScreen from '@/app/edit/BriefScreen'
 import ReviewStep from '@/app/edit/ReviewStep'
+import MomentsPanel from '@/app/edit/MomentsPanel'
 import { SCENE_IDEAS, readHead, exifTime, orderPhotos, normalizeScenes, buildLightMap, countByScene, autoSplit, groupByScene, lightStats, lightingBreaks } from '@/lib/scenes'
 import { briefAdjust, STYLE_LOOK, QUESTIONS, type Brief, type SceneDef, type Signature } from '@/lib/brief'
 import { uploadPhotos } from '@/lib/galleryUpload'
@@ -1062,6 +1063,8 @@ export default function EditWalkthrough() {
                 <div key={p.id} className="aspect-square overflow-hidden rounded-lg bg-white/5">{img(p)}</div>
               ))}
             </div>
+
+            {!sentDone && <MomentsPanel galleryId={galleryId} />}
 
             {sentDone ? (
               <div className={`${panel} mt-10`}>
