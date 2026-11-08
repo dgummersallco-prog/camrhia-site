@@ -332,3 +332,19 @@ export function camiFlag(adj: Adjust): string | null {
   if ((a.contrast ?? 0) <= -0.1) return 'Too contrasty'
   return null
 }
+
+// A guess at the main light of a scene from a few of its photos. Empty when she is not sure.
+export function camiGuessLight(rds: CamiReading[]): string {
+  if (rds.length < 3) return ''
+  const bright = med(rds.map((r) => r.median))
+  const spread = med(rds.map((r) => r.p95 - r.p5))
+  const clip = med(rds.map((r) => r.clipHi))
+  const neutrals = rds.filter((r) => r.neutralShare > 0.03)
+  const warm = neutrals.length >= 3 ? med(neutrals.map((r) => r.warmth)) : null
+  if (bright < 80) return 'dark_flash'
+  if (bright > 150 && spread > 185 && clip > 0.01) return 'harsh_sun'
+  if (warm !== null && warm > 0.12 && spread > 140) return 'golden_hour'
+  if (warm !== null && warm < 0 && bright >= 110 && bright <= 170) return 'open_shade'
+  if (spread < 130 && bright >= 100 && (warm === null || Math.abs(warm) < 0.12)) return 'overcast'
+  return ''
+}

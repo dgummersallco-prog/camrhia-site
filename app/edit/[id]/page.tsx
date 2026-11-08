@@ -12,6 +12,7 @@ import { sendGalleryToClient } from '@/lib/sendGallery'
 import BriefScreen from '@/app/edit/BriefScreen'
 import ReviewStep from '@/app/edit/ReviewStep'
 import MomentsPanel from '@/app/edit/MomentsPanel'
+import { camiRead, camiGuessLight, type CamiReading } from '@/lib/cami'
 import { SCENE_IDEAS, readHead, exifTime, orderPhotos, normalizeScenes, buildLightMap, countByScene, autoSplit, groupByScene, lightStats, lightingBreaks } from '@/lib/scenes'
 import { briefAdjust, STYLE_LOOK, QUESTIONS, type Brief, type SceneDef, type Signature } from '@/lib/brief'
 import { uploadPhotos } from '@/lib/galleryUpload'
@@ -292,7 +293,27 @@ export default function EditWalkthrough() {
       starts = lightingBreaks(stats).map((i) => ordered[i].id)
     }
     const first = sceneList[0] ?? { id: 'first', name: '', startId: ordered[0].id, light: '' }
-    saveScenes([{ ...first, startId: ordered[0].id }, ...starts.map((startId) => ({ id: Math.random().toString(36).slice(2, 9), name: '', startId, light: '' }))])
+    const ns: SceneDef[] = [{ ...first, startId: ordered[0].id }, ...starts.map((startId) => ({ id: Math.random().toString(36).slice(2, 9), name: '', startId, light: '' }))]
+    try {
+      const members = groupByScene(ordered, normalizeScenes(ns, ordered)) as unknown as Record<string, { thumb_path: string | null }[]>
+      for (const sc of ns) {
+        if (sc.light) continue
+        const list = members[sc.id] ?? []
+        const step = Math.max(1, Math.floor(list.length / 10))
+        const sample = list.filter((_, n) => n % step === 0).slice(0, 10)
+        const rds: CamiReading[] = []
+        for (const ph of sample) {
+          const url = ph.thumb_path ? thumbs[ph.thumb_path] : undefined
+          if (!url) continue
+          try {
+            const res = await fetch(url)
+            if (res.ok) rds.push(await camiRead(await res.blob()))
+          } catch { /* skip this one */ }
+        }
+        sc.light = camiGuessLight(rds)
+      }
+    } catch { /* leave the light as it was */ }
+    saveScenes(ns)
     setAnalyzing(false)
   }
 

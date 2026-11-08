@@ -96,18 +96,6 @@ const LIGHT: Record<string, Adjust> = {
   dark_flash: { exposure: 0.12, shadows: 0.15, saturation: -0.03 },
 }
 
-const MOOD: Record<string, Adjust> = {
-  romantic: { fade: 0.02, contrast: -0.05, temp: 0.03, saturation: -0.03 },
-  joyful: { exposure: 0.1, saturation: 0.06 },
-  dramatic: { contrast: 0.15, exposure: -0.1, shadows: -0.08 },
-  timeless: { contrast: 0.05, saturation: -0.05 },
-  cinematic: { contrast: 0.1, saturation: -0.08, fade: 0.03 },
-}
-
-const SETTING: Record<string, Adjust> = {
-  indoors: { shadows: 0.05 },
-}
-
 function add(a: Adjust, b: Adjust | undefined): Adjust {
   const out: Adjust = { ...a }
   if (!b) return out
@@ -118,7 +106,5 @@ function add(a: Adjust, b: Adjust | undefined): Adjust {
 export function briefAdjust(b: Brief): { adjust: Adjust | undefined; skin: boolean } {
   let a: Adjust = {}
   a = add(a, b.light ? LIGHT[b.light] : undefined)
-  a = add(a, b.mood ? MOOD[b.mood] : undefined)
-  a = add(a, b.setting ? SETTING[b.setting] : undefined)
   return { adjust: Object.keys(a).length > 0 ? a : undefined, skin: b.skin === 'yes' }
 }

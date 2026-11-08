@@ -6,6 +6,16 @@ import { QUESTIONS, type Brief, type Signature } from '@/lib/brief'
 const primary = 'rounded-full bg-[var(--color-twilight)] px-7 py-3 text-sm font-medium text-white transition hover:opacity-90'
 const quiet = 'rounded-full border border-white/15 px-6 py-3 text-sm text-white/70 transition hover:border-white/35 hover:text-white'
 
+const KEEP = ['type', 'style', 'skin']
+const QS = QUESTIONS.filter((x) => KEEP.includes(x.key))
+function clean(b: Brief): Brief {
+  const c = { ...b }
+  delete c.light
+  delete c.mood
+  delete c.setting
+  return c
+}
+
 type Usual = { value: string; n: number; total: number }
 
 const LG: Record<number, string> = {
@@ -48,13 +58,13 @@ export default function BriefScreen({
   onSkip: () => void
 }) {
   const [i, setI] = useState(0)
-  const [b, setB] = useState<Brief>(initial)
+  const [b, setB] = useState<Brief>(clean(initial))
   const [sig, setSig] = useState<Signature | null>(null)
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [savedAs, setSavedAs] = useState<string | null>(null)
-  const q = QUESTIONS[i]
-  const last = i === QUESTIONS.length - 1
+  const q = QS[i]
+  const last = i === QS.length - 1
   const usual = usualFor(history, q.key)
   const nOpts = q.options.length
   const cols = nOpts <= 2 ? 2 : nOpts <= 4 ? nOpts : nOpts <= 6 ? 3 : 4
@@ -63,26 +73,26 @@ export default function BriefScreen({
     setB({ ...b, [q.key]: v })
     setSig(null)
     setSavedAs(null)
-    if (!last) setTimeout(() => setI((x) => Math.min(x + 1, QUESTIONS.length - 1)), 180)
+    if (!last) setTimeout(() => setI((x) => Math.min(x + 1, QS.length - 1)), 180)
   }
 
   function useUsual() {
     const next: Brief = { ...b }
-    for (const qq of QUESTIONS) {
+    for (const qq of QS) {
       if (qq.key === 'type') continue
       const u = usualFor(history, qq.key)
       if (u) (next as Record<string, unknown>)[qq.key] = u.value
     }
     setB(next)
     setSig(null)
-    setI(QUESTIONS.length - 1)
+    setI(QS.length - 1)
   }
 
   function useSignature(s: Signature) {
-    setB({ ...s.answers })
+    setB(clean({ ...s.answers }))
     setSig(s)
     setSavedAs(null)
-    setI(QUESTIONS.length - 1)
+    setI(QS.length - 1)
   }
 
   async function save() {
@@ -110,7 +120,7 @@ export default function BriefScreen({
         </div>
 
         <div className="mt-8 flex gap-2">
-          {QUESTIONS.map((_, n) => (
+          {QS.map((_, n) => (
             <div key={n} className={`h-1 flex-1 rounded-full ${n <= i ? 'bg-[var(--color-twilight)]' : 'bg-white/10'}`} />
           ))}
         </div>
@@ -183,7 +193,7 @@ export default function BriefScreen({
         <div className="mt-10 flex flex-wrap gap-3">
           {i > 0 && <button className={quiet} onClick={() => setI(i - 1)}>Back</button>}
           {!last && <button className={quiet} onClick={() => setI(i + 1)}>Skip this one</button>}
-          {last && <button className={primary} onClick={() => onDone(b, sig)}>Start editing</button>}
+          {last && <button className={primary} onClick={() => onDone(clean(b), sig)}>Start editing</button>}
         </div>
       </div>
     </div>
