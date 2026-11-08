@@ -147,13 +147,15 @@ export function camiPickBW(readings: Record<string, CamiReading>): Set<string> {
 
 // Turns a reading into slider changes, with a plain reason for each.
 // With a scene baseline, every photo in the scene is pulled toward the same brightness and color.
-export function camiFix(rd: CamiReading, base: Baseline | null = null, bias: CamiBias | null = null): CamiFix {
+export function camiFix(rd: CamiReading, base: Baseline | null = null, bias: CamiBias | null = null, look: string | null = null): CamiFix {
+  const soft = look === 'airy' || look === 'matte' || look === 'film' || look === 'bright'
+  const zone: [number, number] = look === 'airy' || look === 'bright' ? [120, 175] : look === 'moody' ? [70, 125] : [108, 138]
   const a: Adjust = {}
   const notes: string[] = []
   const set = (k: keyof Adjust, v: number) => { if (Math.abs(v) >= 0.03) (a as Record<string, number>)[k as string] = r2(v) }
 
   // Exposure
-  const target = clamp(base ? base.median : rd.median, 108, 138)
+  const target = clamp(base ? base.median : rd.median, zone[0], zone[1])
   let ex = clamp(0.7 * Math.log2(lin(target) / lin(rd.median)), -0.5, 0.5)
   if (ex > 0 && rd.clipHi > 0.04) ex = 0
   if (Math.abs(ex) >= 0.08) {
@@ -166,7 +168,7 @@ export function camiFix(rd: CamiReading, base: Baseline | null = null, bias: Cam
   if (rd.clipHi > 0.015) {
     set('highlights', -Math.min(0.7, rd.clipHi * 10 + 0.15))
     notes.push('Pulled back highlights that were blowing out.')
-  } else if (rd.p99 < 235 && rd.median > 70) {
+  } else if (rd.p99 < 215 && rd.median > 70 && !soft) {
     set('whites', Math.min(0.3, ((245 - rd.p99) / 255) * 1.2))
     notes.push('Opened the whites so the brightest parts have some sparkle.')
   }
@@ -179,14 +181,14 @@ export function camiFix(rd: CamiReading, base: Baseline | null = null, bias: Cam
   if (rd.clipLo > 0.04) {
     set('blacks', Math.min(0.3, rd.clipLo * 3))
     notes.push('Eased the darkest areas that were crushing to pure black.')
-  } else if (rd.p1 > 28) {
+  } else if (rd.p1 > 28 && !soft) {
     set('blacks', -Math.min(0.4, ((rd.p1 - 20) / 255) * 2.5))
     notes.push('Deepened the blacks, the photo looked flat and milky.')
   }
 
   // Contrast
   const spread = rd.p95 - rd.p5
-  if (spread < 120) {
+  if (spread < 120 && !soft) {
     set('contrast', Math.min(0.25, ((120 - spread) / 120) * 0.5))
     notes.push('Added contrast, the tones were bunched together.')
   } else if (spread > 215) {
@@ -195,12 +197,13 @@ export function camiFix(rd: CamiReading, base: Baseline | null = null, bias: Cam
   }
 
   // White balance: neutral parts first, matched to the scene, then checked against skin
+  const tol = (w: number) => (w > 0.12 ? w - 0.12 : w < -0.03 ? w + 0.03 : 0)
   const hasNeutral = rd.neutralShare > 0.03
   const sceneWarm = base ? base.warmth : rd.warmth
   let temp = 0
   if (hasNeutral || base) {
     const dev = hasNeutral ? rd.warmth - sceneWarm : 0
-    temp = -((base ? 0.6 : 1) * sceneWarm + dev) * 1.2
+    temp = -((base ? 0.6 : 1) * tol(sceneWarm) + dev) * 1.2
   }
   let skinActed = false
   if (rd.skinShare > 0.02) {
@@ -248,7 +251,7 @@ export function camiFix(rd: CamiReading, base: Baseline | null = null, bias: Cam
   }
 
   const raw: Adjust = { ...a }
-  const b = bias ? biasFor(bias, rd) : null
+  const b = bias && Object.keys(a).length > 0 ? biasFor(bias, rd) : null
   if (b) {
     const am = a as Record<string, number>
     let used = false
@@ -259,7 +262,7 @@ export function camiFix(rd: CamiReading, base: Baseline | null = null, bias: Cam
     for (const k of Object.keys(am)) if (Math.abs(am[k]) < 0.03) delete am[k]
     if (used) notes.push('Adjusted to match how you usually edit.')
   }
-  if (notes.length === 0) notes.push('This one already looks good. Cami left it alone.')
+  if (notes.length === 0) notes.push('Looks great. The exposure, color and tones are already well balanced, so Cami left it alone.')
   return { adjust: a, notes, reading: rd, raw }
 }
 
@@ -313,4 +316,19 @@ export function camiDelta(final: Adjust, before: Adjust): Adjust {
     if (Math.abs(v) >= 0.005) out[k] = r2(v)
   }
   return out as Adjust
+}
+
+// A short label for the biggest problem Cami would fix, or null if the photo is fine.
+export function camiFlag(adj: Adjust): string | null {
+  const a = adj as Record<string, number>
+  if ((a.exposure ?? 0) >= 0.3) return 'Too dark'
+  if ((a.exposure ?? 0) <= -0.3) return 'Too bright'
+  if ((a.highlights ?? 0) <= -0.5) return 'Blown highlights'
+  if (Math.abs(a.temp ?? 0) >= 0.15) return (a.temp ?? 0) < 0 ? 'Looks too warm' : 'Looks too cool'
+  if (Math.abs(a.tint ?? 0) >= 0.12) return 'Color tint'
+  if ((a.blacks ?? 0) <= -0.3) return 'Flat and milky'
+  if ((a.blacks ?? 0) >= 0.2) return 'Crushed shadows'
+  if ((a.saturation ?? 0) <= -0.1) return 'Oversaturated'
+  if ((a.contrast ?? 0) <= -0.1) return 'Too contrasty'
+  return null
 }

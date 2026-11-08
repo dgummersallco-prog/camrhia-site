@@ -251,7 +251,7 @@ export default function ReviewStep({
       if (before.bw) {
         setCamiNote({ id: row.id, notes: ['This one is black and white, so Cami left it alone.'], bw: false })
       } else {
-        const fix = camiFix(rd, sid ? shoot.bases[sid] ?? null : null, shoot.bias)
+        const fix = camiFix(rd, sid ? shoot.bases[sid] ?? null : null, shoot.bias, lookId)
         camiPrev.current = { adj: manual }
         camiApplied.current[row.id] = { reading: rd, suggested: fix.raw, studyAdj: before }
         editManual(addAdj(before, fix.adjust))
@@ -300,7 +300,7 @@ export default function ReviewStep({
       try {
         const cur = await sb.from('gallery_photos').select('reviewed').eq('id', r.id).maybeSingle()
         if (!cur.data || cur.data.reviewed) { setSceneBusy({ done: i + 1, total: targets.length }); continue }
-        const fix = camiFix(shoot.readings[r.id], shoot.bases[sid] ?? null, shoot.bias)
+        const fix = camiFix(shoot.readings[r.id], shoot.bases[sid] ?? null, shoot.bias, lookId)
         if (Object.keys(fix.adjust).length > 0) {
           const before = shoot.studyAdj[r.id] ?? {}
           const mine = cleanAdj(addAdj(before, fix.adjust))
