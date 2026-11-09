@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabaseAffiliate as defaultClient } from '@/lib/supabaseAffiliate'
 import HubFeed from './HubFeed'
-import HubAnnouncements from './HubAnnouncements'
 import HubBoard from './HubBoard'
 import HubTop from './HubTop'
 
@@ -31,7 +30,6 @@ export default function HubHome({ client }: { client?: SupabaseClient | null }) 
 
   return (
     <div className="space-y-10">
-      <HubAnnouncements client={supabase} uid={uid} admin={admin} />
       <HubTop client={supabase} />
       <section>
         <div className="mx-auto max-w-3xl">
