@@ -138,19 +138,55 @@ export default function AffiliateSignupPage() {
     <div className="min-h-screen bg-paper">
       {header}
       <main>
-        <section className="px-6 pb-16 pt-6 text-center" style={{ backgroundColor: ROSE }}>
-          <div className="mx-auto max-w-3xl pt-10">
+        <section className="px-6 pb-20 pt-6 text-center" style={{ backgroundColor: ROSE }}>
+          <div className="mx-auto max-w-3xl pt-10 text-white">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">{kicker}</p>
-            <h1 className="mt-4 font-fraunces text-5xl font-semibold leading-[1.05] text-white sm:text-6xl">
-              Be one of the 15 who build Camrhia.
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-white/90">
-              Camrhia is the all-in-one studio app for photographers. We are signing 15 founding affiliates to put it in front of 5% of the market. You get Camrhia free for life and 30% of every subscription, every month, for as long as they stay. No cap.
-            </p>
-            <a href="#apply" className="mt-8 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>
-              {full ? 'Join the waitlist' : 'Claim a founding seat'}
-            </a>
-            <p className="mt-5 inline-block rounded-full bg-white/15 px-5 py-2 text-sm font-semibold text-white">{pill}</p>
+
+            <div className="mt-10 space-y-5 font-fraunces text-3xl leading-tight sm:text-4xl">
+              <p className="text-5xl font-semibold sm:text-7xl">This is it.</p>
+              <p>You wanted a chance to be part of something big.</p>
+              <p className="font-semibold">Here it is.</p>
+            </div>
+
+            <div className="mx-auto mt-12 max-w-2xl space-y-4 text-xl leading-snug text-white/95 sm:text-2xl">
+              <p>Photographers join Camrhia and stay for years.</p>
+              <p>You tell them about it. They join. They pay every month.</p>
+              <p className="font-semibold text-white">You get paid every month.</p>
+            </div>
+
+            <div className="mx-auto mt-10 max-w-2xl space-y-3 text-xl text-white/95 sm:text-2xl">
+              <p>Sign one. Get paid every month.</p>
+              <p>Sign ten. Get paid ten times. Every month.</p>
+            </div>
+
+            <div className="mx-auto mt-14 max-w-2xl">
+              <p className="font-fraunces text-3xl font-semibold sm:text-4xl">Here is the plan.</p>
+              <p className="mt-4 text-xl text-white/95 sm:text-2xl">Camrhia&apos;s goal: <span className="font-semibold text-white">7,500 photographers by the end of 2027.</span></p>
+              <p className="mt-3 text-xl text-white/95 sm:text-2xl">Post by post, the founding 15 will drive them here.</p>
+            </div>
+
+            <div className="mt-12">
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/80">Your share</p>
+              <p className="mt-2 font-fraunces text-6xl font-semibold leading-none sm:text-8xl">$7,600</p>
+              <p className="mt-2 font-fraunces text-4xl font-semibold sm:text-6xl">A MONTH</p>
+              <p className="mt-3 text-xl font-semibold sm:text-2xl">Every single month.</p>
+              <p className="mt-4 text-sm text-white/80">That is the goal. It is not a promise.</p>
+            </div>
+
+            <div className="mt-14">
+              <p className="text-xl text-white/95 sm:text-2xl">{full ? 'The Founding 15 is filled.' : counting ? `Only ${left} seats left.` : 'Only 15 people get in first.'}</p>
+              <h1 className="mt-3 font-fraunces text-5xl font-semibold leading-[1.05] sm:text-7xl">Be one of the 15.</h1>
+              <div className="mx-auto mt-6 max-w-xl space-y-1 text-lg text-white/90">
+                <p className="font-semibold text-white">This is a full buy in.</p>
+                <p>Trust in Camrhia. Help improve Camrhia. Grow with Camrhia.</p>
+                <p>In 2028, the goals get bigger.</p>
+              </div>
+              <a href="#apply" className="mt-8 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>
+                {full ? 'Join the waitlist' : 'Claim a founding seat'}
+              </a>
+              <p className="mt-5 inline-block rounded-full bg-white/15 px-5 py-2 text-sm font-semibold text-white">{pill}</p>
+              <p className="mt-4 text-xs text-white/70">Results vary. Income is not guaranteed.</p>
+            </div>
           </div>
         </section>
 
@@ -171,16 +207,16 @@ export default function AffiliateSignupPage() {
           <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-line p-8 sm:p-12" style={{ background: 'linear-gradient(135deg, #FBF3EE 0%, #F3DDDD 100%)' }}>
             <p className="text-center text-xs font-semibold uppercase tracking-[0.25em]" style={{ color: ROSE }}>The mission</p>
             <h2 className="mt-3 text-center font-fraunces text-4xl font-semibold leading-tight text-ink sm:text-5xl">
-              5% of the market. <span style={{ color: ROSE }}>15 people.</span>
+              7,500 photographers. <span style={{ color: ROSE }}>15 people.</span>
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-soft">
-              Every company you know started with a small group who believed first. This is ours. The goal: put Camrhia in front of 5% of working photographers, together.
+              Every company you know started with a small group who believed first. This is ours.
             </p>
             <div className="mx-auto mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
               {[
-                { n: '5%', l: 'of working US photographers' },
-                { n: '~480', l: 'photographers each for the Founding 15' },
-                { n: '~$7,400', l: 'a month each, recurring, if we hit it' },
+                { n: '7,500', l: 'photographers by the end of 2027' },
+                { n: '15', l: 'founding seats' },
+                { n: '$7,600', l: 'a month, every month' },
               ].map((x) => (
                 <div key={x.l} className="rounded-2xl bg-white/70 p-5 text-center">
                   <p className="font-fraunces text-3xl font-semibold" style={{ color: ROSE }}>{x.n}</p>
@@ -188,7 +224,7 @@ export default function AffiliateSignupPage() {
                 </div>
               ))}
             </div>
-            <p className="mx-auto mt-4 max-w-xl text-center text-xs text-ink-soft">Goal math: 5% of about 145,000 US photographers (BLS), shared by 15, at 30% of a Solo subscription after the Apple fee. Some of you will do better.</p>
+            <p className="mx-auto mt-4 max-w-xl text-center text-xs text-ink-soft">Goal math: 7,500 photographers shared by 15 is 500 each, at 30% of a Solo subscription after the Apple fee. Some of you will do better.</p>
             <p className="mx-auto mt-10 max-w-xl text-center text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: ROSE }}>What founders get</p>
             <ol className="relative mx-auto mt-6 max-w-xl space-y-8">
               <span aria-hidden="true" className="absolute bottom-3 left-5 top-3 w-px" style={{ backgroundColor: ROSE, opacity: 0.35 }} />
