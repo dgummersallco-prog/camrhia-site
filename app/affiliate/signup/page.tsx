@@ -140,7 +140,7 @@ export default function AffiliateSignupPage() {
       <main>
         <section className="px-6 pb-20 pt-6 text-center" style={{ backgroundColor: ROSE }}>
           <div className="mx-auto max-w-3xl pt-10 text-white">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">{kicker}</p>
+            {full && <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">{kicker}</p>}
 
             <div className="mt-10 space-y-5 font-fraunces text-3xl leading-tight sm:text-4xl">
               <p className="text-5xl font-semibold sm:text-7xl">This is it.</p>
@@ -204,28 +204,8 @@ export default function AffiliateSignupPage() {
         </section>
 
         <section className="px-6 pb-16">
-          <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-line p-8 sm:p-12" style={{ background: 'linear-gradient(135deg, #FBF3EE 0%, #F3DDDD 100%)' }}>
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.25em]" style={{ color: ROSE }}>The mission</p>
-            <h2 className="mt-3 text-center font-fraunces text-4xl font-semibold leading-tight text-ink sm:text-5xl">
-              7,500 photographers. <span style={{ color: ROSE }}>15 people.</span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-soft">
-              Every company you know started with a small group who believed first. This is ours.
-            </p>
-            <div className="mx-auto mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-              {[
-                { n: '7,500', l: 'photographers by the end of 2027' },
-                { n: '15', l: 'founding seats' },
-                { n: '$7,600', l: 'a month, every month' },
-              ].map((x) => (
-                <div key={x.l} className="rounded-2xl bg-white/70 p-5 text-center">
-                  <p className="font-fraunces text-3xl font-semibold" style={{ color: ROSE }}>{x.n}</p>
-                  <p className="mt-1 text-xs text-ink-soft">{x.l}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mx-auto mt-4 max-w-xl text-center text-xs text-ink-soft">Goal math: 7,500 photographers shared by 15 is 500 each, at 30% of a Solo subscription after the Apple fee. Some of you will do better.</p>
-            <p className="mx-auto mt-10 max-w-xl text-center text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: ROSE }}>What founders get</p>
+          <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-line p-8 sm:p-12" style={{ background: 'linear-gradient(160deg, #2B2B2B 0%, #1C1C1C 100%)' }}>
+            <p className="mx-auto max-w-xl text-center text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: '#E8A5AE' }}>What founders get</p>
             <ol className="relative mx-auto mt-6 max-w-xl space-y-8">
               <span aria-hidden="true" className="absolute bottom-3 left-5 top-3 w-px" style={{ backgroundColor: ROSE, opacity: 0.35 }} />
               {[
@@ -237,13 +217,13 @@ export default function AffiliateSignupPage() {
                 <li key={x.t} className="relative flex gap-5">
                   <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-fraunces text-lg font-semibold text-white" style={{ backgroundColor: ROSE }}>{i + 1}</span>
                   <div>
-                    <p className="text-lg font-semibold text-ink">{x.t}</p>
-                    <p className="mt-1 text-sm text-ink-soft">{x.d}</p>
+                    <p className="text-lg font-semibold text-white">{x.t}</p>
+                    <p className="mt-1 text-sm text-white/70">{x.d}</p>
                   </div>
                 </li>
               ))}
             </ol>
-            <p className="mx-auto mt-8 max-w-xl text-center text-xs text-ink-soft">These numbers are a goal, not a promise. Results depend on your audience and your effort. No income is guaranteed.</p>
+            <p className="mx-auto mt-8 max-w-xl text-center text-xs text-white/55">These numbers are a goal, not a promise. Results depend on your audience and your effort. No income is guaranteed.</p>
           </div>
         </section>
 
