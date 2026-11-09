@@ -110,17 +110,17 @@ export default function AffiliateSignupPage() {
       <main>
         <section className="px-6 pb-16 pt-6 text-center" style={{ backgroundColor: ROSE }}>
           <div className="mx-auto max-w-3xl pt-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Limited founding spots. Apply before they are gone.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Only 15 founding affiliate seats. Then the offer closes.</p>
             <h1 className="mt-4 font-fraunces text-5xl font-semibold leading-[1.05] text-white sm:text-6xl">
-              Make a post. Sign a photographer. Get paid 30%.
+              Be one of the 15 who build Camrhia.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-white/90">
-              Every photographer you sign pays you 30% every single month, for as long as they stay. No cap. Sign 10, sign 100, sign 1,000. It all stacks.
+              Camrhia is the all-in-one studio app for photographers. We are signing 15 founding affiliates to put it in front of 5% of the market. You get Camrhia free for life and 30% of every subscription, every month, for as long as they stay. No cap.
             </p>
             <a href="#apply" className="mt-8 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>
-              Apply now
+              Claim a founding seat
             </a>
-            <p className="mt-5 inline-block rounded-full bg-white/15 px-5 py-2 text-sm font-semibold text-white">Free to join. Approved affiliates get Camrhia free for life, our gift to you.</p>
+            <p className="mt-5 inline-block rounded-full bg-white/15 px-5 py-2 text-sm font-semibold text-white">15 seats. Free Camrhia for life. 30% every month. Closing when they are gone.</p>
           </div>
         </section>
 
@@ -139,16 +139,31 @@ export default function AffiliateSignupPage() {
 
         <section className="px-6 pb-16">
           <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-line p-8 sm:p-12" style={{ background: 'linear-gradient(135deg, #FBF3EE 0%, #F3DDDD 100%)' }}>
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.25em]" style={{ color: ROSE }}>A Camrhia program</p>
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.25em]" style={{ color: ROSE }}>The mission</p>
             <h2 className="mt-3 text-center font-fraunces text-4xl font-semibold leading-tight text-ink sm:text-5xl">
-              The Road to <span style={{ color: ROSE }}>$5K</span> a Month
+              5% of the market. <span style={{ color: ROSE }}>15 people.</span>
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-center text-lg text-ink-soft">
-              You are not doing this alone. Join the Camrhia team and we help you get there, step by step.
+              Every company you know started with a small group who believed first. This is ours. The goal: put Camrhia in front of 5% of working photographers, together.
             </p>
-            <ol className="relative mx-auto mt-10 max-w-xl space-y-8">
+            <div className="mx-auto mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
+              {[
+                { n: '5%', l: 'of working US photographers' },
+                { n: '~480', l: 'photographers each for the Founding 15' },
+                { n: '~$7,400', l: 'a month each, recurring, if we hit it' },
+              ].map((x) => (
+                <div key={x.l} className="rounded-2xl bg-white/70 p-5 text-center">
+                  <p className="font-fraunces text-3xl font-semibold" style={{ color: ROSE }}>{x.n}</p>
+                  <p className="mt-1 text-xs text-ink-soft">{x.l}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mx-auto mt-4 max-w-xl text-center text-xs text-ink-soft">Goal math: 5% of about 145,000 US photographers (BLS), shared by 15, at 30% of a Solo subscription after the Apple fee. Some of you will do better.</p>
+            <p className="mx-auto mt-10 max-w-xl text-center text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: ROSE }}>What founders get</p>
+            <ol className="relative mx-auto mt-6 max-w-xl space-y-8">
               <span aria-hidden="true" className="absolute bottom-3 left-5 top-3 w-px" style={{ backgroundColor: ROSE, opacity: 0.35 }} />
               {[
+                { t: 'Free Camrhia for life', d: 'Your own account, our gift to the people who build this with us.' },
                 { t: 'A welcome call', d: 'We call you, get you set up, and map out your first month together.' },
                 { t: 'Your content kit', d: 'Scripts, captions and post ideas you can use today.' },
                 { t: 'Grow as a team', d: 'Share what is working, learn from the others, and keep climbing together.' },
@@ -162,7 +177,15 @@ export default function AffiliateSignupPage() {
                 </li>
               ))}
             </ol>
-            <p className="mx-auto mt-8 max-w-xl text-center text-xs text-ink-soft">Results depend on your audience and your effort. No income is guaranteed.</p>
+            <p className="mx-auto mt-8 max-w-xl text-center text-xs text-ink-soft">These numbers are a goal, not a promise. Results depend on your audience and your effort. No income is guaranteed.</p>
+          </div>
+        </section>
+
+        <section className="px-6 pb-16">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="font-fraunces text-3xl font-semibold text-ink sm:text-4xl">We are looking for people who move.</h2>
+            <p className="mt-4 text-lg text-ink-soft">Creators who post every week. Marketers who run ads. People who push, test and do not wait to be told. If you outwork the room, this is your seat.</p>
+            <p className="mt-3 text-sm text-ink-soft">Not for tire kickers. There are only 15 seats.</p>
           </div>
         </section>
 
@@ -201,12 +224,12 @@ export default function AffiliateSignupPage() {
 
         <section className="px-6 pb-12">
           <div className="mx-auto max-w-3xl rounded-3xl p-8 text-center text-white sm:p-10" style={{ backgroundColor: ROSE }}>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Founding affiliate offer</p>
-            <h2 className="mt-3 font-fraunces text-3xl font-semibold leading-tight sm:text-4xl">Every month you wait is commission you never get back.</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">The Founding 15</p>
+            <h2 className="mt-3 font-fraunces text-3xl font-semibold leading-tight sm:text-4xl">15 seats. When they are gone, they are gone.</h2>
             <p className="mx-auto mt-4 max-w-xl text-white/90">
-              Founding spots are limited, and we are capping the program. Founding affiliates lock in 30% every single month and a free Camrhia account for life. When the spots are gone, they are gone.
+              We are capping the founding offer at 15 affiliates. Founders lock in 30% every single month and a free Camrhia account for life. Once the 15 seats are filled, the founding offer closes.
             </p>
-            <a href="#apply" className="mt-6 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>Lock in my 30%</a>
+            <a href="#apply" className="mt-6 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>Claim my founding seat</a>
           </div>
         </section>
 
@@ -245,7 +268,7 @@ export default function AffiliateSignupPage() {
               {error && <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
               <button type="submit" disabled={loading} className="mt-2 w-full rounded-full py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: ROSE }}>
-                {loading ? 'Sending…' : 'Lock in my 30%'}
+                {loading ? 'Sending…' : 'Claim my founding seat'}
               </button>
             </form>
           </div>
