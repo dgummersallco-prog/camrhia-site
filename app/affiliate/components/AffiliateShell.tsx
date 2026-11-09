@@ -44,8 +44,13 @@ export default function AffiliateShell({
         .select('id, name, referral_code, team_code, is_master, commission_rate, override_rate, parent_affiliate_id, approved')
         .eq('id', session.user.id)
         .maybeSingle()
+      let row = data as ShellAffiliate | null
+      if (!row) {
+        const { data: adm } = await client.rpc('hub_is_admin')
+        if (adm === true) row = { id: session.user.id, name: 'Camrhia', referral_code: '', team_code: null, is_master: false, commission_rate: null, override_rate: null, parent_affiliate_id: null, approved: true }
+      }
       if (!cancelled) {
-        setAffiliate((data as ShellAffiliate | null) ?? null)
+        setAffiliate(row)
         setLoading(false)
       }
     })()
