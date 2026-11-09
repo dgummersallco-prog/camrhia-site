@@ -10,6 +10,7 @@ const TABS = [
   { href: '/admin/ads', label: 'Ads' }, { href: '/admin/pages', label: 'Funnels' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/affiliates', label: 'Affiliates' },
+  { href: '/admin/payouts', label: 'Payouts' },
   { href: '/admin/masters', label: 'Masters' },
   { href: '/admin/hub', label: 'Hub' },
 ]
