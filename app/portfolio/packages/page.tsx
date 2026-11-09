@@ -4,7 +4,7 @@ import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, rectSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
@@ -50,21 +50,42 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   )
 }
 
-function Row({ pkg, typeLabel, onEdit, onDelete, onToggle }: { pkg: Pkg; typeLabel: string; onEdit: () => void; onDelete: () => void; onToggle: (v: boolean) => void }) {
+function Row({ pkg, onEdit, onDelete, onToggle }: { pkg: Pkg; onEdit: () => void; onDelete: () => void; onToggle: (v: boolean) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: pkg.id })
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    background: 'linear-gradient(160deg, #FFFCF9 0%, #F8EAE4 100%)',
+  }
+  const lines = (pkg.detail ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
   return (
-    <li ref={setNodeRef} style={style} className="flex items-center gap-3 rounded-2xl border border-line bg-card px-4 py-3">
-      <button type="button" {...attributes} {...listeners} aria-label="Drag to reorder" className="cursor-grab touch-none px-1 text-lg leading-none text-ink-soft">⋮⋮</button>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-ink">{pkg.name}</p>
-        <p className="truncate text-xs text-ink-soft">
-          {[pkg.price, pkg.covers, typeLabel].filter(Boolean).join(' · ')}
-        </p>
+    <li ref={setNodeRef} style={style} className="flex flex-col rounded-2xl border border-line p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <button type="button" {...attributes} {...listeners} aria-label="Drag to reorder" className="cursor-grab touch-none text-lg leading-none text-ink-soft">⋮⋮</button>
+        <div className="flex items-center gap-2">
+          <span className={'text-[11px] font-medium uppercase tracking-[0.12em] ' + (pkg.show_public ? 'text-twilight' : 'text-ink-soft')}>{pkg.show_public ? 'On your site' : 'Hidden'}</span>
+          <Switch on={pkg.show_public} onChange={onToggle} label="Show on my website" />
+        </div>
       </div>
-      <Switch on={pkg.show_public} onChange={onToggle} label="Show on my website" />
-      <button type="button" onClick={onEdit} className="text-sm text-twilight hover:underline">Edit</button>
-      <button type="button" onClick={onDelete} className="text-sm text-ink-soft hover:text-red-600">Delete</button>
+      <p className="mt-4 font-fraunces text-xl font-semibold leading-tight text-ink">{pkg.name}</p>
+      {pkg.price && <p className="mt-1 font-fraunces text-3xl font-semibold text-twilight">{pkg.price}</p>}
+      {pkg.covers && <p className="mt-1 text-xs uppercase tracking-[0.12em] text-ink-soft">{pkg.covers}</p>}
+      {lines.length > 0 && (
+        <ul className="mt-4 space-y-1.5 text-sm text-ink">
+          {lines.slice(0, 4).map((l, i) => (
+            <li key={i} className="flex gap-2"><span className="text-twilight">✦</span><span className="min-w-0 break-words">{l}</span></li>
+          ))}
+          {lines.length > 4 && <li className="text-xs text-ink-soft">+ {lines.length - 4} more</li>}
+        </ul>
+      )}
+      <div className="mt-auto flex items-center justify-between gap-3 pt-5">
+        <span className="text-xs text-ink-soft">{pkg.delivery_days ? `Gallery in ${pkg.delivery_days} days` : ''}</span>
+        <span className="flex gap-4">
+          <button type="button" onClick={onEdit} className="text-sm text-twilight hover:underline">Edit</button>
+          <button type="button" onClick={onDelete} className="text-sm text-ink-soft hover:text-red-600">Delete</button>
+        </span>
+      </div>
     </li>
   )
 }
@@ -208,7 +229,7 @@ export default function PackagesEditor() {
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="packages" />
       <SubTabs group="packages" active="packages" />
-      <main className="mx-auto max-w-3xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Work</p>
@@ -221,7 +242,7 @@ export default function PackagesEditor() {
         {msg && <p className="mb-4 rounded-xl bg-blush-wash px-4 py-2 text-sm text-twilight">{msg}</p>}
 
         {draft && (
-          <section className={`${card} mb-6 space-y-4`}>
+          <section className={`${card} mb-6 max-w-3xl space-y-4`}>
             <p className="font-fraunces text-xl font-semibold text-ink">{draft.id ? 'Edit package' : 'New package'}</p>
             <div>
               <label className={lab}>Package name</label>
@@ -274,17 +295,17 @@ export default function PackagesEditor() {
             {groups.map((g) => (
               <section key={g.key}>
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2 className="font-fraunces text-xl font-semibold text-ink">{typeLabel(g.key)} <span className="text-sm font-normal text-ink-soft">· {g.items.length}</span></h2>
+                  <h2 className="font-fraunces text-2xl font-semibold text-ink">{typeLabel(g.key)} <span className="ml-1 rounded-full bg-blush-wash px-2.5 py-0.5 align-middle text-xs font-medium text-twilight">{g.items.length}</span></h2>
                   <button type="button" className="text-sm text-twilight hover:underline" onClick={() => startNew(g.key)}>+ Add package</button>
                 </div>
                 {g.items.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-line px-4 py-3 text-sm text-ink-soft">No packages yet.</p>
                 ) : (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEndGroup(g.items, e)}>
-                    <SortableContext items={g.items.map((x) => x.id)} strategy={verticalListSortingStrategy}>
-                      <ul className="space-y-2">
+                    <SortableContext items={g.items.map((x) => x.id)} strategy={rectSortingStrategy}>
+                      <ul className="grid gap-4 sm:grid-cols-2">
                         {g.items.map((p) => (
-                          <Row key={p.id} pkg={p} typeLabel="" onEdit={() => startEdit(p)} onDelete={() => remove(p)} onToggle={(v) => toggle(p, v)} />
+                          <Row key={p.id} pkg={p} onEdit={() => startEdit(p)} onDelete={() => remove(p)} onToggle={(v) => toggle(p, v)} />
                         ))}
                       </ul>
                     </SortableContext>
