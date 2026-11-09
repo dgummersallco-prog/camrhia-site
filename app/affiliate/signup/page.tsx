@@ -153,12 +153,14 @@ export default function AffiliateSignupPage() {
             </div>
         </section>
 
-        <section className="px-6 py-16 text-center text-white" style={{ background: 'linear-gradient(160deg, #2B2B2B 0%, #1C1C1C 100%)' }}>
-          <div className="mx-auto max-w-2xl">
-              <p className="font-fraunces text-3xl font-semibold sm:text-4xl">Here is the plan.</p>
-              <p className="mt-4 text-xl text-white/95 sm:text-2xl">Camrhia&apos;s goal: <span className="font-semibold text-white">7,500 photographers by the end of 2027.</span></p>
-              <p className="mt-3 text-xl text-white/95 sm:text-2xl">Post by post, the founding 15 will drive them here.</p>
-            </div>
+        <section className="px-6 py-24 text-center text-white sm:py-32" style={{ background: 'linear-gradient(160deg, #2B2B2B 0%, #1C1C1C 100%)' }}>
+          <div className="mx-auto max-w-3xl">
+            <div className="mx-auto mb-8 h-px w-20" style={{ backgroundColor: '#E8A5AE' }} />
+            <p className="font-fraunces text-6xl font-semibold leading-none tracking-tight sm:text-8xl">Here is the plan.</p>
+            <p className="mt-10 text-xl text-white/80 sm:text-2xl">Camrhia&apos;s goal:</p>
+            <p className="mt-2 font-fraunces text-4xl font-semibold leading-tight sm:text-6xl" style={{ color: '#F3C7CC' }}>7,500 photographers by the end of 2027.</p>
+            <p className="mt-8 text-xl text-white/90 sm:text-2xl">Post by post, the founding 15 will drive them here.</p>
+          </div>
         </section>
 
         <section className="px-6 pb-20 pt-6 text-center" style={{ backgroundColor: ROSE }}>
@@ -191,7 +193,7 @@ export default function AffiliateSignupPage() {
 
         
 
-        <section className="px-6 pb-16">
+        <section className="px-6 pb-16 pt-20">
           <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-line p-8 sm:p-12" style={{ background: 'linear-gradient(160deg, #2B2B2B 0%, #1C1C1C 100%)' }}>
             <p className="mx-auto max-w-xl text-center text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: '#E8A5AE' }}>What founders get</p>
             <ol className="relative mx-auto mt-6 max-w-xl space-y-8">
@@ -219,7 +221,7 @@ export default function AffiliateSignupPage() {
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="font-fraunces text-3xl font-semibold text-ink sm:text-4xl">We are looking for people who move.</h2>
             <p className="mt-4 text-lg text-ink-soft">Creators who post every week. Marketers who run ads. People who push, test and do not wait to be told. If you outwork the room, this is your seat.</p>
-            <p className="mt-3 text-sm text-ink-soft">Not for tire kickers. There are only 15 seats.</p>
+            
           </div>
         </section>
 
