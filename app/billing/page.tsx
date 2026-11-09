@@ -116,7 +116,7 @@ export default function BillingPage() {
   function PlanCard({ plan }: { plan: PlanTier }) {
     const isStudio = plan === 'studio'
     const features = isStudio ? STUDIO_FEATURES : SOLO_FEATURES
-    const monthlyPrice = isStudio ? '$149' : '$59'
+    const monthlyPrice = isStudio ? '$149' : '$59.99'
     const annualPrice = isStudio ? '$999.99' : '$590'
     const isCurrentPlan = subscriptionActive && planTier === plan
     const isDowngradeTarget = subscriptionActive && planTier === 'studio' && plan === 'solo'
