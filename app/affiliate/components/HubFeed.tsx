@@ -43,35 +43,42 @@ function embedFor(url: string | null): { src: string; kind: 'tall' | 'wide'; h?:
 
 const toNum = (v: string) => { const n = parseInt(v.replace(/[^0-9]/g, ''), 10); return Number.isFinite(n) ? n : null }
 
+const PLATFORM_DOT: Record<string, string> = { Instagram: '#E1306C', TikTok: '#25F4EE', YouTube: '#FF0000' }
+
 function PostEmbed({ url, platform }: { url: string | null; platform: string | null }) {
   const [on, setOn] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const em = embedFor(url)
   if (!em) return null
-  if (!on) {
-    return (
-      <button type="button" onClick={() => setOn(true)} className="group mt-3 flex w-full items-center gap-4 rounded-2xl border border-line bg-paper-deep p-4 text-left transition hover:border-[#3A4A6B]">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#3A4A6B] text-white shadow-md transition group-hover:scale-105">&#9654;</span>
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold text-ink">Watch the post</span>
-          <span className="block truncate text-xs text-ink-soft">{platform ?? 'Open the post'}</span>
-        </span>
-      </button>
-    )
-  }
+  const tall = em.kind === 'tall'
   return (
-    <div className={em.kind === 'tall' ? 'relative mx-auto mt-3 w-full max-w-[420px]' : 'relative mt-3'}>
-      {!loaded && <div className="absolute inset-0 animate-pulse rounded-xl bg-paper-deep" />}
-      <iframe
-        src={em.src}
-        title="Post"
-        loading="lazy"
-        onLoad={() => setLoaded(true)}
-        allow="encrypted-media; picture-in-picture; fullscreen"
-        allowFullScreen
-        className={`w-full rounded-xl border border-line bg-white transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${em.kind === 'wide' ? 'aspect-video' : ''}`}
-        style={em.h ? { height: em.h } : undefined}
-      />
+    <div className="mt-4 overflow-hidden rounded-2xl p-3" style={{ background: 'linear-gradient(160deg,#1E2740 0%,#0F1422 100%)' }}>
+      {!on ? (
+        <button
+          type="button"
+          onClick={() => setOn(true)}
+          className={`group relative mx-auto flex w-full max-w-[340px] flex-col items-center justify-center gap-3 rounded-xl ${tall ? 'aspect-[4/5]' : 'aspect-video'}`}
+          style={{ background: 'radial-gradient(circle at 50% 35%, rgba(255,255,255,0.14), rgba(255,255,255,0.03) 70%)' }}
+        >
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-xl shadow-xl transition group-hover:scale-110" style={{ color: ROSE }}>&#9654;</span>
+          <span className="text-sm font-semibold text-white">Watch the post</span>
+          <span className="text-xs text-white/60">{platform ?? 'Tap to load'}</span>
+        </button>
+      ) : (
+        <div className={tall ? 'relative mx-auto w-full max-w-[380px]' : 'relative'}>
+          {!loaded && <div className="absolute inset-0 animate-pulse rounded-xl bg-white/10" />}
+          <iframe
+            src={em.src}
+            title="Post"
+            loading="lazy"
+            onLoad={() => setLoaded(true)}
+            allow="encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            className={`w-full rounded-xl bg-white transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${em.kind === 'wide' ? 'aspect-video' : ''}`}
+            style={em.h ? { height: em.h } : undefined}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -96,6 +103,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   const [sort, setSort] = useState<'new' | 'signed'>('new')
   const [editing, setEditing] = useState<Record<string, Nums | undefined>>({})
   const [avatars, setAvatars] = useState<Record<string, string>>({})
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -304,7 +312,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         </div>
       )}
 
-      <div className="columns-1 gap-5 md:columns-2 xl:columns-3">
+      <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
       {shown.map((p) => {
         const pl = likes.filter((l) => l.post_id === p.id)
         const liked = !!uid && pl.some((l) => l.user_id === uid)
@@ -312,53 +320,75 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         const mine = p.author_id === uid
         const ed = editing[p.id]
         const hasNums = p.views != null || p.ig_likes != null || p.shares != null || p.saves != null || p.signed != null
+        const long = p.body.length > 220
+        const isOpen = !!expanded[p.id]
         return (
-          <article key={p.id} className="mb-5 break-inside-avoid rounded-3xl border border-line bg-card p-5 shadow-[0_1px_2px_rgba(30,40,70,0.04),0_14px_34px_-18px_rgba(30,40,70,0.22)]" style={{ borderColor: p.pinned ? ROSE : undefined }}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <Avatar url={avatars[p.author_id]} name={p.author_name} />
-                <div>
-                <p className="text-sm font-semibold text-ink">
-                  {p.author_name}
-                  {p.platform && <span className="ml-2 rounded-full bg-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">{p.platform}</span>}
-                  {p.pinned && <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white" style={{ backgroundColor: ROSE }}>Pinned</span>}
-                </p>
-                <p className="text-xs text-ink-soft">{ago(p.created_at)}</p>
+          <article key={p.id} className={`overflow-hidden rounded-3xl bg-white p-6 shadow-[0_1px_2px_rgba(30,40,70,0.05),0_20px_44px_-24px_rgba(30,40,70,0.28)] ${p.pinned ? 'ring-2 ring-[#3A4A6B]' : 'border border-line'}`}>
+            {p.pinned && <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: ROSE }}>Pinned</p>}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar url={avatars[p.author_id]} name={p.author_name} size={44} />
+                <div className="min-w-0">
+                  <p className="truncate text-[15px] font-semibold text-ink">{p.author_name}</p>
+                  <p className="flex items-center gap-1.5 text-xs text-ink-soft">
+                    {p.platform && (
+                      <>
+                        <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: PLATFORM_DOT[p.platform] ?? ROSE }} />
+                        {p.platform}
+                        <span aria-hidden>&middot;</span>
+                      </>
+                    )}
+                    {ago(p.created_at)}
+                  </p>
                 </div>
               </div>
-              <div className="flex gap-3 text-xs text-ink-soft">
+              <div className="flex shrink-0 gap-3 text-xs text-ink-soft">
                 {admin && <button onClick={() => togglePin(p)} className="hover:text-ink">{p.pinned ? 'Unpin' : 'Pin'}</button>}
                 {(admin || mine) && <button onClick={() => removePost(p)} className="hover:text-red-700">Delete</button>}
               </div>
             </div>
-            <p className="mt-3 whitespace-pre-wrap text-sm text-ink">{p.body}</p>
+
+            <p className={`mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-ink ${long && !isOpen ? 'line-clamp-4' : ''}`}>{p.body}</p>
+            {long && (
+              <button onClick={() => setExpanded((x) => ({ ...x, [p.id]: !x[p.id] }))} className="mt-1 text-xs font-semibold" style={{ color: ROSE }}>
+                {isOpen ? 'Show less' : 'Read more'}
+              </button>
+            )}
             {p.image_url && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.image_url} alt="Post" className="mt-3 max-h-[28rem] w-full rounded-xl border border-line object-contain bg-white" />
+              <img src={p.image_url} alt="Post" className="mt-4 max-h-[28rem] w-full rounded-2xl border border-line object-contain bg-white" />
             )}
             <PostEmbed url={p.link_url} platform={p.platform} />
             {p.link_url && (
-              <a href={p.link_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-1.5 text-xs font-semibold transition hover:border-[#3A4A6B]" style={{ color: ROSE }}>Open post &#8599;</a>
+              <a href={p.link_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold hover:underline" style={{ color: ROSE }}>
+                Open on {p.platform ?? 'the original'} &#8599;
+              </a>
             )}
 
             {(hasNums || mine) && !ed && (
-              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-paper-deep p-3">
-                <div className="rounded-lg px-4 py-2 text-center text-white" style={{ backgroundColor: ROSE }}>
-                  <p className="font-fraunces text-2xl font-semibold leading-none">{fmt(p.signed)}</p>
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-white/85">Signed</p>
-                </div>
-                {([['Views', p.views], ['Likes', p.ig_likes], ['Shares', p.shares], ['Saves', p.saves]] as const).map(([label, v]) => (
-                  <div key={label} className="px-2 text-center">
-                    <p className="text-base font-semibold text-ink">{fmt(v)}</p>
-                    <p className="text-[10px] uppercase tracking-wider text-ink-soft">{label}</p>
+              <div className="mt-5 overflow-hidden rounded-2xl border border-line">
+                <div className="grid grid-cols-5 divide-x divide-line">
+                  <div className="px-1 py-3 text-center text-white" style={{ backgroundColor: ROSE }}>
+                    <p className="font-fraunces text-xl font-semibold leading-none">{fmt(p.signed)}</p>
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-white/85">Signed</p>
                   </div>
-                ))}
-                {mine && <button onClick={() => startEdit(p)} className="ml-auto text-xs font-semibold" style={{ color: ROSE }}>{hasNums ? 'Update numbers' : 'Add your numbers'}</button>}
+                  {([['Views', p.views], ['Likes', p.ig_likes], ['Shares', p.shares], ['Saves', p.saves]] as const).map(([label, v]) => (
+                    <div key={label} className="px-1 py-3 text-center">
+                      <p className="text-base font-semibold leading-none text-ink">{fmt(v)}</p>
+                      <p className="mt-1 text-[9px] uppercase tracking-wider text-ink-soft">{label}</p>
+                    </div>
+                  ))}
+                </div>
+                {mine && (
+                  <button onClick={() => startEdit(p)} className="w-full border-t border-line bg-paper-deep px-4 py-2 text-xs font-semibold" style={{ color: ROSE }}>
+                    {hasNums ? 'Update numbers' : 'Add your numbers'}
+                  </button>
+                )}
               </div>
             )}
 
             {ed && (
-              <div className="mt-4 rounded-xl bg-paper-deep p-3">
+              <div className="mt-5 rounded-2xl bg-paper-deep p-3">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                   {([['signed', 'Signed'], ['views', 'Views'], ['ig_likes', 'Likes'], ['shares', 'Shares'], ['saves', 'Saves']] as const).map(([k, label]) => (
                     <label key={k} className="block text-[10px] uppercase tracking-wider text-ink-soft">
@@ -374,11 +404,11 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               </div>
             )}
 
-            <div className="mt-4 flex items-center gap-5 text-sm">
-              <button onClick={() => toggleLike(p)} className={liked ? 'font-semibold' : 'text-ink-soft hover:text-ink'} style={liked ? { color: ROSE } : undefined}>
+            <div className="mt-5 flex items-center gap-3 border-t border-line pt-4 text-sm">
+              <button onClick={() => toggleLike(p)} className={`rounded-full border px-4 py-1.5 transition ${liked ? 'font-semibold' : 'border-line text-ink-soft hover:text-ink'}`} style={liked ? { color: ROSE, borderColor: ROSE } : undefined}>
                 {liked ? '♥' : '♡'} {pl.length}
               </button>
-              <button onClick={() => setOpen((o) => ({ ...o, [p.id]: !o[p.id] }))} className="text-ink-soft hover:text-ink">
+              <button onClick={() => setOpen((o) => ({ ...o, [p.id]: !o[p.id] }))} className="rounded-full border border-line px-4 py-1.5 text-ink-soft transition hover:text-ink">
                 Comments {pc.length}
               </button>
             </div>
