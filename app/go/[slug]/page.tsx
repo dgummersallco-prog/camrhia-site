@@ -96,8 +96,12 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
       <h1 className={`mt-4 font-fraunces font-semibold leading-tight ${big ? 'text-5xl sm:text-6xl' : 'text-4xl sm:text-5xl'}`}>{s('hero_headline') || T.headline}</h1>
       <p className="mt-5 text-lg leading-relaxed text-ink-soft">{s('hero_sub') || T.sub}</p>
       {s('image_url') ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={s('image_url')} alt="" className="mt-8 w-full rounded-2xl" />
+        <div className="mt-8 flex items-start justify-center gap-3">
+          {s('image_url').split(',').map((u) => u.trim()).filter(Boolean).slice(0, 3).map((u, _i, all) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={u} src={u} alt="" className={all.length > 1 ? 'w-1/3 rounded-[1.4rem] shadow-lg ring-1 ring-black/10' : 'w-full rounded-2xl'} />
+          ))}
+        </div>
       ) : null}
       <div className="mt-8"><Button /></div>
     </>

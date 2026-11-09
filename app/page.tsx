@@ -146,14 +146,11 @@ export default function Home() {
           <div>
             <p className="text-base font-medium text-brass">Your camera could be your whole career</p>
             <h1 className="mt-4 font-fraunces text-[3rem] md:text-7xl font-medium text-ink leading-[1.05]">
-              Become the photographer everyone is looking for.
+              Stop paying for five tools.
             </h1>
             <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-xl">
-              Your work deserves more than a hidden Instagram grid and a stack of unanswered
-              messages. Camrhia gives you a website that sells for you, puts you in front of
-              clients searching for a photographer, and runs the entire business from first
-              hello to final photos. This is how photography stops being a side hustle and
-              becomes the life you pictured when you started.
+              Camrhia replaces your website, contracts, payments, client messaging, gallery
+              delivery and photo editing. One app. One price.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-4">
               <AppStoreButton />
