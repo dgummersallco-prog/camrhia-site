@@ -43,6 +43,39 @@ function embedFor(url: string | null): { src: string; kind: 'tall' | 'wide'; h?:
 
 const toNum = (v: string) => { const n = parseInt(v.replace(/[^0-9]/g, ''), 10); return Number.isFinite(n) ? n : null }
 
+function PostEmbed({ url, platform }: { url: string | null; platform: string | null }) {
+  const [on, setOn] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const em = embedFor(url)
+  if (!em) return null
+  if (!on) {
+    return (
+      <button type="button" onClick={() => setOn(true)} className="group mt-3 flex w-full items-center gap-4 rounded-2xl border border-[#D5DCEA] bg-[linear-gradient(135deg,#F4F6FA_0%,#DCE3F0_100%)] p-4 text-left transition hover:border-[#3A4A6B]">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#3A4A6B] text-white shadow-md transition group-hover:scale-105">&#9654;</span>
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-ink">Watch the post</span>
+          <span className="block truncate text-xs text-ink-soft">{platform ?? 'Open the post'}</span>
+        </span>
+      </button>
+    )
+  }
+  return (
+    <div className={em.kind === 'tall' ? 'relative mx-auto mt-3 w-full max-w-[420px]' : 'relative mt-3'}>
+      {!loaded && <div className="absolute inset-0 animate-pulse rounded-xl bg-[#E9EEF7]" />}
+      <iframe
+        src={em.src}
+        title="Post"
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        allow="encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+        className={`w-full rounded-xl border border-line bg-white transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${em.kind === 'wide' ? 'aspect-video' : ''}`}
+        style={em.h ? { height: em.h } : undefined}
+      />
+    </div>
+  )
+}
+
 export default function HubFeed({ client }: { client?: SupabaseClient | null }) {
   const supabase = client ?? defaultClient
   const [uid, setUid] = useState<string | null>(null)
@@ -268,7 +301,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         const ed = editing[p.id]
         const hasNums = p.views != null || p.ig_likes != null || p.shares != null || p.saves != null || p.signed != null
         return (
-          <article key={p.id} className="mb-5 break-inside-avoid rounded-2xl border bg-card p-5" style={{ borderColor: p.pinned ? ROSE : undefined }}>
+          <article key={p.id} className="mb-5 break-inside-avoid rounded-3xl border border-[#D5DCEA] bg-[linear-gradient(160deg,#FCFDFE_0%,#E9EEF7_100%)] p-5 shadow-[0_1px_2px_rgba(30,40,70,0.04),0_14px_34px_-18px_rgba(30,40,70,0.22)]" style={{ borderColor: p.pinned ? ROSE : undefined }}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Avatar url={avatars[p.author_id]} name={p.author_name} />
@@ -291,17 +324,9 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               // eslint-disable-next-line @next/next/no-img-element
               <img src={p.image_url} alt="Post" className="mt-3 max-h-[28rem] w-full rounded-xl border border-line object-contain bg-white" />
             )}
-            {(() => {
-              const em = embedFor(p.link_url)
-              if (!em) return null
-              return (
-                <div className={em.kind === 'tall' ? 'mx-auto mt-3 w-full max-w-[420px]' : 'mt-3'}>
-                  <iframe src={em.src} title="Post" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen className={`w-full rounded-xl border border-line bg-white ${em.kind === 'wide' ? 'aspect-video' : ''}`} style={em.h ? { height: em.h } : undefined} />
-                </div>
-              )
-            })()}
+            <PostEmbed url={p.link_url} platform={p.platform} />
             {p.link_url && (
-              <a href={p.link_url} target="_blank" rel="noopener noreferrer" className="mt-2 block truncate text-sm underline" style={{ color: ROSE }}>{p.link_url}</a>
+              <a href={p.link_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#D5DCEA] bg-white px-4 py-1.5 text-xs font-semibold transition hover:border-[#3A4A6B]" style={{ color: ROSE }}>Open post &#8599;</a>
             )}
 
             {(hasNums || mine) && !ed && (
