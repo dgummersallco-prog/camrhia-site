@@ -12,10 +12,13 @@ const inputCls =
   'w-full rounded-xl border border-line bg-card px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition'
 
 function baseCode(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10) || 'user'
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16) || 'user'
 }
 
 async function uniqueReferralCode(name: string): Promise<string> {
+  if (!supabase) return baseCode(name)
+  const { data: cleanTaken } = await supabase.rpc('referral_code_taken', { p_code: baseCode(name) })
+  if (cleanTaken === false) return baseCode(name)
   for (let i = 0; i < 5; i++) {
     const suffix = Math.floor(100 + Math.random() * 900)
     const code = `${baseCode(name)}${suffix}`
