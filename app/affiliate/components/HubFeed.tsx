@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabaseAffiliate as defaultClient } from '@/lib/supabaseAffiliate'
-import { Avatar, AvatarPicker } from './Avatar'
+import { Avatar } from './Avatar'
 
 type Post = {
   id: string; author_id: string; author_name: string; body: string; link_url: string | null; pinned: boolean; created_at: string
@@ -90,6 +90,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   const [file, setFile] = useState<File | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [composing, setComposing] = useState(false)
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [sort, setSort] = useState<'new' | 'signed'>('new')
@@ -189,6 +190,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
     setLink('')
     setPlatform('')
     setFile(null)
+    setComposing(false)
     load()
   }
 
@@ -253,28 +255,38 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
 
   return (
     <div className="space-y-5">
-      <div className="max-w-2xl rounded-2xl border border-line bg-card p-5">
-        {uid && (
-          <div className="mb-4">
-            <AvatarPicker client={supabase} uid={uid} url={avatars[uid]} name="Me" onDone={(u) => setAvatars((a) => ({ ...a, [uid]: u }))} />
-          </div>
-        )}
-        <div className="mb-3 flex flex-wrap gap-2">
-          {PLATFORMS.map((pl) => (
-            <button key={pl} type="button" onClick={() => setPlatform(platform === pl ? '' : pl)} className={`rounded-full border px-4 py-1.5 text-sm transition ${platform === pl ? 'text-white' : 'border-line text-ink hover:border-[#3A4A6B]'}`} style={platform === pl ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
-              {pl}
-            </button>
-          ))}
-        </div>
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} maxLength={2000} placeholder="The hook or caption you used…" className={field} />
-        <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste the link to your post (Instagram, TikTok or YouTube)" className={`${field} mt-3`} />
-        {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
-        <div className="mt-3 flex justify-end">
-          <button onClick={submitPost} disabled={busy || !body.trim() || !link.trim()} className="rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: ROSE }}>
-            {busy ? 'Posting…' : 'Post to the team'}
-          </button>
-        </div>
+      <div>
+        <button type="button" onClick={() => setComposing(true)} className="rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90" style={{ backgroundColor: ROSE }}>
+          Add a post
+        </button>
       </div>
+
+      {composing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setComposing(false)}>
+          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-[#D5DCEA] bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="font-fraunces text-2xl font-semibold text-ink">Add a post</p>
+              <button type="button" aria-label="Close" onClick={() => setComposing(false)} className="text-2xl leading-none text-ink-soft hover:text-ink">&times;</button>
+            </div>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {PLATFORMS.map((pl) => (
+                <button key={pl} type="button" onClick={() => setPlatform(platform === pl ? '' : pl)} className={`rounded-full border px-4 py-1.5 text-sm transition ${platform === pl ? 'text-white' : 'border-line text-ink hover:border-[#3A4A6B]'}`} style={platform === pl ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
+                  {pl}
+                </button>
+              ))}
+            </div>
+            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} maxLength={2000} placeholder="The hook or caption you used…" className={field} />
+            <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste the link to your post (Instagram, TikTok or YouTube)" className={`${field} mt-3`} />
+            {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
+            <div className="mt-4 flex justify-end gap-3">
+              <button type="button" onClick={() => setComposing(false)} className="rounded-full border border-line px-5 py-2.5 text-sm text-ink-soft hover:text-ink">Cancel</button>
+              <button onClick={submitPost} disabled={busy || !body.trim() || !link.trim()} className="rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: ROSE }}>
+                {busy ? 'Posting…' : 'Post to the team'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {posts.length > 1 && (
         <div className="flex gap-2 text-sm">
