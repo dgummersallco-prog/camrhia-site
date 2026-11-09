@@ -28,10 +28,10 @@ function ago(iso: string): string {
   return `${Math.round(hrs / 24)}d ago`
 }
 
-const card = 'rounded-2xl border border-line bg-card p-5'
+const card = 'rounded-3xl border border-[#EBD9D1] bg-[linear-gradient(160deg,#FFFCF9_0%,#F8EAE4_100%)] p-6 shadow-[0_1px_2px_rgba(60,30,30,0.04),0_14px_34px_-18px_rgba(120,60,60,0.22)]'
 const btn = 'rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90'
 const btnGhost = 'rounded-full border border-line px-5 py-2.5 text-sm text-ink hover:bg-paper-deep'
-const tile = 'flex flex-col gap-1 rounded-2xl border border-line bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md'
+const tile = 'flex flex-col gap-1 rounded-3xl border border-[#EBD9D1] bg-[linear-gradient(160deg,#FFFCF9_0%,#F8EAE4_100%)] p-6 text-left shadow-[0_1px_2px_rgba(60,30,30,0.04),0_14px_34px_-18px_rgba(120,60,60,0.22)] transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-lg'
 
 import InfoTip from '@/app/components/InfoTip'
 
@@ -267,7 +267,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-paper xl:pl-60">
+    <div className="min-h-screen bg-paper bg-[radial-gradient(1100px_480px_at_75%_-8%,#F8EAE4_0%,transparent_65%)] xl:pl-60">
       <DashboardHeader active="dashboard" />
       <main className="mx-auto max-w-5xl px-6 py-10">
         {!ready ? (
@@ -277,10 +277,11 @@ export default function DashboardPage() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Home</p>
-                <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">
+                <h1 className="font-fraunces text-4xl font-semibold tracking-tight text-ink md:text-5xl">
                   {greeting()}{name ? `, ${name}` : ''}.
                 </h1>
                 <p className="mt-2 text-ink-soft">Here is what is happening with your studio.</p>
+                <div className="mt-4 h-px w-16 bg-brass/60" />
               </div>
               <div className="flex items-center gap-3">
                 <div ref={bellRef} className="relative">
@@ -336,23 +337,23 @@ export default function DashboardPage() {
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
             {next && (
-              <section className={`${card} flex flex-wrap items-center gap-5`}>
-                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-blush-wash text-twilight">
+              <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-white/10 bg-twilight bg-[linear-gradient(135deg,rgba(255,255,255,0.16),rgba(0,0,0,0.14))] p-6 text-white shadow-[0_18px_40px_-18px_rgba(120,60,60,0.55)]">
+                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-white/95 text-twilight shadow-md">
                   <span className="text-[11px] font-semibold uppercase tracking-wider">{new Date(`${next.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}</span>
                   <span className="font-fraunces text-2xl font-semibold leading-none">{new Date(`${next.wedding_date}T00:00:00`).getDate()}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs uppercase tracking-wider text-ink-soft">Next shoot · {countdown(daysUntil(next.wedding_date!))}</p>
-                  <p className="truncate font-fraunces text-xl font-semibold text-ink">{next.names || 'Untitled session'}</p>
-                  <p className="text-sm text-ink-soft">{typeLabel(next.session_type)} · {fmtDay(next.wedding_date!)}</p>
+                  <p className="text-xs uppercase tracking-widest text-white/75">Next shoot · {countdown(daysUntil(next.wedding_date!))}</p>
+                  <p className="truncate font-fraunces text-2xl font-semibold text-white">{next.names || 'Untitled session'}</p>
+                  <p className="text-sm text-white/80">{typeLabel(next.session_type)} · {fmtDay(next.wedding_date!)}</p>
                 </div>
-                <Link href={`/sessions/${next.id}`} className={btnGhost}>Open session →</Link>
+                <Link href={`/sessions/${next.id}`} className="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-twilight transition hover:opacity-90">Open session →</Link>
               </section>
             )}
 
               {/* Coming up */}
               <section className={card}>
-                <p className="mb-3 font-fraunces text-xl font-semibold text-ink">Coming up</p>
+                <p className="mb-3 font-fraunces text-2xl font-semibold text-ink">Coming up</p>
                 {upcoming.length === 0 ? (
                   <p className="text-sm text-ink-soft">No upcoming sessions. New bookings show up here.</p>
                 ) : (
@@ -377,7 +378,7 @@ export default function DashboardPage() {
               <div>
                 <section className={card}>
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="font-fraunces text-xl font-semibold text-ink">To do</p>
+                    <p className="font-fraunces text-2xl font-semibold text-ink">To do</p>
                     {attention.length > 3 && (
                       <button type="button" onClick={() => setTodoAll((o) => !o)} className="text-xs text-ink-soft hover:text-ink">
                         {todoAll ? 'Show less' : `See all (${attention.length})`}
