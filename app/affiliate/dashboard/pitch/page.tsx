@@ -734,50 +734,118 @@ function ScriptsCompact({ a }: { a: ShellAffiliate }) {
   )
 }
 
-function StartHere({ a }: { a: ShellAffiliate }) {
+const AUTHORITY_HOOKS: string[] = [
+  "I've shot [number] [weddings / sessions]. Here's the one thing I'd never run my business without again.",
+  "After [number] years behind the camera, this is the part of the business nobody warns you about.",
+  "Here's what I tell every photographer who asks how I stay organized.",
+  "I lost [number] hours chasing payments. Here's how I stopped.",
+  "The biggest mistake I made in my first year of photography:",
+  "If I started my photography business over today, I'd set this up first.",
+  "Most photographers I know are great at shooting and stuck on the paperwork. Here's the fix.",
+  "I've worked with [number] clients. This is the question I ask every one of them before the shoot.",
+  "Still running contracts through DMs? Here's the tool I'd recommend instead.",
+  "After [number] bookings, here's what I've learned about getting clients to pay on time.",
+  "Here's the 3-minute setup that took the stress out of my client onboarding.",
+  "Every photographer has heard this one: \"Wait, what time is the shoot again?\" Here's how I stopped hearing it.",
+  "I've been a photographer for [number] years. Here's why I finally stopped using spreadsheets.",
+  "Nobody taught me the business side of photography. Here's what I wish I knew.",
+  "This is what a professional client experience looks like, from the first message to the final gallery.",
+  "Here's how I handle contracts so I never have an awkward conversation about money.",
+  "Three things every photographer should have in place before their next booking.",
+  "I get asked about my workflow every week. Here's the real answer.",
+  "What [number] [weddings / sessions] taught me about running a calm business.",
+  "If you've booked [number]+ clients, you've felt this problem.",
+  "The difference between a hobby and a business isn't your camera. It's this.",
+  "Here's what I check before I say yes to any new booking.",
+  "I used to dread sending invoices. Here's what changed.",
+  "Quick lesson from a [number]-year photographer: your website is your first impression.",
+  "How you handle the first reply decides whether they book. Here's what I do.",
+  "I'm [your name], a [type] photographer, and this is the system I trust with my business.",
+  "The advice I give every photographer who's thinking about going full-time.",
+  "Why clients trust me before we ever meet. (It's not my portfolio.)",
+  "What I'd tell my younger self about contracts.",
+  "I've seen what happens when photographers skip the timeline. Here's how I avoid it.",
+  "A client told me \"[what they actually said].\" Here's what I do differently.",
+  "Here's a behind-the-scenes look at how I run my photography business.",
+  "I keep every client in the loop without a single long text thread. Here's how.",
+  "What nobody tells you about busy season, and how I prepare for it.",
+  "If I had to delete every app except one, this is the one I'd keep.",
+  "I moved [number] things into one place. Here's what happened to my stress.",
+  "The most underrated skill in photography isn't editing.",
+  "Your clients judge your business in the first five minutes. Here's what they see.",
+  "Photographers ask me how I stay booked. This is part of the answer.",
+  "After [number] seasons, these are the habits that actually kept me sane.",
+  "This is how I make sure every client knows exactly what happens next.",
+  "Here's what almost burned me out, and what actually helped.",
+  "If your business lives in your inbox, read this.",
+  "My exact checklist from \"yes, I'll book you\" to \"here's your gallery.\"",
+  "What I learned from my hardest client experience, and the system I built after.",
+  "The photographers I respect most all do this one thing.",
+  "Here's why I recommend Camrhia, and who it's not for.",
+  "Three questions to ask yourself before your next busy season.",
+  "I'm not a business guru. I'm a photographer who found a better way to run things.",
+  "I've tried a lot of tools. Here's the one I actually kept using.",
+]
+
+function HookBank() {
   const [copied, setCopied] = useState<string | null>(null)
-  const link = `https://camrhia.com/r/${a.referral_code}`
-  const steps = [
-    'Copy your link.',
-    'Pick one idea below and tap Copy.',
-    'Post it, with your link in your bio.',
-    'Answer every comment and DM. Use the scripts and send your link.',
-  ]
   return (
-    <section className="rounded-2xl bg-ink p-6 sm:p-8">
-      <p className="font-mono text-xs tracking-widest uppercase text-white/40">Start here</p>
-      <ol className="mt-4 space-y-3">
-        {steps.map((t, i) => (
-          <li key={t} className="flex gap-3 text-white">
-            <span className="font-fraunces text-xl leading-none text-white/50">{i + 1}</span>
-            <span className="text-sm sm:text-base">{t}</span>
-          </li>
-        ))}
-      </ol>
-      <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3">
-        <span className="font-mono text-sm text-white/60 bg-white/5 px-3 py-1.5 rounded-lg truncate">{link.replace('https://', '')}</span>
-        <CopyButton text={link} id="start-link" copied={copied} setCopied={setCopied} />
-      </div>
-      <p className="mt-5 text-sm text-white/70">Post 3 times this week. That&apos;s it.</p>
-    </section>
+    <div className="space-y-6">
+      <section className="space-y-4">
+        <div>
+          <h2 className="font-fraunces text-3xl font-semibold text-ink">Authority</h2>
+          <p className="mt-1 max-w-2xl text-sm text-ink-soft">
+            People listen to people who have done the thing. When your first line says what you have done or learned, they trust the rest before you say it. Fill in anything{' '}
+            <span className="rounded bg-brass/20 px-1 text-brass font-medium">[in brackets]</span> with something real, and only claim experience you actually have.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {AUTHORITY_HOOKS.map((h, i) => {
+            const id = `hook-${i}`
+            return (
+              <div key={id} className="flex flex-col rounded-2xl border border-line bg-card p-5">
+                <p className="font-mono text-[10px] tracking-widest uppercase text-[#3A4A6B]">Hook {i + 1}</p>
+                <p className="mt-2 text-sm leading-relaxed text-ink"><Highlight text={h} /></p>
+                <div className="mt-auto pt-5">
+                  <CopyButton text={h} id={id} copied={copied} setCopied={setCopied} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+    </div>
   )
 }
 
 export default function PitchPage() {
-  const [view, setView] = useState<'ideas' | 'scripts'>('ideas')
-  const pill = (on: boolean) =>
-    'rounded-full px-5 py-2 text-sm font-medium transition-colors ' +
-    (on ? 'bg-[#3A4A6B] text-white' : 'border border-line text-ink-soft hover:text-ink')
+  const [view, setView] = useState<'hooks' | 'ideas' | 'scripts'>('hooks')
+  const tabs: { key: 'hooks' | 'ideas' | 'scripts'; title: string; sub: string }[] = [
+    { key: 'hooks', title: 'Hooks', sub: '50 first lines that make people stop and read.' },
+    { key: 'ideas', title: 'Post ideas', sub: 'Full posts you can make today.' },
+    { key: 'scripts', title: 'DM and call scripts', sub: 'What to say when they reply or pick up.' },
+  ]
   return (
     <AffiliateShell title="Marketing HQ" subtitle="Post ideas and scripts to help you sign photographers.">
       {(a) => (
         <div className="space-y-8">
-          <StartHere a={a} />
-          <div className="flex gap-2">
-            <button onClick={() => setView('ideas')} className={pill(view === 'ideas')} style={view === 'ideas' ? { backgroundColor: '#3A4A6B', color: '#ffffff' } : undefined}>Post ideas</button>
-            <button onClick={() => setView('scripts')} className={pill(view === 'scripts')} style={view === 'scripts' ? { backgroundColor: '#3A4A6B', color: '#ffffff' } : undefined}>DM and call scripts</button>
+          <div className="grid gap-4 md:grid-cols-3">
+            {tabs.map((t) => {
+              const on = view === t.key
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setView(t.key)}
+                  className={`rounded-2xl border p-7 text-left transition ${on ? 'border-[#3A4A6B] shadow-lg' : 'border-line bg-card hover:border-[#3A4A6B]'}`}
+                  style={on ? { backgroundColor: '#3A4A6B', color: '#ffffff' } : undefined}
+                >
+                  <p className="font-fraunces text-2xl font-semibold">{t.title}</p>
+                  <p className={`mt-2 text-sm ${on ? 'text-white/80' : 'text-ink-soft'}`}>{t.sub}</p>
+                </button>
+              )
+            })}
           </div>
-          {view === 'ideas' ? <IdeaBank /> : <ScriptsCompact a={a} />}
+          {view === 'hooks' ? <HookBank /> : view === 'ideas' ? <IdeaBank /> : <ScriptsCompact a={a} />}
         </div>
       )}
     </AffiliateShell>
