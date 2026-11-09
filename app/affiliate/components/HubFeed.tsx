@@ -50,7 +50,7 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
   if (!em) return null
   if (!on) {
     return (
-      <button type="button" onClick={() => setOn(true)} className="group mt-3 flex w-full items-center gap-4 rounded-2xl border border-[#D5DCEA] bg-[linear-gradient(135deg,#F4F6FA_0%,#DCE3F0_100%)] p-4 text-left transition hover:border-[#3A4A6B]">
+      <button type="button" onClick={() => setOn(true)} className="group mt-3 flex w-full items-center gap-4 rounded-2xl border border-line bg-paper-deep p-4 text-left transition hover:border-[#3A4A6B]">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#3A4A6B] text-white shadow-md transition group-hover:scale-105">&#9654;</span>
         <span className="min-w-0">
           <span className="block text-sm font-semibold text-ink">Watch the post</span>
@@ -61,7 +61,7 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
   }
   return (
     <div className={em.kind === 'tall' ? 'relative mx-auto mt-3 w-full max-w-[420px]' : 'relative mt-3'}>
-      {!loaded && <div className="absolute inset-0 animate-pulse rounded-xl bg-[#E9EEF7]" />}
+      {!loaded && <div className="absolute inset-0 animate-pulse rounded-xl bg-paper-deep" />}
       <iframe
         src={em.src}
         title="Post"
@@ -313,7 +313,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         const ed = editing[p.id]
         const hasNums = p.views != null || p.ig_likes != null || p.shares != null || p.saves != null || p.signed != null
         return (
-          <article key={p.id} className="mb-5 break-inside-avoid rounded-3xl border border-[#D5DCEA] bg-[linear-gradient(160deg,#FCFDFE_0%,#E9EEF7_100%)] p-5 shadow-[0_1px_2px_rgba(30,40,70,0.04),0_14px_34px_-18px_rgba(30,40,70,0.22)]" style={{ borderColor: p.pinned ? ROSE : undefined }}>
+          <article key={p.id} className="mb-5 break-inside-avoid rounded-3xl border border-line bg-card p-5 shadow-[0_1px_2px_rgba(30,40,70,0.04),0_14px_34px_-18px_rgba(30,40,70,0.22)]" style={{ borderColor: p.pinned ? ROSE : undefined }}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Avatar url={avatars[p.author_id]} name={p.author_name} />
@@ -338,7 +338,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
             )}
             <PostEmbed url={p.link_url} platform={p.platform} />
             {p.link_url && (
-              <a href={p.link_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#D5DCEA] bg-white px-4 py-1.5 text-xs font-semibold transition hover:border-[#3A4A6B]" style={{ color: ROSE }}>Open post &#8599;</a>
+              <a href={p.link_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-1.5 text-xs font-semibold transition hover:border-[#3A4A6B]" style={{ color: ROSE }}>Open post &#8599;</a>
             )}
 
             {(hasNums || mine) && !ed && (
