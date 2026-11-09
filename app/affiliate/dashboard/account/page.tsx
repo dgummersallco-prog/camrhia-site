@@ -3,9 +3,13 @@
 import { useEffect, useState } from 'react'
 import AffiliateShell from '../../components/AffiliateShell'
 import { AvatarPicker } from '../../components/Avatar'
-import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
+import { supabaseAffiliate } from '@/lib/supabaseAffiliate'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { usePathname } from 'next/navigation'
 
 function AccountBody({ name }: { name: string | null }) {
+  const isAdmin = (usePathname() ?? '').startsWith('/admin')
+  const supabase = isAdmin ? supabaseAdmin : supabaseAffiliate
   const [uid, setUid] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [url, setUrl] = useState<string | null>(null)
@@ -61,6 +65,24 @@ function AccountBody({ name }: { name: string | null }) {
     setW9Busy(false)
     if (error) { setW9Err(error.message); return }
     setDoc({ file_path: path, uploaded_at: now, verified_at: null })
+  }
+
+  if (isAdmin) {
+    return (
+      <div className="max-w-xl space-y-5">
+        <div className="rounded-2xl border border-line bg-card p-6">
+          <p className="mb-4 font-fraunces text-xl font-semibold text-ink">Camrhia profile photo</p>
+          {uid && <AvatarPicker client={supabase} uid={uid} url={url} name="Camrhia" size={80} onDone={setUrl} />}
+          <p className="mt-3 text-sm text-ink-soft">Your posts, pinned messages and announcements show as Camrhia with this photo.</p>
+        </div>
+        <div className="rounded-2xl border border-line bg-card p-6">
+          <p className="text-xs uppercase tracking-wider text-ink-soft">Name</p>
+          <p className="mt-1 text-ink">Camrhia</p>
+          <p className="mt-4 text-xs uppercase tracking-wider text-ink-soft">Email</p>
+          <p className="mt-1 text-ink">{email}</p>
+        </div>
+      </div>
+    )
   }
 
   return (

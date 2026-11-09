@@ -7,12 +7,13 @@ import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 
 export default function AffiliateTabs() {
   const pathname = usePathname() ?? ''
+  const admin = pathname.startsWith('/admin')
   const [isMaster, setIsMaster] = useState(false)
   const [onTeam, setOnTeam] = useState(false)
 
   useEffect(() => {
     const client = supabase
-    if (!client) return
+    if (!client || window.location.pathname.startsWith('/admin')) return
     let cancelled = false
     ;(async () => {
       const { data: { session } } = await client.auth.getSession()
@@ -48,21 +49,29 @@ export default function AffiliateTabs() {
     return () => { cancelled = true }
   }, [])
 
-  const tabs = [{ href: '/affiliate/dashboard', label: 'Home' }, { href: '/affiliate/dashboard/hub', label: 'Team Hub' }]
+  const tabs = admin
+    ? [
+        { href: '/admin/hub', label: 'Team Hub' },
+        { href: '/admin/hub/pitch', label: 'Marketing HQ' },
+        { href: '/admin/hub/boosted', label: 'Boosted posts' },
+        { href: '/admin/hub/pay', label: 'Pay breakdown' },
+        { href: '/admin/hub/account', label: 'Account' },
+      ]
+    : [{ href: '/affiliate/dashboard', label: 'Home' }, { href: '/affiliate/dashboard/hub', label: 'Team Hub' }]
   if (isMaster) tabs.push({ href: '/affiliate/dashboard/team', label: 'Team' })
   if (isMaster) {
     tabs.push({ href: '/affiliate/dashboard/numbers', label: 'Numbers' })
     tabs.push({ href: '/affiliate/dashboard/recruit', label: 'Recruit' })
   }
-  tabs.push({ href: '/affiliate/dashboard/pitch', label: 'Marketing HQ' })
-  tabs.push({ href: '/affiliate/dashboard/boosted', label: 'Boosted posts' })
-  tabs.push({ href: '/affiliate/dashboard/pay', label: 'Pay breakdown' })
-  tabs.push({ href: '/affiliate/dashboard/account', label: 'Account' })
+  if (!admin) tabs.push({ href: '/affiliate/dashboard/pitch', label: 'Marketing HQ' })
+  if (!admin) tabs.push({ href: '/affiliate/dashboard/boosted', label: 'Boosted posts' })
+  if (!admin) tabs.push({ href: '/affiliate/dashboard/pay', label: 'Pay breakdown' })
+  if (!admin) tabs.push({ href: '/affiliate/dashboard/account', label: 'Account' })
 
   return (
     <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap lg:sticky lg:top-24 lg:flex-col lg:items-stretch lg:overflow-visible">
       {tabs.map((t) => {
-        const active = t.href === '/affiliate/dashboard' ? pathname === t.href : pathname.startsWith(t.href)
+        const active = t.href === '/affiliate/dashboard' || t.href === '/admin/hub' ? pathname === t.href : pathname.startsWith(t.href)
         return (
           <Link
             key={t.href}

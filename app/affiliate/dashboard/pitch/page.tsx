@@ -532,7 +532,7 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
   const [copied, setCopied] = useState<string | null>(null)
   const [theirName, setTheirName] = useState('')
   const [myName, setMyName] = useState((a.name ?? '').split(' ')[0] || '')
-  const link = `https://camrhia.com/r/${a.referral_code}`
+  const link = a.referral_code ? `https://camrhia.com/r/${a.referral_code}` : 'https://camrhia.com'
   const teamLink = `https://camrhia.com/t/${a.team_code || a.referral_code}`
 
   const fill = (t: string) => {
@@ -689,7 +689,7 @@ function ScriptsCompact({ a }: { a: ShellAffiliate }) {
   const [copied, setCopied] = useState<string | null>(null)
   const [theirName, setTheirName] = useState('')
   const [myName, setMyName] = useState((a.name ?? '').split(' ')[0] || '')
-  const link = `https://camrhia.com/r/${a.referral_code}`
+  const link = a.referral_code ? `https://camrhia.com/r/${a.referral_code}` : 'https://camrhia.com'
   const teamLink = `https://camrhia.com/t/${a.team_code || a.referral_code}`
   const fill = (t: string) => {
     let out = t

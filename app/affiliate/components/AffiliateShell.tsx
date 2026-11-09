@@ -2,8 +2,9 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import Wordmark from "@/app/components/Wordmark"
 import AffiliateTabs from './AffiliateTabs'
 
@@ -29,10 +30,24 @@ export default function AffiliateShell({
   children: (a: ShellAffiliate) => ReactNode
 }) {
   const router = useRouter()
+  const isAdminArea = (usePathname() ?? '').startsWith('/admin')
   const [affiliate, setAffiliate] = useState<ShellAffiliate | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (isAdminArea) {
+      const ac = supabaseAdmin
+      if (!ac) { setLoading(false); return }
+      ;(async () => {
+        const { data: { session } } = await ac.auth.getSession()
+        if (!session) { router.replace('/admin/login'); return }
+        const { data: adm } = await ac.rpc('hub_is_admin')
+        if (adm !== true) { router.replace('/admin/login'); return }
+        setAffiliate({ id: session.user.id, name: 'Camrhia', referral_code: '', team_code: null, is_master: false, commission_rate: null, override_rate: null, parent_affiliate_id: null, approved: true })
+        setLoading(false)
+      })()
+      return
+    }
     const client = supabase
     if (!client) { setLoading(false); return }
     let cancelled = false
@@ -50,7 +65,7 @@ export default function AffiliateShell({
       }
     })()
     return () => { cancelled = true }
-  }, [router])
+  }, [router, isAdminArea])
 
   const [teamName, setTeamName] = useState<string | null>(null)
   useEffect(() => {
@@ -72,7 +87,7 @@ export default function AffiliateShell({
 
   return (
     <div className="min-h-screen bg-paper bg-[radial-gradient(1100px_480px_at_75%_-8%,#E9EEF7_0%,transparent_65%)] flex flex-col">
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
+      <header className={`${isAdminArea ? 'hidden' : ''} sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm`}>
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
           <Link href="/" className="font-fraunces text-lg font-semibold text-ink hover:text-[#3A4A6B] transition-colors">
             <Wordmark className="text-3xl" /> <span className="text-ink-soft font-normal">/ affiliate</span>
