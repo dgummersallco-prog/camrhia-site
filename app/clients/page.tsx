@@ -12,6 +12,9 @@ type Contact = { wedding_id: string; phone: string | null }
 type Inquiry = { invited_wedding_id: string | null; email: string | null; phone: string | null }
 type Client = { key: string; name: string; sessions: S[]; paid: number; owed: number; last: string | null; next: string | null; phone: string | null; email: string | null; fromWeb: boolean }
 
+type Fam = { id: string; client_key: string; name: string; kind: string; date: string | null }
+type FamIn = { name: string; kind: string; date: string }
+
 const ROSE = '#A9545F'
 const money = (n: number) => '$' + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
@@ -26,7 +29,58 @@ function suitFor(t: string | null): { g: string; red: boolean } {
   return { g: '♠', red: false }
 }
 
-function ClientCard({ c }: { c: Client }) {
+const KINDS: [string, string][] = [['child', 'Child'], ['spouse', 'Spouse'], ['partner', 'Partner'], ['anniversary', 'Anniversary'], ['other', 'Other']]
+
+function FamilyBlock({ items, onAdd, onDelete }: { items: Fam[]; onAdd: (f: FamIn) => void; onDelete: (id: string) => void }) {
+  const [adding, setAdding] = useState(false)
+  const [name, setName] = useState('')
+  const [kind, setKind] = useState('child')
+  const [date, setDate] = useState('')
+  const field = 'w-full rounded-lg border border-line bg-white px-2.5 py-1.5 text-xs text-ink outline-none focus:border-twilight'
+  function save() {
+    const n = name.trim() || (kind === 'anniversary' ? 'Anniversary' : '')
+    if (!n) return
+    onAdd({ name: n, kind, date })
+    setName(''); setDate(''); setKind('child'); setAdding(false)
+  }
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] uppercase tracking-[0.12em] text-ink-soft">Family</p>
+        {!adding && <button type="button" onClick={() => setAdding(true)} className="text-xs font-medium text-twilight hover:underline">+ Add</button>}
+      </div>
+      {items.length === 0 && !adding && <p className="mt-1 text-xs text-ink-soft">Nothing added yet.</p>}
+      {items.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {items.map((f) => (
+            <span key={f.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1 text-xs text-ink">
+              <span>{f.name}{f.date ? ' · ' + (f.kind === 'anniversary' ? '' : 'Birthday ') + fmtDate(f.date) : ''}</span>
+              <button type="button" aria-label={'Remove ' + f.name} onClick={() => { if (window.confirm('Remove ' + f.name + '?')) onDelete(f.id) }} className="text-ink-soft hover:text-red-600">×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      {adding && (
+        <div className="mt-2 space-y-2">
+          <input className={field} placeholder={kind === 'anniversary' ? 'Label (optional)' : 'Name'} value={name} onChange={(e) => setName(e.target.value)} />
+          <select className={field} value={kind} onChange={(e) => setKind(e.target.value)}>
+            {KINDS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
+          <div>
+            <p className="mb-0.5 text-[11px] text-ink-soft">{kind === 'anniversary' ? 'Anniversary date' : 'Birthday'}</p>
+            <input type="date" className={field} value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div className="flex gap-2">
+            <button type="button" onClick={save} className="rounded-lg bg-twilight px-3 py-1.5 text-xs font-medium text-white">Save</button>
+            <button type="button" onClick={() => setAdding(false)} className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink">Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd: (f: FamIn) => void; onDelete: (id: string) => void }) {
   const [flipped, setFlipped] = useState(false)
   const latestType = c.sessions[0]?.session_type ?? null
   const suit = suitFor(latestType)
@@ -97,14 +151,17 @@ function ClientCard({ c }: { c: Client }) {
             <p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-ink-soft">Lifetime paid</p>
             <p className="font-fraunces text-3xl font-semibold" style={{ color: ROSE }}>{money(c.paid)}</p>
             {c.fromWeb && <p className="mt-2 text-xs text-ink-soft">Came in through your website</p>}
-            <p className="mt-4 text-[11px] uppercase tracking-[0.12em] text-ink-soft">Sessions</p>
-            <div className="mt-2 flex-1 space-y-2 overflow-y-auto pr-1">
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1" onClick={stop}>
+              <FamilyBlock items={fam} onAdd={onAdd} onDelete={onDelete} />
+              <p className="mt-4 text-[11px] uppercase tracking-[0.12em] text-ink-soft">Sessions</p>
+            <div className="mt-2 space-y-2">
               {c.sessions.map((s) => (
                 <Link key={s.id} href={`/sessions/${s.id}`} onClick={stop} className="flex items-center justify-between gap-2 rounded-xl border border-line bg-white px-3 py-2 transition hover:border-ink">
                   <span className="text-sm font-medium text-ink">{typeLabel(s.session_type)}</span>
                   <span className="text-[11px] text-ink-soft">{fmtDate(s.wedding_date)}</span>
                 </Link>
               ))}
+            </div>
             </div>
             <p className="mt-3 text-center text-[11px] text-ink-soft">Tap to flip back</p>
           </div>
@@ -126,12 +183,15 @@ export default function ClientsPage() {
   const [sort, setSort] = useState<'recent' | 'name' | 'paid'>('recent')
   const [view, setView] = useState<'cards' | 'list'>('cards')
   const [open, setOpen] = useState<string | null>(null)
+  const [fams, setFams] = useState<Fam[]>([])
+  const [uid, setUid] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
       if (!supabase) { router.push('/login'); return }
       const { data: sess } = await supabase.auth.getSession()
       if (!sess.session) { router.push('/login'); return }
+      setUid(sess.session.user.id)
       const { data, error: e } = await supabase.from('weddings').select('id, names, wedding_date, session_type, status').order('wedding_date', { ascending: false, nullsFirst: false })
       if (e) { setError(e.message); setLoading(false); return }
       const rows = (data ?? []) as S[]
@@ -152,10 +212,30 @@ export default function ClientsPage() {
       setPays(all)
       setContacts(cts)
       setInquiries(inq)
+      const { data: fm } = await supabase.from('client_family').select('id, client_key, name, kind, date').order('date', { ascending: true })
+      setFams((fm ?? []) as Fam[])
       setLoading(false)
     }
     load()
   }, [router])
+
+  async function addFam(key: string, f: FamIn) {
+    if (!supabase || !uid) return
+    const { data, error: e } = await supabase.from('client_family').insert({ owner_id: uid, client_key: key, name: f.name, kind: f.kind, date: f.date || null }).select('id, client_key, name, kind, date').single()
+    if (e) { setError(e.message); return }
+    setFams((l) => [...l, data as Fam])
+  }
+  async function delFam(id: string) {
+    if (!supabase) return
+    const { error: e } = await supabase.from('client_family').delete().eq('id', id)
+    if (e) { setError(e.message); return }
+    setFams((l) => l.filter((x) => x.id !== id))
+  }
+  const famBy = useMemo(() => {
+    const m: Record<string, Fam[]> = {}
+    for (const f of fams) (m[f.client_key] ??= []).push(f)
+    return m
+  }, [fams])
 
   const clients = useMemo(() => {
     const today = todayStr()
@@ -251,7 +331,7 @@ export default function ClientsPage() {
 
             {view === 'cards' ? (
               <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {shown.map((c) => <ClientCard key={c.key} c={c} />)}
+                {shown.map((c) => <ClientCard key={c.key} c={c} fam={famBy[c.key] ?? []} onAdd={(f) => addFam(c.key, f)} onDelete={delFam} />)}
               </div>
             ) : (
               <div className="mt-5 space-y-3">
@@ -272,6 +352,7 @@ export default function ClientsPage() {
                     </button>
                     {open === c.key && (
                       <div className="space-y-2 border-t border-line px-5 py-4">
+                        <FamilyBlock items={famBy[c.key] ?? []} onAdd={(f) => addFam(c.key, f)} onDelete={delFam} />
                         {c.sessions.map((s) => (
                           <Link key={s.id} href={`/sessions/${s.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 py-3 transition hover:border-ink">
                             <span className="text-sm font-medium text-ink">{typeLabel(s.session_type)}</span>
