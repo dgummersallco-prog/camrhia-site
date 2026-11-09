@@ -19,68 +19,46 @@ const PHONE =
   "rounded-[1.9rem] ring-1 ring-black/10 bg-card shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]"
 
 const PAINS = [
-  "Your work is incredible, but Instagram is the only place anyone can find it",
-  "A client reaches out and by the time you reply, they have booked someone else",
-  "You spend more hours on emails, contracts and invoices than behind your camera",
-  "Your best shoots sit on a hard drive while strangers hire someone else",
-  "Every year you say this is the year you go all in, and every year it stays a maybe",
+  "Instagram is the only place anyone can find your work.",
+  "Clients wait for your reply and book someone else.",
+  "You spend more time on admin than behind your camera.",
 ]
 
 const OLD_STACK = [
-  { name: "A website builder", example: "Squarespace", price: "$16 to $36", free: false, pain: "Pretty, but it has no idea who is booked." },
-  { name: "Booking, contracts and invoices", example: "HoneyBook", price: "$29 to $49", free: false, pain: "One more login for you. One more link for your client." },
-  { name: "Gallery hosting", example: "Pixieset", price: "$10 to $20", free: false, pain: "Delivered by a link buried in a thread." },
-  { name: "AI culling and editing", example: "Aftershoot", price: "$40 to $55", free: false, pain: "Another login. Another place your photos have to travel." },
-  { name: "Email threads with clients", example: "", price: "Free, but buried", free: true, pain: "Was it the Tuesday email or the Thursday one?" },
-  { name: "A separate calendar", example: "", price: "Free, but disconnected", free: true, pain: "Double-booked, because it never saw the contract." },
-  { name: "Scattered notes and texts", example: "", price: "Free, but lost", free: true, pain: "The venue address is in a text from March." },
-  { name: "Gallery links lost in inboxes", example: "", price: "Free, but forgotten", free: true, pain: "Hey, can you resend our gallery? Again." },
+  { name: "A website builder", example: "Squarespace", price: "$16 to $36" },
+  { name: "Booking, contracts and invoices", example: "HoneyBook", price: "$29 to $49" },
+  { name: "Gallery hosting", example: "Pixieset", price: "$10 to $20" },
+  { name: "AI culling and editing", example: "Aftershoot", price: "$40 to $55" },
 ]
 
 const NEW_STACK = [
-  "Your own website, built in minutes, at your own web address",
-  "A marketplace where new clients find you",
-  "Bookings and sessions, organized",
-  "Contracts that fill themselves in",
-  "Client questionnaires sent and collected for you",
-  "Payments tracked and confirmed",
-  "Client messaging, tied to each session",
-  "A free dashboard for every client, with their galleries, contracts, payments and messages in one place",
-  "Galleries hosted and delivered, with client favorites",
-  "Culling and editing that learns your style, built right in",
-  "Your calendar, always current",
+  "Your own website at your own web address",
+  "A marketplace where clients find you",
+  "Bookings, contracts and payments",
+  "Client messaging and your calendar",
+  "Galleries and client favorites",
+  "Culling and editing built in",
 ]
 
 const STEPS = [
-  ["Download and make it yours", "Add your photos, packages and details. Your website is live the moment you save."],
-  ["Share one link", "Put it in your bio, your emails, your business card. Clients inquire, book and pay."],
-  ["Run everything from your phone", "Sessions, contracts, payments and delivery, handled where you already are."],
+  ["Make it yours", "Add your photos and packages. Your website goes live when you save."],
+  ["Share one link", "Clients inquire, book and pay from it."],
+  ["Run it from your phone", "Sessions, contracts, payments and delivery in one place."],
 ]
 
 const FAQ = [
-  ["Do I need a credit card to try it?", "Start free for 14 days. If it is not for you, you walk away. No awkward conversation."],
-  ["I already have a website. Why Camrhia?", "Keep it if you love it. Camrhia replaces the pile of tools behind it: booking, contracts, payment tracking, messaging and delivery, and gives you a portfolio that updates itself."],
-  ["Is it hard to set up?", "If you can post to Instagram, you can set this up. Most photographers are live in an afternoon."],
-  ["Will my clients have to figure out something new?", "They get one simple app with their session, payments, messages and photos. Fewer emails for you, less confusion for them."],
-  ["Can I cancel anytime?", "Yes. Monthly plans cancel anytime through your Apple ID subscriptions."],
-  ["Is it only for weddings?", "No. Weddings, portraits, newborns, families, events. Set up the session types you shoot."],
+  ["Do I need a credit card to try it?", "Start free for 14 days. If it is not for you, you walk away."],
+  ["I already have a website. Why Camrhia?", "Keep it if you love it. Camrhia replaces the tools behind it: booking, contracts, payments, messaging and delivery."],
+  ["Is it hard to set up?", "If you can post to Instagram, you can set this up. Most are live in an afternoon."],
+  ["Can I cancel anytime?", "Yes. Cancel anytime in your Apple ID subscriptions."],
+  ["Is it only for weddings?", "No. Weddings, portraits, newborns, families and events."],
 ]
 
 const CLIENT_PERKS = [
-  ["One place for everything", "Their session timeline, contract, payments, messages and photos all live in one simple app. No more digging through email."],
-  ["Photos they will love opening", "A beautiful gallery with a PIN. They tap a heart on their favorites, download in one tap, and send you their picks without a single email."],
-  ["Always know what is next", "Reminders for session day, what to wear, where to arrive and when the next payment is due. Fewer questions for you, less stress for them."],
-  ["Payments that feel easy", "A clear schedule of what is due and when, with a friendly reminder before each date. You stop being the one who has to ask."],
-  ["Reminders that bring them back", "Time for this year of family photos. Holiday photos before the calendar fills. An anniversary note. Set it once and Camrhia keeps your past clients booking."],
-  ["Reviews while the joy is fresh", "A gentle nudge to leave you a review right after delivery, when they are happiest with their photos."],
-]
-
-const YEAR = [
-  ["Session day", "A reminder with what to wear, where to park and when to arrive"],
-  ["A week later", "Their gallery is ready, with a PIN-protected link"],
-  ["After delivery", "A friendly nudge to leave you a review"],
-  ["September", "Holiday photos? A nudge to book before the calendar fills"],
-  ["11 months later", "Time for this year of photos, one tap to book again"],
+  ["One place for everything", "Contract, payments, messages and photos in one simple app."],
+  ["Photos they love opening", "A PIN gallery with hearts and one-tap downloads."],
+  ["Always know what is next", "Reminders for session day and for each payment."],
+  ["Reviews and rebooking", "Camrhia asks for a review and brings past clients back."],
 ]
 
 function Check() {
@@ -114,14 +92,16 @@ function Story({
       <div className={flip ? "md:order-1" : ""}>
         <h3 className="font-fraunces text-3xl sm:text-[2.6rem] font-semibold text-ink leading-[1.1] mb-5">{title}</h3>
         <p className="text-lg text-ink-soft leading-relaxed mb-6 max-w-md">{body}</p>
-        <ul className="space-y-3">
-          {points.map((p) => (
-            <li key={p} className="flex gap-3 text-ink text-[0.95rem] leading-snug">
-              <Check />
-              <span>{p}</span>
-            </li>
-          ))}
-        </ul>
+        {points.length > 0 && (
+          <ul className="space-y-3">
+            {points.map((p) => (
+              <li key={p} className="flex gap-3 text-ink text-[0.95rem] leading-snug">
+                <Check />
+                <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   )
@@ -183,7 +163,7 @@ export default function Home() {
               ))}
             </ul>
             <p className="mt-10 font-fraunces text-2xl text-twilight">
-              What actually fills a calendar is being easy to find and easy to book. That is exactly what Camrhia fixes.
+              What fills a calendar is being easy to find and easy to book. Camrhia fixes that.
             </p>
           </div>
         </section>
@@ -206,11 +186,10 @@ export default function Home() {
         <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <Story
             title="A website that sells for you."
-            body="Build your site on your phone or your computer with a live preview. Pick a look, arrange your sections, add your photos, and it is live at your own web address, like camrhia.com/yourstudio. Put the link in your Instagram bio, your TikTok, your email signature. Clients tap it, fall in love, and inquire without leaving the page."
+            body="Build your site on your phone with a live preview. Pick a look, add your photos, and it goes live at your own web address. Clients tap your link and inquire without leaving the page."
             points={[
-              "Start from a template, then make every section yours: fonts, colors, layouts and photos",
-              "No developer, and the website is included in your subscription",
-              "Inquiries and open dates connect to your app, so nothing gets retyped",
+              "Fonts, colors, layouts and photos are all yours",
+              "The website is included in your price",
             ]}
             panel={
               <Panel tone="bg-twilight/10">
@@ -228,13 +207,9 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
             <Story
               flip
-              title="Get found by clients who are ready to book."
-              body="Camrhia is also a marketplace. Clients browse the photographers in their area right inside the app, and it costs them nothing. They find your portfolio, then message you or send an inquiry."
-              points={[
-                "Clients browse photographers in their area",
-                "Free for the clients looking",
-                "Your best work front and center",
-              ]}
+              title="Get found by clients ready to book."
+              body="Clients browse photographers near them right in the app. It is free for them."
+              points={[]}
               panel={
                 <Panel tone="bg-brass/20">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -245,67 +220,21 @@ export default function Home() {
           </div>
         </section>
 
-        {/* SEE IT IN ACTION */}
+        {/* MESSAGES + CALENDAR */}
         <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-          <div className="max-w-2xl mb-20 sm:mb-28">
-            <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08] mb-5">
-              See it in action
-            </h2>
-            <p className="text-lg text-ink-soft leading-relaxed">
-              Every session, date and setting, right where you need it.
-            </p>
-          </div>
-
-          <div className="space-y-24 sm:space-y-36">
-            <Story
-              title="Your whole business in one place, away from your personal life."
-              body="Message your clients and check your calendar inside the app, so work stays together and out of your personal texts. Shoots, deadlines and deliveries sit on one calendar, so nothing slips."
-              points={[
-                "Client messaging, tied to each session",
-                "Your calendar, always current",
-                "Work stays out of your personal inbox",
-              ]}
-              panel={
-                <Panel tone="bg-sage/15">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/messages.png" alt="Client messages in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/calendar.png" alt="The Camrhia calendar" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
-                </Panel>
-              }
-            />
-
-            <Story
-              flip
-              title="Set your studio up once."
-              body="Your studio name, your packages and your look. Manage your packages and pricing, your questionnaires and how your studio runs, then let it run. Prefer a big screen? Sign in at camrhia.com with the same email and password and do it all from your computer."
-              points={["Packages and pricing", "Questionnaires for your clients", "Your studio setup", "On your phone or your computer"]}
-              panel={
-                <Panel tone="bg-brass/15">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/3-packages-1.png" alt="Camrhia packages" loading="lazy" className={`${PHONE} absolute left-[2%] top-[28%] w-[38%]`} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/3-packages-2.png" alt="Camrhia package details" loading="lazy" className={`${PHONE} absolute right-[2%] top-[28%] w-[38%]`} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/studio.png" alt="Camrhia studio settings" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[8%] w-[50%] z-10`} />
-                </Panel>
-              }
-            />
-
-            <Story
-              title="Every session, and the plan for the day."
-              body="Weddings, portraits, families and more. See who is booked and where each one stands, with a timeline for every session so the details of the day do not live in a text thread."
-              points={["Upcoming and past sessions together", "A schedule for every session"]}
-              panel={
-                <Panel tone="bg-twilight/10">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/1-sessions.png" alt="The Camrhia session list" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/2-timeline.png" alt="A session timeline in Camrhia" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
-                </Panel>
-              }
-            />
-          </div>
+          <Story
+            title="Your whole business in one place."
+            body="Message clients and check your calendar inside the app. Work stays out of your personal texts."
+            points={[]}
+            panel={
+              <Panel tone="bg-sage/15">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/screens/messages.png" alt="Client messages in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/screens/calendar.png" alt="The Camrhia calendar" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
+              </Panel>
+            }
+          />
         </section>
 
         {/* CLIENT EXPERIENCE */}
@@ -317,37 +246,17 @@ export default function Home() {
                 Be the photographer clients never have to chase.
               </h2>
               <p className="mt-5 text-lg text-ink-soft leading-relaxed">
-                Most photographers lose repeat clients to a forgotten email. Camrhia gives every
-                client one calm, beautiful place for their session, and quietly brings them back
-                when it is time for the next one.
+                Every client gets one calm place for their session. Camrhia also brings them back for the next one.
               </p>
             </div>
 
-            <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {CLIENT_PERKS.map(([t, d]) => (
                 <div key={t} className="rounded-3xl border border-line bg-card p-7">
                   <p className="font-fraunces text-xl font-semibold text-ink">{t}</p>
                   <p className="mt-2 leading-relaxed text-ink-soft">{d}</p>
                 </div>
               ))}
-            </div>
-
-            <div className="mt-20">
-              <h3 className="font-fraunces text-2xl md:text-4xl font-semibold text-ink leading-[1.1]">
-                One shoot. A whole year of staying in touch.
-              </h3>
-              <p className="mt-3 max-w-xl text-ink-soft">
-                You do the shoot. Camrhia handles the follow-up, so one booking turns into a client for life.
-              </p>
-              <ol className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-                {YEAR.map(([when, what], i) => (
-                  <li key={when} className="relative rounded-2xl border border-line bg-card p-5">
-                    <span className="font-fraunces text-4xl font-semibold leading-none" style={{ color: NAVY, opacity: 0.22 }}>{i + 1}</span>
-                    <p className="mt-3 text-sm font-semibold uppercase tracking-wider text-brass">{when}</p>
-                    <p className="mt-1 text-sm leading-snug text-ink">{what}</p>
-                  </li>
-                ))}
-              </ol>
             </div>
           </div>
         </section>
@@ -359,11 +268,7 @@ export default function Home() {
               Delivery day, without the scramble.
             </h2>
             <p className="mt-6 text-lg text-white/80 leading-relaxed">
-              Drag in your whole shoot and publish a PIN-protected gallery that opens with your
-              cover photo. Your clients heart their favorites and download everything as one
-              zip. It lands in the same app as their contract, questionnaire and messages, so
-              there is no digging through email and no &ldquo;did you get my link?&rdquo; Prefer
-              another gallery host? Paste its link into the session and deliver it the same way.
+              Drag in your shoot and publish a PIN-protected gallery. Clients heart their favorites and download it all as one zip. No digging through email.
             </p>
           </div>
         </section>
@@ -372,19 +277,18 @@ export default function Home() {
         <section id="compare" className="bg-ink text-white">
           <div className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
             <h2 className="mx-auto max-w-3xl text-center font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">
-              Stop paying for a pile of tools. Run your whole business from one app.
+              Stop paying for a pile of tools.
             </h2>
             <div className="mt-14 grid md:grid-cols-2 gap-6">
               <div className="rounded-3xl border border-white/15 p-8">
-                <p className="text-sm text-white/55">Your business, spread across 8 places</p>
+                <p className="text-sm text-white/55">What you pay for now</p>
                 <ul className="mt-6 space-y-3">
                   {OLD_STACK.map((t) => (
                     <li key={t.name} className="text-white/70">
                       <div className="flex items-baseline justify-between gap-4 text-lg">
                         <span>{t.name}{t.example ? <span className="text-sm text-white/40"> ({t.example})</span> : null}</span>
-                        <span className={`whitespace-nowrap ${t.free ? "text-sm text-white/40" : "text-white/90"}`}>{t.price}</span>
+                        <span className="whitespace-nowrap text-white/90">{t.price}</span>
                       </div>
-                      <p className="mt-0.5 text-sm italic text-brass/80">{t.pain}</p>
                     </li>
                   ))}
                 </ul>
@@ -392,7 +296,6 @@ export default function Home() {
                   <span className="text-white/70">Total</span>
                   <span className="font-fraunces text-2xl font-semibold">$95 to $160 a month</span>
                 </div>
-                <p className="mt-3 text-base text-brass">Plus every hour you spend chasing it all down.</p>
                 <p className="mt-2 text-xs text-white/45">Typical published plan prices. Check each company for current pricing.</p>
               </div>
               <div className="rounded-3xl bg-card text-ink p-8 border-2 border-brass">
@@ -407,7 +310,6 @@ export default function Home() {
                 </ul>
                 <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login.</p>
                 <p className="mt-1 text-sm text-ink-soft">Plans start at $59.99 a month. Your first 14 days are free.</p>
-                <p className="mt-3 text-sm text-ink-soft">Galleries are included too. Upload your photos, share a PIN-protected link, and your clients can favorite and download. No separate gallery host to pay for.</p>
               </div>
             </div>
           </div>
@@ -420,7 +322,7 @@ export default function Home() {
               Simple pricing. Try it free first.
             </h2>
             <p className="mt-4 text-center text-ink-soft">
-              Every plan starts with 14 free days. If it is not for you, you owe nothing.
+              Every plan starts with 14 free days.
             </p>
             <div className="mt-12 grid md:grid-cols-2 gap-6">
               <div className="rounded-3xl bg-card border-2 border-twilight p-8">
@@ -450,9 +352,6 @@ export default function Home() {
               <h2 className="mt-2 font-fraunces text-3xl font-semibold leading-[1.1] md:text-4xl">
                 Know photographers who would love this? Get paid to share it.
               </h2>
-              <p className="mt-3 text-white/80 leading-relaxed">
-                Get your own link, share it anywhere, and track every signup from your affiliate dashboard.
-              </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center md:flex-col md:items-stretch">
               <a
@@ -489,8 +388,7 @@ export default function Home() {
           <div className="mx-auto max-w-2xl px-6 py-24 text-center">
             <Wordmark className="text-5xl" />
             <p className="mt-8 text-lg text-ink leading-relaxed">
-              I built Camrhia because photographers deserve a calmer way to run their business.
-              One place for your work, your clients and your time. Try it for 14 days. If it
+              I built Camrhia so photographers can run their business with less stress. Try it for 14 days. If it
               gives you even one evening back, it was worth it.
             </p>
             <div className="mt-10">
