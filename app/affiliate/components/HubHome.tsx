@@ -36,7 +36,7 @@ export default function HubHome({ client }: { client?: SupabaseClient | null }) 
       <HubAnnouncements client={supabase} uid={uid} admin={admin} />
       <div className="flex gap-2 text-sm">
         {([['board', 'Message board'], ['posts', 'Posts']] as const).map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-5 py-2 transition ${tab === k ? 'text-white' : 'border-line text-ink hover:border-twilight'}`} style={tab === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
+          <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-6 py-2.5 text-sm font-medium transition ${tab === k ? 'text-white' : 'border-[#EBD9D1] bg-white/60 text-ink hover:border-twilight'}`} style={tab === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
             {label}
           </button>
         ))}

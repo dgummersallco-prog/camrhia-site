@@ -25,9 +25,9 @@ export const monthLabel = (ym: string) => MONTHS[Number(ym.slice(5, 7)) - 1] ?? 
 
 export function Tile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-xl border border-line bg-paper p-4">
+    <div className="rounded-2xl border border-[#EBD9D1] bg-[linear-gradient(160deg,#FFFCF9_0%,#F8EAE4_100%)] shadow-[0_1px_2px_rgba(60,30,30,0.04),0_14px_34px_-18px_rgba(120,60,60,0.22)] p-5">
       <p className="text-xs uppercase tracking-widest text-ink-soft">{label}</p>
-      <p className="mt-1 font-fraunces text-2xl text-ink">{value}</p>
+      <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{value}</p>
       {sub ? <p className="text-xs text-ink-soft mt-0.5">{sub}</p> : null}
     </div>
   )

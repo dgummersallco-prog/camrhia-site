@@ -71,7 +71,7 @@ export default function AffiliateShell({
   }
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col">
+    <div className="min-h-screen bg-paper bg-[radial-gradient(1100px_480px_at_75%_-8%,#F8EAE4_0%,transparent_65%)] flex flex-col">
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
           <Link href="/" className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors">
@@ -102,13 +102,14 @@ export default function AffiliateShell({
           </div>
         ) : null}
         <div>
-          <h1 className="font-fraunces text-3xl font-semibold text-ink">{title}</h1>
-          {subtitle ? <p className="mt-2 text-sm text-ink-soft max-w-2xl">{subtitle}</p> : null}
+          <h1 className="font-fraunces text-4xl font-semibold tracking-tight text-ink md:text-5xl">{title}</h1>
+          {subtitle ? <p className="mt-3 text-base text-ink-soft max-w-2xl">{subtitle}</p> : null}
+          <div className="mt-4 h-px w-16 bg-brass/60" />
         </div>
         {loading ? (
           <p className="text-sm text-ink-soft">Loading…</p>
         ) : affiliate && !affiliate.approved ? (
-          <div className="rounded-2xl border border-line bg-card p-6">
+          <div className="rounded-3xl border border-[#EBD9D1] bg-[linear-gradient(160deg,#FFFCF9_0%,#F8EAE4_100%)] shadow-[0_1px_2px_rgba(60,30,30,0.04),0_14px_34px_-18px_rgba(120,60,60,0.22)] p-6">
             <p className="font-medium text-ink">Your application is being reviewed</p>
             <p className="mt-2 text-sm text-ink-soft">Once you are approved, your referral link and earnings will show up here.</p>
           </div>
