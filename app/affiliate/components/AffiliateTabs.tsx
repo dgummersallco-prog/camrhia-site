@@ -51,7 +51,8 @@ export default function AffiliateTabs() {
 
   const tabs = admin
     ? [
-        { href: '/admin/hub', label: 'Team Hub' },
+        { href: '/admin/hub', label: 'Home' },
+        { href: '/admin/hub/team', label: 'Team Hub' },
         { href: '/admin/hub/pitch', label: 'Marketing HQ' },
         { href: '/admin/hub/boosted', label: 'Boosted posts' },
         { href: '/admin/hub/pay', label: 'Pay breakdown' },
