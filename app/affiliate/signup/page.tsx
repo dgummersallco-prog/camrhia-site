@@ -6,6 +6,8 @@ import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 import Wordmark from '@/app/components/Wordmark'
 
 const ROSE = '#A9545F'
+const SEATS = 15
+const SHOW_AFTER = 5
 const inputCls =
   'w-full rounded-xl border border-line bg-card px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition'
 
@@ -41,12 +43,20 @@ export default function AffiliateSignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+  const [taken, setTaken] = useState<number | null>(null)
 
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem('camrhia_recruit')
       if (saved) setTeamCode(saved)
     } catch {}
+  }, [])
+
+  useEffect(() => {
+    if (!supabase) return
+    supabase.rpc('founding_seats_taken').then(({ data }) => {
+      if (typeof data === 'number') setTaken(data)
+    })
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -84,6 +94,26 @@ export default function AffiliateSignupPage() {
     }
   }
 
+  const full = taken !== null && taken >= SEATS
+  const counting = taken !== null && taken >= SHOW_AFTER && !full
+  const left = taken === null ? SEATS : Math.max(SEATS - taken, 0)
+  const kicker = full
+    ? 'Founding seats are filled. Join the waitlist.'
+    : counting
+      ? `Only ${left} founding affiliate seats left. Then the offer closes.`
+      : 'Only 15 founding affiliate seats. Then the offer closes.'
+  const pill = full
+    ? 'Waitlist open. We will reach out if a seat opens.'
+    : counting
+      ? `${left} of 15 seats left. Free Camrhia for life. 30% every month.`
+      : '15 seats. Free Camrhia for life. 30% every month. Closing when they are gone.'
+  const ctaTitle = full
+    ? 'The Founding 15 is filled.'
+    : counting
+      ? `${left} seats left. When they are gone, they are gone.`
+      : '15 seats. When they are gone, they are gone.'
+  const claim = full ? 'Join the waitlist' : 'Claim my founding seat'
+
   const header = (
     <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
       <Link href="/" aria-label="Camrhia home"><Wordmark className="text-3xl" /></Link>
@@ -110,7 +140,7 @@ export default function AffiliateSignupPage() {
       <main>
         <section className="px-6 pb-16 pt-6 text-center" style={{ backgroundColor: ROSE }}>
           <div className="mx-auto max-w-3xl pt-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Only 15 founding affiliate seats. Then the offer closes.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">{kicker}</p>
             <h1 className="mt-4 font-fraunces text-5xl font-semibold leading-[1.05] text-white sm:text-6xl">
               Be one of the 15 who build Camrhia.
             </h1>
@@ -118,9 +148,9 @@ export default function AffiliateSignupPage() {
               Camrhia is the all-in-one studio app for photographers. We are signing 15 founding affiliates to put it in front of 5% of the market. You get Camrhia free for life and 30% of every subscription, every month, for as long as they stay. No cap.
             </p>
             <a href="#apply" className="mt-8 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>
-              Claim a founding seat
+              {full ? 'Join the waitlist' : 'Claim a founding seat'}
             </a>
-            <p className="mt-5 inline-block rounded-full bg-white/15 px-5 py-2 text-sm font-semibold text-white">15 seats. Free Camrhia for life. 30% every month. Closing when they are gone.</p>
+            <p className="mt-5 inline-block rounded-full bg-white/15 px-5 py-2 text-sm font-semibold text-white">{pill}</p>
           </div>
         </section>
 
@@ -225,11 +255,11 @@ export default function AffiliateSignupPage() {
         <section className="px-6 pb-12">
           <div className="mx-auto max-w-3xl rounded-3xl p-8 text-center text-white sm:p-10" style={{ backgroundColor: ROSE }}>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">The Founding 15</p>
-            <h2 className="mt-3 font-fraunces text-3xl font-semibold leading-tight sm:text-4xl">15 seats. When they are gone, they are gone.</h2>
+            <h2 className="mt-3 font-fraunces text-3xl font-semibold leading-tight sm:text-4xl">{ctaTitle}</h2>
             <p className="mx-auto mt-4 max-w-xl text-white/90">
               We are capping the founding offer at 15 affiliates. Founders lock in 30% every single month and a free Camrhia account for life. Once the 15 seats are filled, the founding offer closes.
             </p>
-            <a href="#apply" className="mt-6 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>Claim my founding seat</a>
+            <a href="#apply" className="mt-6 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>{claim}</a>
           </div>
         </section>
 
@@ -268,7 +298,7 @@ export default function AffiliateSignupPage() {
               {error && <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
               <button type="submit" disabled={loading} className="mt-2 w-full rounded-full py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: ROSE }}>
-                {loading ? 'Sending…' : 'Claim my founding seat'}
+                {loading ? 'Sending…' : claim}
               </button>
             </form>
           </div>
