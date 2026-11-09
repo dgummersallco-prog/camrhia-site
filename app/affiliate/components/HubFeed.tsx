@@ -314,9 +314,6 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
 
       <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
       {shown.map((p) => {
-        const pl = likes.filter((l) => l.post_id === p.id)
-        const liked = !!uid && pl.some((l) => l.user_id === uid)
-        const pc = comments.filter((c) => c.post_id === p.id)
         const mine = p.author_id === uid
         const ed = editing[p.id]
         const hasNums = p.views != null || p.ig_likes != null || p.shares != null || p.saves != null || p.signed != null
@@ -404,29 +401,6 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               </div>
             )}
 
-            <div className="mt-5 flex items-center gap-3 border-t border-line pt-4 text-sm">
-              <button onClick={() => toggleLike(p)} className={`rounded-full border px-4 py-1.5 transition ${liked ? 'font-semibold' : 'border-line text-ink-soft hover:text-ink'}`} style={liked ? { color: ROSE, borderColor: ROSE } : undefined}>
-                {liked ? '♥' : '♡'} {pl.length}
-              </button>
-              <button onClick={() => setOpen((o) => ({ ...o, [p.id]: !o[p.id] }))} className="rounded-full border border-line px-4 py-1.5 text-ink-soft transition hover:text-ink">
-                Comments {pc.length}
-              </button>
-            </div>
-            {open[p.id] && (
-              <div className="mt-4 space-y-3 border-t border-line pt-4">
-                {pc.map((c) => (
-                  <div key={c.id} className="text-sm">
-                    <p className="flex items-center gap-2 text-ink"><Avatar url={avatars[c.author_id]} name={c.author_name} size={22} /><span className="font-semibold">{c.author_name}</span> <span className="text-xs text-ink-soft">{ago(c.created_at)}</span></p>
-                    <p className="whitespace-pre-wrap text-ink-soft">{c.body}</p>
-                    {(admin || c.author_id === uid) && <button onClick={() => removeComment(c)} className="text-xs text-ink-soft hover:text-red-700">Delete</button>}
-                  </div>
-                ))}
-                <div className="flex gap-2">
-                  <input value={drafts[p.id] ?? ''} onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))} placeholder="Add a comment" maxLength={1000} className={field} />
-                  <button onClick={() => addComment(p)} className="rounded-full px-5 text-sm font-semibold text-white" style={{ backgroundColor: ROSE }}>Send</button>
-                </div>
-              </div>
-            )}
           </article>
         )
       })}
