@@ -76,47 +76,6 @@ export default function BillingPage() {
     loadProfile()
   }, [])
 
-  async function handleSubscribe(plan: PlanTier) {
-    if (!supabase) { setError('Service not configured.'); return }
-    setActionLoading(plan)
-    setError(null)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
-
-      const res = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email, userId: user.id, interval: billingInterval, plan }),
-      })
-      const data = await res.json()
-      if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not create checkout session.')
-      window.location.href = data.url
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
-      setActionLoading(null)
-    }
-  }
-
-  async function handleManage() {
-    if (!userId) return
-    setActionLoading(planTier)
-    setError(null)
-    try {
-      const res = await fetch('/api/create-portal-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      })
-      const data = await res.json()
-      if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not open billing portal.')
-      window.location.href = data.url
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
-      setActionLoading(null)
-    }
-  }
-
   if (pageState === 'loading') {
     return (
       <div className="min-h-screen bg-paper xl:pl-60">
@@ -163,29 +122,6 @@ export default function BillingPage() {
     const isDowngradeTarget = subscriptionActive && planTier === 'studio' && plan === 'solo'
     const isUpgradeTarget = subscriptionActive && planTier === 'solo' && plan === 'studio'
 
-    let buttonLabel: string
-    let onButtonClick: () => void
-    let buttonDisabled = false
-
-    if (isCurrentPlan) {
-      buttonLabel = 'Current plan'
-      onButtonClick = () => {}
-      buttonDisabled = true
-    } else if (isUpgradeTarget) {
-      buttonLabel = actionLoading === plan ? 'Opening portal…' : 'Upgrade →'
-      onButtonClick = handleManage
-    } else if (isDowngradeTarget) {
-      buttonLabel = actionLoading === plan ? 'Opening portal…' : 'Downgrade →'
-      onButtonClick = handleManage
-    } else {
-      buttonLabel = actionLoading === plan
-        ? 'Redirecting to checkout…'
-        : billingInterval === 'annual'
-          ? `Subscribe — ${annualPrice}/year →`
-          : `Subscribe — ${monthlyPrice}/month →`
-      onButtonClick = () => handleSubscribe(plan)
-    }
-
     return (
       <div className={`rounded-2xl bg-card border p-6 flex flex-col ${isCurrentPlan ? 'border-twilight' : 'border-line'}`}>
         <p className="font-mono text-xs tracking-widest uppercase text-brass mb-3">
@@ -222,18 +158,11 @@ export default function BillingPage() {
           </p>
         )}
 
-        <button
-          onClick={onButtonClick}
-          disabled={buttonDisabled || actionLoading !== null}
-          className={`w-full rounded-full py-3 text-sm font-semibold transition-colors disabled:opacity-50 ${
-            isCurrentPlan
-              ? 'border border-twilight text-twilight cursor-default'
-              : 'bg-twilight text-white hover:bg-twilight/90'
-          }`}
-          style={isCurrentPlan ? {} : { backgroundColor: 'var(--color-twilight)', color: '#ffffff' }}
-        >
-          {buttonLabel}
-        </button>
+        {isCurrentPlan ? (
+          <p className="w-full rounded-full border border-twilight py-3 text-center text-sm font-semibold text-twilight">Current plan</p>
+        ) : (
+          <p className="text-center text-sm text-ink-soft">Subscribe in the Camrhia app on your iPhone.</p>
+        )}
       </div>
     )
   }
@@ -243,11 +172,11 @@ export default function BillingPage() {
     status === 'comped'
       ? 'Your account is complimentary. Nothing to pay.'
       : status === 'past_due'
-        ? 'Your last payment did not go through. Update your payment method to keep your account active.'
+        ? 'Your last payment did not go through. Update your payment method in your iPhone Settings, under Subscriptions, to keep your account active.'
         : status === 'active'
-          ? `You are subscribed to the ${planTier === 'studio' ? 'Studio' : 'Photographer'} plan. Update your card, download invoices or cancel in the billing portal.`
+          ? `You are subscribed to the ${planTier === 'studio' ? 'Studio' : 'Photographer'} plan. To change or cancel, open Settings on your iPhone, tap your name, then Subscriptions.`
           : trialDaysLeft !== null && trialDaysLeft > 0
-            ? `Your free trial ends in ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'}. Subscribe to keep your galleries and sessions.`
+            ? `Your free trial ends in ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'}. Subscribe in the Camrhia app to keep your galleries and sessions.`
             : null
 
   if (status === 'comped') {
@@ -312,7 +241,7 @@ export default function BillingPage() {
           </h1>
           <p className="text-ink-soft text-sm mb-8">
             {subscriptionActive
-              ? 'Manage or change your subscription below.'
+              ? 'Subscriptions are managed through the App Store.'
               : 'Choose the plan that fits how you work.'}
           </p>
 
@@ -338,15 +267,6 @@ export default function BillingPage() {
           {bannerText && (
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-card px-5 py-4 text-sm">
               <p className="text-ink">{bannerText}</p>
-              {(status === 'active' || status === 'past_due') && (
-                <button
-                  onClick={handleManage}
-                  disabled={actionLoading !== null}
-                  className="shrink-0 rounded-full border border-twilight px-4 py-2 text-xs font-semibold text-twilight transition hover:bg-twilight/5 disabled:opacity-50"
-                >
-                  {actionLoading !== null ? 'Opening…' : 'Manage billing'}
-                </button>
-              )}
             </div>
           )}
 
@@ -362,7 +282,7 @@ export default function BillingPage() {
           </div>
 
           <p className="mt-8 text-center text-xs text-ink-soft">
-            Secure billing powered by Stripe.
+            Subscriptions are billed through the App Store.
           </p>
         </div>
       </main>
