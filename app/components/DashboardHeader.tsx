@@ -89,6 +89,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
   const [unread, setUnread] = useState(0)
   const [blocked, setBlocked] = useState(false)
   const [showTeam, setShowTeam] = useState(false)
+  const [isAffiliate, setIsAffiliate] = useState(false)
 
   useEffect(() => {
     async function run() {
@@ -191,6 +192,18 @@ export function DashboardHeader({ active }: { active: Tab }) {
     router.push('/login')
   }
 
+  useEffect(() => {
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const { data: aff } = await sb.from('affiliates').select('id').eq('id', data.session.user.id).maybeSingle()
+      if (aff) setIsAffiliate(true)
+    }
+    run()
+  }, [])
+
   const item = (it: { tab: Tab | 'affiliate'; href: string; label: string }, accent = false) => {
     const isActive = (COVERS[it.tab] ?? [it.tab]).includes(active)
     const isPro = it.tab === 'edit'
@@ -231,7 +244,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
       {g.label && <p className="mb-1.5 px-3.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-soft/70">{g.label}</p>}
       <div className="flex flex-col gap-1">
         {g.tabs.filter((t) => t !== 'team' || showTeam || active === 'team').map((t) => item(ITEMS.find((i) => i.tab === t)!))}
-        {g.label === 'Account' && item({ tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
+        {g.label === 'Account' && item(isAffiliate ? { tab: 'affiliate', href: '/affiliate/dashboard', label: 'Affiliate dashboard' } : { tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
       </div>
     </div>
   ))
