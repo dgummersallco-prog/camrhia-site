@@ -12,7 +12,6 @@ function AccountBody({ name }: { name: string | null }) {
   const [nameInput, setNameInput] = useState(name ?? '')
   const [saved, setSaved] = useState(name ?? '')
   const [busy, setBusy] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
@@ -23,8 +22,6 @@ function AccountBody({ name }: { name: string | null }) {
       if (!session) return
       setUid(session.user.id)
       setEmail(session.user.email ?? '')
-      const { data: adm } = await supabase.rpc('hub_is_admin')
-      setIsAdmin(adm === true)
       const { data } = await supabase.rpc('hub_avatars', { p_ids: [session.user.id] })
       setUrl((data as { user_id: string; avatar_url: string | null }[] | null)?.[0]?.avatar_url ?? null)
     })()
@@ -57,15 +54,13 @@ function AccountBody({ name }: { name: string | null }) {
           value={nameInput}
           onChange={(e) => setNameInput(e.target.value)}
           maxLength={60}
-          disabled={isAdmin}
           className="w-full rounded-xl border border-line bg-white px-4 py-3 text-ink outline-none focus:border-[#3A4A6B]"
         />
         {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
         {msg && <p className="mt-2 text-sm text-ink-soft">{msg}</p>}
-        {isAdmin && <p className="mt-2 text-sm text-ink-soft">Admin posts always show as Camrhia.</p>}
         <button
           onClick={saveName}
-          disabled={isAdmin || busy || !nameInput.trim() || nameInput.trim() === saved}
+          disabled={busy || !nameInput.trim() || nameInput.trim() === saved}
           className="mt-4 rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
           style={{ backgroundColor: '#3A4A6B' }}
         >
