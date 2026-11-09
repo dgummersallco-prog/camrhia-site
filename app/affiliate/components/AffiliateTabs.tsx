@@ -68,8 +68,8 @@ export default function AffiliateTabs() {
             href={t.href}
             className={
               active
-                ? 'rounded-full bg-twilight px-4 py-1.5 text-sm font-medium text-white shadow-md lg:rounded-xl lg:py-2.5'
-                : 'rounded-full border border-[#EBD9D1] bg-white/60 px-4 py-1.5 text-sm text-ink-soft transition hover:border-twilight hover:text-ink lg:rounded-xl lg:py-2.5'
+                ? 'rounded-full bg-[#3A4A6B] px-4 py-1.5 text-sm font-medium text-white shadow-md lg:rounded-xl lg:py-2.5'
+                : 'rounded-full border border-[#D5DCEA] bg-white/60 px-4 py-1.5 text-sm text-ink-soft transition hover:border-[#3A4A6B] hover:text-ink lg:rounded-xl lg:py-2.5'
             }
           >
             {t.label}

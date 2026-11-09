@@ -6,8 +6,8 @@ import { Avatar, fetchAvatars } from './Avatar'
 
 type Ann = { id: string; kind: string; title: string | null; body: string; author_id: string; author_name: string; created_at: string }
 
-const ROSE = '#A9545F'
-const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight'
+const ROSE = '#3A4A6B'
+const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[#3A4A6B]/25 focus:border-[#3A4A6B]'
 
 function ago(iso: string) {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000))
@@ -65,7 +65,7 @@ export default function HubAnnouncements({ client, admin }: { client: SupabaseCl
           <p className="mb-3 font-fraunces text-lg font-semibold text-ink">Post to the whole team</p>
           <div className="mb-3 flex gap-2 text-sm">
             {([['announcement', 'Announcement'], ['shoutout', 'Shoutout']] as const).map(([k, label]) => (
-              <button key={k} type="button" onClick={() => setKind(k)} className={`rounded-full border px-4 py-1.5 transition ${kind === k ? 'text-white' : 'border-line text-ink hover:border-twilight'}`} style={kind === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
+              <button key={k} type="button" onClick={() => setKind(k)} className={`rounded-full border px-4 py-1.5 transition ${kind === k ? 'text-white' : 'border-line text-ink hover:border-[#3A4A6B]'}`} style={kind === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
                 {label}
               </button>
             ))}
@@ -85,7 +85,7 @@ export default function HubAnnouncements({ client, admin }: { client: SupabaseCl
         {items.map((a) => {
           const shout = a.kind === 'shoutout'
           return (
-            <article key={a.id} className="rounded-2xl border p-5" style={shout ? { background: 'linear-gradient(135deg, #FBF3EE 0%, #F3DDDD 100%)', borderColor: ROSE } : { backgroundColor: '#fff', borderColor: ROSE }}>
+            <article key={a.id} className="rounded-2xl border p-5" style={shout ? { background: 'linear-gradient(135deg, #F4F6FA 0%, #DCE3F0 100%)', borderColor: ROSE } : { backgroundColor: '#fff', borderColor: ROSE }}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <Avatar url={avatars[a.author_id]} name={a.author_name} size={32} />

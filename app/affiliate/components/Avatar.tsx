@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const ROSE = '#A9545F'
+const ROSE = '#3A4A6B'
 
 export function Avatar({ url, name, size = 36 }: { url?: string | null; name?: string | null; size?: number }) {
   const initial = (name || '?').trim().charAt(0).toUpperCase()

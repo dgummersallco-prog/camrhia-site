@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Avatar, fetchAvatars } from './Avatar'
 
-type Thread = { id: string; author_id: string; author_name: string; body: string; created_at: string }
+type Thread = { id: string; author_id: string; author_name: string; body: string; created_at: string; pinned?: boolean }
 type Reply = { id: string; thread_id: string; author_id: string; author_name: string; body: string; created_at: string }
 
-const ROSE = '#A9545F'
-const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight'
+const ROSE = '#3A4A6B'
+const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[#3A4A6B]/25 focus:border-[#3A4A6B]'
 
 function ago(iso: string) {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000))
@@ -32,7 +32,7 @@ export default function HubBoard({ client, uid, admin }: { client: SupabaseClien
 
   const load = useCallback(async () => {
     if (!client) return
-    const { data: t } = await client.from('hub_threads').select('*').order('created_at', { ascending: false }).limit(100)
+    const { data: t } = await client.from('hub_threads').select('*').order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(100)
     const tl = (t ?? []) as Thread[]
     setThreads(tl)
     let rl: Reply[] = []
@@ -66,6 +66,11 @@ export default function HubBoard({ client, uid, admin }: { client: SupabaseClien
     load()
   }
 
+  async function togglePin(t: Thread) {
+    if (!client) return
+    await client.from('hub_threads').update({ pinned: !t.pinned }).eq('id', t.id)
+    load()
+  }
   async function removeThread(t: Thread) {
     if (!client || !window.confirm('Delete this message and its replies?')) return
     await client.from('hub_threads').delete().eq('id', t.id)
@@ -101,16 +106,19 @@ export default function HubBoard({ client, uid, admin }: { client: SupabaseClien
       {threads.map((t) => {
         const rs = replies.filter((r) => r.thread_id === t.id)
         return (
-          <article key={t.id} className="rounded-2xl border border-line bg-card p-5">
+          <article key={t.id} className="rounded-2xl border border-line bg-card p-5" style={t.pinned ? { borderColor: ROSE } : undefined}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Avatar url={avatars[t.author_id]} name={t.author_name} size={40} />
                 <div>
-                  <p className="text-sm font-semibold text-ink">{t.author_name}</p>
+                  <p className="text-sm font-semibold text-ink">{t.author_name}{t.pinned && <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white" style={{ backgroundColor: ROSE }}>Pinned</span>}</p>
                   <p className="text-xs text-ink-soft">{ago(t.created_at)}</p>
                 </div>
               </div>
-              {(admin || t.author_id === uid) && <button onClick={() => removeThread(t)} className="text-xs text-ink-soft hover:text-red-700">Delete</button>}
+              <div className="flex gap-3 text-xs text-ink-soft">
+                {admin && <button onClick={() => togglePin(t)} className="hover:text-ink">{t.pinned ? 'Unpin' : 'Pin'}</button>}
+                {(admin || t.author_id === uid) && <button onClick={() => removeThread(t)} className="hover:text-red-700">Delete</button>}
+              </div>
             </div>
             <p className="mt-3 whitespace-pre-wrap text-sm text-ink">{t.body}</p>
 

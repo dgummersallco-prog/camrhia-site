@@ -6,15 +6,13 @@ import { supabaseAffiliate as defaultClient } from '@/lib/supabaseAffiliate'
 import HubFeed from './HubFeed'
 import HubAnnouncements from './HubAnnouncements'
 import HubBoard from './HubBoard'
-
-const ROSE = '#A9545F'
+import HubTop from './HubTop'
 
 export default function HubHome({ client }: { client?: SupabaseClient | null }) {
   const supabase = client ?? defaultClient
   const [uid, setUid] = useState<string | null>(null)
   const [ok, setOk] = useState<boolean | null>(null)
   const [admin, setAdmin] = useState(false)
-  const [tab, setTab] = useState<'board' | 'posts'>('board')
 
   useEffect(() => {
     ;(async () => {
@@ -32,16 +30,19 @@ export default function HubHome({ client }: { client?: SupabaseClient | null }) 
   if (!ok || !uid) return <HubFeed client={client} />
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <HubAnnouncements client={supabase} uid={uid} admin={admin} />
-      <div className="flex gap-2 text-sm">
-        {([['board', 'Message board'], ['posts', 'Posts']] as const).map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)} className={`rounded-full border px-6 py-2.5 text-sm font-medium transition ${tab === k ? 'text-white' : 'border-[#EBD9D1] bg-white/60 text-ink hover:border-twilight'}`} style={tab === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
-            {label}
-          </button>
-        ))}
-      </div>
-      {tab === 'board' ? <HubBoard client={supabase} uid={uid} admin={admin} /> : <HubFeed client={client} />}
+      <HubTop client={supabase} />
+      <section>
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-4 font-fraunces text-2xl font-semibold text-ink">Message board</h2>
+        </div>
+        <HubBoard client={supabase} uid={uid} admin={admin} />
+      </section>
+      <section>
+        <h2 className="mb-4 font-fraunces text-2xl font-semibold text-ink">Posts</h2>
+        <HubFeed client={client} />
+      </section>
     </div>
   )
 }

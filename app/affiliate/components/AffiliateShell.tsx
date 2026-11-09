@@ -71,10 +71,10 @@ export default function AffiliateShell({
   }
 
   return (
-    <div className="min-h-screen bg-paper bg-[radial-gradient(1100px_480px_at_75%_-8%,#F8EAE4_0%,transparent_65%)] flex flex-col">
+    <div className="min-h-screen bg-paper bg-[radial-gradient(1100px_480px_at_75%_-8%,#E9EEF7_0%,transparent_65%)] flex flex-col">
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
-          <Link href="/" className="font-fraunces text-lg font-semibold text-ink hover:text-twilight transition-colors">
+          <Link href="/" className="font-fraunces text-lg font-semibold text-ink hover:text-[#3A4A6B] transition-colors">
             <Wordmark className="text-3xl" /> <span className="text-ink-soft font-normal">/ affiliate</span>
           </Link>
           <div className="flex items-center gap-4">
@@ -95,7 +95,7 @@ export default function AffiliateShell({
               <span className="rounded-full bg-brass/15 text-brass px-3 py-1 font-medium">Master partner</span>
             ) : null}
             {teamName ? (
-              <span className="rounded-full bg-twilight/10 text-twilight px-3 py-1 font-medium">
+              <span className="rounded-full bg-[#3A4A6B]/10 text-[#3A4A6B] px-3 py-1 font-medium">
                 On {teamName}&apos;s team
               </span>
             ) : null}
@@ -109,7 +109,7 @@ export default function AffiliateShell({
         {loading ? (
           <p className="text-sm text-ink-soft">Loading…</p>
         ) : affiliate && !affiliate.approved ? (
-          <div className="rounded-3xl border border-[#EBD9D1] bg-[linear-gradient(160deg,#FFFCF9_0%,#F8EAE4_100%)] shadow-[0_1px_2px_rgba(60,30,30,0.04),0_14px_34px_-18px_rgba(120,60,60,0.22)] p-6">
+          <div className="rounded-3xl border border-[#D5DCEA] bg-[linear-gradient(160deg,#FCFDFE_0%,#E9EEF7_100%)] shadow-[0_1px_2px_rgba(60,30,30,0.04),0_14px_34px_-18px_rgba(120,60,60,0.22)] p-6">
             <p className="font-medium text-ink">Your application is being reviewed</p>
             <p className="mt-2 text-sm text-ink-soft">Once you are approved, your referral link and earnings will show up here.</p>
           </div>
@@ -117,7 +117,7 @@ export default function AffiliateShell({
           children(affiliate)
         ) : (
           <p className="text-sm text-ink-soft">
-            No affiliate account found. <Link href="/affiliate/dashboard" className="text-twilight underline">Go to Overview</Link> to activate it.
+            No affiliate account found. <Link href="/affiliate/dashboard" className="text-[#3A4A6B] underline">Go to Overview</Link> to activate it.
           </p>
         )}
         </div>

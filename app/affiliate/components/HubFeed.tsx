@@ -13,9 +13,9 @@ type Comment = { id: string; post_id: string; author_id: string; author_name: st
 type Like = { post_id: string; user_id: string }
 type Nums = { views: string; ig_likes: string; shares: string; saves: string; signed: string }
 
-const ROSE = '#A9545F'
+const ROSE = '#3A4A6B'
 const PLATFORMS = ['Instagram', 'TikTok', 'YouTube']
-const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight'
+const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[#3A4A6B]/25 focus:border-[#3A4A6B]'
 
 function ago(iso: string) {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000))
@@ -92,6 +92,11 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   }, [supabase])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    const t = setInterval(() => { load() }, 30000)
+    return () => clearInterval(t)
+  }, [load])
 
   useEffect(() => {
     const sb = supabase
@@ -223,7 +228,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         )}
         <div className="mb-3 flex flex-wrap gap-2">
           {PLATFORMS.map((pl) => (
-            <button key={pl} type="button" onClick={() => setPlatform(platform === pl ? '' : pl)} className={`rounded-full border px-4 py-1.5 text-sm transition ${platform === pl ? 'text-white' : 'border-line text-ink hover:border-twilight'}`} style={platform === pl ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
+            <button key={pl} type="button" onClick={() => setPlatform(platform === pl ? '' : pl)} className={`rounded-full border px-4 py-1.5 text-sm transition ${platform === pl ? 'text-white' : 'border-line text-ink hover:border-[#3A4A6B]'}`} style={platform === pl ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
               {pl}
             </button>
           ))}
@@ -241,7 +246,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
       {posts.length > 1 && (
         <div className="flex gap-2 text-sm">
           {([['new', 'Newest'], ['signed', 'Most signed']] as const).map(([k, label]) => (
-            <button key={k} onClick={() => setSort(k)} className={`rounded-full border px-4 py-1.5 transition ${sort === k ? 'text-white' : 'border-line text-ink hover:border-twilight'}`} style={sort === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
+            <button key={k} onClick={() => setSort(k)} className={`rounded-full border px-4 py-1.5 transition ${sort === k ? 'text-white' : 'border-line text-ink hover:border-[#3A4A6B]'}`} style={sort === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
               {label}
             </button>
           ))}
@@ -321,7 +326,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
                   {([['signed', 'Signed'], ['views', 'Views'], ['ig_likes', 'Likes'], ['shares', 'Shares'], ['saves', 'Saves']] as const).map(([k, label]) => (
                     <label key={k} className="block text-[10px] uppercase tracking-wider text-ink-soft">
                       {label}
-                      <input inputMode="numeric" value={ed[k]} onChange={(e) => setEditing((s) => ({ ...s, [p.id]: { ...ed, [k]: e.target.value } }))} className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-twilight" />
+                      <input inputMode="numeric" value={ed[k]} onChange={(e) => setEditing((s) => ({ ...s, [p.id]: { ...ed, [k]: e.target.value } }))} className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-[#3A4A6B]" />
                     </label>
                   ))}
                 </div>
