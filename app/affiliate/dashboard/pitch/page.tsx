@@ -734,86 +734,139 @@ function ScriptsCompact({ a }: { a: ShellAffiliate }) {
   )
 }
 
-const AUTHORITY_HOOKS: string[] = [
-  "I've shot [number] [weddings / sessions]. Here's the one thing I'd never run my business without again.",
-  "After [number] years behind the camera, this is the part of the business nobody warns you about.",
-  "Here's what I tell every photographer who asks how I stay organized.",
-  "I lost [number] hours chasing payments. Here's how I stopped.",
-  "The biggest mistake I made in my first year of photography:",
-  "If I started my photography business over today, I'd set this up first.",
-  "Most photographers I know are great at shooting and stuck on the paperwork. Here's the fix.",
-  "I've worked with [number] clients. This is the question I ask every one of them before the shoot.",
-  "Still running contracts through DMs? Here's the tool I'd recommend instead.",
-  "After [number] bookings, here's what I've learned about getting clients to pay on time.",
-  "Here's the 3-minute setup that took the stress out of my client onboarding.",
-  "Every photographer has heard this one: \"Wait, what time is the shoot again?\" Here's how I stopped hearing it.",
-  "I've been a photographer for [number] years. Here's why I finally stopped using spreadsheets.",
-  "Nobody taught me the business side of photography. Here's what I wish I knew.",
-  "This is what a professional client experience looks like, from the first message to the final gallery.",
-  "Here's how I handle contracts so I never have an awkward conversation about money.",
-  "Three things every photographer should have in place before their next booking.",
-  "I get asked about my workflow every week. Here's the real answer.",
-  "What [number] [weddings / sessions] taught me about running a calm business.",
-  "If you've booked [number]+ clients, you've felt this problem.",
-  "The difference between a hobby and a business isn't your camera. It's this.",
-  "Here's what I check before I say yes to any new booking.",
-  "I used to dread sending invoices. Here's what changed.",
-  "Quick lesson from a [number]-year photographer: your website is your first impression.",
-  "How you handle the first reply decides whether they book. Here's what I do.",
-  "I'm [your name], a [type] photographer, and this is the system I trust with my business.",
-  "The advice I give every photographer who's thinking about going full-time.",
-  "Why clients trust me before we ever meet. (It's not my portfolio.)",
-  "What I'd tell my younger self about contracts.",
-  "I've seen what happens when photographers skip the timeline. Here's how I avoid it.",
-  "A client told me \"[what they actually said].\" Here's what I do differently.",
-  "Here's a behind-the-scenes look at how I run my photography business.",
-  "I keep every client in the loop without a single long text thread. Here's how.",
-  "What nobody tells you about busy season, and how I prepare for it.",
-  "If I had to delete every app except one, this is the one I'd keep.",
-  "I moved [number] things into one place. Here's what happened to my stress.",
-  "The most underrated skill in photography isn't editing.",
-  "Your clients judge your business in the first five minutes. Here's what they see.",
-  "Photographers ask me how I stay booked. This is part of the answer.",
-  "After [number] seasons, these are the habits that actually kept me sane.",
-  "This is how I make sure every client knows exactly what happens next.",
-  "Here's what almost burned me out, and what actually helped.",
-  "If your business lives in your inbox, read this.",
-  "My exact checklist from \"yes, I'll book you\" to \"here's your gallery.\"",
-  "What I learned from my hardest client experience, and the system I built after.",
-  "The photographers I respect most all do this one thing.",
-  "Here's why I recommend Camrhia, and who it's not for.",
-  "Three questions to ask yourself before your next busy season.",
-  "I'm not a business guru. I'm a photographer who found a better way to run things.",
-  "I've tried a lot of tools. Here's the one I actually kept using.",
+type HookSet = { title: string; why: string; hooks: string[] }
+
+const HOOK_SETS: HookSet[] = [
+  {
+    title: "Authority",
+    why: "People listen to people who have done the thing. Open with what you have done or learned and they trust the rest. Only claim experience you really have.",
+    hooks: [
+      "I've shot [number] [weddings / sessions]. Here's the one thing I'd never run my business without again.",
+      "After [number] years behind the camera, this is the part of the business nobody warns you about.",
+      "If I started my photography business over today, I'd set this up first.",
+      "I've worked with [number] clients. This is the question I ask every one of them before the shoot.",
+      "Here's what I tell every photographer who asks how I stay organized.",
+      "I'm [your name], a [type] photographer, and this is the system I trust with my business.",
+      "I've tried a lot of tools. Here's the one I actually kept using.",
+    ],
+  },
+  {
+    title: "Loss Aversion",
+    why: "People hate losing more than they like winning. Show what photographers are losing right now.",
+    hooks: [
+      "Every weekend you spend chasing a late payment is a weekend you didn't spend shooting.",
+      "You could be losing bookings before you even know they were there.",
+      "Every hour you spend retyping the same client details is an hour you don't get back.",
+      "An unsigned contract can cost you far more than the session is worth.",
+      "A client who can't find your timeline is a client who texts you at 10pm.",
+      "How many leads have slipped away because your reply came too late?",
+      "Your best photos are sitting on your phone doing nothing for your business.",
+    ],
+  },
+  {
+    title: "Social Proof",
+    why: "People follow the crowd. Use real names and real results, never made-up ones.",
+    hooks: [
+      "[Number] photographers I know have moved their business into one app.",
+      "What [Name] said after her first week on Camrhia:",
+      "I just got my first Camrhia payout. [Show a screenshot.]",
+      "More photographers are leaving spreadsheets and DMs behind. Here's why.",
+      "[Name] told me she got her weekends back. Here's what she changed.",
+      "I asked [number] photographers what they hate most about the business side. The answers were all the same.",
+    ],
+  },
+  {
+    title: "Scarcity",
+    why: "Use real scarcity only: a photographer's time and weekends are limited, and that is true.",
+    hooks: [
+      "You only get so many weekends a year. Don't spend them on paperwork.",
+      "Your calendar fills up. Your system shouldn't fall behind.",
+      "Busy season is coming. Set this up before it hits, not in the middle of it.",
+      "There are only [number] open dates left this season. Here's how I make sure none of them slip through the cracks.",
+      "You only have so many hours. Here's where I stopped spending mine.",
+      "The best time to fix your booking system is before your next client asks for it.",
+    ],
+  },
+  {
+    title: "Identity",
+    why: "People act like the person they see themselves as. Speak to the pro they want to be.",
+    hooks: [
+      "Professional photographers don't run their business out of their DMs.",
+      "You're not a hobbyist anymore. Your business shouldn't look like one.",
+      "The photographers who stay booked are the organized ones.",
+      "If you take your photography seriously, your client experience should too.",
+      "Be the photographer clients tell their friends about.",
+      "Creative on the outside, organized on the inside. That's how I run my business.",
+    ],
+  },
+  {
+    title: "Reciprocity",
+    why: "Give something useful for free first. People want to give back.",
+    hooks: [
+      "Free tip: send your client the timeline before the day, not the morning of.",
+      "Here's my free [checklist / tip] for your next session.",
+      "I'll help you set up your first booking, for free. Comment 'setup'.",
+      "Steal this: the exact message I send after every booking.",
+      "Here's what I wish someone had told me about contracts. No catch.",
+      "Three free tips to keep your clients in the loop without extra work.",
+    ],
+  },
+  {
+    title: "Framing",
+    why: "The same price lands differently depending on how you say it.",
+    hooks: [
+      "$59.99 a month is about $2 a day.",
+      "Camrhia costs less than [one hour of your session rate].",
+      "It's not another app to manage. It's where your whole business lives.",
+      "Think of it as time back, not another monthly bill.",
+      "What's your weekend worth? Chasing paperwork is costing you some of it.",
+      "One subscription instead of [number] tools. Here's what I replaced.",
+    ],
+  },
+  {
+    title: "Commitment",
+    why: "A small yes comes first. Make the first step tiny and risk free.",
+    hooks: [
+      "Don't switch your whole business. Just try it on one booking.",
+      "Step one is a free 14-day trial. That's it.",
+      "Want the link? Just comment 'yes'.",
+      "Try it on your next client, and keep what works.",
+      "Start small: put one contract in Camrhia this week.",
+      "No big decision today. Just see if it makes your next booking easier.",
+    ],
+  },
 ]
 
 function HookBank() {
   const [copied, setCopied] = useState<string | null>(null)
   return (
-    <div className="space-y-6">
-      <section className="space-y-4">
-        <div>
-          <h2 className="font-fraunces text-3xl font-semibold text-ink">Authority</h2>
-          <p className="mt-1 max-w-2xl text-sm text-ink-soft">
-            People listen to people who have done the thing. When your first line says what you have done or learned, they trust the rest before you say it. Fill in anything{' '}
-            <span className="rounded bg-brass/20 px-1 text-brass font-medium">[in brackets]</span> with something real, and only claim experience you actually have.
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {AUTHORITY_HOOKS.map((h, i) => {
-            const id = `hook-${i}`
-            return (
-              <div key={id} className="flex flex-col rounded-2xl border border-line bg-card p-5">
-                <p className="font-mono text-[10px] tracking-widest uppercase text-[#3A4A6B]">Hook {i + 1}</p>
-                <p className="mt-2 text-sm leading-relaxed text-ink"><Highlight text={h} /></p>
-                <div className="mt-auto pt-5">
-                  <CopyButton text={h} id={id} copied={copied} setCopied={setCopied} />
+    <div className="space-y-12">
+      <p className="max-w-2xl text-sm text-ink-soft">
+        A hook is the first line of your post. Pick one, tap Copy, then add the rest. Fill in anything{' '}
+        <span className="rounded bg-brass/20 px-1 text-brass font-medium">[in brackets]</span> with something real, and only post what is true.
+      </p>
+      {HOOK_SETS.map((set, si) => (
+        <section key={set.title} className="space-y-4">
+          <div>
+            <h2 className="font-fraunces text-3xl font-semibold text-ink">{set.title}</h2>
+            <p className="mt-1 text-sm text-ink-soft">{set.why}</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {set.hooks.map((h, i) => {
+              const id = `hook-${si}-${i}`
+              return (
+                <div key={id} className="flex flex-col rounded-2xl border border-line bg-card p-5">
+                  <p className="font-mono text-[10px] tracking-widest uppercase text-[#3A4A6B]">Hook</p>
+                  <p className="mt-2 text-sm leading-relaxed text-ink"><Highlight text={h} /></p>
+                  <div className="mt-auto pt-5">
+                    <CopyButton text={h} id={id} copied={copied} setCopied={setCopied} />
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
+              )
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   )
 }

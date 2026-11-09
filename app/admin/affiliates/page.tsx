@@ -35,6 +35,8 @@ export default function AdminAffiliatesPage() {
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [apps, setApps] = useState<App[]>([])
+  const [pay, setPay] = useState<Record<string, { m: string | null; e: string | null }>>({})
+  const [docs, setDocs] = useState<Record<string, { file_path: string; verified_at: string | null }>>({})
 
   useEffect(() => {
     async function init() {
@@ -74,6 +76,18 @@ export default function AdminAffiliatesPage() {
       if (!res.ok) throw new Error(json.error ?? 'Failed to load')
       setRows(json.rows ?? [])
       setApps(json.applications ?? [])
+      if (supabase) {
+        const [{ data: af }, { data: dc }] = await Promise.all([
+          supabase.from('affiliates').select('id, payout_method, payout_email'),
+          supabase.from('affiliate_tax_docs').select('affiliate_id, file_path, verified_at'),
+        ])
+        const pm: Record<string, { m: string | null; e: string | null }> = {}
+        for (const x of (af ?? []) as { id: string; payout_method: string | null; payout_email: string | null }[]) pm[x.id] = { m: x.payout_method, e: x.payout_email }
+        setPay(pm)
+        const dm: Record<string, { file_path: string; verified_at: string | null }> = {}
+        for (const x of (dc ?? []) as { affiliate_id: string; file_path: string; verified_at: string | null }[]) dm[x.affiliate_id] = { file_path: x.file_path, verified_at: x.verified_at }
+        setDocs(dm)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
@@ -154,6 +168,20 @@ export default function AdminAffiliatesPage() {
     }
   }
 
+  async function viewW9(path: string) {
+    if (!supabase) return
+    const { data, error: e } = await supabase.storage.from('affiliate-tax').createSignedUrl(path, 120)
+    if (e || !data?.signedUrl) { setError(e?.message ?? 'Could not open the file'); return }
+    window.open(data.signedUrl, '_blank')
+  }
+
+  async function verifyW9(id: string) {
+    if (!supabase) return
+    const { error: e } = await supabase.from('affiliate_tax_docs').update({ verified_at: new Date().toISOString() }).eq('affiliate_id', id)
+    if (e) { setError(e.message); return }
+    await load()
+  }
+
   async function handleSignOut() {
     if (!supabase) return
     await supabase.auth.signOut()
@@ -228,6 +256,11 @@ export default function AdminAffiliatesPage() {
                 <p className="mt-1 text-xs text-ink-soft">
                   Code {r.referral_code} · {r.active_referrals} active / {r.total_referrals} referrals
                   {r.recruited_by ? ` · recruited by ${r.recruited_by}` : ''}
+                </p>
+                <p className="mt-1 text-xs text-ink-soft">
+                  Payout: {pay[r.id]?.m ? `${pay[r.id].m}${pay[r.id].e ? ' · ' + pay[r.id].e : ''}` : 'not set'} · W-9: {docs[r.id] ? (docs[r.id].verified_at ? 'verified' : 'uploaded') : 'not received'}
+                  {docs[r.id] ? <button onClick={() => viewW9(docs[r.id].file_path)} className="ml-2 underline">View</button> : null}
+                  {docs[r.id] && !docs[r.id].verified_at ? <button onClick={() => verifyW9(r.id)} className="ml-2 underline">Mark verified</button> : null}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
