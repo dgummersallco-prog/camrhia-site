@@ -417,7 +417,7 @@ export default function DashboardPage() {
               <section className={`${card} mt-6`}>
                 <div className="mb-3 flex items-start justify-between gap-4">
                   <div>
-                    <p className="font-fraunces text-xl font-semibold text-ink">Get your studio set up</p>
+                    <p className="font-fraunces text-2xl font-semibold text-ink">Get your studio set up</p>
                     <p className="text-xs text-ink-soft">{doneCount} of {steps.length} done</p>
                   </div>
                   <button
@@ -454,7 +454,7 @@ export default function DashboardPage() {
                     return (
                       <li key={st.label}>
                         {st.href && !st.done ? (
-                          <Link href={st.href} className="flex gap-3 rounded-xl p-2 hover:bg-paper">{inner}</Link>
+                          <Link href={st.href} className="flex gap-3 rounded-xl p-2 transition hover:bg-white/70">{inner}</Link>
                         ) : (
                           <div className="flex gap-3 p-2">{inner}</div>
                         )}
@@ -468,23 +468,23 @@ export default function DashboardPage() {
             {/* Money */}
             <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
               <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Collected this month</p>
-                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{usd(collectedMonth)}</p>
+                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Collected this month</p>
+                <p className="mt-2 font-fraunces text-4xl font-semibold tracking-tight text-ink">{usd(collectedMonth)}</p>
                 <p className="mt-1 text-xs text-ink-soft">{usd(collectedYear)} so far in {yr}</p>
               </div>
               <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Outstanding</p>
-                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{usd(outstanding)}</p>
+                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Outstanding</p>
+                <p className="mt-2 font-fraunces text-4xl font-semibold tracking-tight text-ink">{usd(outstanding)}</p>
                 <p className={`mt-1 text-xs ${overdueAmt > 0 ? 'text-red-700' : 'text-ink-soft'}`}>{overdueAmt > 0 ? `${usd(overdueAmt)} overdue` : 'Nothing overdue'}</p>
               </div>
               <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Coming in</p>
-                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{usd(comingIn)}</p>
+                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Coming in</p>
+                <p className="mt-2 font-fraunces text-4xl font-semibold tracking-tight text-ink">{usd(comingIn)}</p>
                 <p className="mt-1 text-xs text-ink-soft">Due in the next 30 days</p>
               </div>
               <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Average per session</p>
-                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{paidSessions > 0 ? usd(collectedAll / paidSessions) : '—'}</p>
+                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Average per session</p>
+                <p className="mt-2 font-fraunces text-4xl font-semibold tracking-tight text-ink">{paidSessions > 0 ? usd(collectedAll / paidSessions) : '—'}</p>
                 <p className="mt-1 text-xs text-ink-soft">{paidSessions > 0 ? `Across ${paidSessions} paid session${paidSessions === 1 ? '' : 's'}` : 'Shows once a payment is marked paid'}</p>
               </div>
             </div>
@@ -492,23 +492,23 @@ export default function DashboardPage() {
             {/* Pipeline */}
             <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
               <Link href="/messages" className={tile}>
-                <span className="text-xs uppercase tracking-wider text-ink-soft">Inquiries waiting</span>
-                <span className={`font-fraunces text-3xl font-semibold ${inq.waiting > 0 ? 'text-brass' : 'text-ink'}`}>{inq.waiting}</span>
+                <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Inquiries waiting</span>
+                <span className={`font-fraunces text-4xl font-semibold tracking-tight ${inq.waiting > 0 ? 'text-brass' : 'text-ink'}`}>{inq.waiting}</span>
                 <span className="text-xs text-ink-soft">{inq.waiting > 0 ? 'Waiting for your reply' : 'All answered'}</span>
               </Link>
               <Link href="/contracts" className={tile}>
-                <span className="text-xs uppercase tracking-wider text-ink-soft">Contracts to sign</span>
-                <span className={`font-fraunces text-3xl font-semibold ${unsigned.length > 0 ? 'text-brass' : 'text-ink'}`}>{unsigned.length}</span>
+                <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Contracts to sign</span>
+                <span className={`font-fraunces text-4xl font-semibold tracking-tight ${unsigned.length > 0 ? 'text-brass' : 'text-ink'}`}>{unsigned.length}</span>
                 <span className="text-xs text-ink-soft">{unsigned.length > 0 ? 'Sent, waiting on clients' : 'Nothing pending'}</span>
               </Link>
               <Link href="/galleries" className={tile}>
-                <span className="text-xs uppercase tracking-wider text-ink-soft">Galleries to deliver</span>
-                <span className={`font-fraunces text-3xl font-semibold ${dueGalleries.length > 0 ? 'text-brass' : 'text-ink'}`}>{dueGalleries.length}</span>
+                <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Galleries to deliver</span>
+                <span className={`font-fraunces text-4xl font-semibold tracking-tight ${dueGalleries.length > 0 ? 'text-brass' : 'text-ink'}`}>{dueGalleries.length}</span>
                 <span className="text-xs text-ink-soft">{dueGalleries.length > 0 ? 'Due soon or overdue' : 'On track'}</span>
               </Link>
               <Link href="/payments" className={tile}>
-                <span className="text-xs uppercase tracking-wider text-ink-soft">Balances owed</span>
-                <span className={`font-fraunces text-3xl font-semibold ${owed.length > 0 ? 'text-brass' : 'text-ink'}`}>{owed.length}</span>
+                <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Balances owed</span>
+                <span className={`font-fraunces text-4xl font-semibold tracking-tight ${owed.length > 0 ? 'text-brass' : 'text-ink'}`}>{owed.length}</span>
                 <span className="text-xs text-ink-soft">{owed.length > 0 ? 'Past the shoot date' : 'Nothing owed'}</span>
               </Link>
             </div>
@@ -516,7 +516,7 @@ export default function DashboardPage() {
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
               {/* Activity */}
               <section className={card}>
-                <p className="mb-4 font-fraunces text-xl font-semibold text-ink">Recent client activity</p>
+                <p className="mb-4 font-fraunces text-2xl font-semibold text-ink">Recent client activity</p>
                 {activity.length === 0 ? (
                   <p className="text-sm text-ink-soft">
                     When clients heart photos in your galleries, you will see it here.
@@ -543,7 +543,7 @@ export default function DashboardPage() {
               {/* Storage */}
               <section className={card}>
                 <div className="mb-2 flex items-center justify-between gap-4">
-                  <p className="font-fraunces text-xl font-semibold text-ink">Storage</p>
+                  <p className="font-fraunces text-2xl font-semibold text-ink">Storage</p>
                   <Link href="/storage" className="text-sm font-medium text-twilight hover:underline">Manage storage →</Link>
                 </div>
                 {Number.isFinite(limitBytes) && limitBytes > 0 ? (
@@ -563,18 +563,18 @@ export default function DashboardPage() {
             {/* Your year */}
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
               <div className={card}>
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Sessions in {yr}</p>
-                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{sessionsThisYear}</p>
+                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Sessions in {yr}</p>
+                <p className="mt-2 font-fraunces text-4xl font-semibold tracking-tight text-ink">{sessionsThisYear}</p>
                 <p className="mt-1 text-xs text-ink-soft">Booked this year</p>
               </div>
               <div className={card}>
-                <div className="flex items-center gap-1.5"><p className="text-xs uppercase tracking-wider text-ink-soft">Booking rate</p><InfoTip text="Out of everyone who inquired in the last 12 months, how many became a booked session. An inquiry counts as booked once you turn it into a session. Inquiries you have hidden are not counted." /></div>
-                <p className="mt-1 font-fraunces text-3xl font-semibold text-ink">{bookingRate === null ? '—' : `${bookingRate}%`}</p>
+                <div className="flex items-center gap-1.5"><p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Booking rate</p><InfoTip text="Out of everyone who inquired in the last 12 months, how many became a booked session. An inquiry counts as booked once you turn it into a session. Inquiries you have hidden are not counted." /></div>
+                <p className="mt-2 font-fraunces text-4xl font-semibold tracking-tight text-ink">{bookingRate === null ? '—' : `${bookingRate}%`}</p>
                 <p className="mt-1 text-xs text-ink-soft">{bookingRate === null ? 'Shows once you get inquiries' : `${inq.booked} of ${inq.total} inquiries in the last 12 months`}</p>
               </div>
               <div className={card}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-wider text-ink-soft">Galleries</p>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft">Galleries</p>
                   <Link href="/galleries" className="text-xs font-medium text-twilight hover:underline">Open →</Link>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
@@ -592,7 +592,7 @@ export default function DashboardPage() {
               <section className={`${card} mt-6`}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-fraunces text-xl font-semibold text-ink">Client reminders</p>
+                    <p className="font-fraunces text-2xl font-semibold text-ink">Client reminders</p>
                     <p className="text-sm text-ink-soft">Choose which automatic reminders your clients get and edit the wording.</p>
                   </div>
                   <Link href="/reminders" className="text-sm font-medium text-twilight hover:underline">Manage reminders →</Link>
