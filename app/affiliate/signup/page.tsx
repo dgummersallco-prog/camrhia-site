@@ -26,11 +26,7 @@ async function uniqueReferralCode(name: string): Promise<string> {
   return `${baseCode(name)}${Date.now().toString().slice(-4)}`
 }
 
-const STEPS = [
-  { t: 'Make a post', d: 'Show Camrhia to your followers with your personal link.' },
-  { t: 'A photographer subscribes', d: 'They sign up through your link and start paying.' },
-  { t: 'You get paid 30%', d: 'Every month, for as long as they stay subscribed.' },
-]
+
 
 export default function AffiliateSignupPage() {
   const [name, setName] = useState('')
@@ -102,11 +98,6 @@ export default function AffiliateSignupPage() {
     : counting
       ? `Only ${left} founding affiliate seats left. Then the offer closes.`
       : 'Only 15 founding affiliate seats. Then the offer closes.'
-  const pill = full
-    ? 'Waitlist open. We will reach out if a seat opens.'
-    : counting
-      ? `${left} of 15 seats left. Free Camrhia for life. 30% every month.`
-      : '15 seats. Free Camrhia for life. 30% every month. Closing when they are gone.'
   const ctaTitle = full
     ? 'The Founding 15 is filled.'
     : counting
@@ -159,11 +150,19 @@ export default function AffiliateSignupPage() {
               <p>Sign ten. Get paid ten times. Every month.</p>
             </div>
 
-            <div className="mx-auto mt-14 max-w-2xl">
+            </div>
+        </section>
+
+        <section className="px-6 py-16 text-center text-white" style={{ background: 'linear-gradient(160deg, #2B2B2B 0%, #1C1C1C 100%)' }}>
+          <div className="mx-auto max-w-2xl">
               <p className="font-fraunces text-3xl font-semibold sm:text-4xl">Here is the plan.</p>
               <p className="mt-4 text-xl text-white/95 sm:text-2xl">Camrhia&apos;s goal: <span className="font-semibold text-white">7,500 photographers by the end of 2027.</span></p>
               <p className="mt-3 text-xl text-white/95 sm:text-2xl">Post by post, the founding 15 will drive them here.</p>
             </div>
+        </section>
+
+        <section className="px-6 pb-20 pt-6 text-center" style={{ backgroundColor: ROSE }}>
+          <div className="mx-auto max-w-3xl text-white">
 
             <div className="mt-12">
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/80">Your share</p>
@@ -184,24 +183,13 @@ export default function AffiliateSignupPage() {
               <a href="#apply" className="mt-8 inline-block rounded-full bg-white px-9 py-4 text-base font-semibold" style={{ color: ROSE }}>
                 {full ? 'Join the waitlist' : 'Claim a founding seat'}
               </a>
-              <p className="mt-5 inline-block rounded-full bg-white/15 px-5 py-2 text-sm font-semibold text-white">{pill}</p>
-              <p className="mt-4 text-xs text-white/70">Results vary. Income is not guaranteed.</p>
+              
+              
             </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-6 py-16">
-          <h2 className="text-center font-fraunces text-3xl font-semibold text-ink">Simple as 1, 2, 3</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            {STEPS.map((s, i) => (
-              <div key={s.t} className="rounded-2xl border border-line bg-card p-6">
-                <p className="font-fraunces text-4xl font-semibold" style={{ color: ROSE }}>{i + 1}</p>
-                <p className="mt-2 text-lg font-semibold text-ink">{s.t}</p>
-                <p className="mt-1 text-sm text-ink-soft">{s.d}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        
 
         <section className="px-6 pb-16">
           <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-line p-8 sm:p-12" style={{ background: 'linear-gradient(160deg, #2B2B2B 0%, #1C1C1C 100%)' }}>
