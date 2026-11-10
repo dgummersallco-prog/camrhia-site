@@ -68,7 +68,7 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
   const S = cw > 0 ? cw / (W0 - 2 * side) : 0.85
   const boxH = em.h ? (em.h - tp - bt) * S : 0
   return (
-    <div className="-mx-6 mt-4 overflow-hidden bg-[#0F1422]">
+    <div className="-mx-4 mt-3 overflow-hidden bg-[#0F1422]">
       {!on ? (
         <button
           type="button"
@@ -341,7 +341,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         </div>
       )}
 
-      <div className="grid grid-cols-1 items-start gap-6 sm:[grid-template-columns:repeat(auto-fill,320px)]">
+      <div className="grid grid-cols-1 items-start gap-6 sm:[grid-template-columns:repeat(auto-fill,214px)]">
       {shown.map((p) => {
         const mine = p.author_id === uid
         const ed = editing[p.id]
@@ -349,13 +349,13 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         const long = p.body.length > 220
         const isOpen = !!expanded[p.id]
         return (
-          <article key={p.id} className={`overflow-hidden rounded-3xl bg-white p-6 shadow-[0_1px_2px_rgba(30,40,70,0.05),0_20px_44px_-24px_rgba(30,40,70,0.28)] ${p.pinned ? 'ring-2 ring-[#3A4A6B]' : 'border border-line'}`}>
+          <article key={p.id} className={`overflow-hidden rounded-3xl bg-white p-4 shadow-[0_1px_2px_rgba(30,40,70,0.05),0_20px_44px_-24px_rgba(30,40,70,0.28)] ${p.pinned ? 'ring-2 ring-[#3A4A6B]' : 'border border-line'}`}>
             {p.pinned && <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: ROSE }}>Pinned</p>}
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
-                <Avatar url={avatars[p.author_id]} name={p.author_name} size={44} />
+                <Avatar url={avatars[p.author_id]} name={p.author_name} size={36} />
                 <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold text-ink">{p.author_name}</p>
+                  <p className="truncate text-sm font-semibold text-ink">{p.author_name}</p>
                   <p className="flex items-center gap-1.5 text-xs text-ink-soft">
                     {p.platform && (
                       <>
@@ -374,7 +374,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               </div>
             </div>
 
-            <p className={`mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-ink ${long && !isOpen ? 'line-clamp-4' : ''}`}>{p.body}</p>
+            <p className={`mt-3 whitespace-pre-wrap text-[13px] leading-relaxed text-ink ${long && !isOpen ? 'line-clamp-4' : ''}`}>{p.body}</p>
             {long && (
               <button onClick={() => setExpanded((x) => ({ ...x, [p.id]: !x[p.id] }))} className="mt-1 text-xs font-semibold" style={{ color: ROSE }}>
                 {isOpen ? 'Show less' : 'Read more'}
@@ -395,13 +395,13 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               <div className="mt-5 overflow-hidden rounded-2xl border border-line">
                 <div className="grid grid-cols-5 divide-x divide-line">
                   <div className="px-1 py-3 text-center text-white" style={{ backgroundColor: ROSE }}>
-                    <p className="font-fraunces text-xl font-semibold leading-none">{fmt(p.signed)}</p>
-                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-white/85">Subs</p>
+                    <p className="font-fraunces text-base font-semibold leading-none">{fmt(p.signed)}</p>
+                    <p className="mt-1 text-[8px] font-semibold uppercase tracking-wider text-white/85">Subs</p>
                   </div>
                   {([['Views', p.views], ['Likes', p.ig_likes], ['Shares', p.shares], ['Saves', p.saves]] as const).map(([label, v]) => (
                     <div key={label} className="px-1 py-3 text-center">
-                      <p className="text-base font-semibold leading-none text-ink">{fmt(v)}</p>
-                      <p className="mt-1 text-[9px] uppercase tracking-wider text-ink-soft">{label}</p>
+                      <p className="text-sm font-semibold leading-none text-ink">{fmt(v)}</p>
+                      <p className="mt-1 text-[8px] uppercase tracking-wider text-ink-soft">{label}</p>
                     </div>
                   ))}
                 </div>
@@ -415,7 +415,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
 
             {ed && (
               <div className="mt-5 rounded-2xl bg-paper-deep p-3">
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <div className="grid grid-cols-2 gap-2">
                   {([['signed', 'Subs'], ['views', 'Views'], ['ig_likes', 'Likes'], ['shares', 'Shares'], ['saves', 'Saves']] as const).map(([k, label]) => (
                     <label key={k} className="block text-[10px] uppercase tracking-wider text-ink-soft">
                       {label}
