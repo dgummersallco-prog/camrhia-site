@@ -46,7 +46,7 @@ const toNum = (v: string) => { const n = parseInt(v.replace(/[^0-9]/g, ''), 10);
 const PLATFORM_DOT: Record<string, string> = { Instagram: '#E1306C', TikTok: '#25F4EE', YouTube: '#FF0000' }
 
 function PostEmbed({ url, platform }: { url: string | null; platform: string | null }) {
-  const [on, setOn] = useState(false)
+  const [on] = useState(true)
   const [loaded, setLoaded] = useState(false)
   const [cw, setCw] = useState(0)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -72,7 +72,6 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
       {!on ? (
         <button
           type="button"
-          onClick={() => setOn(true)}
           className={`group relative flex w-full flex-col items-center justify-center gap-3 ${tall ? 'aspect-[4/5]' : 'aspect-video'}`}
           style={{ background: 'linear-gradient(160deg,#1E2740 0%,#0F1422 100%)' }}
         >
