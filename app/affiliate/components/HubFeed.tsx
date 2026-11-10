@@ -127,6 +127,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [composing, setComposing] = useState(false)
+  const [menu, setMenu] = useState<string | null>(null)
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [sort, setSort] = useState<'new' | 'signed'>('new')
@@ -363,9 +364,27 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
                   </p>
                 </div>
               </div>
-              <div className="flex shrink-0 gap-3 text-xs text-ink-soft">
-                {admin && <button onClick={() => togglePin(p)} className="hover:text-ink">{p.pinned ? 'Unpin' : 'Pin'}</button>}
-                {(admin || mine) && <button onClick={() => removePost(p)} className="hover:text-red-700">Delete</button>}
+              <div className="relative flex shrink-0 items-center gap-1 text-ink-soft">
+                {admin && (
+                  <button onClick={() => togglePin(p)} aria-label={p.pinned ? 'Unpin' : 'Pin'} title={p.pinned ? 'Unpin' : 'Pin to top'} className="rounded-full p-1.5 transition hover:bg-paper-deep" style={p.pinned ? { color: ROSE } : undefined}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill={p.pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 17v5" /><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z" /></svg>
+                  </button>
+                )}
+                {(admin || mine) && (
+                  <>
+                    <button onClick={() => setMenu(menu === p.id ? null : p.id)} aria-label="More" className="rounded-full p-1.5 transition hover:bg-paper-deep hover:text-ink">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
+                    </button>
+                    {menu === p.id && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setMenu(null)} />
+                        <div className="absolute right-0 top-9 z-20 w-36 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg">
+                          <button onClick={() => { setMenu(null); removePost(p) }} className="block w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-paper-deep">Delete post</button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             </div>
 
