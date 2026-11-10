@@ -6,13 +6,14 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 const ROSE = '#3A4A6B'
 
 export function Avatar({ url, name, size = 36 }: { url?: string | null; name?: string | null; size?: number }) {
-  const initial = (name || '?').trim().charAt(0).toUpperCase()
+  const words = (name || '?').trim().split(/\s+/).filter(Boolean)
+  const initial = (words.length > 1 ? words[0].charAt(0) + words[1].charAt(0) : words[0]?.charAt(0) || '?').toUpperCase()
   if (url) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={url} alt="" width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />
   }
   return (
-    <span className="flex shrink-0 items-center justify-center rounded-full font-semibold text-white" style={{ width: size, height: size, backgroundColor: ROSE, fontSize: size * 0.42 }}>
+    <span className="flex shrink-0 items-center justify-center rounded-full font-semibold text-white" style={{ width: size, height: size, backgroundColor: ROSE, fontSize: size * (initial.length > 1 ? 0.36 : 0.42) }}>
       {initial}
     </span>
   )
