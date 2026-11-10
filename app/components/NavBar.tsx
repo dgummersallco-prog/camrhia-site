@@ -8,10 +8,9 @@ import { APP_STORE_URL } from '@/lib/appStore'
 import { supabase } from '@/lib/supabase'
 
 const LINKS = [
-  { href: '/#how', label: 'How it works' },
-  { href: '/#clients', label: 'For your clients' },
-  { href: '/#pricing', label: 'Pricing' },
-  { href: '/find', label: 'Find a photographer' },
+  { href: '/how-it-works', label: 'How it works' },
+  { href: '/for-your-clients', label: 'For your clients' },
+  { href: '/pricing', label: 'Pricing' },
 ]
 
 export function Nav() {
