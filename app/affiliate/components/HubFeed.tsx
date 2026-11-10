@@ -28,6 +28,7 @@ function ago(iso: string) {
 }
 
 const fmt = (n: number | null) => (n == null ? '—' : n.toLocaleString())
+const fmtc = (n: number | null) => (n == null ? '—' : n >= 10000 ? new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n) : n.toLocaleString())
 function embedFor(url: string | null): { src: string; kind: 'tall' | 'wide'; h?: number; top?: number; bottom?: number; side?: number } | null {
   if (!url) return null
   let m = url.match(/instagram\.com\/(?:[^/?#]+\/)?(p|reel|tv)\/([A-Za-z0-9_-]+)/i)
@@ -383,15 +384,15 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
 
             {!ed && (
               <div className="mt-5 overflow-hidden rounded-2xl border border-line">
-                <div className="grid grid-cols-5 divide-x divide-line">
-                  <div className="px-1 py-3 text-center text-white" style={{ backgroundColor: ROSE }}>
-                    <p className="h-4 text-sm font-semibold leading-4">{fmt(p.signed)}</p>
-                    <p className="mt-1 text-[8px] font-semibold uppercase leading-3 tracking-wider text-white/85">Subs</p>
-                  </div>
+                <div className="flex items-center justify-between px-4 py-2.5 text-white" style={{ backgroundColor: ROSE }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/85">Subs</p>
+                  <p className="font-fraunces text-xl font-semibold leading-none" title={p.signed == null ? undefined : p.signed.toLocaleString()}>{fmtc(p.signed)}</p>
+                </div>
+                <div className="grid grid-cols-4 divide-x divide-line">
                   {([['Views', p.views], ['Likes', p.ig_likes], ['Shares', p.shares], ['Saves', p.saves]] as const).map(([label, v]) => (
                     <div key={label} className="px-1 py-3 text-center">
-                      <p className="h-4 text-sm font-semibold leading-4 text-ink">{fmt(v)}</p>
-                      <p className="mt-1 text-[8px] font-semibold uppercase leading-3 tracking-wider text-ink-soft">{label}</p>
+                      <p className="h-4 text-sm font-semibold leading-4 text-ink" title={v == null ? undefined : v.toLocaleString()}>{fmtc(v)}</p>
+                      <p className="mt-1 text-[9px] font-semibold uppercase leading-3 tracking-wider text-ink-soft">{label}</p>
                     </div>
                   ))}
                 </div>
