@@ -132,7 +132,6 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   const [sort, setSort] = useState<'new' | 'signed'>('new')
   const [editing, setEditing] = useState<Record<string, Nums | undefined>>({})
   const [avatars, setAvatars] = useState<Record<string, string>>({})
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -192,8 +191,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
 
   async function submitPost() {
     const sb = supabase
-    const text = body.trim()
-    if (!sb || !uid || !text) return
+    if (!sb || !uid) return
     let url: string | null = null
     const raw = link.trim()
     if (raw) {
@@ -220,7 +218,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
       if (up.error) { setBusy(false); setErr(up.error.message); return }
       imageUrl = sb.storage.from('hub-posts').getPublicUrl(path).data.publicUrl
     }
-    const { error } = await sb.from('hub_posts').insert({ author_id: uid, body: text, link_url: url, platform: platform || null, image_url: imageUrl })
+    const { error } = await sb.from('hub_posts').insert({ author_id: uid, body: '', link_url: url, platform: platform || null, image_url: imageUrl })
     setBusy(false)
     if (error) { setErr(error.message); return }
     setBody('')
@@ -312,12 +310,11 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
                 </button>
               ))}
             </div>
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} maxLength={2000} placeholder="The hook or caption you used…" className={field} />
-            <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste the link to your post (Instagram, TikTok or YouTube)" className={`${field} mt-3`} />
+            <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste the link to your post (Instagram, TikTok or YouTube)" className={field} />
             {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
             <div className="mt-4 flex justify-end gap-3">
               <button type="button" onClick={() => setComposing(false)} className="rounded-full border border-line px-5 py-2.5 text-sm text-ink-soft hover:text-ink">Cancel</button>
-              <button onClick={submitPost} disabled={busy || !body.trim() || !link.trim()} className="rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: ROSE }}>
+              <button onClick={submitPost} disabled={busy || !link.trim()} className="rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: ROSE }}>
                 {busy ? 'Posting…' : 'Post to the team'}
               </button>
             </div>
@@ -346,8 +343,6 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         const mine = p.author_id === uid
         const ed = editing[p.id]
         const hasNums = p.views != null || p.ig_likes != null || p.shares != null || p.saves != null || p.signed != null
-        const long = p.body.length > 220
-        const isOpen = !!expanded[p.id]
         return (
           <article key={p.id} className={`overflow-hidden rounded-3xl bg-white p-4 shadow-[0_1px_2px_rgba(30,40,70,0.05),0_20px_44px_-24px_rgba(30,40,70,0.28)] ${p.pinned ? 'ring-2 ring-[#3A4A6B]' : 'border border-line'}`}>
             {p.pinned && <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: ROSE }}>Pinned</p>}
@@ -374,12 +369,6 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               </div>
             </div>
 
-            <p className={`mt-3 whitespace-pre-wrap text-[13px] leading-relaxed text-ink ${long && !isOpen ? 'line-clamp-4' : ''}`}>{p.body}</p>
-            {long && (
-              <button onClick={() => setExpanded((x) => ({ ...x, [p.id]: !x[p.id] }))} className="mt-1 text-xs font-semibold" style={{ color: ROSE }}>
-                {isOpen ? 'Show less' : 'Read more'}
-              </button>
-            )}
             {p.image_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={p.image_url} alt="Post" className="mt-4 max-h-[28rem] w-full rounded-2xl border border-line object-contain bg-white" />
