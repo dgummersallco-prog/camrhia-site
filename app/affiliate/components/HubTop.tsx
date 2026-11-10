@@ -45,7 +45,6 @@ export default function HubTop({ client }: { client: SupabaseClient | null }) {
               <Avatar url={avatars[p.author_id]} name={p.author_name} size={28} />
               <p className="text-sm font-semibold text-ink">{p.author_name}</p>
             </div>
-            <p className="mt-3 line-clamp-2 text-sm text-ink-soft">{p.body}</p>
             <div className="mt-4 flex items-end justify-between">
               <div>
                 <p className="font-fraunces text-3xl font-semibold" style={{ color: ROSE }}>{fmt(p.signed)}</p>
