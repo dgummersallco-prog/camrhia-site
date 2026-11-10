@@ -342,7 +342,6 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink">{p.author_name}</p>
                   <p className="flex items-center gap-1.5 whitespace-nowrap text-xs text-ink-soft">
-                    {p.platform && <span title={p.platform} className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: PLATFORM_DOT[p.platform] ?? ROSE }} />}
                     {ago(p.created_at)}
                   </p>
                 </div>
