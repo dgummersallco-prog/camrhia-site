@@ -196,6 +196,35 @@ export default function AffiliateSignupPage() {
 
         
 
+        <section className="px-6 pb-4 pt-20">
+          <div className="mx-auto max-w-4xl">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: '#E8A5AE' }}>The goal</p>
+            <h2 className="mt-3 text-center font-fraunces text-3xl font-semibold text-ink sm:text-4xl">Get them in at $8.99. Then watch them grow.</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-ink-soft">$8.99 a month is an easy yes. Every photographer you sign starts there. When they upgrade, they stay yours, and so does the extra money.</p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-line bg-card p-6 text-center">
+                <p className="text-sm text-ink-soft">1. They start</p>
+                <p className="mt-1 font-fraunces text-4xl font-semibold text-ink">$8.99</p>
+                <p className="mt-2 text-sm text-ink-soft">a month</p>
+                <p className="mt-3 text-sm font-semibold text-ink">You earn $2.29 a month</p>
+              </div>
+              <div className="rounded-2xl border border-line bg-card p-6 text-center">
+                <p className="text-sm text-ink-soft">2. They add a team</p>
+                <p className="mt-1 font-fraunces text-4xl font-semibold text-ink">$15.99</p>
+                <p className="mt-2 text-sm text-ink-soft">a month</p>
+                <p className="mt-3 text-sm font-semibold text-ink">You earn $4.08 a month</p>
+              </div>
+              <div className="rounded-2xl p-6 text-center text-white" style={{ backgroundColor: ROSE }}>
+                <p className="text-sm text-white/85">3. They keep upgrading</p>
+                <p className="mt-1 font-fraunces text-4xl font-semibold">More</p>
+                <p className="mt-2 text-sm text-white/85">bigger plans, bigger months</p>
+                <p className="mt-3 text-sm font-semibold">Your 30% grows with them</p>
+              </div>
+            </div>
+            <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-ink-soft">Your 30% is paid on what Camrhia keeps after Apple&apos;s 15% fee. Upgrades stay with the person who brought the photographer in. Results vary.</p>
+          </div>
+        </section>
+
         <section className="px-6 pb-16 pt-20">
           <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-line p-8 sm:p-12" style={{ background: 'linear-gradient(160deg, #2B2B2B 0%, #1C1C1C 100%)' }}>
             <p className="mx-auto max-w-xl text-center text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: '#E8A5AE' }}>What founders get</p>
