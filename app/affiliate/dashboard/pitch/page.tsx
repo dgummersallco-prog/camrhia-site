@@ -80,7 +80,7 @@ if you ever wanna compare, you could run just one session through Camrhia during
         when: "They ask what it costs.",
         why: "Saying it as \"about $2 a day\" makes it feel small, and the free trial means they can decide with no risk.",
         body: (link) =>
-          `it's $59.99 a month for Solo, so about $2 a day. you get 14 days free first, so you can try it on a real booking before you pay anything: ${link}`,
+          `it's $8.99 a month for Solo, so about 30 cents a day. you get 14 days free first, so you can try it on a real booking before you pay anything: ${link}`,
       },
     ],
   },
@@ -471,7 +471,7 @@ const IDEA_SETS: IdeaSet[] = [
     why: "The same price lands differently depending on how you say it.",
     ideas: [
       { hook: "Camrhia costs less than [one hour of your session rate].", value: "And it holds your contracts, payments and website in one place.", end: "Free for 14 days first. Link in bio." },
-      { hook: "$59.99 a month is about $2 a day.", value: "For your website, contracts and payments, all in one app.", end: "Try it free for 14 days. Link in bio." },
+      { hook: "$8.99 a month is about 30 cents a day.", value: "For your website, contracts and payments, all in one app.", end: "Try it free for 14 days. Link in bio." },
       { hook: "It's not another app to manage.", value: "It's where your contracts, payments, timeline and website live.", end: "See it for yourself. Free for 14 days." },
     ],
   },
@@ -815,7 +815,7 @@ const HOOK_SETS: HookSet[] = [
     title: "Framing",
     why: "The same price lands differently depending on how you say it.",
     hooks: [
-      "$59.99 a month is about $2 a day.",
+      "$8.99 a month is about 30 cents a day.",
       "Camrhia costs less than [one hour of your session rate].",
       "It's not another app to manage. It's where your whole business lives.",
       "Think of it as time back, not another monthly bill.",

@@ -309,7 +309,7 @@ export default function Home() {
                   ))}
                 </ul>
                 <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login.</p>
-                <p className="mt-1 text-sm text-ink-soft">Plans start at $59.99 a month. Your first 14 days are free.</p>
+                <p className="mt-1 text-sm text-ink-soft">Plans start at $8.99 a month. Your first 14 days are free.</p>
               </div>
             </div>
           </div>
@@ -328,14 +328,14 @@ export default function Home() {
               <div className="rounded-3xl bg-card border-2 border-twilight p-8">
                 <p className="font-fraunces text-2xl font-semibold text-ink">Solo</p>
                 <p className="mt-1 text-sm text-ink-soft">For the photographer running their own show.</p>
-                <p className="mt-6 font-fraunces text-5xl text-ink">$59.99<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="mt-1 text-sm text-ink-soft">or $590 /year</p>
+                <p className="mt-6 font-fraunces text-5xl text-ink">$8.99<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="mt-1 text-sm text-ink-soft">or $89.99 /year</p>
               </div>
               <div className="rounded-3xl bg-card border border-line p-8">
                 <p className="font-fraunces text-2xl font-semibold text-ink">Studio</p>
                 <p className="mt-1 text-sm text-ink-soft">For studios with a team.</p>
-                <p className="mt-6 font-fraunces text-5xl text-ink">$149<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="mt-1 text-sm text-ink-soft">or $999.99 /year</p>
+                <p className="mt-6 font-fraunces text-5xl text-ink">$15.99<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="mt-1 text-sm text-ink-soft">or $159.99 /year</p>
               </div>
             </div>
             <div className="mt-10 text-center">
