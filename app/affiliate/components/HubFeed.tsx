@@ -28,12 +28,12 @@ function ago(iso: string) {
 }
 
 const fmt = (n: number | null) => (n == null ? '—' : n.toLocaleString())
-function embedFor(url: string | null): { src: string; kind: 'tall' | 'wide'; h?: number; top?: number; bottom?: number } | null {
+function embedFor(url: string | null): { src: string; kind: 'tall' | 'wide'; h?: number; top?: number; bottom?: number; side?: number } | null {
   if (!url) return null
   let m = url.match(/instagram\.com\/(?:[^/?#]+\/)?(p|reel|tv)\/([A-Za-z0-9_-]+)/i)
-  if (m) return { src: `https://www.instagram.com/${m[1].toLowerCase()}/${m[2]}/embed`, kind: 'tall', h: 620, top: 60, bottom: 130 }
+  if (m) return { src: `https://www.instagram.com/${m[1].toLowerCase()}/${m[2]}/embed`, kind: 'tall', h: 620, top: 60, bottom: 146, side: 10 }
   m = url.match(/tiktok\.com\/@[^/?#]+\/video\/(\d+)/i)
-  if (m) return { src: `https://www.tiktok.com/embed/v2/${m[1]}`, kind: 'tall', h: 740, top: 72, bottom: 64 }
+  if (m) return { src: `https://www.tiktok.com/embed/v2/${m[1]}`, kind: 'tall', h: 740, top: 72, bottom: 74, side: 28 }
   m = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/i)
   if (m) return { src: `https://www.youtube.com/embed/${m[1]}`, kind: 'tall', h: 600 }
   m = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?(?:[^#]*&)?v=)([A-Za-z0-9_-]{6,})/i)
@@ -51,13 +51,20 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
   const em = embedFor(url)
   if (!em) return null
   const tall = em.kind === 'tall'
+  const S = 0.85
+  const W0 = 380
+  const side = em.side ?? 0
+  const tp = em.top ?? 0
+  const bt = em.bottom ?? 0
+  const boxW = (W0 - 2 * side) * S
+  const boxH = em.h ? (em.h - tp - bt) * S : 0
   return (
     <div className="mt-4 overflow-hidden rounded-2xl p-3" style={{ background: 'linear-gradient(160deg,#1E2740 0%,#0F1422 100%)' }}>
       {!on ? (
         <button
           type="button"
           onClick={() => setOn(true)}
-          className={`group relative mx-auto flex w-full max-w-[340px] flex-col items-center justify-center gap-3 rounded-xl ${tall ? 'aspect-[4/5]' : 'aspect-video'}`}
+          className={`group relative mx-auto flex w-full max-w-[290px] flex-col items-center justify-center gap-3 rounded-xl ${tall ? 'aspect-[4/5]' : 'aspect-video'}`}
           style={{ background: 'radial-gradient(circle at 50% 35%, rgba(255,255,255,0.14), rgba(255,255,255,0.03) 70%)' }}
         >
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-xl shadow-xl transition group-hover:scale-110" style={{ color: ROSE }}>&#9654;</span>
@@ -65,7 +72,7 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
           <span className="text-xs text-white/60">{platform ?? 'Tap to load'}</span>
         </button>
       ) : (
-        <div className={tall ? 'relative mx-auto w-full max-w-[380px] overflow-hidden rounded-xl' : 'relative'} style={em.h && (em.top || em.bottom) ? { height: em.h - (em.top ?? 0) - (em.bottom ?? 0) } : undefined}>
+        <div className={tall ? 'relative mx-auto overflow-hidden rounded-xl bg-white' : 'relative'} style={tall && em.h ? { width: boxW, height: boxH } : undefined}>
           {!loaded && <div className="absolute inset-0 animate-pulse rounded-xl bg-white/10" />}
           <iframe
             src={em.src}
@@ -74,8 +81,8 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
             onLoad={() => setLoaded(true)}
             allow="encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
-            className={`w-full rounded-xl bg-white transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${em.kind === 'wide' ? 'aspect-video' : ''}`}
-            style={em.h ? { height: em.h, marginTop: -(em.top ?? 0) } : undefined}
+            className={`${tall ? 'absolute max-w-none' : 'w-full'} rounded-xl bg-white transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${em.kind === 'wide' ? 'aspect-video' : ''}`}
+            style={em.h ? { width: W0, height: em.h, left: -side * S, top: -tp * S, transform: `scale(${S})`, transformOrigin: 'top left' } : undefined}
           />
         </div>
       )}
@@ -298,7 +305,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
 
       {posts.length > 1 && (
         <div className="flex gap-2 text-sm">
-          {([['new', 'Newest'], ['signed', 'Most signed']] as const).map(([k, label]) => (
+          {([['new', 'Newest'], ['signed', 'Most subs']] as const).map(([k, label]) => (
             <button key={k} onClick={() => setSort(k)} className={`rounded-full border px-4 py-1.5 transition ${sort === k ? 'text-white' : 'border-line text-ink hover:border-[#3A4A6B]'}`} style={sort === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
               {label}
             </button>
@@ -367,7 +374,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
                 <div className="grid grid-cols-5 divide-x divide-line">
                   <div className="px-1 py-3 text-center text-white" style={{ backgroundColor: ROSE }}>
                     <p className="font-fraunces text-xl font-semibold leading-none">{fmt(p.signed)}</p>
-                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-white/85">Signed</p>
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-white/85">Subs</p>
                   </div>
                   {([['Views', p.views], ['Likes', p.ig_likes], ['Shares', p.shares], ['Saves', p.saves]] as const).map(([label, v]) => (
                     <div key={label} className="px-1 py-3 text-center">
@@ -387,7 +394,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
             {ed && (
               <div className="mt-5 rounded-2xl bg-paper-deep p-3">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                  {([['signed', 'Signed'], ['views', 'Views'], ['ig_likes', 'Likes'], ['shares', 'Shares'], ['saves', 'Saves']] as const).map(([k, label]) => (
+                  {([['signed', 'Subs'], ['views', 'Views'], ['ig_likes', 'Likes'], ['shares', 'Shares'], ['saves', 'Saves']] as const).map(([k, label]) => (
                     <label key={k} className="block text-[10px] uppercase tracking-wider text-ink-soft">
                       {label}
                       <input inputMode="numeric" value={ed[k]} onChange={(e) => setEditing((s) => ({ ...s, [p.id]: { ...ed, [k]: e.target.value } }))} className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-[#3A4A6B]" />
