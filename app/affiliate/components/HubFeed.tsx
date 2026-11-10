@@ -28,12 +28,12 @@ function ago(iso: string) {
 }
 
 const fmt = (n: number | null) => (n == null ? '—' : n.toLocaleString())
-function embedFor(url: string | null): { src: string; kind: 'tall' | 'wide'; h?: number } | null {
+function embedFor(url: string | null): { src: string; kind: 'tall' | 'wide'; h?: number; top?: number; bottom?: number } | null {
   if (!url) return null
   let m = url.match(/instagram\.com\/(?:[^/?#]+\/)?(p|reel|tv)\/([A-Za-z0-9_-]+)/i)
-  if (m) return { src: `https://www.instagram.com/${m[1].toLowerCase()}/${m[2]}/embed`, kind: 'tall', h: 620 }
+  if (m) return { src: `https://www.instagram.com/${m[1].toLowerCase()}/${m[2]}/embed`, kind: 'tall', h: 620, top: 60, bottom: 130 }
   m = url.match(/tiktok\.com\/@[^/?#]+\/video\/(\d+)/i)
-  if (m) return { src: `https://www.tiktok.com/embed/v2/${m[1]}`, kind: 'tall', h: 740 }
+  if (m) return { src: `https://www.tiktok.com/embed/v2/${m[1]}`, kind: 'tall', h: 740, top: 72, bottom: 64 }
   m = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/i)
   if (m) return { src: `https://www.youtube.com/embed/${m[1]}`, kind: 'tall', h: 600 }
   m = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?(?:[^#]*&)?v=)([A-Za-z0-9_-]{6,})/i)
@@ -65,7 +65,7 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
           <span className="text-xs text-white/60">{platform ?? 'Tap to load'}</span>
         </button>
       ) : (
-        <div className={tall ? 'relative mx-auto w-full max-w-[380px]' : 'relative'}>
+        <div className={tall ? 'relative mx-auto w-full max-w-[380px] overflow-hidden rounded-xl' : 'relative'} style={em.h && (em.top || em.bottom) ? { height: em.h - (em.top ?? 0) - (em.bottom ?? 0) } : undefined}>
           {!loaded && <div className="absolute inset-0 animate-pulse rounded-xl bg-white/10" />}
           <iframe
             src={em.src}
@@ -75,7 +75,7 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
             allow="encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
             className={`w-full rounded-xl bg-white transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${em.kind === 'wide' ? 'aspect-video' : ''}`}
-            style={em.h ? { height: em.h } : undefined}
+            style={em.h ? { height: em.h, marginTop: -(em.top ?? 0) } : undefined}
           />
         </div>
       )}
