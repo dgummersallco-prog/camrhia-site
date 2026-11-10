@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabaseAffiliate as defaultClient } from '@/lib/supabaseAffiliate'
 import { Avatar } from './Avatar'
@@ -48,32 +48,41 @@ const PLATFORM_DOT: Record<string, string> = { Instagram: '#E1306C', TikTok: '#2
 function PostEmbed({ url, platform }: { url: string | null; platform: string | null }) {
   const [on, setOn] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [cw, setCw] = useState(0)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setCw(el.clientWidth))
+    ro.observe(el)
+    setCw(el.clientWidth)
+    return () => ro.disconnect()
+  }, [on])
   const em = embedFor(url)
   if (!em) return null
   const tall = em.kind === 'tall'
-  const S = 0.85
   const W0 = 380
   const side = em.side ?? 0
   const tp = em.top ?? 0
   const bt = em.bottom ?? 0
-  const boxW = (W0 - 2 * side) * S
+  const S = cw > 0 ? cw / (W0 - 2 * side) : 0.85
   const boxH = em.h ? (em.h - tp - bt) * S : 0
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl p-3" style={{ background: 'linear-gradient(160deg,#1E2740 0%,#0F1422 100%)' }}>
+    <div className="-mx-6 mt-4 overflow-hidden bg-[#0F1422]">
       {!on ? (
         <button
           type="button"
           onClick={() => setOn(true)}
-          className={`group relative mx-auto flex w-full max-w-[290px] flex-col items-center justify-center gap-3 rounded-xl ${tall ? 'aspect-[4/5]' : 'aspect-video'}`}
-          style={{ background: 'radial-gradient(circle at 50% 35%, rgba(255,255,255,0.14), rgba(255,255,255,0.03) 70%)' }}
+          className={`group relative flex w-full flex-col items-center justify-center gap-3 ${tall ? 'aspect-[4/5]' : 'aspect-video'}`}
+          style={{ background: 'linear-gradient(160deg,#1E2740 0%,#0F1422 100%)' }}
         >
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-xl shadow-xl transition group-hover:scale-110" style={{ color: ROSE }}>&#9654;</span>
           <span className="text-sm font-semibold text-white">Watch the post</span>
           <span className="text-xs text-white/60">{platform ?? 'Tap to load'}</span>
         </button>
-      ) : (
-        <div className={tall ? 'relative mx-auto overflow-hidden rounded-xl bg-white' : 'relative'} style={tall && em.h ? { width: boxW, height: boxH } : undefined}>
-          {!loaded && <div className="absolute inset-0 animate-pulse rounded-xl bg-white/10" />}
+      ) : tall && em.h ? (
+        <div ref={wrapRef} className="relative w-full overflow-hidden bg-white" style={{ height: boxH }}>
+          {!loaded && <div className="absolute inset-0 animate-pulse bg-white/10" />}
           <iframe
             src={em.src}
             title="Post"
@@ -81,8 +90,21 @@ function PostEmbed({ url, platform }: { url: string | null; platform: string | n
             onLoad={() => setLoaded(true)}
             allow="encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
-            className={`${tall ? 'absolute max-w-none' : 'w-full'} rounded-xl bg-white transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${em.kind === 'wide' ? 'aspect-video' : ''}`}
-            style={em.h ? { width: W0, height: em.h, left: -side * S, top: -tp * S, transform: `scale(${S})`, transformOrigin: 'top left' } : undefined}
+            className={`absolute max-w-none bg-white transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+            style={{ width: W0, height: em.h, left: -side * S, top: -tp * S, transform: `scale(${S})`, transformOrigin: 'top left' }}
+          />
+        </div>
+      ) : (
+        <div className="relative">
+          {!loaded && <div className="absolute inset-0 animate-pulse bg-white/10" />}
+          <iframe
+            src={em.src}
+            title="Post"
+            loading="lazy"
+            onLoad={() => setLoaded(true)}
+            allow="encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            className={`aspect-video w-full bg-white transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
           />
         </div>
       )}
@@ -319,7 +341,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         </div>
       )}
 
-      <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-6 sm:[grid-template-columns:repeat(auto-fill,320px)]">
       {shown.map((p) => {
         const mine = p.author_id === uid
         const ed = editing[p.id]
