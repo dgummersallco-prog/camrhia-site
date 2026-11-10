@@ -49,7 +49,7 @@ export default function HubTop({ client }: { client: SupabaseClient | null }) {
             <div className="mt-4 flex items-end justify-between">
               <div>
                 <p className="font-fraunces text-3xl font-semibold" style={{ color: ROSE }}>{fmt(p.signed)}</p>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft">Signed</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft">Subs</p>
               </div>
               <div className="text-right">
                 <p className="text-base font-semibold text-ink">{fmt(p.views)}</p>
