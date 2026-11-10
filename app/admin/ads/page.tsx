@@ -213,7 +213,7 @@ export default function AdminAdsPage() {
   const [ready, setReady] = useState(false)
   const [ads, setAds] = useState<Ad[]>([])
   const [error, setError] = useState<string | null>(null)
-  const net = 51
+  const net = 7.64
   const [view, setView] = useState<'cac' | 'profit'>('cac')
   const [ltvView, setLtvView] = useState<'back' | 'total'>('back')
   const [open, setOpen] = useState<string | null>(null)
@@ -383,7 +383,7 @@ export default function AdminAdsPage() {
 
         <div className="mt-5 rounded-xl bg-paper p-4">
           <p className="font-fraunces text-xl font-semibold text-ink">CAC break even is {usd(net)}</p>
-          <p className="mt-1 text-sm text-ink-soft">$59.99 Solo monthly minus Apple's 15% = about {usd(net)} kept. Pay less than {usd(net)} per subscriber and you are ahead after the first month.</p>
+          <p className="mt-1 text-sm text-ink-soft">$8.99 Solo monthly minus Apple's 15% = about {usd(net)} kept. Pay less than {usd(net)} per subscriber and you are ahead after the first month.</p>
         </div>
 
         <p className="mt-5 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Examples</p>
