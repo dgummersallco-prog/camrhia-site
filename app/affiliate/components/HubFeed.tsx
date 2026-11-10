@@ -31,7 +31,7 @@ const fmt = (n: number | null) => (n == null ? '—' : n.toLocaleString())
 function embedFor(url: string | null): { src: string; kind: 'tall' | 'wide'; h?: number; top?: number; bottom?: number; side?: number } | null {
   if (!url) return null
   let m = url.match(/instagram\.com\/(?:[^/?#]+\/)?(p|reel|tv)\/([A-Za-z0-9_-]+)/i)
-  if (m) return { src: `https://www.instagram.com/${m[1].toLowerCase()}/${m[2]}/embed`, kind: 'tall', h: 620, top: 60, bottom: 146, side: 10 }
+  if (m) return { src: `https://www.instagram.com/${m[1].toLowerCase()}/${m[2]}/embed`, kind: 'tall', h: 620, top: 60, bottom: 146, side: 70 }
   m = url.match(/tiktok\.com\/@[^/?#]+\/video\/(\d+)/i)
   if (m) return { src: `https://www.tiktok.com/embed/v2/${m[1]}`, kind: 'tall', h: 740, top: 72, bottom: 74, side: 28 }
   m = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/i)
