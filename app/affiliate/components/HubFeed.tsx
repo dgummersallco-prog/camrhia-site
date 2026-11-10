@@ -328,7 +328,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         </div>
       )}
 
-      <div className="grid grid-cols-1 items-start gap-6 sm:[grid-template-columns:repeat(auto-fill,214px)]">
+      <div className="grid grid-cols-1 items-start gap-6 sm:[grid-template-columns:repeat(auto-fill,225px)]">
       {shown.map((p) => {
         const mine = p.author_id === uid
         const ed = editing[p.id]
@@ -341,14 +341,8 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
                 <Avatar url={avatars[p.author_id]} name={p.author_name} size={36} />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink">{p.author_name}</p>
-                  <p className="flex items-center gap-1.5 text-xs text-ink-soft">
-                    {p.platform && (
-                      <>
-                        <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: PLATFORM_DOT[p.platform] ?? ROSE }} />
-                        {p.platform}
-                        <span aria-hidden>&middot;</span>
-                      </>
-                    )}
+                  <p className="flex items-center gap-1.5 whitespace-nowrap text-xs text-ink-soft">
+                    {p.platform && <span title={p.platform} className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: PLATFORM_DOT[p.platform] ?? ROSE }} />}
                     {ago(p.created_at)}
                   </p>
                 </div>
@@ -388,17 +382,17 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               </a>
             )}
 
-            {(hasNums || mine) && !ed && (
+            {!ed && (
               <div className="mt-5 overflow-hidden rounded-2xl border border-line">
                 <div className="grid grid-cols-5 divide-x divide-line">
                   <div className="px-1 py-3 text-center text-white" style={{ backgroundColor: ROSE }}>
-                    <p className="font-fraunces text-base font-semibold leading-none">{fmt(p.signed)}</p>
-                    <p className="mt-1 text-[8px] font-semibold uppercase tracking-wider text-white/85">Subs</p>
+                    <p className="h-4 text-sm font-semibold leading-4">{fmt(p.signed)}</p>
+                    <p className="mt-1 text-[8px] font-semibold uppercase leading-3 tracking-wider text-white/85">Subs</p>
                   </div>
                   {([['Views', p.views], ['Likes', p.ig_likes], ['Shares', p.shares], ['Saves', p.saves]] as const).map(([label, v]) => (
                     <div key={label} className="px-1 py-3 text-center">
-                      <p className="text-sm font-semibold leading-none text-ink">{fmt(v)}</p>
-                      <p className="mt-1 text-[8px] uppercase tracking-wider text-ink-soft">{label}</p>
+                      <p className="h-4 text-sm font-semibold leading-4 text-ink">{fmt(v)}</p>
+                      <p className="mt-1 text-[8px] font-semibold uppercase leading-3 tracking-wider text-ink-soft">{label}</p>
                     </div>
                   ))}
                 </div>
