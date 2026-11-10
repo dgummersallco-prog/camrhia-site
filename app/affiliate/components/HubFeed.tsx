@@ -129,7 +129,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   const [menu, setMenu] = useState<string | null>(null)
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [drafts, setDrafts] = useState<Record<string, string>>({})
-  const [sort, setSort] = useState<'new' | 'signed'>('new')
+  const [sort] = useState<'new' | 'signed'>('signed')
   const [editing, setEditing] = useState<Record<string, Nums | undefined>>({})
   const [avatars, setAvatars] = useState<Record<string, string>>({})
 
@@ -319,16 +319,6 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {posts.length > 1 && (
-        <div className="flex gap-2 text-sm">
-          {([['new', 'Newest'], ['signed', 'Most subs']] as const).map(([k, label]) => (
-            <button key={k} onClick={() => setSort(k)} className={`rounded-full border px-4 py-1.5 transition ${sort === k ? 'text-white' : 'border-line text-ink hover:border-[#3A4A6B]'}`} style={sort === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
-              {label}
-            </button>
-          ))}
         </div>
       )}
 
