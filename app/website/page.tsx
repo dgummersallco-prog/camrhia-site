@@ -1646,6 +1646,7 @@ export default function WebsitePage() {
       <link rel="stylesheet" href={ALL_FONTS_HREF} />
       <DashboardHeader active="website" />
       <main className="mx-auto max-w-7xl px-6 py-8">
+        <div className="mb-4 flex justify-end"><Link href="/website/design" className="rounded-xl bg-[rgb(var(--scene-b,201_133_136))] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">Design with Cami</Link></div>
         {!form || !T ? (
           <p className="text-sm text-ink-soft">{message ?? 'Loading…'}</p>
         ) : (

@@ -79,7 +79,7 @@ async function filesFromDrop(dt: DataTransfer): Promise<File[]> {
   return out
 }
 
-const card = 'rounded-2xl border border-line bg-card p-5'
+const card = 'rounded-2xl border border-line bg-white/60 p-5'
 const input = 'w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25'
 const btn = 'rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50'
 const btnGhost = 'rounded-xl border border-line px-4 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50'
@@ -746,7 +746,7 @@ export default function GalleryManagePage() {
 
 
                 <section
-                  className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed px-5 ${photos.length > 0 ? 'py-4' : 'py-10'} transition ${dragging ? 'border-twilight bg-twilight/5' : 'border-line bg-card'}`}
+                  className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed px-5 ${photos.length > 0 ? 'py-4' : 'py-10'} transition ${dragging ? 'border-twilight bg-twilight/5' : 'border-line bg-white/60'}`}
                   onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
                   onDragLeave={() => setDragging(false)}
                   onDrop={onDrop}
@@ -920,7 +920,7 @@ export default function GalleryManagePage() {
 
 
                 {shown.length === 0 ? (
-                  <p className="rounded-2xl border border-line bg-card py-16 text-center text-sm text-ink-soft">
+                  <p className="rounded-2xl border border-line bg-white/60 py-16 text-center text-sm text-ink-soft">
                     {filter === 'fav' ? 'No client favorites yet.' : filter !== 'all' ? `No ${filter} photos.` : 'No photos yet. Drop some above.'}
                   </p>
                 ) : (

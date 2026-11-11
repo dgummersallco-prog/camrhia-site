@@ -35,10 +35,10 @@ export default function EditLayout({ children }: { children: ReactNode }) {
 
   if (blocked) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0c0c0e] px-6">
-        <div className="max-w-md rounded-2xl border border-white/10 bg-[#151518] p-8 text-center">
-          <h1 className="font-fraunces text-3xl text-white">The editing room is locked</h1>
-          <p className="mt-3 text-white/60">
+      <div className="flex min-h-screen items-center justify-center bg-paper px-6">
+        <div className="max-w-md rounded-2xl border border-white/70 bg-white/60 p-8 text-center">
+          <h1 className="font-fraunces text-3xl text-ink">The editing room is locked</h1>
+          <p className="mt-3 text-ink-soft">
             Your free trial or subscription is no longer active. Subscribe in the Camrhia app and everything here will be right where you left it.
           </p>
         </div>

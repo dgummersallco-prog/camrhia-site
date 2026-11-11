@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { QUESTIONS, STYLE_LOOK, type Signature } from '@/lib/brief'
 
 type Row = { id: string; title: string; status: string; created_at: string; gallery_photos: { count: number }[] }
@@ -70,9 +71,9 @@ function summarize(items: Correction[]) {
 }
 
 const tileBtn = (on: boolean) =>
-  `rounded-2xl border p-5 text-left transition ${on ? 'border-twilight bg-twilight text-white' : 'border-white/10 bg-[#151518] text-white hover:-translate-y-0.5 hover:border-twilight'}`
-const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
-const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-white/70 transition hover:border-white/35 hover:text-white disabled:opacity-40'
+  `rounded-2xl border p-5 text-left transition ${on ? 'border-[rgb(var(--scene-b,201_133_136))] bg-[rgb(var(--scene-b,201_133_136))] text-white' : 'border-white/70 bg-white/60 text-ink hover:-translate-y-0.5 hover:border-twilight'}`
+const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-ink transition hover:opacity-90 disabled:opacity-40'
+const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-ink-soft transition hover:border-white/35 hover:text-ink disabled:opacity-40'
 
 export default function EditingRoom() {
   const router = useRouter()
@@ -230,33 +231,34 @@ export default function EditingRoom() {
   const titleOf = (gid: string) => rows?.find((r) => r.id === gid)?.title ?? 'A shoot'
 
   return (
-    <div className="min-h-screen bg-[#0c0c0e] text-[#ececf0]">
+    <div className="min-h-screen bg-paper text-ink xl:pl-60">
+      <DashboardHeader active="edit" />
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="flex items-center justify-between">
-          <Link href="/dashboard" className="text-sm text-white/50 transition hover:text-white">← Back to Camrhia</Link>
-          <Link href="/galleries" className="text-sm text-white/50 transition hover:text-white">New shoot? Create it in Galleries</Link>
+          <Link href="/dashboard" className="text-sm text-ink-soft transition hover:text-ink">← Back to Camrhia</Link>
+          <Link href="/galleries" className="text-sm text-ink-soft transition hover:text-ink">New shoot? Create it in Galleries</Link>
         </div>
 
-        <h1 className="mt-12 font-fraunces text-4xl text-white">The editing room</h1>
+        <h1 className="mt-12 font-fraunces text-4xl text-ink">The editing room</h1>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           {([['edit', 'Edit', 'Pick a shoot and start'], ['styles', 'My styles', 'Your signature looks'], ['brain', 'Cami', 'Your AI editing assistant']] as [Tab, string, string][]).map(([k, label, sub]) => (
             <button key={k} className={tileBtn(tab === k)} onClick={() => setTab(k)}>
               <p className="font-fraunces text-xl">{label}</p>
-              <p className={`mt-1 text-sm ${tab === k ? 'text-white/80' : 'text-white/50'}`}>{sub}</p>
+              <p className={`mt-1 text-sm ${tab === k ? 'text-white/80' : 'text-ink-soft'}`}>{sub}</p>
             </button>
           ))}
         </div>
 
-        {error && <p className="mt-6 text-sm text-red-300">{error}</p>}
+        {error && <p className="mt-6 text-sm text-red-700">{error}</p>}
 
         {tab === 'edit' && (
           <>
-            <p className="mt-8 max-w-xl text-white/55">Pick a shoot. We walk it from raw photos to a finished gallery, one step at a time.</p>
+            <p className="mt-8 max-w-xl text-ink-soft">Pick a shoot. We walk it from raw photos to a finished gallery, one step at a time.</p>
 
-            {rows === null && <p className="mt-10 text-sm text-white/40">Loading…</p>}
+            {rows === null && <p className="mt-10 text-sm text-ink-soft">Loading…</p>}
             {rows && rows.length === 0 && !error && (
-              <p className="mt-10 rounded-2xl border border-white/10 bg-[#151518] p-8 text-white/60">
+              <p className="mt-10 rounded-2xl border border-white/70 bg-white/60 p-8 text-ink-soft">
                 No shoots yet. Create a gallery for your shoot first, then come back here to edit it.
               </p>
             )}
@@ -268,10 +270,10 @@ export default function EditingRoom() {
                   <Link
                     key={r.id}
                     href={`/edit/${r.id}`}
-                    className="group rounded-2xl border border-white/10 bg-[#151518] p-6 transition hover:border-twilight"
+                    className="group rounded-2xl border border-white/70 bg-white/60 p-6 transition hover:border-twilight"
                   >
-                    <p className="font-fraunces text-xl text-white">{r.title}</p>
-                    <p className="mt-2 text-sm text-white/50">
+                    <p className="font-fraunces text-xl text-ink">{r.title}</p>
+                    <p className="mt-2 text-sm text-ink-soft">
                       {count} {count === 1 ? 'photo' : 'photos'} · {r.status === 'published' ? 'Published' : 'Draft'}
                     </p>
                     <p className="mt-6 text-sm text-twilight transition group-hover:translate-x-1">{count === 0 ? 'Start' : 'Open'} →</p>
@@ -284,26 +286,26 @@ export default function EditingRoom() {
 
         {tab === 'styles' && (
           <div className="mt-8">
-            <p className="max-w-xl text-white/55">Your signature styles. Pick one at the start of a shoot and the editing room starts from your look.</p>
+            <p className="max-w-xl text-ink-soft">Your signature styles. Pick one at the start of a shoot and the editing room starts from your look.</p>
 
-            <div className="mt-8 rounded-2xl border border-white/10 bg-[#151518] p-6">
-              <p className="font-fraunces text-xl text-white">Create a style</p>
+            <div className="mt-8 rounded-2xl border border-white/70 bg-white/60 p-6">
+              <p className="font-fraunces text-xl text-ink">Create a style</p>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Name it, like Senior girls or Team Flames"
-                className="mt-4 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                className="mt-4 w-full rounded-lg border border-white/70 bg-white/70 px-3 py-2 text-sm text-ink outline-none focus:border-twilight"
               />
               <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {FIELDS.map((f) => {
                   const q = QUESTIONS.find((x) => x.key === f.key)
                   return (
-                    <label key={f.key} className="block text-xs text-white/50">
+                    <label key={f.key} className="block text-xs text-ink-soft">
                       {f.label}
                       <select
                         value={form[f.key] ?? ''}
                         onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                        className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                        className="mt-1 w-full rounded-lg border border-white/70 bg-white/70 px-3 py-2 text-sm text-ink outline-none focus:border-twilight"
                       >
                         <option value="">{f.key === 'style' ? 'Choose…' : 'Any'}</option>
                         {q?.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -317,9 +319,9 @@ export default function EditingRoom() {
               </button>
             </div>
 
-            {sigs === null && <p className="mt-8 text-sm text-white/40">Loading…</p>}
+            {sigs === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
             {sigs && sigs.length === 0 && (
-              <p className="mt-8 rounded-2xl border border-white/10 bg-[#151518] p-8 text-white/60">No signature styles yet. Create your first one above.</p>
+              <p className="mt-8 rounded-2xl border border-white/70 bg-white/60 p-8 text-ink-soft">No signature styles yet. Create your first one above.</p>
             )}
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -327,7 +329,7 @@ export default function EditingRoom() {
                 const a = s.answers as Record<string, unknown>
                 const bits = FIELDS.map((f) => optionLabel(f.key, a[f.key])).filter(Boolean)
                 return (
-                  <div key={s.id} className="rounded-2xl border border-white/10 bg-[#151518] p-6">
+                  <div key={s.id} className="rounded-2xl border border-white/70 bg-white/60 p-6">
                     {renaming === s.id ? (
                       <div className="flex gap-2">
                         <input
@@ -335,14 +337,14 @@ export default function EditingRoom() {
                           value={renameVal}
                           onChange={(e) => setRenameVal(e.target.value)}
                           onKeyDown={(e) => { if (e.key === 'Enter') void saveRename(s.id) }}
-                          className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+                          className="w-full rounded-lg border border-white/70 bg-white/70 px-3 py-2 text-sm text-ink outline-none focus:border-twilight"
                         />
                         <button className={quiet} onClick={() => saveRename(s.id)}>Save</button>
                       </div>
                     ) : (
-                      <p className="font-fraunces text-xl text-white">{s.name}</p>
+                      <p className="font-fraunces text-xl text-ink">{s.name}</p>
                     )}
-                    <p className="mt-2 text-sm text-white/50">{bits.length ? bits.join(' · ') : 'Your custom tweaks'}</p>
+                    <p className="mt-2 text-sm text-ink-soft">{bits.length ? bits.join(' · ') : 'Your custom tweaks'}</p>
                     <div className="mt-5 flex gap-2">
                       <button className={quiet} onClick={() => { setRenaming(s.id); setRenameVal(s.name) }}>Rename</button>
                       <button className={quiet} onClick={() => removeStyle(s)}>Delete</button>
@@ -356,53 +358,53 @@ export default function EditingRoom() {
 
         {tab === 'brain' && (
           <div className="mt-8">
-            <p className="max-w-xl text-white/55">What Cami has noticed from the fixes you make while you review photos.</p>
+            <p className="max-w-xl text-ink-soft">What Cami has noticed from the fixes you make while you review photos.</p>
 
-            {brain === null && <p className="mt-8 text-sm text-white/40">Loading…</p>}
+            {brain === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
             {brain && brain.checked === 0 && (
-              <p className="mt-8 rounded-2xl border border-white/10 bg-[#151518] p-8 text-white/60">
+              <p className="mt-8 rounded-2xl border border-white/70 bg-white/60 p-8 text-ink-soft">
                 Nothing yet. Review a few photos in a shoot and fix what you want to change. Cami starts noticing your habits right away.
               </p>
             )}
             {brain && brain.checked > 0 && (
               <>
                 <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-[#151518] p-6">
-                    <p className="font-fraunces text-3xl text-white">{brain.shoots}</p>
-                    <p className="mt-1 text-sm text-white/50">{brain.shoots === 1 ? 'shoot' : 'shoots'} reviewed</p>
+                  <div className="rounded-2xl border border-white/70 bg-white/60 p-6">
+                    <p className="font-fraunces text-3xl text-ink">{brain.shoots}</p>
+                    <p className="mt-1 text-sm text-ink-soft">{brain.shoots === 1 ? 'shoot' : 'shoots'} reviewed</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#151518] p-6">
-                    <p className="font-fraunces text-3xl text-white">{brain.checked}</p>
-                    <p className="mt-1 text-sm text-white/50">photos checked</p>
+                  <div className="rounded-2xl border border-white/70 bg-white/60 p-6">
+                    <p className="font-fraunces text-3xl text-ink">{brain.checked}</p>
+                    <p className="mt-1 text-sm text-ink-soft">photos checked</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-[#151518] p-6">
-                    <p className="font-fraunces text-3xl text-white">{brain.fixed}</p>
-                    <p className="mt-1 text-sm text-white/50">photos you fixed by hand</p>
+                  <div className="rounded-2xl border border-white/70 bg-white/60 p-6">
+                    <p className="font-fraunces text-3xl text-ink">{brain.fixed}</p>
+                    <p className="mt-1 text-sm text-ink-soft">photos you fixed by hand</p>
                   </div>
                 </div>
 
-                <p className="mt-10 font-fraunces text-xl text-white">How Cami did on each shoot</p>
+                <p className="mt-10 font-fraunces text-xl text-ink">How Cami did on each shoot</p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {brain.scores.map((sc) => (
-                    <div key={sc.gid} className="rounded-2xl border border-white/10 bg-[#151518] p-5">
-                      <p className="truncate text-white">{titleOf(sc.gid)}</p>
-                      <p className="mt-1 text-sm text-white/50">Cami got {sc.pct}% right · {sc.checked} {sc.checked === 1 ? 'photo' : 'photos'} checked</p>
-                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div key={sc.gid} className="rounded-2xl border border-white/70 bg-white/60 p-5">
+                      <p className="truncate text-ink">{titleOf(sc.gid)}</p>
+                      <p className="mt-1 text-sm text-ink-soft">Cami got {sc.pct}% right · {sc.checked} {sc.checked === 1 ? 'photo' : 'photos'} checked</p>
+                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/50">
                         <div className="h-full rounded-full bg-[var(--color-twilight)]" style={{ width: `${sc.pct}%` }} />
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <p className="mt-10 font-fraunces text-xl text-white">Your habits by light</p>
+                <p className="mt-10 font-fraunces text-xl text-ink">Your habits by light</p>
                 {brain.situations.length === 0 ? (
-                  <p className="mt-3 text-white/55">Not enough fixes yet to see a pattern for each kind of light. Keep reviewing and they show up here.</p>
+                  <p className="mt-3 text-ink-soft">Not enough fixes yet to see a pattern for each kind of light. Keep reviewing and they show up here.</p>
                 ) : (
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {brain.situations.map((sit) => (
-                      <div key={sit.light} className="rounded-2xl border border-white/10 bg-[#151518] p-5">
-                        <p className="text-lg text-white">{optionLabel('light', sit.light) ?? sit.light}</p>
-                        <ul className="mt-3 space-y-1 text-sm text-white/70">
+                      <div key={sit.light} className="rounded-2xl border border-white/70 bg-white/60 p-5">
+                        <p className="text-lg text-ink">{optionLabel('light', sit.light) ?? sit.light}</p>
+                        <ul className="mt-3 space-y-1 text-sm text-ink-soft">
                           {sit.top.map((h) => <li key={h.key}>{h.phrase} · {h.n} of {sit.fixed} photos</li>)}
                         </ul>
                       </div>
@@ -410,15 +412,15 @@ export default function EditingRoom() {
                   </div>
                 )}
 
-                <p className="mt-10 font-fraunces text-xl text-white">Your habits overall</p>
+                <p className="mt-10 font-fraunces text-xl text-ink">Your habits overall</p>
                 {brain.habits.length === 0 ? (
-                  <p className="mt-3 text-white/55">Not enough fixes yet to see a pattern. Keep reviewing and they show up here.</p>
+                  <p className="mt-3 text-ink-soft">Not enough fixes yet to see a pattern. Keep reviewing and they show up here.</p>
                 ) : (
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {brain.habits.map((h) => (
-                      <div key={h.key} className="rounded-2xl border border-white/10 bg-[#151518] p-5">
-                        <p className="text-lg text-white">{h.phrase}</p>
-                        <p className="mt-1 text-sm text-white/50">{h.n} of {brain.fixed} photos you fixed</p>
+                      <div key={h.key} className="rounded-2xl border border-white/70 bg-white/60 p-5">
+                        <p className="text-lg text-ink">{h.phrase}</p>
+                        <p className="mt-1 text-sm text-ink-soft">{h.n} of {brain.fixed} photos you fixed</p>
                       </div>
                     ))}
                   </div>
@@ -426,13 +428,13 @@ export default function EditingRoom() {
 
                 {suggestions.length > 0 && (
                   <>
-                    <p className="mt-10 font-fraunces text-xl text-white">Make Cami&apos;s edits yours</p>
-                    <p className="mt-2 max-w-xl text-white/55">You keep making the same fixes. Add them to your style and they happen on their own next time.</p>
+                    <p className="mt-10 font-fraunces text-xl text-ink">Make Cami&apos;s edits yours</p>
+                    <p className="mt-2 max-w-xl text-ink-soft">You keep making the same fixes. Add them to your style and they happen on their own next time.</p>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       {suggestions.map(({ sig, fixed, useful, usual }) => (
-                        <div key={sig.id} className="rounded-2xl border border-white/10 bg-[#151518] p-5">
-                          <p className="font-fraunces text-lg text-white">{sig.name}</p>
-                          <ul className="mt-3 space-y-1 text-sm text-white/70">
+                        <div key={sig.id} className="rounded-2xl border border-white/70 bg-white/60 p-5">
+                          <p className="font-fraunces text-lg text-ink">{sig.name}</p>
+                          <ul className="mt-3 space-y-1 text-sm text-ink-soft">
                             {useful.map((h) => <li key={h.key}>{h.phrase} · {h.n} of {fixed} photos</li>)}
                           </ul>
                           <button className={`${primary} mt-4`} disabled={adding === sig.id} onClick={() => addToStyle(sig, usual)}>

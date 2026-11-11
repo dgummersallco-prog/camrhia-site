@@ -76,6 +76,19 @@ for (const [label, cat] of MORE) {
   if (!FONT_OPTIONS[key]) FONT_OPTIONS[key] = mk(label, cat, W[label] ? label.replace(/ /g, '+') + ':wght@' + W[label] : undefined)
 }
 
+const SYS: [string, string, FontCat, string][] = [
+  ['Times New Roman', "'Times New Roman', Times, Tinos, serif", 'serif', 'Tinos:wght@400;700'],
+  ['Georgia', "Georgia, Gelasio, serif", 'serif', 'Gelasio:wght@400;500;600;700'],
+  ['Cambria', "Cambria, Caladea, serif", 'serif', 'Caladea:wght@400;700'],
+  ['Arial', "Arial, Arimo, sans-serif", 'sans', 'Arimo:wght@400;500;600;700'],
+  ['Helvetica', "'Helvetica Neue', Helvetica, Arimo, sans-serif", 'sans', 'Arimo:wght@400;500;600;700'],
+  ['Calibri', "Calibri, Carlito, sans-serif", 'sans', 'Carlito:wght@400;700'],
+  ['Courier New', "'Courier New', Courier, Cousine, monospace", 'display', 'Cousine:wght@400;700'],
+]
+for (const [label, family, cat, gf] of SYS) {
+  FONT_OPTIONS[label.toLowerCase().replace(/[^a-z0-9]/g, '')] = { label, family, cat, gf, weights: [400, 700] }
+}
+
 export const PAIR_PRESETS: Record<string, { name: string; head: string; body: string }> = {
   serif: { name: 'Classic', head: 'cormorant', body: 'montserrat' },
   modern: { name: 'Modern', head: 'josefin', body: 'worksans' },

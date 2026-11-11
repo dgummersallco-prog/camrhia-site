@@ -210,7 +210,7 @@ export default function GalleriesPage() {
         </div>
 
         {showNew && (
-          <form onSubmit={createGallery} className="mb-8 rounded-2xl border border-line bg-card p-5">
+          <form onSubmit={createGallery} className="mb-8 rounded-2xl border border-line bg-white/60 p-5">
             <p className="mb-4 font-fraunces text-lg font-semibold text-ink">New gallery</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -292,13 +292,13 @@ export default function GalleriesPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search galleries"
-              className="w-full rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none sm:w-64"
+              className="w-full rounded-xl border border-line bg-white/60 px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none sm:w-64"
             />
           </div>
         )}
 
         {selecting && (
-          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-card p-4 text-sm">
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white/60 p-4 text-sm">
             <span className="text-ink">{sel.size} selected</span>
             <button onClick={() => setSel(new Set(visible.map((g) => g.id)))} className="text-xs text-twilight underline">
               Select all shown
@@ -335,7 +335,7 @@ export default function GalleriesPage() {
         {rows === null ? (
           <p className="text-sm text-ink-soft">Loading…</p>
         ) : rows.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-line bg-card px-6 py-16 text-center">
+          <div className="rounded-2xl border border-dashed border-line bg-white/60 px-6 py-16 text-center">
             <p className="font-fraunces text-xl text-ink">No galleries yet</p>
             <p className="mt-1 text-sm text-ink-soft">Create your first gallery to start delivering photos.</p>
           </div>
@@ -351,7 +351,7 @@ export default function GalleriesPage() {
                   tabIndex={0}
                   onClick={() => (selecting ? toggleSel(g.id) : router.push(`/galleries/${g.id}`))}
                   onKeyDown={(e) => { if (e.key === 'Enter') { if (selecting) toggleSel(g.id); else router.push(`/galleries/${g.id}`) } }}
-                  className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-line bg-card transition hover:-translate-y-0.5 hover:shadow-lg ${sel.has(g.id) ? 'ring-2 ring-twilight' : ''}`}
+                  className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-line bg-white/60 transition hover:-translate-y-0.5 hover:shadow-lg ${sel.has(g.id) ? 'ring-2 ring-twilight' : ''}`}
                 >
                   {selecting && (
                     <span

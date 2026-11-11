@@ -186,6 +186,9 @@ function NotesBlock({ items, onAdd, onToggle, onDelete }: { items: Note[]; onAdd
 function ClientDetails({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: Ct[]; notes: Note[]; api: Api }) {
   return (
     <div className="space-y-5">
+      <NotesBlock items={notes} onAdd={(v) => api.addNote(c.key, v)} onToggle={api.toggleNote} onDelete={api.delNote} />
+      <ContactsBlock items={cts} onAdd={(v) => api.addCt(c.key, v)} onDelete={api.delCt} />
+      <FamilyBlock items={fam} onAdd={(f) => api.addFam(c.key, f)} onDelete={api.delFam} />
       <div>
         <p className={LABEL}>Sessions</p>
         <div className="mt-2 space-y-2">
@@ -197,9 +200,6 @@ function ClientDetails({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts
           ))}
         </div>
       </div>
-      <NotesBlock items={notes} onAdd={(v) => api.addNote(c.key, v)} onToggle={api.toggleNote} onDelete={api.delNote} />
-      <ContactsBlock items={cts} onAdd={(v) => api.addCt(c.key, v)} onDelete={api.delCt} />
-      <FamilyBlock items={fam} onAdd={(f) => api.addFam(c.key, f)} onDelete={api.delFam} />
     </div>
   )
 }
@@ -216,12 +216,9 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
   const pill = 'rounded-full border border-white/80 bg-white/70 px-3 py-1 text-xs font-medium text-ink transition hover:border-ink'
   const limit = addDays(todayStr(), 14)
   const due = notes.some((n) => isDue(n, limit))
-  const people: Person[] = cts.length
-    ? cts
-    : c.phone || c.email
-      ? [{ id: 'primary', name: 'Primary contact', role: null, phone: c.phone, email: c.email }]
-      : []
-  const types = Array.from(new Set(c.sessions.map((s) => typeLabel(s.session_type)))).join(' · ')
+  const phone = cts.find((p) => p.phone)?.phone ?? c.phone
+  const email = cts.find((p) => p.email)?.email ?? c.email
+  const box = 'rounded-2xl border border-white/80 bg-white/50 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]'
 
   return (
     <div className="w-full" style={{ perspective: '1200px', aspectRatio: '4 / 5' }}>
@@ -236,26 +233,35 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
         {/* FRONT */}
         <div className={face} style={{ ...faceStyle, ...GLASS }}>
           {due && <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ROSE }}>Reminder</span>}
-          <div className="flex h-full flex-col px-5 pb-5 pt-6">
+          <div className="flex h-full flex-col px-5 pb-4 pt-6">
             <p className="line-clamp-2 break-words text-center font-fraunces text-2xl font-bold leading-tight text-ink">{c.name}</p>
-            <p className="mt-1 truncate text-center text-xs text-ink-soft">{types}</p>
-            <div className="mt-4 min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-0.5" onClick={stop}>
-              {people.length === 0 && <p className="pt-4 text-center text-xs text-ink-soft">Flip the card to add who you talk to.</p>}
-              {people.map((p) => (
-                <div key={p.id} className="rounded-xl border border-white/80 bg-white/60 px-3 py-2.5">
-                  <p className="text-sm font-semibold text-ink">{p.name}</p>
-                  {p.role && <p className="text-[11px] uppercase tracking-[0.12em] text-ink-soft">{p.role}</p>}
-                  {(p.phone || p.email) && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {p.phone && <a href={`tel:${p.phone}`} className={pill}>Call</a>}
-                      {p.phone && <a href={`sms:${p.phone}`} className={pill}>Text</a>}
-                      {p.email && <a href={`mailto:${p.email}`} className={pill}>Email</a>}
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className="mt-5 space-y-3" onClick={stop}>
+              <div className={box}>
+                <p className={LABEL}>Phone</p>
+                {phone ? (
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <span className="truncate text-base font-semibold text-ink">{phone}</span>
+                    <span className="flex shrink-0 gap-1.5">
+                      <a href={`tel:${phone}`} className={pill}>Call</a>
+                      <a href={`sms:${phone}`} className={pill}>Text</a>
+                    </span>
+                  </div>
+                ) : <p className="mt-1 text-base text-ink-soft/70">No phone yet</p>}
+              </div>
+              <div className={box}>
+                <p className={LABEL}>Email</p>
+                {email ? (
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate text-base font-semibold text-ink">{email}</span>
+                    <a href={`mailto:${email}`} className={pill + ' shrink-0'}>Email</a>
+                  </div>
+                ) : <p className="mt-1 text-base text-ink-soft/70">No email yet</p>}
+              </div>
             </div>
-            <Link href="/messages" onClick={stop} className="mt-3 rounded-xl bg-[rgb(var(--scene-b,201_133_136))] px-4 py-2.5 text-center text-sm font-medium text-white transition hover:opacity-90">Message on Camrhia</Link>
+            <div className="mt-auto" onClick={stop}>
+              <Link href="/messages" className="block rounded-2xl border border-white/90 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_-12px_rgba(90,50,60,0.5)] transition hover:bg-white/75">Message on Camrhia</Link>
+            </div>
+            <p className="mt-3 text-center text-xs font-medium text-ink-soft">Flip for notes</p>
           </div>
         </div>
 
