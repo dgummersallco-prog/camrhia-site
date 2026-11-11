@@ -81,7 +81,7 @@ function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd:
   const stop = (e: React.MouseEvent) => e.stopPropagation()
   const face = 'absolute inset-0 overflow-hidden rounded-2xl border border-line shadow-lg'
   const faceStyle = {
-    background: 'linear-gradient(160deg, #FFFCF9 0%, #F6EEDC 100%)',
+    background: '#FFFFFF',
     backfaceVisibility: 'hidden' as const,
     WebkitBackfaceVisibility: 'hidden' as const,
   }

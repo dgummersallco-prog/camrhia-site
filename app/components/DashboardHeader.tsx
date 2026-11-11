@@ -250,15 +250,15 @@ export function DashboardHeader({ active }: { active: Tab }) {
   }
 
   const GROUPS: { label: string | null; tabs: string[] }[] = [
-    { label: null, tabs: ['dashboard', 'edit'] },
+    { label: null, tabs: ['dashboard', 'galleries', 'edit'] },
     { label: 'Clients', tabs: ['clients', 'messages', 'sessions', 'calendar'] },
-    { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments', 'team'] },
+    { label: 'Work', tabs: ['packages', 'questionnaires', 'contracts', 'payments', 'team'] },
     { label: 'Your brand', tabs: ['website', 'specials'] },
     { label: 'Account', tabs: ['settings', 'help'] },
   ]
   const groupedNav = GROUPS.map((g, gi) => (
     <div key={gi} className={gi === 0 ? '' : 'mt-6'}>
-      {g.label && <p className="mb-2 px-3 text-[14px] font-semibold uppercase tracking-[0.16em] text-[#8C6B3F]">{g.label}</p>}
+      {g.label && <p className="mb-1.5 px-3 font-fraunces text-[22px] font-semibold text-[#8C6B3F]">{g.label}</p>}
       <div className="flex flex-col gap-1">
         {g.tabs.filter((t) => t !== 'team' || showTeam || active === 'team').map((t) => item(ITEMS.find((i) => i.tab === t)!))}
         {g.label === 'Account' && item(isAffiliate ? { tab: 'affiliate', href: '/affiliate/dashboard', label: 'Affiliate dashboard' } : { tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
@@ -269,7 +269,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="fixed bottom-4 left-4 top-4 z-40 hidden w-56 flex-col rounded-[28px] border border-white/70 bg-[rgba(255,252,248,0.78)] px-3 py-7 shadow-[0_20px_60px_-20px_rgba(140,107,63,0.35)] backdrop-blur-xl xl:flex">
+      <aside className="fixed bottom-4 left-4 top-4 z-40 hidden w-56 flex-col rounded-[28px] border border-line bg-white px-3 py-7 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.12)] xl:flex">
         <Link href="/" className="mb-8 px-3"><Wordmark className="text-4xl text-[#8C6B3F]!" /></Link>
         <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {groupedNav}
@@ -280,7 +280,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper xl:hidden">
+      <header className="sticky top-0 z-40 border-b border-line bg-white xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
           <Link href="/"><Wordmark className="text-3xl text-[#8C6B3F]!" /></Link>
           <button

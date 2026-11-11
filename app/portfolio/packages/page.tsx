@@ -56,7 +56,7 @@ function Row({ pkg, onEdit, onDelete, onToggle }: { pkg: Pkg; onEdit: () => void
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.6 : 1,
-    background: 'linear-gradient(160deg, #FFFCF9 0%, #F8EAE4 100%)',
+    background: '#FFFFFF',
   }
   const lines = (pkg.detail ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
   return (

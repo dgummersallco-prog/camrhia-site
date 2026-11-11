@@ -1,10 +1,10 @@
 export const DASH_BG_KEY = 'camrhia_dash_bg'
-const SCRIM = 'linear-gradient(rgba(255, 250, 244, 0.25), rgba(255, 250, 244, 0.25))'
+const SCRIM = 'linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2))'
 
 export const BG_PRESETS: { id: string; label: string; css: string | null; preview: string }[] = [
-  { id: 'golden', label: 'Ivory', css: null, preview: 'linear-gradient(160deg,#FBF6F0 0%,#F4E8D6 55%,#EAD7B4 100%)' },
-  { id: 'evening', label: 'Champagne', css: 'linear-gradient(160deg,#FFF9EF 0%,#F3E2BF 50%,#E2C48D 100%)', preview: 'linear-gradient(160deg,#FFF9EF 0%,#F3E2BF 50%,#E2C48D 100%)' },
-  { id: 'garden', label: 'Sage', css: 'linear-gradient(160deg,#F6F3E8 0%,#DCE4CC 55%,#C3D0AC 100%)', preview: 'linear-gradient(160deg,#F6F3E8 0%,#DCE4CC 55%,#C3D0AC 100%)' },
+  { id: 'golden', label: 'White', css: null, preview: '#FFFFFF' },
+  { id: 'evening', label: 'Mist', css: 'linear-gradient(160deg,#F7F8FA 0%,#E9ECF1 100%)', preview: 'linear-gradient(160deg,#F7F8FA 0%,#E9ECF1 100%)' },
+  { id: 'garden', label: 'Sage', css: 'linear-gradient(160deg,#F6F8F2 0%,#DCE4CC 100%)', preview: 'linear-gradient(160deg,#F6F8F2 0%,#DCE4CC 100%)' },
 ]
 
 // value: a preset id, a storage path in the portfolio bucket, or null for the default.

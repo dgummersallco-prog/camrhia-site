@@ -13,7 +13,7 @@
   --color-card: #FFFCF8;
   --color-rose: #D9B36A;
   --color-blush: #EBD8AE;
-  --color-blush-wash: #F6EEDC;
+  --color-blush-wash: #F5F5F4;
   --color-plum: #3A2A31;
 
   /* Brand fonts */
@@ -171,19 +171,19 @@ select option {
   background: #FFFCF8;
 }
 
-/* Dashboard shell: light and airy, content on a soft white card */
+/* Dashboard shell: straight white, content on a white card */
 html.dash-shell body {
-  background: var(--dash-bg, radial-gradient(1000px 600px at 80% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 60%), radial-gradient(900px 600px at 10% 100%, rgba(233, 211, 168, 0.55), rgba(233, 211, 168, 0) 60%), linear-gradient(160deg, #FBF6F0 0%, #F4E8D6 55%, #EAD7B4 100%));
+  background: var(--dash-bg, #FFFFFF);
   background-size: cover;
   background-attachment: fixed;
 }
 html.dash-shell .min-h-screen.bg-paper {
-  background: rgba(255, 252, 248, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #FFFFFF;
+  border: 1px solid #EADFD6;
   margin: 0.75rem;
   min-height: calc(100vh - 1.5rem);
   border-radius: 24px;
-  box-shadow: 0 20px 50px -28px rgba(140, 107, 63, 0.35);
+  box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.12);
 }
 @media (min-width: 1280px) {
   html.dash-shell .min-h-screen.bg-paper {
