@@ -28,12 +28,23 @@ function ago(iso: string): string {
   return `${Math.round(hrs / 24)}d ago`
 }
 
-const card = 'rounded-3xl border border-[#E7E5E4] bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_14px_34px_-18px_rgba(0,0,0,0.12)]'
+const card = 'rounded-3xl border border-white/70 bg-white/60 p-6 backdrop-blur-xl shadow-[0_1px_2px_rgba(0,0,0,0.04),0_14px_34px_-18px_rgba(0,0,0,0.12)]'
 const btn = 'rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90'
 const btnGhost = 'rounded-full border border-line px-5 py-2.5 text-sm text-ink hover:bg-paper-deep'
-const tile = 'flex flex-col gap-1 rounded-3xl border border-[#E7E5E4] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,0.04),0_14px_34px_-18px_rgba(0,0,0,0.12)] transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-lg'
+const tile = 'flex flex-col gap-1 rounded-3xl border border-white/70 bg-white/60 p-6 text-left backdrop-blur-xl shadow-[0_1px_2px_rgba(0,0,0,0.04),0_14px_34px_-18px_rgba(0,0,0,0.12)] transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-lg'
 
 import InfoTip from '@/app/components/InfoTip'
+
+function SessionThumb({ type, name }: { type?: string | null; name?: string | null }) {
+  const key = (type || 'session').toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  return (
+    <span className="relative flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[linear-gradient(135deg,#8A7850,#4F4430)] font-fraunces text-xl text-[#F3E3B8] shadow-sm">
+      {(name || '•').trim().charAt(0).toUpperCase()}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`/session-types/${key}.png`} alt="" className="absolute inset-0 h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+    </span>
+  )
+}
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -266,7 +277,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-paper xl:pl-60">
+    <div className="min-h-screen bg-[radial-gradient(90%_60%_at_80%_0%,#FBF6EA_0%,#F3EADA_60%,#EBDFCB_100%)] xl:pl-60">
       <DashboardHeader active="dashboard" />
       <main className="mx-auto max-w-5xl px-6 py-10">
         {!ready ? (
@@ -335,8 +346,8 @@ export default function DashboardPage() {
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
             {next && (
-              <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-white/10 bg-twilight bg-[linear-gradient(135deg,rgba(255,255,255,0.16),rgba(0,0,0,0.14))] p-6 text-white shadow-[0_18px_40px_-18px_rgba(0,0,0,0.3)]">
-                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-white/95 text-twilight shadow-md">
+              <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-[#E3C88F]/40 bg-[linear-gradient(135deg,#8A7850_0%,#6B5C3C_55%,#4F4430_100%)] p-6 text-white shadow-[0_18px_40px_-18px_rgba(60,45,20,0.55)]">
+                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#FBF6EA] text-[#6B5C3C] shadow-md">
                   <span className="text-[11px] font-semibold uppercase tracking-wider">{new Date(`${next.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}</span>
                   <span className="font-fraunces text-2xl font-semibold leading-none">{new Date(`${next.wedding_date}T00:00:00`).getDate()}</span>
                 </div>
@@ -345,7 +356,7 @@ export default function DashboardPage() {
                   <p className="truncate font-fraunces text-2xl font-semibold text-white">{next.names || 'Untitled session'}</p>
                   <p className="text-sm text-white/80">{typeLabel(next.session_type)} · {fmtDay(next.wedding_date!)}</p>
                 </div>
-                <Link href={`/sessions/${next.id}`} className="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-twilight transition hover:opacity-90">Open session →</Link>
+                <Link href={`/sessions/${next.id}`} className="rounded-xl bg-[#FBF6EA] px-4 py-2.5 text-sm font-medium text-[#6B5C3C] transition hover:opacity-90">Open session →</Link>
               </section>
             )}
 
@@ -358,12 +369,12 @@ export default function DashboardPage() {
                   <ul className="divide-y divide-line">
                     {upcoming.map((x) => (
                       <li key={x.id}>
-                        <Link href={`/sessions/${x.id}`} className="flex items-center justify-between gap-3 py-2.5 hover:opacity-80">
+                        <Link href={`/sessions/${x.id}`} className="flex items-center gap-4 py-3 hover:opacity-80"><SessionThumb type={x.session_type} name={x.names} />
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-medium text-ink">{x.names || 'Untitled session'}</span>
                             <span className="block text-xs text-ink-soft">{typeLabel(x.session_type)}</span>
                           </span>
-                          <span className="shrink-0 text-xs text-ink-soft">{fmtDay(x.wedding_date!)}</span>
+                          <span className="ml-auto shrink-0 text-xs text-ink-soft">{fmtDay(x.wedding_date!)}</span>
                         </Link>
                       </li>
                     ))}
