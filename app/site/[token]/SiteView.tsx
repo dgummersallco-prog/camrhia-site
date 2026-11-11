@@ -6,6 +6,7 @@ import { heroStarter } from '@/lib/aboutCanvas'
 import { galleryStarter, exploreStarter } from '@/lib/aboutCanvas'
 import { installPreviewGlow } from '@/lib/previewGlow'
 import { installPreviewPick } from '@/lib/previewPick'
+import { installPreviewSections } from '@/lib/previewSections'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
@@ -73,6 +74,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   useEffect(() => installPreviewGlow(), [])
   useEffect(() => installPreviewPick(), [])
+  useEffect(() => installPreviewSections(), [])
 
   const t = resolveTheme(r)
   const { tpl, accent, ink, soft, line, bg, tint } = t
@@ -949,7 +951,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
 
         {visible.map((k, i) => (
-          <React.Fragment key={k}>{renderSection(k, i % 2 === 1)}</React.Fragment>
+          <React.Fragment key={k}>{((hid: boolean) => isPreview ? (<div data-sec={k} style={hid ? { display: 'none' } : undefined}>{hid ? null : renderSection(k, i % 2 === 1)}</div>) : hid ? null : renderSection(k, i % 2 === 1))(((r as any).site_settings?.hiddenSecs ?? []).includes(k))}</React.Fragment>
         ))}
 
         {page !== 'home' && page !== 'about' && visible.length > 0 && (

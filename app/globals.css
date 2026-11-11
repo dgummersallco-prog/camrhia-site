@@ -247,3 +247,19 @@ html.dash-shell [class*="color-mix(in_srgb,rgb(var(--scene-a"], html.dash-shell 
 /* Website builder panel: keep step cards compact in the narrow left panel */
 .bld .grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 .bld .grid:has(> input) { grid-template-columns: minmax(0, 1fr) !important; }
+
+/* Affiliate and admin pages: swap the navy for the photo-matched accent */
+.aff-scope {
+  --aff-fill: color-mix(in srgb, rgb(var(--scene-a, 204 138 140)) 65%, #e6e6e6);
+  --aff-ink: rgb(var(--scene-b, 165 100 106));
+  --color-twilight: var(--aff-fill);
+}
+.aff-scope [class~="bg-[#3A4A6B]"] { background-color: var(--aff-fill); }
+.aff-scope [class~="bg-[#3A4A6B]/10"] { background-color: color-mix(in srgb, var(--aff-fill) 22%, transparent); }
+.aff-scope [class~="text-[#3A4A6B]"] { color: var(--aff-ink); }
+.aff-scope [class~="border-[#3A4A6B]"] { border-color: var(--aff-fill); }
+.aff-scope [class~="border-[#D5DCEA]"] { border-color: rgba(255, 255, 255, 0.7); }
+.aff-scope input:focus, .aff-scope textarea:focus, .aff-scope select:focus {
+  border-color: var(--aff-fill) !important;
+  --tw-ring-color: color-mix(in srgb, var(--aff-fill) 35%, transparent) !important;
+}

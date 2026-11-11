@@ -80,7 +80,7 @@ export default function AffiliateShell({
   }, [affiliate?.parent_affiliate_id])
 
   return (
-    <div className={`min-h-screen bg-paper flex flex-col ${isAdminArea ? '' : 'aff-scope xl:pl-60'}`}>
+    <div className={`min-h-screen bg-paper flex flex-col ${isAdminArea ? 'aff-scope' : 'aff-scope xl:pl-60'}`}>
       <main className={`flex-1 mx-auto w-full max-w-5xl px-6 py-8`}>
         {!isAdminArea && (
           <aside>

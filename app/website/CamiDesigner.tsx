@@ -134,6 +134,8 @@ function FontPick({ label, hint, value, onPick }: { label: string; hint: string;
   )
 }
 
+const HOME_SECS: [string, string][] = [['explore', 'Explore'], ['portfolio', 'Portfolio'], ['testimonials', 'Testimonials'], ['contact', 'Contact']]
+
 export default function CamiDesigner() {
   const router = useRouter()
   const [form, setForm] = useState<Prof | null>(null)
@@ -166,6 +168,7 @@ export default function CamiDesigner() {
   const [dirty, setDirty] = useState(false)
   const [pubMsg, setPubMsg] = useState('')
   const [full, setFull] = useState(false)
+  const commitRef = useRef<((fn: (n: Prof) => void) => Promise<void>) | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -192,6 +195,23 @@ export default function CamiDesigner() {
     function onMsg(e: MessageEvent) {
       const d = e.data
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
+      if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
+        commitRef.current?.((n) => {
+          const s = (n.site_settings = n.site_settings ?? {})
+          if (d.action === 'hide') {
+            const h: string[] = Array.isArray(s.hiddenSecs) ? s.hiddenSecs : []
+            if (!h.includes(d.key)) s.hiddenSecs = [...h, d.key]
+            return
+          }
+          const ord: string[] = [...(d.order as string[])]
+          const from = ord.indexOf(d.key)
+          if (from < 0) return
+          ord.splice(from, 1)
+          ord.splice(Math.max(0, Math.min(ord.length, Number(d.to))), 0, d.key)
+          s.order_home = ord.includes('explore') ? ord : ['explore', ...ord]
+        })
+        return
+      }
       if (!d || d.type !== 'camrhia-pick' || e.source !== frameRef.current?.contentWindow) return
       const f = frameRef.current!.getBoundingClientRect()
       const b = boxRef.current?.getBoundingClientRect()
@@ -270,6 +290,8 @@ export default function CamiDesigner() {
     await save(next)
   }
 
+  commitRef.current = commit
+
   async function undo() {
     const prev = history[history.length - 1]
     if (!prev) return false
@@ -346,9 +368,37 @@ export default function CamiDesigner() {
   const idx = TABS.indexOf(tab)
   const roleVal = role === 'accent' ? accent : role === 'bg' ? bg : txt
   const swatches = role === 'accent' ? ACCENTS : role === 'bg' ? BGS : TEXTS
+  const hiddenSecs: string[] = Array.isArray(set.hiddenSecs) ? set.hiddenSecs : []
+  const homeKnown = HOME_SECS.map(([k]) => k)
+  const homeCustom: string[] = ((set.customs ?? []) as { id: string; page: string }[]).filter((c) => c.page === 'home').map((c) => c.id)
+  const savedHome: string[] = Array.isArray(set.order_home) ? set.order_home : []
+  const homeFull: string[] = [...savedHome.filter((k) => homeKnown.includes(k) || homeCustom.includes(k)), ...homeKnown.filter((k) => !savedHome.includes(k)), ...homeCustom.filter((k) => !savedHome.includes(k))]
+  const homeOrder: string[] = homeFull.filter((k) => homeKnown.includes(k))
 
   function pickColor(v: string) {
     commit((n) => applyPalette(n, role === 'accent' ? v : n.site_accent ?? accent, role === 'bg' ? v : n.site_settings?.colors?.bg ?? bg, role === 'text' ? v : n.site_settings?.colors?.text ?? txt))
+  }
+  function moveSec(k: string, dir: number) {
+    const i = homeOrder.indexOf(k)
+    const j = i + dir
+    if (i < 0 || j < 0 || j >= homeOrder.length) return
+    const other = homeOrder[j]
+    commit((n) => {
+      const s = (n.site_settings = n.site_settings ?? {})
+      const full = [...homeFull]
+      const a = full.indexOf(k)
+      const b = full.indexOf(other)
+      full[a] = other
+      full[b] = k
+      s.order_home = full
+    })
+  }
+  function toggleSec(k: string) {
+    commit((n) => {
+      const s = (n.site_settings = n.site_settings ?? {})
+      const h: string[] = Array.isArray(s.hiddenSecs) ? s.hiddenSecs : []
+      s.hiddenSecs = h.includes(k) ? h.filter((x) => x !== k) : [...h, k]
+    })
   }
   function togglePage(k: string) {
     commit((n) => {
@@ -565,6 +615,24 @@ export default function CamiDesigner() {
               <h2 className="font-fraunces text-2xl font-semibold text-ink">Pages</h2>
               <p className="mt-1 text-sm text-ink-soft">{HEADINGS.pages[1]}</p>
               <div className="mt-5">{renderStep('pages')}</div>
+              <h3 className="mt-9 font-fraunces text-xl font-semibold text-ink">Home page sections</h3>
+              <p className="mt-1 text-sm text-ink-soft">Move sections up or down, or hide the ones you do not want. You can also hover a section in the preview.</p>
+              <div className="mt-4 border-t border-black/10">
+                {homeOrder.map((k, i) => {
+                  const off = hiddenSecs.includes(k)
+                  const lab = HOME_SECS.find(([x]) => x === k)?.[1] ?? k
+                  return (
+                    <div key={k} className="flex items-center justify-between border-b border-black/10 py-3">
+                      <span className={'text-base ' + (off ? 'text-ink-soft line-through' : 'text-ink')}>{lab}</span>
+                      <span className="flex items-center gap-1">
+                        <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => moveSec(k, -1)} className="h-8 w-8 rounded-lg text-ink-soft transition hover:bg-black/5 hover:text-ink disabled:opacity-30">↑</button>
+                        <button type="button" aria-label="Move down" disabled={i === homeOrder.length - 1} onClick={() => moveSec(k, 1)} className="h-8 w-8 rounded-lg text-ink-soft transition hover:bg-black/5 hover:text-ink disabled:opacity-30">↓</button>
+                        <button type="button" onClick={() => toggleSec(k)} className="ml-1 rounded-lg bg-black/5 px-3 py-1.5 text-sm text-ink transition hover:bg-black/10">{off ? 'Show' : 'Hide'}</button>
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
               <h3 className="mt-9 font-fraunces text-xl font-semibold text-ink">Home photos</h3>
               <p className="mt-1 text-sm text-ink-soft">{HEADINGS.photos[1]}</p>
               <div className="mt-4">{renderStep('photos')}</div>
