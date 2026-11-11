@@ -276,7 +276,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
     <>
       <DashScenes />
       {/* Desktop sidebar */}
-      <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-60 flex-col border-r border-[#F6DDD6]/30 bg-[linear-gradient(180deg,rgba(204,138,140,0.94)_0%,rgba(158,98,106,0.94)_100%)] px-3 py-7 shadow-[8px_0_40px_-18px_rgba(0,0,0,0.45)] backdrop-blur-xl xl:flex">
+      <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-60 flex-col border-r border-[#F6DDD6]/30 bg-[linear-gradient(180deg,rgba(204,138,140,0.62)_0%,rgba(158,98,106,0.62)_100%)] px-3 py-7 shadow-[8px_0_40px_-18px_rgba(0,0,0,0.45)] backdrop-blur-xl xl:flex">
         <Link href="/" className="mb-8 block px-3 text-center"><Wordmark className="text-4xl text-[#FBF1E6]!" /></Link>
         <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {groupedNav}

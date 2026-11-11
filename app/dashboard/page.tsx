@@ -287,7 +287,7 @@ export default function DashboardPage() {
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
             {next && (
-              <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-white/50 bg-[linear-gradient(135deg,rgba(204,138,140,0.82)_0%,rgba(158,98,106,0.78)_100%)] p-6 text-white shadow-[0_18px_40px_-18px_rgba(120,60,70,0.4)] backdrop-blur-xl">
+              <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-white/50 bg-[linear-gradient(135deg,rgba(204,138,140,0.6)_0%,rgba(158,98,106,0.55)_100%)] p-6 text-white shadow-[0_18px_40px_-18px_rgba(120,60,70,0.4)] backdrop-blur-xl">
                 <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#FBF6EA] text-[#A5646A] shadow-md">
                   <span className="text-[11px] font-semibold uppercase tracking-wider">{new Date(`${next.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}</span>
                   <span className="font-fraunces text-2xl font-semibold leading-none">{new Date(`${next.wedding_date}T00:00:00`).getDate()}</span>
