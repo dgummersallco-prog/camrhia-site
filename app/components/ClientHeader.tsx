@@ -1,11 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import Wordmark from '@/app/components/Wordmark'
 import { loadClientThreads } from '@/lib/clientThreads'
+import SceneSidebar from '@/app/components/SceneSidebar'
 
 export type ClientTab = 'home' | 'sessions' | 'galleries' | 'messages' | 'notifications' | 'account'
 
@@ -26,19 +25,9 @@ const ITEMS: { tab: ClientTab; href: string; label: string }[] = [
   { tab: 'account', href: '/my/account', label: 'Account' },
 ]
 
-function Icon({ name }: { name: ClientTab }) {
-  return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d={ICONS[name]} />
-    </svg>
-  )
-}
-
 export function ClientHeader({ active }: { active: ClientTab }) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
   const [unread, setUnread] = useState(0)
-  const [unreadNotifs, setUnreadNotifs] = useState(0)
 
   useEffect(() => {
     let off = false
@@ -49,8 +38,6 @@ export function ClientHeader({ active }: { active: ClientTab }) {
       if (!data.session) return
       const t = await loadClientThreads(sb, data.session.user.id)
       if (!off) setUnread(t.filter((x) => x.unread).length)
-      const { count } = await sb.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', data.session.user.id).eq('read', false)
-      if (!off) setUnreadNotifs(count ?? 0)
     }
     run()
     const timer = setInterval(run, 45000)
@@ -63,62 +50,13 @@ export function ClientHeader({ active }: { active: ClientTab }) {
     router.push('/login')
   }
 
-  const item = (it: { tab: ClientTab; href: string; label: string }) => {
-    const isActive = active === it.tab
-    return (
-      <Link
-        key={it.href}
-        href={it.href}
-        onClick={() => setOpen(false)}
-        className={`relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13.5px] font-medium tracking-wide transition ${
-          isActive ? 'bg-blush-wash text-twilight' : 'text-ink-soft hover:bg-blush-wash/60 hover:text-ink'
-        }`}
-      >
-        {isActive && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-twilight" />}
-        <Icon name={it.tab} />
-        {it.label}
-        {it.tab === 'notifications' && unreadNotifs > 0 && (
-          <span className="ml-auto rounded-full bg-brass px-2 py-0.5 text-[11px] font-semibold text-white">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>
-        )}
-        {it.tab === 'messages' && unread > 0 && (
-          <span className="ml-auto rounded-full bg-brass px-2 py-0.5 text-[11px] font-semibold text-white">{unread > 9 ? '9+' : unread}</span>
-        )}
-      </Link>
-    )
-  }
-
+  const activeHref = ITEMS.find((i) => i.tab === active)?.href ?? ''
   return (
-    <>
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line bg-card px-4 py-6 xl:flex">
-        <Link href="/my" className="mb-8 px-2"><Wordmark className="text-3xl" /></Link>
-        <nav className="flex flex-1 flex-col gap-1">
-          {ITEMS.map((it) => item(it))}
-        </nav>
-        <button onClick={signOut} className="rounded-xl px-3.5 py-2.5 text-left text-sm text-ink-soft transition hover:bg-line/60 hover:text-ink">
-          Sign out
-        </button>
-      </aside>
-
-      <header className="sticky top-0 z-40 border-b border-line bg-paper xl:hidden">
-        <div className="flex items-center justify-between px-6 py-3">
-          <Link href="/my"><Wordmark className="text-3xl" /></Link>
-          <button
-            onClick={() => setOpen((o) => !o)}
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-ink"
-          >
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
-              {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-            </svg>
-          </button>
-        </div>
-        {open && (
-          <nav className="flex flex-col gap-1 border-t border-line px-4 pb-4 pt-2">
-            {ITEMS.map((it) => item(it))}
-            <button onClick={signOut} className="rounded-xl px-3.5 py-2.5 text-left text-sm text-ink-soft">Sign out</button>
-          </nav>
-        )}
-      </header>
-    </>
+    <SceneSidebar
+      groups={[{ items: ITEMS.map((i) => ({ href: i.href, label: i.label, icon: ICONS[i.tab], badge: i.tab === 'messages' ? unread : 0 })) }]}
+      activeHref={activeHref}
+      homeHref="/my"
+      onSignOut={signOut}
+    />
   )
 }

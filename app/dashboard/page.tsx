@@ -287,8 +287,8 @@ export default function DashboardPage() {
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
             {next && (
-              <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-white/50 bg-[linear-gradient(135deg,rgba(204,138,140,0.28)_0%,rgba(158,98,106,0.3)_100%)] p-6 text-white shadow-[0_18px_40px_-18px_rgba(120,60,70,0.4)] backdrop-blur-xl">
-                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#FBF6EA] text-[#A5646A] shadow-md">
+              <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-white/50 bg-[linear-gradient(135deg,rgb(var(--scene-a,204_138_140)/0.28)_0%,rgb(var(--scene-b,158_98_106)/0.3)_100%)] p-6 text-white shadow-[0_18px_40px_-18px_rgba(120,60,70,0.4)] backdrop-blur-xl">
+                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#FBF6EA] text-[rgb(var(--scene-b,165_100_106))] shadow-md">
                   <span className="text-[11px] font-semibold uppercase tracking-wider">{new Date(`${next.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}</span>
                   <span className="font-fraunces text-2xl font-semibold leading-none">{new Date(`${next.wedding_date}T00:00:00`).getDate()}</span>
                 </div>
@@ -297,7 +297,7 @@ export default function DashboardPage() {
                   <p className="truncate font-fraunces text-3xl font-bold text-white">{next.names || 'Untitled session'}</p>
                   <p className="text-sm text-white">{typeLabel(next.session_type)} · {fmtDay(next.wedding_date!)}</p>
                 </div>
-                <Link href={`/sessions/${next.id}`} className="rounded-xl bg-[#FBF6EA] px-4 py-2.5 text-sm font-medium text-[#A5646A] transition hover:opacity-90">Open session →</Link>
+                <Link href={`/sessions/${next.id}`} className="rounded-xl bg-[#FBF6EA] px-4 py-2.5 text-sm font-medium text-[rgb(var(--scene-b,165_100_106))] transition hover:opacity-90">Open session →</Link>
               </section>
             )}
 

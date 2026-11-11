@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import SceneSidebar from '@/app/components/SceneSidebar'
 import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 
 export default function AffiliateTabs() {
   const pathname = usePathname() ?? ''
+  const router = useRouter()
   const admin = pathname.startsWith('/admin')
   const [isMaster, setIsMaster] = useState(false)
   const [onTeam, setOnTeam] = useState(false)
@@ -68,6 +70,20 @@ export default function AffiliateTabs() {
   if (!admin) tabs.push({ href: '/affiliate/dashboard/boosted', label: 'Boosted posts' })
   if (!admin) tabs.push({ href: '/affiliate/dashboard/pay', label: 'Pay breakdown' })
   if (!admin) tabs.push({ href: '/affiliate/dashboard/account', label: 'Account' })
+
+  if (!admin) {
+    const activeHref = tabs
+      .filter((t) => (t.href === '/affiliate/dashboard' ? pathname === t.href : pathname.startsWith(t.href)))
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? ''
+    return (
+      <SceneSidebar
+        groups={[{ items: tabs }]}
+        activeHref={activeHref}
+        homeHref="/affiliate/dashboard"
+        onSignOut={async () => { if (supabase) await supabase.auth.signOut(); router.replace('/affiliate/login') }}
+      />
+    )
+  }
 
   return (
     <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap lg:sticky lg:top-24 lg:flex-col lg:items-stretch lg:overflow-visible">

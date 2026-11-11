@@ -15,7 +15,7 @@ type Client = { key: string; name: string; sessions: S[]; paid: number; owed: nu
 type Fam = { id: string; client_key: string; name: string; kind: string; date: string | null }
 type FamIn = { name: string; kind: string; date: string }
 
-const ROSE = '#8C6B3F'
+const ROSE = 'rgb(var(--scene-b, 184 98 106))'
 const money = (n: number) => '$' + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const fmtDate = (d: string | null) => { if (!d) return 'No date'; const [y, m, day] = d.split('-').map(Number); return new Date(y, m - 1, day).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
@@ -100,7 +100,7 @@ function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd:
         {/* FRONT */}
         <div className={face} style={{ ...faceStyle, ...GLASS }}>
           <div className="flex h-full flex-col items-center px-5 pb-5 pt-6 text-center">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-fraunces text-xl font-semibold text-white shadow-md" style={{ background: 'linear-gradient(135deg, #D79A9C, #B8626A)' }}>
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-fraunces text-xl font-semibold text-white shadow-md" style={{ background: 'linear-gradient(135deg, rgb(var(--scene-a, 215 154 156)), rgb(var(--scene-b, 184 98 106)))' }}>
               {(c.name.trim().charAt(0) || '?').toUpperCase()}
             </div>
             <p className="mt-3 line-clamp-2 break-words font-fraunces text-2xl font-bold leading-tight text-ink">{c.name}</p>
@@ -294,7 +294,7 @@ export default function ClientsPage() {
             <h1 className="font-fraunces text-4xl font-bold text-ink">Clients</h1>
             {!loading && <p className="mt-1 text-sm text-ink-soft">{clients.length} {clients.length === 1 ? 'client' : 'clients'} · {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}</p>}
           </div>
-          <Link href="/sessions/new" className="rounded-xl bg-[#C98588] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New session</Link>
+          <Link href="/sessions/new" className="rounded-xl bg-[rgb(var(--scene-b,201_133_136))] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New session</Link>
         </div>
 
         {error && <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
@@ -316,7 +316,7 @@ export default function ClientsPage() {
               </select>
               <div className="flex overflow-hidden rounded-xl border border-white/70 bg-white/60 text-sm">
                 {(['cards', 'list'] as const).map((v) => (
-                  <button key={v} type="button" onClick={() => setView(v)} className={'px-4 py-2.5 font-medium transition ' + (view === v ? 'bg-[#C98588] text-white' : 'text-ink-soft hover:text-ink')}>
+                  <button key={v} type="button" onClick={() => setView(v)} className={'px-4 py-2.5 font-medium transition ' + (view === v ? 'bg-[rgb(var(--scene-b,201_133_136))] text-white' : 'text-ink-soft hover:text-ink')}>
                     {v === 'cards' ? 'Cards' : 'List'}
                   </button>
                 ))}
@@ -343,7 +343,7 @@ export default function ClientsPage() {
                       </span>
                       <span className="flex items-center gap-5 text-right">
                         <span><span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">Paid</span><span className="text-sm font-medium text-ink">{money(c.paid)}</span></span>
-                        <span><span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">Owed</span><span className={'text-sm font-medium ' + (c.owed > 0 ? 'text-[#B8626A]' : 'text-ink')}>{money(c.owed)}</span></span>
+                        <span><span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">Owed</span><span className={'text-sm font-medium ' + (c.owed > 0 ? 'text-[rgb(var(--scene-b,184_98_106))]' : 'text-ink')}>{money(c.owed)}</span></span>
                       </span>
                     </button>
                     {open === c.key && (

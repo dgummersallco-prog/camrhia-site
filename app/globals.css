@@ -217,3 +217,10 @@ html.dash-shell .min-h-screen.bg-paper {
     padding-left: 0 !important;
   }
 }
+
+/* Admin: one panel for every admin page */
+.admin-shell { min-height: 100vh; background: rgba(255, 255, 255, 0.58); }
+@media (min-width: 80rem) {
+  .admin-shell { margin-left: 15rem; }
+}
+html.dash-shell .admin-shell .min-h-screen.bg-paper { margin-left: 0 !important; background: transparent; }
