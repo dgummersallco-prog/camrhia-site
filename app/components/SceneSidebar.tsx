@@ -69,7 +69,7 @@ export default function SceneSidebar({ groups, activeHref, homeHref, onSignOut }
         <button onClick={onSignOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-white transition hover:bg-white/5">Sign out</button>
       </aside>
 
-      <header className="sticky top-0 z-40 border-b border-white/30 bg-[rgb(var(--scene-b,185_122_126))] xl:hidden">
+      <header className="sticky top-0 z-40 border-b border-white/30 bg-[rgb(var(--scene-a,185_122_126)/0.7)] xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
           <Link href={homeHref}><Wordmark className="text-3xl text-white!" /></Link>
           <button

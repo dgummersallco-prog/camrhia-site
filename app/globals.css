@@ -226,10 +226,13 @@ html.dash-shell .min-h-screen.bg-paper {
 html.dash-shell .admin-shell .min-h-screen.bg-paper { margin-left: 0 !important; background: transparent; }
 
 /* Buttons everywhere use the photo accent color */
-html.dash-shell .bg-twilight { background-color: rgb(var(--scene-b, 201 133 136)) !important; }
+html.dash-shell .bg-twilight { background-color: rgb(var(--scene-a, 204 138 140) / 0.7) !important; }
 
 /* Dark buttons and links use the photo accent color too */
 html.dash-shell button.bg-ink,
 html.dash-shell a.bg-ink,
 html.dash-shell button.bg-ink\/90,
-html.dash-shell a.bg-ink\/90 { background-color: rgb(var(--scene-b, 201 133 136)) !important; color: #fff; }
+html.dash-shell a.bg-ink\/90 { background-color: rgb(var(--scene-a, 204 138 140) / 0.7) !important; color: #fff; }
+
+/* Soft shadow so white text reads on the see-through accent buttons */
+html.dash-shell [class*="bg-[rgb(var(--scene-a"], html.dash-shell .bg-twilight, html.dash-shell button.bg-ink, html.dash-shell a.bg-ink { text-shadow: 0 1px 6px rgba(0,0,0,0.35); }

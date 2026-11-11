@@ -310,7 +310,7 @@ export default function DashboardPage() {
                   <ul className="divide-y divide-line">
                     {upcoming.map((x) => (
                       <li key={x.id} className="flex items-center gap-3 py-2.5">
-                        <span className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-[rgb(var(--scene-b,165_100_106))] text-white shadow-sm">
+                        <span className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-[rgb(var(--scene-a,165_100_106)/0.7)] text-white shadow-sm">
                           <span className="text-[10px] font-medium uppercase tracking-wider">{new Date(`${String(x.wedding_date).slice(0, 10)}T12:00:00`).toLocaleDateString('en-US', { month: 'short' })}</span>
                           <span className="font-fraunces text-lg font-semibold leading-none">{new Date(`${String(x.wedding_date).slice(0, 10)}T12:00:00`).getDate()}</span>
                         </span>

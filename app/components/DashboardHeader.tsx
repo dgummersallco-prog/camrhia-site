@@ -287,7 +287,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 border-b border-[#FFFFFF]/30 bg-[rgb(var(--scene-b,185_122_126))] xl:hidden">
+      <header className="sticky top-0 z-40 border-b border-[#FFFFFF]/30 bg-[rgb(var(--scene-a,185_122_126)/0.7)] xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
           <Link href="/"><Wordmark className="text-3xl text-[#FFFFFF]!" /></Link>
           <button

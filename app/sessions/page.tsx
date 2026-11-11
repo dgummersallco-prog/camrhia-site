@@ -406,7 +406,7 @@ export default function SessionsPage() {
                     )}
                     <div className="mb-3 rounded-2xl border border-line bg-card px-5 py-4">
                       <Link href="/minis" className="flex flex-wrap items-center gap-4">
-                        <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-[rgb(var(--scene-b,165_100_106))] shadow-md [&_span]:text-white!">
+                        <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-[rgb(var(--scene-a,165_100_106)/0.7)] shadow-md [&_span]:text-white!">
                           <span className="text-[10px] font-medium uppercase tracking-wider text-brass">{mdt.toLocaleDateString(undefined, { month: 'short' })}</span>
                           <span className="font-fraunces text-2xl font-semibold leading-none text-ink">{mdt.getDate()}</span>
                         </div>
@@ -477,7 +477,7 @@ export default function SessionsPage() {
                     className="mb-3 block rounded-2xl border border-line bg-card px-5 py-4 transition hover:-translate-y-0.5 hover:border-twilight hover:shadow-md"
                   >
                     <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-[rgb(var(--scene-b,165_100_106))] shadow-md [&_span]:text-white!">
+                    <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-[rgb(var(--scene-a,165_100_106)/0.7)] shadow-md [&_span]:text-white!">
                       {dt ? (
                         <>
                           <span className="text-[10px] font-medium uppercase tracking-wider text-brass">{dt.toLocaleDateString(undefined, { month: 'short' })}</span>
