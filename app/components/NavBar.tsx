@@ -7,11 +7,7 @@ import Wordmark from '@/app/components/Wordmark'
 import { APP_STORE_URL } from '@/lib/appStore'
 import { supabase } from '@/lib/supabase'
 
-const LINKS = [
-  { href: '/how-it-works', label: 'How it works' },
-  { href: '/for-your-clients', label: 'For your clients' },
-  { href: '/pricing', label: 'Pricing' },
-]
+const LINKS: { href: string; label: string }[] = []
 
 export function Nav() {
   const router = useRouter()

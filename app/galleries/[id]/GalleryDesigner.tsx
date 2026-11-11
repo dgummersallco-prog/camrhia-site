@@ -41,7 +41,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     const { error } = await sb.from('galleries').update({ design: next }).eq('id', galleryId)
     setSaving(false)
     if (error) setErr(error.message.includes('design') ? 'Run the design SQL in Supabase first.' : error.message)
-    else { setErr(null); onSaved(next) }
+    else setErr(null)
   }
   function change(patch: Partial<GalleryDesign>) {
     const next = { ...latest.current, ...patch }
@@ -54,6 +54,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   }
   function close() {
     if (timer.current) { clearTimeout(timer.current); timer.current = null; void save(latest.current) }
+    onSaved(latest.current)
     onClose()
   }
 
@@ -69,17 +70,17 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const head = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-[#f6f2ec]">
-      <aside className="flex w-[380px] shrink-0 flex-col overflow-y-auto border-r border-line bg-white/70 p-5">
+    <div className="glass mb-6 flex h-[58vh] min-h-[400px] max-h-[560px] overflow-hidden rounded-2xl">
+      <aside className="flex w-[290px] shrink-0 flex-col overflow-y-auto border-r border-line bg-white/50 p-4">
         <div className="mb-5 flex items-center justify-between">
-          <button type="button" onClick={close} className="text-sm text-ink-soft hover:text-ink">← Back to gallery</button>
+          <button type="button" onClick={close} className="text-sm text-ink-soft hover:text-ink">✕ Close</button>
           <span className="text-xs text-ink-soft">{saving ? 'Saving…' : 'Saved'}</span>
         </div>
-        <h2 className="font-fraunces text-2xl font-semibold text-ink">Gallery design</h2>
+        <h2 className="font-fraunces text-2xl font-semibold text-ink">Style this gallery</h2>
         <p className="mb-4 truncate text-sm text-ink-soft">{title}</p>
         {err && <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
 
-        <p className={head + ' mt-2'}>Cover</p>
+        <p className={head + ' mt-2'}>Opening photo</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {COVERS.map((c) => (
             <button key={c.k} type="button" onClick={() => change({ cover: c.k })} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
@@ -106,7 +107,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           </div>
         )}
 
-        <p className={head + ' mt-8'}>Look &amp; feel</p>
+        <p className={head + ' mt-8'}>Mood</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {LOOK_KEYS.map((k) => (
             <button key={k} type="button" onClick={() => change({ look: k })} className={'rounded-lg border bg-white px-2 py-3 text-sm text-ink transition hover:bg-paper ' + ((d.look ?? 'classic') === k ? ring : 'border-line')}>{LOOKS[k].name}</button>
@@ -126,7 +127,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <p className="mt-2 text-xs text-ink-soft">{eff.pal.name}</p>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col p-5">
+      <div className="flex min-w-0 flex-1 flex-col p-3">
         <div className="mb-3 flex items-center justify-end gap-3">
           <div className="flex overflow-hidden rounded-xl border border-line bg-white text-sm">
             {(['desktop', 'phone'] as const).map((x) => (

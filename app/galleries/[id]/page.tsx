@@ -725,7 +725,7 @@ export default function GalleryManagePage() {
                 </p>
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
-                <button className={btnGhost} onClick={() => setDesignOpen(true)}>Design</button>
+                <button className={btnGhost} onClick={() => setDesignOpen((o) => !o)}>Style</button>
                 <button className={btnGhost} onClick={() => setShareOpen(true)}>Share</button>
                 <button className={btnGhost} onClick={() => setAccessOpen(true)}>Access</button>
                 <button
