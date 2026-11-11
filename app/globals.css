@@ -243,3 +243,7 @@ html.dash-shell [class*="color-mix(in_srgb,rgb(var(--scene-a"], html.dash-shell 
   border-color: rgba(255, 255, 255, 0.7);
   box-shadow: 0 1px 2px rgba(60, 30, 30, 0.04), 0 18px 40px -22px rgba(0, 0, 0, 0.35);
 }
+
+/* Website builder panel: keep step cards compact in the narrow left panel */
+.bld .grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.bld .grid:has(> input) { grid-template-columns: minmax(0, 1fr) !important; }

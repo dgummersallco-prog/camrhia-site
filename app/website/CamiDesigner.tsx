@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { camiSite, applyPalette, setButtons, type SiteState } from '@/lib/camiSite'
 import { FONT_OPTIONS, PAIR_PRESETS } from '@/lib/siteTheme'
-import SceneSidebar from '@/app/components/SceneSidebar'
 
 type Prof = SiteState & {
   id: string; public_token: string | null; slug: string | null; logo_path: string | null
@@ -161,6 +160,12 @@ export default function CamiDesigner() {
   const [msgs, setMsgs] = useState<Msg[]>([{ from: 'cami', text: "Hi, I'm Cami. What should I change?" }])
   const [input, setInput] = useState('')
   const chatEnd = useRef<HTMLDivElement>(null)
+  const [view, setView] = useState<'pages' | 'design' | 'settings'>('pages')
+  const [sub, setSub] = useState<Tab | null>(null)
+  const [camiOpen, setCamiOpen] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [pubMsg, setPubMsg] = useState('')
+  const [full, setFull] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -168,9 +173,13 @@ export default function CamiDesigner() {
       if (!sb) { router.push('/login'); return }
       const { data: sess } = await sb.auth.getSession()
       if (!sess.session) { router.push('/login'); return }
-      const { data, error } = await sb.from('profiles').select(COLS).eq('id', sess.session.user.id).single()
-      if (error) { setErr(error.message); return }
-      const p = data as unknown as Prof
+      const { data, error } = await sb.from('profiles').select(COLS + ', site_draft').eq('id', sess.session.user.id).single()
+      if (error) { setErr(error.message.includes('site_draft') ? 'Run the website draft SQL in Supabase first.' : error.message); return }
+      const raw = data as unknown as Prof & { site_draft?: Partial<Prof> | null }
+      const dr = raw.site_draft
+      const p = (dr ? { ...raw, ...dr } : raw) as Prof
+      latest.current = p
+      setDirty(!!dr)
       setForm(p)
       setIg(p.instagram_url ?? ''); setFb(p.facebook_url ?? ''); setTt(p.tiktok_url ?? ''); setPin(p.pinterest_url ?? '')
     }
@@ -207,17 +216,49 @@ export default function CamiDesigner() {
   async function save(next: Prof) {
     const sb = supabase
     if (!sb) return
-    const { error } = await sb.from('profiles').update({
+    pushPatch(next)
+    setDirty(true)
+    const draft = {
       site_template: next.site_template ?? 'editorial',
       site_accent: next.site_accent,
       site_font_pair: next.site_font_pair ?? 'serif',
       site_headline: next.site_headline?.trim() || null,
       site_subhead: next.site_subhead?.trim() || null,
       site_settings: next.site_settings ?? {},
-    }).eq('id', next.id)
+      instagram_url: next.instagram_url,
+      facebook_url: next.facebook_url,
+      tiktok_url: next.tiktok_url,
+      pinterest_url: next.pinterest_url,
+    }
+    const { error } = await sb.from('profiles').update({ site_draft: draft }).eq('id', next.id)
+    if (error) { setErr(error.message.includes('site_draft') ? 'Run the website draft SQL in Supabase first.' : error.message); return }
+    setErr(null)
+  }
+
+  async function publish() {
+    const sb = supabase
+    if (!sb || !form) return
+    setBusy(true)
+    const live = {
+      site_template: form.site_template ?? 'editorial',
+      site_accent: form.site_accent,
+      site_font_pair: form.site_font_pair ?? 'serif',
+      site_headline: form.site_headline?.trim() || null,
+      site_subhead: form.site_subhead?.trim() || null,
+      site_settings: form.site_settings ?? {},
+      instagram_url: ig.trim() || null,
+      facebook_url: fb.trim() || null,
+      tiktok_url: tt.trim() || null,
+      pinterest_url: pin.trim() || null,
+    }
+    const { error } = await sb.from('profiles').update({ ...live, site_draft: null }).eq('id', form.id)
+    setBusy(false)
     if (error) { setErr(error.message); return }
     setErr(null)
-    pushPatch(next)
+    setForm({ ...form, ...live })
+    setDirty(false)
+    setPubMsg('Published. Your site is live.')
+    setTimeout(() => setPubMsg(''), 3000)
   }
 
   async function commit(fn: (n: Prof) => void) {
@@ -279,15 +320,12 @@ export default function CamiDesigner() {
   }
 
   async function saveSocial() {
-    const sb = supabase
-    if (!sb || !form) return
-    setBusy(true)
+    if (!form) return
     const patch = { instagram_url: ig.trim() || null, facebook_url: fb.trim() || null, tiktok_url: tt.trim() || null, pinterest_url: pin.trim() || null }
-    const { error } = await sb.from('profiles').update(patch).eq('id', form.id)
-    setBusy(false)
-    if (error) { setErr(error.message); return }
-    setForm({ ...form, ...patch })
-    pushPatch({ ...form, ...patch })
+    const next = { ...form, ...patch }
+    setHistory((h) => [...h, form])
+    setForm(next)
+    await save(next)
   }
 
   if (!form) return <p className="text-sm text-ink-soft">{err ?? 'Loading…'}</p>
@@ -483,102 +521,178 @@ export default function CamiDesigner() {
     )
   }
 
+  const ACC = 'bg-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)]'
+  const tabsDef: { k: 'pages' | 'design' | 'settings'; label: string; icon: string }[] = [
+    { k: 'pages', label: 'Pages', icon: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5' },
+    { k: 'design', label: 'Design', icon: 'M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2 0-1.5-1-2-1-3s1-2 2-2h3a3 3 0 0 0 3-3c0-4.5-4-8-9-8z' },
+    { k: 'settings', label: 'Settings', icon: 'M4 21v-7 M4 10V3 M12 21v-9 M12 8V3 M20 21v-5 M20 12V3 M1 14h6 M9 8h6 M17 16h6' },
+  ]
+  const designRows: [Tab, string, string][] = [
+    ['style', 'Layout', 'The look of your whole site'],
+    ['colors', 'Colors', 'Accent, background and text'],
+    ['type', 'Fonts & buttons', 'Your fonts and the shape of your buttons'],
+  ]
+  const siteUrl = form.slug ? `camrhia.com/${form.slug}` : form.public_token ? `camrhia.com/site/${form.public_token}` : ''
+
   return (
-    <>
-      <SceneSidebar
-        groups={[
-          { items: [{ href: '/dashboard', label: '← Back to dashboard' }] },
-          { label: 'Design your website', items: TABS.map((k, i) => ({ href: '#' + k, label: `${i + 1}. ${TAB_TITLES[k]}`, onClick: () => setTab(k) })) },
-        ]}
-        activeHref={'#' + tab}
-        homeHref="/website"
-        noScenes
-        onSignOut={async () => { if (supabase) await supabase.auth.signOut(); window.location.href = '/login' }}
-      />
-    <div className="w-full">
-      {err && <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{err}</p>}
-
-      <div className={glass + ' mb-4 p-4'}>
-        <div>
-          <p className="font-fraunces text-xl font-semibold text-ink">Cami</p>
-          <p className="text-xs text-ink-soft">Tell me what to change, in plain words.</p>
+    <div className="bld fixed inset-0 z-[60] flex bg-[#efeae4] text-ink">
+      <aside className={(full ? 'hidden' : 'flex') + ' w-[400px] shrink-0 flex-col border-r border-black/10 bg-white'}>
+        <div className="flex items-center justify-between px-5 pb-2 pt-5">
+          <div className="flex items-center gap-2">
+            <button type="button" aria-label="Back to dashboard" onClick={() => router.push('/dashboard')} className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-ink-soft transition hover:bg-black/5 hover:text-ink">←</button>
+            <p className="font-fraunces text-xl font-semibold text-ink">Website</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => { void undo() }} disabled={history.length === 0} className="rounded-lg px-3 py-1.5 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink disabled:opacity-40">Undo</button>
+            <button type="button" onClick={() => setCamiOpen((o) => !o)} className={'rounded-lg px-3 py-1.5 text-sm font-medium transition ' + (camiOpen ? ACC + ' text-white' : 'bg-black/5 text-ink hover:bg-black/10')}>Ask Cami</button>
+          </div>
         </div>
-        <div className="mt-3 max-h-32 space-y-2 overflow-y-auto pr-1">
-          {msgs.slice(-4).map((m, i) => (
-            <div key={i} className={'max-w-[85%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] text-white' : 'bg-white text-ink')}>{m.text}</div>
+
+        <nav className="flex border-b border-black/10 px-2">
+          {tabsDef.map((t) => (
+            <button key={t.k} type="button" onClick={() => { setView(t.k); setSub(null) }} className={'flex flex-1 flex-col items-center gap-1 border-b-2 py-3 text-xs font-medium transition ' + (view === t.k ? 'border-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)] text-ink' : 'border-transparent text-ink-soft hover:text-ink')}>
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d={t.icon} /></svg>
+              {t.label}
+            </button>
           ))}
-          <div ref={chatEnd} />
-        </div>
-        <form onSubmit={(e) => { e.preventDefault(); send(input) }} className="mt-3 flex gap-2">
-          <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Tell Cami what to change" className="min-w-0 flex-1 rounded-xl border border-white/80 bg-white px-4 py-3 text-sm text-ink outline-none focus:border-twilight" />
-          <button type="submit" className={accentBtn}>Send</button>
-        </form>
-      </div>
+        </nav>
 
-      <div>
-        <div className={glass + ' mb-4 max-h-[44vh] overflow-y-auto p-5'}>
-          <div className="mb-4 flex items-start justify-between gap-3">
-            <p className="text-sm text-ink-soft">{HEADINGS[tab][1]}</p>
-            {tab === 'social'
-              ? <button className={accentBtn + ' !px-4 !py-2'} disabled={busy} onClick={saveSocial}>Save</button>
-              : <button className={accentBtn + ' !px-4 !py-2'} onClick={() => setTab(TABS[idx + 1])}>Next</button>}
-          </div>
-          {renderStep(tab)}
-        </div>
+        {err && <p className="mx-5 mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{err}</p>}
 
-        <div className="mx-auto w-full max-w-5xl">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          {view === 'pages' && (
             <div>
-              <p className="font-fraunces text-xl font-semibold text-ink">Live preview</p>
-              <p className="text-xs text-ink-soft">Click any text on the site to change its words, font and color.</p>
+              <h2 className="font-fraunces text-2xl font-semibold text-ink">Pages</h2>
+              <p className="mt-1 text-sm text-ink-soft">{HEADINGS.pages[1]}</p>
+              <div className="mt-5">{renderStep('pages')}</div>
+              <h3 className="mt-9 font-fraunces text-xl font-semibold text-ink">Home photos</h3>
+              <p className="mt-1 text-sm text-ink-soft">{HEADINGS.photos[1]}</p>
+              <div className="mt-4">{renderStep('photos')}</div>
             </div>
-            <div className="flex overflow-hidden rounded-xl border border-white/70 bg-white/60 text-sm">
-              {(['desktop', 'phone'] as const).map((d) => (
-                <button key={d} type="button" onClick={() => setDevice(d)} className={'px-4 py-2 font-medium transition ' + (device === d ? 'bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] text-white' : 'text-ink-soft hover:text-ink')}>{d === 'desktop' ? 'Desktop' : 'Phone'}</button>
+          )}
+
+          {view === 'design' && sub === null && (
+            <div>
+              <h2 className="font-fraunces text-2xl font-semibold text-ink">Design</h2>
+              <p className="mt-1 text-sm text-ink-soft">Change how your whole site looks.</p>
+              <div className="mt-4 border-t border-black/10">
+                {designRows.map(([k, t, d]) => (
+                  <button key={k} type="button" onClick={() => { setSub(k); setTab(k) }} className="flex w-full items-center justify-between border-b border-black/10 px-1 py-4 text-left transition hover:bg-black/[0.03]">
+                    <span>
+                      <span className="block text-base text-ink">{t}</span>
+                      <span className="block text-xs text-ink-soft">{d}</span>
+                    </span>
+                    <span className="text-xl text-ink-soft">›</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {view === 'design' && sub !== null && (
+            <div>
+              <button type="button" onClick={() => setSub(null)} className="mb-3 text-sm text-ink-soft transition hover:text-ink">‹ Design</button>
+              <h2 className="font-fraunces text-2xl font-semibold text-ink">{TAB_TITLES[sub]}</h2>
+              <p className="mt-1 text-sm text-ink-soft">{HEADINGS[sub][1]}</p>
+              <div className="mt-5">{renderStep(sub)}</div>
+            </div>
+          )}
+
+          {view === 'settings' && (
+            <div>
+              <h2 className="font-fraunces text-2xl font-semibold text-ink">Settings</h2>
+              {siteUrl && (
+                <div className="mt-5 rounded-xl border border-black/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Your link</p>
+                  <p className="mt-1 break-all font-fraunces text-lg text-ink">{siteUrl}</p>
+                  <button type="button" onClick={() => { try { void navigator.clipboard.writeText('https://' + siteUrl) } catch { /* ignore */ } setPubMsg('Link copied.'); setTimeout(() => setPubMsg(''), 2000) }} className="mt-3 rounded-lg bg-black/5 px-3 py-1.5 text-sm text-ink transition hover:bg-black/10">Copy link</button>
+                </div>
+              )}
+              <h3 className="mt-8 font-fraunces text-xl font-semibold text-ink">Social links</h3>
+              <p className="mt-1 text-sm text-ink-soft">{HEADINGS.social[1]}</p>
+              <div className="mt-4">{renderStep('social')}</div>
+              <button type="button" onClick={saveSocial} className={accentBtn + ' mt-4 !px-4 !py-2'}>Update preview</button>
+            </div>
+          )}
+        </div>
+
+        {camiOpen && (
+          <div className="border-t border-black/10 bg-[#faf7f3] p-4">
+            <p className="font-fraunces text-lg font-semibold text-ink">Cami</p>
+            <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
+              {msgs.slice(-4).map((m, i) => (
+                <div key={i} className={'max-w-[88%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto ' + ACC + ' text-white' : 'bg-white text-ink')}>{m.text}</div>
               ))}
+              <div ref={chatEnd} />
             </div>
+            <form onSubmit={(e) => { e.preventDefault(); send(input) }} className="mt-3 flex gap-2">
+              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Tell Cami what to change" className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+              <button type="submit" className={accentBtn + ' !px-4 !py-2'}>Send</button>
+            </form>
           </div>
-          <div ref={boxRef} className={glass + ' relative overflow-hidden p-3'}>
-            {form.public_token ? (
-              <div style={{ height: 'calc(100vh - 9rem)', minHeight: 520 }} className="flex justify-center">
-                <iframe ref={frameRef} src={`/site/${form.public_token}?preview=1`} title="Website preview" style={{ width: device === 'phone' ? 390 : '100%', height: '100%', border: 0, borderRadius: 12, background: '#fff' }} />
-              </div>
-            ) : (
-              <p className="p-8 text-center text-sm text-ink-soft">Your website link isn&apos;t set up yet. Finish setting up your portfolio in the app first.</p>
-            )}
-            {pick && (
-              <div style={{ left: pick.left, top: pick.top, width: 340 }} className="absolute z-30 max-h-[85%] overflow-y-auto rounded-2xl border border-white/80 bg-white/95 p-4 shadow-[0_24px_60px_-20px_rgba(60,30,40,0.55)] backdrop-blur-xl">
-                <div className="flex items-center justify-between">
-                  <p className="font-fraunces text-lg font-semibold text-ink">{PICK_LABELS[pick.key] ?? 'Text'}</p>
-                  <button type="button" aria-label="Close" onClick={() => { applyText(); setPick(null) }} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
-                </div>
-                {TEXT_KEYS.includes(pick.key) && (LONG_TEXT.includes(pick.key)
-                  ? <textarea value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} rows={4} className="mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />
-                  : <input value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} className="mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />)}
-                <div className="mt-3">
-                  <FontPick label="Font" hint="Just this text" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
-                </div>
-                {pick.key !== 'hero_headline' && (
-                  <div className="mt-3">
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-ink-soft">Color</p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {PICK_COLORS.map((c) => (
-                        <button key={c} type="button" aria-label={c} onClick={() => setElProp(pick.key, { color: c })} className={'h-7 w-7 rounded-full border border-black/15 transition hover:scale-110 ' + (String(set.el?.[pick.key]?.color ?? pick.color).toLowerCase() === c.toLowerCase() ? 'ring-2 ring-offset-1 ring-[rgb(var(--scene-b,201_133_136))]' : '')} style={{ background: c }} />
-                      ))}
-                      <input value={phex} onChange={(e) => { const v = e.target.value.trim(); setPhex(v); if (/^#[0-9a-fA-F]{6}$/.test(v)) setElProp(pick.key, { color: v }) }} placeholder="#hex" maxLength={7} className="w-20 rounded-lg border border-line bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-twilight" />
-                    </div>
-                  </div>
-                )}
-                <div className="mt-4 flex gap-2">
-                  <button type="button" className={ghostBtn + ' !px-4 !py-2'} onClick={() => resetEl(pick.key)}>Reset</button>
-                  <button type="button" className={accentBtn + ' !px-4 !py-2'} onClick={() => { applyText(); setPick(null) }}>Done</button>
-                </div>
-              </div>
-            )}
+        )}
+
+        {pubMsg && <p className="px-4 pt-3 text-center text-xs text-ink-soft">{pubMsg}</p>}
+        <div className="flex gap-3 border-t border-black/10 p-4">
+          <button type="button" onClick={() => setFull(true)} className="flex-1 rounded-lg bg-black/5 py-3 text-sm font-medium text-ink transition hover:bg-black/10">Preview</button>
+          <button type="button" onClick={publish} disabled={busy} className={'relative flex-1 rounded-lg py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60 ' + ACC}>
+            Publish
+            {dirty && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-400" />}
+          </button>
+        </div>
+      </aside>
+
+      <main className="relative flex min-w-0 flex-1 flex-col p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            {full && <button type="button" onClick={() => setFull(false)} className={'rounded-lg px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 ' + ACC}>← Back to editing</button>}
+            <p className="text-xs text-ink-soft">{full ? 'Previewing your draft.' : 'Click any text on the page to change its words, font and color.'}</p>
+          </div>
+          <div className="flex overflow-hidden rounded-xl border border-black/10 bg-white text-sm">
+            {(['desktop', 'phone'] as const).map((d) => (
+              <button key={d} type="button" onClick={() => setDevice(d)} className={'px-4 py-2 font-medium transition ' + (device === d ? ACC + ' text-white' : 'text-ink-soft hover:text-ink')}>{d === 'desktop' ? 'Desktop' : 'Phone'}</button>
+            ))}
           </div>
         </div>
-      </div>
+        <div ref={boxRef} className="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-black/10 bg-[#e6e1da] shadow-sm">
+          {form.public_token ? (
+            <div className="flex h-full justify-center">
+              <iframe ref={frameRef} src={`/site/${form.public_token}?preview=1`} title="Website preview" style={{ width: device === 'phone' ? 390 : '100%', height: '100%', border: 0, background: '#fff' }} />
+            </div>
+          ) : (
+            <p className="p-8 text-center text-sm text-ink-soft">Your website link isn&apos;t set up yet. Finish setting up your portfolio in the app first.</p>
+          )}
+          {pick && (
+            <div style={{ left: pick.left, top: pick.top, width: 340 }} className="absolute z-30 max-h-[85%] overflow-y-auto rounded-2xl border border-white/80 bg-white/95 p-4 shadow-[0_24px_60px_-20px_rgba(60,30,40,0.55)] backdrop-blur-xl">
+              <div className="flex items-center justify-between">
+                <p className="font-fraunces text-lg font-semibold text-ink">{PICK_LABELS[pick.key] ?? 'Text'}</p>
+                <button type="button" aria-label="Close" onClick={() => { applyText(); setPick(null) }} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
+              </div>
+              {TEXT_KEYS.includes(pick.key) && (LONG_TEXT.includes(pick.key)
+                ? <textarea value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} rows={4} className="mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />
+                : <input value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} className="mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />)}
+              <div className="mt-3">
+                <FontPick label="Font" hint="Just this text" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
+              </div>
+              {pick.key !== 'hero_headline' && (
+                <div className="mt-3">
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-ink-soft">Color</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {PICK_COLORS.map((c) => (
+                      <button key={c} type="button" aria-label={c} onClick={() => setElProp(pick.key, { color: c })} className={'h-7 w-7 rounded-full border border-black/15 transition hover:scale-110 ' + (String(set.el?.[pick.key]?.color ?? pick.color).toLowerCase() === c.toLowerCase() ? 'ring-2 ring-offset-1 ring-[rgb(var(--scene-b,201_133_136))]' : '')} style={{ background: c }} />
+                    ))}
+                    <input value={phex} onChange={(e) => { const v = e.target.value.trim(); setPhex(v); if (/^#[0-9a-fA-F]{6}$/.test(v)) setElProp(pick.key, { color: v }) }} placeholder="#hex" maxLength={7} className="w-20 rounded-lg border border-line bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-twilight" />
+                  </div>
+                </div>
+              )}
+              <div className="mt-4 flex gap-2">
+                <button type="button" className={ghostBtn + ' !px-4 !py-2'} onClick={() => resetEl(pick.key)}>Reset</button>
+                <button type="button" className={accentBtn + ' !px-4 !py-2'} onClick={() => { applyText(); setPick(null) }}>Done</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
-    </>
   )
 }
