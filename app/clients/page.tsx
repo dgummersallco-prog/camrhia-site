@@ -21,14 +21,6 @@ const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${Stri
 const fmtDate = (d: string | null) => { if (!d) return 'No date'; const [y, m, day] = d.split('-').map(Number); return new Date(y, m - 1, day).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
 const typeLabel = (t: string | null) => (t ? t.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()) : 'Session')
 
-function suitFor(t: string | null): { g: string; red: boolean } {
-  const k = (t ?? '').toLowerCase()
-  if (/wedding|engagement|proposal|boudoir|elope/.test(k)) return { g: '♥', red: true }
-  if (/family|maternity|newborn/.test(k)) return { g: '♣', red: false }
-  if (/senior|graduation|headshot|branding|portrait/.test(k)) return { g: '♦', red: true }
-  return { g: '♠', red: false }
-}
-
 const KINDS: [string, string][] = [['child', 'Child'], ['spouse', 'Spouse'], ['partner', 'Partner'], ['anniversary', 'Anniversary'], ['other', 'Other']]
 
 function FamilyBlock({ items, onAdd, onDelete }: { items: Fam[]; onAdd: (f: FamIn) => void; onDelete: (id: string) => void }) {
@@ -83,15 +75,13 @@ function FamilyBlock({ items, onAdd, onDelete }: { items: Fam[]; onAdd: (f: FamI
 function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd: (f: FamIn) => void; onDelete: (id: string) => void }) {
   const [flipped, setFlipped] = useState(false)
   const latestType = c.sessions[0]?.session_type ?? null
-  const suit = suitFor(latestType)
-  const mark = (typeLabel(latestType)[0] ?? 'S').toUpperCase()
-  const color = suit.red ? ROSE : '#2B2B2B'
+  const color = ROSE
   const total = c.paid + c.owed
   const pct = total > 0 ? Math.round((c.paid / total) * 100) : 0
   const stop = (e: React.MouseEvent) => e.stopPropagation()
   const face = 'absolute inset-0 overflow-hidden rounded-2xl border border-line shadow-lg'
   const faceStyle = {
-    background: 'linear-gradient(160deg, #FFFCF9 0%, #F8EAE4 100%)',
+    background: 'linear-gradient(160deg, #FFFCF9 0%, #F6EEDC 100%)',
     backfaceVisibility: 'hidden' as const,
     WebkitBackfaceVisibility: 'hidden' as const,
   }
@@ -109,14 +99,6 @@ function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd:
       >
         {/* FRONT */}
         <div className={face} style={faceStyle}>
-          <div className="absolute left-4 top-3 text-center leading-none" style={{ color }}>
-            <div className="font-fraunces text-2xl font-semibold">{mark}</div>
-            <div className="mt-1 text-xl">{suit.g}</div>
-          </div>
-          <div className="absolute bottom-3 right-4 rotate-180 text-center leading-none" style={{ color }}>
-            <div className="font-fraunces text-2xl font-semibold">{mark}</div>
-            <div className="mt-1 text-xl">{suit.g}</div>
-          </div>
 
           <div className="absolute inset-x-6 bottom-[26%] top-[16%] flex flex-col items-center justify-center text-center">
             <p className="line-clamp-3 break-words font-fraunces text-2xl font-semibold leading-tight text-ink">{c.name}</p>

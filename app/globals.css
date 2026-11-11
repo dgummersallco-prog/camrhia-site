@@ -171,22 +171,21 @@ select option {
   background: #FFFCF8;
 }
 
-/* Dashboard shell: photo behind, glass nav, content on a cream card */
+/* Dashboard shell: light and airy, content on a soft white card */
 html.dash-shell body {
-  background:
-    radial-gradient(1200px 700px at 78% 10%, rgba(255, 214, 150, 0.9), rgba(255, 214, 150, 0) 60%),
-    radial-gradient(900px 600px at 18% 92%, rgba(150, 90, 70, 0.6), rgba(150, 90, 70, 0) 60%),
-    linear-gradient(160deg, #3A2A2E 0%, #8A5A4E 45%, #E0A878 75%, #F3D3A0 100%);
-  background: var(--dash-bg, linear-gradient(rgba(20, 14, 16, 0.12), rgba(20, 14, 16, 0.12)), radial-gradient(1200px 700px at 78% 10%, rgba(255, 214, 150, 0.9), rgba(255, 214, 150, 0) 60%), radial-gradient(900px 600px at 18% 92%, rgba(150, 90, 70, 0.6), rgba(150, 90, 70, 0) 60%), linear-gradient(160deg, #3A2A2E 0%, #8A5A4E 45%, #E0A878 75%, #F3D3A0 100%));
+  background: var(--dash-bg, radial-gradient(1000px 600px at 80% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 60%), radial-gradient(900px 600px at 10% 100%, rgba(233, 211, 168, 0.55), rgba(233, 211, 168, 0) 60%), linear-gradient(160deg, #FBF6F0 0%, #F4E8D6 55%, #EAD7B4 100%));
   background-size: cover;
   background-attachment: fixed;
 }
 html.dash-shell .min-h-screen.bg-paper {
-  background: rgba(251, 246, 240, 0.97);
+  background: rgba(255, 252, 248, 0.86);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   margin: 0.75rem;
   min-height: calc(100vh - 1.5rem);
   border-radius: 24px;
-  box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 50px -28px rgba(140, 107, 63, 0.35);
 }
 @media (min-width: 1280px) {
   html.dash-shell .min-h-screen.bg-paper {

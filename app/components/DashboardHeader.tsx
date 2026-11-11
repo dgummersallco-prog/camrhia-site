@@ -234,13 +234,13 @@ export function DashboardHeader({ active }: { active: Tab }) {
         onClick={() => setOpen(false)}
         className={`relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-[15px] transition ${
           isActive
-            ? 'bg-[#D9B36A]/20 font-semibold text-white'
+            ? 'bg-[#B8935A]/15 font-semibold text-ink'
             : accent
-              ? 'text-[#D9B36A] hover:bg-white/10'
-              : 'text-[#EFE6DC] hover:bg-white/10'
+              ? 'text-[#8C6B3F] hover:bg-[#B8935A]/10'
+              : 'text-ink-soft hover:bg-[#B8935A]/10 hover:text-ink'
         }`}
       >
-        <span className={isActive ? 'text-[#E7C888]' : 'text-[#CFAE72]'}><Icon name={it.tab} /></span>
+        <span className={isActive ? 'text-[#8C6B3F]' : 'text-[#B8935A]'}><Icon name={it.tab} /></span>
         {it.label}
         {it.tab === 'messages' && unread > 0 && (
           <span className="ml-auto rounded-full bg-[#D9B36A] px-2 py-0.5 text-[11px] font-semibold text-[#2A2326]">{unread > 9 ? '9+' : unread}</span>
@@ -258,7 +258,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
   ]
   const groupedNav = GROUPS.map((g, gi) => (
     <div key={gi} className={gi === 0 ? '' : 'mt-6'}>
-      {g.label && <p className="mb-2 px-3 text-[14px] font-semibold uppercase tracking-[0.16em] text-[#D9B36A]">{g.label}</p>}
+      {g.label && <p className="mb-2 px-3 text-[14px] font-semibold uppercase tracking-[0.16em] text-[#8C6B3F]">{g.label}</p>}
       <div className="flex flex-col gap-1">
         {g.tabs.filter((t) => t !== 'team' || showTeam || active === 'team').map((t) => item(ITEMS.find((i) => i.tab === t)!))}
         {g.label === 'Account' && item(isAffiliate ? { tab: 'affiliate', href: '/affiliate/dashboard', label: 'Affiliate dashboard' } : { tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
@@ -269,24 +269,24 @@ export function DashboardHeader({ active }: { active: Tab }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="fixed bottom-4 left-4 top-4 z-40 hidden w-56 flex-col rounded-[28px] border border-white/15 bg-[rgba(22,16,17,0.88)] px-3 py-7 shadow-2xl backdrop-blur-xl xl:flex">
-        <Link href="/" className="mb-8 px-3"><span className="font-fraunces text-4xl font-medium text-[#D9B36A]">Camrhia</span></Link>
+      <aside className="fixed bottom-4 left-4 top-4 z-40 hidden w-56 flex-col rounded-[28px] border border-white/70 bg-[rgba(255,252,248,0.78)] px-3 py-7 shadow-[0_20px_60px_-20px_rgba(140,107,63,0.35)] backdrop-blur-xl xl:flex">
+        <Link href="/" className="mb-8 px-3"><span className="font-fraunces text-4xl font-medium text-[#8C6B3F]">Camrhia</span></Link>
         <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {groupedNav}
         </nav>
-        <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-[#EFE6DC]/80 transition hover:bg-white/10 hover:text-white">
+        <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-ink-soft transition hover:bg-[#B8935A]/10 hover:text-ink">
           Sign out
         </button>
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#1C1415] xl:hidden">
+      <header className="sticky top-0 z-40 border-b border-line bg-paper xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
-          <Link href="/"><span className="font-fraunces text-3xl font-medium text-[#D9B36A]">Camrhia</span></Link>
+          <Link href="/"><span className="font-fraunces text-3xl font-medium text-[#8C6B3F]">Camrhia</span></Link>
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? 'Close menu' : 'Open menu'}
-            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#D9B36A]"
+            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#8C6B3F]"
           >
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
               {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
@@ -294,9 +294,9 @@ export function DashboardHeader({ active }: { active: Tab }) {
           </button>
         </div>
         {open && (
-          <nav className="flex flex-col border-t border-white/10 px-4 pb-4 pt-3">
+          <nav className="flex flex-col border-t border-line px-4 pb-4 pt-3">
             {groupedNav}
-            <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-[#EFE6DC]/80">Sign out</button>
+            <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-ink-soft">Sign out</button>
           </nav>
         )}
       </header>
