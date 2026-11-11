@@ -81,10 +81,12 @@ export default function AffiliateShell({
 
   return (
     <div className={`min-h-screen bg-paper flex flex-col ${isAdminArea ? '' : 'aff-scope xl:pl-60'}`}>
-      <main className={`flex-1 mx-auto w-full px-6 py-8 ${isAdminArea ? 'max-w-6xl lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10' : 'max-w-5xl'}`}>
-        <aside>
-          <AffiliateTabs />
-        </aside>
+      <main className={`flex-1 mx-auto w-full max-w-5xl px-6 py-8`}>
+        {!isAdminArea && (
+          <aside>
+            <AffiliateTabs />
+          </aside>
+        )}
         <div className="min-w-0 space-y-6 pt-6 lg:pt-0">
         {affiliate && (affiliate.is_master || teamName) ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">

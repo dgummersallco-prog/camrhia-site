@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin'
-import SceneSidebar from '@/app/components/SceneSidebar'
+import SceneSidebar, { type SceneGroup, type SceneItem } from '@/app/components/SceneSidebar'
 
 const I = {
   home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
@@ -36,6 +36,15 @@ const GROUPS = [
   ] },
 ]
 
+const HUB = [
+  { href: '/admin/hub', label: 'Home' },
+  { href: '/admin/hub/team', label: 'Team Hub' },
+  { href: '/admin/hub/pitch', label: 'Marketing HQ' },
+  { href: '/admin/hub/boosted', label: 'Boosted posts' },
+  { href: '/admin/hub/pay', label: 'Pay breakdown' },
+  { href: '/admin/hub/account', label: 'Account' },
+]
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? ''
   const router = useRouter()
@@ -43,11 +52,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const all = GROUPS.flatMap((g) => g.items)
   const activeHref = all.find((t) => pathname.startsWith(t.href))?.href ?? ''
+  const inHub = pathname.startsWith('/admin/hub')
+  const groups: SceneGroup[] = GROUPS.map((g) => ({
+    ...g,
+    items: g.items.flatMap((it): SceneItem[] =>
+      it.href === '/admin/hub'
+        ? [
+            { ...it, id: 'hub-parent', active: inHub },
+            ...(inHub
+              ? HUB.map((h) => ({ ...h, sub: true, id: 'hub-' + h.href, active: h.href === '/admin/hub' ? pathname === '/admin/hub' : pathname.startsWith(h.href) }))
+              : []),
+          ]
+        : [it]
+    ),
+  }))
 
   return (
     <>
       <SceneSidebar
-        groups={GROUPS}
+        groups={groups}
         activeHref={activeHref}
         homeHref="/admin/dashboard"
         onSignOut={async () => { await supabase?.auth.signOut(); router.replace('/admin/login') }}

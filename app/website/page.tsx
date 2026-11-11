@@ -1645,7 +1645,7 @@ export default function WebsitePage() {
     <div className="min-h-screen bg-paper xl:pl-60">
       <style>{SLIDER_CSS}</style>
       <link rel="stylesheet" href={ALL_FONTS_HREF} />
-      <DashboardHeader active="website" />
+      <DashboardHeader active="website" hideNav />
       <main className="px-6 py-8">
         {!form || !T ? (
           <p className="text-sm text-ink-soft">{message ?? 'Loading…'}</p>

@@ -81,7 +81,7 @@ function Icon({ name }: { name: string }) {
   )
 }
 
-export function DashboardHeader({ active }: { active: Tab }) {
+export function DashboardHeader({ active, hideNav }: { active: Tab; hideNav?: boolean }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [unread, setUnread] = useState(0)
@@ -276,7 +276,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
     <>
       <DashScenes />
       {/* Desktop sidebar */}
-      <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-60 flex-col border-r border-[#FFFFFF]/30 bg-[linear-gradient(180deg,rgb(var(--scene-a,204_138_140)/0.26)_0%,rgb(var(--scene-b,158_98_106)/0.3)_100%)] px-3 py-7 shadow-[8px_0_40px_-18px_rgba(0,0,0,0.45)] backdrop-blur-xl [text-shadow:0_1px_6px_rgba(0,0,0,0.35)] xl:flex">
+      <aside style={hideNav ? { display: 'none' } : undefined} className="fixed bottom-0 left-0 top-0 z-40 hidden w-60 flex-col border-r border-[#FFFFFF]/30 bg-[linear-gradient(180deg,rgb(var(--scene-a,204_138_140)/0.26)_0%,rgb(var(--scene-b,158_98_106)/0.3)_100%)] px-3 py-7 shadow-[8px_0_40px_-18px_rgba(0,0,0,0.45)] backdrop-blur-xl [text-shadow:0_1px_6px_rgba(0,0,0,0.35)] xl:flex">
         <Link href="/" className="mb-8 block px-3 text-center"><Wordmark className="text-5xl text-[#FFFFFF]!" /></Link>
         <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {groupedNav}
@@ -287,7 +287,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 border-b border-[#FFFFFF]/30 bg-[color-mix(in_srgb,rgb(var(--scene-a,185_122_126))_65%,#e6e6e6)] xl:hidden">
+      <header style={hideNav ? { display: 'none' } : undefined} className="sticky top-0 z-40 border-b border-[#FFFFFF]/30 bg-[color-mix(in_srgb,rgb(var(--scene-a,185_122_126))_65%,#e6e6e6)] xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
           <Link href="/"><Wordmark className="text-3xl text-[#FFFFFF]!" /></Link>
           <button

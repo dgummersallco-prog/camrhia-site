@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { camiSite, applyPalette, setButtons, type SiteState } from '@/lib/camiSite'
 import { FONT_OPTIONS, PAIR_PRESETS } from '@/lib/siteTheme'
+import SceneSidebar from '@/app/components/SceneSidebar'
 
 type Prof = SiteState & {
   id: string; public_token: string | null; slug: string | null; logo_path: string | null
@@ -483,6 +484,17 @@ export default function CamiDesigner() {
   }
 
   return (
+    <>
+      <SceneSidebar
+        groups={[
+          { items: [{ href: '/dashboard', label: '← Back to dashboard' }] },
+          { label: 'Design your website', items: TABS.map((k, i) => ({ href: '#' + k, label: `${i + 1}. ${TAB_TITLES[k]}`, onClick: () => setTab(k) })) },
+        ]}
+        activeHref={'#' + tab}
+        homeHref="/website"
+        noScenes
+        onSignOut={async () => { if (supabase) await supabase.auth.signOut(); window.location.href = '/login' }}
+      />
     <div className="w-full">
       {err && <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{err}</p>}
 
@@ -504,14 +516,6 @@ export default function CamiDesigner() {
       </div>
 
       <div>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {TABS.map((k, i) => (
-            <button key={k} type="button" onClick={() => setTab(k)} className={'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition ' + (tab === k ? 'border-transparent bg-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)] text-white' : 'border-white/70 bg-white/60 text-ink hover:bg-white/80')}>
-              <span className={'flex h-6 w-6 items-center justify-center rounded-full text-xs ' + (tab === k ? 'bg-white/25 text-white' : 'bg-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)] text-white')}>{i + 1}</span>
-              {TAB_TITLES[k]}
-            </button>
-          ))}
-        </div>
         <div className={glass + ' mb-4 max-h-[44vh] overflow-y-auto p-5'}>
           <div className="mb-4 flex items-start justify-between gap-3">
             <p className="text-sm text-ink-soft">{HEADINGS[tab][1]}</p>
@@ -575,5 +579,6 @@ export default function CamiDesigner() {
         </div>
       </div>
     </div>
+    </>
   )
 }
