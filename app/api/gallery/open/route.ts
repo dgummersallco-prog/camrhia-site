@@ -24,14 +24,21 @@ export async function POST(req: Request) {
 
   const { data: g } = await sb
     .from('galleries')
-    .select('id, owner_id, session_id, title, pin_hash, allow_downloads, expires_at, status, cover_photo_id, audience, moments')
+    .select('id, owner_id, session_id, title, pin_hash, allow_downloads, expires_at, status, cover_photo_id, audience, moments, design')
     .eq('token', token)
     .maybeSingle()
   if (!g) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  let ownerPreview = false
+  if (body.preview) {
+    try {
+      const jwt0 = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '')
+      if (jwt0) { const { data: u0 } = await sb.auth.getUser(jwt0); ownerPreview = u0.user?.id === g.owner_id }
+    } catch { /* ignore */ }
+  }
   const live = isLive(g)
-  if (live === 'missing') return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  if (live === 'expired') return NextResponse.json({ error: 'Expired' }, { status: 410 })
+  if (live === 'missing' && !ownerPreview) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (live === 'expired' && !ownerPreview) return NextResponse.json({ error: 'Expired' }, { status: 410 })
 
   const { data: prof } = await sb
     .from('profiles')
@@ -43,7 +50,7 @@ export async function POST(req: Request) {
     accent: usableAccent(prof?.accent_color as string | null),
   }
 
-  if (g.pin_hash) {
+  if (g.pin_hash && !ownerPreview) {
     const hasAccess = verifyAccess(body.access) === g.id
     if (!hasAccess) {
       if (!pin) return NextResponse.json({ needsPin: true, title: g.title, brand }, { status: 401 })
@@ -138,6 +145,7 @@ export async function POST(req: Request) {
     brand,
     allowDownloads: g.allow_downloads,
     coverId: g.cover_photo_id,
+    design: g.design ?? null,
     access: signAccess(g.id),
     favorites,
     moments: momentList.map((m) => ({ id: m.id, name: m.name })),

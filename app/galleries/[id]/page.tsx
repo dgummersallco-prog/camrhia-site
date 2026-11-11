@@ -1,5 +1,8 @@
 'use client'
 
+import GalleryDesigner from './GalleryDesigner'
+import type { GalleryDesign } from '@/lib/galleryDesign'
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -21,6 +24,7 @@ type Gallery = {
   status: 'draft' | 'published'
   cover_photo_id: string | null
   cover_path: string | null
+  design?: Record<string, unknown> | null
   session_id: string | null
 }
 type Photo = {
@@ -95,6 +99,7 @@ export default function GalleryManagePage() {
   const [thumbs, setThumbs] = useState<Record<string, string>>({})
   const [favCounts, setFavCounts] = useState<Record<string, number>>({})
   const [uploads, setUploads] = useState<UploadItem[]>([])
+  const [designOpen, setDesignOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [pin, setPin] = useState('')
   const [expiry, setExpiry] = useState('')
@@ -138,7 +143,7 @@ export default function GalleryManagePage() {
     if (!sb) return
     const { data, error } = await sb
       .from('galleries')
-      .select('id, title, token, pin_hash, allow_downloads, expires_at, status, cover_photo_id, cover_path, session_id')
+      .select('id, title, token, pin_hash, allow_downloads, expires_at, status, cover_photo_id, cover_path, session_id, design')
       .eq('id', galleryId)
       .maybeSingle()
     if (error || !data) { setMessage('Gallery not found.'); return }
@@ -720,6 +725,7 @@ export default function GalleryManagePage() {
                 </p>
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
+                <button className={btnGhost} onClick={() => setDesignOpen(true)}>Design</button>
                 <button className={btnGhost} onClick={() => setShareOpen(true)}>Share</button>
                 <button className={btnGhost} onClick={() => setAccessOpen(true)}>Access</button>
                 <button
@@ -740,6 +746,18 @@ export default function GalleryManagePage() {
             </div>
 
             {message && <p className="mb-4 text-sm text-twilight">{message}</p>}
+
+            {designOpen && (
+              <GalleryDesigner
+                galleryId={gallery.id}
+                token={gallery.token}
+                title={gallery.title}
+                initial={(gallery.design ?? null) as unknown as GalleryDesign | null}
+                coverUrl={coverThumb}
+                onClose={() => setDesignOpen(false)}
+                onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as Record<string, unknown> } : g))}
+              />
+            )}
 
             <div>
               {/* Left: upload + photos */}

@@ -455,7 +455,7 @@ export default function ClientsPage() {
             <h1 className="font-fraunces text-4xl font-bold text-ink">Clients</h1>
             {!loading && <p className="mt-1 text-sm text-ink-soft">{clients.length} {clients.length === 1 ? 'client' : 'clients'}</p>}
           </div>
-          <Link href="/sessions/new" className="rounded-xl bg-[rgb(var(--scene-a,201_133_136)/0.7)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New session</Link>
+          <Link href="/sessions/new" className="rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New session</Link>
         </div>
 
         {error && <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
@@ -491,7 +491,7 @@ export default function ClientsPage() {
               </select>
               <div className="flex overflow-hidden rounded-xl border border-white/70 bg-white/60 text-sm">
                 {(['cards', 'list'] as const).map((v) => (
-                  <button key={v} type="button" onClick={() => setView(v)} className={'px-4 py-2.5 font-medium transition ' + (view === v ? 'bg-[rgb(var(--scene-a,201_133_136)/0.7)] text-white' : 'text-ink-soft hover:text-ink')}>
+                  <button key={v} type="button" onClick={() => setView(v)} className={'px-4 py-2.5 font-medium transition ' + (view === v ? 'bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] text-white' : 'text-ink-soft hover:text-ink')}>
                     {v === 'cards' ? 'Cards' : 'List'}
                   </button>
                 ))}

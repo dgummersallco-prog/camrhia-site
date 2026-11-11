@@ -80,6 +80,7 @@ export default function AffiliateTabs() {
         groups={[{ items: tabs }]}
         activeHref={activeHref}
         homeHref="/affiliate/dashboard"
+        tag="affiliate"
         onSignOut={async () => { if (supabase) await supabase.auth.signOut(); router.replace('/affiliate/login') }}
       />
     )

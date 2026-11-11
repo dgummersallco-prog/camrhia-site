@@ -73,7 +73,7 @@ const PAGES: { k: string; label: string; blurb: string; locked?: boolean; soon?:
 ]
 
 const glass = 'rounded-2xl border border-white/70 bg-white/60 backdrop-blur-xl shadow-[0_18px_40px_-22px_rgba(90,50,60,0.45)]'
-const accentBtn = 'rounded-xl bg-[rgb(var(--scene-a,201_133_136)/0.7)] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50'
+const accentBtn = 'rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50'
 const ghostBtn = 'rounded-xl border border-white/80 bg-white/60 px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-white/80'
 const ringOn = 'border-[rgb(var(--scene-b,201_133_136))] ring-2 ring-[rgb(var(--scene-b,201_133_136))]'
 const fam = (k: string) => FONT_OPTIONS[k]?.family ?? 'serif'
@@ -361,7 +361,7 @@ export default function CamiDesigner() {
 
   function renderStep(k: Tab) {
     if (k === 'style') return (
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {STYLES.map((st) => (
           <button key={st.key} type="button" onClick={async () => {
             setStyleSel(st.key)
@@ -375,14 +375,14 @@ export default function CamiDesigner() {
       </div>
     )
     if (k === 'pages') return (
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {PAGES.map((pg) => {
           const on = pg.locked || (!pg.soon && !hidden.includes(pg.k))
           return (
             <button key={pg.k} type="button" disabled={pg.locked || pg.soon} onClick={() => togglePage(pg.k)} className={'flex h-24 flex-col justify-between rounded-xl border bg-white/70 p-3 text-left transition ' + (on ? ringOn : 'border-white/80') + (pg.soon ? ' opacity-50' : ' hover:bg-white')}>
               <span className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-ink">{pg.label}</span>
-                <span className={'flex h-5 w-5 items-center justify-center rounded-full text-[11px] text-white ' + (on ? 'bg-[rgb(var(--scene-a,201_133_136)/0.7)]' : 'bg-ink/20')}>{on ? '✓' : ''}</span>
+                <span className={'flex h-5 w-5 items-center justify-center rounded-full text-[11px] text-white ' + (on ? 'bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)]' : 'bg-ink/20')}>{on ? '✓' : ''}</span>
               </span>
               <span className="text-xs text-ink-soft">{pg.soon ? 'Coming soon' : pg.locked ? 'Always on' : pg.blurb}</span>
             </button>
@@ -392,7 +392,7 @@ export default function CamiDesigner() {
     )
     if (k === 'colors') return (
       <div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 lg:grid-cols-6">
           {PALETTES.map((pl) => (
             <button key={pl.name} type="button" onClick={() => commit((n) => applyPalette(n, pl.accent, pl.bg, pl.text))} className="rounded-xl border border-white/80 bg-white/70 p-2.5 text-left transition hover:bg-white">
               <div className="flex gap-1">{[pl.accent, pl.bg, pl.text].map((c) => <span key={c} className="h-5 w-5 rounded-full border border-black/15" style={{ background: c }} />)}</div>
@@ -417,7 +417,7 @@ export default function CamiDesigner() {
     )
     if (k === 'type') return (
       <div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
           {TYPE_SETS.map((t) => (
             <div key={t.key} className="flex flex-col items-center gap-1.5">
               <button type="button" onClick={() => {
@@ -438,14 +438,14 @@ export default function CamiDesigner() {
         </div>
         <button type="button" onClick={() => setOwnFonts(!ownFonts)} className={ghostBtn + ' mt-4'}>{ownFonts ? 'Hide my own fonts' : 'Choose my own fonts'}</button>
         {ownFonts && (
-          <div className="mt-3 grid gap-3">
+          <div className="mt-3 grid gap-3 lg:grid-cols-3">
             <FontPick label="Headings" hint="Your name and big titles" value={curHead} onPick={(fk) => setOwn('head', fk)} />
             <FontPick label="Sub headings" hint="The line under your headline" value={curSub} onPick={(fk) => setOwn('sub', fk)} />
             <FontPick label="Paragraphs" hint="Everything else you write" value={curBody} onPick={(fk) => setOwn('body', fk)} />
           </div>
         )}
         <p className="mt-6 text-sm font-medium text-ink">Button shape</p>
-        <div className="mt-2 grid grid-cols-3 gap-2">
+        <div className="mt-2 grid max-w-xl grid-cols-3 gap-3">
           {SHAPES.map((sh) => (
             <button key={sh.k} type="button" onClick={() => commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); setButtons(x, sh.k) })}
               className={'flex h-24 flex-col items-center justify-center gap-2 rounded-xl border bg-white/70 transition hover:bg-white ' + (curShape === sh.k ? ringOn : 'border-white/80')}>
@@ -457,7 +457,7 @@ export default function CamiDesigner() {
       </div>
     )
     if (k === 'photos') return (
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
         {photos.map((ph) => (
           <div key={ph} className="relative aspect-[4/5] overflow-hidden rounded-lg border border-white/80">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -474,7 +474,7 @@ export default function CamiDesigner() {
       </div>
     )
     return (
-      <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         {([['Instagram link', ig, setIg], ['Facebook link', fb, setFb], ['TikTok link', tt, setTt], ['Pinterest link', pin, setPin]] as const).map(([ph, v, fn]) => (
           <input key={ph} value={v} onChange={(e) => fn(e.target.value)} placeholder={ph} className="w-full rounded-xl border border-white/80 bg-white/70 px-4 py-3 text-base text-ink outline-none focus:border-twilight" />
         ))}
@@ -493,7 +493,7 @@ export default function CamiDesigner() {
         </div>
         <div className="mt-3 max-h-32 space-y-2 overflow-y-auto pr-1">
           {msgs.slice(-4).map((m, i) => (
-            <div key={i} className={'max-w-[85%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto bg-[rgb(var(--scene-a,201_133_136)/0.7)] text-white' : 'bg-white text-ink')}>{m.text}</div>
+            <div key={i} className={'max-w-[85%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] text-white' : 'bg-white text-ink')}>{m.text}</div>
           ))}
           <div ref={chatEnd} />
         </div>
@@ -503,30 +503,26 @@ export default function CamiDesigner() {
         </form>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[400px_minmax(0,1fr)]">
-        <aside className="space-y-2">
+      <div>
+        <div className="mb-3 flex flex-wrap gap-2">
           {TABS.map((k, i) => (
-            <div key={k}>
-              <button type="button" onClick={() => setTab(k)} className={'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition ' + (tab === k ? 'border-transparent bg-[rgb(var(--scene-a,201_133_136)/0.7)] text-white' : 'border-white/70 bg-white/60 text-ink hover:bg-white/80')}>
-                <span className={'flex h-6 w-6 items-center justify-center rounded-full text-xs ' + (tab === k ? 'bg-white/25 text-white' : 'bg-[rgb(var(--scene-a,201_133_136)/0.7)] text-white')}>{i + 1}</span>
-                {TAB_TITLES[k]}
-              </button>
-              {tab === k && (
-                <div className={glass + ' mt-2 p-4'}>
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <p className="text-sm text-ink-soft">{HEADINGS[k][1]}</p>
-                    {k === 'social'
-                      ? <button className={accentBtn + ' !px-4 !py-2'} disabled={busy} onClick={saveSocial}>Save</button>
-                      : <button className={accentBtn + ' !px-4 !py-2'} onClick={() => setTab(TABS[idx + 1])}>Next</button>}
-                  </div>
-                  {renderStep(k)}
-                </div>
-              )}
-            </div>
+            <button key={k} type="button" onClick={() => setTab(k)} className={'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition ' + (tab === k ? 'border-transparent bg-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)] text-white' : 'border-white/70 bg-white/60 text-ink hover:bg-white/80')}>
+              <span className={'flex h-6 w-6 items-center justify-center rounded-full text-xs ' + (tab === k ? 'bg-white/25 text-white' : 'bg-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)] text-white')}>{i + 1}</span>
+              {TAB_TITLES[k]}
+            </button>
           ))}
-        </aside>
+        </div>
+        <div className={glass + ' mb-4 max-h-[44vh] overflow-y-auto p-5'}>
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <p className="text-sm text-ink-soft">{HEADINGS[tab][1]}</p>
+            {tab === 'social'
+              ? <button className={accentBtn + ' !px-4 !py-2'} disabled={busy} onClick={saveSocial}>Save</button>
+              : <button className={accentBtn + ' !px-4 !py-2'} onClick={() => setTab(TABS[idx + 1])}>Next</button>}
+          </div>
+          {renderStep(tab)}
+        </div>
 
-        <div className="xl:sticky xl:top-4 xl:self-start">
+        <div className="mx-auto w-full max-w-5xl">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-fraunces text-xl font-semibold text-ink">Live preview</p>
@@ -534,7 +530,7 @@ export default function CamiDesigner() {
             </div>
             <div className="flex overflow-hidden rounded-xl border border-white/70 bg-white/60 text-sm">
               {(['desktop', 'phone'] as const).map((d) => (
-                <button key={d} type="button" onClick={() => setDevice(d)} className={'px-4 py-2 font-medium transition ' + (device === d ? 'bg-[rgb(var(--scene-a,201_133_136)/0.7)] text-white' : 'text-ink-soft hover:text-ink')}>{d === 'desktop' ? 'Desktop' : 'Phone'}</button>
+                <button key={d} type="button" onClick={() => setDevice(d)} className={'px-4 py-2 font-medium transition ' + (device === d ? 'bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] text-white' : 'text-ink-soft hover:text-ink')}>{d === 'desktop' ? 'Desktop' : 'Phone'}</button>
               ))}
             </div>
           </div>

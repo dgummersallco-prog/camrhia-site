@@ -226,13 +226,20 @@ html.dash-shell .min-h-screen.bg-paper {
 html.dash-shell .admin-shell .min-h-screen.bg-paper { margin-left: 0 !important; background: transparent; }
 
 /* Buttons everywhere use the photo accent color */
-html.dash-shell .bg-twilight { background-color: rgb(var(--scene-a, 204 138 140) / 0.7) !important; }
+html.dash-shell .bg-twilight { background-color: color-mix(in srgb, rgb(var(--scene-a, 204 138 140)) 65%, #e6e6e6) !important; }
 
 /* Dark buttons and links use the photo accent color too */
 html.dash-shell button.bg-ink,
 html.dash-shell a.bg-ink,
 html.dash-shell button.bg-ink\/90,
-html.dash-shell a.bg-ink\/90 { background-color: rgb(var(--scene-a, 204 138 140) / 0.7) !important; color: #fff; }
+html.dash-shell a.bg-ink\/90 { background-color: color-mix(in srgb, rgb(var(--scene-a, 204 138 140)) 65%, #e6e6e6) !important; color: #fff; }
 
 /* Soft shadow so white text reads on the see-through accent buttons */
-html.dash-shell [class*="bg-[rgb(var(--scene-a"], html.dash-shell .bg-twilight, html.dash-shell button.bg-ink, html.dash-shell a.bg-ink { text-shadow: 0 1px 6px rgba(0,0,0,0.35); }
+html.dash-shell [class*="color-mix(in_srgb,rgb(var(--scene-a"], html.dash-shell .bg-twilight, html.dash-shell button.bg-ink, html.dash-shell a.bg-ink { text-shadow: 0 1px 6px rgba(0,0,0,0.35); }
+
+/* Affiliate pages: frosted glass cards over the scene photo */
+.aff-scope .bg-card {
+  background: rgba(255, 252, 248, 0.72);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 1px 2px rgba(60, 30, 30, 0.04), 0 18px 40px -22px rgba(0, 0, 0, 0.35);
+}

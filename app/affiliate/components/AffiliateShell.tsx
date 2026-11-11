@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import Wordmark from "@/app/components/Wordmark"
 import AffiliateTabs from './AffiliateTabs'
 
 export type ShellAffiliate = {
@@ -80,26 +79,9 @@ export default function AffiliateShell({
     return () => { cancelled = true }
   }, [affiliate?.parent_affiliate_id])
 
-  async function signOut() {
-    if (supabase) await supabase.auth.signOut()
-    router.replace('/affiliate/login')
-  }
-
   return (
-    <div className="min-h-screen bg-paper flex flex-col">
-      <header className={`hidden sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm`}>
-        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
-          <Link href="/" className="font-fraunces text-lg font-semibold text-ink hover:text-[#3A4A6B] transition-colors">
-            <Wordmark className="text-3xl" /> <span className="text-ink-soft font-normal">/ affiliate</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <span className="hidden sm:block text-sm text-ink-soft">{affiliate?.name}</span>
-            <button onClick={signOut} className="text-sm text-ink-soft hover:text-ink transition-colors">Sign out</button>
-          </div>
-        </div>
-      </header>
-
-      <main className={`flex-1 mx-auto w-full max-w-6xl px-6 py-8 ${isAdminArea ? 'lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10' : ''}`}>
+    <div className={`min-h-screen bg-paper flex flex-col ${isAdminArea ? '' : 'aff-scope xl:pl-60'}`}>
+      <main className={`flex-1 mx-auto w-full px-6 py-8 ${isAdminArea ? 'max-w-6xl lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10' : 'max-w-5xl'}`}>
         <aside>
           <AffiliateTabs />
         </aside>

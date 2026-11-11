@@ -1,13 +1,14 @@
 'use client'
 
-import { Fragment } from 'react'
+import { Fragment, type CSSProperties } from 'react'
+import { resolveDesign, type GalleryDesign } from '@/lib/galleryDesign'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useParams } from 'next/navigation'
 
 type Photo = { id: string; filename: string | null; width: number | null; height: number | null; thumb: string | null; web: string | null }
-type Data = { title: string; allowDownloads: boolean; coverId: string | null; access: string; favorites: string[]; photos: Photo[] }
+type Data = { title: string; allowDownloads: boolean; coverId: string | null; access: string; favorites: string[]; photos: Photo[]; design?: GalleryDesign | null }
 type Phase = 'loading' | 'pin' | 'ready' | 'missing' | 'expired'
 type ZipFile = { id: string; name: string; size: number | null; url: string }
 type Brand = { name: string | null; accent: string | null }
@@ -42,6 +43,7 @@ export default function GalleryViewPage() {
   const [onlyFavs, setOnlyFavs] = useState(false)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [brand, setBrand] = useState<Brand | null>(null)
+  const [designPreview, setDesignPreview] = useState<GalleryDesign | null>(null)
   const [zip, setZip] = useState<{ busy: boolean; done: number; total: number; error: string | null }>({ busy: false, done: 0, total: 0, error: null })
 
   const load = useCallback(async (pinValue?: string) => {
@@ -54,7 +56,7 @@ export default function GalleryViewPage() {
       const res = await fetch('/api/gallery/open', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}) },
-        body: JSON.stringify({ token, pin: pinValue, access: pinValue ? undefined : stored, visitorId: visitorId() }),
+        body: JSON.stringify({ token, pin: pinValue, access: pinValue ? undefined : stored, visitorId: visitorId(), preview: new URLSearchParams(window.location.search).get('preview') === '1' }),
       })
       const j = await res.json().catch(() => ({}))
       if (j.brand) setBrand(j.brand as Brand)
@@ -208,6 +210,15 @@ export default function GalleryViewPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [openIndex, list.length])
 
+  // Inside the designer's preview, show design changes live.
+  useEffect(() => {
+    if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
+    const onMsg = (e: MessageEvent) => { const m = e.data; if (m && m.type === 'camrhia-gallery-design') setDesignPreview((m.design ?? {}) as GalleryDesign) }
+    window.addEventListener('message', onMsg)
+    window.parent?.postMessage({ type: 'camrhia-gallery-ready' }, '*')
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
+
   if (phase === 'loading') {
     return <div className="flex min-h-screen items-center justify-center bg-paper text-sm text-ink-soft">Loading gallery…</div>
   }
@@ -256,6 +267,10 @@ export default function GalleryViewPage() {
   }
 
   if (!data) return null
+  const { look, cover: coverKind, pal, focal } = resolveDesign(designPreview ?? data.design ?? null)
+  const pos = `${focal.x}% ${focal.y}%`
+  const headCls = look.font === 'fraunces' ? 'font-fraunces' : ''
+  const headStyle: CSSProperties = { ...(look.font === 'fraunces' ? {} : { fontFamily: look.font }), fontWeight: look.weight, letterSpacing: look.track, textTransform: look.upper ? 'uppercase' : 'none', fontStyle: look.italic ? 'italic' : 'normal' }
   const cover = data.photos.find((p) => p.id === data.coverId) ?? data.photos[0]
   const momentMeta = (data as unknown as { moments?: { id: string; name: string }[] }).moments ?? []
   const momentHead = (p: unknown, i: number) => {
@@ -265,100 +280,133 @@ export default function GalleryViewPage() {
     if (i > 0 && m === prev) return null
     const name = m ? momentMeta.find((x) => x.id === m)?.name : null
     if (!name) return null
-    return <h2 className="mb-4 mt-8 font-fraunces text-2xl text-ink first:mt-0 [column-span:all]">{name}</h2>
+    return <h2 className={`mb-4 mt-8 text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
   }
   const current = openIndex !== null ? list[openIndex] : null
   const heart = brand?.accent || '#fb7185'
 
+  const imgEl = cover?.web ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={cover.web} alt="" className="h-full w-full object-cover" style={{ objectPosition: pos }} />
+  ) : null
+  const brandLine = brand?.name ? (
+    <p className="mb-3 font-mono text-xs uppercase tracking-widest" style={{ color: pal.soft }}>{brand.name}</p>
+  ) : null
+  const titleEl = (extra: string) => <h1 className={`${headCls} ${extra}`} style={headStyle}>{data.title}</h1>
+  const renderItem = (p: (typeof list)[number], i: number, uniform: boolean) => (
+    <Fragment key={p.id}>
+      {momentHead(p, i)}
+      <div className={`group relative overflow-hidden ${uniform ? '' : 'break-inside-avoid'}`} style={{ marginBottom: uniform ? 0 : look.gap, borderRadius: look.radius, background: pal.line }}>
+        {p.thumb && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={p.thumb}
+            alt={p.filename ?? ''}
+            loading="lazy"
+            onClick={() => setOpenIndex(i)}
+            className={uniform ? 'aspect-[3/4] w-full cursor-zoom-in object-cover' : 'w-full cursor-zoom-in'}
+            style={!uniform && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : undefined}
+          />
+        )}
+        <button
+          onClick={() => toggleFav(p.id)}
+          aria-label="Favorite"
+          style={favs.has(p.id) ? { color: heart } : undefined}
+          className={`absolute right-2 top-2 rounded-full bg-black/40 p-2 text-white transition hover:bg-black/60 ${favs.has(p.id) ? '' : 'sm:opacity-0 sm:group-hover:opacity-100'}`}
+        >
+          <Heart filled={favs.has(p.id)} className="h-4 w-4" />
+        </button>
+      </div>
+    </Fragment>
+  )
+  const pill = (on: boolean): CSSProperties => (on ? { background: pal.accent, color: pal.onAccent, border: '1px solid transparent' } : { border: `1px solid ${pal.line}`, color: pal.ink })
+
   return (
-    <div className="min-h-screen bg-paper">
-      {cover?.web && (
-        <div className="relative h-[55vh] min-h-[320px] w-full overflow-hidden bg-line">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={cover.web} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/65 via-black/10 to-transparent p-6 sm:p-10">
-            <div>
+    <div className="min-h-screen" style={{ background: pal.bg, color: pal.ink }}>
+      {coverKind === 'text' || !cover?.web ? (
+        <div className="px-6 py-20 text-center">
+          {brandLine}
+          {titleEl('text-4xl sm:text-5xl')}
+        </div>
+      ) : coverKind === 'split' ? (
+        <div className="grid min-h-[60vh] md:grid-cols-2">
+          <div className="flex flex-col justify-center px-8 py-14 sm:px-14">
+            {brandLine}
+            {titleEl('text-4xl sm:text-5xl')}
+          </div>
+          <div className="relative min-h-[320px] overflow-hidden"><div className="absolute inset-0">{imgEl}</div></div>
+        </div>
+      ) : coverKind === 'frame' ? (
+        <div className="px-6 pb-4 pt-8 text-center sm:px-14">
+          <div className="mx-auto max-w-4xl" style={{ border: `1px solid ${pal.line}`, padding: 12, borderRadius: look.radius }}>
+            <div className="h-[50vh] min-h-[280px] overflow-hidden" style={{ borderRadius: Math.max(0, look.radius - 4) }}>{imgEl}</div>
+          </div>
+          <div className="mt-8">
+            {brandLine}
+            {titleEl('text-3xl sm:text-4xl')}
+          </div>
+        </div>
+      ) : coverKind === 'below' ? (
+        <div>
+          <div className="h-[50vh] min-h-[280px] w-full overflow-hidden">{imgEl}</div>
+          <div className="px-6 py-10 text-center">
+            {brandLine}
+            {titleEl('text-3xl sm:text-4xl')}
+          </div>
+        </div>
+      ) : (
+        <div className="relative h-[55vh] min-h-[320px] w-full overflow-hidden" style={{ background: pal.line }}>
+          {imgEl}
+          <div className={'absolute inset-0 flex p-6 sm:p-10 ' + (coverKind === 'center' ? 'items-center justify-center bg-black/35 text-center' : 'items-end bg-gradient-to-t from-black/65 via-black/10 to-transparent')}>
+            <div className="text-white">
               {brand?.name && <p className="mb-2 font-mono text-xs uppercase tracking-widest text-white/80">{brand.name}</p>}
-              <h1 className="font-fraunces text-4xl font-semibold text-white sm:text-5xl">{data.title}</h1>
+              <h1 className={`${headCls} text-4xl sm:text-5xl`} style={headStyle}>{data.title}</h1>
             </div>
           </div>
         </div>
       )}
 
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-paper/95 px-6 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 backdrop-blur" style={{ background: `${pal.bg}F2`, borderBottom: `1px solid ${pal.line}` }}>
         {!cover?.web ? (
-          <h1 className="font-fraunces text-xl font-semibold text-ink">{data.title}</h1>
+          <h2 className={`${headCls} text-xl`} style={headStyle}>{data.title}</h2>
         ) : (
-          <span className="text-sm text-ink-soft">{data.photos.length} photos</span>
+          <span className="text-sm" style={{ color: pal.soft }}>{data.photos.length} photos</span>
         )}
         <div className="flex items-center gap-2 text-sm">
           {data.allowDownloads && list.length > 0 && (
-            <button
-              onClick={downloadAll}
-              disabled={zip.busy}
-              className="rounded-full border border-line px-4 py-1.5 text-ink transition hover:border-twilight disabled:opacity-60"
-            >
+            <button onClick={downloadAll} disabled={zip.busy} className="rounded-full px-4 py-1.5 transition disabled:opacity-60" style={pill(false)}>
               {zip.busy ? (zip.total ? `Zipping ${zip.done}/${zip.total}` : 'Preparing…') : onlyFavs ? 'Download favorites' : 'Download all'}
             </button>
           )}
-          <button
-            onClick={() => setOnlyFavs(false)}
-            className={`rounded-full px-4 py-1.5 transition ${!onlyFavs ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setOnlyFavs(true)}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 transition ${onlyFavs ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
-          >
+          <button onClick={() => setOnlyFavs(false)} className="rounded-full px-4 py-1.5 transition" style={pill(!onlyFavs)}>All</button>
+          <button onClick={() => setOnlyFavs(true)} className="flex items-center gap-1.5 rounded-full px-4 py-1.5 transition" style={pill(onlyFavs)}>
             <Heart filled={onlyFavs} className="h-4 w-4" /> {favs.size}
           </button>
         </div>
       </div>
 
       {zip.busy && zip.total > 0 && (
-        <p className="px-6 pt-3 text-center text-sm text-ink-soft">Keep this tab open until your download finishes.</p>
+        <p className="px-6 pt-3 text-center text-sm" style={{ color: pal.soft }}>Keep this tab open until your download finishes.</p>
       )}
       {zip.error && <p className="px-6 pt-3 text-center text-sm text-red-600">{zip.error}</p>}
 
       <main className="px-3 py-4 sm:px-6">
         {list.length === 0 ? (
-          <p className="py-20 text-center text-sm text-ink-soft">
+          <p className="py-20 text-center text-sm" style={{ color: pal.soft }}>
             {onlyFavs ? 'No favorites yet. Tap the heart on any photo.' : 'No photos in this gallery yet.'}
           </p>
+        ) : look.grid === 'masonry' ? (
+          <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: look.gap }}>
+            {list.map((p, i) => renderItem(p, i, false))}
+          </div>
         ) : (
-          <div className="columns-2 gap-3 md:columns-3 lg:columns-4">
-            {list.map((p, i) => (
-              <Fragment key={p.id}>
-              {momentHead(p, i)}
-              <div className="group relative mb-3 break-inside-avoid overflow-hidden rounded-lg bg-line">
-                {p.thumb && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.thumb}
-                    alt={p.filename ?? ''}
-                    loading="lazy"
-                    onClick={() => setOpenIndex(i)}
-                    className="w-full cursor-zoom-in"
-                    style={p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : undefined}
-                  />
-                )}
-                <button
-                  onClick={() => toggleFav(p.id)}
-                  aria-label="Favorite"
-                  style={favs.has(p.id) ? { color: heart } : undefined}
-                  className={`absolute right-2 top-2 rounded-full bg-black/40 p-2 text-white transition hover:bg-black/60 ${favs.has(p.id) ? '' : 'sm:opacity-0 sm:group-hover:opacity-100'}`}
-                >
-                  <Heart filled={favs.has(p.id)} className="h-4 w-4" />
-                </button>
-              </div>
-              </Fragment>
-            ))}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap }}>
+            {list.map((p, i) => renderItem(p, i, true))}
           </div>
         )}
       </main>
 
-      <footer className="py-10 text-center text-xs text-ink-soft">{brand?.name ? `${brand.name} · ` : ''}Delivered with Camrhia</footer>
+      <footer className="py-10 text-center text-xs" style={{ color: pal.soft }}>{brand?.name ? `${brand.name} · ` : ''}Delivered with Camrhia</footer>
 
       {current && openIndex !== null && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black/95" onClick={() => setOpenIndex(null)}>

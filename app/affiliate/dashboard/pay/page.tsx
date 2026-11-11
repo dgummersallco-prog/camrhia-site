@@ -189,48 +189,54 @@ function monthlyEarn(n: number, price: number, customRate: number | null) {
   return r2(r2(base * (customRate ?? 0.3)) * n)
 }
 
+// Website plans are bought on camrhia.com, so Apple's cut does not apply. Raise this if card fees should come off first.
+const WEB_FEE = 0
+
+const TIERS = [
+  { key: 'solo', name: 'Solo', price: 8.99, apple: true, soon: false, blurb: 'Booking, payments and a shared space with every client.' },
+  { key: 'studio', name: 'Studio', price: 15.99, apple: true, soon: false, blurb: 'Everything in Solo, plus team management.' },
+  { key: 'web', name: 'Website', price: 36, apple: false, soon: true, blurb: 'The app, plus their own website, gallery delivery and specials.' },
+  { key: 'all', name: 'All-in', price: 59, apple: false, soon: true, blurb: 'Everything above, plus The Editing Room for their photos.' },
+]
+type Tier = (typeof TIERS)[number]
+const tierBase = (t: Tier) => r2(t.price * (1 - (t.apple ? APPLE_RATE : WEB_FEE)))
+
 function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
-  const plans = [
-    { label: 'Solo', price: 8.99 },
-    { label: 'Studio', price: 15.99 },
-  ]
   const custom = a.commission_rate != null && ![0.2, 0.25, 0.3].includes(Number(a.commission_rate))
   const rate = custom ? Number(a.commission_rate) : 0.3
+  const earn = (t: Tier) => r2(tierBase(t) * rate)
+  const first = earn(TIERS[0])
+  const top = earn(TIERS[3])
+  const grow = first > 0 ? Math.round((top / first) * 10) / 10 : 0
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-line bg-card p-6">
-        <h2 className="font-fraunces text-xl font-semibold text-ink">What you earn</h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          Per photographer, per month, for as long as they stay subscribed.{custom ? ` Your rate is ${pct(Number(a.commission_rate))}.` : ''}
+        <p className="text-xs uppercase tracking-[0.25em] text-ink-soft">The path</p>
+        <h2 className="mt-2 font-fraunces text-2xl font-semibold text-ink">Get your foot in the door, then watch them grow</h2>
+        <p className="mt-3 max-w-2xl text-base text-ink-soft">
+          Start every photographer on the booking and business app. Then watch as the photographers you sign keep upgrading, and keep becoming more valuable to you as an affiliate. Every upgrade stays with you.
         </p>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr>
-                <th className={th}>Plan</th>
-                <th className={th}>Apple takes ({pct(APPLE_RATE)})</th>
-                <th className={th}>After Apple</th>
-                <th className={th}>Your rate</th>
-                <th className={th}>You earn / month</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line border-t border-line">
-              {plans.map((p) => {
-                const base = r2(p.price * (1 - APPLE_RATE))
-                return (
-                  <tr key={p.label}>
-                    <td className={td + ' text-ink font-medium'}>{p.label} ({usd(p.price)})</td>
-                    <td className={td + ' text-ink-soft'}>-{usd(r2(p.price - base))}</td>
-                    <td className={td + ' text-ink'}>{usd(base)}</td>
-                    <td className={td + ' text-ink'}>{pct(rate)}</td>
-                    <td className={td + ' text-ink font-semibold'}>{usd(r2(base * rate))}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+      </section>
+
+      <section>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {TIERS.map((t) => (
+            <div key={t.key} className="flex flex-col rounded-2xl border border-line bg-card p-5">
+              <div className="flex items-center justify-between">
+                <h3 className="font-fraunces text-lg font-semibold text-ink">{t.name}</h3>
+                {t.soon ? <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-ink-soft">Launching soon</span> : null}
+              </div>
+              <p className="mt-1 text-sm text-ink-soft">{usd(t.price)} / month</p>
+              <p className="mt-4 text-xs uppercase tracking-widest text-ink-soft">You earn</p>
+              <p className="font-fraunces text-3xl font-semibold text-ink">{usd(earn(t))}</p>
+              <p className="text-xs text-ink-soft">every month they stay</p>
+              <p className="mt-4 text-sm text-ink-soft">{t.blurb}</p>
+            </div>
+          ))}
         </div>
-        <p className="mt-4 text-sm text-ink-soft">Apple takes its fee first. Your rate is then applied to what is left. Yearly plans pay the same percentage once a year.</p>
+        <p className="mt-4 text-sm text-ink-soft">
+          One photographer, growing: they start on Solo and pay you {usd(first)} a month. Move them to All-in and it is {usd(top)} a month{grow > 0 ? `, about ${grow}x` : ''}, and it stays yours.
+        </p>
       </section>
 
       <section className="rounded-2xl border border-line bg-card p-6">
@@ -243,28 +249,31 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
             <thead>
               <tr>
                 <th className={th}>Active photographers</th>
-                <th className={th}>On Solo / month</th>
-                <th className={th}>On Studio / month</th>
+                {TIERS.map((t) => (
+                  <th key={t.key} className={th}>On {t.name} / month</th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-line border-t border-line">
               {[10, 20, 50, 100, 500].map((n) => (
                 <tr key={n}>
                   <td className={td + ' text-ink font-medium'}>{n}</td>
-                  <td className={td + ' text-ink font-semibold'}>{usd(monthlyEarn(n, 8.99, custom ? Number(a.commission_rate) : null))}</td>
-                  <td className={td + ' text-ink font-semibold'}>{usd(monthlyEarn(n, 15.99, custom ? Number(a.commission_rate) : null))}</td>
+                  {TIERS.map((t) => (
+                    <td key={t.key} className={td + ' text-ink font-semibold'}>{usd(r2(earn(t) * n))}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         <p className="mt-4 text-sm text-ink-soft">
-          Each total assumes everyone is on that one plan; a mix of plans lands in between.
+          Each row assumes everyone is on that one plan; a mix of plans lands in between.
         </p>
       </section>
 
       <section className="rounded-2xl border border-line bg-card p-6 text-sm text-ink-soft space-y-2">
-        <p>Commissions are paid on each real charge. The 14-day free trial earns nothing; the first payment after it does.</p>
+        <p>Your rate is {pct(rate)}{custom ? ' (set just for you)' : ''}. Solo and Studio are bought in the App Store, so Apple&apos;s {pct(APPLE_RATE)} comes off first and your rate applies to what is left. Website and All-in are bought on camrhia.com, with no Apple fee.</p>
+        <p>Yearly plans pay the same percentage once a year. Commissions are paid on each real charge. The 14-day free trial earns nothing; the first payment after it does.</p>
         <p>You are an independent partner and responsible for your own taxes.</p>
       </section>
     </div>

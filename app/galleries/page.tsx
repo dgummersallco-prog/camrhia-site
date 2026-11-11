@@ -42,6 +42,8 @@ export default function GalleriesPage() {
   const [title, setTitle] = useState('')
   const [showNew, setShowNew] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [importFrom, setImportFrom] = useState('')
+  const [importMsg, setImportMsg] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [sessions, setSessions] = useState<Sess[]>([])
@@ -118,18 +120,90 @@ export default function GalleriesPage() {
     if (x.names) setTitle(x.names)
   }, [sessions])
 
+  async function importFromShoot(sb: NonNullable<typeof supabase>, srcId: string, newId: string) {
+    const uid = userId
+    if (!uid) throw new Error('Not signed in.')
+    const BUCKET = 'galleries'
+    const all: Record<string, unknown>[] = []
+    for (let from = 0; ; from += 1000) {
+      const { data: ph, error: pe } = await sb.from('gallery_photos').select('*').eq('gallery_id', srcId).order('sort_order', { ascending: true }).range(from, from + 999)
+      if (pe) throw pe
+      all.push(...((ph ?? []) as Record<string, unknown>[]))
+      if (!ph || ph.length < 1000) break
+    }
+    const keep = all.filter((p) => p.cull_label !== 'reject')
+    if (keep.length === 0) throw new Error('That shoot has no photos to import.')
+    const bucket = sb.storage.from(BUCKET)
+    const idMap = new Map<string, string>()
+    const out: Record<string, unknown>[] = []
+    const queue = keep.map((p, i) => ({ p, i }))
+    let done = 0
+    async function worker() {
+      for (;;) {
+        const job = queue.shift()
+        if (!job) return
+        const { p, i } = job
+        const nid = crypto.randomUUID()
+        const dir = `${uid}/${newId}/${nid}`
+        const cp = async (src: unknown, name: string): Promise<string | null> => {
+          if (typeof src !== 'string' || !src) return null
+          const dest = `${dir}/${name}`
+          const { error: ce } = await bucket.copy(src, dest)
+          if (ce) throw ce
+          return dest
+        }
+        const ext = typeof p.orig_path === 'string' ? (p.orig_path.split('.').pop() ?? 'jpg') : 'jpg'
+        const orig = await cp(p.orig_path, `orig.${ext}`)
+        const web = await cp(p.web_path, 'web.jpg')
+        const thumb = await cp(p.thumb_path, 'thumb.jpg')
+        const full = await cp(p.full_path, 'full.jpg')
+        out.push({
+          id: nid, gallery_id: newId, owner_id: uid, filename: p.filename,
+          orig_path: orig, web_path: web, thumb_path: thumb, full_path: full,
+          width: p.width, height: p.height, size_bytes: p.size_bytes, extra_bytes: p.extra_bytes, sort_order: i,
+          ...(p.taken_at ? { taken_at: p.taken_at } : {}),
+          ...(p.enhanced != null ? { enhanced: p.enhanced } : {}),
+        })
+        idMap.set(String(p.id), nid)
+        done++
+        setImportMsg(`Importing photos… ${done} of ${keep.length}`)
+      }
+    }
+    await Promise.all(Array.from({ length: 6 }, () => worker()))
+    out.sort((x, y) => Number(x.sort_order) - Number(y.sort_order))
+    for (let i = 0; i < out.length; i += 100) {
+      const { error: ie } = await sb.from('gallery_photos').insert(out.slice(i, i + 100))
+      if (ie) throw ie
+    }
+    const src = (rows ?? []).find((g) => g.id === srcId)
+    const newCover = src?.cover_photo_id ? idMap.get(src.cover_photo_id) : undefined
+    if (newCover) await sb.from('galleries').update({ cover_photo_id: newCover }).eq('id', newId)
+    setImportMsg(null)
+  }
+
   async function createGallery(e: React.FormEvent) {
     e.preventDefault()
     if (!supabase || !userId || !title.trim()) return
+    const sb = supabase
     setCreating(true)
     setError(null)
-    const { data, error: err } = await supabase
+    const { data, error: err } = await sb
       .from('galleries')
       .insert({ owner_id: userId, title: title.trim(), session_id: sessionPick || null })
       .select('id')
       .single()
+    if (err || !data) { setCreating(false); setError(err?.message ?? 'Could not create the gallery.'); return }
+    if (importFrom) {
+      try {
+        await importFromShoot(sb, importFrom, data.id)
+      } catch (ex) {
+        setCreating(false)
+        setImportMsg(null)
+        setError((ex as { message?: string })?.message ?? 'The import stopped part-way. Open the new gallery to see what came across.')
+        return
+      }
+    }
     setCreating(false)
-    if (err || !data) { setError(err?.message ?? 'Could not create the gallery.'); return }
     router.push(`/galleries/${data.id}`)
   }
 
@@ -243,6 +317,25 @@ export default function GalleriesPage() {
                 </Select>
                 <p className="mt-1.5 text-xs text-ink-soft">Link this gallery to one of your sessions.</p>
               </div>
+            </div>
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium text-ink">Photos <span className="font-normal text-ink-soft">(optional)</span></label>
+              <Select
+                value={importFrom}
+                onChange={(e) => setImportFrom(e.target.value)}
+                className="w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+              >
+                <option value="">I will upload photos (Lightroom or any editor)</option>
+                {(rows ?? [])
+                  .filter((g) => ((g as unknown as { gallery_photos?: { count: number }[] }).gallery_photos?.[0]?.count ?? 0) > 0)
+                  .map((g) => (
+                    <option key={g.id} value={g.id}>
+                      Import from The Editing Room · {g.title} ({(g as unknown as { gallery_photos?: { count: number }[] }).gallery_photos?.[0]?.count ?? 0} photos)
+                    </option>
+                  ))}
+              </Select>
+              <p className="mt-1.5 text-xs text-ink-soft">{importFrom ? 'Copies the photos you kept. The original shoot stays in the Editing Room.' : 'Add photos from your computer after you create the gallery.'}</p>
+              {importMsg && <p className="mt-2 text-sm text-twilight">{importMsg}</p>}
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
               <button
