@@ -224,3 +224,6 @@ html.dash-shell .min-h-screen.bg-paper {
   .admin-shell { margin-left: 15rem; }
 }
 html.dash-shell .admin-shell .min-h-screen.bg-paper { margin-left: 0 !important; background: transparent; }
+
+/* Buttons everywhere use the photo accent color */
+html.dash-shell .bg-twilight { background-color: rgb(var(--scene-b, 201 133 136)) !important; }

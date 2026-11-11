@@ -234,34 +234,36 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
         <div className={face} style={{ ...faceStyle, ...GLASS }}>
           {due && <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ROSE }}>Reminder</span>}
           <div className="flex h-full flex-col px-5 pb-4 pt-6">
-            <p className="line-clamp-2 break-words text-center font-fraunces text-2xl font-bold leading-tight text-ink">{c.name}</p>
-            <div className="mt-5 space-y-3" onClick={stop}>
-              <div className={box}>
+            <p className="line-clamp-2 shrink-0 break-words text-center font-fraunces text-2xl font-bold leading-[1.15] text-ink">{c.name}</p>
+            <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3" onClick={stop}>
+              <div className={box + ' shrink-0'}>
                 <p className={LABEL}>Phone</p>
                 {phone ? (
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="truncate text-base font-semibold text-ink">{phone}</span>
-                    <span className="flex shrink-0 gap-1.5">
+                  <>
+                    <p className="mt-0.5 break-all text-base font-semibold text-ink">{phone}</p>
+                    <div className="mt-2 flex gap-1.5">
                       <a href={`tel:${phone}`} className={pill}>Call</a>
                       <a href={`sms:${phone}`} className={pill}>Text</a>
-                    </span>
-                  </div>
-                ) : <p className="mt-1 text-base text-ink-soft/70">No phone yet</p>}
+                    </div>
+                  </>
+                ) : <p className="mt-0.5 text-base text-ink-soft/70">No phone yet</p>}
               </div>
-              <div className={box}>
+              <div className={box + ' shrink-0'}>
                 <p className={LABEL}>Email</p>
                 {email ? (
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="min-w-0 truncate text-base font-semibold text-ink">{email}</span>
-                    <a href={`mailto:${email}`} className={pill + ' shrink-0'}>Email</a>
-                  </div>
-                ) : <p className="mt-1 text-base text-ink-soft/70">No email yet</p>}
+                  <>
+                    <p className="mt-0.5 break-all text-sm font-semibold text-ink">{email}</p>
+                    <div className="mt-2 flex gap-1.5">
+                      <a href={`mailto:${email}`} className={pill}>Email</a>
+                    </div>
+                  </>
+                ) : <p className="mt-0.5 text-base text-ink-soft/70">No email yet</p>}
               </div>
             </div>
-            <div className="mt-auto" onClick={stop}>
+            <div className="mt-3 shrink-0" onClick={stop}>
               <Link href="/messages" className="block rounded-2xl border border-white/90 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_-12px_rgba(90,50,60,0.5)] transition hover:bg-white/75">Message on Camrhia</Link>
             </div>
-            <p className="mt-3 text-center text-xs font-medium text-ink-soft">Flip for notes</p>
+            <p className="mt-2 shrink-0 text-center text-xs font-medium text-ink-soft">Flip for notes</p>
           </div>
         </div>
 
@@ -499,7 +501,7 @@ export default function ClientsPage() {
             {shown.length === 0 && <p className="mt-5 text-sm text-ink-soft">No clients match that search.</p>}
 
             {view === 'cards' ? (
-              <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {shown.map((c) => <ClientCard key={c.key} c={c} fam={famBy[c.key] ?? []} cts={ctBy[c.key] ?? []} notes={noteBy[c.key] ?? []} api={api} />)}
               </div>
             ) : (

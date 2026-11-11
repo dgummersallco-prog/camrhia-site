@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { DashboardHeader } from '@/app/components/DashboardHeader'
+import SceneSidebar from '@/app/components/SceneSidebar'
 import { QUESTIONS, STYLE_LOOK, type Signature } from '@/lib/brief'
 
 type Row = { id: string; title: string; status: string; created_at: string; gallery_photos: { count: number }[] }
@@ -232,7 +232,19 @@ export default function EditingRoom() {
 
   return (
     <div className="min-h-screen bg-paper text-ink xl:pl-60">
-      <DashboardHeader active="edit" />
+      <SceneSidebar
+        groups={[
+          { items: [{ href: '/dashboard', label: '← Back to dashboard' }] },
+          { label: 'The Editing Room', items: [
+            { href: '/edit', label: 'Edit a shoot', onClick: () => setTab('edit') },
+            { href: '/edit?tab=styles', label: 'My styles', onClick: () => setTab('styles') },
+            { href: '/edit?tab=brain', label: 'Cami', onClick: () => setTab('brain') },
+          ] },
+        ]}
+        activeHref={tab === 'edit' ? '/edit' : tab === 'styles' ? '/edit?tab=styles' : '/edit?tab=brain'}
+        homeHref="/edit"
+        onSignOut={async () => { if (supabase) await supabase.auth.signOut(); window.location.href = '/login' }}
+      />
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="flex items-center justify-between">
           <Link href="/dashboard" className="text-sm text-ink-soft transition hover:text-ink">← Back to Camrhia</Link>

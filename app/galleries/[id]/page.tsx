@@ -9,6 +9,7 @@ import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { enhancePhoto } from '@/lib/enhance'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { GallerySidebar } from '@/app/components/GallerySidebar'
 
 type Gallery = {
   id: string
@@ -688,7 +689,7 @@ export default function GalleryManagePage() {
 
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
-      <DashboardHeader active="galleries" />
+      <GallerySidebar active="galleries" />
 
       <main className="mx-auto max-w-7xl px-6 py-8">
         {!gallery ? (

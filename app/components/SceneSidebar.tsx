@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Wordmark from '@/app/components/Wordmark'
 import DashScenes from '@/app/components/DashScenes'
 
-export type SceneItem = { href: string; label: string; icon?: string; badge?: number }
+export type SceneItem = { href: string; label: string; icon?: string; badge?: number; onClick?: () => void }
 export type SceneGroup = { label?: string; items: SceneItem[] }
 
 export default function SceneSidebar({ groups, activeHref, homeHref, onSignOut }: {
@@ -37,7 +37,7 @@ export default function SceneSidebar({ groups, activeHref, homeHref, onSignOut }
             <Link
               key={it.href}
               href={it.href}
-              onClick={() => setOpen(false)}
+              onClick={(e) => { if (it.onClick) { e.preventDefault(); it.onClick() } setOpen(false) }}
               className={`relative flex items-center gap-3.5 rounded-2xl px-3 py-2.5 text-[15px] text-white transition ${
                 isActive
                   ? 'bg-gradient-to-r from-white/25 via-white/30 to-white/20 font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6),0_4px_14px_-6px_rgba(0,0,0,0.6)]'

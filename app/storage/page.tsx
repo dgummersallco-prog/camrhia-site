@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
-import { GalleryTabs } from '@/app/components/GalleryTabs'
+import { GallerySidebar } from '@/app/components/GallerySidebar'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 import { downloadZip } from 'client-zip'
 
@@ -156,9 +156,8 @@ export default function StoragePage() {
 
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
-      <DashboardHeader active="galleries" />
+      <GallerySidebar active="storage" />
       <main className="mx-auto max-w-4xl px-6 py-10">
-        <GalleryTabs active="storage" />
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Studio</p>
         <h1 className="mb-6 font-fraunces text-3xl font-semibold text-ink">Storage</h1>
 

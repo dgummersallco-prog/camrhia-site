@@ -9,6 +9,7 @@ import { makeVersions } from '@/lib/galleryImages'
 import { getBoard, starter, blank, newItem, hasBoard, galleryStarter, exploreStarter } from '@/lib/aboutCanvas'
 import type { CItem } from '@/lib/aboutCanvas'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import CamiDesigner from './CamiDesigner'
 import { FONT_OPTIONS, PAIR_PRESETS, NAV_DEFAULTS, DEFAULT_TITLES, resolveTheme } from '@/lib/siteTheme'
 import { HexColorPicker } from 'react-colorful'
 
@@ -1645,8 +1646,9 @@ export default function WebsitePage() {
       <style>{SLIDER_CSS}</style>
       <link rel="stylesheet" href={ALL_FONTS_HREF} />
       <DashboardHeader active="website" />
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-4 flex justify-end"><Link href="/website/design" className="rounded-xl bg-[rgb(var(--scene-b,201_133_136))] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">Design with Cami</Link></div>
+      <main className="px-6 py-8">
+        <CamiDesigner />
+        <div className="hidden">
         {!form || !T ? (
           <p className="text-sm text-ink-soft">{message ?? 'Loading…'}</p>
         ) : (
@@ -2570,6 +2572,7 @@ export default function WebsitePage() {
             </div>
           </>
         )}
+      </div>
       </main>
     </div>
   )
