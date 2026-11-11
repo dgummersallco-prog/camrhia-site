@@ -5,6 +5,7 @@ import { AboutCanvas } from './AboutCanvas'
 import { heroStarter } from '@/lib/aboutCanvas'
 import { galleryStarter, exploreStarter } from '@/lib/aboutCanvas'
 import { installPreviewGlow } from '@/lib/previewGlow'
+import { installPreviewPick } from '@/lib/previewPick'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
@@ -71,6 +72,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   }, [])
 
   useEffect(() => installPreviewGlow(), [])
+  useEffect(() => installPreviewPick(), [])
 
   const t = resolveTheme(r)
   const { tpl, accent, ink, soft, line, bg, tint } = t

@@ -309,14 +309,16 @@ export default function DashboardPage() {
                 ) : (
                   <ul className="divide-y divide-line">
                     {upcoming.map((x) => (
-                      <li key={x.id}>
-                        <Link href={`/sessions/${x.id}`} className="flex items-center justify-between gap-3 py-2.5 hover:opacity-80">
-                          <span className="min-w-0">
-                            <span className="block truncate text-base font-semibold text-ink">{x.names || 'Untitled session'}</span>
-                            <span className="block text-xs text-ink-soft">{typeLabel(x.session_type)}</span>
-                          </span>
-                          <span className="ml-auto shrink-0 text-xs text-ink-soft">{fmtDay(x.wedding_date!)}</span>
-                        </Link>
+                      <li key={x.id} className="flex items-center gap-3 py-2.5">
+                        <span className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-[rgb(var(--scene-b,165_100_106))] text-white shadow-sm">
+                          <span className="text-[10px] font-medium uppercase tracking-wider">{new Date(`${String(x.wedding_date).slice(0, 10)}T12:00:00`).toLocaleDateString('en-US', { month: 'short' })}</span>
+                          <span className="font-fraunces text-lg font-semibold leading-none">{new Date(`${String(x.wedding_date).slice(0, 10)}T12:00:00`).getDate()}</span>
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-base font-semibold text-ink">{x.names || 'Untitled session'}</span>
+                          <span className="block text-xs text-ink-soft">{typeLabel(x.session_type)}</span>
+                        </span>
+                        <Link href={`/sessions/${x.id}`} className="shrink-0 rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-medium text-[rgb(var(--scene-b,165_100_106))] transition hover:opacity-80">Open session →</Link>
                       </li>
                     ))}
                   </ul>
