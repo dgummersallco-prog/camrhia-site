@@ -178,8 +178,10 @@ html.dash-shell body {
   background-attachment: fixed;
 }
 html.dash-shell .min-h-screen.bg-paper {
-  background: #FFFFFF;
-  border: 1px solid #EADFD6;
+  background: rgba(255, 255, 255, 0.58);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   margin: 0.75rem;
   min-height: calc(100vh - 1.5rem);
   border-radius: 24px;

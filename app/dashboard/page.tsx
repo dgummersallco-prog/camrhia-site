@@ -35,17 +35,6 @@ const tile = 'flex flex-col gap-1 rounded-3xl border border-white/70 bg-white/60
 
 import InfoTip from '@/app/components/InfoTip'
 
-function SessionThumb({ type, name }: { type?: string | null; name?: string | null }) {
-  const key = (type || 'session').toLowerCase().replace(/[^a-z0-9]+/g, '-')
-  return (
-    <span className="relative flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[linear-gradient(135deg,#8A7850,#4F4430)] font-fraunces text-xl text-[#F3E3B8] shadow-sm">
-      {(name || '•').trim().charAt(0).toUpperCase()}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/session-types/${key}.png`} alt="" className="absolute inset-0 h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-    </span>
-  )
-}
-
 export default function DashboardPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
@@ -277,7 +266,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(90%_60%_at_80%_0%,#FBF6EA_0%,#F3EADA_60%,#EBDFCB_100%)] xl:pl-60">
+    <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="dashboard" />
       <main className="mx-auto max-w-5xl px-6 py-10">
         {!ready ? (
@@ -293,67 +282,19 @@ export default function DashboardPage() {
                 <p className="mt-2 text-ink-soft">Here is what is happening with your studio.</p>
                 <div className="mt-4 h-px w-16 bg-brass/60" />
               </div>
-              <div className="flex items-center gap-3">
-                <div ref={bellRef} className="relative">
-                  <button
-                    type="button"
-                    aria-label="Updates"
-                    onClick={() => setBellOpen((o) => !o)}
-                    className="relative flex h-11 w-11 items-center justify-center rounded-full border border-line bg-card text-ink transition hover:border-twilight"
-                  >
-                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                    </svg>
-                    {updates.length > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brass px-1 text-[10px] font-semibold text-white">
-                        {updates.length > 9 ? '9+' : updates.length}
-                      </span>
-                    )}
-                  </button>
-                  {bellOpen && (
-                    <div className="absolute right-0 z-30 mt-2 w-[min(380px,calc(100vw-3rem))] rounded-2xl border border-line bg-card p-4 shadow-lg">
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="font-fraunces text-lg font-semibold text-ink">Updates</p>
-                        {updates.some((u) => u.notifId) && (
-                          <button type="button" onClick={markAllRead} className="text-xs text-ink-soft hover:text-ink">Mark all as read</button>
-                        )}
-                      </div>
-                      {updates.length === 0 ? (
-                        <p className="py-3 text-sm text-ink-soft">You are all caught up.</p>
-                      ) : (
-                        <ul className="max-h-[60vh] divide-y divide-line overflow-y-auto">
-                          {updates.slice(0, 8).map((a) => (
-                            <li key={a.key} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
-                              <p className="min-w-0 flex-1 text-sm text-ink-soft">{a.text}</p>
-                              <Link
-                                href={a.href}
-                                onClick={() => { setBellOpen(false); if (a.notifId) markRead(a.notifId) }}
-                                className="shrink-0 text-sm font-medium text-twilight hover:underline"
-                              >{a.cta} →</Link>
-                              {a.notifId && (
-                                <button type="button" onClick={() => markRead(a.notifId!)} className="shrink-0 text-xs text-ink-soft hover:text-ink">Dismiss</button>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                </div>
               </div>
-            </div>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
             {next && (
-              <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-[#E3C88F]/40 bg-[linear-gradient(135deg,#8A7850_0%,#6B5C3C_55%,#4F4430_100%)] p-6 text-white shadow-[0_18px_40px_-18px_rgba(60,45,20,0.55)]">
+              <section className="flex flex-wrap items-center gap-5 rounded-3xl border border-[#E3C88F]/40 bg-[linear-gradient(135deg,rgba(138,120,80,0.8)_0%,rgba(79,68,48,0.74)_100%)] p-6 text-white shadow-[0_18px_40px_-18px_rgba(60,45,20,0.55)] backdrop-blur-xl">
                 <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#FBF6EA] text-[#6B5C3C] shadow-md">
                   <span className="text-[11px] font-semibold uppercase tracking-wider">{new Date(`${next.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}</span>
                   <span className="font-fraunces text-2xl font-semibold leading-none">{new Date(`${next.wedding_date}T00:00:00`).getDate()}</span>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs uppercase tracking-widest text-white/75">Next shoot · {countdown(daysUntil(next.wedding_date!))}</p>
-                  <p className="truncate font-fraunces text-2xl font-semibold text-white">{next.names || 'Untitled session'}</p>
+                  <p className="truncate font-fraunces text-3xl font-bold text-white">{next.names || 'Untitled session'}</p>
                   <p className="text-sm text-white/80">{typeLabel(next.session_type)} · {fmtDay(next.wedding_date!)}</p>
                 </div>
                 <Link href={`/sessions/${next.id}`} className="rounded-xl bg-[#FBF6EA] px-4 py-2.5 text-sm font-medium text-[#6B5C3C] transition hover:opacity-90">Open session →</Link>
@@ -362,16 +303,16 @@ export default function DashboardPage() {
 
               {/* Coming up */}
               <section className={card}>
-                <p className="mb-3 font-fraunces text-2xl font-semibold text-ink">Coming up</p>
+                <p className="mb-3 font-fraunces text-3xl font-bold text-ink">Coming up</p>
                 {upcoming.length === 0 ? (
                   <p className="text-sm text-ink-soft">No upcoming sessions. New bookings show up here.</p>
                 ) : (
                   <ul className="divide-y divide-line">
                     {upcoming.map((x) => (
                       <li key={x.id}>
-                        <Link href={`/sessions/${x.id}`} className="flex items-center gap-4 py-3 hover:opacity-80"><SessionThumb type={x.session_type} name={x.names} />
+                        <Link href={`/sessions/${x.id}`} className="flex items-center justify-between gap-3 py-2.5 hover:opacity-80">
                           <span className="min-w-0">
-                            <span className="block truncate text-sm font-medium text-ink">{x.names || 'Untitled session'}</span>
+                            <span className="block truncate text-base font-semibold text-ink">{x.names || 'Untitled session'}</span>
                             <span className="block text-xs text-ink-soft">{typeLabel(x.session_type)}</span>
                           </span>
                           <span className="ml-auto shrink-0 text-xs text-ink-soft">{fmtDay(x.wedding_date!)}</span>

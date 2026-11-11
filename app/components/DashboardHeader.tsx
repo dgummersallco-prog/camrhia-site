@@ -8,6 +8,7 @@ import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
 import { APP_STORE_URL } from '@/lib/appStore'
 import { DASH_BG_KEY, applyDashBg } from '@/lib/dashBg'
+import DashScenes from '@/app/components/DashScenes'
 
 type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'edit' | 'insights' | 'minis' | 'help' | 'packages' | 'questionnaires' | 'specials'
 
@@ -273,9 +274,10 @@ export function DashboardHeader({ active }: { active: Tab }) {
 
   return (
     <>
+      <DashScenes />
       {/* Desktop sidebar */}
-      <aside className="fixed bottom-4 left-4 top-4 z-40 hidden w-56 flex-col rounded-[28px] border border-[#D4B574]/30 bg-[radial-gradient(120%_80%_at_20%_0%,#2F3A32_0%,#222B25_55%,#1B221D_100%)] px-3 py-7 shadow-[0_18px_50px_-18px_rgba(0,0,0,0.55)] xl:flex">
-        <Link href="/" className="mb-8 block px-3 text-center"><Wordmark className="text-4xl text-[#E3C88F]!" /><span className="mt-1 block text-[9px] uppercase tracking-[0.35em] text-[#D4B574]/80">Photography Suite</span></Link>
+      <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-60 flex-col border-r border-[#D4B574]/30 bg-[linear-gradient(180deg,rgba(70,88,74,0.93)_0%,rgba(54,68,58,0.93)_100%)] px-3 py-7 shadow-[8px_0_40px_-18px_rgba(0,0,0,0.45)] backdrop-blur-xl xl:flex">
+        <Link href="/" className="mb-8 block px-3 text-center"><Wordmark className="text-4xl text-[#E3C88F]!" /></Link>
         <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {groupedNav}
         </nav>
@@ -285,7 +287,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 border-b border-[#D4B574]/30 bg-[#222B25] xl:hidden">
+      <header className="sticky top-0 z-40 border-b border-[#D4B574]/30 bg-[#34423A] xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
           <Link href="/"><Wordmark className="text-3xl text-[#E3C88F]!" /></Link>
           <button
