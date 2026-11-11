@@ -179,8 +179,6 @@ html.dash-shell body {
 }
 html.dash-shell .min-h-screen.bg-paper {
   background: rgba(255, 252, 248, 0.86);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.8);
   margin: 0.75rem;
   min-height: calc(100vh - 1.5rem);

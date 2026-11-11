@@ -270,7 +270,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
     <>
       {/* Desktop sidebar */}
       <aside className="fixed bottom-4 left-4 top-4 z-40 hidden w-56 flex-col rounded-[28px] border border-white/70 bg-[rgba(255,252,248,0.78)] px-3 py-7 shadow-[0_20px_60px_-20px_rgba(140,107,63,0.35)] backdrop-blur-xl xl:flex">
-        <Link href="/" className="mb-8 px-3"><span className="font-fraunces text-4xl font-medium text-[#8C6B3F]">Camrhia</span></Link>
+        <Link href="/" className="mb-8 px-3"><Wordmark className="text-4xl text-[#8C6B3F]!" /></Link>
         <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {groupedNav}
         </nav>
@@ -282,7 +282,7 @@ export function DashboardHeader({ active }: { active: Tab }) {
       {/* Mobile top bar */}
       <header className="sticky top-0 z-40 border-b border-line bg-paper xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
-          <Link href="/"><span className="font-fraunces text-3xl font-medium text-[#8C6B3F]">Camrhia</span></Link>
+          <Link href="/"><Wordmark className="text-3xl text-[#8C6B3F]!" /></Link>
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? 'Close menu' : 'Open menu'}
