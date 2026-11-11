@@ -85,10 +85,10 @@ function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd:
     backfaceVisibility: 'hidden' as const,
     WebkitBackfaceVisibility: 'hidden' as const,
   }
-  const pill = 'rounded-full border border-line bg-white px-3 py-1 text-xs font-medium text-ink transition hover:border-ink'
+  const pill = 'rounded-full border border-white/80 bg-white/70 px-3 py-1 text-xs font-medium text-ink transition hover:border-ink'
 
   return (
-    <div className="w-full" style={{ perspective: '1200px', aspectRatio: '5 / 7' }}>
+    <div className="w-full" style={{ perspective: '1200px', aspectRatio: '5 / 6' }}>
       <div
         role="button"
         tabIndex={0}
@@ -98,14 +98,16 @@ function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd:
         style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'none' }}
       >
         {/* FRONT */}
-        <div className={face} style={faceStyle}>
-
-          <div className="absolute inset-x-6 bottom-[26%] top-[16%] flex flex-col items-center justify-center text-center">
-            <p className="line-clamp-3 break-words font-fraunces text-2xl font-semibold leading-tight text-ink">{c.name}</p>
-            <p className="mt-2 text-xs text-ink-soft">
-              {c.sessions.length} {c.sessions.length === 1 ? 'session' : 'sessions'}
-              {c.next ? ' · Next ' + fmtDate(c.next) : c.last ? ' · Last ' + fmtDate(c.last) : ''}
+        <div className={face} style={{ ...faceStyle, ...GLASS }}>
+          <div className="flex h-full flex-col items-center px-5 pb-5 pt-6 text-center">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-fraunces text-xl font-semibold text-white shadow-md" style={{ background: 'linear-gradient(135deg, #D79A9C, #B8626A)' }}>
+              {(c.name.trim().charAt(0) || '?').toUpperCase()}
+            </div>
+            <p className="mt-3 line-clamp-2 break-words font-fraunces text-2xl font-bold leading-tight text-ink">{c.name}</p>
+            <p className="mt-1.5 text-sm font-medium text-ink-soft">
+              {c.next ? 'Next shoot · ' + fmtDate(c.next) : c.last ? 'Last shoot · ' + fmtDate(c.last) : 'No sessions yet'}
             </p>
+            <p className="mt-0.5 text-xs text-ink-soft">{c.sessions.length} {c.sessions.length === 1 ? 'session' : 'sessions'}</p>
             {(c.phone || c.email) && (
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {c.phone && <a href={`tel:${c.phone}`} onClick={stop} className={pill}>Call</a>}
@@ -113,21 +115,22 @@ function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd:
                 {c.email && <a href={`mailto:${c.email}`} onClick={stop} className={pill}>Email</a>}
               </div>
             )}
-          </div>
-
-          <div className="absolute bottom-4 left-5 right-16">
-            <div className="flex justify-between text-[11px] uppercase tracking-[0.12em] text-ink-soft">
-              <span>Paid {money(c.paid)}</span>
-              <span className={c.owed > 0 ? 'font-semibold' : ''} style={c.owed > 0 ? { color: ROSE } : undefined}>Owed {money(c.owed)}</span>
-            </div>
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-line">
-              <div className="h-full rounded-full" style={{ width: pct + '%', backgroundColor: ROSE }} />
-            </div>
+            {c.paid + c.owed > 0 && (
+              <div className="mt-auto w-full pt-4">
+                <div className="flex justify-between text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+                  <span>Paid {money(c.paid)}</span>
+                  <span className={c.owed > 0 ? 'font-semibold' : ''} style={c.owed > 0 ? { color: ROSE } : undefined}>Owed {money(c.owed)}</span>
+                </div>
+                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/70">
+                  <div className="h-full rounded-full" style={{ width: pct + '%', backgroundColor: ROSE }} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* BACK */}
-        <div className={face} style={{ ...faceStyle, transform: 'rotateY(180deg)' }}>
+        <div className={face} style={{ ...faceStyle, ...GLASS_BACK, transform: 'rotateY(180deg)' }}>
           <div className="flex h-full flex-col p-5">
             <p className="truncate font-fraunces text-lg font-semibold text-ink">{c.name}</p>
             <p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-ink-soft">Lifetime paid</p>
@@ -138,7 +141,7 @@ function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd:
               <p className="mt-4 text-[11px] uppercase tracking-[0.12em] text-ink-soft">Sessions</p>
             <div className="mt-2 space-y-2">
               {c.sessions.map((s) => (
-                <Link key={s.id} href={`/sessions/${s.id}`} onClick={stop} className="flex items-center justify-between gap-2 rounded-xl border border-line bg-white px-3 py-2 transition hover:border-ink">
+                <Link key={s.id} href={`/sessions/${s.id}`} onClick={stop} className="flex items-center justify-between gap-2 rounded-xl border border-white/80 bg-white/70 px-3 py-2 transition hover:border-ink">
                   <span className="text-sm font-medium text-ink">{typeLabel(s.session_type)}</span>
                   <span className="text-[11px] text-ink-soft">{fmtDate(s.wedding_date)}</span>
                 </Link>
@@ -152,6 +155,17 @@ function ClientCard({ c, fam, onAdd, onDelete }: { c: Client; fam: Fam[]; onAdd:
     </div>
   )
 }
+
+const GLASS = {
+  background: 'linear-gradient(160deg, rgba(255,255,255,0.62), rgba(255,255,255,0.34))',
+  border: '1px solid rgba(255,255,255,0.75)',
+  boxShadow: '0 18px 40px -22px rgba(90,50,60,0.45)',
+} as const
+const GLASS_BACK = {
+  background: 'rgba(255,255,255,0.8)',
+  border: '1px solid rgba(255,255,255,0.85)',
+  boxShadow: '0 18px 40px -22px rgba(90,50,60,0.45)',
+} as const
 
 export default function ClientsPage() {
   const router = useRouter()
@@ -269,7 +283,7 @@ export default function ClientsPage() {
     return list
   }, [clients, q, sort])
 
-  const input = 'rounded-xl border border-line bg-white px-4 py-2.5 text-sm text-ink outline-none focus:border-twilight'
+  const input = 'rounded-xl border border-white/70 bg-white/60 px-4 py-2.5 text-sm text-ink outline-none focus:border-twilight'
 
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
@@ -277,10 +291,10 @@ export default function ClientsPage() {
       <main className={'mx-auto px-6 py-10 ' + (view === 'cards' ? 'max-w-6xl' : 'max-w-4xl')}>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-fraunces text-3xl font-semibold text-ink">Clients</h1>
+            <h1 className="font-fraunces text-4xl font-bold text-ink">Clients</h1>
             {!loading && <p className="mt-1 text-sm text-ink-soft">{clients.length} {clients.length === 1 ? 'client' : 'clients'} · {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}</p>}
           </div>
-          <Link href="/sessions/new" className="rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New session</Link>
+          <Link href="/sessions/new" className="rounded-xl bg-[#C98588] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New session</Link>
         </div>
 
         {error && <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
@@ -300,9 +314,9 @@ export default function ClientsPage() {
                 <option value="name">Name A to Z</option>
                 <option value="paid">Most paid</option>
               </select>
-              <div className="flex overflow-hidden rounded-xl border border-line bg-white text-sm">
+              <div className="flex overflow-hidden rounded-xl border border-white/70 bg-white/60 text-sm">
                 {(['cards', 'list'] as const).map((v) => (
-                  <button key={v} type="button" onClick={() => setView(v)} className={'px-4 py-2.5 font-medium transition ' + (view === v ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>
+                  <button key={v} type="button" onClick={() => setView(v)} className={'px-4 py-2.5 font-medium transition ' + (view === v ? 'bg-[#C98588] text-white' : 'text-ink-soft hover:text-ink')}>
                     {v === 'cards' ? 'Cards' : 'List'}
                   </button>
                 ))}
@@ -318,7 +332,7 @@ export default function ClientsPage() {
             ) : (
               <div className="mt-5 space-y-3">
                 {shown.map((c) => (
-                  <div key={c.key} className="rounded-2xl border border-line bg-card">
+                  <div key={c.key} className="rounded-2xl border border-white/60 bg-white/50 backdrop-blur-xl">
                     <button type="button" onClick={() => setOpen(open === c.key ? null : c.key)} className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left">
                       <span className="min-w-0">
                         <span className="block truncate font-fraunces text-lg font-semibold text-ink">{c.name}</span>
@@ -329,14 +343,14 @@ export default function ClientsPage() {
                       </span>
                       <span className="flex items-center gap-5 text-right">
                         <span><span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">Paid</span><span className="text-sm font-medium text-ink">{money(c.paid)}</span></span>
-                        <span><span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">Owed</span><span className={'text-sm font-medium ' + (c.owed > 0 ? 'text-twilight' : 'text-ink')}>{money(c.owed)}</span></span>
+                        <span><span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">Owed</span><span className={'text-sm font-medium ' + (c.owed > 0 ? 'text-[#B8626A]' : 'text-ink')}>{money(c.owed)}</span></span>
                       </span>
                     </button>
                     {open === c.key && (
                       <div className="space-y-2 border-t border-line px-5 py-4">
                         <FamilyBlock items={famBy[c.key] ?? []} onAdd={(f) => addFam(c.key, f)} onDelete={delFam} />
                         {c.sessions.map((s) => (
-                          <Link key={s.id} href={`/sessions/${s.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 py-3 transition hover:border-ink">
+                          <Link key={s.id} href={`/sessions/${s.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-white/70 bg-white/70 px-4 py-3 transition hover:border-ink">
                             <span className="text-sm font-medium text-ink">{typeLabel(s.session_type)}</span>
                             <span className="text-xs text-ink-soft">{fmtDate(s.wedding_date)}{s.status ? ' · ' + s.status.replace(/_/g, ' ') : ''}</span>
                           </Link>
