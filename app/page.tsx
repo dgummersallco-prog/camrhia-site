@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
 }
 
-const NAVY = "#A9545F"
+const NAVY = "#8C6B3F"
 const PHONE =
   "rounded-[1.9rem] ring-1 ring-black/10 bg-card shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]"
 
@@ -262,7 +262,7 @@ export default function Home() {
         </section>
 
         {/* DELIVERY */}
-        <section className="bg-gradient-to-br from-[#A9545F] to-[#BC6470] text-white">
+        <section className="bg-gradient-to-br from-[#8C6B3F] to-[#A6824F] text-white">
           <div className="mx-auto max-w-3xl px-6 py-24 sm:py-28 text-center">
             <h2 className="font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">
               Delivery day, without the scramble.
@@ -345,7 +345,7 @@ export default function Home() {
         </section>
 
         {/* AFFILIATE */}
-        <section className="bg-gradient-to-br from-[#A9545F] to-[#BC6470] text-white">
+        <section className="bg-gradient-to-br from-[#8C6B3F] to-[#A6824F] text-white">
           <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-8 px-6 py-16 md:flex-row md:items-center">
             <div className="max-w-xl">
               <p className="text-sm font-medium text-brass">Camrhia affiliate program</p>

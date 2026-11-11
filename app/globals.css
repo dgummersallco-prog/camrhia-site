@@ -6,14 +6,14 @@
   --color-paper-deep: #F3EBE1;
   --color-ink: #2A1F24;
   --color-ink-soft: #6F5E64;
-  --color-twilight: #A9545F;
+  --color-twilight: #8C6B3F;
   --color-brass: #8C6B3F;
   --color-sage: #5E7F5A;
   --color-line: #EADFD6;
   --color-card: #FFFCF8;
-  --color-rose: #E29B9B;
-  --color-blush: #F5C2C2;
-  --color-blush-wash: #FBE9E7;
+  --color-rose: #D9B36A;
+  --color-blush: #EBD8AE;
+  --color-blush-wash: #F6EEDC;
   --color-plum: #3A2A31;
 
   /* Brand fonts */
@@ -41,7 +41,7 @@ details[open] .faq-chevron {
   transform: rotate(180deg);
 }
 details[open] .faq-question-text {
-  color: #A9545F;
+  color: #8C6B3F;
 }
 
 /* ── Blog post prose ──────────────────────────────────────────────────────── */
@@ -107,7 +107,7 @@ details[open] .faq-question-text {
 }
 
 .blog-content a {
-  color: #A9545F;
+  color: #8C6B3F;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -169,4 +169,30 @@ select:not([style]):focus {
 select option {
   color: #2A1F24;
   background: #FFFCF8;
+}
+
+/* Dashboard shell: photo behind, glass nav, content on a cream card */
+html.dash-shell body {
+  background:
+    radial-gradient(1200px 700px at 78% 10%, rgba(255, 214, 150, 0.9), rgba(255, 214, 150, 0) 60%),
+    radial-gradient(900px 600px at 18% 92%, rgba(150, 90, 70, 0.6), rgba(150, 90, 70, 0) 60%),
+    linear-gradient(160deg, #3A2A2E 0%, #8A5A4E 45%, #E0A878 75%, #F3D3A0 100%);
+  background: var(--dash-bg, linear-gradient(rgba(20, 14, 16, 0.12), rgba(20, 14, 16, 0.12)), radial-gradient(1200px 700px at 78% 10%, rgba(255, 214, 150, 0.9), rgba(255, 214, 150, 0) 60%), radial-gradient(900px 600px at 18% 92%, rgba(150, 90, 70, 0.6), rgba(150, 90, 70, 0) 60%), linear-gradient(160deg, #3A2A2E 0%, #8A5A4E 45%, #E0A878 75%, #F3D3A0 100%));
+  background-size: cover;
+  background-attachment: fixed;
+}
+html.dash-shell .min-h-screen.bg-paper {
+  background: rgba(251, 246, 240, 0.97);
+  margin: 0.75rem;
+  min-height: calc(100vh - 1.5rem);
+  border-radius: 24px;
+  box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.5);
+}
+@media (min-width: 1280px) {
+  html.dash-shell .min-h-screen.bg-paper {
+    margin: 1rem 1rem 1rem 16rem;
+    min-height: calc(100vh - 2rem);
+    padding-left: 0;
+    border-radius: 28px;
+  }
 }

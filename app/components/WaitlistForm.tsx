@@ -52,7 +52,7 @@ export default function WaitlistForm() {
           type="submit"
           disabled={state === 'loading'}
           className="rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white hover:bg-twilight/90 disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
-          style={{ backgroundColor: '#A9545F', color: '#ffffff' }}
+          style={{ backgroundColor: '#8C6B3F', color: '#ffffff' }}
         >
           {state === 'loading' ? 'Joining…' : 'Get early access →'}
         </button>

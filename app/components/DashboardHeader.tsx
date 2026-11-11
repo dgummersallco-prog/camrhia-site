@@ -7,32 +7,33 @@ import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
 import { APP_STORE_URL } from '@/lib/appStore'
+import { DASH_BG_KEY, applyDashBg } from '@/lib/dashBg'
 
 type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'edit' | 'insights' | 'minis' | 'help' | 'packages' | 'questionnaires' | 'specials'
 
 const ICONS: Record<string, string> = {
-  specials: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',
+  specials: 'M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z',
   dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
   messages: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
-  sessions: 'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
-  contracts: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5',
-  payments: 'M12 1v22 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
-  calendar: 'M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
-  galleries: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M9 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21',
+  sessions: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 9a4 4 0 1 0 0 8a4 4 0 1 0 0-8z',
+  contracts: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M9 13h6 M9 17h6',
+  payments: 'M12 2v20 M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+  calendar: 'M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M16 2v4 M8 2v4 M3 10h18',
+  galleries: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M8.5 7a1.5 1.5 0 1 0 0 3a1.5 1.5 0 1 0 0-3z M21 15l-5-5L5 21',
   portfolio: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M3 12h18 M12 3a14 14 0 0 1 0 18 M12 3a14 14 0 0 0 0 18',
-  website: 'M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M2 9h20 M6 6.5h.01 M9 6.5h.01',
+  website: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M3 12h18 M12 3a14 14 0 0 1 0 18 M12 3a14 14 0 0 0 0 18',
   reminders: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0',
-  edit: 'M4 21v-7 M4 10V3 M12 21v-9 M12 8V3 M20 21v-5 M20 12V3 M1 14h6 M9 8h6 M17 16h6',
+  edit: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M7 3v18 M17 3v18 M3 8h4 M3 16h4 M17 8h4 M17 16h4',
   storage: 'M22 12H2 M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z M6 16h.01 M10 16h.01',
-  help: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3 M12 17h.01',
+  help: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7 M12 17h.01',
   minis: 'M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
   insights: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
-  clients: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
-  team: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
+  clients: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 3a4 4 0 1 0 0 8a4 4 0 1 0 0-8z M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
+  team: 'M12 3a4 4 0 1 0 0 8a4 4 0 1 0 0-8z M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1',
   settings: 'M4 21v-7 M4 10V3 M12 21v-9 M12 8V3 M20 21v-5 M20 12V3 M1 14h6 M9 8h6 M17 16h6',
   billing: 'M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M1 10h22',
-  packages: 'M21 8l-9-5-9 5v8l9 5 9-5z M3.3 7.5L12 12l8.7-4.5 M12 21v-9',
-  questionnaires: 'M9 2h6a1 1 0 0 1 1 1v2H8V3a1 1 0 0 1 1-1z M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2 M9 12h6 M9 16h4',
+  packages: 'M21 8l-9-5-9 5v8l9 5 9-5z M3 8l9 5 9-5 M12 13v8',
+  questionnaires: 'M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M9 12h6 M9 16h4',
   affiliate: 'M20 12v10H4V12 M2 7h20v5H2z M12 22V7 M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z',
 }
 
@@ -58,7 +59,6 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'messages', href: '/messages', label: 'Messages' },
   { tab: 'calendar', href: '/calendar', label: 'Calendar' },
   { tab: 'website', href: '/website', label: 'Your website' },
-  { tab: 'portfolio', href: '/portfolio', label: 'App portfolio' },
   { tab: 'specials', href: '/specials', label: 'Specials' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
   { tab: 'settings', href: '/settings', label: 'Settings' },
@@ -66,18 +66,15 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
 ]
 
 // Returns the color only if white text stays readable on it.
+// The dashboard keeps one gold accent for everyone.
 function usableAccent(c: string | null | undefined): string | null {
-  if (!c) return null
-  const m = /^#?([0-9a-f]{6})$/i.exec(c.trim())
-  if (!m) return null
-  const n = parseInt(m[1], 16)
-  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
-  return lum > 0.8 ? null : '#' + m[1]
+  void c
+  return null
 }
 
 function Icon({ name }: { name: string }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <path d={ICONS[name]} />
     </svg>
   )
@@ -184,7 +181,31 @@ export function DashboardHeader({ active }: { active: Tab }) {
     run()
   }, [])
 
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.add('dash-shell')
+    return () => root.classList.remove('dash-shell')
+  }, [])
+
+  useEffect(() => {
+    async function run() {
+      try {
+        const c = localStorage.getItem(DASH_BG_KEY)
+        if (c) applyDashBg(c, supabase)
+      } catch {}
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const { data: pr } = await sb.from('profiles').select('dash_bg').eq('id', data.session.user.id).maybeSingle()
+      const v = (pr as { dash_bg?: string | null } | null)?.dash_bg ?? null
+      applyDashBg(v && v !== 'golden' ? v : null, sb)
+    }
+    run().catch(() => {})
+  }, [])
+
   async function signOut() {
+    applyDashBg(null, null)
     try { localStorage.removeItem('camrhia_accent') } catch {}
     document.documentElement.style.removeProperty('--color-twilight')
     document.documentElement.style.removeProperty('--color-blush-wash')
@@ -206,27 +227,23 @@ export function DashboardHeader({ active }: { active: Tab }) {
 
   const item = (it: { tab: Tab | 'affiliate'; href: string; label: string }, accent = false) => {
     const isActive = (COVERS[it.tab] ?? [it.tab]).includes(active)
-    const isPro = it.tab === 'edit'
     return (
       <Link
         key={it.href}
         href={it.href}
         onClick={() => setOpen(false)}
-        className={`relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13.5px] font-medium tracking-wide transition ${
-          isPro
-            ? `bg-twilight text-white hover:opacity-90${isActive ? ' ring-2 ring-twilight/30' : ''}`
-            : isActive
-            ? 'bg-blush-wash text-twilight'
+        className={`relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-[15px] transition ${
+          isActive
+            ? 'bg-[#D9B36A]/20 font-semibold text-white'
             : accent
-              ? 'text-brass hover:bg-blush-wash/60'
-              : 'text-ink-soft hover:bg-blush-wash/60 hover:text-ink'
+              ? 'text-[#D9B36A] hover:bg-white/10'
+              : 'text-[#EFE6DC] hover:bg-white/10'
         }`}
       >
-        {isActive && !isPro && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-twilight" />}
-        {!isPro && <Icon name={it.tab} />}
+        <span className={isActive ? 'text-[#E7C888]' : 'text-[#CFAE72]'}><Icon name={it.tab} /></span>
         {it.label}
         {it.tab === 'messages' && unread > 0 && (
-          <span className="ml-auto rounded-full bg-brass px-2 py-0.5 text-[11px] font-semibold text-white">{unread > 9 ? '9+' : unread}</span>
+          <span className="ml-auto rounded-full bg-[#D9B36A] px-2 py-0.5 text-[11px] font-semibold text-[#2A2326]">{unread > 9 ? '9+' : unread}</span>
         )}
       </Link>
     )
@@ -236,12 +253,12 @@ export function DashboardHeader({ active }: { active: Tab }) {
     { label: null, tabs: ['dashboard', 'edit'] },
     { label: 'Clients', tabs: ['clients', 'messages', 'sessions', 'calendar'] },
     { label: 'Work', tabs: ['galleries', 'packages', 'questionnaires', 'contracts', 'payments', 'team'] },
-    { label: 'Your brand', tabs: ['website', 'specials', 'portfolio'] },
+    { label: 'Your brand', tabs: ['website', 'specials'] },
     { label: 'Account', tabs: ['settings', 'help'] },
   ]
   const groupedNav = GROUPS.map((g, gi) => (
-    <div key={gi} className={gi === 0 ? '' : 'mt-5'}>
-      {g.label && <p className="mb-1.5 px-3.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-soft/70">{g.label}</p>}
+    <div key={gi} className={gi === 0 ? '' : 'mt-6'}>
+      {g.label && <p className="mb-2 px-3 text-[14px] font-semibold uppercase tracking-[0.16em] text-[#D9B36A]">{g.label}</p>}
       <div className="flex flex-col gap-1">
         {g.tabs.filter((t) => t !== 'team' || showTeam || active === 'team').map((t) => item(ITEMS.find((i) => i.tab === t)!))}
         {g.label === 'Account' && item(isAffiliate ? { tab: 'affiliate', href: '/affiliate/dashboard', label: 'Affiliate dashboard' } : { tab: 'affiliate', href: '/affiliate/signup', label: 'Earn with Camrhia' }, true)}
@@ -252,24 +269,24 @@ export function DashboardHeader({ active }: { active: Tab }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-line bg-card px-4 py-6 xl:flex">
-        <Link href="/" className="mb-8 px-2"><Wordmark className="text-3xl" /></Link>
+      <aside className="fixed bottom-4 left-4 top-4 z-40 hidden w-56 flex-col rounded-[28px] border border-white/15 bg-[rgba(22,16,17,0.88)] px-3 py-7 shadow-2xl backdrop-blur-xl xl:flex">
+        <Link href="/" className="mb-8 px-3"><span className="font-fraunces text-4xl font-medium text-[#D9B36A]">Camrhia</span></Link>
         <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {groupedNav}
         </nav>
-        <button onClick={signOut} className="rounded-xl px-3.5 py-2.5 text-left text-sm text-ink-soft transition hover:bg-line/60 hover:text-ink">
+        <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-[#EFE6DC]/80 transition hover:bg-white/10 hover:text-white">
           Sign out
         </button>
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper xl:hidden">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#1C1415] xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
-          <Link href="/"><Wordmark className="text-3xl" /></Link>
+          <Link href="/"><span className="font-fraunces text-3xl font-medium text-[#D9B36A]">Camrhia</span></Link>
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? 'Close menu' : 'Open menu'}
-            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-ink"
+            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#D9B36A]"
           >
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
               {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
@@ -277,9 +294,9 @@ export function DashboardHeader({ active }: { active: Tab }) {
           </button>
         </div>
         {open && (
-          <nav className="flex flex-col border-t border-line px-4 pb-4 pt-3">
+          <nav className="flex flex-col border-t border-white/10 px-4 pb-4 pt-3">
             {groupedNav}
-            <button onClick={signOut} className="rounded-xl px-3.5 py-2.5 text-left text-sm text-ink-soft">Sign out</button>
+            <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-[#EFE6DC]/80">Sign out</button>
           </nav>
         )}
       </header>

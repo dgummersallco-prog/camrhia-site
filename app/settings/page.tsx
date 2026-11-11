@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { SubTabs } from '@/app/components/SubTabs'
+import { DashboardBackground } from '@/app/components/DashboardBackground'
 
 type St = { connected: boolean; ready: boolean; enabled?: boolean; payoutsEnabled?: boolean; dashboardUrl?: string | null; bank?: { name: string | null; last4: string | null } | null }
 
@@ -113,6 +114,14 @@ export default function SettingsPage() {
                 <label className="mb-1.5 block text-xs font-medium text-ink">Email</label>
                 <input className={input + ' bg-blush-wash/40'} value={email} readOnly />
               </div>
+            </Card>
+
+            <Card title="Dashboard background" hint="Pick a look, or upload your own photo to sit behind your dashboard.">
+        <DashboardBackground />
+      </Card>
+
+      <Card title="Client reminders" hint="Choose which automatic reminders your clients get and edit the wording.">
+              <Link href="/reminders" className={btnGhost}>Manage reminders</Link>
             </Card>
 
             <Card title="Password">

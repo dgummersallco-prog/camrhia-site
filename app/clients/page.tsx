@@ -15,7 +15,7 @@ type Client = { key: string; name: string; sessions: S[]; paid: number; owed: nu
 type Fam = { id: string; client_key: string; name: string; kind: string; date: string | null }
 type FamIn = { name: string; kind: string; date: string }
 
-const ROSE = '#A9545F'
+const ROSE = '#8C6B3F'
 const money = (n: number) => '$' + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const fmtDate = (d: string | null) => { if (!d) return 'No date'; const [y, m, day] = d.split('-').map(Number); return new Date(y, m - 1, day).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
