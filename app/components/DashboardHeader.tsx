@@ -237,11 +237,11 @@ export function DashboardHeader({ active }: { active: Tab }) {
           isActive
             ? 'bg-gradient-to-r from-white/25 via-white/30 to-white/20 font-semibold text-[#FBF6EA] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6),0_4px_14px_-6px_rgba(0,0,0,0.6)]'
             : accent
-              ? 'text-[#FBF1E6] hover:bg-white/5'
-              : 'text-[#FBF1E6] hover:bg-white/5 hover:text-white'
+              ? 'text-[#FFFFFF] hover:bg-white/5'
+              : 'text-[#FFFFFF] hover:bg-white/5 hover:text-white'
         }`}
       >
-        <span className={isActive ? 'text-[#FFFFFF]' : 'text-[#F6DDD6]'}><Icon name={it.tab} /></span>
+        <span className={isActive ? 'text-[#FFFFFF]' : 'text-[#FFFFFF]'}><Icon name={it.tab} /></span>
         {it.label}
         {it.tab === 'messages' && unread > 0 && (
           <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[#A5646A]">{unread > 9 ? '9+' : unread}</span>
@@ -261,8 +261,8 @@ export function DashboardHeader({ active }: { active: Tab }) {
     <div key={gi} className={gi === 0 ? '' : 'mt-6'}>
       {g.label && (
         <div className="mb-2 flex items-center gap-3 px-3">
-          <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[#F6DDD6]">{g.label}</p>
-          <span className="h-px flex-1 bg-[#F6DDD6]/40" />
+          <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[#FFFFFF]">{g.label}</p>
+          <span className="h-px flex-1 bg-[#FFFFFF]/40" />
         </div>
       )}
       <div className="flex flex-col gap-1">
@@ -276,24 +276,24 @@ export function DashboardHeader({ active }: { active: Tab }) {
     <>
       <DashScenes />
       {/* Desktop sidebar */}
-      <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-60 flex-col border-r border-[#F6DDD6]/30 bg-[linear-gradient(180deg,rgba(204,138,140,0.26)_0%,rgba(158,98,106,0.3)_100%)] px-3 py-7 shadow-[8px_0_40px_-18px_rgba(0,0,0,0.45)] backdrop-blur-xl xl:flex">
-        <Link href="/" className="mb-8 block px-3 text-center"><Wordmark className="text-4xl text-[#FBF1E6]!" /></Link>
+      <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-60 flex-col border-r border-[#FFFFFF]/30 bg-[linear-gradient(180deg,rgba(204,138,140,0.26)_0%,rgba(158,98,106,0.3)_100%)] px-3 py-7 shadow-[8px_0_40px_-18px_rgba(0,0,0,0.45)] backdrop-blur-xl [text-shadow:0_1px_6px_rgba(0,0,0,0.35)] xl:flex">
+        <Link href="/" className="mb-8 block px-3 text-center"><Wordmark className="text-5xl text-[#FFFFFF]!" /></Link>
         <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {groupedNav}
         </nav>
-        <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-[#FBF1E6] transition hover:bg-white/5 hover:text-white">
+        <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-[#FFFFFF] transition hover:bg-white/5 hover:text-white">
           Sign out
         </button>
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 border-b border-[#F6DDD6]/30 bg-[#B97A7E] xl:hidden">
+      <header className="sticky top-0 z-40 border-b border-[#FFFFFF]/30 bg-[#B97A7E] xl:hidden">
         <div className="flex items-center justify-between px-6 py-3">
-          <Link href="/"><Wordmark className="text-3xl text-[#FBF1E6]!" /></Link>
+          <Link href="/"><Wordmark className="text-3xl text-[#FFFFFF]!" /></Link>
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? 'Close menu' : 'Open menu'}
-            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#FBF1E6]"
+            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#FFFFFF]"
           >
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
               {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
@@ -301,9 +301,9 @@ export function DashboardHeader({ active }: { active: Tab }) {
           </button>
         </div>
         {open && (
-          <nav className="flex flex-col border-t border-[#F6DDD6]/30 px-4 pb-4 pt-3">
+          <nav className="flex flex-col border-t border-[#FFFFFF]/30 px-4 pb-4 pt-3">
             {groupedNav}
-            <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-[#FBF1E6]">Sign out</button>
+            <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-[#FFFFFF]">Sign out</button>
           </nav>
         )}
       </header>

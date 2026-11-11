@@ -293,9 +293,9 @@ export default function DashboardPage() {
                   <span className="font-fraunces text-2xl font-semibold leading-none">{new Date(`${next.wedding_date}T00:00:00`).getDate()}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs uppercase tracking-widest text-white/75">Next shoot · {countdown(daysUntil(next.wedding_date!))}</p>
+                  <p className="text-xs uppercase tracking-widest text-white">Next shoot · {countdown(daysUntil(next.wedding_date!))}</p>
                   <p className="truncate font-fraunces text-3xl font-bold text-white">{next.names || 'Untitled session'}</p>
-                  <p className="text-sm text-white/80">{typeLabel(next.session_type)} · {fmtDay(next.wedding_date!)}</p>
+                  <p className="text-sm text-white">{typeLabel(next.session_type)} · {fmtDay(next.wedding_date!)}</p>
                 </div>
                 <Link href={`/sessions/${next.id}`} className="rounded-xl bg-[#FBF6EA] px-4 py-2.5 text-sm font-medium text-[#A5646A] transition hover:opacity-90">Open session →</Link>
               </section>
