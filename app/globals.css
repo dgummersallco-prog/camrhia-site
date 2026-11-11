@@ -227,3 +227,9 @@ html.dash-shell .admin-shell .min-h-screen.bg-paper { margin-left: 0 !important;
 
 /* Buttons everywhere use the photo accent color */
 html.dash-shell .bg-twilight { background-color: rgb(var(--scene-b, 201 133 136)) !important; }
+
+/* Dark buttons and links use the photo accent color too */
+html.dash-shell button.bg-ink,
+html.dash-shell a.bg-ink,
+html.dash-shell button.bg-ink\/90,
+html.dash-shell a.bg-ink\/90 { background-color: rgb(var(--scene-b, 201 133 136)) !important; color: #fff; }

@@ -48,14 +48,14 @@ export function applyPalette(n: SiteState, accent: string, bg: string, text: str
   s.button = { ...(s.button ?? {}), text: isLight(accent) ? '#2A1F24' : '#FFFFFF' }
 }
 
-function setButtons(S: Record<string, any>, shape: 'square' | 'rounded' | 'pill') {
+export function setButtons(S: Record<string, any>, shape: 'square' | 'rounded' | 'pill') {
   ens(S, 'button').shape = shape
   ens(S, 'hero').btn_shape = shape
   for (const k of ['contactBtn', 'bookBtn', 'aboutBtn', 'galBtn', 'portfolioBtn']) ens(S, k).shape = shape
 }
 
 // ---- Photographer design knowledge ----
-type Preset = {
+export type Preset = {
   why: string
   tpl?: string; pair?: string; head?: string; body?: string
   pal?: [string, string, string]
@@ -99,7 +99,7 @@ const NICHE_WORDS: [RegExp, string][] = [
   [/\b(commercial|brand|branding|product|food|real estate|architecture|corporate)\b/, 'commercial'], [/\bboudoir\b/, 'boudoir'],
 ]
 
-function applyPreset(n: SiteState, p: Preset) {
+export function applyPreset(n: SiteState, p: Preset) {
   const S = (n.site_settings = n.site_settings ?? {})
   if (p.tpl) n.site_template = p.tpl
   if (p.pair || p.head || p.body) {
@@ -326,4 +326,12 @@ export function camiSite(input: string, cur: SiteState): { state: SiteState; rep
   }
   const text = done.length === 1 ? done[0] : done.slice(0, -1).join(', ') + ' and ' + done[done.length - 1]
   return { state: n, changed: true, reply: 'Done. I ' + text + '.' + (why.length ? ' ' + why.join(' ') : '') }
+}
+
+export const NICHE_CHOICES: [string, string][] = Object.entries(NICHES).map(([k, v]) => [k, v.label])
+export function applyNiche(n: SiteState, key: string): string {
+  const z = NICHES[key]
+  if (!z) return ''
+  applyPreset(n, z.p)
+  return z.p.why
 }

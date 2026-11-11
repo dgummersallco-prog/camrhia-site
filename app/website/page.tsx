@@ -1647,8 +1647,6 @@ export default function WebsitePage() {
       <link rel="stylesheet" href={ALL_FONTS_HREF} />
       <DashboardHeader active="website" />
       <main className="px-6 py-8">
-        <CamiDesigner />
-        <div className="hidden">
         {!form || !T ? (
           <p className="text-sm text-ink-soft">{message ?? 'Loading…'}</p>
         ) : (
@@ -1657,17 +1655,17 @@ export default function WebsitePage() {
               <div>
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Your website</p>
                 <h1 className="font-fraunces text-3xl font-semibold text-ink">Design your website</h1>
-                <p className="mt-1 text-sm text-ink-soft">Work down the steps. The preview updates as you go, and nothing is live until you press Save.</p>
+                <p className="mt-1 text-sm text-ink-soft">Answer a few questions and Cami builds your site. Every change saves as you go.</p>
               </div>
               <div className="flex items-center gap-3">
                 {message && <span className="text-sm text-twilight">{message}</span>}
-                <button className={btn} disabled={!dirty || saving} onClick={save}>
+                <button style={{ display: 'none' }} className={btn} disabled={!dirty || saving} onClick={save}>
                   {saving ? 'Saving…' : saveErr ? 'Retry save' : dirty ? 'Save now' : 'All changes saved'}
                 </button>
               </div>
             </div>
 
-            <div className="mb-6 rounded-2xl border border-line bg-card p-5">
+            <div className="hidden mb-6 rounded-2xl border border-line bg-card p-5">
               <p className="font-fraunces text-lg font-semibold text-ink">Generate for me</p>
               <p className="mt-1 text-sm text-ink-soft">Pick a style. I choose the layout, fonts, colors and button shape, and write a headline if you do not have one. Then change anything you like.</p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -1713,6 +1711,8 @@ export default function WebsitePage() {
               </div>
             )}
 
+            <CamiDesigner />
+            <div className="hidden">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,480px)_1fr]">
               <div className="cr-cap min-w-0 space-y-4">
                 <div>
@@ -2570,9 +2570,9 @@ export default function WebsitePage() {
                 )}
               </div>
             </div>
+            </div>
           </>
         )}
-      </div>
       </main>
     </div>
   )
