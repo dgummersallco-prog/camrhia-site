@@ -195,3 +195,27 @@ html.dash-shell .min-h-screen.bg-paper {
     border-radius: 28px;
   }
 }
+
+/* Dashboard panel: flush, no frame */
+html.dash-shell .min-h-screen.bg-paper {
+  margin: 0;
+  min-height: 100vh;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+@media (min-width: 1280px) {
+  html.dash-shell .min-h-screen.bg-paper {
+    margin: 0 0 0 15rem;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+}
+
+/* Keep the panel clear of the sidebar (same breakpoint as Tailwind xl) */
+@media (min-width: 80rem) {
+  html.dash-shell .min-h-screen.bg-paper {
+    margin-left: 15rem !important;
+    padding-left: 0 !important;
+  }
+}
