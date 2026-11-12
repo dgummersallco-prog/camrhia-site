@@ -68,7 +68,7 @@ export default function Pricing() {
             <div className="mt-12 grid md:grid-cols-2 gap-6">
               <div className="rounded-3xl bg-card border border-line p-8">
                 <p className="font-fraunces text-2xl font-semibold text-ink">Culling</p>
-                <p className="mt-1 text-sm text-ink-soft">Find your best photos fast.</p>
+                <p className="mt-1 text-sm text-ink-soft">Catches closed eyes and soft focus, groups near-identical shots and picks the best from each. You make the final call.</p>
                 <p className="mt-6 font-fraunces text-5xl text-ink">$11<span className="text-base text-ink-soft"> /month</span></p>
                 <div className="mt-5"><Soon /></div>
               </div>

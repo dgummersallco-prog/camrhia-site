@@ -16,6 +16,7 @@ import { camiRead, camiGuessLight, type CamiReading } from '@/lib/cami'
 import { SCENE_IDEAS, readHead, exifTime, orderPhotos, normalizeScenes, buildLightMap, countByScene, autoSplit, groupByScene, lightStats, lightingBreaks } from '@/lib/scenes'
 import { briefAdjust, STYLE_LOOK, QUESTIONS, type Brief, type SceneDef, type Signature } from '@/lib/brief'
 import { uploadPhotos } from '@/lib/galleryUpload'
+import { takePendingFiles } from '@/lib/editHandoff'
 
 type Photo = {
   id: string
@@ -462,6 +463,13 @@ export default function EditWalkthrough() {
     await loadPhotos()
   }
 
+  useEffect(() => {
+    if (!userId) return
+    const f = takePendingFiles(galleryId)
+    if (f.length) void addFiles(f)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
+
   // ---- Step 2: cull ----
   async function runCull() {
     const sb = supabase
@@ -523,6 +531,65 @@ export default function EditWalkthrough() {
     setConfirmCut(false)
     setWorking(false)
     if (ok) goTo(2)
+  }
+
+  // ---- cull shortcuts + export ----
+  const [cur, setCur] = useState(0)
+  useEffect(() => { setCur(0) }, [cullView])
+
+  function setLabelFor(p: Photo, label: 'pick' | 'maybe' | 'reject') {
+    const sb = supabase
+    if (!sb) return
+    const reason = label === 'reject' ? 'Cut by you' : null
+    setPhotos((prev) => prev.map((x) => (x.id === p.id ? { ...x, cull_label: label, cull_reason: reason } : x)))
+    void sb.from('gallery_photos').update({ cull_label: label, cull_reason: reason }).eq('id', p.id)
+  }
+
+  useEffect(() => {
+    if (step !== 1 || cull.busy) return
+    const list = cullView === 'picks' ? pickList : cullView === 'maybe' ? maybeList : cullView === 'cuts' ? cuts : []
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null
+      if (t && ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName)) return
+      if (e.metaKey || e.ctrlKey || e.altKey || list.length === 0) return
+      const k = e.key.toLowerCase()
+      const p = list[Math.min(cur, list.length - 1)]
+      if (k === 'arrowright') { e.preventDefault(); setCur((c) => Math.min(c + 1, list.length - 1)) }
+      else if (k === 'arrowleft') { e.preventDefault(); setCur((c) => Math.max(c - 1, 0)) }
+      else if (k === 'p') setLabelFor(p, 'pick')
+      else if (k === 'm') setLabelFor(p, 'maybe')
+      else if (k === 'x') setLabelFor(p, 'reject')
+      else if ((k === ' ' || k === 'enter') && cullView === 'cuts') {
+        e.preventDefault()
+        setConfirmCut(false)
+        setRescued((prev) => {
+          const n = new Set(prev)
+          if (n.has(p.id)) n.delete(p.id)
+          else n.add(p.id)
+          return n
+        })
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, cull.busy, cullView, cur, photos, rescued])
+
+  function exportList(kind: 'txt' | 'csv') {
+    const title = String((gallery as { title?: string } | null)?.title ?? 'shoot').replace(/[^\w-]+/g, '-')
+    const named = photos.filter((p) => p.filename)
+    let text: string
+    if (kind === 'txt') {
+      text = named.filter((p) => p.cull_label === 'pick').map((p) => p.filename).join('\n')
+    } else {
+      const status = (p: Photo) => (p.cull_label === 'pick' ? 'keeper' : p.cull_label === 'maybe' ? 'maybe' : p.cull_label === 'reject' ? 'cut' : 'unchecked')
+      text = 'filename,status\n' + named.map((p) => `"${p.filename}",${status(p)}`).join('\n')
+    }
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }))
+    a.download = `${title}-${kind === 'txt' ? 'keepers.txt' : 'list.csv'}`
+    a.click()
+    URL.revokeObjectURL(a.href)
   }
 
   // ---- Step 3: duplicates ----
@@ -791,14 +858,16 @@ export default function EditWalkthrough() {
                   <button className={chipCls('dupes')} onClick={() => setCullView('dupes')}><b className="text-white">{groupList.length}</b> duplicate groups</button>
                 </div>
 
+                <p className="mt-4 text-xs text-white/40">Keys: ← → move · P keeper · M maybe · X cut · Space keeps or un-keeps a suggested cut</p>
+
                 {cullView === 'picks' || cullView === 'maybe' ? (
                   <div className="mt-8">
                     <p className="max-w-2xl text-white/55">
                       {cullView === 'picks' ? 'These look good to us.' : 'These are close calls. They stay in your gallery.'}
                     </p>
                     <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-                      {(cullView === 'picks' ? pickList : maybeList).map((p) => (
-                        <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-white/5">
+                      {(cullView === 'picks' ? pickList : maybeList).map((p, i) => (
+                        <div key={p.id} onMouseDown={() => setCur(i)} className={`relative aspect-square overflow-hidden rounded-xl bg-white/5${i === cur ? ' outline outline-2 outline-white' : ''}`}>
                           {img(p)}
                           {p.cull_reason && <span className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1 text-[10px] text-white/80">{p.cull_reason}</span>}
                         </div>
@@ -847,7 +916,7 @@ export default function EditWalkthrough() {
                       These are the ones we recommend cutting. Tap any you want to keep. Cutting only removes a photo from this gallery, and your own copy stays wherever you saved it.
                     </p>
                     <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-                      {cuts.map((p) => {
+                      {cuts.map((p, i) => {
                         const kept = rescued.has(p.id)
                         return (
                           <button
@@ -861,7 +930,8 @@ export default function EditWalkthrough() {
                                 return n
                               })
                             }}
-                            className={`relative aspect-square overflow-hidden rounded-xl bg-white/5 transition ${kept ? 'ring-2 ring-emerald-400' : 'opacity-90 hover:opacity-100'}`}
+                            onMouseDown={() => setCur(i)}
+                            className={`relative aspect-square overflow-hidden rounded-xl bg-white/5 transition ${kept ? 'ring-2 ring-emerald-400' : 'opacity-90 hover:opacity-100'}${i === cur ? ' outline outline-2 outline-white' : ''}`}
                           >
                             {img(p)}
                             <span className={`absolute inset-x-0 bottom-0 px-2 py-1 text-[10px] ${kept ? 'bg-emerald-600 text-white' : 'bg-black/70 text-white/80'}`}>
@@ -891,6 +961,8 @@ export default function EditWalkthrough() {
                   )}
                   {toCut.length > 0 && !confirmCut && <button className={btnQuiet} onClick={() => goTo(2)}>Skip, keep everything</button>}
                   <button className={btnQuiet} disabled={working} onClick={runCull}>Run again</button>
+                  <button className={btnQuiet} onClick={() => exportList('txt')}>Keepers list (.txt)</button>
+                  <button className={btnQuiet} onClick={() => exportList('csv')}>Full list (.csv)</button>
                 </div>
               </>
             )}

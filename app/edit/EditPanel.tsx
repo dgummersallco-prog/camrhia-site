@@ -11,7 +11,6 @@ const BUCKET = 'galleries'
 
 type P = { id: string; orig_path: string; full_path?: string | null; thumb_path?: string | null }
 
-const chip = (on: boolean) => `rounded-full border px-3 py-1.5 text-xs transition ${on ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`
 const quiet = 'rounded-full border border-white/15 px-5 py-2 text-sm text-white/70 transition hover:border-white/35 hover:text-white disabled:opacity-40'
 
 export default function EditPanel({
@@ -60,6 +59,10 @@ export default function EditPanel({
   const [err, setErr] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const cache = useRef<Map<string, ImageBitmap>>(new Map())
+  const [lookThumbs, setLookThumbs] = useState<Record<string, string>>({})
+  const lookRef = useRef<Record<string, string>>({})
+  useEffect(() => { lookRef.current = lookThumbs }, [lookThumbs])
+  useEffect(() => () => { Object.values(lookRef.current).forEach((u) => URL.revokeObjectURL(u)) }, [])
 
   useEffect(() => {
     if (samples.length === 0) { setSelId(null); return }
@@ -129,14 +132,49 @@ export default function EditPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick, lookId, strength, JSON.stringify(tweak), lightOf[selId ?? ''] ?? '', brief.light, brief.mood, brief.setting, brief.skin])
 
+  useEffect(() => {
+    if (!selId) return
+    const bmp = cache.current.get(selId)
+    if (!bmp) return
+    let cancelled = false
+    const t = setTimeout(async () => {
+      const lg = lightOf[selId] ?? ''
+      const base = briefAdjust(lg ? { ...brief, light: lg } : brief)
+      for (const l of LOOKS) {
+        if (cancelled) return
+        try {
+          const url = await renderPreview(bmp, l.id, strength, 240, base.adjust, base.skin)
+          if (cancelled) { URL.revokeObjectURL(url); return }
+          setLookThumbs((prev) => {
+            const old = prev[l.id]
+            if (old) URL.revokeObjectURL(old)
+            return { ...prev, [l.id]: url }
+          })
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 300)
+    return () => { cancelled = true; clearTimeout(t) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tick, strength, lightOf[selId ?? ''] ?? '', brief.light, brief.mood, brief.setting, brief.skin])
+
   useEffect(() => () => { cache.current.forEach((b) => b.close()); cache.current.clear() }, [])
 
   return (
     <div className="mt-8">
       <div className="rounded-2xl border border-white/10 bg-[#151518] p-5">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-3 overflow-x-auto pb-2">
           {LOOKS.map((l) => (
-            <button key={l.id} className={chip(l.id === lookId)} onClick={() => setLookId(l.id)}>{l.label}</button>
+            <button key={l.id} onClick={() => setLookId(l.id)} className="w-28 shrink-0 text-left">
+              <div className={`aspect-[4/3] overflow-hidden rounded-lg bg-white/5 transition ${l.id === lookId ? 'ring-2 ring-[var(--color-twilight)]' : 'opacity-90 hover:opacity-100'}`}>
+                {lookThumbs[l.id] && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={lookThumbs[l.id]} alt="" className="h-full w-full object-cover" />
+                )}
+              </div>
+              <p className={`mt-1.5 text-xs ${l.id === lookId ? 'text-white' : 'text-white/55'}`}>{l.label}</p>
+            </button>
           ))}
         </div>
         <div className="mt-4 flex items-center gap-3 text-sm">

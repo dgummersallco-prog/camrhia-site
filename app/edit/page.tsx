@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import SceneSidebar from '@/app/components/SceneSidebar'
+import ImportStart from './ImportStart'
 import { QUESTIONS, STYLE_LOOK, type Signature } from '@/lib/brief'
 
 type Row = { id: string; title: string; status: string; created_at: string; gallery_photos: { count: number }[] }
@@ -266,33 +267,7 @@ export default function EditingRoom() {
 
         {tab === 'edit' && (
           <>
-            <p className="mt-8 max-w-xl text-ink-soft">Pick a shoot. We walk it from raw photos to a finished gallery, one step at a time.</p>
-
-            {rows === null && <p className="mt-10 text-sm text-ink-soft">Loading…</p>}
-            {rows && rows.length === 0 && !error && (
-              <p className="mt-10 rounded-2xl border border-white/70 bg-white/60 p-8 text-ink-soft">
-                No shoots yet. Create a gallery for your shoot first, then come back here to edit it.
-              </p>
-            )}
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {(rows ?? []).map((r) => {
-                const count = r.gallery_photos?.[0]?.count ?? 0
-                return (
-                  <Link
-                    key={r.id}
-                    href={`/edit/${r.id}`}
-                    className="group rounded-2xl border border-white/70 bg-white/60 p-6 transition hover:border-twilight"
-                  >
-                    <p className="font-fraunces text-xl text-ink">{r.title}</p>
-                    <p className="mt-2 text-sm text-ink-soft">
-                      {count} {count === 1 ? 'photo' : 'photos'} · {r.status === 'published' ? 'Published' : 'Draft'}
-                    </p>
-                    <p className="mt-6 text-sm text-twilight transition group-hover:translate-x-1">{count === 0 ? 'Start' : 'Open'} →</p>
-                  </Link>
-                )
-              })}
-            </div>
+            <ImportStart rows={rows} userId={userId} />
           </>
         )}
 
