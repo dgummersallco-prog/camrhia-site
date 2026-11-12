@@ -1,8 +1,6 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { isAccepted } from '@/lib/galleryUpload'
 import { setPendingFiles } from '@/lib/editHandoff'
@@ -35,8 +33,7 @@ async function filesFromDrop(dt: DataTransfer): Promise<File[]> {
 const primary = 'rounded-full bg-[var(--color-twilight)] px-6 py-2.5 text-sm font-medium text-ink transition hover:opacity-90 disabled:opacity-40'
 const quiet = 'rounded-full border border-white/15 px-5 py-2.5 text-sm text-ink-soft transition hover:border-white/35 hover:text-ink disabled:opacity-40'
 
-export default function ImportStart({ rows, userId }: { rows: Row[] | null; userId: string | null }) {
-  const router = useRouter()
+export default function ImportStart({ rows, userId, onOpen }: { rows: Row[] | null; userId: string | null; onOpen: (id: string) => void }) {
   const [dragging, setDragging] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -54,7 +51,7 @@ export default function ImportStart({ rows, userId }: { rows: Row[] | null; user
     const { data, error } = await sb.from('galleries').insert({ owner_id: userId, title, session_id: null }).select('id').single()
     if (error || !data) { setBusy(false); setErr(error?.message ?? 'Could not start the shoot.'); return }
     setPendingFiles(data.id, files)
-    router.push(`/edit/${data.id}`)
+    onOpen(data.id)
   }
 
   return (
@@ -86,11 +83,11 @@ export default function ImportStart({ rows, userId }: { rows: Row[] | null; user
             {rows.map((r) => {
               const count = r.gallery_photos?.[0]?.count ?? 0
               return (
-                <Link key={r.id} href={`/edit/${r.id}`} className="group rounded-2xl border border-white/70 bg-white/60 p-6 transition hover:border-twilight">
+                <button key={r.id} onClick={() => onOpen(r.id)} className="group rounded-2xl border border-white/70 bg-white/60 p-6 text-left transition hover:border-twilight">
                   <p className="font-fraunces text-xl text-ink">{r.title}</p>
                   <p className="mt-2 text-sm text-ink-soft">{count} {count === 1 ? 'photo' : 'photos'} · {r.status === 'published' ? 'Published' : 'Draft'}</p>
                   <p className="mt-6 text-sm text-twilight transition group-hover:translate-x-1">{count === 0 ? 'Start' : 'Open'} →</p>
-                </Link>
+                </button>
               )
             })}
           </div>

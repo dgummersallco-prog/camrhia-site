@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import SceneSidebar from '@/app/components/SceneSidebar'
 import ImportStart from './ImportStart'
+import ShootRoom from './ShootRoom'
 import { QUESTIONS, STYLE_LOOK, type Signature } from '@/lib/brief'
 
 type Row = { id: string; title: string; status: string; created_at: string; gallery_photos: { count: number }[] }
@@ -90,6 +91,7 @@ export default function EditingRoom() {
   const [renaming, setRenaming] = useState<string | null>(null)
   const [renameVal, setRenameVal] = useState('')
   const [adding, setAdding] = useState<string | null>(null)
+  const [shootId, setShootId] = useState<string | null>(null)
 
   useEffect(() => {
     const sb = supabase
@@ -229,6 +231,14 @@ export default function EditingRoom() {
     setSigs((prev) => (prev ?? []).filter((x) => x.id !== s.id))
   }
 
+  async function backToStart() {
+    setShootId(null)
+    const sb = supabase
+    if (!sb || !userId) return
+    const g = await sb.from('galleries').select('id, title, status, created_at, gallery_photos(count)').eq('owner_id', userId).order('created_at', { ascending: false })
+    if (!g.error) setRows((g.data ?? []) as unknown as Row[])
+  }
+
   const titleOf = (gid: string) => rows?.find((r) => r.id === gid)?.title ?? 'A shoot'
 
   return (
@@ -246,28 +256,19 @@ export default function EditingRoom() {
         homeHref="/edit"
         onSignOut={async () => { if (supabase) await supabase.auth.signOut(); window.location.href = '/login' }}
       />
-      <div className="mx-auto max-w-5xl px-6 py-10">
+      <div className={`mx-auto px-6 py-10 ${shootId ? 'max-w-7xl' : 'max-w-5xl'}`}>
         <div className="flex items-center justify-between">
           <Link href="/dashboard" className="text-sm text-ink-soft transition hover:text-ink">← Back to Camrhia</Link>
           <Link href="/galleries" className="text-sm text-ink-soft transition hover:text-ink">New shoot? Create it in Galleries</Link>
         </div>
 
-        <h1 className="mt-12 font-fraunces text-4xl text-ink">The editing room</h1>
-
-        <div className="mt-8 grid gap-3 sm:grid-cols-3">
-          {([['edit', 'Edit', 'Pick a shoot and start'], ['styles', 'My styles', 'Your signature looks'], ['brain', 'Cami', 'Your AI editing assistant']] as [Tab, string, string][]).map(([k, label, sub]) => (
-            <button key={k} className={tileBtn(tab === k)} onClick={() => setTab(k)}>
-              <p className="font-fraunces text-xl">{label}</p>
-              <p className={`mt-1 text-sm ${tab === k ? 'text-white/80' : 'text-ink-soft'}`}>{sub}</p>
-            </button>
-          ))}
-        </div>
+        {!shootId && <h1 className="mt-12 font-fraunces text-4xl text-ink">The editing room</h1>}
 
         {error && <p className="mt-6 text-sm text-red-700">{error}</p>}
 
         {tab === 'edit' && (
           <>
-            <ImportStart rows={rows} userId={userId} />
+            {shootId ? <div className="mt-6"><ShootRoom galleryId={shootId} onBack={backToStart} /></div> : <ImportStart rows={rows} userId={userId} onOpen={setShootId} />}
           </>
         )}
 
