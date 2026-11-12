@@ -168,11 +168,16 @@ export async function POST(request: Request) {
         ...(a.recruit_code ? { recruit_code: a.recruit_code } : {}),
       },
     })
+    let uid = inv?.user?.id
     if (invErr) {
-      const msg = /already|registered|exists/i.test(invErr.message) ? 'That email already has a Camrhia account, so it cannot be invited again.' : invErr.message
-      return Response.json({ error: msg }, { status: 400 })
+      if (!/already|registered|exists/i.test(invErr.message)) return Response.json({ error: invErr.message }, { status: 400 })
+      const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
+      const found = list?.users?.find((u) => (u.email ?? '').toLowerCase() === a.email.toLowerCase())
+      if (!found) return Response.json({ error: 'That email already has a Camrhia account, but it could not be found.' }, { status: 400 })
+      const { error: cErr } = await supabase.rpc('create_affiliate_for', { p_uid: found.id, p_name: a.name })
+      if (cErr) return Response.json({ error: cErr.message }, { status: 500 })
+      uid = found.id
     }
-    const uid = inv?.user?.id
     if (uid) await supabase.from('affiliates').update({ approved: true }).eq('id', uid)
     await supabase.from('affiliate_applications').update({ status: 'approved' }).eq('id', applicationId)
     return Response.json({ ok: true })
