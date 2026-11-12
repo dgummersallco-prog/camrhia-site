@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '../../../lib/confirmDialog'
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -101,7 +102,7 @@ export default function AdminAffiliatesPage() {
 
   async function setMaster(row: Row, makeMaster: boolean) {
     const who = row.name || row.email || 'this affiliate'
-    const ok = window.confirm(
+    const ok = await confirmDialog(
       makeMaster
         ? `Make ${who} a master partner?\n\nThey earn 50% on their own referrals, plus half of what is left after a recruit's commission on every affiliate they sign.`
         : `Remove master status from ${who}?\n\nNew referrals go back to the normal 20-30% tiers. Referrals already locked at 50% keep that rate.`,
@@ -135,8 +136,8 @@ export default function AdminAffiliatesPage() {
   }
 
   async function appAction(a: App, action: 'approve_application' | 'decline_application') {
-    if (action === 'decline_application' && !window.confirm(`Delete the application from ${a.name}?`)) return
-    if (action === 'approve_application' && !window.confirm(`Approve ${a.name}? This creates their account and emails ${a.email} a link to set their password.`)) return
+    if (action === 'decline_application' && !await confirmDialog(`Delete the application from ${a.name}?`)) return
+    if (action === 'approve_application' && !await confirmDialog(`Approve ${a.name}? This creates their account and emails ${a.email} a link to set their password.`)) return
     setBusyId(a.id)
     setError(null)
     try {
@@ -153,7 +154,7 @@ export default function AdminAffiliatesPage() {
 
   async function removeAffiliate(row: Row) {
     const who = row.name || row.email || 'this affiliate'
-    if (!window.confirm(`Remove ${who} as an affiliate?\n\nTheir Camrhia login stays, but they lose their affiliate account.`)) return
+    if (!await confirmDialog(`Remove ${who} as an affiliate?\n\nTheir Camrhia login stays, but they lose their affiliate account.`)) return
     setBusyId(row.id)
     setError(null)
     try {
