@@ -705,7 +705,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   }
 
   if (!loaded) {
-    return <div className="min-h-[60vh] rounded-3xl bg-[#0c0c0e] p-10 text-sm text-white/40">{msg ?? 'Loading…'}</div>
+    return <div className={`min-h-[60vh] p-10 text-sm ${onBack ? 'text-ink-soft' : 'rounded-3xl bg-[#0c0c0e] text-white/40'}`}>{msg ?? 'Loading…'}</div>
   }
 
   const enhancedCount = photos.filter((p) => p.enhanced).length
@@ -726,7 +726,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   }
 
   return (
-    <div className={`bg-[#0c0c0e] text-[#ececf0] ${onBack ? 'min-h-[80vh] rounded-3xl' : 'min-h-screen'}`}>
+    <div className={onBack ? 'min-h-[60vh]' : 'min-h-screen bg-[#0c0c0e] text-[#ececf0]'}>
       <div className={`mx-auto px-6 py-8 ${editTab === 'each' && !dev.busy ? 'max-w-[2400px]' : 'max-w-5xl'}`}>
         <div className="flex items-center justify-between gap-4">
           {onBack ? <button onClick={onBack} className="text-sm text-white/50 transition hover:text-white">← Editing room</button> : <Link href="/edit" className="text-sm text-white/50 transition hover:text-white">← Editing room</Link>}

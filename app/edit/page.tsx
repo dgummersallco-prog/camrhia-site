@@ -257,18 +257,13 @@ export default function EditingRoom() {
         onSignOut={async () => { if (supabase) await supabase.auth.signOut(); window.location.href = '/login' }}
       />
       <div className={`mx-auto px-6 py-10 ${shootId ? 'max-w-7xl' : 'max-w-5xl'}`}>
-        <div className="flex items-center justify-between">
-          <Link href="/dashboard" className="text-sm text-ink-soft transition hover:text-ink">← Back to Camrhia</Link>
-          <Link href="/galleries" className="text-sm text-ink-soft transition hover:text-ink">New shoot? Create it in Galleries</Link>
-        </div>
-
-        {!shootId && <h1 className="mt-12 font-fraunces text-4xl text-ink">The editing room</h1>}
+        {!shootId && <h1 className="mt-2 font-fraunces text-4xl text-ink">The editing room</h1>}
 
         {error && <p className="mt-6 text-sm text-red-700">{error}</p>}
 
         {tab === 'edit' && (
           <>
-            {shootId ? <div className="mt-6"><ShootRoom galleryId={shootId} onBack={backToStart} /></div> : <ImportStart rows={rows} userId={userId} onOpen={setShootId} />}
+            {shootId ? <div className="room-light mt-2"><ShootRoom galleryId={shootId} onBack={backToStart} /></div> : <ImportStart rows={rows} userId={userId} onOpen={setShootId} />}
           </>
         )}
 

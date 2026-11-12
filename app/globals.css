@@ -263,3 +263,19 @@ html.dash-shell [class*="color-mix(in_srgb,rgb(var(--scene-a"], html.dash-shell 
   border-color: var(--aff-fill) !important;
   --tw-ring-color: color-mix(in srgb, var(--aff-fill) 35%, transparent) !important;
 }
+
+/* Editing room walkthrough, light scene look when shown inside /edit */
+.room-light { color: var(--color-ink, #2a2523); }
+.room-light [class*="text-white"], .room-light [class*="text-[#"] { color: var(--color-ink, #2a2523); }
+.room-light [class*="text-white/"] { color: var(--color-ink-soft, #6b625d); }
+.room-light [class*="bg-white/"] { background-color: rgba(255, 255, 255, 0.55); }
+.room-light [class*="bg-[#"] { background-color: rgba(255, 255, 255, 0.6); }
+.room-light [class*="border-white/"] { border-color: rgba(0, 0, 0, 0.12); }
+.room-light [class*="divide-white"] > * + * { border-color: rgba(0, 0, 0, 0.1); }
+.room-light input::placeholder, .room-light textarea::placeholder { color: rgba(0, 0, 0, 0.35); }
+.room-light [class*="text-red-300"] { color: #b91c1c; }
+.room-light [class*="text-emerald-300"] { color: #047857; }
+.room-light [class*="text-amber-"] { color: #92400e; }
+.room-light [class*="bg-black/"] { color: #fff; }
+.room-light [class*="bg-black/"] [class*="text-white"], .room-light [class*="bg-black/"][class*="text-white"] { color: rgba(255, 255, 255, 0.88); }
+.room-light [class*="bg-emerald-"][class*="text-white"], .room-light [class*="bg-red-"][class*="text-white"], .room-light [class*="bg-emerald-"] [class*="text-white"] { color: #fff; }
