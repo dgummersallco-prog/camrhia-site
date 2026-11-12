@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const ROSE = '#3A4A6B'
+const ROSE = 'var(--aff-fill)'
 
 export function Avatar({ url, name, size = 36 }: { url?: string | null; name?: string | null; size?: number }) {
   const words = (name || '?').trim().split(/\s+/).filter(Boolean)

@@ -13,9 +13,9 @@ type Comment = { id: string; post_id: string; author_id: string; author_name: st
 type Like = { post_id: string; user_id: string }
 type Nums = { views: string; ig_likes: string; shares: string; saves: string; signed: string }
 
-const ROSE = '#3A4A6B'
+const ROSE = 'var(--aff-fill)'
 const PLATFORMS = ['Instagram', 'TikTok', 'YouTube']
-const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[#3A4A6B]/25 focus:border-[#3A4A6B]'
+const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[var(--aff-fill)]/25 focus:border-[var(--aff-fill)]'
 
 function ago(iso: string) {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000))
@@ -306,7 +306,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
             </div>
             <div className="mb-3 flex flex-wrap gap-2">
               {PLATFORMS.map((pl) => (
-                <button key={pl} type="button" onClick={() => setPlatform(platform === pl ? '' : pl)} className={`rounded-full border px-4 py-1.5 text-sm transition ${platform === pl ? 'text-white' : 'border-line text-ink hover:border-[#3A4A6B]'}`} style={platform === pl ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
+                <button key={pl} type="button" onClick={() => setPlatform(platform === pl ? '' : pl)} className={`rounded-full border px-4 py-1.5 text-sm transition ${platform === pl ? 'text-white' : 'border-line text-ink hover:border-[var(--aff-fill)]'}`} style={platform === pl ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
                   {pl}
                 </button>
               ))}
@@ -335,7 +335,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
         const ed = editing[p.id]
         const hasNums = p.views != null || p.ig_likes != null || p.shares != null || p.saves != null || p.signed != null
         return (
-          <article key={p.id} className={`overflow-hidden rounded-3xl bg-white p-4 shadow-[0_1px_2px_rgba(30,40,70,0.05),0_20px_44px_-24px_rgba(30,40,70,0.28)] ${p.pinned ? 'ring-2 ring-[#3A4A6B]' : 'border border-line'}`}>
+          <article key={p.id} className={`overflow-hidden rounded-3xl bg-white p-4 shadow-[0_1px_2px_rgba(30,40,70,0.05),0_20px_44px_-24px_rgba(30,40,70,0.28)] ${p.pinned ? 'ring-2 ring-[var(--aff-fill)]' : 'border border-line'}`}>
             {p.pinned && <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: ROSE }}>Pinned</p>}
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
@@ -410,7 +410,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
                   {([['signed', 'Subs'], ['views', 'Views'], ['ig_likes', 'Likes'], ['shares', 'Shares'], ['saves', 'Saves']] as const).map(([k, label]) => (
                     <label key={k} className="block text-[10px] uppercase tracking-wider text-ink-soft">
                       {label}
-                      <input inputMode="numeric" value={ed[k]} onChange={(e) => setEditing((s) => ({ ...s, [p.id]: { ...ed, [k]: e.target.value } }))} className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-[#3A4A6B]" />
+                      <input inputMode="numeric" value={ed[k]} onChange={(e) => setEditing((s) => ({ ...s, [p.id]: { ...ed, [k]: e.target.value } }))} className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:border-[var(--aff-fill)]" />
                     </label>
                   ))}
                 </div>

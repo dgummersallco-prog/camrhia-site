@@ -7,8 +7,8 @@ import { Avatar, fetchAvatars } from './Avatar'
 type Thread = { id: string; author_id: string; author_name: string; body: string; created_at: string; pinned?: boolean }
 type Reply = { id: string; thread_id: string; author_id: string; author_name: string; body: string; created_at: string }
 
-const ROSE = '#3A4A6B'
-const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[#3A4A6B]/25 focus:border-[#3A4A6B]'
+const ROSE = 'var(--aff-fill)'
+const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[var(--aff-fill)]/25 focus:border-[var(--aff-fill)]'
 
 function ago(iso: string) {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000))

@@ -6,7 +6,7 @@ import { Avatar, fetchAvatars } from './Avatar'
 
 type Top = { id: string; author_id: string; author_name: string; body: string; link_url: string | null; platform: string | null; views: number | null; signed: number | null }
 
-const ROSE = '#3A4A6B'
+const ROSE = 'var(--aff-fill)'
 const fmt = (n: number | null) => (n == null ? '—' : n.toLocaleString())
 
 export default function HubTop({ client }: { client: SupabaseClient | null }) {

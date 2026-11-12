@@ -327,7 +327,7 @@ function MessageGroups({ groups, prefix, link, fill, copied, setCopied }: Common
             return (
               <div key={m.label} className="rounded-2xl border border-line bg-card p-6">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="rounded-full bg-[#3A4A6B]/10 text-[#3A4A6B] px-2.5 py-0.5 text-xs font-medium">{g.tags[mi]}</span>
+                  <span className="rounded-full bg-[var(--aff-fill)]/10 text-[var(--aff-ink)] px-2.5 py-0.5 text-xs font-medium">{g.tags[mi]}</span>
                   {gi === 0 && mi === 0 ? <span className="rounded-full bg-sage/15 text-sage px-2.5 py-0.5 text-xs font-medium">Start here</span> : null}
                 </div>
                 <p className="font-medium text-ink">{m.label}</p>
@@ -369,7 +369,7 @@ function CallScript({
     <div className="space-y-4">
       {steps.map((s, i) => (
         <div key={s.title} className="rounded-2xl border border-line bg-card p-6">
-          <p className="font-medium text-ink"><span className="text-[#3A4A6B]">Step {i + 1}.</span> {s.title}</p>
+          <p className="font-medium text-ink"><span className="text-[var(--aff-ink)]">Step {i + 1}.</span> {s.title}</p>
           <p className="mt-3 text-xs uppercase tracking-widest text-ink-soft">Say this</p>
           <div className="mt-1.5 rounded-xl bg-paper border border-line p-4 text-sm text-ink leading-relaxed whitespace-pre-wrap">
             <Highlight text={fill(s.say)} />
@@ -510,7 +510,7 @@ function IdeaBank() {
                   <div className="space-y-4">
                     {parts.map(([label, t]) => (
                       <div key={label}>
-                        <p className="font-mono text-[10px] tracking-widest uppercase text-[#3A4A6B]">{label}</p>
+                        <p className="font-mono text-[10px] tracking-widest uppercase text-[var(--aff-ink)]">{label}</p>
                         <p className="mt-1 text-sm text-ink leading-relaxed"><Highlight text={t} /></p>
                       </div>
                     ))}
@@ -553,9 +553,9 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
         </p>
 
         <ol className="mt-5 space-y-3 text-sm text-ink">
-          <li className="flex gap-3"><span className="font-semibold text-[#3A4A6B]">1.</span><span>Type the photographer&apos;s first name and your name below. We fill them in for you.</span></li>
-          <li className="flex gap-3"><span className="font-semibold text-[#3A4A6B]">2.</span><span>Pick a message (or a call script), and tap <span className="font-medium">Copy message</span>.</span></li>
-          <li className="flex gap-3"><span className="font-semibold text-[#3A4A6B]">3.</span><span>Paste it where you&apos;re chatting. Change anything <span className="rounded bg-brass/20 px-1 text-brass font-medium">[highlighted like this]</span>, then send.</span></li>
+          <li className="flex gap-3"><span className="font-semibold text-[var(--aff-ink)]">1.</span><span>Type the photographer&apos;s first name and your name below. We fill them in for you.</span></li>
+          <li className="flex gap-3"><span className="font-semibold text-[var(--aff-ink)]">2.</span><span>Pick a message (or a call script), and tap <span className="font-medium">Copy message</span>.</span></li>
+          <li className="flex gap-3"><span className="font-semibold text-[var(--aff-ink)]">3.</span><span>Paste it where you&apos;re chatting. Change anything <span className="rounded bg-brass/20 px-1 text-brass font-medium">[highlighted like this]</span>, then send.</span></li>
         </ol>
 
         <div className="mt-5 grid sm:grid-cols-2 gap-4">
@@ -643,7 +643,7 @@ function ScriptSet({
           const text = fill(m.body(link))
           return (
             <div key={prefix + i} className={`${box} p-5 flex flex-col`}>
-              <p className="font-mono text-[10px] tracking-widest uppercase text-[#3A4A6B]">{m.label}</p>
+              <p className="font-mono text-[10px] tracking-widest uppercase text-[var(--aff-ink)]">{m.label}</p>
               <p className="mt-2 text-sm text-ink leading-relaxed whitespace-pre-wrap"><Highlight text={text} /></p>
               <div className="mt-auto pt-4">
                 <CopyButton text={text} id={`${prefix}m${i}`} copied={copied} setCopied={setCopied} />
@@ -657,14 +657,14 @@ function ScriptSet({
         <ol className="mt-4 space-y-3 text-sm">
           {steps.map((st, i) => (
             <li key={st.title} className="flex gap-3">
-              <span className="font-semibold text-[#3A4A6B]">{i + 1}.</span>
+              <span className="font-semibold text-[var(--aff-ink)]">{i + 1}.</span>
               <span className="text-ink"><span className="font-medium">{st.title}:</span> <Highlight text={fill(st.say)} /></span>
             </li>
           ))}
         </ol>
         {voicemail ? (
           <div className="mt-4 rounded-xl bg-paper border border-line p-4 text-sm text-ink leading-relaxed whitespace-pre-wrap">
-            <p className="font-mono text-[10px] tracking-widest uppercase text-[#3A4A6B] mb-1">No answer? Voicemail</p>
+            <p className="font-mono text-[10px] tracking-widest uppercase text-[var(--aff-ink)] mb-1">No answer? Voicemail</p>
             <Highlight text={voicemail} />
             <div className="mt-3"><CopyButton text={voicemail} id={`${prefix}vm`} copied={copied} setCopied={setCopied} /></div>
           </div>
@@ -856,7 +856,7 @@ function HookBank() {
               const id = `hook-${si}-${i}`
               return (
                 <div key={id} className="flex flex-col rounded-2xl border border-line bg-card p-5">
-                  <p className="font-mono text-[10px] tracking-widest uppercase text-[#3A4A6B]">Hook</p>
+                  <p className="font-mono text-[10px] tracking-widest uppercase text-[var(--aff-ink)]">Hook</p>
                   <p className="mt-2 text-sm leading-relaxed text-ink"><Highlight text={h} /></p>
                   <div className="mt-auto pt-5">
                     <CopyButton text={h} id={id} copied={copied} setCopied={setCopied} />
@@ -889,8 +889,8 @@ export default function PitchPage() {
                 <button
                   key={t.key}
                   onClick={() => setView(t.key)}
-                  className={`rounded-2xl border p-7 text-left transition ${on ? 'border-[#3A4A6B] shadow-lg' : 'border-line bg-card hover:border-[#3A4A6B]'}`}
-                  style={on ? { backgroundColor: '#3A4A6B', color: '#ffffff' } : undefined}
+                  className={`rounded-2xl border p-7 text-left transition ${on ? 'border-[var(--aff-fill)] shadow-lg' : 'border-line bg-card hover:border-[var(--aff-fill)]'}`}
+                  style={on ? { backgroundColor: 'var(--aff-fill)', color: '#ffffff' } : undefined}
                 >
                   <p className="font-fraunces text-2xl font-semibold">{t.title}</p>
                   <p className={`mt-2 text-sm ${on ? 'text-white/80' : 'text-ink-soft'}`}>{t.sub}</p>

@@ -26,7 +26,7 @@ export default function BoostedPage() {
             <ol className="mt-4 space-y-3">
               {STEPS.map((t, i) => (
                 <li key={t} className="flex gap-3 text-ink">
-                  <span className="font-fraunces text-xl leading-none text-[#3A4A6B]">{i + 1}</span>
+                  <span className="font-fraunces text-xl leading-none text-[var(--aff-ink)]">{i + 1}</span>
                   <span>{t}</span>
                 </li>
               ))}

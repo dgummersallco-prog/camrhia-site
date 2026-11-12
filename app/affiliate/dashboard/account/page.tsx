@@ -98,7 +98,7 @@ function AccountBody({ name }: { name: string | null }) {
           value={nameInput}
           onChange={(e) => setNameInput(e.target.value)}
           maxLength={60}
-          className="w-full rounded-xl border border-line bg-white px-4 py-3 text-ink outline-none focus:border-[#3A4A6B]"
+          className="w-full rounded-xl border border-line bg-white px-4 py-3 text-ink outline-none focus:border-[var(--aff-fill)]"
         />
         {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
         {msg && <p className="mt-2 text-sm text-ink-soft">{msg}</p>}
@@ -106,7 +106,7 @@ function AccountBody({ name }: { name: string | null }) {
           onClick={saveName}
           disabled={busy || !nameInput.trim() || nameInput.trim() === saved}
           className="mt-4 rounded-full px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-          style={{ backgroundColor: '#3A4A6B' }}
+          style={{ backgroundColor: 'var(--aff-fill)' }}
         >
           {busy ? 'Saving…' : 'Save name'}
         </button>
@@ -117,13 +117,13 @@ function AccountBody({ name }: { name: string | null }) {
         <p className="mb-2 font-fraunces text-xl font-semibold text-ink">Tax form (W-9)</p>
         <p className="text-sm text-ink-soft">
           Camrhia needs a signed W-9 on file to pay you.{' '}
-          <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#3A4A6B' }}>Download the IRS Form W-9</a>, fill it in, sign it and upload it here. Only you and Camrhia can open it.
+          <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--aff-ink)' }}>Download the IRS Form W-9</a>, fill it in, sign it and upload it here. Only you and Camrhia can open it.
         </p>
         <p className="mt-3 text-sm font-medium text-ink">
           {!doc ? 'Not uploaded yet' : doc.verified_at ? 'Verified' : 'Uploaded, waiting for review'}
         </p>
         {!(doc && doc.verified_at) && (
-          <label className="mt-3 inline-block cursor-pointer rounded-full px-6 py-2.5 text-sm font-semibold text-white" style={{ backgroundColor: '#3A4A6B' }}>
+          <label className="mt-3 inline-block cursor-pointer rounded-full px-6 py-2.5 text-sm font-semibold text-white" style={{ backgroundColor: 'var(--aff-fill)' }}>
             {w9Busy ? 'Uploading…' : doc ? 'Replace file' : 'Upload W-9'}
             <input type="file" accept="application/pdf,image/jpeg,image/png" className="hidden" disabled={w9Busy} onChange={(e) => uploadW9(e.target.files?.[0])} />
           </label>

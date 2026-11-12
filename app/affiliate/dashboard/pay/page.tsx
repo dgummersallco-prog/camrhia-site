@@ -86,7 +86,7 @@ function MasterBreakdown({ a }: { a: ShellAffiliate }) {
 
   const rows = [
     { label: "Apple's cut", value: apple, color: '#9AA0A6', show: true, note: `${pct(APPLE_RATE)} of the price` },
-    { label: 'Affiliate commission', value: affiliate, color: '#3A4A6B', show: true, note: `${pct(rate)} of ${usd(base)}` },
+    { label: 'Affiliate commission', value: affiliate, color: 'var(--aff-ink)', show: true, note: `${pct(rate)} of ${usd(base)}` },
     { label: 'Master partner bonus', value: master, color: '#8C6B3F', show: hasMaster, note: `${pct(override)} of what's left after the affiliate` },
     { label: 'Camrhia keeps', value: camrhia, color: '#5E7F5A', show: true, note: 'before processing fees and taxes' },
   ].filter((r) => r.show)

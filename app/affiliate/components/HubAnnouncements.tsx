@@ -6,8 +6,8 @@ import { Avatar, fetchAvatars } from './Avatar'
 
 type Ann = { id: string; kind: string; title: string | null; body: string; author_id: string; author_name: string; created_at: string }
 
-const ROSE = '#3A4A6B'
-const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[#3A4A6B]/25 focus:border-[#3A4A6B]'
+const ROSE = 'var(--aff-fill)'
+const field = 'w-full rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[var(--aff-fill)]/25 focus:border-[var(--aff-fill)]'
 
 function ago(iso: string) {
   const s = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000))
@@ -65,7 +65,7 @@ export default function HubAnnouncements({ client, admin }: { client: SupabaseCl
           <p className="mb-3 font-fraunces text-lg font-semibold text-ink">Post to the whole team</p>
           <div className="mb-3 flex gap-2 text-sm">
             {([['announcement', 'Announcement'], ['shoutout', 'Shoutout']] as const).map(([k, label]) => (
-              <button key={k} type="button" onClick={() => setKind(k)} className={`rounded-full border px-4 py-1.5 transition ${kind === k ? 'text-white' : 'border-line text-ink hover:border-[#3A4A6B]'}`} style={kind === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
+              <button key={k} type="button" onClick={() => setKind(k)} className={`rounded-full border px-4 py-1.5 transition ${kind === k ? 'text-white' : 'border-line text-ink hover:border-[var(--aff-fill)]'}`} style={kind === k ? { backgroundColor: ROSE, borderColor: ROSE } : undefined}>
                 {label}
               </button>
             ))}

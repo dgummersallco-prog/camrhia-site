@@ -78,7 +78,7 @@ function RecruitBody({ a }: { a: ShellAffiliate }) {
           <button onClick={() => copy(link, 'link')} className={`${btn} border border-line text-ink hover:bg-paper`}>
             {copied === 'link' ? 'Copied' : 'Copy link'}
           </button>
-          <button onClick={() => send(`Join my Camrhia affiliate team: ${link}`)} className={btn} style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}>
+          <button onClick={() => send(`Join my Camrhia affiliate team: ${link}`)} className={btn} style={{ backgroundColor: 'var(--aff-fill)', color: '#ffffff' }}>
             Send link
           </button>
         </div>

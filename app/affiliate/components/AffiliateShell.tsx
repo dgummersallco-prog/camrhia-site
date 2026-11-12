@@ -81,7 +81,7 @@ export default function AffiliateShell({
 
   return (
     <div className={`min-h-screen bg-paper flex flex-col ${isAdminArea ? 'aff-scope' : 'aff-scope xl:pl-60'}`}>
-      <main className={`flex-1 mx-auto w-full max-w-5xl px-6 py-8`}>
+      <main className={`flex-1 w-full max-w-5xl px-6 md:px-10 py-8`}>
         {!isAdminArea && (
           <aside>
             <AffiliateTabs />
@@ -94,7 +94,7 @@ export default function AffiliateShell({
               <span className="rounded-full bg-brass/15 text-brass px-3 py-1 font-medium">Master partner</span>
             ) : null}
             {teamName ? (
-              <span className="rounded-full bg-[#3A4A6B]/10 text-[#3A4A6B] px-3 py-1 font-medium">
+              <span className="rounded-full bg-[var(--aff-fill)]/10 text-[var(--aff-ink)] px-3 py-1 font-medium">
                 On {teamName}&apos;s team
               </span>
             ) : null}
@@ -116,7 +116,7 @@ export default function AffiliateShell({
           children(affiliate)
         ) : (
           <p className="text-sm text-ink-soft">
-            No affiliate account found. <Link href="/affiliate/dashboard" className="text-[#3A4A6B] underline">Go to Overview</Link> to activate it.
+            No affiliate account found. <Link href="/affiliate/dashboard" className="text-[var(--aff-ink)] underline">Go to Overview</Link> to activate it.
           </p>
         )}
         </div>

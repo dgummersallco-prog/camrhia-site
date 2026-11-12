@@ -354,11 +354,11 @@ export default function AffiliateDashboardPage() {
           onClick={activateAffiliate}
           disabled={activating}
           className="rounded-full px-6 py-3 text-sm font-medium text-white disabled:opacity-60"
-          style={{ backgroundColor: '#3A4A6B' }}
+          style={{ backgroundColor: 'var(--aff-fill)' }}
         >
           {activating ? 'Activating…' : 'Activate affiliate account'}
         </button>
-        <Link href="/affiliate/login" className="text-sm text-[#3A4A6B] hover:underline">
+        <Link href="/affiliate/login" className="text-sm text-[var(--aff-ink)] hover:underline">
           Back to login
         </Link>
       </div>
@@ -370,7 +370,7 @@ export default function AffiliateDashboardPage() {
       <div className="min-h-screen bg-paper flex flex-col items-center justify-center gap-4 px-6">
         <p className="text-ink font-fraunces text-xl">Something went wrong</p>
         <p className="text-ink-soft text-sm">{error ?? 'Could not load your profile.'}</p>
-        <Link href="/affiliate/login" className="text-sm text-[#3A4A6B] hover:underline">
+        <Link href="/affiliate/login" className="text-sm text-[var(--aff-ink)] hover:underline">
           Back to login
         </Link>
       </div>
@@ -384,7 +384,7 @@ export default function AffiliateDashboardPage() {
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
           <Link
             href="/"
-            className="font-fraunces text-lg font-semibold text-ink hover:text-[#3A4A6B] transition-colors"
+            className="font-fraunces text-lg font-semibold text-ink hover:text-[var(--aff-ink)] transition-colors"
           >
             <Wordmark className="text-3xl" />{' '}
             <span className="text-ink-soft font-normal">/ affiliate</span>
@@ -459,7 +459,7 @@ export default function AffiliateDashboardPage() {
                 onClick={saveCode}
                 disabled={codeStatus !== 'available' || codeSaving || codeInput === affiliate.referral_code}
                 className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                style={{ backgroundColor: '#3A4A6B', color: '#ffffff' }}
+                style={{ backgroundColor: 'var(--aff-fill)', color: '#ffffff' }}
               >
                 {codeSaving ? 'Saving…' : 'Save'}
               </button>
@@ -563,7 +563,7 @@ export default function AffiliateDashboardPage() {
                   value={payoutEmail}
                   onChange={(e) => setPayoutEmail(e.target.value)}
                   placeholder="paypal@example.com"
-                  className="w-full max-w-sm rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[#3A4A6B]/25 focus:border-[#3A4A6B] transition"
+                  className="w-full max-w-sm rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[var(--aff-fill)]/25 focus:border-[var(--aff-fill)] transition"
                 />
               </div>
 
@@ -574,7 +574,7 @@ export default function AffiliateDashboardPage() {
                 <Select
                   value={payoutMethod}
                   onChange={(e) => setPayoutMethod(e.target.value)}
-                  className="rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-[#3A4A6B]/25 focus:border-[#3A4A6B] transition"
+                  className="rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-[var(--aff-fill)]/25 focus:border-[var(--aff-fill)] transition"
                 >
                   <option value="">Select method</option>
                   <option value="paypal">PayPal</option>
@@ -588,7 +588,7 @@ export default function AffiliateDashboardPage() {
                 <button
                   type="submit"
                   disabled={payoutSaving}
-                  className="rounded-full bg-[#3A4A6B] px-5 py-2 text-sm font-semibold text-white hover:bg-[#3A4A6B]/90 disabled:opacity-50 transition-colors"
+                  className="rounded-full bg-[var(--aff-fill)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--aff-fill)]/90 disabled:opacity-50 transition-colors"
                 >
                   {payoutSaving ? 'Saving…' : 'Save'}
                 </button>
