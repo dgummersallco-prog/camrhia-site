@@ -26,7 +26,7 @@ type Row = {
   best_reach: string | null
 }
 
-type App = { id: string; name: string; email: string; phone: string | null; handle: string | null; followers: string | null; best_reach: string | null; created_at: string }
+type App = { id: string; name: string; email: string; phone: string | null; handle: string | null; followers: string | null; best_reach: string | null; team_of?: string | null; created_at: string }
 
 export default function AdminAffiliatesPage() {
   const router = useRouter()
@@ -104,8 +104,8 @@ export default function AdminAffiliatesPage() {
     const who = row.name || row.email || 'this affiliate'
     const ok = await confirmDialog(
       makeMaster
-        ? `Make ${who} a master partner?\n\nThey earn 50% on their own referrals, plus half of what is left after a recruit's commission on every affiliate they sign.`
-        : `Remove master status from ${who}?\n\nNew referrals go back to the normal 20-30% tiers. Referrals already locked at 50% keep that rate.`,
+        ? `Make ${who} a master partner?\n\nThey earn 30% on their own referrals, plus 15% on every subscriber their team brings in.`
+        : `Remove master status from ${who}?\n\nThey stop earning the 15% team bonus. Their own referrals stay at 30%.`,
     )
     if (!ok) return
     setBusyId(row.id)
@@ -211,6 +211,7 @@ export default function AdminAffiliatesPage() {
                   <div>
                     <p className="font-medium text-ink">{a.name}</p>
                     <p className="text-sm text-ink-soft">{a.email}</p>
+                    {a.team_of ? <p className="mt-1 text-sm font-medium" style={{ color: '#8C6B3F' }}>Invited by {a.team_of}. Joins their team.</p> : null}
                     <p className="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-ink">
                       {a.phone ? <a href={`tel:${a.phone}`} className="font-medium underline">{a.phone}</a> : null}
                       {a.handle ? <span>{a.handle}</span> : null}

@@ -39,6 +39,7 @@ export default function AffiliateSignupPage() {
   const [followers, setFollowers] = useState('')
   const [reach, setReach] = useState('')
   const [teamCode, setTeamCode] = useState('')
+  const [inviter, setInviter] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
@@ -46,7 +47,7 @@ export default function AffiliateSignupPage() {
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem('camrhia_recruit')
+      const saved = new URLSearchParams(window.location.search).get('recruit') || window.localStorage.getItem('camrhia_recruit')
       if (saved) setTeamCode(saved)
     } catch {}
   }, [])
@@ -57,6 +58,11 @@ export default function AffiliateSignupPage() {
       if (typeof data === 'number') setTaken(data)
     })
   }, [])
+
+  useEffect(() => {
+    if (!supabase || !teamCode) { setInviter(null); return }
+    supabase.rpc('team_inviter_name', { p_code: teamCode }).then(({ data }) => setInviter(typeof data === 'string' && data ? data : null))
+  }, [teamCode])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -119,6 +125,8 @@ export default function AffiliateSignupPage() {
       <div className="min-h-screen bg-paper">
         {header}
         <main className="mx-auto max-w-xl px-6 py-20 text-center">
+        {inviter ? <style>{'main > section:not(#apply){display:none}'}</style> : null}
+        {inviter ? <div className="px-6 py-3 text-center text-sm font-semibold text-white" style={{ backgroundColor: ROSE }}>You are invited to join {inviter}&apos;s team at Camrhia. Fill this out and you are in.</div> : null}
           <h1 className="font-fraunces text-4xl font-semibold text-ink">Thank you for applying.</h1>
           <p className="mt-4 text-ink-soft">
             We got your application and will reach out within 48 hours at the number you gave us.
@@ -303,7 +311,7 @@ export default function AffiliateSignupPage() {
 
         <section id="apply" className="px-6 pb-20">
           <div className="mx-auto max-w-xl rounded-[2rem] border border-line bg-card p-7 shadow-xl sm:p-9">
-            <h2 className="font-fraunces text-3xl font-semibold text-ink">Apply in one minute</h2>
+            <h2 className="font-fraunces text-3xl font-semibold text-ink">{inviter ? 'Join ' + inviter + "'s team" : 'Apply in one minute'}</h2>
             <p className="mt-1 text-sm text-ink-soft">We will call you to get you started.</p>
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
@@ -336,7 +344,7 @@ export default function AffiliateSignupPage() {
               {error && <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
               <button type="submit" disabled={loading} className="mt-2 w-full rounded-full py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: ROSE }}>
-                {loading ? 'Sending…' : claim}
+                {loading ? 'Sending…' : inviter ? 'Join the team' : claim}
               </button>
             </form>
           </div>

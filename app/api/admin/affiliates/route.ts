@@ -80,10 +80,16 @@ export async function POST(request: Request) {
     }))
     const { data: appData } = await supabase
       .from('affiliate_applications')
-      .select('id, name, email, phone, handle, followers, best_reach, created_at')
+      .select('id, name, email, phone, handle, followers, best_reach, recruit_code, created_at')
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
-    return Response.json({ rows, applications: appData ?? [] })
+    const { data: mData } = await supabase.from('affiliates').select('name, team_code, referral_code').eq('is_master', true)
+    const apps = (appData ?? []).map((x: any) => {
+      const c = String(x.recruit_code ?? '').toLowerCase()
+      const m = c ? (mData ?? []).find((y: any) => String(y.team_code ?? '').toLowerCase() === c || String(y.referral_code ?? '').toLowerCase() === c) : null
+      return { ...x, team_of: m ? m.name : null }
+    })
+    return Response.json({ rows, applications: apps })
   }
 
   if (action === 'masters') {
@@ -143,7 +149,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'affiliateId and isMaster are required' }, { status: 400 })
     }
     const patch = isMaster
-      ? { is_master: true, commission_rate: 0.5, override_rate: 0.5 }
+      ? { is_master: true, commission_rate: 0.3, override_rate: 0.15 }
       : { is_master: false, commission_rate: 0.3, override_rate: 0 }
     const { error } = await supabase.from('affiliates').update(patch).eq('id', affiliateId)
     if (error) return Response.json({ error: error.message }, { status: 500 })

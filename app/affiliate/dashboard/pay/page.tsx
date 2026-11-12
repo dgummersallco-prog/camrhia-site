@@ -67,27 +67,27 @@ function PayoutTable({ withMaster, override }: { withMaster: boolean; override: 
 }
 
 function MasterBreakdown({ a }: { a: ShellAffiliate }) {
-  const masterShare = Number(a.override_rate ?? 0.5)
+  const masterShare = Number(a.override_rate ?? 0.15)
   const [planKey, setPlanKey] = useState('solo-m')
   const [rate, setRate] = useState(Number(a.commission_rate ?? 0.2))
   const [hasMaster, setHasMaster] = useState(false)
   const [override, setOverride] = useState(masterShare)
 
   const rateOptions = Array.from(new Set([0.2, 0.25, 0.3, Number(a.commission_rate ?? 0.2)])).sort((x, y) => x - y)
-  const overrideOptions = Array.from(new Set([0.3, 0.4, 0.5, masterShare])).sort((x, y) => x - y)
+  const overrideOptions = Array.from(new Set([0.15, masterShare])).sort((x, y) => x - y)
 
   const plan = PLANS.find((p) => p.key === planKey) ?? PLANS[0]
   const price = plan.price
   const apple = r2(price * APPLE_RATE)
   const base = r2(price - apple)
   const affiliate = r2(base * rate)
-  const master = hasMaster ? r2((base - affiliate) * override) : 0
+  const master = hasMaster ? r2(base * override) : 0
   const camrhia = r2(price - apple - affiliate - master)
 
   const rows = [
     { label: "Apple's cut", value: apple, color: '#9AA0A6', show: true, note: `${pct(APPLE_RATE)} of the price` },
     { label: 'Affiliate commission', value: affiliate, color: 'var(--aff-ink)', show: true, note: `${pct(rate)} of ${usd(base)}` },
-    { label: 'Master partner bonus', value: master, color: '#8C6B3F', show: hasMaster, note: `${pct(override)} of what's left after the affiliate` },
+    { label: 'Master partner bonus', value: master, color: '#8C6B3F', show: hasMaster, note: `${pct(override)} of ${usd(base)}` },
     { label: 'Camrhia keeps', value: camrhia, color: '#5E7F5A', show: true, note: 'before processing fees and taxes' },
   ].filter((r) => r.show)
 
@@ -102,7 +102,7 @@ function MasterBreakdown({ a }: { a: ShellAffiliate }) {
             on every photographer they sign, every month, with no cap.
           </li>
           <li>
-            If that affiliate is on a master&apos;s team, the master gets <span className="font-medium">a share of what&apos;s left after the affiliate is paid</span>.
+            If that affiliate is on a master&apos;s team, the master gets <span className="font-medium">15% of that same amount, on top of the affiliate&apos;s 30%</span>.
             This never reduces the affiliate&apos;s share.
           </li>
           <li>Camrhia keeps the rest.</li>
