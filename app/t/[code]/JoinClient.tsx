@@ -121,7 +121,6 @@ export default function JoinClient({ code }: { code: string }) {
       <ul className="mt-8 space-y-3 text-base text-ink">
         <li className="flex gap-3"><span style={{ color: ROSE }}>&#10003;</span><span>Earn 30% every month, for as long as a photographer you refer stays subscribed.</span></li>
         <li className="flex gap-3"><span style={{ color: ROSE }}>&#10003;</span><span>Your own referral link, ready-made posts and an earnings dashboard.</span></li>
-        <li className="flex gap-3"><span style={{ color: ROSE }}>&#10003;</span><span>{inviter} is on your side. Your wins are their wins.</span></li>
       </ul>
 
       <form onSubmit={submit} className="mt-10 space-y-4 rounded-[2rem] border border-line bg-card p-7 shadow-xl sm:p-9">
