@@ -91,7 +91,7 @@ export default function AffiliateShell({
         {affiliate && (affiliate.is_master || teamName) ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {affiliate.is_master ? (
-              <span className="rounded-full bg-brass/15 text-brass px-3 py-1 font-medium">Master partner</span>
+              <span className="rounded-full bg-brass/15 text-brass px-3 py-1 font-medium">Master Partner</span>
             ) : null}
             {teamName ? (
               <span className="rounded-full bg-[var(--aff-fill)]/10 text-[var(--aff-ink)] px-3 py-1 font-medium">

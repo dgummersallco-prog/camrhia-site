@@ -600,7 +600,7 @@ function PitchBody({ a }: { a: ShellAffiliate }) {
       {a.is_master ? (
         <section id="recruit" className="space-y-6 scroll-mt-24">
           <div className="rounded-2xl border border-brass/40 bg-brass/5 p-6">
-            <span className="rounded-full bg-brass/15 text-brass px-3 py-1 text-xs font-medium">Master partners only</span>
+            <span className="rounded-full bg-brass/15 text-brass px-3 py-1 text-xs font-medium">Master Partners only</span>
             <h2 className="mt-3 font-fraunces text-xl font-semibold text-ink">Recruiting affiliates for your team</h2>
             <p className="mt-1 text-sm text-ink-soft max-w-2xl">
               Use these to invite people to join your team. Your team link is already in them, so your team code is filled in when they sign up. The name boxes at the top work here too.

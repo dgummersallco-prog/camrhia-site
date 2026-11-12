@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation"
+import JoinClient from './JoinClient'
 
-// Short team link: camrhia.com/t/TEAMCODE -> affiliate signup with the team code filled in.
+// Personal invite link: camrhia.com/t/TEAMCODE
 export default async function TeamLink(props: { params: Promise<{ code: string }> }) {
   const { code } = await props.params
-  redirect(`/affiliate/signup?recruit=${encodeURIComponent(code)}`)
+  return <JoinClient code={code} />
 }
