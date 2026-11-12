@@ -378,30 +378,8 @@ export default function AffiliateDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="font-fraunces text-lg font-semibold text-ink hover:text-[var(--aff-ink)] transition-colors"
-          >
-            <Wordmark className="text-3xl" />{' '}
-            <span className="text-ink-soft font-normal">/ affiliate</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <span className="hidden sm:block text-sm text-ink-soft">{affiliate.name}</span>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-ink-soft hover:text-ink transition-colors"
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-8 lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10">
+    <div className="min-h-screen bg-paper flex flex-col aff-scope xl:pl-60">
+      <main className="flex-1 w-full max-w-5xl px-6 md:px-10 py-8">
         <aside>
           <AffiliateTabs />
         </aside>
