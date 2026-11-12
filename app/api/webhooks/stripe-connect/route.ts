@@ -23,12 +23,13 @@ export async function POST(request: Request) {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session
-      const lineId = session.metadata?.payment_schedule_id
+      const lineIds = (session.metadata?.payment_schedule_ids ?? session.metadata?.payment_schedule_id ?? '').split(',').filter(Boolean)
       const miniSlotId = session.metadata?.mini_slot_id
       if (miniSlotId && session.payment_status === 'paid') {
         await supabase.rpc('finalize_mini_slot', { p_slot_id: miniSlotId, p_session_id: session.id })
       }
-      if (lineId && session.payment_status === 'paid') {
+      for (const lineId of lineIds) {
+        if (session.payment_status !== 'paid') continue
         const piId = typeof session.payment_intent === 'string' ? session.payment_intent : null
         const { data: paidLine } = await supabase
           .from('payment_schedule')
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
           .from('payment_schedule')
           .select('owner_id, wedding_id, label, amount')
           .eq('stripe_payment_intent', piId)
-          .maybeSingle()
+          .limit(1).maybeSingle()
         if (line) {
           await supabase.from('notifications').insert({
             user_id: line.owner_id,
