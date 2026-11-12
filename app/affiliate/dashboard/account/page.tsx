@@ -90,7 +90,7 @@ function AccountBody({ name }: { name: string | null }) {
       <div className="rounded-2xl border border-line bg-card p-6">
         <p className="mb-4 font-fraunces text-xl font-semibold text-ink">Profile photo</p>
         {uid && <AvatarPicker client={supabase} uid={uid} url={url} name={saved} size={80} onDone={setUrl} />}
-        <p className="mt-3 text-sm text-ink-soft">This shows on your posts and comments in the Team Hub.</p>
+        <p className="mt-3 text-sm text-ink-soft">This shows on your posts and comments in the Community.</p>
       </div>
       <div className="rounded-2xl border border-line bg-card p-6">
         <p className="mb-4 font-fraunces text-xl font-semibold text-ink">Name</p>

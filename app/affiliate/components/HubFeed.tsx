@@ -283,7 +283,7 @@ export default function HubFeed({ client }: { client?: SupabaseClient | null }) 
   if (!member) {
     return (
       <div className="rounded-2xl border border-line bg-card p-8 text-center">
-        <p className="font-fraunces text-xl font-semibold text-ink">The Team Hub opens when your application is approved.</p>
+        <p className="font-fraunces text-xl font-semibold text-ink">The Community opens when your application is approved.</p>
         <p className="mt-2 text-sm text-ink-soft">We will call you soon.</p>
       </div>
     )

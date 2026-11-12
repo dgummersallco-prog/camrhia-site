@@ -3,7 +3,7 @@
 import AffiliateShell from '../../components/AffiliateShell'
 
 const STEPS = [
-  'You post in the Team Hub with your link.',
+  'You post in the Community with your link.',
   "Camrhia's ad team watches which posts perform best.",
   'The best ones get posted as ads on the Camrhia account, and Camrhia pays for the ad spend.',
   'The ads send people to your affiliate link and sign up, so those signups are credited to you.',

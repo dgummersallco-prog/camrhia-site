@@ -51,25 +51,32 @@ export default function AffiliateTabs() {
     return () => { cancelled = true }
   }, [])
 
-  const tabs = admin
+  const adminTabs = [
+    { href: '/admin/hub', label: 'Home' },
+    { href: '/admin/hub/team', label: 'Community' },
+    { href: '/admin/hub/pitch', label: 'Marketing HQ' },
+    { href: '/admin/hub/boosted', label: 'Boosted posts' },
+    { href: '/admin/hub/pay', label: 'Pay breakdown' },
+    { href: '/admin/hub/account', label: 'Account' },
+  ]
+  const mainTabs = [
+    { href: '/affiliate/dashboard', label: 'Home' },
+    { href: '/affiliate/dashboard/hub', label: 'Community' },
+    { href: '/affiliate/dashboard/pitch', label: 'Marketing HQ' },
+    { href: '/affiliate/dashboard/boosted', label: 'Boosted posts' },
+  ]
+  const teamTabs = isMaster
     ? [
-        { href: '/admin/hub', label: 'Home' },
-        { href: '/admin/hub/team', label: 'Team Hub' },
-        { href: '/admin/hub/pitch', label: 'Marketing HQ' },
-        { href: '/admin/hub/boosted', label: 'Boosted posts' },
-        { href: '/admin/hub/pay', label: 'Pay breakdown' },
-        { href: '/admin/hub/account', label: 'Account' },
+        { href: '/affiliate/dashboard/team', label: 'My team' },
+        { href: '/affiliate/dashboard/numbers', label: 'Team numbers' },
+        { href: '/affiliate/dashboard/recruit', label: 'Invite' },
       ]
-    : [{ href: '/affiliate/dashboard', label: 'Home' }, { href: '/affiliate/dashboard/hub', label: 'Team Hub' }]
-  if (isMaster) tabs.push({ href: '/affiliate/dashboard/team', label: 'Team' })
-  if (isMaster) {
-    tabs.push({ href: '/affiliate/dashboard/numbers', label: 'Numbers' })
-    tabs.push({ href: '/affiliate/dashboard/recruit', label: 'Recruit' })
-  }
-  if (!admin) tabs.push({ href: '/affiliate/dashboard/pitch', label: 'Marketing HQ' })
-  if (!admin) tabs.push({ href: '/affiliate/dashboard/boosted', label: 'Boosted posts' })
-  if (!admin) tabs.push({ href: '/affiliate/dashboard/pay', label: 'Pay breakdown' })
-  if (!admin) tabs.push({ href: '/affiliate/dashboard/account', label: 'Account' })
+    : []
+  const moneyTabs = [
+    { href: '/affiliate/dashboard/pay', label: 'Pay breakdown' },
+    { href: '/affiliate/dashboard/account', label: 'Account' },
+  ]
+  const tabs = admin ? adminTabs : [...mainTabs, ...teamTabs, ...moneyTabs]
 
   if (!admin) {
     const activeHref = tabs
@@ -77,7 +84,7 @@ export default function AffiliateTabs() {
       .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? ''
     return (
       <SceneSidebar
-        groups={[{ items: tabs }]}
+        groups={[{ items: mainTabs }, ...(teamTabs.length ? [{ label: 'My team', items: teamTabs }] : []), { items: moneyTabs }]}
         activeHref={activeHref}
         homeHref="/affiliate/dashboard"
         tag="affiliate"

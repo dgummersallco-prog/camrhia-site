@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export default function AdminHubPage() {
   return (
-    <AffiliateShell title="Team Hub">
+    <AffiliateShell title="Community">
       {() => <HubHome client={supabaseAdmin} />}
     </AffiliateShell>
   )
