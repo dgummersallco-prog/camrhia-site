@@ -34,12 +34,20 @@ export async function POST(request: Request) {
     const kitPalettes: { name: string }[] = (Array.isArray(kitIn.palettes) ? kitIn.palettes : []).slice(0, 8).map((x: any) => ({ name: String(x?.name ?? '') })).filter((x: any) => x.name)
     const kitFonts: { key: string; name: string }[] = (Array.isArray(kitIn.fonts) ? kitIn.fonts : []).slice(0, 8).map((x: any) => ({ key: String(x?.key ?? ''), name: String(x?.name ?? '') })).filter((x: any) => x.key)
     const kitThemes: string[] = (Array.isArray(kitIn.themes) ? kitIn.themes : []).filter((x: unknown) => typeof x === 'string').slice(0, 20)
+    const stIn = body.structure ?? {}
+    const strList = (a: unknown): string[] => (Array.isArray(a) ? a : []).filter((x: unknown): x is string => typeof x === 'string').slice(0, 20)
+    const stExtra = (Array.isArray(stIn.extra) ? stIn.extra : []).slice(0, 8).map((e: any) => ({ id: String(e?.id ?? '').slice(0, 24), label: String(e?.label ?? '').slice(0, 24), sections: strList(e?.sections) })).filter((e: any) => e.id)
+    const stPageIds: string[] = ['home', 'about', 'galleries', ...stExtra.map((e: any) => e.id)]
+    const tpIn = kitIn.type ?? {}
+    const typeDesc = ['title', 'subtitle', 'paragraph'].map((r) => r + ' [' + strList(tpIn[r]).join(', ') + ']').join(', ')
+    const SECS = ['about', 'portfolio', 'investment', 'testimonials', 'faq', 'contact', 'explore', 'aboutcta']
+    const stDesc = 'Home [' + strList(stIn.home).join(', ') + '], About [' + strList(stIn.about).join(', ') + '], Galleries [' + strList(stIn.galleries).join(', ') + ']' + stExtra.map((e: any) => ', ' + e.label + ' (id ' + e.id + ') [' + e.sections.join(', ') + ']').join('')
     const fontList: { id: string; label: string }[] = (Array.isArray(body.fontList) ? body.fontList : []).slice(0, 200).map((x: any) => ({ id: String(x?.id ?? ''), label: String(x?.label ?? '') })).filter((x: any) => x.id)
     const fontIds = fontList.map((f) => f.id)
     const system = `You are Camri, a cute, warm camera robot who designs photographers' websites. You know what works for photographers: big photos, lots of white space, one accent color, readable type, a clear Book button, and a look that matches the kind of client they want.
 
 Reply with ONLY a JSON object, no other text:
-{"reply": string, "changes": {"style": string|null, "palette": {"accent": string, "bg": string, "text": string}|null, "font_pair": string|null, "buttons": string|null, "headline": string|null, "subhead": string|null, "css": string|null, "kit": {"layout": string|null, "palette": string|null, "fonts": string|null, "heading_font": string|null, "body_font": string|null, "theme": string|null, "save_theme": string|null}|null}}
+{"reply": string, "changes": {"style": string|null, "palette": {"accent": string, "bg": string, "text": string}|null, "font_pair": string|null, "buttons": string|null, "headline": string|null, "subhead": string|null, "css": string|null, "kit": {"layout": string|null, "palette": string|null, "fonts": string|null, "heading_font": string|null, "body_font": string|null, "theme": string|null, "save_theme": string|null, "role_font": {"role": string, "font": string}|null, "move_section": {"section": string, "to": string}|null, "add_page": {"id": string, "label": string, "sections": string[]}|null, "remove_page": string|null}|null}}
 
 Rules:
 - reply: 1-3 short, friendly sentences. Say what you changed and why it suits a photographer. No emoji spam.
@@ -61,6 +69,8 @@ Rules:
   kit.layout: a layout key from their favorites, or "next" or "prev" to move through them. kit.palette: a color scheme name from their favorites. kit.fonts: a font pair key from their favorites.
   kit.heading_font and kit.body_font: a font id from this list when they ask for a specific font: ${fontList.map((f) => f.id + '=' + f.label).join(', ') || 'none'}.
   kit.theme: the name of a saved theme to switch to. kit.save_theme: a short name to save the design as it will look after this reply's changes. Use it when they ask for a new named theme like Christmas or Dark: make the design changes with palette, css and the other fields in the same reply, and set kit.save_theme. The app keeps their current design as "Main" so they can always switch back.
+  Page structure (pages and the sections stacked on them, in order): ${stDesc}. Section ids: about, portfolio (the galleries), investment (pricing), testimonials, faq, contact (the book-now band), explore (the Galleries / About / Book cards), aboutcta. kit.move_section {"section","to"}: move a section onto a page (to = home, about, galleries or an extra page id), or to = "none" to take it off every page. kit.add_page {"id","label","sections"}: make a new menu page (id is lowercase letters, numbers and dashes) holding those sections, for example a testimonials page. kit.remove_page: the id of an extra page to delete. Use these only when they ask to move, add or remove a section or page.
+  kit.role_font {"role","font"}: set one font for the title, subtitle or paragraph (role is one of those three words). Their saved picks, first is the one in use: ${typeDesc}. Use a saved pick when they say things like "use my second title font", otherwise any font id from the font list.
 
 Current site: template ${site.template ?? 'unknown'}, accent ${site.accent ?? 'unknown'}, page color ${site.bg ?? 'unknown'}, text color ${site.text ?? 'unknown'}, fonts ${site.font_pair ?? 'unknown'}, buttons ${site.buttons ?? 'unknown'}, headline "${site.headline ?? ''}", subhead "${site.subhead ?? ''}".
 
@@ -100,6 +110,10 @@ ${String(site.css ?? '').slice(0, 6000) || '(none)'}`
       heading_font: fontIds.includes(kc.heading_font) ? kc.heading_font : null,
       body_font: fontIds.includes(kc.body_font) ? kc.body_font : null,
       theme: kitThemes.includes(kc.theme) ? kc.theme : null,
+      move_section: kc.move_section && SECS.includes(kc.move_section.section) && (stPageIds.includes(kc.move_section.to) || kc.move_section.to === 'none') ? { section: kc.move_section.section, to: kc.move_section.to } : null,
+      add_page: kc.add_page && /^[a-z0-9-]{1,24}$/.test(String(kc.add_page.id ?? '')) && !['home', 'about', 'galleries', 'book', 'p', 'site'].includes(String(kc.add_page.id)) ? { id: String(kc.add_page.id), label: String(kc.add_page.label ?? kc.add_page.id).slice(0, 24), sections: strList(kc.add_page.sections).filter((k) => SECS.includes(k)) } : null,
+      remove_page: stExtra.some((e: any) => e.id === kc.remove_page) ? kc.remove_page : null,
+      role_font: kc.role_font && ['title', 'subtitle', 'paragraph'].includes(kc.role_font.role) && fontList.some((f: any) => f.id === kc.role_font.font) ? { role: kc.role_font.role, font: kc.role_font.font } : null,
       save_theme: clean(kc.save_theme, 30),
     }
     const kitAny = Object.values(kitOut).some(Boolean)

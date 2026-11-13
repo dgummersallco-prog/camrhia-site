@@ -155,15 +155,46 @@ export function resolveTheme(r: Record<string, any>) {
   const customIds = (pg: string) => customs.filter((c) => c.page === pg).map((c) => c.id)
   const homeDef = ['explore', 'portfolio', 'testimonials', 'contact', ...customIds('home')]
   const hasEx = Array.isArray(s.order_home) && s.order_home.includes('explore')
-  const orderHome: string[] = hasEx
+  let orderHome: string[] = hasEx
     ? orderOf(s.order_home, homeDef)
     : (() => {
         const o = orderOf(s.order_home, homeDef.filter((k) => k !== 'explore'))
         o.splice(0, 0, 'explore')
         return o
       })().filter((k) => k !== 'portfolio')
-  const orderAbout = orderOf(s.order_about, ['about', 'investment', 'faq', 'aboutcta', ...customIds('about')])
-  const orderGalleries = orderOf(s.order_galleries, ['portfolio', ...customIds('galleries')])
+  let orderAbout = orderOf(s.order_about, ['about', 'investment', 'faq', 'aboutcta', ...customIds('about')])
+  let orderGalleries = orderOf(s.order_galleries, ['portfolio', ...customIds('galleries')])
+
+  const strc = s.structure && typeof s.structure === 'object' && s.structure.v === 1 ? (s.structure as Record<string, any>) : null
+  const MOVABLE_KEYS = ['explore', 'portfolio', 'testimonials', 'contact', 'about', 'investment', 'faq', 'aboutcta']
+  const extraPages: { id: string; label: string; sections: string[] }[] = []
+  const pagesOff: string[] = []
+  if (strc) {
+    const usedKeys = new Set<string>()
+    const cleanKeys = (a: unknown, pg: string): string[] => {
+      const out: string[] = []
+      for (const k of Array.isArray(a) ? (a as unknown[]) : []) {
+        if (typeof k !== 'string' || usedKeys.has(k)) continue
+        if (!MOVABLE_KEYS.includes(k) && !customIds(pg).includes(k)) continue
+        usedKeys.add(k)
+        out.push(k)
+      }
+      return out
+    }
+    orderHome = cleanKeys(strc.home, 'home')
+    orderAbout = cleanKeys(strc.about, 'about')
+    orderGalleries = cleanKeys(strc.galleries, 'galleries')
+    for (const p of (Array.isArray(strc.extra) ? (strc.extra as any[]) : []).slice(0, 8)) {
+      const id = typeof p?.id === 'string' ? p.id : ''
+      if (!/^[a-z0-9-]{1,24}$/.test(id) || ['home', 'about', 'galleries', 'book', 'p', 'site'].includes(id) || extraPages.some((e) => e.id === id)) continue
+      const label = typeof p.label === 'string' && p.label.trim() ? p.label.trim().slice(0, 24) : id
+      extraPages.push({ id, label, sections: cleanKeys(p.sections, '__none') })
+    }
+    for (const c of customIds('home')) if (!usedKeys.has(c)) { usedKeys.add(c); orderHome.push(c) }
+    for (const c of customIds('about')) if (!usedKeys.has(c)) { usedKeys.add(c); orderAbout.push(c) }
+    for (const c of customIds('galleries')) if (!usedKeys.has(c)) { usedKeys.add(c); orderGalleries.push(c) }
+    for (const k of Array.isArray(strc.off) ? (strc.off as unknown[]) : []) if (k === 'about' || k === 'galleries') pagesOff.push(k)
+  }
 
   const titles: Record<string, string> = { ...DEFAULT_TITLES }
   for (const k of Object.keys(DEFAULT_TITLES)) {
@@ -485,6 +516,8 @@ export function resolveTheme(r: Record<string, any>) {
     btnText,
     order,
     orderHome,
+    extraPages,
+    pagesOff,
     aboutBtnText: (str(s.aboutBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability') as string,
     galBtnText: (str(s.galBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability') as string,
     backText: Object.fromEntries(['galleries', 'about', 'book'].map((pg) => [pg, str((s.backBtn ?? {})[pg]?.text)])) as Record<string, string | null>,
@@ -511,5 +544,17 @@ export function resolveTheme(r: Record<string, any>) {
     galFamily: galKey ? FONT_OPTIONS[galKey].family : null,
     sizes,
     cssVars,
+  }
+}
+
+export function structureOf(r: Record<string, any>) {
+  const t = resolveTheme(r)
+  return {
+    v: 1 as const,
+    home: [...t.orderHome],
+    about: [...t.orderAbout],
+    galleries: [...t.orderGalleries],
+    extra: t.extraPages.map((e) => ({ id: e.id, label: e.label, sections: [...e.sections] })),
+    off: [...t.pagesOff],
   }
 }

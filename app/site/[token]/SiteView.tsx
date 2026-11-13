@@ -49,7 +49,7 @@ const PH_FAQ = [
   { id: 'ph2', question: 'Your second question', answer: 'Your answer goes here.', q: 'Your second question', a: 'Your answer goes here.' },
 ]
 
-type PageKey = 'home' | 'about' | 'galleries'
+type PageKey = string
 
 export function SiteView({ initial, token, page = 'home' }: { initial: Record<string, any>; token: string; page?: PageKey }) {
   const [r, setR] = useState<Record<string, any>>(initial)
@@ -155,12 +155,13 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     aboutcta: on('aboutcta'),
   }
   for (const c of t.customs) showMap[c.id] = on(c.id)
-  const pageOrder: string[] = page === 'home' ? t.orderHome : page === 'about' ? t.orderAbout : t.orderGalleries
+  const pageOrder: string[] = page === 'home' ? t.orderHome : page === 'about' ? t.orderAbout : page === 'galleries' ? t.orderGalleries : (t.extraPages.find((e) => e.id === page)?.sections ?? [])
   const visible = pageOrder.filter((k) => showMap[k])
 
-  const navItems = (['home', 'galleries', 'about', 'book'] as const)
-    .filter((k) => !t.menu.hidden.includes(k) && !(k === 'galleries' && galleries.length === 0))
-    .map((k) => ({ key: k, href: hrefs[k], label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === page }))
+  for (const e of t.extraPages) hrefs[e.id] = `${base}/p/${e.id}${qs}`
+  const navItems = ([...['home', 'galleries', 'about', 'book'], ...t.extraPages.map((e) => e.id)] as string[])
+    .filter((k) => !(t.menu.hidden as string[]).includes(k) && !t.pagesOff.includes(k) && !(k === 'galleries' && galleries.length === 0))
+    .map((k) => ({ key: k, href: hrefs[k], label: (t.menu.labels as Record<string, string | undefined>)[k]?.trim() || (NAV_DEFAULTS as Record<string, string>)[k] || t.extraPages.find((e) => e.id === k)?.label || k, active: k === page }))
 
   const ex = ((r as any).site_settings?.explore ?? {}) as { show?: boolean; layout?: string; heading?: string; lines?: Record<string, string>; titles?: Record<string, string> }
   const exLayout = ['lines', 'tiles', 'list', 'cards', 'stack', 'outline', 'free'].includes(String(ex.layout)) ? String(ex.layout) : 'lines'
@@ -696,7 +697,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     window.parent?.postMessage({ type: 'camrhia-featured', list }, '*')
   }, [isPreview, galleries])
 
-  const exploreEl = page === 'home' && doors.length > 0 && ex.show !== false ? (
+  const exploreEl = doors.length > 0 && ex.show !== false ? (
           <section id="explore" className="px-6 py-16">
           <div className="mx-auto max-w-6xl">
             {ex.heading?.trim() && (
@@ -813,7 +814,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${pageBg ?? bg}}`}</style>
       <PortfolioLightbox />
       <div style={{ background: pageBg ?? bg, color: ink, fontFamily: t.body }}>
-        {page === 'galleries' || page === 'about' ? <SiteNav t={t} logo={logo} name={name} homeHref={hrefs.home} headStyle={headStyle} pageBg={pageBg} items={navItems} /> : page !== 'home' && renderNav(false, false)}
+        {page !== 'home' ? <SiteNav t={t} logo={logo} name={name} homeHref={hrefs.home} headStyle={headStyle} pageBg={pageBg} items={navItems} /> : null}
 
         {page === 'home' && tpl === 'editorial' && (
           <>
@@ -956,7 +957,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <React.Fragment key={k}>{((hid: boolean) => isPreview ? (<div data-sec={k} style={hid ? { display: 'none' } : undefined}>{hid ? null : renderSection(k, i % 2 === 1)}</div>) : hid ? null : renderSection(k, i % 2 === 1))(((r as any).site_settings?.hiddenSecs ?? []).includes(k))}</React.Fragment>
         ))}
 
-        {page !== 'home' && page !== 'about' && visible.length > 0 && (
+        {page === 'galleries' && visible.length > 0 && (
           <div className="px-6 pb-12 pt-4 text-center"><a href={availHref} id="gal-btn" className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.galBtnText}</a></div>
         )}
 
