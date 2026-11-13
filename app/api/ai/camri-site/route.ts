@@ -23,6 +23,14 @@ async function handle(request: Request): Promise<Response> {
     const email = (auth.user.email ?? '').toLowerCase()
     if (!(await hasCamriAccess(auth.user.id, email))) return Response.json({ error: 'Camri is not open to your account yet.' }, { status: 403 })
     if (!process.env.ANTHROPIC_API_KEY) return Response.json({ error: 'Camri is not set up yet.' }, { status: 503 })
+    {
+      const cap = Number(process.env.CAMRI_MONTHLY_CAP_USD ?? 5)
+      const now = new Date()
+      const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+      const { data: used, error: usedErr } = await (adminDb() as any).from('ai_usage').select('cost_usd').eq('owner_id', auth.user.id).like('job', 'camri%').gte('created_at', monthStart)
+      const spent = usedErr ? 0 : (used ?? []).reduce((t: number, r: any) => t + Number(r.cost_usd ?? 0), 0)
+      if (cap > 0 && spent >= cap) return Response.json({ reply: "I've used all my design help for this month. It refills on the 1st, and I can pick right back up then.", changes: {} })
+    }
 
     const body = await request.json()
     const message = typeof body.message === 'string' ? body.message.trim().slice(0, 600) : ''
