@@ -1,4 +1,5 @@
 'use client'
+import CamriHelper from '@/app/components/CamriHelper'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -81,7 +82,7 @@ function Icon({ name }: { name: string }) {
   )
 }
 
-export function DashboardHeader({ active, hideNav }: { active: Tab; hideNav?: boolean }) {
+function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: boolean }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [unread, setUnread] = useState(0)
@@ -324,6 +325,15 @@ export function DashboardHeader({ active, hideNav }: { active: Tab; hideNav?: bo
           </div>
         </div>
       )}
+    </>
+  )
+}
+
+export function DashboardHeader(props: Parameters<typeof DashboardHeaderInner>[0]) {
+  return (
+    <>
+      <DashboardHeaderInner {...props} />
+      <CamriHelper />
     </>
   )
 }
