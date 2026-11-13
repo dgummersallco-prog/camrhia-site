@@ -733,7 +733,7 @@ export default function SpecialsPage() {
 
             <div className="relative mb-6 mt-16 rounded-2xl border border-[#E8DDD0] bg-white/90 p-5 shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[48px] right-6 h-[80px] w-auto" />
+              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[58px] right-6 h-[80px] w-auto" />
               <div className="flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/camri/13_face_avatar.png" alt="" className="h-8 w-8 rounded-full" />

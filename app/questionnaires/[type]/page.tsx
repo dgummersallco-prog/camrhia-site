@@ -239,7 +239,7 @@ export default function QuestionnaireEditorPage() {
       <DashboardHeader active="questionnaires" />
       <main className="relative mx-auto mb-10 mt-24 max-w-3xl rounded-3xl bg-[#FBF7F2]/85 px-8 py-10 shadow-[0_8px_40px_rgba(60,40,30,0.10)] backdrop-blur-md">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[53px] right-8 h-[100px] w-auto" />
+        <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[66px] right-8 h-[100px] w-auto" />
         <Link href="/questionnaires" className="text-sm text-ink-soft hover:text-ink">← All questionnaires</Link>
         <div className="mb-4 mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
