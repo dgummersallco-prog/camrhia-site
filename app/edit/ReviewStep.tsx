@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjust } from '@/lib/enhance'
 import { briefAdjust, type Brief } from '@/lib/brief'
@@ -84,11 +84,18 @@ function Slide({ label, shown, min, max, step, value, onChange, onReset }: {
   onChange: (v: number) => void
   onReset: () => void
 }) {
+  const zero = min < 0 && max > 0 ? ((0 - min) / (max - min)) * 100 : 0
+  const pct = ((value - min) / (max - min)) * 100
+  const lo = Math.min(zero, pct)
+  const hi = Math.max(zero, pct)
+  const track = 'rgba(120,113,108,0.28)'
+  const fill = 'var(--color-twilight)'
+  const bg = `linear-gradient(to right, ${track} 0%, ${track} ${lo}%, ${fill} ${lo}%, ${fill} ${hi}%, ${track} ${hi}%, ${track} 100%)`
   return (
     <div>
       <div className="flex items-center justify-between text-xs">
         <span className="text-white/75">{label}</span>
-        <span className="text-white/45">{shown}</span>
+        <span className="tabular-nums text-white/45">{shown}</span>
       </div>
       <input
         type="range"
@@ -99,7 +106,8 @@ function Slide({ label, shown, min, max, step, value, onChange, onReset }: {
         onChange={(e) => onChange(Number(e.target.value))}
         onDoubleClick={onReset}
         onPointerUp={(e) => e.currentTarget.blur()}
-        className="mt-1 w-full accent-[var(--color-twilight)]"
+        className="dial"
+        style={{ ['--dial-bg' as string]: bg } as CSSProperties}
       />
     </div>
   )
@@ -209,7 +217,7 @@ export default function ReviewStep({
     }
     return camiPromise.current
   }
-  // Study the whole shoot in the background and flag photos Cami would fix in a big way
+  // Study the whole shoot in the background and flag photos Camri would fix in a big way
   useEffect(() => {
     if (!checked || rows.length === 0) return
     let off = false
@@ -279,7 +287,7 @@ export default function ReviewStep({
       const sid = shoot.sceneOf[row.id]
       const before = shoot.studyAdj[row.id] ?? {}
       if (before.bw) {
-        setCamiNote({ id: row.id, notes: ['This one is black and white, so Cami left it alone.'], bw: false })
+        setCamiNote({ id: row.id, notes: ['This one is black and white, so Camri left it alone.'], bw: false })
       } else {
         const fix = camiFix(rd, sid ? shoot.bases[sid] ?? null : null, shoot.bias, lookId)
         camiPrev.current = { adj: manual }
@@ -288,7 +296,7 @@ export default function ReviewStep({
         setCamiNote({ id: row.id, notes: fix.notes, bw: shoot.bw.has(row.id) })
       }
     } catch {
-      setCamiNote({ id: row.id, notes: ['Cami could not read this photo.'], bw: false })
+      setCamiNote({ id: row.id, notes: ['Camri could not read this photo.'], bw: false })
     }
     setCamiProgress(0)
     setCamiBusy(false)
@@ -302,7 +310,7 @@ export default function ReviewStep({
     try {
       shoot = await camiStudy()
     } catch {
-      setCamiNote({ id: row.id, notes: ['Cami could not read this shoot.'], bw: false })
+      setCamiNote({ id: row.id, notes: ['Camri could not read this shoot.'], bw: false })
       setCamiProgress(0)
       setCamiBusy(false)
       return
@@ -311,12 +319,12 @@ export default function ReviewStep({
     setCamiBusy(false)
     const sid = shoot.sceneOf[row.id]
     if (!sid) {
-      setCamiNote({ id: row.id, notes: ['Split this shoot into scenes first, so Cami knows which photos belong together.'], bw: false })
+      setCamiNote({ id: row.id, notes: ['Split this shoot into scenes first, so Camri knows which photos belong together.'], bw: false })
       return
     }
     const targets = rows.filter((r) => r.id !== row.id && !r.reviewed && shoot.sceneOf[r.id] === sid && shoot.readings[r.id] && !(shoot.studyAdj[r.id] ?? {}).bw && !(shoot.studyAdj[r.id] ?? {}).raw)
     if (targets.length === 0) {
-      setCamiNote({ id: row.id, notes: ['Nothing else in this scene needs Cami.'], bw: false })
+      setCamiNote({ id: row.id, notes: ['Nothing else in this scene needs Camri.'], bw: false })
       return
     }
     sceneStop.current = false
@@ -375,7 +383,7 @@ export default function ReviewStep({
     setSceneBusy(null)
     setCamiNote({
       id: row.id,
-      notes: [`Cami fixed ${fixedCount} other ${fixedCount === 1 ? 'photo' : 'photos'} in this scene. They still show as unchecked so you can look them over.` + (failed > 0 ? ` ${failed} could not be fixed.` : '')],
+      notes: [`Camri fixed ${fixedCount} other ${fixedCount === 1 ? 'photo' : 'photos'} in this scene. They still show as unchecked so you can look them over.` + (failed > 0 ? ` ${failed} could not be fixed.` : '')],
       bw: false,
     })
   }
@@ -561,20 +569,47 @@ export default function ReviewStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row?.id])
 
-  // Draw the edited version
+  // Draw the edited version: a quick small draw while dragging, then the sharp one
+  const latestRef = useRef({ rowId: row?.id ?? '', lookId, strength, total, skin: base.skin, crop })
+  latestRef.current = { rowId: row?.id ?? '', lookId, strength, total, skin: base.skin, crop }
+  const liveRef = useRef({ busy: false, again: false })
   useEffect(() => {
     const src = srcRef.current
     if (!src || !row || src.id !== row.id) return
     let cancelled = false
-    const t = setTimeout(async () => {
+    const live = liveRef.current
+    const show = (url: string) => setAfterUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url })
+
+    async function draft() {
+      if (live.busy) { live.again = true; return }
+      live.busy = true
       try {
-        const url = await renderPreview(src.bmp, lookId, strength, 1400, total, base.skin, crop ?? undefined)
-        if (cancelled) { URL.revokeObjectURL(url); return }
-        setAfterUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url })
+        do {
+          live.again = false
+          const s2 = srcRef.current
+          const L = latestRef.current
+          if (!s2 || s2.id !== L.rowId) break
+          const url = await renderPreview(s2.bmp, L.lookId, L.strength, 520, L.total, L.skin, L.crop ?? undefined)
+          if (!srcRef.current || srcRef.current.id !== latestRef.current.rowId) { URL.revokeObjectURL(url); break }
+          show(url)
+        } while (live.again)
       } catch {
         /* ignore */
       }
-    }, 60)
+      live.busy = false
+    }
+    void draft()
+
+    const t = setTimeout(async () => {
+      try {
+        const L = latestRef.current
+        const url = await renderPreview(src.bmp, L.lookId, L.strength, 1400, L.total, L.skin, L.crop ?? undefined)
+        if (cancelled) { URL.revokeObjectURL(url); return }
+        show(url)
+      } catch {
+        /* ignore */
+      }
+    }, 220)
     return () => { cancelled = true; clearTimeout(t) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [srcTick, manualKey, cropKey, lookId, strength, base])
@@ -1039,17 +1074,17 @@ export default function ReviewStep({
               </div>
               <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                 <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
-                  {camiBusy ? (camiProgress > 0 ? 'Cami is studying this shoot… ' + camiProgress + '/' + rows.length : 'Cami is looking…') : 'Use Cami to scan & fix'}
+                  {camiBusy ? (camiProgress > 0 ? 'Camri is studying this shoot… ' + camiProgress + '/' + rows.length : 'Camri is looking…') : 'Use Camri to scan & fix'}
                 </button>
                 <button className={tab(false) + ' mt-2'} disabled={camiBusy || !!sceneBusy} onClick={camiScanScene}>
-                  {sceneBusy ? 'Cami is fixing this scene… ' + sceneBusy.done + '/' + sceneBusy.total : 'Scan the whole scene'}
+                  {sceneBusy ? 'Camri is fixing this scene… ' + sceneBusy.done + '/' + sceneBusy.total : 'Scan the whole scene'}
                 </button>
                 {sceneBusy && <button className="mt-2 block text-xs text-white/60 underline" onClick={() => { sceneStop.current = true }}>Stop</button>}
                 {camiNote && camiNote.id === row.id && (
                   <div className="mt-2 space-y-1 text-xs text-white/60">
                     {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
-                    {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Cami thinks this could be black &amp; white. Try it</button>}
-                    {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Cami</button>}
+                    {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Camri thinks this could be black &amp; white. Try it</button>}
+                    {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Camri</button>}
                   </div>
                 )}
               </div>

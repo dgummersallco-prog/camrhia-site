@@ -1655,7 +1655,7 @@ export default function WebsitePage() {
               <div>
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Your website</p>
                 <h1 className="font-fraunces text-3xl font-semibold text-ink">Design your website</h1>
-                <p className="mt-1 text-sm text-ink-soft">Answer a few questions and Cami builds your site. Every change saves as you go.</p>
+                <p className="mt-1 text-sm text-ink-soft">Answer a few questions and Camri builds your site. Every change saves as you go.</p>
               </div>
               <div className="flex items-center gap-3">
                 {message && <span className="text-sm text-twilight">{message}</span>}

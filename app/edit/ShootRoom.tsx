@@ -528,7 +528,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     setRescued(new Set())
     setConfirmCut(false)
     setWorking(false)
-    if (ok) goTo(2)
+    if (ok) setCullView('picks')
   }
 
   // ---- cull shortcuts + export ----
@@ -925,32 +925,43 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
             )}
 
             {cull.busy && (() => {
-              const order = ['sharp', 'eyes', 'dupes']
-              const stages = [
-                { key: 'sharp', label: 'Checking sharpness' },
-                ...(cullEyes ? [{ key: 'eyes', label: 'Checking faces' }] : []),
-                { key: 'dupes', label: 'Finding duplicates' },
+              const pct = cull.total ? cull.done / cull.total : 0
+              const p = cull.phase
+              const DUP_SHARE = 0.4
+              type St = 'done' | 'active' | 'wait'
+              const sharpState: St = p === 'sharp' ? 'active' : 'done'
+              const facesState: St = p === 'sharp' ? 'wait' : p === 'eyes' ? 'active' : 'done'
+              let dupState: St = 'wait'
+              let dupVal = 0
+              if (!cullEyes) {
+                dupState = p === 'dupes' ? 'active' : 'wait'
+                dupVal = p === 'dupes' ? pct : 0
+              } else if (p === 'eyes') {
+                dupVal = Math.min(1, pct / DUP_SHARE)
+                dupState = dupVal >= 1 ? 'done' : 'active'
+              } else if (p === 'dupes') {
+                dupState = 'done'
+                dupVal = 1
+              }
+              const cols: { key: string; label: string; state: St; value: number }[] = [
+                { key: 'sharp', label: 'Checking sharpness', state: sharpState, value: p === 'sharp' ? pct : 1 },
+                ...(cullEyes ? [{ key: 'eyes', label: 'Checking faces', state: facesState, value: p === 'eyes' ? pct : p === 'sharp' ? 0 : 1 }] : []),
+                { key: 'dupes', label: 'Finding duplicates', state: dupState, value: dupVal },
               ]
-              const cur = order.indexOf(cull.phase)
               return (
                 <div className={`${panel} mt-8`}>
-                  <div className="space-y-6">
-                    {stages.map((st) => {
-                      const idx = order.indexOf(st.key)
-                      const state = idx < cur ? 'done' : idx === cur ? 'active' : 'wait'
-                      const pct = state === 'done' ? 100 : state === 'active' && cull.total ? (cull.done / cull.total) * 100 : 0
-                      return (
-                        <div key={st.key} className={state === 'wait' ? 'opacity-40' : ''}>
-                          <div className="flex items-baseline justify-between">
-                            <p className={`text-sm uppercase tracking-[0.18em] ${state === 'active' ? 'animate-pulse text-white' : 'text-white/55'}`}>{state === 'done' ? '✓ ' : ''}{st.label}</p>
-                            {state === 'active' && <p className="text-sm text-white/55">{cull.done} / {cull.total}</p>}
-                          </div>
-                          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                            <div className={`h-full bg-twilight transition-all ${state === 'active' ? 'animate-pulse' : ''}`} style={{ width: `${pct}%` }} />
-                          </div>
+                  <div className={`grid gap-8 ${cols.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+                    {cols.map((c) => (
+                      <div key={c.key} className={c.state === 'wait' ? 'opacity-40' : ''}>
+                        <p className={`text-xs uppercase tracking-[0.18em] ${c.state === 'active' ? 'animate-pulse text-white' : 'text-white/45'}`}>{c.label}</p>
+                        <p className={`mt-3 font-fraunces text-5xl ${c.state === 'active' ? 'animate-pulse text-white' : 'text-white/60'}`}>
+                          {c.state === 'wait' ? '—' : c.state === 'done' ? '✓' : <>{Math.round(c.value * cull.total)}<span className="text-white/25"> / {cull.total}</span></>}
+                        </p>
+                        <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                          <div className={`h-full bg-twilight transition-all ${c.state === 'active' ? 'animate-pulse' : ''}`} style={{ width: `${Math.round(c.value * 100)}%` }} />
                         </div>
-                      )
-                    })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )

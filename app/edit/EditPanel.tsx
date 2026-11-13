@@ -6,6 +6,7 @@ import { LOOKS, renderPreview, originalPreview, type Adjust } from '@/lib/enhanc
 import { briefAdjust, type Brief } from '@/lib/brief'
 import { addAdj } from '@/lib/tools'
 import Dials from '@/app/edit/Dials'
+import AskCami from '@/app/edit/AskCami'
 
 const BUCKET = 'galleries'
 
@@ -235,6 +236,7 @@ export default function EditPanel({
         </div>
 
         <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
+          <AskCami value={tweak} onChange={setTweak} lookName={lookId} strength={strength} brief={brief} previewUrl={afterUrl} />
           <Dials value={tweak} onChange={setTweak} />
           {signatureName && onSaveToSignature && (
             <div className="mt-4">

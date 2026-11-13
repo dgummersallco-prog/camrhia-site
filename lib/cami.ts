@@ -275,7 +275,7 @@ export function camiFix(rd: CamiReading, base: Baseline | null = null, bias: Cam
     for (const k of Object.keys(am)) if (Math.abs(am[k]) < 0.03) delete am[k]
     if (used) notes.push('Adjusted to match how you usually edit.')
   }
-  if (notes.length === 0) notes.push('Looks great. The exposure, color and tones are already well balanced, so Cami left it alone.')
+  if (notes.length === 0) notes.push('Looks great. The exposure, color and tones are already well balanced, so Camri left it alone.')
   return { adjust: a, notes, reading: rd, raw }
 }
 
@@ -288,7 +288,7 @@ export function camiBucket(rd: CamiReading): string {
   return (rd.median < 90 ? 'dark' : rd.median > 150 ? 'bright' : 'mid') + '|' + (rd.skinShare > 0.02 ? 'skin' : 'noskin')
 }
 
-// Averages how far the photographer moved each slider away from what Cami suggested.
+// Averages how far the photographer moved each slider away from what Camri suggested.
 export function camiLearn(rows: FeedbackRow[]): CamiBias {
   const out: CamiBias = {}
   const add = (key: string, sug: Record<string, number>, fin: Record<string, number>) => {
@@ -331,7 +331,7 @@ export function camiDelta(final: Adjust, before: Adjust): Adjust {
   return out as Adjust
 }
 
-// A short label for the biggest problem Cami would fix, or null if the photo is fine.
+// A short label for the biggest problem Camri would fix, or null if the photo is fine.
 export function camiFlag(adj: Adjust): string | null {
   const a = adj as Record<string, number>
   if ((a.exposure ?? 0) >= 0.3) return 'Too dark'

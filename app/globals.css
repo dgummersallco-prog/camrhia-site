@@ -286,3 +286,38 @@ html.dash-shell [class*="color-mix(in_srgb,rgb(var(--scene-a"], html.dash-shell 
   border-color: rgba(0, 0, 0, 0.15) !important;
 }
 .room-light [class*="bg-twilight"][class*="text-white"], .room-light [class*="bg-[var(--color-twilight)]"][class*="text-white"] { color: #fff; }
+
+/* pro slider */
+.room-light input[type=range].dial,
+input[type=range].dial {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  padding: 0 !important;
+  border: 0 !important;
+  background-color: transparent !important;
+  background-image: var(--dial-bg) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 100% 2px !important;
+  cursor: pointer;
+  outline: none;
+}
+input[type=range].dial::-webkit-slider-runnable-track { background: transparent; height: 16px; }
+input[type=range].dial::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 8px; height: 8px; margin-top: 2px;
+  border-radius: 9999px;
+  background: var(--color-twilight);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.22);
+}
+input[type=range].dial::-moz-range-track { background: transparent; height: 16px; }
+input[type=range].dial::-moz-range-thumb {
+  width: 8px; height: 8px; border-radius: 9999px;
+  background: var(--color-twilight);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.22);
+}
+input[type=range].dial:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(120,90,60,.3); }

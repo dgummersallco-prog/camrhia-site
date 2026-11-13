@@ -249,7 +249,7 @@ export default function EditingRoom() {
           { label: 'The Editing Room', items: [
             { href: '/edit', label: 'Edit a shoot', onClick: () => setTab('edit') },
             { href: '/edit?tab=styles', label: 'My styles', onClick: () => setTab('styles') },
-            { href: '/edit?tab=brain', label: 'Cami', onClick: () => setTab('brain') },
+            { href: '/edit?tab=brain', label: 'Camri', onClick: () => setTab('brain') },
           ] },
         ]}
         activeHref={tab === 'edit' ? '/edit' : tab === 'styles' ? '/edit?tab=styles' : '/edit?tab=brain'}
@@ -341,12 +341,12 @@ export default function EditingRoom() {
 
         {tab === 'brain' && (
           <div className="mt-8">
-            <p className="max-w-xl text-ink-soft">What Cami has noticed from the fixes you make while you review photos.</p>
+            <p className="max-w-xl text-ink-soft">What Camri has noticed from the fixes you make while you review photos.</p>
 
             {brain === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
             {brain && brain.checked === 0 && (
               <p className="mt-8 rounded-2xl border border-white/70 bg-white/60 p-8 text-ink-soft">
-                Nothing yet. Review a few photos in a shoot and fix what you want to change. Cami starts noticing your habits right away.
+                Nothing yet. Review a few photos in a shoot and fix what you want to change. Camri starts noticing your habits right away.
               </p>
             )}
             {brain && brain.checked > 0 && (
@@ -366,12 +366,12 @@ export default function EditingRoom() {
                   </div>
                 </div>
 
-                <p className="mt-10 font-fraunces text-xl text-ink">How Cami did on each shoot</p>
+                <p className="mt-10 font-fraunces text-xl text-ink">How Camri did on each shoot</p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {brain.scores.map((sc) => (
                     <div key={sc.gid} className="rounded-2xl border border-white/70 bg-white/60 p-5">
                       <p className="truncate text-ink">{titleOf(sc.gid)}</p>
-                      <p className="mt-1 text-sm text-ink-soft">Cami got {sc.pct}% right · {sc.checked} {sc.checked === 1 ? 'photo' : 'photos'} checked</p>
+                      <p className="mt-1 text-sm text-ink-soft">Camri got {sc.pct}% right · {sc.checked} {sc.checked === 1 ? 'photo' : 'photos'} checked</p>
                       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/50">
                         <div className="h-full rounded-full bg-[var(--color-twilight)]" style={{ width: `${sc.pct}%` }} />
                       </div>
@@ -411,7 +411,7 @@ export default function EditingRoom() {
 
                 {suggestions.length > 0 && (
                   <>
-                    <p className="mt-10 font-fraunces text-xl text-ink">Make Cami&apos;s edits yours</p>
+                    <p className="mt-10 font-fraunces text-xl text-ink">Make Camri&apos;s edits yours</p>
                     <p className="mt-2 max-w-xl text-ink-soft">You keep making the same fixes. Add them to your style and they happen on their own next time.</p>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       {suggestions.map(({ sig, fixed, useful, usual }) => (

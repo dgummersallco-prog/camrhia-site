@@ -159,7 +159,7 @@ export default function CamiDesigner() {
   const frameRef = useRef<HTMLIFrameElement>(null)
   const boxRef = useRef<HTMLDivElement>(null)
   const latest = useRef<Prof | null>(null)
-  const [msgs, setMsgs] = useState<Msg[]>([{ from: 'cami', text: "Hi, I'm Cami. What should I change?" }])
+  const [msgs, setMsgs] = useState<Msg[]>([{ from: 'cami', text: "Hi, I'm Camri. What should I change?" }])
   const [input, setInput] = useState('')
   const chatEnd = useRef<HTMLDivElement>(null)
   const [view, setView] = useState<'pages' | 'design' | 'settings'>('pages')
@@ -594,7 +594,7 @@ export default function CamiDesigner() {
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => { void undo() }} disabled={history.length === 0} className="rounded-lg px-3 py-1.5 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink disabled:opacity-40">Undo</button>
-            <button type="button" onClick={() => setCamiOpen((o) => !o)} className={'rounded-lg px-3 py-1.5 text-sm font-medium transition ' + (camiOpen ? ACC + ' text-white' : 'bg-black/5 text-ink hover:bg-black/10')}>Ask Cami</button>
+            <button type="button" onClick={() => setCamiOpen((o) => !o)} className={'rounded-lg px-3 py-1.5 text-sm font-medium transition ' + (camiOpen ? ACC + ' text-white' : 'bg-black/5 text-ink hover:bg-black/10')}>Ask Camri</button>
           </div>
         </div>
 
@@ -686,7 +686,7 @@ export default function CamiDesigner() {
 
         {camiOpen && (
           <div className="border-t border-black/10 bg-[#faf7f3] p-4">
-            <p className="font-fraunces text-lg font-semibold text-ink">Cami</p>
+            <p className="font-fraunces text-lg font-semibold text-ink">Camri</p>
             <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
               {msgs.slice(-4).map((m, i) => (
                 <div key={i} className={'max-w-[88%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto ' + ACC + ' text-white' : 'bg-white text-ink')}>{m.text}</div>
@@ -694,7 +694,7 @@ export default function CamiDesigner() {
               <div ref={chatEnd} />
             </div>
             <form onSubmit={(e) => { e.preventDefault(); send(input) }} className="mt-3 flex gap-2">
-              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Tell Cami what to change" className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Tell Camri what to change" className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
               <button type="submit" className={accentBtn + ' !px-4 !py-2'}>Send</button>
             </form>
           </div>

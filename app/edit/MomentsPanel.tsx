@@ -147,7 +147,7 @@ export default function MomentsPanel({ galleryId }: { galleryId: string }) {
     const threshold = Math.max(medianGap * 10, 120000)
     const picks = gaps.filter((x) => x.g > threshold).sort((a, b) => b.g - a.g).slice(0, 11).map((x) => x.i).sort((a, b) => a - b)
     if (picks.length === 0) {
-      setNote('Cami could not find clear breaks in the timing. Tap photos to start moments yourself.')
+      setNote('Camri could not find clear breaks in the timing. Tap photos to start moments yourself.')
       return
     }
     const keep = new Map(moments.map((m) => [m.startId, m.name]))
@@ -192,7 +192,7 @@ export default function MomentsPanel({ galleryId }: { galleryId: string }) {
     <div className="mt-10 rounded-2xl border border-white/10 bg-[#151518] p-5">
       <p className="text-sm text-white/80">Moments (optional)</p>
       <p className="mt-1 max-w-2xl text-sm text-white/50">
-        Break the gallery into sections your client sees in order, like {names.slice(0, 3).join(', ')}. Tap a photo below to start a new moment there, or let Cami suggest breaks from when the photos were taken.
+        Break the gallery into sections your client sees in order, like {names.slice(0, 3).join(', ')}. Tap a photo below to start a new moment there, or let Camri suggest breaks from when the photos were taken.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/70 transition hover:border-white/30" onClick={suggest}>Suggest from capture times</button>
