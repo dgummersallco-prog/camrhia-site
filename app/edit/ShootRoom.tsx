@@ -764,41 +764,63 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
             <h1 className="font-fraunces text-4xl text-white">Bring in the shoot</h1>
             <p className="mt-3 max-w-xl text-white/55">Drop your photos in. RAW files from your camera work. Keep this tab open until they finish.</p>
 
-            <div
-              className={`mt-8 flex flex-col items-center rounded-3xl border-2 border-dashed px-6 py-16 text-center transition ${dragging ? 'border-twilight bg-twilight/10' : 'border-white/15 bg-[#121215]'}`}
-              onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(Array.from(e.dataTransfer.files)) }}
-            >
-              <p className="font-fraunces text-2xl text-white">{up.busy ? `Uploading ${up.done} of ${up.total}` : 'Drop photos here'}</p>
-              <p className="mt-2 text-sm text-white/45">JPG, PNG, WebP, HEIC and RAW, up to 250 MB each</p>
-              {up.busy && (
-                <div className="mt-6 h-1.5 w-full max-w-md overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full bg-twilight transition-all" style={{ width: `${up.total ? (up.done / up.total) * 100 : 0}%` }} />
-                </div>
-              )}
-              <input ref={fileInput} type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = '' }} />
-              <input ref={folderInput} type="file" multiple className="hidden" {...({ webkitdirectory: '' } as Record<string, string>)} onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = '' }} />
-              <div className="mt-8 flex gap-3">
-                <button className={btnPrimary} disabled={up.busy} onClick={() => fileInput.current?.click()}>Choose photos</button>
-                <button className={btnQuiet} disabled={up.busy} onClick={() => folderInput.current?.click()}>Choose folder</button>
-              </div>
-              {up.note && <p className="mt-6 text-sm text-white/60">{up.note}</p>}
-              {!up.busy && failedRef.current.length > 0 && (
-                <button className={`${btnQuiet} mt-4`} onClick={() => addFiles(failedRef.current)}>Retry the failed ones</button>
-              )}
-            </div>
+            <input ref={fileInput} type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = '' }} />
+            <input ref={folderInput} type="file" multiple className="hidden" {...({ webkitdirectory: '' } as Record<string, string>)} onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = '' }} />
 
-            {photos.length > 0 && (
-              <div className="mt-8">
-                <p className="text-sm text-white/60">{photos.length} {photos.length === 1 ? 'photo' : 'photos'} in this shoot</p>
-                <div className="mt-3 grid grid-cols-6 gap-2 sm:grid-cols-8 lg:grid-cols-12">
-                  {photos.slice(0, 24).map((p) => (
+            {photos.length === 0 ? (
+              <div
+                className={`mt-8 flex flex-col items-center rounded-3xl border-2 border-dashed px-6 py-16 text-center transition ${dragging ? 'border-twilight bg-twilight/10' : 'border-white/15 bg-[#121215]'}`}
+                onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(Array.from(e.dataTransfer.files)) }}
+              >
+                <p className="font-fraunces text-2xl text-white">{up.busy ? `Uploading ${up.done} of ${up.total}` : 'Drop photos here'}</p>
+                <p className="mt-2 text-sm text-white/45">JPG, PNG, WebP, HEIC and RAW, up to 250 MB each</p>
+                {up.busy && (
+                  <div className="mt-6 h-1.5 w-full max-w-md overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full bg-twilight transition-all" style={{ width: `${up.total ? (up.done / up.total) * 100 : 0}%` }} />
+                  </div>
+                )}
+                <div className="mt-8 flex gap-3">
+                  <button className={btnPrimary} disabled={up.busy} onClick={() => fileInput.current?.click()}>Choose photos</button>
+                  <button className={btnQuiet} disabled={up.busy} onClick={() => folderInput.current?.click()}>Choose folder</button>
+                </div>
+                {up.note && <p className="mt-6 text-sm text-white/60">{up.note}</p>}
+                {!up.busy && failedRef.current.length > 0 && (
+                  <button className={`${btnQuiet} mt-4`} onClick={() => addFiles(failedRef.current)}>Retry the failed ones</button>
+                )}
+              </div>
+            ) : (
+              <div
+                className="mt-6"
+                onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(Array.from(e.dataTransfer.files)) }}
+              >
+                <div className={`flex flex-wrap items-center gap-3 rounded-2xl border-2 border-dashed px-5 py-4 transition ${dragging ? 'border-twilight bg-twilight/10' : 'border-white/15 bg-[#121215]'}`}>
+                  <p className="mr-auto text-sm text-white/60">{up.busy ? `Uploading ${up.done} of ${up.total}` : 'Drop more photos anywhere here, or'}</p>
+                  <button className={btnQuiet} disabled={up.busy} onClick={() => fileInput.current?.click()}>Add photos</button>
+                  <button className={btnQuiet} disabled={up.busy} onClick={() => folderInput.current?.click()}>Add a folder</button>
+                  {up.busy && (
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full bg-twilight transition-all" style={{ width: `${up.total ? (up.done / up.total) * 100 : 0}%` }} />
+                    </div>
+                  )}
+                </div>
+                {up.note && <p className="mt-3 text-sm text-white/60">{up.note}</p>}
+                {!up.busy && failedRef.current.length > 0 && (
+                  <button className={`${btnQuiet} mt-3`} onClick={() => addFiles(failedRef.current)}>Retry the failed ones</button>
+                )}
+
+                <p className="mt-6 text-sm text-white/60">{photos.length} {photos.length === 1 ? 'photo' : 'photos'} in this shoot</p>
+                <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-8">
+                  {photos.map((p) => (
                     <div key={p.id} className="aspect-square overflow-hidden rounded-lg bg-white/5">{img(p)}</div>
                   ))}
                 </div>
-                <div className="mt-8">
-                  <button className={btnPrimary} disabled={up.busy} onClick={() => goTo(1)}>Continue</button>
+
+                <div className="sticky bottom-4 mt-8 flex justify-end">
+                  <button className={`${btnPrimary} shadow-lg`} disabled={up.busy} onClick={() => goTo(1)}>Continue to culling</button>
                 </div>
               </div>
             )}
