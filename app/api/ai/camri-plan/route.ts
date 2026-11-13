@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     if (!message) return Response.json({ text: '' })
     const twist = TWISTS[Math.floor(Math.random() * TWISTS.length)]
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const system = 'You are Camri, a friendly white pearl camera-robot helping a photographer design their website. They just asked for a big design. Reply with JSON only, no markdown: {"text": string, "images": [{"name": "frame", "edge": "top", "prompt": string}, {"name": "strip", "edge": "top" or "bottom", "prompt": string}]}. "text": think out loud in 2 or 3 short, warm, excited sentences about what you are about to build, naming specific details in plain words such as colors, scenery and big visuals; take this fresh angle this time: ' + twist + '; no lists, no emoji, no markdown, no question; start with something like I\'m picturing or Okay, here\'s what I\'m thinking. "images": two photoreal scenery pictures made just for THIS theme, never people or text. The frame prompt must start with: a photoreal [theme] border frame for a website hero banner: then describe the specific scenery and objects down the left and right sides, and end with: the whole center 76 percent of the image left completely empty and fully transparent. The strip prompt describes a long straight horizontal strip of theme scenery, photoreal, edge to edge, to run along the top or bottom edge (choose edge: waves or ground go on the bottom, garlands or hanging things go on the top). Layout facts you must follow: both pictures are 1536x1024 landscape and get stretched across the full width of a wide website page, with text, a menu and photos in the middle, so for the frame keep ALL scenery inside the outer 12 percent on the left and right edges and nothing in the middle; for the strip put the scenery only in the bottom 30 percent of the image (or the top 30 percent if the edge is top) and leave everything above or below it completely empty and fully transparent. Keep each picture prompt under 100 words.'
+    const system = `You are Camri, a friendly white pearl camera-robot helping a photographer design their website. They just asked for a big design. Reply with JSON only, no markdown: {"text": string, "images": [{"name": "scene", "edge": "top", "prompt": string}]}. "text": think out loud in 2 or 3 short, warm, excited sentences about what you are about to build, naming specific details in plain words such as colors, scenery and big visuals; take this fresh angle this time: ${twist}; no lists, no emoji, no markdown, no question; start with something like I am picturing or Okay, here is what I am thinking. "images": exactly one photoreal full-page background scene made just for THIS theme, never people or text. It is 1536x1024 landscape and will be pinned behind the whole website as a fixed backdrop, with text, menus and the photographers own photos laid over it, so describe a rich, immersive, cinematic scene with depth (sky, horizon, foreground details, soft glowing light) whose middle area is calm, softly lit and slightly darker and less busy so white and gold text stays readable, with the richest details toward the left and right edges. Keep the prompt under 100 words.`
     const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 1800, system, messages: [{ role: 'user', content: message }] })
     const raw = res.content.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('')
     let text = ''
@@ -39,8 +39,8 @@ export async function POST(request: Request) {
       const m = raw.match(/\{[\s\S]*\}/)
       const parsed: any = m ? JSON.parse(m[0]) : null
       text = String(parsed?.text ?? '').trim().slice(0, 600)
-      images = (Array.isArray(parsed?.images) ? parsed.images : []).slice(0, 2).map((i: any) => ({
-        name: i?.name === 'strip' ? 'strip' : 'frame',
+      images = (Array.isArray(parsed?.images) ? parsed.images : []).slice(0, 1).map((i: any) => ({
+        name: 'scene',
         edge: i?.edge === 'bottom' ? 'bottom' : 'top',
         prompt: String(i?.prompt ?? '').trim().slice(0, 600),
       })).filter((i: any) => i.prompt)
@@ -49,11 +49,7 @@ export async function POST(request: Request) {
       text = tm ? tm[1].replace(/\\"/g, '"').slice(0, 600) : ''
     }
     if (!images.length) {
-      const theme = message.slice(0, 120)
-      images = [
-        { name: 'frame', edge: 'top', prompt: 'a photoreal ' + theme + ' border frame for a website hero banner: rich, detailed scenery and objects down the left and right sides that fit this theme, soft cinematic lighting, no people, no text, the whole center 76 percent of the image left completely empty and fully transparent' },
-        { name: 'strip', edge: 'bottom', prompt: 'a long straight horizontal strip of photoreal scenery for this theme: ' + theme + ', edge to edge, soft cinematic lighting, no people, no text' },
-      ]
+      images = [{ name: 'scene', edge: 'top', prompt: 'a rich, immersive, cinematic photoreal scene for this theme: ' + message.slice(0, 120) + ', soft glowing light, depth, the middle calm and slightly darker and less busy so text stays readable, the richest details toward the left and right edges, no people, no text' }]
     }
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0

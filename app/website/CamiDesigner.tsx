@@ -453,7 +453,7 @@ export default function CamiDesigner() {
               return null
             }
           }))).filter(Boolean) as { name: string; edge: string; url: string }[]
-          if (madeImgs.length) planNote += "\\n\\n(Photoreal images were just generated for this design as transparent PNG files. Do not order any images, and do not use any emoji decorations or css-drawn garland, lights, ornaments or scenery in this design: the generated images are the only decoration art. You MUST use every one in your css as a background-image with url('ADDRESS') using these exact addresses: " + madeImgs.map((i) => i.name + ' (' + i.edge + '): ' + i.url).join('; ') + ". Placement by name. frame: a full-bleed overlay on the hero with position:absolute, inset:0, background-size:100% 100%, background-position:center, above the hero photo and below the text. strip: a strip along its edge (top means just under the menu, bottom means the bottom of the hero) with position:absolute, left:0, right:0, width 100 percent, height about 140px, background-size:100% 100%, above the hero photo and below the text.)"
+          if (madeImgs.length) planNote += "\\n\\n(A photoreal backdrop picture was just generated and is already pinned behind the whole page by the builder, so do not use any image in your css and do not draw scenery with emoji or css. Design the look to sit over a rich dark photographic backdrop: light, high-contrast text with soft text shadows, and no solid full-width section background colors.)"
         } catch (e) { console.error('camri-plan failed', e) }
       }
       const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: (tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t) + planNote, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
@@ -465,9 +465,7 @@ export default function CamiDesigner() {
           let extra = ''
           for (const im of madeImgs) {
             if (String(ch.css ?? '').includes(im.url)) continue
-            const pos = im.name === 'strip' ? 'left:0;right:0;height:24vw;' + (im.edge === 'bottom' ? 'bottom:0;' : 'top:0;') : 'inset:0;'
-            const bg = im.name === 'strip' ? 'center ' + (im.edge === 'bottom' ? 'bottom' : 'top') + '/100% auto' : 'center/100% 100%'
-            extra += ' body::' + (im.name === 'strip' ? 'after' : 'before') + '{content:"";position:fixed;' + pos + 'z-index:3;pointer-events:none;background:url(' + im.url + ') ' + bg + ' no-repeat}'
+            extra += ' html body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:url(' + im.url + ') center/cover no-repeat} body main,body section,body header,body nav,body footer{background:transparent!important}'
           }
           if (extra) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')) + extra
         }

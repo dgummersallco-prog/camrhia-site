@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         prompt: 'Photorealistic, highly detailed: ' + prompt + '. Scenery and objects only: no people, no faces, no text, no watermark. Cinematic, professional photography quality.',
         size,
         quality: process.env.OPENAI_IMAGE_QUALITY || 'medium',
-        background: 'transparent',
+        background: name === 'scene' ? 'opaque' : 'transparent',
         output_format: 'png',
         n: 1,
       }),
