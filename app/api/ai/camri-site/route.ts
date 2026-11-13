@@ -73,7 +73,7 @@ ${String(site.css ?? '').slice(0, 6000) || '(none)'}`
     while (messages.length && messages[0].role !== 'user') messages.shift()
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 1800, system, messages })
+    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 4000, system, messages })
 
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0

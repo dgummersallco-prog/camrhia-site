@@ -735,7 +735,7 @@ export default function CamiDesigner() {
 
         <div className="flex min-h-0 flex-1 flex-col">
           {kitNow.done && (
-            <div className="max-h-[46%] shrink-0 overflow-y-auto border-b border-black/10 bg-[#f1e9e0] px-5 py-4">
+            <div className="min-h-0 flex-1 overflow-y-auto border-b border-black/10 bg-[#f1e9e0] px-5 py-4">
               <p className="font-fraunces text-lg font-semibold text-ink">Your setup</p>
               {(() => {
                 const lab = 'mt-3 text-[11px] font-semibold uppercase tracking-wider text-ink-soft'
@@ -804,7 +804,7 @@ export default function CamiDesigner() {
             </div>
           )}
 
-          <div className="flex min-h-0 flex-1 flex-col bg-[#faf7f3]">
+          <div className="flex h-[320px] shrink-0 flex-col bg-[#faf7f3]">
             <div className="flex items-center gap-2 px-5 pt-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/camri/13_face_avatar.png" alt="" className="h-9 w-9 rounded-full" />

@@ -12,7 +12,7 @@ const PAGE_HELP: [string, Help][] = [
   ['/galleries/', { tip: 'Tap Style this gallery and I will help with the cover and look.', chips: ['Which galleries are due soon?'] }],
   ['/galleries', { chips: ['Which galleries are due soon?', 'What sessions are coming up that will need a gallery?'] }],
   ['/edit', { chips: ['Which shoots should I edit first?', 'Which galleries are due this week?'] }],
-  ['/website', { tip: 'I can restyle your site with you. Open my chat on this page and tap Walk me through it.', chips: [] }],
+  ['/website', { tip: 'I can design your site with you. Tap a layout, color or font in Your setup, or just tell me what to change.', chips: [] }],
   ['/questionnaires', { tip: 'Use the Ask Camri box on this page to reword, add or remove questions.', chips: [] }],
   ['/specials', { tip: 'Use Design with Camri on this page to build your special.', chips: [] }],
   ['/calendar', { tip: 'Ask Camri on this page about any date, or tell me what to block.', chips: ['What is coming up this week?'] }],
