@@ -1,4 +1,5 @@
 'use client'
+import CustomJs from '@/app/site/CustomJs'
 import { sanitizeCss } from '@/lib/safeCss'
 
 import { useSiteBase } from '@/app/site/useSiteBase'
@@ -818,6 +819,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   return (
     <>
+      <CustomJs code={String((r as any).site_settings?.custom_js ?? '')} />
       <link rel="stylesheet" href={t.fontsHref} />
       {extraFontsHref && <link rel="stylesheet" href={extraFontsHref} />}
       {secCss && <style dangerouslySetInnerHTML={{ __html: secCss }} />}

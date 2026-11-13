@@ -12,7 +12,7 @@ function safeUrl(raw: string): string {
   return 'none'
 }
 
-export function sanitizeCss(input: unknown): string {
+function sanitizeCssCore(input: unknown): string {
   if (typeof input !== 'string') return ''
   let s = input.slice(0, 40000)
   s = s.replace(/\/\*[\s\S]*?\*\//g, '')
@@ -25,4 +25,20 @@ export function sanitizeCss(input: unknown): string {
   s = s.replace(/position\s*:\s*fixed/gi, 'position:fixed;pointer-events:none')
   s = s.replace(/pointer-events\s*:\s*(?!none\b)[^;}]*/gi, 'pointer-events:none')
   return s.trim()
+}
+
+// Camri writes symbols as content:'\2744'. Backslashes are stripped for safety, so turn those
+// codes into the real character first.
+function unescapeContent(css: string): string {
+  return css.replace(/content\s*:\s*(["'])((?:\\[0-9a-fA-F]{1,6}\s?|[^"'\\\n])*)\1/g, (_m, q: string, body: string) => {
+    const out = body.replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_x, hex: string) => {
+      const cp = parseInt(hex, 16)
+      return cp >= 0x20 && cp <= 0x10ffff && ![0x22, 0x27, 0x3c, 0x3e, 0x5c].includes(cp) ? String.fromCodePoint(cp) : ''
+    })
+    return 'content:' + q + out + q
+  })
+}
+
+export function sanitizeCss(input: unknown): string {
+  return sanitizeCssCore(typeof input === 'string' ? unescapeContent(input) : input)
 }

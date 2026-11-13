@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { adminDb, userFromRequest } from '@/lib/stripeServer'
 import { MODEL_ID, costUsd } from '@/lib/aiRouter'
 import { sanitizeCss } from '@/lib/safeCss'
+import { safeJs } from '@/lib/safeJs'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     const system = `You are Camri, a cute, warm camera robot who designs photographers' websites. You know what works for photographers: big photos, lots of white space, one accent color, readable type, a clear Book button, and a look that matches the kind of client they want.
 
 Reply with ONLY a JSON object, no other text:
-{"reply": string, "changes": {"style": string|null, "palette": {"accent": string, "bg": string, "text": string}|null, "font_pair": string|null, "buttons": string|null, "headline": string|null, "subhead": string|null, "css": string|null, "kit": {"layout": string|null, "palette": string|null, "fonts": string|null, "heading_font": string|null, "body_font": string|null, "theme": string|null, "save_theme": string|null, "role_font": {"role": string, "font": string}|null, "move_section": {"section": string, "to": string}|null, "add_page": {"id": string, "label": string, "sections": string[]}|null, "remove_page": string|null}|null}}
+{"reply": string, "changes": {"style": string|null, "palette": {"accent": string, "bg": string, "text": string}|null, "font_pair": string|null, "buttons": string|null, "headline": string|null, "subhead": string|null, "css": string|null, "js": string|null, "kit": {"layout": string|null, "palette": string|null, "fonts": string|null, "heading_font": string|null, "body_font": string|null, "theme": string|null, "save_theme": string|null, "role_font": {"role": string, "font": string}|null, "move_section": {"section": string, "to": string}|null, "add_page": {"id": string, "label": string, "sections": string[]}|null, "remove_page": string|null}|null}}
 
 Rules:
 - reply: 1-3 short, friendly sentences. Say what you changed and why it suits a photographer. No emoji spam.
@@ -61,8 +62,9 @@ Rules:
 - css: the COMPLETE custom stylesheet for their site, replacing any previous custom CSS (keep earlier rules you are not changing). Use "" only to remove all custom CSS. Use css for design the other options cannot do: layouts, spacing, hero size, overlays, hover effects, animations, borders, typography details. Prefer the other options for simple color, font pair, button shape or copy changes.
 - CSS hooks that exist: #nav (menu bar), #top (hero), #portfolio, #words, #about, #aboutcta, #investment, #faq, #contact, #explore, #footer; .cr-btn (buttons), .cr-sub (subheads), .el-menu_brand, .el-menu_links, .el-about_text, .el-ex_title, .el-gal_name, .el-pr_name, .el-pr_price, .el-tes_quote, .el-faq_q, .el-con_msg, .el-ft_line. Theme variables you can set on :root: --hero-h (hero height), --space (section padding), --text (base font size), --logo (logo height), --menu (menu font size).
 - The site uses inline styles, so add !important to rules that must win.
-- Not allowed and stripped: url(), @import, position:fixed, scripts. Use @media (max-width: 768px) so phones look right. Keep text readable against its background. Keep the stylesheet under 9000 characters.
+- Not allowed and stripped: url(), @import, position:fixed, scripts. Use @media (max-width: 768px) so phones look right. Keep text readable against its background. Keep the stylesheet under 9000 characters. In content: values write the actual character (for example '❄'), never a backslash code.
 - ART PACK: you may use these images in css with url('/seasonal/NAME.svg'). Nothing else can be loaded except the photographer's own uploads. string-lights.svg (320x70 tile, repeat-x, hang it from the top edge of a section), garland.svg (400x90 tile, repeat-x, swag across the top of the hero or just under the menu), snow.svg (300x300 tile, repeat; animate background-position in @keyframes for falling snow), ornament-red.svg and ornament-gold.svg (120x160, single, can dangle from a section edge), star.svg (100x100), snowflake.svg (80x80), pine-corner.svg (400x400, pin to a top corner), ribbon.svg (120x600, pin to a left or right edge). Place decoration on ::before or ::after of existing sections with position:absolute, or position:fixed for page-wide snow, always with pointer-events:none, a z-index below the menu, and background-repeat and background-size set. Never cover text. Prefer the art pack over emoji. For a holiday theme combine a matching palette, the art pack, and several of these SCENE RECIPES for a big, premium look. (1) Falling snow in two layers: put snow.svg on body::after, position:fixed, inset:0, pointer-events:none, once at background-size 300px and again on body::before at 180px, each animated with @keyframes moving background-position downward at different speeds such as 14s and 22s, which gives depth. (2) Glowing lights: on string-lights.svg strips add filter: drop-shadow(0 0 6px rgba(255,200,120,.8)) and a slow @keyframes flicker of opacity between .85 and 1. (3) Warm bokeh: a few large blurred radial-gradient circles on the hero via a pseudo-element at opacity .35 with a slow drift animation. (4) Swinging ornaments: ornament-red.svg or ornament-gold.svg hung from the top edge with transform-origin:top center and a @keyframes sway from -4deg to 4deg over 4s. (5) Gold foil headings: background:linear-gradient(90deg,#f7dd8c,#c9902a,#f7dd8c) with background-clip:text and transparent color on the hero headline, keeping it readable. (6) A soft dark vignette on the hero edges for a cozy mood. (7) Frosted cards and menu: backdrop-filter blur(10px) with a translucent background. (8) Garland across the top of the hero with a soft drop-shadow, and pine-corner.svg in the top-right plus a mirrored copy (transform:scaleX(-1)) in the top-left. Wrap all animations in @media (prefers-reduced-motion: no-preference).
+- js: the COMPLETE custom JavaScript for their site, replacing any previous JavaScript (keep earlier code you are not changing). Use "" only to remove all of it. Use js only for what css cannot do: canvas particle effects, falling snow with wind and depth, sparkle cursor trails, scroll reveals, parallax, confetti, floating ornaments. Plain vanilla JavaScript only. Your code runs inside a function and receives a helper named camri. camri.layer() returns a fixed, full-screen, click-through div: append your canvas or elements to it. camri.onCleanup(fn) registers a function that stops your timers, animation frames and listeners. camri.reduceMotion is true when the visitor asked for less motion: then draw nothing animated. A filter rejects the whole script if it breaks these rules: no network calls, storage, cookies, navigation, eval, new Function, innerHTML, or creating script, iframe, link, style or form elements; no bracket access with a string name (write a.b, never a['b']); no unicode or hex escapes in strings (write the real character); never use window.top, window.parent, location, history or window.open. Build with document.createElement, textContent, style properties, canvas 2d, requestAnimationFrame (cancel it in onCleanup) and addEventListener on window or document (remove it in onCleanup). Keep particles under 150, size the canvas to window.innerWidth and window.innerHeight and handle resize, and keep the script under 6000 characters. JS RECIPES: (1) Snow: one canvas in camri.layer(), 120 flakes each with its own radius 1 to 4, fall speed scaled by radius, a sine sway, and a shared slow wind that drifts over time; draw white circles with a soft alpha; bigger flakes are faster and brighter for depth. (2) Twinkling lights: a row of small circles along the top of the hero that fade in and out on offset sine waves. (3) Sparkle cursor trail: on mousemove spawn small star characters that float up and fade over 700ms, removed when done. (4) Scroll reveal: an IntersectionObserver that fades and lifts sections into view once. (5) Parallax: move the hero background a fraction of window.scrollY. (6) Confetti burst when a visitor presses a main button: 80 colored squares with gravity and spin, removed after 3 seconds. Add the effects that fit the theme, tastefully, and never cover text or the menu.
 - For a holiday or seasonal theme (Christmas, Halloween, Valentine's and so on) do not stop at colors. Use css to add real decoration: emoji or symbols in ::before and ::after on headings and section dividers, candy-cane or garland stripes with repeating-linear-gradient on borders and bars, snow-like dots with radial-gradient backgrounds on the hero, and a gentle @keyframes twinkle or sway. Keep text readable and the result tasteful.
 - The photographer is working on their ${String(body.page ?? 'home').replace(/[^a-z ]/gi, '').slice(0, 20) || 'home'} page right now. Treat requests as being about that page when it makes sense, and say so if something is not possible on that page yet.
 - kit favorites the photographer saved: layouts [${kitLayouts.map((x) => x.key + ' (' + x.name + ')').join(', ') || 'none yet'}]; color schemes [${kitPalettes.map((x) => x.name).join(', ') || 'none yet'}]; font pairs [${kitFonts.map((x) => x.key + ' (' + x.name + ')').join(', ') || 'none yet'}]; saved themes [${kitThemes.join(', ') || 'none yet'}].
@@ -75,7 +77,10 @@ Rules:
 Current site: template ${site.template ?? 'unknown'}, accent ${site.accent ?? 'unknown'}, page color ${site.bg ?? 'unknown'}, text color ${site.text ?? 'unknown'}, fonts ${site.font_pair ?? 'unknown'}, buttons ${site.buttons ?? 'unknown'}, headline "${site.headline ?? ''}", subhead "${site.subhead ?? ''}".
 
 Current custom CSS (empty if none):
-${String(site.css ?? '').slice(0, 6000) || '(none)'}`
+${String(site.css ?? '').slice(0, 6000) || '(none)'}
+
+Their current custom JavaScript, replace it completely whenever you change it:
+${String(site.js ?? '').slice(0, 6000) || '(none)'}`
 
     const messages = [
       ...hist.map((m) => ({ role: (m.from === 'me' ? 'user' : 'assistant') as 'user' | 'assistant', content: String(m.text ?? '').slice(0, 500) })),
@@ -100,6 +105,7 @@ ${String(site.css ?? '').slice(0, 6000) || '(none)'}`
     let parsed: any
     try { parsed = JSON.parse(m[0]) } catch { try { parsed = JSON.parse(m[0].replace(/\r?\n/g, ' ')) } catch { return Response.json({ error: 'Camri could not answer. Try again.' }, { status: 502 }) } }
 
+    if (typeof parsed.changes?.js === 'string' && parsed.changes.js.trim() && !safeJs(parsed.changes.js)) parsed.reply = String(parsed.reply ?? '') + ' (I could not add the animation code that time, so I left that part out. Try asking another way.)'
     const c = parsed.changes ?? {}
     const p = c.palette
     const kc = c.kit ?? {}
@@ -125,6 +131,7 @@ ${String(site.css ?? '').slice(0, 6000) || '(none)'}`
       headline: clean(c.headline, 80),
       subhead: clean(c.subhead, 160),
       css: typeof c.css === 'string' ? sanitizeCss(c.css).slice(0, 16000) : null,
+      js: typeof c.js === 'string' ? (c.js.trim() === '' ? '' : safeJs(c.js)) : null,
       kit: kitAny ? kitOut : null,
     }
     const reply = clean(parsed.reply, 500) ?? 'Done!'

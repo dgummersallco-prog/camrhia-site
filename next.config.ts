@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
           { key: "Content-Type", value: "application/json" },
         ],
       },
+      {
+        // Photographer sites run on their own host, so code Camri writes can never reach the dashboard,
+        // and this policy stops it talking to anything outside Camrhia and Supabase.
+        source: "/:path*",
+        has: [{ type: "host", value: "sites.camrhia.com" }],
+        headers: [
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://camrhia.com https://www.camrhia.com" },
+        ],
+      },
     ];
   },
 };

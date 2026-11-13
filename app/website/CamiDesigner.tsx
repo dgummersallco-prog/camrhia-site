@@ -420,12 +420,12 @@ export default function CamiDesigner() {
       const st0 = form.site_settings ?? {}
       const kk = (st0 as any).kit ?? {}
       const kitPayload = { layouts: (kk.layouts ?? []).map((key: string) => ({ key, name: STYLES.find((q) => q.key === key)?.name ?? key })), palettes: (kk.palettes ?? []).map((p: any) => ({ name: p.name })), fonts: (kk.fonts ?? []).map((key: string) => ({ key, name: TYPE_SETS.find((t) => t.key === key)?.name ?? key })), themes: (kk.themes ?? []).map((t: any) => t.name), type: kk.type ?? null }
-      const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
+      const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
       if (!res.ok) console.error('camri-site status', res.status, await res.clone().text().catch(() => ''))
       const ai = res.ok ? await res.json() : null
       if (ai?.reply && ai.changes) {
         const ch = ai.changes
-        if (ch.style || ch.palette || ch.font_pair || ch.buttons || ch.headline || ch.subhead || typeof ch.css === 'string' || ch.kit) {
+        if (ch.style || ch.palette || ch.font_pair || ch.buttons || ch.headline || ch.subhead || typeof ch.css === 'string' || typeof ch.js === 'string' || ch.kit) {
           await commit((n) => {
             n.site_settings = n.site_settings ?? {}
             if (ch.kit) applyKitOps(n, ch.kit)
@@ -437,6 +437,7 @@ export default function CamiDesigner() {
             if (ch.headline) n.site_headline = ch.headline
             if (ch.subhead) n.site_subhead = ch.subhead
             if (typeof ch.css === 'string') { if (ch.css) n.site_settings.custom_css = ch.css; else delete n.site_settings.custom_css }
+            if (typeof ch.js === 'string') { if (ch.js) n.site_settings.custom_js = ch.js; else delete n.site_settings.custom_js }
             if (ch.kit?.save_theme) saveThemeAs(n, ch.kit.save_theme)
           })
         }
@@ -759,7 +760,8 @@ export default function CamiDesigner() {
   const chosenPages: string[] = ['home', 'booking', ...(stNow.off.includes('galleries') ? [] : ['galleries']), ...(stNow.off.includes('about') ? [] : ['about']), ...stNow.extra.map((e) => e.id)]
   const pageLabel = (k: string) => PAGE_LABEL[k] ?? stNow.extra.find((e) => e.id === k)?.label ?? (k.charAt(0).toUpperCase() + k.slice(1))
   const PAGE_PATH: Record<string, string> = { home: '', about: '/about', galleries: '/galleries', booking: '/availability' }
-  const previewSrc = '/site/' + form.public_token + (PAGE_PATH[curPage] ?? (curPage && curPage !== 'home' ? '/p/' + curPage : '')) + '?preview=1'
+  const previewBase = process.env.NODE_ENV === 'production' ? 'https://sites.camrhia.com' : ''
+  const previewSrc = previewBase + '/site/' + form.public_token + (PAGE_PATH[curPage] ?? (curPage && curPage !== 'home' ? '/p/' + curPage : '')) + '?preview=1'
   const ACC = 'bg-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)]'
   const tabsDef: { k: 'pages' | 'design' | 'settings'; label: string; icon: string }[] = [
     { k: 'pages', label: 'Pages', icon: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5' },
