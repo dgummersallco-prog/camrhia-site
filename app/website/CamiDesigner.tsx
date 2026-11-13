@@ -433,7 +433,14 @@ export default function CamiDesigner() {
       const imgJobs = kitImgs.map(async (im) => {
         try {
           const rr = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: im.name, prompt: im.prompt, shape: im.shape }) })
-          if (!rr.ok) { console.error('camri-image status', rr.status, await rr.text().catch(() => '')); return null }
+          if (!rr.ok) {
+            const tx = await rr.text().catch(() => '')
+            console.error('camri-image status', rr.status, tx)
+            let why = tx
+            try { const pj2 = JSON.parse(tx); why = pj2.detail || pj2.error || tx } catch { /* plain text */ }
+            setMsgs((m) => [...m, { from: 'cami', text: "I couldn't make the " + im.name + " picture. " + String(why).slice(0, 300) }])
+            return null
+          }
           const jj = await rr.json()
           return jj?.url ? { ...im, url: jj.url as string } : null
         } catch (e) { console.error('camri-image failed', e); return null }

@@ -44,8 +44,11 @@ export async function POST(request: Request) {
       }),
     })
     if (!res.ok) {
-      console.error('camri-image openai', res.status, (await res.text().catch(() => '')).slice(0, 500))
-      return Response.json({ error: 'The picture did not work out.' }, { status: 502 })
+      const errText = (await res.text().catch(() => '')).slice(0, 800)
+      console.error('camri-image openai', res.status, errText)
+      let detail = errText
+      try { detail = JSON.parse(errText)?.error?.message ?? errText } catch { /* plain text */ }
+      return Response.json({ error: 'The picture did not work out.', detail: 'OpenAI said (' + res.status + '): ' + String(detail).slice(0, 300) }, { status: 502 })
     }
     const j: any = await res.json()
     const b64 = j?.data?.[0]?.b64_json
