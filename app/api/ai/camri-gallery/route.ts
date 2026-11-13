@@ -1,3 +1,4 @@
+import { hasCamriAccess } from '@/lib/aiAccess'
 import Anthropic from '@anthropic-ai/sdk'
 import { adminDb, userFromRequest } from '@/lib/stripeServer'
 import { MODEL_ID, costUsd } from '@/lib/aiRouter'
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
 
     const beta = (process.env.AI_BETA_EMAILS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
     const email = (auth.user.email ?? '').toLowerCase()
-    if (!email || !beta.includes(email)) return Response.json({ error: 'Camri is not open to your account yet.' }, { status: 403 })
+    if (!(await hasCamriAccess(auth.user.id, email))) return Response.json({ error: 'Camri is not open to your account yet.' }, { status: 403 })
     if (!process.env.ANTHROPIC_API_KEY) return Response.json({ error: 'Camri is not set up yet.' }, { status: 503 })
 
     const body = await request.json()
