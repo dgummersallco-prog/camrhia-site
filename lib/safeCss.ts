@@ -9,6 +9,7 @@ function safeUrl(raw: string): string {
   if (u.includes('..')) return 'none'
   if (/^\/seasonal\/[a-z0-9_\-./]+$/i.test(u)) return 'url("' + u + '")'
   if (SUPA && u.startsWith(SUPA + '/storage/v1/object/public/') && /^[a-z0-9_\-./:%~+]+$/i.test(u)) return 'url("' + u + '")'
+  if (/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/[a-z0-9_\-./:%~+]+$/i.test(u)) return 'url("' + u + '")'
   return 'none'
 }
 
