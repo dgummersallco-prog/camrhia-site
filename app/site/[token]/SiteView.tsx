@@ -153,6 +153,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     contact: true,
     explore: true,
     aboutcta: on('aboutcta'),
+    social: ['instagram_url', 'facebook_url', 'pinterest_url', 'tiktok_url'].some((k) => !!(r as any)[k] && !t.socialHidden.includes(k)),
   }
   for (const c of t.customs) showMap[c.id] = on(c.id)
   const pageOrder: string[] = page === 'home' ? t.orderHome : page === 'about' ? t.orderAbout : page === 'galleries' ? t.orderGalleries : (t.extraPages.find((e) => e.id === page)?.sections ?? [])
@@ -303,6 +304,16 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   const renderSection = (k: string, tinted: boolean): React.ReactNode => {
     switch (k) {
+      case 'social':
+        return socials.length > 0 ? (
+          <section id="social" className="px-6 py-12 text-center">
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+              {socials.map((s) => (
+                <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="text-[11px] uppercase tracking-[0.22em]" style={{ fontFamily: t.body, color: accent }}>{s.label}</a>
+              ))}
+            </div>
+          </section>
+        ) : null
       case 'explore':
         return exploreEl
       case 'about': {

@@ -2,21 +2,27 @@
 
 import { useState } from 'react'
 
+export type Links = { instagram_url: string; facebook_url: string; tiktok_url: string; pinterest_url: string }
 export type Struct = { v: 1; home: string[]; about: string[]; galleries: string[]; extra: { id: string; label: string; sections: string[] }[]; off: string[] }
 type Col = { id: string; label: string; fixed?: boolean; extra?: boolean }
 
 const BLOCKS: Record<string, { label: string; blurb: string }> = {
-  explore: { label: 'Nav section', blurb: 'Galleries, About and Book cards' },
+  explore: { label: 'Quick links', blurb: 'Pretty cards linking to your other pages' },
   portfolio: { label: 'Galleries', blurb: 'Your galleries' },
   about: { label: 'About', blurb: 'Your story and photo' },
   testimonials: { label: 'Testimonials', blurb: 'Kind words from clients' },
   investment: { label: 'Pricing', blurb: 'Your packages' },
   faq: { label: 'FAQ', blurb: 'Common questions' },
   contact: { label: 'Booking', blurb: 'Book-now band' },
-  aboutcta: { label: 'About button', blurb: 'Button under your story' },
+  social: { label: 'Social links', blurb: 'Instagram, Facebook and more' },
 }
-const ORDER = ['explore', 'portfolio', 'about', 'testimonials', 'investment', 'faq', 'contact', 'aboutcta']
+const ORDER = ['explore', 'portfolio', 'about', 'testimonials', 'investment', 'faq', 'contact', 'social']
 const RESERVED = ['home', 'about', 'galleries', 'book', 'p', 'site']
+
+export function cleanStruct(s: Struct): Struct {
+  const keep = (l: string[]) => l.filter((k) => !!BLOCKS[k])
+  return { v: 1, home: keep(s.home), about: keep(s.about), galleries: keep(s.galleries), extra: s.extra.map((e) => ({ ...e, sections: keep(e.sections) })), off: [...s.off] }
+}
 
 function listOf(s: Struct, id: string): string[] {
   if (id === 'home') return s.home
@@ -37,7 +43,7 @@ function strip(s: Struct, sec: string) {
   s.extra.forEach((e) => { e.sections = e.sections.filter((k) => k !== sec) })
 }
 
-export default function PageBuilder({ struct, setStruct }: { struct: Struct; setStruct: (s: Struct) => void }) {
+export default function PageBuilder({ struct, setStruct, links, setLinks }: { struct: Struct; setStruct: (s: Struct) => void; links: Links; setLinks: (l: Links) => void }) {
   const [pick, setPick] = useState<string | null>(null)
   const [drag, setDrag] = useState<string | null>(null)
 
@@ -50,7 +56,7 @@ export default function PageBuilder({ struct, setStruct }: { struct: Struct; set
     ...(struct.off.includes('about') ? [] : [{ id: 'about', label: 'About' }]),
     ...struct.extra.map((e) => ({ id: e.id, label: e.label, extra: true })),
   ]
-  const nameOf = (k: string) => BLOCKS[k]?.label ?? 'Custom section'
+  const nameOf = (k: string) => BLOCKS[k]?.label ?? 'Section'
 
   function place(sec: string, target: string) {
     const s = clone()
@@ -100,12 +106,12 @@ export default function PageBuilder({ struct, setStruct }: { struct: Struct; set
   const slice = 'mb-1.5 rounded-lg bg-black/5 px-2 py-1.5 text-xs text-ink-soft'
   return (
     <div>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">
         {cols.map((p) => (
           <div key={p.id}
             onDragOver={(e) => { if (drag) e.preventDefault() }}
             onDrop={(e) => { e.preventDefault(); if (drag) place(drag, p.id) }}
-            className={'flex w-44 shrink-0 flex-col rounded-2xl border bg-white/80 p-3 ' + (pick || drag ? 'border-dashed border-twilight' : 'border-black/10')}>
+            className={'flex min-h-[230px] flex-col rounded-2xl border bg-white/80 p-3 ' + (pick || drag ? 'border-dashed border-twilight' : 'border-black/10')}>
             <div className="mb-2 flex items-center gap-1">
               {p.extra
                 ? <input value={p.label} onChange={(e) => rename(p.id, e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none" />
@@ -129,7 +135,7 @@ export default function PageBuilder({ struct, setStruct }: { struct: Struct; set
             <div className={slice + ' mt-auto'}>Footer</div>
           </div>
         ))}
-        <div className="flex w-44 shrink-0 flex-col rounded-2xl border border-black/10 bg-white/60 p-3">
+        <div className="flex min-h-[230px] flex-col rounded-2xl border border-black/10 bg-white/60 p-3">
           <span className="mb-2 text-sm font-semibold text-ink">Booking</span>
           <div className={slice}>Menu</div>
           <div className={slice}>Your booking calendar</div>
@@ -139,13 +145,13 @@ export default function PageBuilder({ struct, setStruct }: { struct: Struct; set
             onClick={() => addPage(pick)}
             onDragOver={(e) => { if (drag) e.preventDefault() }}
             onDrop={(e) => { e.preventDefault(); if (drag) addPage(drag) }}
-            className="flex w-44 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-black/20 p-3 text-sm text-ink-soft">
+            className="flex min-h-[230px] items-center justify-center rounded-2xl border-2 border-dashed border-black/20 p-3 text-sm text-ink-soft">
             + Add page
           </button>
         )}
       </div>
 
-      <p className="mb-2 mt-4 text-xs uppercase tracking-wide text-ink-soft">Add sections, or make them a whole page</p>
+      <p className="mb-2 mt-6 text-xs uppercase tracking-wide text-ink-soft">Pieces to add. Drop one on a page, or make it a whole page</p>
       <div className="flex flex-wrap gap-2" onDragOver={(e) => { if (drag) e.preventDefault() }} onDrop={(e) => { e.preventDefault(); if (drag) place(drag, 'tray') }}>
         {tray.map((sec) => (
           <button key={sec} type="button" draggable onDragStart={() => setDrag(sec)} onDragEnd={() => setDrag(null)}
@@ -158,6 +164,16 @@ export default function PageBuilder({ struct, setStruct }: { struct: Struct; set
         <span className="rounded-xl border border-dashed border-black/20 px-3 py-2 text-sm text-ink-soft">Blog · coming soon</span>
         {tray.length === 0 && <span className="py-2 text-xs text-ink-soft">Everything is placed. Take one off a page to see it here.</span>}
       </div>
+      {placed.has('social') && (
+        <div className="mt-5 rounded-xl border border-black/10 bg-white/80 p-4">
+          <p className="text-sm font-medium text-ink">Your social links</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {([['instagram_url', 'Instagram'], ['facebook_url', 'Facebook'], ['tiktok_url', 'TikTok'], ['pinterest_url', 'Pinterest']] as const).map(([k, label]) => (
+              <input key={k} value={links[k]} onChange={(e) => setLinks({ ...links, [k]: e.target.value })} placeholder={label + ' link'} className="rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+            ))}
+          </div>
+        </div>
+      )}
       {pick && <p className="mt-2 text-xs text-ink-soft">Tap a page to put it there, or tap + Add page to make it a whole page.</p>}
     </div>
   )

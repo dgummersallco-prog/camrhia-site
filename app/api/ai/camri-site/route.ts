@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     const stPageIds: string[] = ['home', 'about', 'galleries', ...stExtra.map((e: any) => e.id)]
     const tpIn = kitIn.type ?? {}
     const typeDesc = ['title', 'subtitle', 'paragraph'].map((r) => r + ' [' + strList(tpIn[r]).join(', ') + ']').join(', ')
-    const SECS = ['about', 'portfolio', 'investment', 'testimonials', 'faq', 'contact', 'explore', 'aboutcta']
+    const SECS = ['about', 'portfolio', 'investment', 'testimonials', 'faq', 'contact', 'explore', 'aboutcta', 'social']
     const stDesc = 'Home [' + strList(stIn.home).join(', ') + '], About [' + strList(stIn.about).join(', ') + '], Galleries [' + strList(stIn.galleries).join(', ') + ']' + stExtra.map((e: any) => ', ' + e.label + ' (id ' + e.id + ') [' + e.sections.join(', ') + ']').join('')
     const fontList: { id: string; label: string }[] = (Array.isArray(body.fontList) ? body.fontList : []).slice(0, 200).map((x: any) => ({ id: String(x?.id ?? ''), label: String(x?.label ?? '') })).filter((x: any) => x.id)
     const fontIds = fontList.map((f) => f.id)
@@ -69,7 +69,7 @@ Rules:
   kit.layout: a layout key from their favorites, or "next" or "prev" to move through them. kit.palette: a color scheme name from their favorites. kit.fonts: a font pair key from their favorites.
   kit.heading_font and kit.body_font: a font id from this list when they ask for a specific font: ${fontList.map((f) => f.id + '=' + f.label).join(', ') || 'none'}.
   kit.theme: the name of a saved theme to switch to. kit.save_theme: a short name to save the design as it will look after this reply's changes. Use it when they ask for a new named theme like Christmas or Dark: make the design changes with palette, css and the other fields in the same reply, and set kit.save_theme. The app keeps their current design as "Main" so they can always switch back.
-  Page structure (pages and the sections stacked on them, in order): ${stDesc}. Section ids: about, portfolio (the galleries), investment (pricing), testimonials, faq, contact (the book-now band), explore (the Galleries / About / Book cards), aboutcta. kit.move_section {"section","to"}: move a section onto a page (to = home, about, galleries or an extra page id), or to = "none" to take it off every page. kit.add_page {"id","label","sections"}: make a new menu page (id is lowercase letters, numbers and dashes) holding those sections, for example a testimonials page. kit.remove_page: the id of an extra page to delete. Use these only when they ask to move, add or remove a section or page.
+  Page structure (pages and the sections stacked on them, in order): ${stDesc}. Section ids: about, portfolio (the galleries), investment (pricing), testimonials, faq, contact (the book-now band), explore (the quick-links cards to their other pages), social (their social media links), aboutcta. kit.move_section {"section","to"}: move a section onto a page (to = home, about, galleries or an extra page id), or to = "none" to take it off every page. kit.add_page {"id","label","sections"}: make a new menu page (id is lowercase letters, numbers and dashes) holding those sections, for example a testimonials page. kit.remove_page: the id of an extra page to delete. Use these only when they ask to move, add or remove a section or page.
   kit.role_font {"role","font"}: set one font for the title, subtitle or paragraph (role is one of those three words). Their saved picks, first is the one in use: ${typeDesc}. Use a saved pick when they say things like "use my second title font", otherwise any font id from the font list.
 
 Current site: template ${site.template ?? 'unknown'}, accent ${site.accent ?? 'unknown'}, page color ${site.bg ?? 'unknown'}, text color ${site.text ?? 'unknown'}, fonts ${site.font_pair ?? 'unknown'}, buttons ${site.buttons ?? 'unknown'}, headline "${site.headline ?? ''}", subhead "${site.subhead ?? ''}".
@@ -84,7 +84,7 @@ ${String(site.css ?? '').slice(0, 6000) || '(none)'}`
     while (messages.length && messages[0].role !== 'user') messages.shift()
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 4000, system, messages })
+    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 8000, system, messages })
 
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0

@@ -421,6 +421,7 @@ export default function CamiDesigner() {
       const kk = (st0 as any).kit ?? {}
       const kitPayload = { layouts: (kk.layouts ?? []).map((key: string) => ({ key, name: STYLES.find((q) => q.key === key)?.name ?? key })), palettes: (kk.palettes ?? []).map((p: any) => ({ name: p.name })), fonts: (kk.fonts ?? []).map((key: string) => ({ key, name: TYPE_SETS.find((t) => t.key === key)?.name ?? key })), themes: (kk.themes ?? []).map((t: any) => t.name), type: kk.type ?? null }
       const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
+      if (!res.ok) console.error('camri-site status', res.status, await res.clone().text().catch(() => ''))
       const ai = res.ok ? await res.json() : null
       if (ai?.reply && ai.changes) {
         const ch = ai.changes
@@ -442,7 +443,7 @@ export default function CamiDesigner() {
         setMsgs((m) => [...m, { from: 'cami', text: ai.reply }])
         aiDone = true
       }
-    } catch {}
+    } catch (e) { console.error('camri-site failed', e) }
     const r = aiDone ? { changed: false, state: form, reply: '' } : camiSite(t, form)
     if (r.changed) await commit((n) => { n.site_template = r.state.site_template; n.site_accent = r.state.site_accent; n.site_font_pair = r.state.site_font_pair; n.site_headline = r.state.site_headline; n.site_subhead = r.state.site_subhead; n.site_settings = r.state.site_settings })
     if (!aiDone) setMsgs((m) => [...m, { from: 'cami', text: r.reply }])
@@ -488,16 +489,22 @@ export default function CamiDesigner() {
   if (!setupFinished && (setupForce || review || !kitDone)) {
     return (
       <CamriSetup
-        styles={STYLES} palettes={PALETTES} typeSets={TYPE_SETS} pages={PAGES} fam={fam} structure={structureOf(form as any)}
-        fontList={FONT_IDS.map((id) => ({ id, label: fname(id), family: fam(id), gf: String((FONT_OPTIONS[id] as any)?.gf ?? '') }))}
+        styles={STYLES} palettes={PALETTES} typeSets={TYPE_SETS} pages={PAGES} fam={fam} structure={review ? structureOf(form as any) : { v: 1 as const, home: [], about: [], galleries: [], extra: [], off: [] }}
+        links={{ instagram_url: String((form as any).instagram_url ?? ''), facebook_url: String((form as any).facebook_url ?? ''), tiktok_url: String((form as any).tiktok_url ?? ''), pinterest_url: String((form as any).pinterest_url ?? '') }}
+        fontList={FONT_IDS.map((id) => ({ id, label: fname(id), family: fam(id), gf: String((FONT_OPTIONS[id] as any)?.gf ?? ''), cat: String((FONT_OPTIONS[id] as any)?.cat ?? (FONT_OPTIONS[id] as any)?.category ?? (FONT_OPTIONS[id] as any)?.kind ?? (FONT_OPTIONS[id] as any)?.group ?? '') }))}
         startStep={review ? 1 : 0}
         onCancel={review ? () => { setReview(false); setSetupFinished(true) } : undefined}
-        initial={review ? (() => { const k0: any = (form.site_settings as any)?.kit ?? {}; const tw = (k0.palettes ?? []).find((q: any) => q.name === 'My colors'); return { layouts: (k0.layouts ?? []) as string[], palettes: ((k0.palettes ?? []) as any[]).map((q) => q.name as string).filter((nm) => PALETTES.some((pp) => pp.name === nm)), fonts: (k0.fonts ?? []) as string[], type: k0.type ?? undefined, tweak: tw ? { accent: tw.accent as string, bg: tw.bg as string, text: tw.text as string } : null } })() : undefined}
+        initial={review ? (() => { const k0: any = (form.site_settings as any)?.kit ?? {}; return { layouts: (k0.layouts ?? []) as string[], palettes: ((k0.palettes ?? []) as any[]).map((q) => ({ name: String(q.name), accent: String(q.accent), bg: String(q.bg), text: String(q.text) })), fonts: (k0.fonts ?? []) as string[], type: k0.type ?? undefined } })() : undefined}
         onSkip={() => setSetupSkipped(true)}
-        onFinish={async (kit, struct) => {
+        onFinish={async (kit, struct, links) => {
           await commit((n) => {
             const x = (n.site_settings = n.site_settings ?? {})
             x.structure = struct
+            const nn = n as any
+            nn.instagram_url = links.instagram_url.trim() || null
+            nn.facebook_url = links.facebook_url.trim() || null
+            nn.tiktok_url = links.tiktok_url.trim() || null
+            nn.pinterest_url = links.pinterest_url.trim() || null
             const prev: any = x.kit ?? null
             const same = (a: any, b: any) => JSON.stringify([a?.accent, a?.bg, a?.text]) === JSON.stringify([b?.accent, b?.bg, b?.text])
             const layoutNew = !prev || prev.layouts?.[0] !== kit.layouts[0]
@@ -771,14 +778,15 @@ export default function CamiDesigner() {
       <aside className={(full ? 'hidden' : 'flex') + ' w-[400px] shrink-0 flex-col border-r border-black/10 bg-white'}>
         <div className="flex items-center justify-between px-5 pb-2 pt-5">
           <div className="flex items-center gap-2">
-            <button type="button" aria-label="Back to dashboard" onClick={() => router.push('/dashboard')} className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-ink-soft transition hover:bg-black/5 hover:text-ink">←</button>
-            <p className="font-fraunces text-xl font-semibold text-ink">Website</p>
+            <button type="button" aria-label="Back to dashboard" onClick={() => router.push('/dashboard')} className="flex h-9 items-center gap-1 rounded-full px-3 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink">← Dashboard</button>
           </div>
           <div className="flex items-center gap-2">
+            {siteUrl && <button type="button" onClick={() => { try { void navigator.clipboard.writeText('https://' + siteUrl) } catch { /* ignore */ } setPubMsg('Link copied.'); setTimeout(() => setPubMsg(''), 2000) }} className="rounded-lg px-3 py-1.5 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink">Copy link</button>}
             <button type="button" onClick={() => { void undo() }} disabled={history.length === 0} className="rounded-lg px-3 py-1.5 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink disabled:opacity-40">Undo</button>
           </div>
         </div>
 
+        <p className="px-5 pb-2 font-fraunces text-2xl font-semibold text-ink">Design your website</p>
         {err && <p className="mx-5 mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{err}</p>}
 
         <div className="flex min-h-0 flex-1 flex-col">
@@ -836,42 +844,16 @@ export default function CamiDesigner() {
                   </>
                 )
               })()}
-              <div className="mt-4 flex items-center gap-4 border-t border-black/10 pt-3">
-                <button type="button" onClick={() => setShowSet((o) => !o)} className="text-xs text-ink-soft underline">{showSet ? 'Hide link and social links' : 'Link and social links'}</button>
-                {!confirmRestart ? (
-                  <button type="button" onClick={() => setConfirmRestart(true)} className="text-xs text-ink-soft underline">Start over</button>
-                ) : (
-                  <span className="inline-flex items-center gap-2 text-xs text-ink">
-                    Redo the whole setup?
-                    <button type="button" className="font-semibold text-red-600 underline" onClick={() => { setConfirmRestart(false); void commit((n) => { if (n.site_settings) { delete (n.site_settings as Record<string, any>).kit; delete (n.site_settings as Record<string, any>).custom_css } }).then(() => setSetupFinished(false)) }}>Yes</button>
-                    <button type="button" className="underline" onClick={() => setConfirmRestart(false)}>Cancel</button>
-                  </span>
-                )}
-              </div>
-              {showSet && (
-                <div className="mt-3 rounded-xl border border-black/10 bg-white p-3">
-                  {siteUrl && (
-                    <div className="mb-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Your link</p>
-                      <p className="mt-1 break-all font-fraunces text-base text-ink">{siteUrl}</p>
-                      <button type="button" onClick={() => { try { void navigator.clipboard.writeText('https://' + siteUrl) } catch { /* ignore */ } setPubMsg('Link copied.'); setTimeout(() => setPubMsg(''), 2000) }} className="mt-2 rounded-lg bg-black/5 px-3 py-1.5 text-xs text-ink transition hover:bg-black/10">Copy link</button>
-                    </div>
-                  )}
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Social links</p>
-                  <div className="mt-2">{renderStep('social')}</div>
-                  <button type="button" onClick={saveSocial} className={accentBtn + ' mt-3 !px-4 !py-2'}>Update preview</button>
-                </div>
-              )}
             </div>
           )}
 
-          <div className="flex h-[320px] shrink-0 flex-col bg-[#faf7f3]">
+          <div className="relative flex h-[320px] shrink-0 flex-col bg-[#faf7f3]">
             <div className="flex items-center gap-2 px-5 pt-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/camri/13_face_avatar.png" alt="" className="h-9 w-9 rounded-full" />
               <p className="font-fraunces text-xl font-semibold text-ink">Camri</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none ml-auto h-12 w-auto" />
+              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[52px] right-6 z-10 h-14 w-auto" />
             </div>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-3">
               {msgs.map((m, i) => (

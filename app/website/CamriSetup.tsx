@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import PageBuilder, { type Struct } from './PageBuilder'
+import PageBuilder, { type Struct, type Links, cleanStruct } from './PageBuilder'
 import FontStep, { type FontPick, type FontItem } from './FontStep'
 
 export type Kit = {
@@ -22,7 +22,7 @@ type PageDef = { k: string; label: string; blurb: string; locked?: boolean; soon
 const LINES = [
   "Hi, I'm Camri! I'll help you design your website. Pick the looks you love and I'll remember them, so later you can just say \"switch my layout\" or \"use my dark theme\".",
   'Pick up to five layouts you love. The first one you pick becomes your starting design.',
-  "Build your pages like a sandwich. Drag a section onto a page, or make it a whole page of its own. You can switch these around later, or just ask me.",
+  "This is like build-a-bear, but for your pages! Start with an empty page and add the pieces you love. Drag a section onto a page, or make it a whole page of its own. You can switch these around later, or just ask me.",
   'Now colors. Pick up to three schemes you like. The first one is your starting scheme, and you can fine-tune it.',
   'Last one: fonts. Pick up to three for your title, subtitle and paragraph. The first one you pick for each is what I start with.',
 ]
@@ -33,32 +33,33 @@ function toggle(list: string[], v: string, max: number) {
   return [...list, v]
 }
 
-export default function CamriSetup({ styles, palettes, typeSets, pages, fam, structure, fontList, initial, startStep, onCancel, onFinish, onSkip }: {
-  styles: Style[]; palettes: Pal[]; typeSets: TypeSet[]; pages: PageDef[]; structure: Struct; fontList: FontItem[]; initial?: { layouts: string[]; palettes: string[]; fonts: string[]; type?: FontPick; tweak: { accent: string; bg: string; text: string } | null }; startStep?: number; onCancel?: () => void
+export default function CamriSetup({ styles, palettes, typeSets, pages, fam, structure, links: linksIn, fontList, initial, startStep, onCancel, onFinish, onSkip }: {
+  styles: Style[]; palettes: Pal[]; typeSets: TypeSet[]; pages: PageDef[]; structure: Struct; links: Links; fontList: FontItem[]; initial?: { layouts: string[]; palettes: Pal[]; fonts: string[]; type?: FontPick }; startStep?: number; onCancel?: () => void
   fam: (k: string) => string
-  onFinish: (kit: Kit, structure: Struct) => Promise<void>
+  onFinish: (kit: Kit, structure: Struct, links: Links) => Promise<void>
   onSkip: () => void
 }) {
   const [step, setStep] = useState(startStep ?? 0)
   const [layouts, setLayouts] = useState<string[]>(initial?.layouts ?? [])
-  const [pals, setPals] = useState<string[]>(initial?.palettes ?? [])
-  const [tweak, setTweak] = useState<{ accent: string; bg: string; text: string } | null>(initial?.tweak ?? null)
+  const [picked, setPicked] = useState<Pal[]>(initial?.palettes ?? [])
+  
   const [fp, setFp] = useState<FontPick>(initial?.type ?? { title: [], subtitle: [], paragraph: [] })
-  const [struct, setStruct] = useState<Struct>(structure)
+  const [struct, setStruct] = useState<Struct>(cleanStruct(structure))
+  const [ls, setLs] = useState<Links>(linksIn)
   const [busy, setBusy] = useState(false)
 
-  const base = pals.length ? palettes.find((p) => p.name === pals[0]) ?? null : null
+  
   const ring = 'border-twilight ring-2 ring-twilight'
   const badge = (n: number) => <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-twilight text-xs font-semibold text-white">{n}</span>
-  const canGo = step === 1 ? layouts.length > 0 : step === 3 ? pals.length > 0 : step === 4 ? (fp.title.length > 0 && fp.subtitle.length > 0 && fp.paragraph.length > 0) : true
+  const canGo = step === 1 ? layouts.length > 0 : step === 2 ? struct.home.length > 0 : step === 3 ? picked.length > 0 : step === 4 ? (fp.title.length > 0 && fp.subtitle.length > 0 && fp.paragraph.length > 0) : true
 
   async function finish() {
     setBusy(true)
-    const list: Pal[] = []
-    if (tweak) list.push({ name: 'My colors', ...tweak })
-    pals.forEach((n) => { const p = palettes.find((x) => x.name === n); if (p) list.push(p) })
+    const list: Pal[] = picked
+    
+    
     const pagesOut = ['home', 'book', ...(struct.off.includes('galleries') ? [] : ['galleries']), ...(struct.off.includes('about') ? [] : ['about']), ...struct.extra.map((e) => e.id)]
-    await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, pages: pagesOut, extra_pages: '', themes: [] }, struct)
+    await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, pages: pagesOut, extra_pages: '', themes: [] }, struct, ls)
     setBusy(false)
   }
 
@@ -100,39 +101,39 @@ export default function CamriSetup({ styles, palettes, typeSets, pages, fam, str
           </div>
         )}
 
-        {step === 2 && <PageBuilder struct={struct} setStruct={setStruct} />}
+        {step === 2 && <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} />}
 
         {step === 3 && (
           <div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {palettes.map((p) => {
-                const i = pals.indexOf(p.name)
+                const i = picked.findIndex((q) => q.name === p.name)
                 return (
-                  <button key={p.name} type="button" onClick={() => setPals((l) => toggle(l, p.name, 3))} className={'relative rounded-xl border bg-white/80 p-3 text-left transition hover:bg-white ' + (i >= 0 ? ring : 'border-black/10')}>
-                    <div className="flex h-14 overflow-hidden rounded-lg border border-black/10">
-                      <span className="flex-1" style={{ background: p.bg }} />
-                      <span className="flex-1" style={{ background: p.accent }} />
-                      <span className="flex-1" style={{ background: p.text }} />
-                    </div>
-                    <p className="mt-2 text-sm font-medium text-ink">{p.name}</p>
+                  <button key={p.name} type="button" onClick={() => setPicked((l) => (i >= 0 ? l.filter((q) => q.name !== p.name) : l.length >= 3 ? l : [...l, { ...p }]))} className={'relative rounded-xl border bg-white/80 p-3 text-left transition hover:bg-white ' + (i >= 0 ? ring : 'border-black/10')}>
+                    <span className="flex h-12 overflow-hidden rounded-lg border border-black/10"><span className="flex-1" style={{ background: p.bg }} /><span className="flex-1" style={{ background: p.accent }} /><span className="flex-1" style={{ background: p.text }} /></span>
+                    <span className="mt-2 block text-sm text-ink">{p.name}</span>
                     {i >= 0 && badge(i + 1)}
                   </button>
                 )
               })}
+              <button type="button" disabled={picked.length >= 3} onClick={() => setPicked((l) => [...l, { name: 'My colors ' + (l.filter((q) => q.name.startsWith('My colors')).length + 1), accent: '#C98A8D', bg: '#FAF7F2', text: '#2A1F24' }])} className="flex min-h-[96px] items-center justify-center rounded-xl border-2 border-dashed border-black/20 text-sm text-ink-soft disabled:opacity-40">+ Make my own</button>
             </div>
-            {base && (
-              <div className="mt-5 rounded-xl border border-black/10 bg-white/80 p-4">
-                <p className="text-sm font-medium text-ink">Fine-tune your first scheme ({base.name})</p>
+            {picked.map((p, i) => (
+              <div key={p.name} className="mt-4 rounded-xl border border-black/10 bg-white/80 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-ink">Fine-tune color choice {i + 1} <span className="font-normal text-ink-soft">({p.name})</span></p>
+                  <button type="button" onClick={() => setPicked((l) => l.filter((_, j) => j !== i))} className="text-xs text-ink-soft underline">Remove</button>
+                </div>
                 <div className="mt-3 flex flex-wrap gap-5">
                   {([['accent', 'Accent'], ['bg', 'Background'], ['text', 'Main text']] as const).map(([k, label]) => (
                     <label key={k} className="flex items-center gap-2 text-sm text-ink">
-                      <input type="color" value={(tweak ?? base)[k]} onChange={(e) => setTweak({ accent: (tweak ?? base).accent, bg: (tweak ?? base).bg, text: (tweak ?? base).text, [k]: e.target.value })} className="h-9 w-9 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
+                      <input type="color" value={p[k]} onChange={(e) => setPicked((l) => l.map((q, j) => (j === i ? { ...q, [k]: e.target.value } : q)))} className="h-9 w-9 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
                       {label}
                     </label>
                   ))}
                 </div>
               </div>
-            )}
+            ))}
           </div>
         )}
 

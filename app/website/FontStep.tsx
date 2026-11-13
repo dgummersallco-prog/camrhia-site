@@ -3,17 +3,32 @@
 import { useEffect, useRef, useState } from 'react'
 
 export type FontPick = { title: string[]; subtitle: string[]; paragraph: string[] }
-export type FontItem = { id: string; label: string; family: string; gf: string }
+export type FontItem = { id: string; label: string; family: string; gf: string; cat: string }
 type Role = 'title' | 'subtitle' | 'paragraph'
 
-const ROLES: { k: Role; label: string; sample: string }[] = [
-  { k: 'title', label: 'Title', sample: 'Your Name' },
-  { k: 'subtitle', label: 'Subtitle', sample: 'Wedding Photography' },
-  { k: 'paragraph', label: 'Paragraph', sample: 'Candid, honest photos of the moments that matter most to you.' },
+const ROLES: { k: Role; label: string }[] = [
+  { k: 'title', label: 'Title' },
+  { k: 'subtitle', label: 'Subtitle' },
+  { k: 'paragraph', label: 'Paragraph' },
+]
+const GROUPS = [
+  { k: 'serif', label: 'Serif' },
+  { k: 'sans', label: 'Sans serif' },
+  { k: 'script', label: 'Script' },
+  { k: 'display', label: 'Display' },
+  { k: 'other', label: 'More fonts' },
 ]
 const MAX = 3
+const groupOf = (cat: string) => {
+  const c = cat.toLowerCase()
+  if (/sans/.test(c)) return 'sans'
+  if (/script|hand/.test(c)) return 'script'
+  if (/display|decor/.test(c)) return 'display'
+  if (/serif/.test(c)) return 'serif'
+  return 'other'
+}
 
-function Row({ f, role, picks, onPick }: { f: FontItem; role: Role; picks: FontPick; onPick: (id: string) => void }) {
+function Item({ f, role, picks, onPick }: { f: FontItem; role: Role; picks: FontPick; onPick: (id: string) => void }) {
   const ref = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     const el = ref.current
@@ -32,25 +47,16 @@ function Row({ f, role, picks, onPick }: { f: FontItem; role: Role; picks: FontP
     io.observe(el)
     return () => io.disconnect()
   }, [f.id, f.gf])
-
   const on = picks[role].includes(f.id)
-  const cur = ROLES.find((r) => r.k === role)!
-  const style: React.CSSProperties = { fontFamily: f.family }
-  if (role === 'title') style.fontSize = 30
-  if (role === 'subtitle') { style.fontSize = 17; style.letterSpacing = '0.18em'; style.textTransform = 'uppercase' }
-  if (role === 'paragraph') style.fontSize = 15
+  const tags = ROLES.filter((r) => picks[r.k].includes(f.id))
   return (
-    <button ref={ref} type="button" onClick={() => onPick(f.id)}
-      className={'flex items-center gap-4 rounded-xl border bg-white/80 px-4 py-3 text-left transition hover:bg-white ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-black/10')}>
-      <span className="min-w-0 flex-1">
-        <span className={'block text-ink ' + (role === 'paragraph' ? '' : 'truncate')} style={style}>{cur.sample}</span>
-        <span className="mt-0.5 block text-[11px] text-ink-soft">{f.label}</span>
-      </span>
-      <span className="flex shrink-0 flex-wrap justify-end gap-1">
-        {ROLES.filter((r) => picks[r.k].includes(f.id)).map((r) => (
-          <span key={r.k} className="rounded-full bg-twilight px-2 py-0.5 text-[11px] font-medium text-white">{r.label} {picks[r.k].indexOf(f.id) + 1}</span>
-        ))}
-      </span>
+    <button ref={ref} type="button" onClick={() => onPick(f.id)} className="min-w-0 py-1 text-left">
+      <span className={'block truncate text-xl text-ink ' + (on ? 'underline decoration-twilight decoration-2 underline-offset-4' : '')} style={{ fontFamily: f.family }}>{f.label}</span>
+      {tags.length > 0 && (
+        <span className="mt-0.5 flex flex-wrap gap-1">
+          {tags.map((r) => <span key={r.k} className="rounded-full bg-twilight px-1.5 py-0.5 text-[10px] font-medium leading-none text-white">{r.label} {picks[r.k].indexOf(f.id) + 1}</span>)}
+        </span>
+      )}
     </button>
   )
 }
@@ -63,6 +69,7 @@ export default function FontStep({ fonts, picks, setPicks }: { fonts: FontItem[]
     setPicks({ ...picks, [role]: next })
   }
   const first = (r: Role) => fonts.find((f) => f.id === picks[r][0])
+  const groups = GROUPS.map((g) => ({ ...g, list: fonts.filter((f) => groupOf(f.cat) === g.k) })).filter((g) => g.list.length > 0)
   return (
     <div>
       <div className="sticky top-0 z-10 bg-paper/95 pb-3 pt-1 backdrop-blur">
@@ -74,16 +81,21 @@ export default function FontStep({ fonts, picks, setPicks }: { fonts: FontItem[]
             </button>
           ))}
         </div>
-        <div className="mt-3 rounded-xl border border-black/10 bg-white/90 p-4">
+        <div className="mt-3 rounded-xl border border-black/10 bg-white/90 px-4 py-3">
           <p className="truncate text-3xl text-ink" style={{ fontFamily: first('title')?.family }}>Your Name</p>
-          <p className="mt-1 truncate text-sm uppercase tracking-[0.2em] text-ink-soft" style={{ fontFamily: first('subtitle')?.family }}>Wedding Photography</p>
-          <p className="mt-2 text-sm text-ink" style={{ fontFamily: first('paragraph')?.family }}>Candid, honest photos of the moments that matter most to you.</p>
+          <p className="mt-0.5 truncate text-sm uppercase tracking-[0.2em] text-ink-soft" style={{ fontFamily: first('subtitle')?.family }}>Wedding Photography</p>
+          <p className="mt-1 truncate text-sm text-ink" style={{ fontFamily: first('paragraph')?.family }}>Candid, honest photos of the moments that matter most to you.</p>
         </div>
-        <p className="mt-2 text-xs text-ink-soft">Choosing: {ROLES.find((r) => r.k === role)!.label}. Pick up to three. The first one you pick is what I start with.</p>
+        <p className="mt-2 text-xs text-ink-soft">Choosing your {ROLES.find((r) => r.k === role)!.label.toLowerCase()} font. Pick up to three. The first one you pick is what I start with.</p>
       </div>
-      <div className="grid gap-2">
-        {fonts.map((f) => <Row key={f.id} f={f} role={role} picks={picks} onPick={onPick} />)}
-      </div>
+      {groups.map((g) => (
+        <div key={g.k}>
+          <p className="mb-1 mt-4 text-xs uppercase tracking-wide text-ink-soft">{g.label}</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-0.5 sm:grid-cols-4">
+            {g.list.map((f) => <Item key={f.id} f={f} role={role} picks={picks} onPick={onPick} />)}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

@@ -166,7 +166,7 @@ export function resolveTheme(r: Record<string, any>) {
   let orderGalleries = orderOf(s.order_galleries, ['portfolio', ...customIds('galleries')])
 
   const strc = s.structure && typeof s.structure === 'object' && s.structure.v === 1 ? (s.structure as Record<string, any>) : null
-  const MOVABLE_KEYS = ['explore', 'portfolio', 'testimonials', 'contact', 'about', 'investment', 'faq', 'aboutcta']
+  const MOVABLE_KEYS = ['explore', 'portfolio', 'testimonials', 'contact', 'about', 'investment', 'faq', 'aboutcta', 'social']
   const extraPages: { id: string; label: string; sections: string[] }[] = []
   const pagesOff: string[] = []
   if (strc) {
@@ -190,6 +190,8 @@ export function resolveTheme(r: Record<string, any>) {
       const label = typeof p.label === 'string' && p.label.trim() ? p.label.trim().slice(0, 24) : id
       extraPages.push({ id, label, sections: cleanKeys(p.sections, '__none') })
     }
+    const addCta = (l: string[]) => { const i = l.indexOf('about'); if (i >= 0 && !usedKeys.has('aboutcta')) { usedKeys.add('aboutcta'); l.splice(i + 1, 0, 'aboutcta') } }
+    addCta(orderHome); addCta(orderAbout); addCta(orderGalleries); extraPages.forEach((e) => addCta(e.sections))
     for (const c of customIds('home')) if (!usedKeys.has(c)) { usedKeys.add(c); orderHome.push(c) }
     for (const c of customIds('about')) if (!usedKeys.has(c)) { usedKeys.add(c); orderAbout.push(c) }
     for (const c of customIds('galleries')) if (!usedKeys.has(c)) { usedKeys.add(c); orderGalleries.push(c) }
