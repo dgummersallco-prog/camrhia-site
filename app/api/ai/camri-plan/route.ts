@@ -30,8 +30,8 @@ export async function POST(request: Request) {
     if (!message) return Response.json({ text: '' })
     const twist = TWISTS[Math.floor(Math.random() * TWISTS.length)]
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const system = 'You are Camri, a friendly white pearl camera-robot helping a photographer design their website. They just asked for a big design. Reply with JSON only, no markdown: {"text": string, "images": [{"name": "frame", "edge": "top", "prompt": string}, {"name": "strip", "edge": "top" or "bottom", "prompt": string}]}. "text": think out loud in 2 or 3 short, warm, excited sentences about what you are about to build, naming specific details in plain words such as colors, scenery and big visuals; take this fresh angle this time: ' + twist + '; no lists, no emoji, no markdown, no question; start with something like I\'m picturing or Okay, here\'s what I\'m thinking. "images": two photoreal scenery pictures made just for THIS theme, never people or text. The frame prompt must start with: a photoreal [theme] border frame for a website hero banner: then describe the specific scenery and objects down the left and right sides, and end with: the whole center 55 percent of the image left completely empty and fully transparent. The strip prompt describes a long straight horizontal strip of theme scenery, photoreal, edge to edge, to run along the top or bottom edge (choose edge: waves or ground go on the bottom, garlands or hanging things go on the top).'
-    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 900, system, messages: [{ role: 'user', content: message }] })
+    const system = 'You are Camri, a friendly white pearl camera-robot helping a photographer design their website. They just asked for a big design. Reply with JSON only, no markdown: {"text": string, "images": [{"name": "frame", "edge": "top", "prompt": string}, {"name": "strip", "edge": "top" or "bottom", "prompt": string}]}. "text": think out loud in 2 or 3 short, warm, excited sentences about what you are about to build, naming specific details in plain words such as colors, scenery and big visuals; take this fresh angle this time: ' + twist + '; no lists, no emoji, no markdown, no question; start with something like I\'m picturing or Okay, here\'s what I\'m thinking. "images": two photoreal scenery pictures made just for THIS theme, never people or text. The frame prompt must start with: a photoreal [theme] border frame for a website hero banner: then describe the specific scenery and objects down the left and right sides, and end with: the whole center 55 percent of the image left completely empty and fully transparent. The strip prompt describes a long straight horizontal strip of theme scenery, photoreal, edge to edge, to run along the top or bottom edge (choose edge: waves or ground go on the bottom, garlands or hanging things go on the top). Keep each picture prompt under 80 words.'
+    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 1800, system, messages: [{ role: 'user', content: message }] })
     const raw = res.content.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('')
     let text = ''
     let images: { name: string; edge: string; prompt: string }[] = []
@@ -45,7 +45,15 @@ export async function POST(request: Request) {
         prompt: String(i?.prompt ?? '').trim().slice(0, 600),
       })).filter((i: any) => i.prompt)
     } catch {
-      text = raw.trim().slice(0, 600)
+      const tm = raw.match(/"text"\s*:\s*"((?:[^"\\]|\\.)*)"/)
+      text = tm ? tm[1].replace(/\\"/g, '"').slice(0, 600) : ''
+    }
+    if (!images.length) {
+      const theme = message.slice(0, 120)
+      images = [
+        { name: 'frame', edge: 'top', prompt: 'a photoreal ' + theme + ' border frame for a website hero banner: rich, detailed scenery and objects down the left and right sides that fit this theme, soft cinematic lighting, no people, no text, the whole center 55 percent of the image left completely empty and fully transparent' },
+        { name: 'strip', edge: 'bottom', prompt: 'a long straight horizontal strip of photoreal scenery for this theme: ' + theme + ', edge to edge, soft cinematic lighting, no people, no text' },
+      ]
     }
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0
