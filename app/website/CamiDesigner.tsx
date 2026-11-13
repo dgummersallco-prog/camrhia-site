@@ -174,6 +174,8 @@ export default function CamiDesigner() {
   const [input, setInput] = useState('')
   const chatEnd = useRef<HTMLDivElement>(null)
   const [view, setView] = useState<'pages' | 'design' | 'settings'>('pages')
+  const [curPage, setCurPage] = useState('home')
+  const [showSet, setShowSet] = useState(false)
   const [sub, setSub] = useState<Tab | null>(null)
   const [camiOpen, setCamiOpen] = useState(false)
   const [dirty, setDirty] = useState(false)
@@ -385,7 +387,7 @@ export default function CamiDesigner() {
       const st0 = form.site_settings ?? {}
       const kk = (st0 as any).kit ?? {}
       const kitPayload = { layouts: (kk.layouts ?? []).map((key: string) => ({ key, name: STYLES.find((q) => q.key === key)?.name ?? key })), palettes: (kk.palettes ?? []).map((p: any) => ({ name: p.name })), fonts: (kk.fonts ?? []).map((key: string) => ({ key, name: TYPE_SETS.find((t) => t.key === key)?.name ?? key })), themes: (kk.themes ?? []).map((t: any) => t.name) }
-      const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css }, kit: kitPayload, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
+      const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css }, kit: kitPayload, page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
       const ai = res.ok ? await res.json() : null
       if (ai?.reply && ai.changes) {
         const ch = ai.changes
@@ -450,7 +452,7 @@ export default function CamiDesigner() {
   if (!form) return <p className="text-sm text-ink-soft">{err ?? 'Loading…'}</p>
   const kitDone = !!(form.site_settings as any)?.kit?.done
   const siteEmpty = !form.site_headline && Object.keys(form.site_settings ?? {}).length === 0
-  if (!setupSkipped && !setupFinished && (setupForce || (!kitDone && siteEmpty))) {
+  if (!setupFinished && (setupForce || !kitDone)) {
     return (
       <CamriSetup
         styles={STYLES} palettes={PALETTES} typeSets={TYPE_SETS} pages={PAGES} fam={fam}
@@ -696,6 +698,10 @@ export default function CamiDesigner() {
     )
   }
 
+  const PAGE_LABEL: Record<string, string> = { home: 'Home', booking: 'Booking', galleries: 'Galleries', about: 'About', blog: 'Blog', pricing: 'Pricing', faq: 'FAQ' }
+  const kitNow = ((form.site_settings as any)?.kit ?? {}) as Record<string, any>
+  const chosenPages: string[] = Array.from(new Set(['home', 'booking', ...((kitNow.pages ?? []) as any[]).map((q) => (typeof q === 'string' ? q : String(q?.key ?? q?.k ?? q?.id ?? ''))).filter(Boolean)]))
+  const pageLabel = (k: string) => PAGE_LABEL[k] ?? (k.charAt(0).toUpperCase() + k.slice(1))
   const ACC = 'bg-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)]'
   const tabsDef: { k: 'pages' | 'design' | 'settings'; label: string; icon: string }[] = [
     { k: 'pages', label: 'Pages', icon: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5' },
@@ -719,164 +725,98 @@ export default function CamiDesigner() {
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => { void undo() }} disabled={history.length === 0} className="rounded-lg px-3 py-1.5 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink disabled:opacity-40">Undo</button>
-            <button type="button" onClick={() => setCamiOpen((o) => !o)} className={'rounded-lg px-3 py-1.5 text-sm font-medium transition ' + (camiOpen ? ACC + ' text-white' : 'bg-black/5 text-ink hover:bg-black/10')}>Ask Camri</button>
           </div>
         </div>
 
-        <nav className="flex border-b border-black/10 px-2">
-          {tabsDef.map((t) => (
-            <button key={t.k} type="button" onClick={() => { setView(t.k); setSub(null) }} className={'flex flex-1 flex-col items-center gap-1 border-b-2 py-3 text-xs font-medium transition ' + (view === t.k ? 'border-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)] text-ink' : 'border-transparent text-ink-soft hover:text-ink')}>
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d={t.icon} /></svg>
-              {t.label}
-            </button>
-          ))}
-        </nav>
-
         {err && <p className="mx-5 mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{err}</p>}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-          {view === 'pages' && (
-            <div>
-              <h2 className="font-fraunces text-2xl font-semibold text-ink">Pages</h2>
-              <p className="mt-1 text-sm text-ink-soft">{HEADINGS.pages[1]}</p>
-              <div className="mt-5">{renderStep('pages')}</div>
-              <h3 className="mt-9 font-fraunces text-xl font-semibold text-ink">Home page sections</h3>
-              <p className="mt-1 text-sm text-ink-soft">Move sections up or down, or hide the ones you do not want. You can also hover a section in the preview.</p>
-              <div className="mt-4 border-t border-black/10">
-                {homeOrder.map((k, i) => {
-                  const off = hiddenSecs.includes(k)
-                  const lab = HOME_SECS.find(([x]) => x === k)?.[1] ?? k
-                  return (
-                    <div key={k} className="flex items-center justify-between border-b border-black/10 py-3">
-                      <span className={'text-base ' + (off ? 'text-ink-soft line-through' : 'text-ink')}>{lab}</span>
-                      <span className="flex items-center gap-1">
-                        <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => moveSec(k, -1)} className="h-8 w-8 rounded-lg text-ink-soft transition hover:bg-black/5 hover:text-ink disabled:opacity-30">↑</button>
-                        <button type="button" aria-label="Move down" disabled={i === homeOrder.length - 1} onClick={() => moveSec(k, 1)} className="h-8 w-8 rounded-lg text-ink-soft transition hover:bg-black/5 hover:text-ink disabled:opacity-30">↓</button>
-                        <button type="button" onClick={() => toggleSec(k)} className="ml-1 rounded-lg bg-black/5 px-3 py-1.5 text-sm text-ink transition hover:bg-black/10">{off ? 'Show' : 'Hide'}</button>
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-              <h3 className="mt-9 font-fraunces text-xl font-semibold text-ink">Home photos</h3>
-              <p className="mt-1 text-sm text-ink-soft">{HEADINGS.photos[1]}</p>
-              <div className="mt-4">{renderStep('photos')}</div>
-            </div>
-          )}
-
-          {view === 'design' && sub === null && (
-            <div>
-              <h2 className="font-fraunces text-2xl font-semibold text-ink">Design</h2>
-              <p className="mt-1 text-sm text-ink-soft">Change how your whole site looks.</p>
-              <div className="mt-4 border-t border-black/10">
-                {designRows.map(([k, t, d]) => (
-                  <button key={k} type="button" onClick={() => { setSub(k); setTab(k) }} className="flex w-full items-center justify-between border-b border-black/10 px-1 py-4 text-left transition hover:bg-black/[0.03]">
-                    <span>
-                      <span className="block text-base text-ink">{t}</span>
-                      <span className="block text-xs text-ink-soft">{d}</span>
-                    </span>
-                    <span className="text-xl text-ink-soft">›</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {view === 'design' && sub !== null && (
-            <div>
-              <button type="button" onClick={() => setSub(null)} className="mb-3 text-sm text-ink-soft transition hover:text-ink">‹ Design</button>
-              <h2 className="font-fraunces text-2xl font-semibold text-ink">{TAB_TITLES[sub]}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{HEADINGS[sub][1]}</p>
-              <div className="mt-5">{renderStep(sub)}</div>
-            </div>
-          )}
-
-          {view === 'settings' && (
-            <div>
-              <h2 className="font-fraunces text-2xl font-semibold text-ink">Settings</h2>
-              {siteUrl && (
-                <div className="mt-5 rounded-xl border border-black/10 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Your link</p>
-                  <p className="mt-1 break-all font-fraunces text-lg text-ink">{siteUrl}</p>
-                  <button type="button" onClick={() => { try { void navigator.clipboard.writeText('https://' + siteUrl) } catch { /* ignore */ } setPubMsg('Link copied.'); setTimeout(() => setPubMsg(''), 2000) }} className="mt-3 rounded-lg bg-black/5 px-3 py-1.5 text-sm text-ink transition hover:bg-black/10">Copy link</button>
-                </div>
-              )}
-              <h3 className="mt-8 font-fraunces text-xl font-semibold text-ink">Social links</h3>
-              <p className="mt-1 text-sm text-ink-soft">{HEADINGS.social[1]}</p>
-              <div className="mt-4">{renderStep('social')}</div>
-              <button type="button" onClick={saveSocial} className={accentBtn + ' mt-4 !px-4 !py-2'}>Update preview</button>
-            </div>
-          )}
-        </div>
-
-        {camiOpen && (
-          <div className="relative border-t border-black/10 bg-[#faf7f3] p-4">
+        <div className="flex min-h-0 flex-1 flex-col bg-[#faf7f3]">
+          <div className="flex items-center gap-2 px-5 pt-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[58px] right-4 z-10 h-[70px] w-auto" />
-            <div className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/13_face_avatar.png" alt="" className="h-8 w-8 rounded-full" />
-              <p className="font-fraunces text-lg font-semibold text-ink">Camri</p>
-            </div>
+            <img src="/camri/13_face_avatar.png" alt="" className="h-9 w-9 rounded-full" />
+            <p className="font-fraunces text-xl font-semibold text-ink">Camri</p>
+          </div>
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
             {(() => {
-              const kit = (form.site_settings as any)?.kit as Record<string, any> | undefined
-              if (!kit || !kit.done) return null
-              const lab = 'text-[10px] font-semibold uppercase tracking-wider text-ink-soft'
-              const btn = 'rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] text-ink transition hover:border-twilight'
+              if (!kitNow.done) return null
+              const bub = 'max-w-[94%] rounded-2xl bg-white px-4 py-3 text-sm text-ink shadow-sm'
+              const lab = 'mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-soft'
+              const pill = 'rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-ink transition hover:border-twilight'
               return (
-                <div className="mt-2 space-y-2 rounded-xl border border-black/10 bg-white/70 p-3">
-                  <p className="font-fraunces text-sm font-semibold text-ink">My kit</p>
-                  {(kit.layouts ?? []).length > 0 && (
-                    <div><p className={lab}>Layouts</p><div className="mt-1 flex flex-wrap gap-1">
-                      {(kit.layouts as string[]).map((key, i) => <button key={key} type="button" className={btn + (Number(kit.layout_idx ?? 0) === i ? ' !border-twilight' : '')} onClick={() => { void commit((n) => applyKitOps(n, { layout: key })) }}>{STYLES.find((q) => q.key === key)?.name ?? key}</button>)}
+                <>
+                  <div className={bub}>Here is everything we set up together. Tap any of it and I will switch your site, or just tell me what to change.</div>
+                  {(kitNow.layouts ?? []).length > 0 && (
+                    <div className={bub}><p className={lab}>Layouts you loved</p><div className="flex flex-wrap gap-1.5">
+                      {(kitNow.layouts as string[]).map((key, i) => <button key={key} type="button" className={pill + (Number(kitNow.layout_idx ?? 0) === i ? ' !border-twilight' : '')} onClick={() => { void commit((n) => applyKitOps(n, { layout: key })) }}>{STYLES.find((q) => q.key === key)?.name ?? key}</button>)}
                     </div></div>
                   )}
-                  {(kit.palettes ?? []).length > 0 && (
-                    <div><p className={lab}>Colors</p><div className="mt-1 flex flex-wrap gap-1.5">
-                      {(kit.palettes as any[]).map((p) => <button key={p.name} type="button" title={p.name} aria-label={p.name} className="h-7 w-7 overflow-hidden rounded-full border border-black/15 transition hover:scale-110" onClick={() => { void commit((n) => applyKitOps(n, { palette: p.name })) }}><span className="block h-1/2 w-full" style={{ background: p.bg }} /><span className="block h-1/2 w-full" style={{ background: p.accent }} /></button>)}
+                  {(kitNow.palettes ?? []).length > 0 && (
+                    <div className={bub}><p className={lab}>Your color schemes</p><div className="flex flex-wrap gap-2">
+                      {(kitNow.palettes as any[]).map((pl) => (
+                        <button key={pl.name} type="button" className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-2.5 py-1.5 text-xs text-ink transition hover:border-twilight" onClick={() => { void commit((n) => applyKitOps(n, { palette: pl.name })) }}>
+                          <span className="flex overflow-hidden rounded-md border border-black/10"><span className="h-5 w-5" style={{ background: pl.accent }} /><span className="h-5 w-5" style={{ background: pl.bg }} /><span className="h-5 w-5" style={{ background: pl.text }} /></span>
+                          {pl.name}
+                        </button>
+                      ))}
                     </div></div>
                   )}
-                  {(kit.fonts ?? []).length > 0 && (
-                    <div><p className={lab}>Fonts</p><div className="mt-1 flex flex-wrap gap-1">
-                      {(kit.fonts as string[]).map((key) => <button key={key} type="button" className={btn} onClick={() => { void commit((n) => applyKitOps(n, { fonts: key })) }}>{TYPE_SETS.find((t) => t.key === key)?.name ?? key}</button>)}
+                  {(kitNow.fonts ?? []).length > 0 && (
+                    <div className={bub}><p className={lab}>Fonts you picked</p><div className="flex flex-wrap gap-1.5">
+                      {(kitNow.fonts as string[]).map((key) => <button key={key} type="button" className={pill} onClick={() => { void commit((n) => applyKitOps(n, { fonts: key })) }}>{TYPE_SETS.find((t) => t.key === key)?.name ?? key}</button>)}
                     </div></div>
                   )}
-                  {(kit.themes ?? []).length > 0 && (
-                    <div><p className={lab}>Themes</p><div className="mt-1 flex flex-wrap gap-1">
-                      {(kit.themes as any[]).map((t) => (
-                        <span key={t.name} className="inline-flex items-center overflow-hidden rounded-full border border-black/10 bg-white text-[11px] text-ink">
-                          <button type="button" className="px-2.5 py-1 transition hover:bg-black/5" onClick={() => { void commit((n) => applyKitOps(n, { theme: t.name })) }}>{t.name}</button>
-                          <button type="button" aria-label={'Delete ' + t.name} className="px-1.5 py-1 text-ink-soft transition hover:text-red-600" onClick={() => { void commit((n) => { const k = kitOf(n); k.themes = k.themes.filter((q: any) => q.name !== t.name) }) }}>×</button>
+                  <div className={bub}><p className={lab}>Pages to design</p><div className="flex flex-wrap gap-1.5">
+                    {chosenPages.map((k) => <button key={k} type="button" className={pill + (curPage === k ? ' !border-twilight' : '')} onClick={() => setCurPage(k)}>{pageLabel(k)}</button>)}
+                  </div>{kitNow.extra_pages ? <p className="mt-2 text-xs text-ink-soft">Also wanted: {String(kitNow.extra_pages)}</p> : null}</div>
+                  {(kitNow.themes ?? []).length > 0 && (
+                    <div className={bub}><p className={lab}>Saved themes</p><div className="flex flex-wrap gap-1.5">
+                      {(kitNow.themes as any[]).map((t) => (
+                        <span key={t.name} className="inline-flex items-center overflow-hidden rounded-full border border-black/10 bg-white text-xs text-ink">
+                          <button type="button" className="px-3 py-1.5 transition hover:bg-black/5" onClick={() => { void commit((n) => applyKitOps(n, { theme: t.name })) }}>{t.name}</button>
+                          <button type="button" aria-label={'Delete ' + t.name} className="px-2 py-1.5 text-ink-soft transition hover:text-red-600" onClick={() => { void commit((n) => { const k = kitOf(n); k.themes = k.themes.filter((q: any) => q.name !== t.name) }) }}>×</button>
                         </span>
                       ))}
                     </div></div>
                   )}
-                </div>
+                </>
               )
             })()}
-            <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
-              {msgs.slice(-4).map((m, i) => (
-                <div key={i} className={'max-w-[88%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto ' + ACC + ' text-white' : 'bg-white text-ink')}>{m.text}</div>
-              ))}
-              <div ref={chatEnd} />
-            </div>
-            <div className="mt-3 flex max-h-24 flex-wrap gap-1.5 overflow-y-auto">
-              {tour === null && <button type="button" className={chip} onClick={() => { setMsgs((m) => [...m, { from: 'cami', text: TOUR_Q[0] }]); setTour(0) }}>Walk me through it</button>}
-              {tour === 0 && STYLES.map((st) => <button key={st.key} type="button" className={chip} onClick={() => tourPick(st.name, (n) => { n.site_template = st.tpl; n.site_font_pair = st.pair; applyPalette(n, n.site_accent ?? '#C98A8D', st.bg, st.text) }, 1)}>{st.name}</button>)}
-              {tour === 1 && PALETTES.map((pl) => <button key={pl.name} type="button" className={chip} onClick={() => tourPick(pl.name, (n) => applyPalette(n, pl.accent, pl.bg, pl.text), 2)}>{pl.name}</button>)}
-              {tour === 2 && TYPE_SETS.filter((t) => t.pair).map((t) => <button key={t.key} type="button" className={chip} onClick={() => tourPick(t.name, (n) => { n.site_font_pair = t.pair }, 3)}>{t.name}</button>)}
-              {tour === 3 && SHAPES.map((sh) => <button key={sh.k} type="button" className={chip} onClick={() => tourPick(sh.name, (n) => setButtons(n.site_settings, sh.k), 4)}>{sh.name}</button>)}
-              {tour !== null && <button type="button" className="px-2 text-xs text-ink-soft underline" onClick={() => { setTour(null); setMsgs((m) => [...m, { from: 'cami', text: 'Okay, I am here whenever you want to change something.' }]) }}>Skip</button>}
+            {msgs.map((m, i) => (
+              <div key={i} className={'max-w-[88%] rounded-2xl px-4 py-2.5 text-sm ' + (m.from === 'you' ? 'ml-auto ' + ACC + ' text-white' : 'bg-white text-ink shadow-sm')}>{m.text}</div>
+            ))}
+            <div ref={chatEnd} />
+          </div>
+
+          <div className="relative border-t border-black/10 px-5 pb-3 pt-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[58px] right-4 z-10 h-[70px] w-auto" />
+            <div className="flex flex-wrap gap-1.5">
+              {['Switch layout', 'Make me a Christmas theme for December', 'Make my buttons glow on hover'].map((t) => <button key={t} type="button" className={chip} onClick={() => send(t)}>{t}</button>)}
             </div>
             {form.site_settings?.custom_css && (
               <button type="button" onClick={() => { void commit((n) => { if (n.site_settings) delete n.site_settings.custom_css }) }} className="mt-2 text-xs text-twilight underline">Reset my custom design</button>
             )}
             <form onSubmit={(e) => { e.preventDefault(); send(input) }} className="mt-3 flex gap-2">
-              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Tell Camri what to change" className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={'Tell Camri what to change on ' + pageLabel(curPage)} className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
               <button type="submit" className={accentBtn + ' !px-4 !py-2'}>Send</button>
             </form>
+            <button type="button" onClick={() => setShowSet((o) => !o)} className="mt-3 text-xs text-ink-soft underline">{showSet ? 'Hide link and social links' : 'Link and social links'}</button>
+            {showSet && (
+              <div className="mt-3 max-h-64 overflow-y-auto rounded-xl border border-black/10 bg-white p-3">
+                {siteUrl && (
+                  <div className="mb-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Your link</p>
+                    <p className="mt-1 break-all font-fraunces text-base text-ink">{siteUrl}</p>
+                    <button type="button" onClick={() => { try { void navigator.clipboard.writeText('https://' + siteUrl) } catch { /* ignore */ } setPubMsg('Link copied.'); setTimeout(() => setPubMsg(''), 2000) }} className="mt-2 rounded-lg bg-black/5 px-3 py-1.5 text-xs text-ink transition hover:bg-black/10">Copy link</button>
+                  </div>
+                )}
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Social links</p>
+                <div className="mt-2">{renderStep('social')}</div>
+                <button type="button" onClick={saveSocial} className={accentBtn + ' mt-3 !px-4 !py-2'}>Update preview</button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         {pubMsg && <p className="px-4 pt-3 text-center text-xs text-ink-soft">{pubMsg}</p>}
         <div className="flex gap-3 border-t border-black/10 p-4">
@@ -900,6 +840,13 @@ export default function CamiDesigner() {
             ))}
           </div>
         </div>
+        {!full && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {chosenPages.map((k) => (
+              <button key={k} type="button" onClick={() => setCurPage(k)} className={'rounded-full px-4 py-1.5 text-sm font-medium transition ' + (curPage === k ? ACC + ' text-white' : 'bg-white text-ink-soft hover:text-ink')}>{pageLabel(k)}</button>
+            ))}
+          </div>
+        )}
         <div ref={boxRef} className="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-black/10 bg-[#e6e1da] shadow-sm">
           {form.public_token ? (
             <div className="flex h-full justify-center">

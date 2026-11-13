@@ -74,7 +74,7 @@ export default function CamriSetup({ styles, palettes, typeSets, pages, fam, onF
         {step === 0 && (
           <div className="flex flex-wrap items-center gap-4">
             <button type="button" onClick={() => setStep(1)} className="rounded-full bg-twilight px-7 py-3 text-sm font-medium text-white transition hover:opacity-90">Let&apos;s start</button>
-            <button type="button" onClick={onSkip} className="text-sm text-ink-soft underline">Skip, I&apos;ll do it myself</button>
+            
           </div>
         )}
 
@@ -176,7 +176,7 @@ export default function CamriSetup({ styles, palettes, typeSets, pages, fam, onF
           ) : (
             <button type="button" onClick={finish} disabled={!canGo || busy} className="rounded-full bg-twilight px-7 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site'}</button>
           )}
-          <button type="button" onClick={onSkip} className="ml-auto text-sm text-ink-soft underline">Skip setup</button>
+          
         </div>
       )}
     </div>
