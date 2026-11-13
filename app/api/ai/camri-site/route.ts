@@ -101,8 +101,8 @@ ${String(site.js ?? '').slice(0, 12000) || '(none)'}`
 
     const lastUser = String(messages[messages.length - 1]?.content ?? '')
     const jsPhase = lastUser.startsWith('[[JS]]')
-    const wantsMotion = !jsPhase && /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|animat|snow|sparkle|confetti|effect|magic|wow|dramatic|glow|twinkl|scene/i.test(lastUser)
-    const tier: 'sonnet' | 'haiku' = jsPhase || /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|theme|animat|snow|sparkle|confetti|effect|magic|wow|fancy|dramatic|glow|twinkl|scene/i.test(lastUser) ? 'sonnet' : 'haiku'
+    const wantsMotion = !jsPhase && /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|animat|snow|sparkle|confetti|effect|magic|wow|dramatic|glow|twinkl|scene|theme|vibe|season|beach|summer|winter|spring|autumn|tropical|ocean|forest|boho|desert|mountain|sunset|night sky/i.test(lastUser)
+    const tier: 'sonnet' | 'haiku' = jsPhase || wantsMotion || /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|theme|animat|snow|sparkle|confetti|effect|magic|wow|fancy|dramatic|glow|twinkl|scene/i.test(lastUser) ? 'sonnet' : 'haiku'
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const res = await client.messages.create({ model: MODEL_ID[tier], max_tokens: jsPhase ? 5500 : 9000, system: system + (jsPhase ? JS_STEP_NOTE : wantsMotion ? LOOK_STEP_NOTE : ''), messages })
 
