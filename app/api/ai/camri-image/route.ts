@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
       body: JSON.stringify({
         model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2.5-flare',
-        prompt: 'Photorealistic, highly detailed: ' + prompt + '. No text, no watermark.',
+        prompt: 'Photorealistic, highly detailed: ' + prompt + '. Scenery and objects only: no people, no faces, no text, no watermark. Cinematic, professional photography quality.',
         size,
         quality: process.env.OPENAI_IMAGE_QUALITY || 'medium',
         background: 'transparent',

@@ -421,6 +421,23 @@ export default function CamiDesigner() {
       const kk = (st0 as any).kit ?? {}
       const kitPayload = { layouts: (kk.layouts ?? []).map((key: string) => ({ key, name: STYLES.find((q) => q.key === key)?.name ?? key })), palettes: (kk.palettes ?? []).map((p: any) => ({ name: p.name })), fonts: (kk.fonts ?? []).map((key: string) => ({ key, name: TYPE_SETS.find((t) => t.key === key)?.name ?? key })), themes: (kk.themes ?? []).map((t: any) => t.name), type: kk.type ?? null }
       let planNote = ''
+      const kitImgs: { name: string; shape: string; prompt: string }[] = /christmas|xmas/i.test(t)
+        ? [{ name: 'frame', shape: 'wide', prompt: 'a photoreal Christmas border frame for a website hero banner: on the left side tall snow-dusted pine trees covered in glowing warm string lights with red and gold ornaments, plus a vintage lantern with lit candles, pinecones and red berries at the bottom left; on the right side more snowy lit pine trees and a glowing wreath; soft golden bokeh lights; the whole center 55 percent of the image left completely empty and fully transparent' }, { name: 'garland', shape: 'wide', prompt: 'a long straight horizontal garland of snow-dusted pine branches with red berries, pinecones, gold ornaments and glowing warm string lights, photoreal, edge to edge' }]
+        : /halloween/i.test(t)
+          ? [{ name: 'frame', shape: 'wide', prompt: 'a photoreal Halloween border frame for a website hero banner: on the left glowing carved jack-o-lanterns, twisted bare spooky trees and cobwebs; on the right more pumpkins, bats and a hint of full moon glow; the whole center 55 percent of the image left completely empty and fully transparent' }, { name: 'garland', shape: 'wide', prompt: 'a long straight horizontal garland of cobwebs, small pumpkins, dried leaves and tiny orange lights, photoreal, edge to edge' }]
+          : /valentine/i.test(t)
+            ? [{ name: 'frame', shape: 'wide', prompt: 'a photoreal Valentine border frame for a website hero banner: lush deep red and blush roses, soft petals and glowing fairy lights down both the left and right sides; the whole center 55 percent of the image left completely empty and fully transparent' }, { name: 'garland', shape: 'wide', prompt: 'a long straight horizontal garland of red and pink roses with greenery and tiny warm lights, photoreal, edge to edge' }]
+            : /thanksgiving|autumn/i.test(t)
+              ? [{ name: 'frame', shape: 'wide', prompt: 'a photoreal autumn border frame for a website hero banner: golden and red leaves, small pumpkins, wheat and warm lanterns down both the left and right sides; the whole center 55 percent of the image left completely empty and fully transparent' }, { name: 'garland', shape: 'wide', prompt: 'a long straight horizontal garland of autumn leaves, berries and tiny warm lights, photoreal, edge to edge' }]
+              : []
+      const imgJobs = kitImgs.map(async (im) => {
+        try {
+          const rr = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: im.name, prompt: im.prompt, shape: im.shape }) })
+          if (!rr.ok) { console.error('camri-image status', rr.status, await rr.text().catch(() => '')); return null }
+          const jj = await rr.json()
+          return jj?.url ? { ...im, url: jj.url as string } : null
+        } catch (e) { console.error('camri-image failed', e); return null }
+      })
       if (/christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|animat|snow|sparkle|confetti|effect|magic|wow|dramatic|glow|twinkl|scene/i.test(t)) {
         try {
           const pr = await fetch('/api/ai/camri-plan', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: t }) })
@@ -431,6 +448,8 @@ export default function CamiDesigner() {
           }
         } catch (e) { console.error('camri-plan failed', e) }
       }
+      const madeImgs = (await Promise.all(imgJobs)).filter(Boolean) as { name: string; shape: string; url: string }[]
+      if (madeImgs.length) planNote += "\n\n(Photoreal images were just generated for this design as transparent PNG files. Do not order any images, and do not use any /seasonal art pack files, any emoji decorations or any css-drawn garland, lights or ornaments in this design: the generated images are the only decoration art. You MUST use every one in your css as a background-image with url('ADDRESS') using these exact addresses: " + madeImgs.map((i) => i.name + ' (' + i.shape + '): ' + i.url).join('; ') + ". Placement by name. frame: a full-bleed overlay on the hero with position:absolute, inset:0, background-size:100% 100%, background-position:center, above the hero photo and below the text. garland: a strip along the top edge of the hero just under the menu, width 100 percent, height about 130px, background-size:100% 100%. Any other image: put it near an edge without covering text.)"
       const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: (tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t) + planNote, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
       if (!res.ok) console.error('camri-site status', res.status, await res.clone().text().catch(() => ''))
       const ai = res.ok ? await res.json() : null
