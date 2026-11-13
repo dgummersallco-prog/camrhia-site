@@ -420,7 +420,18 @@ export default function CamiDesigner() {
       const st0 = form.site_settings ?? {}
       const kk = (st0 as any).kit ?? {}
       const kitPayload = { layouts: (kk.layouts ?? []).map((key: string) => ({ key, name: STYLES.find((q) => q.key === key)?.name ?? key })), palettes: (kk.palettes ?? []).map((p: any) => ({ name: p.name })), fonts: (kk.fonts ?? []).map((key: string) => ({ key, name: TYPE_SETS.find((t) => t.key === key)?.name ?? key })), themes: (kk.themes ?? []).map((t: any) => t.name), type: kk.type ?? null }
-      const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
+      let planNote = ''
+      if (/christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|animat|snow|sparkle|confetti|effect|magic|wow|dramatic|glow|twinkl|scene/i.test(t)) {
+        try {
+          const pr = await fetch('/api/ai/camri-plan', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: t }) })
+          const pj = pr.ok ? await pr.json() : null
+          if (pj?.text) {
+            setMsgs((m) => [...m, { from: 'cami', text: pj.text }])
+            planNote = '\n\n(You already told them this plan out loud and must build it: ' + pj.text + ' Use this fresh angle: ' + pj.twist + '.)'
+          }
+        } catch (e) { console.error('camri-plan failed', e) }
+      }
+      const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: (tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t) + planNote, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
       if (!res.ok) console.error('camri-site status', res.status, await res.clone().text().catch(() => ''))
       const ai = res.ok ? await res.json() : null
       if (ai?.reply && ai.changes) {
@@ -456,7 +467,7 @@ export default function CamiDesigner() {
         aiDone = true
         if (ai.next === 'js') {
           try {
-            const r2 = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: '[[JS]] ' + t, history: [], site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, css: typeof ch.css === 'string' ? ch.css : st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: [] }) })
+            const r2 = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: '[[JS]] ' + t + planNote, history: [], site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, css: typeof ch.css === 'string' ? ch.css : st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: [] }) })
             if (!r2.ok) console.error('camri-site js status', r2.status)
             const ai2 = r2.ok ? await r2.json() : null
             if (typeof ai2?.changes?.js === 'string' && ai2.changes.js) {
