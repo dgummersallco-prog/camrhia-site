@@ -64,7 +64,7 @@ export default function DashScenes() {
   const [url, setUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    try { if (localStorage.getItem(DASH_BG_KEY)) return } catch {}
+    try { localStorage.removeItem(DASH_BG_KEY) } catch {}
     let off = false
     const month = MONTH_SCENES[new Date().getMonth()]
     const order = [month, ...ALL.filter((s) => s !== month)]

@@ -192,7 +192,7 @@ export function DashboardHeader({ active, hideNav }: { active: Tab; hideNav?: bo
     async function run() {
       try {
         const c = localStorage.getItem(DASH_BG_KEY)
-        if (c) applyDashBg(c, supabase)
+        if (c) localStorage.removeItem(DASH_BG_KEY)
       } catch {}
       const sb = supabase
       if (!sb) return
@@ -200,7 +200,7 @@ export function DashboardHeader({ active, hideNav }: { active: Tab; hideNav?: bo
       if (!data.session) return
       const { data: pr } = await sb.from('profiles').select('dash_bg').eq('id', data.session.user.id).maybeSingle()
       const v = (pr as { dash_bg?: string | null } | null)?.dash_bg ?? null
-      applyDashBg(v && v !== 'golden' ? v : null, sb)
+      void v // custom backgrounds retired: the monthly scene is the only background
     }
     run().catch(() => {})
   }, [])
