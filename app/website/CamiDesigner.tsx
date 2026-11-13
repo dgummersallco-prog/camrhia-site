@@ -430,6 +430,9 @@ export default function CamiDesigner() {
             planNote = '\\n\\n(You already told them this plan out loud and must build it: ' + pj.text + ' Use this fresh angle: ' + pj.twist + '.)'
           }
           const planImgs: { name: string; edge: string; prompt: string }[] = Array.isArray(pj?.images) ? pj.images : []
+          if (!pr.ok) setMsgs((m) => [...m, { from: 'cami', text: 'My planning step did not answer (' + pr.status + '), so no pictures were made.' }])
+          else if (!planImgs.length) setMsgs((m) => [...m, { from: 'cami', text: 'No picture prompts came back from my plan, so no pictures were made.' }])
+          else setMsgs((m) => [...m, { from: 'cami', text: 'Making your scenery pictures now. This takes about 40 seconds.' }])
           const madeImgs = (await Promise.all(planImgs.map(async (im) => {
             try {
               const rr = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: im.name, prompt: im.prompt, shape: 'wide' }) })
@@ -443,7 +446,11 @@ export default function CamiDesigner() {
               }
               const jj = await rr.json()
               return jj?.url ? { ...im, url: jj.url as string } : null
-            } catch (e) { console.error('camri-image failed', e); return null }
+            } catch (e) {
+              console.error('camri-image failed', e)
+              setMsgs((m) => [...m, { from: 'cami', text: "I couldn't make the " + im.name + ' picture. The connection dropped: ' + String((e as any)?.message ?? e).slice(0, 120) }])
+              return null
+            }
           }))).filter(Boolean) as { name: string; edge: string; url: string }[]
           if (madeImgs.length) planNote += "\\n\\n(Photoreal images were just generated for this design as transparent PNG files. Do not order any images, and do not use any emoji decorations or css-drawn garland, lights, ornaments or scenery in this design: the generated images are the only decoration art. You MUST use every one in your css as a background-image with url('ADDRESS') using these exact addresses: " + madeImgs.map((i) => i.name + ' (' + i.edge + '): ' + i.url).join('; ') + ". Placement by name. frame: a full-bleed overlay on the hero with position:absolute, inset:0, background-size:100% 100%, background-position:center, above the hero photo and below the text. strip: a strip along its edge (top means just under the menu, bottom means the bottom of the hero) with position:absolute, left:0, right:0, width 100 percent, height about 140px, background-size:100% 100%, above the hero photo and below the text.)"
         } catch (e) { console.error('camri-plan failed', e) }

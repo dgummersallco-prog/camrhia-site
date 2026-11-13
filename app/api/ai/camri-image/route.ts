@@ -30,7 +30,10 @@ export async function POST(request: Request) {
     const spent = usedErr ? 0 : (used ?? []).reduce((t: number, r: any) => t + Number(r.cost_usd ?? 0), 0)
     if (cap > 0 && spent >= cap) return Response.json({ error: 'Monthly limit reached.' }, { status: 429 })
 
+    const ctl = new AbortController()
+    const timer = setTimeout(() => ctl.abort(), 52000)
     const res = await fetch('https://api.openai.com/v1/images/generations', {
+      signal: ctl.signal,
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
       body: JSON.stringify({
@@ -43,6 +46,7 @@ export async function POST(request: Request) {
         n: 1,
       }),
     })
+    clearTimeout(timer)
     if (!res.ok) {
       const errText = (await res.text().catch(() => '')).slice(0, 800)
       console.error('camri-image openai', res.status, errText)
@@ -68,6 +72,7 @@ export async function POST(request: Request) {
     return Response.json({ url: base + '/storage/v1/object/public/portfolio/' + path })
   } catch (e) {
     console.error('camri-image failed', e)
-    return Response.json({ error: 'Camri hit a snag. Try again.' }, { status: 500 })
+    if ((e as any)?.name === 'AbortError') return Response.json({ error: 'The picture took too long.', detail: 'OpenAI took longer than 50 seconds to make it.' }, { status: 504 })
+    return Response.json({ error: 'Camri hit a snag. Try again.', detail: String((e as any)?.message ?? e).slice(0, 200) }, { status: 500 })
   }
 }
