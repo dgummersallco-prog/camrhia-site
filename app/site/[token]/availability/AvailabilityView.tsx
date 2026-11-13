@@ -8,6 +8,8 @@ import { supabase } from '@/lib/supabase'
 import { DateCheckWidget } from '../../../p/[token]/DateCheckWidget'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { SiteNav } from '../SiteNav'
+import CustomJs from '@/app/site/CustomJs'
+import { sanitizeCss } from '@/lib/safeCss'
 
 const SESSION_TYPES = [
   'Wedding', 'Engagement', 'Proposal', 'Family', 'Maternity', 'Newborn', 'Senior',
@@ -240,6 +242,8 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <link rel="stylesheet" href={t.fontsHref} />
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
       <div id={photoBack ? 'book-photo' : undefined} style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
+        <CustomJs code={String((r as any).site_settings?.custom_js ?? '')} />
+        {(() => { const cc = sanitizeCss((r as any).site_settings?.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
         <SiteNav t={t} logo={logo} name={studio} homeHref={`${homeHref}${qs}`} headStyle={head} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`], ...t.extraPages.map((e) => [e.id, `${base}/p/${e.id}${qs}`] as [string, string])] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k) && !(t.pagesOff as string[]).includes(k)).map(([k, h]) => ({ key: k, href: h, label: (t.menu.labels as Record<string, string | undefined>)[k]?.trim() || (NAV_DEFAULTS as Record<string, string>)[k] || t.extraPages.find((e) => e.id === k)?.label || k, active: k === 'book' }))} />
 
         {photoAbove && (

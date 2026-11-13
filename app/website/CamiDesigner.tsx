@@ -465,8 +465,9 @@ export default function CamiDesigner() {
           let extra = ''
           for (const im of madeImgs) {
             if (String(ch.css ?? '').includes(im.url)) continue
-            const pos = im.name === 'strip' ? 'left:0;right:0;height:150px;' + (im.edge === 'bottom' ? 'bottom:0;' : 'top:0;') : 'inset:0;'
-            extra += ' body::' + (im.name === 'strip' ? 'after' : 'before') + '{content:"";position:fixed;' + pos + 'z-index:3;pointer-events:none;background:url(' + im.url + ') center/100% 100% no-repeat}'
+            const pos = im.name === 'strip' ? 'left:0;right:0;height:24vw;' + (im.edge === 'bottom' ? 'bottom:0;' : 'top:0;') : 'inset:0;'
+            const bg = im.name === 'strip' ? 'center ' + (im.edge === 'bottom' ? 'bottom' : 'top') + '/100% auto' : 'center/100% 100%'
+            extra += ' body::' + (im.name === 'strip' ? 'after' : 'before') + '{content:"";position:fixed;' + pos + 'z-index:3;pointer-events:none;background:url(' + im.url + ') ' + bg + ' no-repeat}'
           }
           if (extra) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')) + extra
         }
