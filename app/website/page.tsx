@@ -41,7 +41,7 @@ type OwnPkg = { id: string; name: string; price: string | null; covers: string |
 function heroAspect(tpl: string, dev: 'phone' | 'desktop', vh: number): number | null {
   const W = dev === 'phone' ? 390 : 1280
   const H = dev === 'phone' ? 844 : 800
-  if (tpl === 'editorial' || tpl === 'framed') return W / ((vh / 100) * H)
+  if (tpl === 'editorial' || tpl === 'framed' || tpl === 'peony') return W / ((vh / 100) * H)
   if (tpl === 'magazine') return W / (0.8 * (vh / 100) * H)
   if (tpl === 'minimal') return dev === 'phone' ? 16 / 10 : 21 / 9
   if (tpl === 'split') return dev === 'phone' ? W / (0.6 * H) : (W / 2) / Math.max(0.6 * H, (vh / 100) * H - 64)

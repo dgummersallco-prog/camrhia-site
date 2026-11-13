@@ -40,6 +40,7 @@ const STYLES = [
   { key: 'clean', name: 'Clean split', blurb: 'Words one side, photo the other.', tpl: 'split', pair: 'modern', bg: '#F6F1EA', text: '#2A1F24' },
   { key: 'mosaic', name: 'Photo collage', blurb: 'A wall of your best shots.', tpl: 'mosaic', pair: 'modern', bg: '#FAF7F2', text: '#2A1F24', mock: 'mosaic' },
   { key: 'earthy', name: 'Warm & earthy', blurb: 'Cream, clay and soft serif.', tpl: 'editorial', pair: 'serif', bg: '#F1E8DA', text: '#3A2A22', mock: 'classic' },
+  { key: 'peony', name: 'Peony', blurb: 'Soft full-photo hero, centered logo.', tpl: 'peony', pair: 'romantic', bg: '#FBF4F1', text: '#3A2A2E' },
 ]
 const PALETTES = [
   { name: 'Blush', accent: '#C98A8D', bg: '#FBF6F1', text: '#2A1F24' },
@@ -473,7 +474,9 @@ export default function CamiDesigner() {
           }
           if (extra) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')).replace(/\/\*camri-backdrop\*\/[\s\S]*?\/\*camri-end\*\//g, '') + ' /*camri-backdrop*/' + extra + ' /*camri-end*/'
         }
-        if (!madeImgs.length && typeof ch.css === 'string' && ch.css && !ch.css.includes('camri-backdrop')) {
+        const stripDecor = /(remove|delete|get rid|take (it|them|that|those) (off|out|away)|without|no more|hate|stupid|ugly|dont want|don't want|too much)/i.test(t) && /(rose|corner|divider|sprig|texture|picture|art|decor|flower|floral|image)/i.test(t)
+        if (stripDecor) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')).replace(/\/\*camri-backdrop\*\/[\s\S]*?\/\*camri-end\*\//g, '')
+        if (!stripDecor && !madeImgs.length && typeof ch.css === 'string' && ch.css && !ch.css.includes('camri-backdrop')) {
           const kept = String(st0.custom_css ?? '').match(/\/\*camri-backdrop\*\/[\s\S]*?\/\*camri-end\*\//)
           if (kept) ch.css += ' ' + kept[0]
         }

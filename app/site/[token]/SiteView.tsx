@@ -908,6 +908,36 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </div>
           </header>
         )}
+        {page === 'home' && tpl === 'peony' && (
+          <>
+            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+              <style>{`#top #nav{color:${ink}!important}`}</style>
+              {heroImg('absolute inset-0 h-full w-full')}
+              <div className="absolute inset-0" style={{ background: `color-mix(in srgb, ${bg} 38%, transparent)` }} />
+              {renderNav(true, true)}
+              <div className="relative mx-auto mt-auto flex w-full max-w-3xl flex-col items-center px-6 pb-14 pt-40 text-center" style={{ color: ink }}>
+                <h1 style={h1Mid}>{headline}</h1>
+                {subhead && <p className="cr-sub mt-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+                <div className="mt-8">{cta()}</div>
+              </div>
+            </header>
+            {(() => {
+              const pics = (mosaicSrcs.length > 0 ? mosaicSrcs : shownHero.length > 0 ? shownHero : isPreview ? PH_SCENES : []).slice(0, 3)
+              return (
+                <section className="mx-auto max-w-6xl px-6 py-20 md:py-28">
+                  <div className="mx-auto flex max-w-xl flex-col items-center text-center">{heroPara(soft)}</div>
+                  {pics.length > 0 && (
+                    <div className="mt-14 grid grid-cols-3 gap-3 md:gap-6">
+                      {pics.map((u, i) => (
+                        <div key={u + i} className="aspect-[3/4] overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )
+            })()}
+          </>
+        )}
         {page === 'home' && tpl === 'mosaic' && (
           <header id="top">
             <div className="mx-auto max-w-6xl px-4 pb-4">
