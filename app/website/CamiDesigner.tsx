@@ -700,7 +700,7 @@ export default function CamiDesigner() {
 
   const PAGE_LABEL: Record<string, string> = { home: 'Home', booking: 'Booking', galleries: 'Galleries', about: 'About', blog: 'Blog', pricing: 'Pricing', faq: 'FAQ' }
   const kitNow = ((form.site_settings as any)?.kit ?? {}) as Record<string, any>
-  const chosenPages: string[] = Array.from(new Set(['home', 'booking', ...((kitNow.pages ?? []) as any[]).map((q) => (typeof q === 'string' ? q : String(q?.key ?? q?.k ?? q?.id ?? ''))).filter(Boolean)]))
+  const chosenPages: string[] = Array.from(new Set(['home', 'booking', ...((kitNow.pages ?? []) as any[]).map((q) => (typeof q === 'string' ? q : String(q?.key ?? q?.k ?? q?.id ?? ''))).map((k) => (k === 'book' ? 'booking' : k)).filter(Boolean)]))
   const pageLabel = (k: string) => PAGE_LABEL[k] ?? (k.charAt(0).toUpperCase() + k.slice(1))
   const ACC = 'bg-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)]'
   const tabsDef: { k: 'pages' | 'design' | 'settings'; label: string; icon: string }[] = [
