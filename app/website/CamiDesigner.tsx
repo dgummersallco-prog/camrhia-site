@@ -453,7 +453,7 @@ export default function CamiDesigner() {
               return null
             }
           }))).filter(Boolean) as { name: string; edge: string; url: string }[]
-          if (madeImgs.length) planNote += "\\n\\n(A photoreal backdrop picture was just generated and is already pinned behind the whole page by the builder, so do not use any image in your css and do not draw scenery with emoji or css. Design the look to sit over a rich dark photographic backdrop: light, high-contrast text with soft text shadows, and no solid full-width section background colors.)"
+          if (madeImgs.length) planNote += "\\n\\n(A photoreal backdrop picture was just generated and is already pinned behind the whole page by the builder, so do not use any image in your css and do not draw scenery with emoji or css. Design the look to sit over a rich dark photographic backdrop: light, high-contrast text with soft text shadows, and no solid full-width section background colors. Aim for a happy medium: a few tasteful touches such as soft glows or a handful of sparkles, not crowded or over the top, and not plain either. Text must always be easy to read over the backdrop.)"
         } catch (e) { console.error('camri-plan failed', e) }
       }
       const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: (tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t) + planNote, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
@@ -467,7 +467,11 @@ export default function CamiDesigner() {
             if (String(ch.css ?? '').includes(im.url)) continue
             extra += ' html{background:linear-gradient(rgba(8,12,24,.35),rgba(8,12,24,.35)) fixed,url(' + im.url + ') center/cover fixed no-repeat!important} html body,body > div,body > div > div,body main,body section,body header,body nav,body footer{background:transparent!important}'
           }
-          if (extra) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')) + extra
+          if (extra) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')).replace(/\/\*camri-backdrop\*\/[\s\S]*?\/\*camri-end\*\//g, '') + ' /*camri-backdrop*/' + extra + ' /*camri-end*/'
+        }
+        if (!madeImgs.length && typeof ch.css === 'string' && ch.css && !ch.css.includes('camri-backdrop')) {
+          const kept = String(st0.custom_css ?? '').match(/\/\*camri-backdrop\*\/[\s\S]*?\/\*camri-end\*\//)
+          if (kept) ch.css += ' ' + kept[0]
         }
         if (Array.isArray(ch.images) && ch.images.length && typeof ch.css === 'string') {
           const made = await Promise.all(ch.images.map(async (im: any) => {
