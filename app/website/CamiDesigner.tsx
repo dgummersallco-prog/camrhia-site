@@ -425,6 +425,17 @@ export default function CamiDesigner() {
       const ai = res.ok ? await res.json() : null
       if (ai?.reply && ai.changes) {
         const ch = ai.changes
+        if (Array.isArray(ch.images) && ch.images.length && typeof ch.css === 'string') {
+          const made = await Promise.all(ch.images.map(async (im: any) => {
+            try {
+              const rr = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: im.name, prompt: im.prompt, shape: im.shape }) })
+              if (!rr.ok) { console.error('camri-image status', rr.status, await rr.text().catch(() => '')); return null }
+              const jj = await rr.json()
+              return jj?.url ? { name: im.name, url: jj.url } : null
+            } catch (e) { console.error('camri-image failed', e); return null }
+          }))
+          for (const d of made) if (d) ch.css = String(ch.css).split('IMG:' + d.name).join(d.url)
+        }
         if (ch.style || ch.palette || ch.font_pair || ch.buttons || ch.headline || ch.subhead || typeof ch.css === 'string' || typeof ch.js === 'string' || ch.kit) {
           await commit((n) => {
             n.site_settings = n.site_settings ?? {}
@@ -866,7 +877,7 @@ export default function CamiDesigner() {
               <img src="/camri/13_face_avatar.png" alt="" className="h-9 w-9 rounded-full" />
               <p className="font-fraunces text-xl font-semibold text-ink">Camri</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[41px] right-6 z-10 h-14 w-auto" />
+              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[43px] right-6 z-10 h-14 w-auto" />
             </div>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-3">
               {msgs.map((m, i) => (
