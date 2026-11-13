@@ -443,6 +443,17 @@ export default function CamiDesigner() {
         }
         setMsgs((m) => [...m, { from: 'cami', text: ai.reply }])
         aiDone = true
+        if (ai.next === 'js') {
+          try {
+            const r2 = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: '[[JS]] ' + t, history: [], site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, css: typeof ch.css === 'string' ? ch.css : st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: [] }) })
+            if (!r2.ok) console.error('camri-site js status', r2.status)
+            const ai2 = r2.ok ? await r2.json() : null
+            if (typeof ai2?.changes?.js === 'string' && ai2.changes.js) {
+              await commit((n) => { n.site_settings = n.site_settings ?? {}; n.site_settings.custom_js = ai2.changes.js })
+              setMsgs((m) => [...m, { from: 'cami', text: ai2.reply }])
+            }
+          } catch (e) { console.error('camri-site js step failed', e) }
+        }
       }
     } catch (e) { console.error('camri-site failed', e) }
     const r = aiDone ? { changed: false, state: form, reply: '' } : camiSite(t, form)

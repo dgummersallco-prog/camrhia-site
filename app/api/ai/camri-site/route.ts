@@ -100,9 +100,11 @@ ${String(site.js ?? '').slice(0, 12000) || '(none)'}`
     while (messages.length && messages[0].role !== 'user') messages.shift()
 
     const lastUser = String(messages[messages.length - 1]?.content ?? '')
-    const tier: 'sonnet' | 'haiku' = /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|theme|animat|snow|sparkle|confetti|effect|magic|wow|fancy|dramatic|glow|twinkl|scene/i.test(lastUser) ? 'sonnet' : 'haiku'
+    const jsPhase = lastUser.startsWith('[[JS]]')
+    const wantsMotion = !jsPhase && /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|animat|snow|sparkle|confetti|effect|magic|wow|dramatic|glow|twinkl|scene/i.test(lastUser)
+    const tier: 'sonnet' | 'haiku' = jsPhase || /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|theme|animat|snow|sparkle|confetti|effect|magic|wow|fancy|dramatic|glow|twinkl|scene/i.test(lastUser) ? 'sonnet' : 'haiku'
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const res = await client.messages.create({ model: MODEL_ID[tier], max_tokens: 14000, system, messages })
+    const res = await client.messages.create({ model: MODEL_ID[tier], max_tokens: 9000, system: system + (jsPhase ? JS_STEP_NOTE : wantsMotion ? LOOK_STEP_NOTE : ''), messages })
 
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0
@@ -148,7 +150,7 @@ ${String(site.js ?? '').slice(0, 12000) || '(none)'}`
       kit: kitAny ? kitOut : null,
     }
     const reply = clean(parsed.reply, 500) ?? 'Done!'
-    return Response.json({ reply, changes })
+    return Response.json({ reply, changes, next: wantsMotion ? 'js' : null })
   } catch (e) {
     return Response.json({ error: 'Camri hit a snag. Try again.' }, { status: 500 })
   }
@@ -176,3 +178,6 @@ export async function POST(request: Request) {
   })
   return new Response(stream, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })
 }
+
+const JS_STEP_NOTE = "\n\nTHIS IS THE ANIMATION STEP, and it overrides any earlier rule that says to also change css or other settings. The look is already built and saved (its css is shown above). The user's message starts with the marker [[JS]]: ignore the marker and treat the rest as their request. Reply with one short, excited sentence about the motion you are adding, and set every change to null except js. Write the complete js now: rich, layered and carefully written so it runs the first time, matching the look that was just built."
+const LOOK_STEP_NOTE = "\n\nTHIS IS STEP 1 OF 2 and it overrides any earlier rule that says to include js in this reply. Build the look now: palette, css (static decoration only, complete, under 7000 characters), kit and headline as needed. Set js to null, because a second step writes the animation code right after this one. In your reply, say what you built in plain, excited words and that the motion is coming next."
