@@ -104,7 +104,7 @@ ${String(site.js ?? '').slice(0, 12000) || '(none)'}`
     const wantsMotion = !jsPhase && /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|animat|snow|sparkle|confetti|effect|magic|wow|dramatic|glow|twinkl|scene|theme|vibe|season|beach|summer|winter|spring|autumn|tropical|ocean|forest|boho|desert|mountain|sunset|night sky/i.test(lastUser)
     const tier: 'sonnet' | 'haiku' = jsPhase || wantsMotion || /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|theme|animat|snow|sparkle|confetti|effect|magic|wow|fancy|dramatic|glow|twinkl|scene/i.test(lastUser) ? 'sonnet' : 'haiku'
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const res = await client.messages.create({ model: MODEL_ID[tier], max_tokens: jsPhase ? 5500 : 9000, system: system + (jsPhase ? JS_STEP_NOTE : wantsMotion ? LOOK_STEP_NOTE : ''), messages })
+    const res = await client.messages.create({ model: MODEL_ID[tier], max_tokens: jsPhase ? 5500 : 9000, system: system + DESIGN_RULES + (jsPhase ? JS_STEP_NOTE : wantsMotion ? LOOK_STEP_NOTE : ''), messages })
 
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0
@@ -182,3 +182,14 @@ export async function POST(request: Request) {
 
 const JS_STEP_NOTE = "\n\nTHIS IS THE ANIMATION STEP, and it overrides any earlier rule that says to also change css or other settings. The look is already built and saved (its css is shown above). The user's message starts with the marker [[JS]]: ignore the marker and treat the rest as their request. Reply with one short, excited sentence about the motion you are adding, and set every change to null except js. If the css already places generated images such as trees or a wreath, do not redraw them in js: spend the code on depth snow with wind, giant bokeh flakes, twinkling lights and a sparkle cursor trail. Write the complete js now, compact and under 7000 characters so it finishes quickly: rich, layered and carefully written so it runs the first time, matching the look that was just built."
 const LOOK_STEP_NOTE = "\n\nTHIS IS STEP 1 OF 2 and it overrides any earlier rule that says to include js in this reply. Build the look now: palette, css (static decoration only, complete, under 7000 characters), kit and headline as needed. Set js to null, because a second step writes the animation code right after this one. In your reply, say what you built in plain, excited words and that the motion is coming next."
+
+const DESIGN_RULES = `
+
+DESIGN RULES FOR EVERY REQUEST (you are a refined art director for wedding and portrait photographers; these always apply):
+- The photographer's own photos are the star. Decoration never covers a photo, a face, a headline or a button, and never sits behind text without enough contrast to read it.
+- Stay refined and restrained: 3 main colors at most, one script or handwritten font used only for small accents, one clean serif or sans for everything else. Plenty of white space. Never crowded, never cartoonish, never cheesy.
+- Decoration is small and organic, not a scene: tucked corner accents, a slim divider between sections, a soft paper or linen or watercolor texture behind a panel, a small sprig or ornament on a card corner, a short themed edge above the footer. At most 4 or 5 decorative pieces per theme.
+- Do not use a full-page scenery background or a huge overlay.
+- Text must always be easy to read: strong contrast, and soft shadows or a calm panel behind text when needed.
+- Name offers specifically, like Book a Holiday Mini Session, instead of a generic Book a Session, when the season or theme calls for it.
+- When asked for less or more, change only the amount of decoration and keep the structure, the photos and the readable text intact.`

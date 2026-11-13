@@ -428,7 +428,7 @@ export default function CamiDesigner() {
           const pj = pr.ok ? await pr.json() : null
           const planImgs0 = Array.isArray(pj?.images) ? pj.images : []
           if (pj?.text) {
-            await sayTyped(pj.text + (planImgs0.length ? ' Making your scenery pictures now. This takes about 40 seconds.' : ''))
+            await sayTyped(pj.text + (planImgs0.length ? ' Making your decorative pieces now. This takes about 40 seconds.' : ''))
             planNote = '\\n\\n(You already told them this plan out loud and must build it: ' + pj.text + ' Use this fresh angle: ' + pj.twist + '.)'
           }
           const planImgs: { name: string; edge: string; prompt: string }[] = Array.isArray(pj?.images) ? pj.images : []
@@ -436,7 +436,7 @@ export default function CamiDesigner() {
           else if (!planImgs.length) setMsgs((m) => [...m, { from: 'cami', text: 'No picture prompts came back from my plan, so no pictures were made.' }])
           madeImgs = (await Promise.all(planImgs.map(async (im) => {
             try {
-              const rr = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: im.name, prompt: im.prompt, shape: 'wide' }) })
+              const rr = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: im.name, prompt: im.prompt, shape: im.name === 'divider' || im.name === 'texture' ? 'wide' : 'square' }) })
               if (!rr.ok) {
                 const tx = await rr.text().catch(() => '')
                 console.error('camri-image status', rr.status, tx)
@@ -453,7 +453,7 @@ export default function CamiDesigner() {
               return null
             }
           }))).filter(Boolean) as { name: string; edge: string; url: string }[]
-          if (madeImgs.length) planNote += "\\n\\n(A photoreal backdrop picture was just generated and is already pinned behind the whole page by the builder, so do not use any image in your css and do not draw scenery with emoji or css. Design the look to sit over a rich dark photographic backdrop: light, high-contrast text with soft text shadows, and no solid full-width section background colors. Aim for a happy medium: a few tasteful touches such as soft glows or a handful of sparkles, not crowded or over the top, and not plain either. Text must always be easy to read over the backdrop.)"
+          if (madeImgs.length) planNote += "\\n\\n(A set of small decorative pieces (a hero corner accent, a divider above each section, a sprig on the cards and a soft texture) was just generated and is already placed by the builder, so do not use any image in your css and do not draw scenery or decorations with emoji or css. Design the look around them: refined, 3 main colors at most, readable text, and a happy medium of decoration, not crowded and not plain.)"
         } catch (e) { console.error('camri-plan failed', e) }
       }
       const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: (tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t) + planNote, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css, js: st0.custom_js }, kit: kitPayload, structure: structureOf(form as any), page: curPage, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
@@ -465,7 +465,11 @@ export default function CamiDesigner() {
           let extra = ''
           for (const im of madeImgs) {
             if (String(ch.css ?? '').includes(im.url)) continue
-            extra += ' html{background:linear-gradient(rgba(8,12,24,.35),rgba(8,12,24,.35)) fixed,url(' + im.url + ') center/cover fixed no-repeat!important} html body,body > div,body > div > div,body main,body section,body header,body nav,body footer{background:transparent!important}'
+            const U = im.url
+            if (im.name === 'corner') extra += ' #top{position:relative}#top::after{content:"";position:absolute;left:0;bottom:0;width:min(13vw,160px);aspect-ratio:1/1;background:url(' + U + ') left bottom/contain no-repeat;pointer-events:none;z-index:1}'
+            else if (im.name === 'divider') extra += ' section[id]:not(#social)::before{content:"";display:block;height:44px;max-width:760px;margin:0 auto 8px;background:url(' + U + ') center/contain no-repeat;pointer-events:none}'
+            else if (im.name === 'sprig') extra += ' #explore a{position:relative}#explore a::after{content:"";position:absolute;top:-10px;right:-4px;width:56px;height:56px;background:url(' + U + ') center/contain no-repeat;pointer-events:none}'
+            else if (im.name === 'texture') extra += ' #explore,#footer{background:url(' + U + ') center/cover!important}'
           }
           if (extra) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')).replace(/\/\*camri-backdrop\*\/[\s\S]*?\/\*camri-end\*\//g, '') + ' /*camri-backdrop*/' + extra + ' /*camri-end*/'
         }
