@@ -504,7 +504,7 @@ export default function CamiDesigner() {
             if (!r2.ok) console.error('camri-site js status', r2.status)
             const ai2 = r2.ok ? await r2.json() : null
             if (typeof ai2?.changes?.js === 'string' && ai2.changes.js) {
-              await commit((n) => { n.site_settings = n.site_settings ?? {}; n.site_settings.custom_js = ai2.changes.js })
+              await (commitRef.current ?? commit)((n) => { n.site_settings = n.site_settings ?? {}; n.site_settings.custom_js = ai2.changes.js })
               sayTyped(ai2.reply)
             }
           } catch (e) { console.error('camri-site js step failed', e) }
