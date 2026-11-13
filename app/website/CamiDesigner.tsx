@@ -421,19 +421,20 @@ export default function CamiDesigner() {
       const kk = (st0 as any).kit ?? {}
       const kitPayload = { layouts: (kk.layouts ?? []).map((key: string) => ({ key, name: STYLES.find((q) => q.key === key)?.name ?? key })), palettes: (kk.palettes ?? []).map((p: any) => ({ name: p.name })), fonts: (kk.fonts ?? []).map((key: string) => ({ key, name: TYPE_SETS.find((t) => t.key === key)?.name ?? key })), themes: (kk.themes ?? []).map((t: any) => t.name), type: kk.type ?? null }
       let planNote = ''
+      let madeImgs: { name: string; edge: string; url: string }[] = []
       if (/christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|animat|snow|sparkle|confetti|effect|magic|wow|dramatic|glow|twinkl|scene|theme|vibe|season|beach|summer|winter|spring|autumn|tropical|ocean|forest|boho|desert|mountain|sunset|night sky/i.test(t)) {
         try {
           const pr = await fetch('/api/ai/camri-plan', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: t }) })
           const pj = pr.ok ? await pr.json() : null
+          const planImgs0 = Array.isArray(pj?.images) ? pj.images : []
           if (pj?.text) {
-            sayTyped(pj.text)
+            await sayTyped(pj.text + (planImgs0.length ? ' Making your scenery pictures now. This takes about 40 seconds.' : ''))
             planNote = '\\n\\n(You already told them this plan out loud and must build it: ' + pj.text + ' Use this fresh angle: ' + pj.twist + '.)'
           }
           const planImgs: { name: string; edge: string; prompt: string }[] = Array.isArray(pj?.images) ? pj.images : []
           if (!pr.ok) setMsgs((m) => [...m, { from: 'cami', text: 'My planning step did not answer (' + pr.status + '), so no pictures were made.' }])
           else if (!planImgs.length) setMsgs((m) => [...m, { from: 'cami', text: 'No picture prompts came back from my plan, so no pictures were made.' }])
-          else setMsgs((m) => [...m, { from: 'cami', text: 'Making your scenery pictures now. This takes about 40 seconds.' }])
-          const madeImgs = (await Promise.all(planImgs.map(async (im) => {
+          madeImgs = (await Promise.all(planImgs.map(async (im) => {
             try {
               const rr = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: im.name, prompt: im.prompt, shape: 'wide' }) })
               if (!rr.ok) {
@@ -460,6 +461,15 @@ export default function CamiDesigner() {
       const ai = res.ok ? await res.json() : null
       if (ai?.reply && ai.changes) {
         const ch = ai.changes
+        if (madeImgs.length) {
+          let extra = ''
+          for (const im of madeImgs) {
+            if (String(ch.css ?? '').includes(im.url)) continue
+            const pos = im.name === 'strip' ? 'left:0;right:0;height:150px;' + (im.edge === 'bottom' ? 'bottom:0;' : 'top:0;') : 'inset:0;'
+            extra += ' body::' + (im.name === 'strip' ? 'after' : 'before') + '{content:"";position:fixed;' + pos + 'z-index:3;pointer-events:none;background:url(' + im.url + ') center/100% 100% no-repeat}'
+          }
+          if (extra) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')) + extra
+        }
         if (Array.isArray(ch.images) && ch.images.length && typeof ch.css === 'string') {
           const made = await Promise.all(ch.images.map(async (im: any) => {
             try {
@@ -508,13 +518,13 @@ export default function CamiDesigner() {
   }
 
   // Camri's words appear one at a time, like she is thinking as she builds.
-  function sayTyped(text: string) {
+  async function sayTyped(text: string): Promise<void> {
     const full = String(text)
     const words = full.split(' ')
     setMsgs((m) => [...m, { from: 'cami', text: words[0] }])
-    void (async () => {
+    await (async () => {
       for (let wi = 2; wi <= words.length; wi++) {
-        await new Promise((r) => setTimeout(r, 110))
+        await new Promise((r) => setTimeout(r, 190))
         const part = words.slice(0, wi).join(' ')
         setMsgs((m) => {
           const k = [...m].reverse().findIndex((x) => x.from === 'cami' && full.startsWith(x.text) && part.startsWith(x.text) && x.text.length >= words[0].length)
