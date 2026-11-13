@@ -141,9 +141,9 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const cal = t.calendar.sync
     ? {
-        dayColor: r.openings_cal_day_color, selectedColor: r.openings_cal_selected_color, monthColor: r.openings_cal_month_color,
-        availableColor: r.openings_cal_available_color, unavailableColor: r.openings_cal_unavailable_color,
-        resultTextColor: r.openings_cal_result_text_color, bgColor: r.openings_cal_bg_color ?? '#FFFFFF',
+        dayColor: (r as any).site_settings?.calendar?.day ?? r.openings_cal_day_color, selectedColor: (r as any).site_settings?.calendar?.selected ?? r.openings_cal_selected_color, monthColor: (r as any).site_settings?.calendar?.month ?? r.openings_cal_month_color,
+        availableColor: (r as any).site_settings?.calendar?.available ?? r.openings_cal_available_color, unavailableColor: (r as any).site_settings?.calendar?.unavailable ?? r.openings_cal_unavailable_color,
+        resultTextColor: (r as any).site_settings?.calendar?.resultText ?? r.openings_cal_result_text_color, bgColor: (r as any).site_settings?.calendar?.bg ?? r.openings_cal_bg_color ?? '#FFFFFF',
       }
     : {
         dayColor: t.calendar.day, selectedColor: t.calendar.selected, monthColor: t.calendar.month,

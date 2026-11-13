@@ -466,10 +466,10 @@ export default function CamiDesigner() {
           for (const im of madeImgs) {
             if (String(ch.css ?? '').includes(im.url)) continue
             const U = im.url
-            if (im.name === 'corner') extra += ' #top{position:relative}#top::after{content:"";position:absolute;left:0;bottom:0;width:min(13vw,160px);aspect-ratio:1/1;background:url(' + U + ') left bottom/contain no-repeat;pointer-events:none;z-index:1}'
-            else if (im.name === 'divider') extra += ' section[id]:not(#social)::before{content:"";display:block;height:44px;max-width:760px;margin:0 auto 8px;background:url(' + U + ') center/contain no-repeat;pointer-events:none}'
+            if (im.name === 'corner') extra += ' #top{position:relative}#top::after{content:"";position:absolute;left:0;bottom:0;width:min(18vw,230px);aspect-ratio:1/1;background:url(' + U + ') left bottom/contain no-repeat;pointer-events:none;z-index:1}'
+            else if (im.name === 'divider') extra += ' section[id]:not(#social)::before{content:"";display:block;height:64px;max-width:900px;margin:0 auto 12px;background:url(' + U + ') center/100% auto no-repeat;pointer-events:none}'
             else if (im.name === 'sprig') extra += ' #explore a{position:relative}#explore a::after{content:"";position:absolute;top:-10px;right:-4px;width:56px;height:56px;background:url(' + U + ') center/contain no-repeat;pointer-events:none}'
-            else if (im.name === 'texture') extra += ' #explore,#footer{background:url(' + U + ') center/cover!important}'
+            else if (im.name === 'texture') extra += ' #footer{background:url(' + U + ') center/cover!important}'
           }
           if (extra) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')).replace(/\/\*camri-backdrop\*\/[\s\S]*?\/\*camri-end\*\//g, '') + ' /*camri-backdrop*/' + extra + ' /*camri-end*/'
         }
@@ -488,7 +488,7 @@ export default function CamiDesigner() {
           }))
           for (const d of made) if (d) ch.css = String(ch.css).split('IMG:' + d.name).join(d.url)
         }
-        if (ch.style || ch.palette || ch.font_pair || ch.buttons || ch.headline || ch.subhead || typeof ch.css === 'string' || typeof ch.js === 'string' || ch.kit) {
+        if (ch.style || ch.palette || ch.font_pair || ch.buttons || ch.headline || ch.subhead || typeof ch.css === 'string' || typeof ch.js === 'string' || ch.calendar || ch.kit) {
           await commit((n) => {
             n.site_settings = n.site_settings ?? {}
             if (ch.kit) applyKitOps(n, ch.kit)
@@ -501,6 +501,7 @@ export default function CamiDesigner() {
             if (ch.subhead) n.site_subhead = ch.subhead
             if (typeof ch.css === 'string') { if (ch.css) n.site_settings.custom_css = ch.css; else delete n.site_settings.custom_css }
             if (typeof ch.js === 'string') { if (ch.js) n.site_settings.custom_js = ch.js; else delete n.site_settings.custom_js }
+            if (ch.calendar && Object.keys(ch.calendar).length) n.site_settings.calendar = { ...(n.site_settings.calendar ?? {}), ...ch.calendar }
             if (ch.kit?.save_theme) saveThemeAs(n, ch.kit.save_theme)
           })
         }
