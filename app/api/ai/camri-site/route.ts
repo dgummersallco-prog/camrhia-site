@@ -89,15 +89,17 @@ ${String(site.js ?? '').slice(0, 6000) || '(none)'}`
     ]
     while (messages.length && messages[0].role !== 'user') messages.shift()
 
+    const lastUser = String(messages[messages.length - 1]?.content ?? '')
+    const tier: 'sonnet' | 'haiku' = /christmas|halloween|holiday|valentine|thanksgiving|easter|fourth of july|seasonal|theme|animat|snow|sparkle|confetti|effect|magic|wow|fancy|dramatic|glow|twinkl|scene/i.test(lastUser) ? 'sonnet' : 'haiku'
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 8000, system, messages })
+    const res = await client.messages.create({ model: MODEL_ID[tier], max_tokens: 8000, system, messages })
 
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0
     const db = adminDb() as any
     await db.from('ai_usage').insert({
-      owner_id: auth.user.id, gallery_id: null, job: 'camri_site', model: MODEL_ID.haiku,
-      photos: 0, input_tokens: inTok, output_tokens: outTok, cost_usd: costUsd('haiku', inTok, outTok),
+      owner_id: auth.user.id, gallery_id: null, job: 'camri_site', model: MODEL_ID[tier],
+      photos: 0, input_tokens: inTok, output_tokens: outTok, cost_usd: costUsd(tier, inTok, outTok),
     })
 
     const raw = res.content.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('')
