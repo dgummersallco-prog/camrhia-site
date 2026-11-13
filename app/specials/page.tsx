@@ -401,6 +401,59 @@ export default function SpecialsPage() {
   const [ssErr, setSsErr] = useState<string | null>(null)
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
   const [ready, setReady] = useState(false)
+  const [spMsgs, setSpMsgs] = useState<{ from: 'you' | 'cami'; text: string }[]>([])
+  const [spInput, setSpInput] = useState('')
+  const [spBusy, setSpBusy] = useState(false)
+  const [spUndo, setSpUndo] = useState<Form | null>(null)
+  const [spTour, setSpTour] = useState<number | null>(null)
+  const SP_Q = ["Let's design your special together. What's the occasion?", 'Now pick a color mood.', 'How should your buttons look?', 'Last one. Tell me about your offer in a sentence or two and I will write the headline and details.']
+  const SP_PALS = [
+    { name: 'Warm cream & rose', theme: { bgColor: '#FAF7F2', titleColor: '#2A1F24', subColor: '#6B5A5E', textColor: '#2A1F24', accent: '#A9545F', btnText: '#FFFFFF', cardBg: '#FFFFFF', cardText: '#2A1F24' } },
+    { name: 'Deep green & gold', theme: { bgColor: '#1F3A2E', titleColor: '#F6EFE2', subColor: '#E9DFC9', textColor: '#F6EFE2', accent: '#B08D57', btnText: '#1F3A2E', cardBg: '#F6EFE2', cardText: '#1F3A2E' } },
+    { name: 'Soft blush', theme: { bgColor: '#FBEFF1', titleColor: '#4A2A32', subColor: '#7A5A62', textColor: '#4A2A32', accent: '#C98A8D', btnText: '#2A1F24', cardBg: '#FFFFFF', cardText: '#4A2A32' } },
+    { name: 'Dark & dramatic', theme: { bgColor: '#17141A', titleColor: '#F4EEE8', subColor: '#D9CFC4', textColor: '#F4EEE8', accent: '#E6D3B3', btnText: '#17141A', cardBg: '#2A242E', cardText: '#F4EEE8' } },
+  ]
+  const spChip = 'rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-ink transition hover:border-twilight'
+  const spSay = (text: string) => setSpMsgs((m) => [...m, { from: 'cami', text }])
+  const spMe = (text: string) => setSpMsgs((m) => [...m, { from: 'you', text }])
+  const spPatch = (label: string, fn: (f: Form) => Form, next: number) => {
+    if (!form) return
+    spMe(label)
+    setSpUndo(form)
+    setForm(fn(form))
+    spSay(SP_Q[next])
+    setSpTour(next)
+  }
+  async function spAsk(raw: string) {
+    const t = raw.trim()
+    if (!t || spBusy || !form) return
+    const last = spTour === 3
+    const outgoing = last ? 'Write my special page copy: headline, subhead, and what is included. About my offer: ' + t : t
+    if (last) setSpTour(null)
+    setSpInput('')
+    setSpBusy(true)
+    spMe(t)
+    try {
+      const sess = (await supabase?.auth.getSession())?.data.session
+      const th = form.theme as unknown as Record<string, string>
+      const fonts = Array.from(new Set(EXAMPLES.flatMap((e) => [e.theme.headFont, e.theme.subFont, e.theme.bodyFont]).filter(Boolean)))
+      const res = await fetch('/api/ai/camri-special', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: outgoing, history: spMsgs.slice(-8), presets: EXAMPLES.map((e) => e.name), decors: Object.keys(DECOR_EMOJI), fonts, current: { cta_label: form.cta_label, text: form.text, colors: { bg: th.bgColor, accent: th.accent, title: th.titleColor, text: th.textColor }, decor: th.decor, shape: th.shape } }) })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error ?? 'Camri hit a snag.')
+      const ch = j.changes ?? {}
+      if (ch.preset) { setSpUndo(form); makeItForMe(ch.preset) }
+      else if (ch.cta_label || Object.keys(ch.text ?? {}).length || Object.keys(ch.theme ?? {}).length) {
+        setSpUndo(form)
+        setForm((f) => f && ({ ...f, cta_label: ch.cta_label ?? f.cta_label, text: { ...f.text, ...(ch.text ?? {}) }, theme: { ...f.theme, ...(ch.theme ?? {}) } }))
+      }
+      spSay(j.reply)
+      if (last) spSay('Add your photos, check the preview, then save and publish in step 4.')
+    } catch (e) {
+      spSay((e as Error).message)
+    } finally {
+      setSpBusy(false)
+    }
+  }
   const photoInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async (uid: string) => {
@@ -675,15 +728,40 @@ export default function SpecialsPage() {
           <>
             <link rel="stylesheet" href={ALL_FONTS_HREF} />
 
-                                <div className="mb-6 rounded-2xl border border-line bg-card p-5">
-                      <p className="font-fraunces text-lg font-semibold text-ink">Use a preset to start</p>
-                      <p className="mt-1 text-sm text-ink-soft">Pick the occasion. I fill in the look, the words, your studio name, your mini-session and your photos. Change anything after.</p>
-                      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        {EXAMPLES.map((ex) => (
-                          <button key={ex.name} type="button" onClick={() => makeItForMe(ex.name)} className="flex w-full items-center justify-center gap-1.5 rounded-full border border-line bg-card px-3 py-2.5 text-sm text-ink transition hover:border-twilight">{DECOR_EMOJI[ex.theme.decor ?? 'none']} {ex.name}</button>
-                        ))}
-                      </div>
-                    </div>
+                                
+
+            <div className="relative mb-6 mt-16 rounded-2xl border border-[#E8DDD0] bg-white/90 p-5 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[68px] right-6 h-[80px] w-auto" />
+              <div className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/camri/13_face_avatar.png" alt="" className="h-8 w-8 rounded-full" />
+                <p className="font-fraunces text-lg font-semibold text-ink">Design with Camri</p>
+              </div>
+              <div className="mt-3 space-y-2">
+                {spMsgs.slice(-4).map((m, i) => (
+                  <div key={i} className={'max-w-[88%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto bg-twilight text-white' : 'bg-[#EBDDCF] text-ink')}>{m.text}</div>
+                ))}
+                {spBusy && (
+                  <div className="flex items-center gap-2 text-sm text-ink-soft">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/camri/04_thinking.png" alt="" className="h-10 w-auto" /> Camri is thinking…
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {spTour === null && <button type="button" className={spChip} onClick={() => { spSay(SP_Q[0]); setSpTour(0) }}>Walk me through it</button>}
+                {spTour === 0 && EXAMPLES.map((ex) => <button key={ex.name} type="button" className={spChip} onClick={() => { spMe(ex.name); setSpUndo(form); makeItForMe(ex.name); spSay(SP_Q[1]); setSpTour(1) }}>{DECOR_EMOJI[ex.theme.decor ?? 'none']} {ex.name}</button>)}
+                {spTour === 1 && SP_PALS.map((pl) => <button key={pl.name} type="button" className={spChip} onClick={() => spPatch(pl.name, (f) => ({ ...f, theme: { ...f.theme, ...pl.theme } }), 2)}>{pl.name}</button>)}
+                {spTour === 2 && (['square', 'rounded', 'pill'] as const).map((k) => <button key={k} type="button" className={spChip} onClick={() => spPatch(k === 'square' ? 'Square' : k === 'rounded' ? 'Soft' : 'Pill', (f) => ({ ...f, theme: { ...f.theme, shape: k } }), 3)}>{k === 'square' ? 'Square' : k === 'rounded' ? 'Soft' : 'Pill'}</button>)}
+                {spTour !== null && <button type="button" className="px-2 text-xs text-ink-soft underline" onClick={() => { setSpTour(null); spSay('Okay, I am here whenever you want to change something.') }}>Skip</button>}
+              </div>
+              {spUndo && <button type="button" onClick={() => { setForm(spUndo); setSpUndo(null) }} className="mt-2 text-xs text-twilight underline">Undo Camri&apos;s last change</button>}
+              <form onSubmit={(e) => { e.preventDefault(); spAsk(spInput) }} className="mt-3 flex gap-2">
+                <input value={spInput} onChange={(e) => setSpInput(e.target.value)} placeholder={spTour === 3 ? 'Describe your offer' : 'Ask Camri to write, restyle or advise'} className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+                <button type="submit" disabled={spBusy} className="rounded-xl bg-twilight px-4 py-2 text-sm font-medium text-white disabled:opacity-60">Send</button>
+              </form>
+            </div>
 
             <div className="mb-6 grid gap-6 md:grid-cols-2">
               <StepCard n={1} title="Make a post">
@@ -703,6 +781,15 @@ export default function SpecialsPage() {
                 <StepCard n={3} title="Design your special">
                   <div className="space-y-5">
                     <MiniCard title="Background" summary={form.theme.bgImage ? 'Photo added' : 'Color'}>
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-ink-soft">Start from a preset</p>
+                        <p className="mt-1 text-xs text-ink-soft">Pick the occasion. I fill in the look, the words, your studio and your photos. Change anything after.</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {EXAMPLES.map((ex) => (
+                            <button key={ex.name} type="button" onClick={() => makeItForMe(ex.name)} className="flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-sm text-ink transition hover:border-twilight">{DECOR_EMOJI[ex.theme.decor ?? 'none']} {ex.name}</button>
+                          ))}
+                        </div>
+                      </div>
                       <div className="flex flex-wrap items-center gap-4">
                         {form.theme.bgImage ? (
                           <div className="relative">

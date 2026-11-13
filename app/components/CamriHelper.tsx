@@ -8,6 +8,12 @@ type Msg = { role: 'user' | 'camri'; text: string }
 const STARTERS = ['Who still owes me money?', 'What is coming up this week?', 'Which contracts are unsigned?']
 const P = '/camri/'
 
+function bold(t: string) {
+  return t.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.length > 4 && part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{part.slice(2, -2)}</strong> : part,
+  )
+}
+
 export default function CamriHelper() {
   const [open, setOpen] = useState(false)
   const [msgs, setMsgs] = useState<Msg[]>([])
@@ -112,10 +118,10 @@ export default function CamriHelper() {
               m.role === 'user' ? (
                 <div key={i} className="ml-10 rounded-2xl rounded-br-sm bg-twilight px-3.5 py-2 text-[13px] leading-relaxed text-white">{m.text}</div>
               ) : (
-                <div key={i} className="mr-6 flex gap-2 text-[13px] leading-relaxed">
+                <div key={i} className="mr-8 flex items-end gap-2 text-[13px] leading-relaxed">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {imgOk && <img src={`${P}13_face_avatar.png`} alt="" className="mt-0.5 h-6 w-6 shrink-0 object-contain" />}
-                  <p className="whitespace-pre-wrap">{m.text}</p>
+                  {imgOk && <img src={`${P}13_face_avatar.png`} alt="" className="mb-0.5 h-6 w-6 shrink-0 object-contain" />}
+                  <p className="whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-[#EBDDCF] px-3.5 py-2 text-[#3a2f2a]">{bold(m.text)}</p>
                 </div>
               ),
             )}

@@ -34,6 +34,11 @@ export default function CalendarPage() {
   const [uid, setUid] = useState<string | null>(null)
   const [blocks, setBlocks] = useState<Block[]>([])
   const [colors, setColors] = useState(DEF_COLORS)
+  type CalAct = { type: string; summary: string; dates?: string[]; state?: string; days?: number[]; colors?: Record<string, string> }
+  const [cMsgs, setCMsgs] = useState<{ from: 'you' | 'cami'; text: string; facts?: string[] }[]>([])
+  const [cInput, setCInput] = useState('')
+  const [cBusy, setCBusy] = useState(false)
+  const [cPending, setCPending] = useState<CalAct[] | null>(null)
   const [recurring, setRecurring] = useState<number[]>([])
   const [selDay, setSelDay] = useState<string | null>(null)
   const [dayBusy, setDayBusy] = useState(false)
@@ -141,6 +146,65 @@ export default function CalendarPage() {
   const selBlk = selDay ? blockByDate[selDay] : undefined
   const selBooked = selDay ? bookedByDate[selDay] : undefined
 
+  async function calAsk(raw: string) {
+    const t = raw.trim()
+    if (!t || cBusy) return
+    setCInput('')
+    setCBusy(true)
+    setCPending(null)
+    setCMsgs((m) => [...m, { from: 'you', text: t }])
+    try {
+      const sess = (await supabase?.auth.getSession())?.data.session
+      const now = new Date()
+      const res = await fetch('/api/ai/camri-calendar', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: t, history: cMsgs.slice(-6).map((m) => ({ from: m.from, text: m.text })), today: key(now.getFullYear(), now.getMonth(), now.getDate()), booked: Object.entries(bookedByDate).map(([date, v]) => { const w: any = Array.isArray(v) ? v[0] : v; return { date, names: w?.names ?? 'a session' } }), blocks: blocks.map((b) => ({ date: b.block_date, type: b.type })), recurring, colors, feedReady: !!feedUrl }) })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error ?? 'Camri hit a snag.')
+      setCMsgs((m) => [...m, { from: 'cami', text: j.reply, facts: j.facts }])
+      if (j.actions?.length) setCPending(j.actions as CalAct[])
+    } catch (e) {
+      setCMsgs((m) => [...m, { from: 'cami', text: (e as Error).message }])
+    } finally {
+      setCBusy(false)
+    }
+  }
+
+  async function calApply(actions: CalAct[]) {
+    const sb = supabase
+    if (!sb || !uid) return
+    setCBusy(true)
+    setCPending(null)
+    try {
+      for (const a of actions) {
+        if (a.type === 'colors' && a.colors) {
+          const c = a.colors
+          setColors((prev) => ({ ...prev, ...c }))
+          for (const k of ['booked', 'hold', 'blocked']) if (c[k]) await saveColor(('cal_color_' + k) as 'cal_color_booked' | 'cal_color_hold' | 'cal_color_blocked', c[k])
+        } else if (a.type === 'recurring' && a.days) {
+          setRecurring(a.days)
+          await saveRecurring(a.days)
+        } else if (a.type === 'set' && a.dates) {
+          const dates = a.dates.filter((d) => !bookedByDate[d])
+          const existing = dates.map((d) => blockByDate[d]).filter(Boolean)
+          if (a.state === 'open') {
+            if (existing.length) await sb.from('availability_blocks').delete().in('id', existing.map((x) => x.id))
+          } else {
+            const toUpdate = existing.filter((x) => x.type !== a.state)
+            if (toUpdate.length) await sb.from('availability_blocks').update({ type: a.state }).in('id', toUpdate.map((x) => x.id))
+            const ins = dates.filter((d) => !blockByDate[d]).map((d) => ({ owner_id: uid, block_date: d, type: a.state }))
+            if (ins.length) await sb.from('availability_blocks').insert(ins)
+          }
+          const { data: fresh } = await sb.from('availability_blocks').select('id, block_date, type, is_recurring').eq('owner_id', uid)
+          setBlocks((fresh ?? []) as Block[])
+        }
+      }
+      setCMsgs((m) => [...m, { from: 'cami', text: 'Done! Your calendar is updated.' }])
+    } catch (e) {
+      setCMsgs((m) => [...m, { from: 'cami', text: (e as Error).message ?? 'Something went wrong.' }])
+    } finally {
+      setCBusy(false)
+    }
+  }
+
   async function setDayType(date: string, type: 'blocked' | 'hold') {
     const sb = supabase
     if (!sb || !uid) return
@@ -184,15 +248,16 @@ export default function CalendarPage() {
     sb.from('profiles').update({ cal_color_booked: DEF_COLORS.booked, cal_color_hold: DEF_COLORS.hold, cal_color_blocked: DEF_COLORS.blocked }).eq('id', uid).then(() => {})
   }
 
-  async function saveRecurring() {
+  async function saveRecurring(daysOverride?: number[]) {
+    const days = daysOverride ?? recurring
     const sb = supabase
     if (!sb || !uid) return
     setRecSaving(true)
     setError(null)
     try {
-      await sb.from('profiles').update({ recurring_blocked_days: recurring }).eq('id', uid)
+      await sb.from('profiles').update({ recurring_blocked_days: days }).eq('id', uid)
       await sb.from('availability_blocks').delete().eq('owner_id', uid).eq('is_recurring', true)
-      if (recurring.length > 0) {
+      if (days.length > 0) {
         const { data: ex } = await sb.from('availability_blocks').select('block_date').eq('owner_id', uid)
         const taken = new Set<string>()
         ;(ex ?? []).forEach((b: { block_date: string }) => taken.add(b.block_date))
@@ -203,7 +268,7 @@ export default function CalendarPage() {
         const end = new Date(start)
         end.setMonth(end.getMonth() + 18)
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          if (!recurring.includes(d.getDay())) continue
+          if (!days.includes(d.getDay())) continue
           const ds = key(d.getFullYear(), d.getMonth(), d.getDate())
           if (taken.has(ds)) continue
           out.push({ owner_id: uid, block_date: ds, type: 'blocked', is_recurring: true })
@@ -251,6 +316,51 @@ export default function CalendarPage() {
         </div>
 
         {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+
+        <div className="relative mb-6 mt-16 rounded-2xl border border-[#E8DDD0] bg-white/90 p-5 shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[68px] right-6 h-[80px] w-auto" />
+          <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/camri/13_face_avatar.png" alt="" className="h-8 w-8 rounded-full" />
+            <p className="font-fraunces text-lg font-semibold text-ink">Ask Camri</p>
+          </div>
+          <div className="mt-3 space-y-2">
+            {cMsgs.slice(-4).map((m, i) => (
+              <div key={i} className={'max-w-[88%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto bg-twilight text-white' : 'bg-[#EBDDCF] text-ink')}>
+                {m.text}
+                {m.facts && m.facts.length > 0 && <ul className="mt-1.5 space-y-0.5 font-medium">{m.facts.map((f, j) => <li key={j}>{f}</li>)}</ul>}
+              </div>
+            ))}
+            {cBusy && (
+              <div className="flex items-center gap-2 text-sm text-ink-soft">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/camri/04_thinking.png" alt="" className="h-10 w-auto" /> Camri is thinking…
+              </div>
+            )}
+          </div>
+          {cPending && (
+            <div className="mt-3 rounded-xl border border-twilight/30 bg-blush-wash p-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Camri wants to</p>
+              <ul className="mt-1 space-y-0.5 text-sm text-ink">{cPending.map((a, i) => <li key={i}>{a.summary}</li>)}</ul>
+              <div className="mt-2 flex gap-2">
+                <button type="button" disabled={cBusy} onClick={() => calApply(cPending)} className="rounded-full bg-twilight px-4 py-1.5 text-sm font-medium text-white disabled:opacity-60">Confirm</button>
+                <button type="button" onClick={() => { setCPending(null); setCMsgs((m) => [...m, { from: 'cami', text: 'No problem, I left everything as it was.' }]) }} className="rounded-full border border-line px-4 py-1.5 text-sm text-ink">Cancel</button>
+              </div>
+            </div>
+          )}
+          {cMsgs.length === 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {['Is November 27th open?', 'Block all Mondays', 'What calendar am I linked to?'].map((c) => (
+                <button key={c} type="button" onClick={() => calAsk(c)} className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-ink transition hover:border-twilight">{c}</button>
+              ))}
+            </div>
+          )}
+          <form onSubmit={(e) => { e.preventDefault(); calAsk(cInput) }} className="mt-3 flex gap-2">
+            <input value={cInput} onChange={(e) => setCInput(e.target.value)} placeholder="Ask about any date, or tell me what to block, hold or recolor" className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+            <button type="submit" disabled={cBusy} className="rounded-xl bg-twilight px-4 py-2 text-sm font-medium text-white disabled:opacity-60">Send</button>
+          </form>
+        </div>
 
         <div className="mb-6 rounded-2xl border border-line bg-card p-4">
           {!feedUrl ? (
@@ -324,7 +434,7 @@ export default function CalendarPage() {
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button type="button" className={btn} onClick={() => setRecurring([0, 6])}>Weekends</button>
                 <button type="button" className={btn} onClick={() => setRecurring([])}>None</button>
-                <button type="button" disabled={recSaving} onClick={saveRecurring} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60">
+                <button type="button" disabled={recSaving} onClick={() => saveRecurring()} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60">
                   {recSaving ? 'Saving…' : 'Save recurring days'}
                 </button>
                 {recMsg && <span className="text-sm text-ink-soft">{recMsg}</span>}

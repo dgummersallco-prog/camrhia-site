@@ -13,6 +13,27 @@ type Draft = { id: string | null; section: string; prompt: string; hint: string 
 const inp = 'w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25'
 const lab = 'mb-1 block text-xs uppercase tracking-wider text-ink-soft'
 
+type Op = { op: 'add'; section: string; prompt: string; hint: string | null } | { op: 'edit'; id: string; prompt: string | null; hint: string | null; section: string | null } | { op: 'remove'; id: string } | { op: 'move'; id: string; after_id: string | null }
+type CMsg = { from: 'you' | 'cami'; text: string }
+
+function applyOps(prev: Q[], ops: Op[]): Q[] {
+  let next = [...prev]
+  for (const o of ops) {
+    if (o.op === 'add') next.push({ id: `local-${Date.now()}-${next.length}`, section: o.section, prompt: o.prompt, hint: o.hint, sort_order: next.length })
+    else if (o.op === 'edit') next = next.map((x) => (x.id === o.id ? { ...x, prompt: o.prompt ?? x.prompt, hint: o.hint ?? x.hint, section: o.section ?? x.section } : x))
+    else if (o.op === 'remove') next = next.filter((x) => x.id !== o.id)
+    else if (o.op === 'move') {
+      const item = next.find((x) => x.id === o.id)
+      if (!item) continue
+      const rest = next.filter((x) => x.id !== o.id)
+      const idx = o.after_id === null ? 0 : rest.findIndex((x) => x.id === o.after_id) + 1
+      rest.splice(idx, 0, item)
+      next = rest
+    }
+  }
+  return next
+}
+
 export default function QuestionnaireEditorPage() {
   const router = useRouter()
   const { type } = useParams<{ type: string }>()
@@ -25,6 +46,10 @@ export default function QuestionnaireEditorPage() {
   const [saving, setSaving] = useState(false)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
+  const [cMsgs, setCMsgs] = useState<CMsg[]>([])
+  const [cInput, setCInput] = useState('')
+  const [cBusy, setCBusy] = useState(false)
+  const [cUndo, setCUndo] = useState<Q[] | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -83,6 +108,26 @@ export default function QuestionnaireEditorPage() {
   function remove(q: Q) {
     setQuestions((prev) => prev.filter((x) => x.id !== q.id))
     setDirty(true)
+  }
+
+  async function askCamri(text: string) {
+    const t = text.trim()
+    if (!t || cBusy) return
+    setCInput('')
+    setCBusy(true)
+    setCMsgs((m) => [...m, { from: 'you', text: t }])
+    try {
+      const sess = (await supabase?.auth.getSession())?.data.session
+      const res = await fetch('/api/ai/camri-questions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: t, label, questions: questions.map((q) => ({ id: q.id, section: q.section, prompt: q.prompt, hint: q.hint })), history: cMsgs.slice(-8) }) })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error ?? 'Camri hit a snag.')
+      if (j.ops?.length) { setCUndo(questions); setQuestions((prev) => applyOps(prev, j.ops as Op[])); setDirty(true) }
+      setCMsgs((m) => [...m, { from: 'cami', text: j.reply }])
+    } catch (e) {
+      setCMsgs((m) => [...m, { from: 'cami', text: (e as Error).message }])
+    } finally {
+      setCBusy(false)
+    }
   }
 
   function startNew() {
@@ -191,19 +236,52 @@ export default function QuestionnaireEditorPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="questionnaires" />
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="relative mx-auto mb-10 mt-24 max-w-3xl rounded-3xl bg-[#FBF7F2]/85 px-8 py-10 shadow-[0_8px_40px_rgba(60,40,30,0.10)] backdrop-blur-md">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[84px] right-8 h-[100px] w-auto" />
         <Link href="/questionnaires" className="text-sm text-ink-soft hover:text-ink">← All questionnaires</Link>
         <div className="mb-4 mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Work</p>
-            <h1 className="font-fraunces text-3xl font-semibold capitalize text-ink">{label} questionnaire</h1>
+            <h1 className="font-fraunces text-4xl font-semibold capitalize text-ink">{label} questionnaire</h1>
           </div>
           {saveBtn}
         </div>
         <p className="mb-4 text-sm text-ink-soft">These questions are sent to every {label.toLowerCase()} client. Their answers appear on each session in the Camrhia app.</p>
 
+        <div className="mb-6 rounded-2xl border border-[#E8DDD0] bg-white/90 p-4 shadow-sm">
+          <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/camri/13_face_avatar.png" alt="" className="h-8 w-8 rounded-full" />
+            <p className="font-fraunces text-lg font-semibold text-ink">Ask Camri</p>
+          </div>
+          <div className="mt-3 space-y-2">
+            {cMsgs.slice(-4).map((m, i) => (
+              <div key={i} className={'max-w-[88%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto bg-twilight text-white' : 'bg-[#EBDDCF] text-ink')}>{m.text}</div>
+            ))}
+            {cBusy && (
+              <div className="flex items-center gap-2 text-sm text-ink-soft">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/camri/04_thinking.png" alt="" className="h-10 w-auto" /> Camri is thinking…
+              </div>
+            )}
+          </div>
+          {cMsgs.length === 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {['Reword these to sound warmer', 'What am I missing?', 'Shorten the long questions'].map((c) => (
+                <button key={c} type="button" onClick={() => askCamri(c)} className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-ink transition hover:border-twilight">{c}</button>
+              ))}
+            </div>
+          )}
+          {cUndo && <button type="button" onClick={() => { setQuestions(cUndo); setCUndo(null); setDirty(true) }} className="mt-2 text-xs text-twilight underline">Undo Camri&apos;s changes</button>}
+          <form onSubmit={(e) => { e.preventDefault(); askCamri(cInput) }} className="mt-3 flex gap-2">
+            <input value={cInput} onChange={(e) => setCInput(e.target.value)} placeholder="Ask Camri to reword, add, remove or give advice" className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+            <button type="submit" disabled={cBusy} className="rounded-xl bg-twilight px-4 py-2 text-sm font-medium text-white disabled:opacity-60">Send</button>
+          </form>
+        </div>
+
         {dirty && (
-          <p className="mb-4 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800">You have unsaved changes. Tap Save questionnaire to publish them.</p>
+          <p className="mb-4 rounded-xl bg-[#F3E4DC] px-4 py-2.5 text-sm text-[#7A4A3A]">You have unsaved changes. Tap Save questionnaire to publish them.</p>
         )}
         {msg && !msg.startsWith('Saved') && <p className="mb-4 text-sm text-red-600">{msg}</p>}
         {msg && msg.startsWith('Saved') && <p className="mb-4 text-sm text-twilight">{msg}</p>}
@@ -217,24 +295,25 @@ export default function QuestionnaireEditorPage() {
               return (
                 <div key={sec} className="mb-6">
                   <div className="mb-2 flex items-center gap-3">
-                    <p className="font-mono text-xs font-semibold uppercase tracking-widest text-brass">{sec}</p>
+                    <p className="font-fraunces text-xl font-semibold text-ink">{sec}</p>
+                    <span className="rounded-full bg-[#EBDDCF] px-2 py-0.5 text-[11px] text-ink-soft">{list.length}</span>
                     <span className="h-px flex-1 bg-line" />
                   </div>
                   <ul className="space-y-2">
                     {list.map((q, i) => (
                       <li key={q.id}>
                         {draft?.id === q.id ? draftForm : (
-                          <div className="flex items-start gap-3 rounded-2xl border border-line bg-card px-4 py-3">
+                          <div className="flex items-start gap-3 rounded-2xl border border-[#E8DDD0] bg-white/90 px-4 py-3.5 shadow-sm transition hover:shadow-md">
                             <div className="flex flex-col text-xs text-ink-soft">
-                              <button type="button" disabled={i === 0} onClick={() => move(q, -1)} aria-label="Move up" className="px-1 hover:text-ink disabled:opacity-30">▲</button>
-                              <button type="button" disabled={i === list.length - 1} onClick={() => move(q, 1)} aria-label="Move down" className="px-1 hover:text-ink disabled:opacity-30">▼</button>
+                              <button type="button" disabled={i === 0} onClick={() => move(q, -1)} aria-label="Move up" className="px-1 hover:text-ink disabled:opacity-30"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 7.5 6 4l3.5 3.5" /></svg></button>
+                              <button type="button" disabled={i === list.length - 1} onClick={() => move(q, 1)} aria-label="Move down" className="px-1 hover:text-ink disabled:opacity-30"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5" /></svg></button>
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm text-ink">{q.prompt}</p>
                               {q.hint && <p className="mt-0.5 text-xs italic text-ink-soft">{q.hint}</p>}
                             </div>
-                            <button type="button" onClick={() => startEdit(q)} className="text-sm text-twilight hover:underline">Edit</button>
-                            <button type="button" onClick={() => remove(q)} className="text-sm text-ink-soft hover:text-red-600">Remove</button>
+                            <button type="button" onClick={() => startEdit(q)} className="rounded-full border border-twilight/30 px-3 py-1 text-xs text-twilight transition hover:bg-blush-wash">Edit</button>
+                            <button type="button" onClick={() => remove(q)} className="px-1 text-xs text-ink-soft transition hover:text-red-600">Remove</button>
                           </div>
                         )}
                       </li>

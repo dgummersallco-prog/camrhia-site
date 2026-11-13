@@ -31,6 +31,46 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const latest = useRef<GalleryDesign>(initial ?? {})
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const eff = resolveDesign(d)
+  const [gMsgs, setGMsgs] = useState<{ from: 'you' | 'cami'; text: string }[]>([])
+  const [gInput, setGInput] = useState('')
+  const [gBusy, setGBusy] = useState(false)
+  const [gUndo, setGUndo] = useState<GalleryDesign | null>(null)
+  const [gTour, setGTour] = useState<number | null>(null)
+  const G_Q = ["Let's style your gallery. How should the opening photo look?", 'Now pick a mood.', 'Last one: colors.', 'All set! Check the preview. Want me to tweak anything, like moving the focal point?']
+  const gChip = 'rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] text-ink transition hover:border-twilight'
+  const gSay = (text: string) => setGMsgs((m) => [...m, { from: 'cami', text }])
+  const gPick = (label: string, patch: Partial<GalleryDesign>, next: number) => {
+    setGMsgs((m) => [...m, { from: 'you', text: label }])
+    setGUndo({ ...latest.current })
+    change(patch)
+    gSay(G_Q[next])
+    setGTour(next === 3 ? null : next)
+  }
+  async function gAsk(raw: string) {
+    const t = raw.trim()
+    if (!t || gBusy) return
+    setGInput('')
+    setGBusy(true)
+    setGMsgs((m) => [...m, { from: 'you', text: t }])
+    try {
+      const sess = (await supabase?.auth.getSession())?.data.session
+      const res = await fetch('/api/ai/camri-gallery', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: t, history: gMsgs.slice(-6), covers: COVERS.map((c) => ({ k: c.k, name: c.name })), looks: LOOK_KEYS.map((k) => ({ k, name: LOOKS[k].name, blurb: LOOKS[k].blurb })), palettes: PALETTES.map((p) => ({ k: p.key, name: p.name })), current: { cover: eff.cover, look: d.look, colors: eff.pal.key, focal: eff.focal } }) })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error ?? 'Camri hit a snag.')
+      const ch = j.changes ?? {}
+      const patch: Record<string, unknown> = {}
+      if (ch.cover) patch.cover = ch.cover
+      if (ch.look) patch.look = ch.look
+      if (ch.colors) patch.colors = ch.colors
+      if (ch.focal) patch.focal = ch.focal
+      if (Object.keys(patch).length) { setGUndo({ ...latest.current }); change(patch as Partial<GalleryDesign>) }
+      gSay(j.reply)
+    } catch (e) {
+      gSay((e as Error).message)
+    } finally {
+      setGBusy(false)
+    }
+  }
 
   function postDesign(next: GalleryDesign) {
     try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-design', design: next }, '*') } catch { /* ignore */ }
@@ -79,6 +119,37 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <h2 className="font-fraunces text-2xl font-semibold text-ink">Style this gallery</h2>
         <p className="mb-4 truncate text-sm text-ink-soft">{title}</p>
         {err && <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
+
+        <div className="mb-5 rounded-xl border border-[#E8DDD0] bg-white/80 p-3">
+          <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/camri/13_face_avatar.png" alt="" className="h-7 w-7 rounded-full" />
+            <p className="font-fraunces text-base font-semibold text-ink">Camri</p>
+          </div>
+          <div className="mt-2 space-y-1.5">
+            {gMsgs.slice(-3).map((m, i) => (
+              <div key={i} className={'max-w-[92%] rounded-xl px-2.5 py-1.5 text-xs ' + (m.from === 'you' ? 'ml-auto bg-twilight text-white' : 'bg-[#EBDDCF] text-ink')}>{m.text}</div>
+            ))}
+            {gBusy && (
+              <div className="flex items-center gap-1.5 text-xs text-ink-soft">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/camri/04_thinking.png" alt="" className="h-8 w-auto" /> Thinking…
+              </div>
+            )}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {gTour === null && <button type="button" className={gChip} onClick={() => { gSay(G_Q[0]); setGTour(0) }}>Walk me through it</button>}
+            {gTour === 0 && COVERS.map((c) => <button key={c.k} type="button" className={gChip} onClick={() => gPick(c.name, { cover: c.k } as Partial<GalleryDesign>, 1)}>{c.name}</button>)}
+            {gTour === 1 && LOOK_KEYS.map((k) => <button key={k} type="button" className={gChip} onClick={() => gPick(LOOKS[k].name, { look: k } as Partial<GalleryDesign>, 2)}>{LOOKS[k].name}</button>)}
+            {gTour === 2 && PALETTES.map((p) => <button key={p.key} type="button" className={gChip} onClick={() => gPick(p.name, { colors: p.key } as Partial<GalleryDesign>, 3)}>{p.name}</button>)}
+            {gTour !== null && <button type="button" className="px-1 text-[11px] text-ink-soft underline" onClick={() => { setGTour(null); gSay('Okay, I am here whenever you want a change.') }}>Skip</button>}
+          </div>
+          {gUndo && <button type="button" onClick={() => { const u = gUndo; setGUndo(null); change({ cover: u.cover, look: u.look, colors: u.colors, focal: u.focal } as Partial<GalleryDesign>) }} className="mt-1.5 text-[11px] text-twilight underline">Undo Camri&apos;s last change</button>}
+          <form onSubmit={(e) => { e.preventDefault(); gAsk(gInput) }} className="mt-2 flex gap-1.5">
+            <input value={gInput} onChange={(e) => setGInput(e.target.value)} placeholder="Ask Camri to restyle" className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-xs text-ink outline-none focus:border-twilight" />
+            <button type="submit" disabled={gBusy} className="rounded-lg bg-twilight px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60">Send</button>
+          </form>
+        </div>
 
         <p className={head + ' mt-2'}>Opening photo</p>
         <div className="mt-3 grid grid-cols-3 gap-2">

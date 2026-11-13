@@ -160,6 +160,16 @@ export default function CamiDesigner() {
   const boxRef = useRef<HTMLDivElement>(null)
   const latest = useRef<Prof | null>(null)
   const [msgs, setMsgs] = useState<Msg[]>([{ from: 'cami', text: "Hi, I'm Camri. What should I change?" }])
+  const [tour, setTour] = useState<number | null>(null)
+  const TOUR_Q = ["Let's build your site together. First, what feeling do you want?", 'Now pick your colors.', 'Now your lettering.', 'How should your buttons look?', 'Last one. Tell me what you shoot and where, and I will write your headline.']
+  const tourPick = async (label: string, fn: (n: any) => void, next: number) => {
+    setMsgs((m) => [...m, { from: 'you', text: label }])
+    await commit((n) => { n.site_settings = n.site_settings ?? {}; fn(n) })
+    setMsgs((m) => [...m, { from: 'cami', text: TOUR_Q[next] }])
+    setTour(next)
+  }
+  const chip = 'rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-ink transition hover:border-twilight'
+
   const [input, setInput] = useState('')
   const chatEnd = useRef<HTMLDivElement>(null)
   const [view, setView] = useState<'pages' | 'design' | 'settings'>('pages')
@@ -311,9 +321,34 @@ export default function CamiDesigner() {
       setMsgs((m) => [...m, { from: 'cami', text: ok ? 'Undone.' : 'Nothing to undo yet.' }])
       return
     }
-    const r = camiSite(t, form)
+    if (tour === 4) setTour(null)
+    let aiDone = false
+    try {
+      const sess = (await supabase?.auth.getSession())?.data.session
+      const st0 = form.site_settings ?? {}
+      const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape } }) })
+      const ai = res.ok ? await res.json() : null
+      if (ai?.reply && ai.changes) {
+        const ch = ai.changes
+        if (ch.style || ch.palette || ch.font_pair || ch.buttons || ch.headline || ch.subhead) {
+          await commit((n) => {
+            n.site_settings = n.site_settings ?? {}
+            const sty = ch.style ? STYLES.find((x) => x.key === ch.style) : null
+            if (sty) { n.site_template = sty.tpl; n.site_font_pair = sty.pair; applyPalette(n, n.site_accent ?? '#C98A8D', sty.bg, sty.text) }
+            if (ch.palette) applyPalette(n, ch.palette.accent, ch.palette.bg, ch.palette.text)
+            if (ch.font_pair) n.site_font_pair = ch.font_pair
+            if (ch.buttons) setButtons(n.site_settings, ch.buttons)
+            if (ch.headline) n.site_headline = ch.headline
+            if (ch.subhead) n.site_subhead = ch.subhead
+          })
+        }
+        setMsgs((m) => [...m, { from: 'cami', text: ai.reply }])
+        aiDone = true
+      }
+    } catch {}
+    const r = aiDone ? { changed: false, state: form, reply: '' } : camiSite(t, form)
     if (r.changed) await commit((n) => { n.site_template = r.state.site_template; n.site_accent = r.state.site_accent; n.site_font_pair = r.state.site_font_pair; n.site_headline = r.state.site_headline; n.site_subhead = r.state.site_subhead; n.site_settings = r.state.site_settings })
-    setMsgs((m) => [...m, { from: 'cami', text: r.reply }])
+    if (!aiDone) setMsgs((m) => [...m, { from: 'cami', text: r.reply }])
   }
 
   async function addPhotos(files: FileList | null) {
@@ -685,13 +720,27 @@ export default function CamiDesigner() {
         </div>
 
         {camiOpen && (
-          <div className="border-t border-black/10 bg-[#faf7f3] p-4">
-            <p className="font-fraunces text-lg font-semibold text-ink">Camri</p>
+          <div className="relative border-t border-black/10 bg-[#faf7f3] p-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[58px] right-4 z-10 h-[70px] w-auto" />
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/camri/13_face_avatar.png" alt="" className="h-8 w-8 rounded-full" />
+              <p className="font-fraunces text-lg font-semibold text-ink">Camri</p>
+            </div>
             <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
               {msgs.slice(-4).map((m, i) => (
                 <div key={i} className={'max-w-[88%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto ' + ACC + ' text-white' : 'bg-white text-ink')}>{m.text}</div>
               ))}
               <div ref={chatEnd} />
+            </div>
+            <div className="mt-3 flex max-h-24 flex-wrap gap-1.5 overflow-y-auto">
+              {tour === null && <button type="button" className={chip} onClick={() => { setMsgs((m) => [...m, { from: 'cami', text: TOUR_Q[0] }]); setTour(0) }}>Walk me through it</button>}
+              {tour === 0 && STYLES.map((st) => <button key={st.key} type="button" className={chip} onClick={() => tourPick(st.name, (n) => { n.site_template = st.tpl; n.site_font_pair = st.pair; applyPalette(n, n.site_accent ?? '#C98A8D', st.bg, st.text) }, 1)}>{st.name}</button>)}
+              {tour === 1 && PALETTES.map((pl) => <button key={pl.name} type="button" className={chip} onClick={() => tourPick(pl.name, (n) => applyPalette(n, pl.accent, pl.bg, pl.text), 2)}>{pl.name}</button>)}
+              {tour === 2 && TYPE_SETS.filter((t) => t.pair).map((t) => <button key={t.key} type="button" className={chip} onClick={() => tourPick(t.name, (n) => { n.site_font_pair = t.pair }, 3)}>{t.name}</button>)}
+              {tour === 3 && SHAPES.map((sh) => <button key={sh.k} type="button" className={chip} onClick={() => tourPick(sh.name, (n) => setButtons(n.site_settings, sh.k), 4)}>{sh.name}</button>)}
+              {tour !== null && <button type="button" className="px-2 text-xs text-ink-soft underline" onClick={() => { setTour(null); setMsgs((m) => [...m, { from: 'cami', text: 'Okay, I am here whenever you want to change something.' }]) }}>Skip</button>}
             </div>
             <form onSubmit={(e) => { e.preventDefault(); send(input) }} className="mt-3 flex gap-2">
               <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Tell Camri what to change" className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
