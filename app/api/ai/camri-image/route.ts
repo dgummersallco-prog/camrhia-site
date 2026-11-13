@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
       body: JSON.stringify({
         model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2.5-flare',
-        prompt: 'Photorealistic, highly detailed: ' + prompt + '. Scenery and objects only: no people, no faces, no text, no watermark. Cinematic, professional photography quality.',
+        prompt: 'This image is the full-page background that sets the whole vibe and mood of a professional photographer website: menus, headlines, buttons, cards and the photographers own photos will be laid over it, so compose it with calm, uncluttered space in the middle and a cohesive color palette that works with light text. Photorealistic, highly detailed: ' + prompt + '. Scenery and objects only: no people, no faces, no text, no watermark. Cinematic, professional photography quality.',
         size,
         quality: process.env.OPENAI_IMAGE_QUALITY || 'medium',
         background: name === 'scene' ? 'opaque' : 'transparent',

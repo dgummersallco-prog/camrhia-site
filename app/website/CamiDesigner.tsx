@@ -465,7 +465,7 @@ export default function CamiDesigner() {
           let extra = ''
           for (const im of madeImgs) {
             if (String(ch.css ?? '').includes(im.url)) continue
-            extra += ' html body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:url(' + im.url + ') center/cover no-repeat} body main,body section,body header,body nav,body footer{background:transparent!important} html body > *:not(script):not(style){position:relative;z-index:1}'
+            extra += ' html{background:linear-gradient(rgba(8,12,24,.35),rgba(8,12,24,.35)) fixed,url(' + im.url + ') center/cover fixed no-repeat!important} html body,body > div,body > div > div,body main,body section,body header,body nav,body footer{background:transparent!important}'
           }
           if (extra) ch.css = String(typeof ch.css === 'string' ? ch.css : (st0.custom_css ?? '')) + extra
         }
