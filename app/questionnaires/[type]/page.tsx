@@ -1,5 +1,6 @@
 'use client'
 
+import CamriTyping from '@/app/components/CamriTyping'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -262,7 +263,7 @@ export default function QuestionnaireEditorPage() {
             {cBusy && (
               <div className="flex items-center gap-2 text-sm text-ink-soft">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/camri/04_thinking.png" alt="" className="h-10 w-auto" /> Camri is thinking…
+                <img src="/camri/04_thinking.png" alt="" className="h-10 w-auto" /> <CamriTyping />
               </div>
             )}
           </div>

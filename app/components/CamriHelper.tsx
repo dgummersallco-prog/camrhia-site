@@ -1,5 +1,6 @@
 'use client'
 
+import CamriTyping from './CamriTyping'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { usePathname } from 'next/navigation'
@@ -213,7 +214,7 @@ export default function CamriHelper() {
               <div className="flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {imgOk && <img src={`${P}04_thinking.png`} alt="" className="h-14 w-auto" />}
-                <p className="animate-pulse text-[13px] text-[#3a2f2a]/55">Camri is thinking…</p>
+                <CamriTyping />
               </div>
             )}
           </div>

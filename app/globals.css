@@ -324,3 +324,8 @@ input[type=range].dial:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3
 
 /* Camri is white, so give her a soft edge on light backgrounds */
 img[src^="/camri/"] { filter: drop-shadow(0 3px 6px rgba(70, 50, 40, 0.35)); }
+
+@keyframes camri-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}

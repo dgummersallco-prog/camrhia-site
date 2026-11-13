@@ -1,5 +1,6 @@
 'use client'
 
+import CamriTyping from '@/app/components/CamriTyping'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { HexColorPicker } from 'react-colorful'
@@ -745,7 +746,7 @@ export default function SpecialsPage() {
                 {spBusy && (
                   <div className="flex items-center gap-2 text-sm text-ink-soft">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/camri/04_thinking.png" alt="" className="h-10 w-auto" /> Camri is thinking…
+                    <img src="/camri/04_thinking.png" alt="" className="h-10 w-auto" /> <CamriTyping />
                   </div>
                 )}
               </div>

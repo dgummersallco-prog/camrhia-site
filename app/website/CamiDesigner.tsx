@@ -1,5 +1,6 @@
 'use client'
 
+import CamriTyping from '@/app/components/CamriTyping'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -161,6 +162,7 @@ export default function CamiDesigner() {
   const boxRef = useRef<HTMLDivElement>(null)
   const latest = useRef<Prof | null>(null)
   const [msgs, setMsgs] = useState<Msg[]>([{ from: 'cami', text: "Hi, I'm Camri. What should I change?" }])
+  const [camBusy, setCamBusy] = useState(false)
   const [tour, setTour] = useState<number | null>(null)
   const TOUR_Q = ["Let's build your site together. First, what feeling do you want?", 'Now pick your colors.', 'Now your lettering.', 'How should your buttons look?', 'Last one. Tell me what you shoot and where, and I will write your headline.']
   const tourPick = async (label: string, fn: (n: any) => void, next: number) => {
@@ -372,6 +374,10 @@ export default function CamiDesigner() {
   }
 
   async function send(text: string) {
+    setCamBusy(true)
+    try { await sendInner(text) } finally { setCamBusy(false) }
+  }
+  async function sendInner(text: string) {
     const t = text.trim()
     if (!t || !form) return
     setMsgs((m) => [...m, { from: 'you', text: t }])
@@ -816,6 +822,7 @@ export default function CamiDesigner() {
               {msgs.map((m, i) => (
                 <div key={i} className={'max-w-[88%] rounded-2xl px-4 py-2.5 text-sm ' + (m.from === 'you' ? 'ml-auto ' + ACC + ' text-white' : 'bg-white text-ink shadow-sm')}>{m.text}</div>
               ))}
+              {camBusy && <CamriTyping />}
               <div ref={chatEnd} />
             </div>
             <div className="border-t border-black/10 px-5 pb-3 pt-3">

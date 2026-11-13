@@ -1,5 +1,6 @@
 'use client'
 
+import CamriTyping from '@/app/components/CamriTyping'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { COVERS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type GalleryDesign } from '@/lib/galleryDesign'
@@ -133,7 +134,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             {gBusy && (
               <div className="flex items-center gap-1.5 text-xs text-ink-soft">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/camri/04_thinking.png" alt="" className="h-8 w-auto" /> Thinking…
+                <img src="/camri/04_thinking.png" alt="" className="h-8 w-auto" /> <CamriTyping />
               </div>
             )}
           </div>
