@@ -1,4 +1,5 @@
 'use client'
+import { sanitizeCss } from '@/lib/safeCss'
 
 import { useSiteBase } from '@/app/site/useSiteBase'
 import { AboutCanvas } from './AboutCanvas'
@@ -808,6 +809,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       <link rel="stylesheet" href={t.fontsHref} />
       {extraFontsHref && <link rel="stylesheet" href={extraFontsHref} />}
       {secCss && <style dangerouslySetInnerHTML={{ __html: secCss }} />}
+      {(() => { const cc = sanitizeCss((r as any).site_settings?.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
       <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${pageBg ?? bg}}`}</style>
       <PortfolioLightbox />
       <div style={{ background: pageBg ?? bg, color: ink, fontFamily: t.body }}>

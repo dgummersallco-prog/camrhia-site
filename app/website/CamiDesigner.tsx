@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { camiSite, applyPalette, setButtons, type SiteState } from '@/lib/camiSite'
 import { FONT_OPTIONS, PAIR_PRESETS } from '@/lib/siteTheme'
+import CamriSetup from './CamriSetup'
 
 type Prof = SiteState & {
   id: string; public_token: string | null; slug: string | null; logo_path: string | null
@@ -178,6 +179,9 @@ export default function CamiDesigner() {
   const [dirty, setDirty] = useState(false)
   const [pubMsg, setPubMsg] = useState('')
   const [full, setFull] = useState(false)
+  const [setupSkipped, setSetupSkipped] = useState(false)
+  const [setupFinished, setSetupFinished] = useState(false)
+  const [setupForce] = useState(() => typeof window !== 'undefined' && window.location.search.includes('setup=1'))
   const commitRef = useRef<((fn: (n: Prof) => void) => Promise<void>) | null>(null)
 
   useEffect(() => {
@@ -302,6 +306,59 @@ export default function CamiDesigner() {
 
   commitRef.current = commit
 
+  function kitOf(n: Prof) {
+    const x = (n.site_settings = n.site_settings ?? {}) as Record<string, any>
+    if (!x.kit) x.kit = { done: true, layouts: [], palettes: [], fonts: [], pages: [], extra_pages: '', themes: [] }
+    if (!Array.isArray(x.kit.themes)) x.kit.themes = []
+    return x.kit as Record<string, any>
+  }
+  function snapTheme(n: Prof, name: string) {
+    const { kit: _k, ...rest } = (n.site_settings ?? {}) as Record<string, any>
+    return { name, site_template: n.site_template, site_accent: n.site_accent, site_font_pair: n.site_font_pair, site_headline: n.site_headline, site_subhead: n.site_subhead, settings: JSON.parse(JSON.stringify(rest)) }
+  }
+  function saveThemeAs(n: Prof, name: string) {
+    const k = kitOf(n)
+    const snap = snapTheme(n, name)
+    const i = k.themes.findIndex((t: any) => t.name === name)
+    if (i >= 0) k.themes[i] = snap
+    else k.themes.push(snap)
+  }
+  function applyKitOps(n: Prof, kc: Record<string, any>) {
+    const k = kitOf(n)
+    const x = n.site_settings as Record<string, any>
+    if (kc.save_theme && !k.themes.some((t: any) => t.name === 'Main')) k.themes.push(snapTheme(n, 'Main'))
+    if (kc.layout) {
+      const L: string[] = k.layouts ?? []
+      if (L.length) {
+        let i = Number(k.layout_idx ?? 0)
+        if (kc.layout === 'next') i = (i + 1) % L.length
+        else if (kc.layout === 'prev') i = (i - 1 + L.length) % L.length
+        else if (L.includes(kc.layout)) i = L.indexOf(kc.layout)
+        k.layout_idx = i
+        const st = STYLES.find((q) => q.key === L[i])
+        if (st) n.site_template = st.tpl
+      }
+    }
+    if (kc.palette) { const p = (k.palettes ?? []).find((q: any) => q.name === kc.palette); if (p) applyPalette(n, p.accent, p.bg, p.text) }
+    if (kc.fonts) {
+      const ts = TYPE_SETS.find((t) => t.key === kc.fonts)
+      if (ts) {
+        clearFontOverrides(x)
+        if (ts.pair) n.site_font_pair = ts.pair
+        else { x.fonts = { ...(x.fonts ?? {}), head: ts.head, body: ts.body }; x.hero = { ...(x.hero ?? {}), headline_font: ts.head, para_font: ts.body } }
+      }
+    }
+    if (kc.heading_font) { x.fonts = { ...(x.fonts ?? {}), head: kc.heading_font }; x.hero = { ...(x.hero ?? {}), headline_font: kc.heading_font } }
+    if (kc.body_font) { x.fonts = { ...(x.fonts ?? {}), body: kc.body_font }; x.hero = { ...(x.hero ?? {}), para_font: kc.body_font } }
+    if (kc.theme) {
+      const t = k.themes.find((q: any) => q.name === kc.theme)
+      if (t) {
+        n.site_template = t.site_template; n.site_accent = t.site_accent; n.site_font_pair = t.site_font_pair; n.site_headline = t.site_headline; n.site_subhead = t.site_subhead
+        n.site_settings = { ...JSON.parse(JSON.stringify(t.settings)), kit: k }
+      }
+    }
+  }
+
   async function undo() {
     const prev = history[history.length - 1]
     if (!prev) return false
@@ -326,13 +383,16 @@ export default function CamiDesigner() {
     try {
       const sess = (await supabase?.auth.getSession())?.data.session
       const st0 = form.site_settings ?? {}
-      const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape } }) })
+      const kk = (st0 as any).kit ?? {}
+      const kitPayload = { layouts: (kk.layouts ?? []).map((key: string) => ({ key, name: STYLES.find((q) => q.key === key)?.name ?? key })), palettes: (kk.palettes ?? []).map((p: any) => ({ name: p.name })), fonts: (kk.fonts ?? []).map((key: string) => ({ key, name: TYPE_SETS.find((t) => t.key === key)?.name ?? key })), themes: (kk.themes ?? []).map((t: any) => t.name) }
+      const res = await fetch('/api/ai/camri-site', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: tour === 4 ? 'Write my homepage headline and subhead. About me: ' + t : t, history: msgs.slice(-10).map((m: any) => ({ from: m.from === 'cami' ? 'cami' : 'me', text: m.text })), site: { template: form.site_template, accent: form.site_accent, font_pair: form.site_font_pair, headline: form.site_headline, subhead: form.site_subhead, bg: st0.colors?.bg, text: st0.colors?.text, buttons: st0.button?.shape, css: st0.custom_css }, kit: kitPayload, fontList: FONT_IDS.slice(0, 150).map((id) => ({ id, label: fname(id) })) }) })
       const ai = res.ok ? await res.json() : null
       if (ai?.reply && ai.changes) {
         const ch = ai.changes
-        if (ch.style || ch.palette || ch.font_pair || ch.buttons || ch.headline || ch.subhead) {
+        if (ch.style || ch.palette || ch.font_pair || ch.buttons || ch.headline || ch.subhead || typeof ch.css === 'string' || ch.kit) {
           await commit((n) => {
             n.site_settings = n.site_settings ?? {}
+            if (ch.kit) applyKitOps(n, ch.kit)
             const sty = ch.style ? STYLES.find((x) => x.key === ch.style) : null
             if (sty) { n.site_template = sty.tpl; n.site_font_pair = sty.pair; applyPalette(n, n.site_accent ?? '#C98A8D', sty.bg, sty.text) }
             if (ch.palette) applyPalette(n, ch.palette.accent, ch.palette.bg, ch.palette.text)
@@ -340,6 +400,8 @@ export default function CamiDesigner() {
             if (ch.buttons) setButtons(n.site_settings, ch.buttons)
             if (ch.headline) n.site_headline = ch.headline
             if (ch.subhead) n.site_subhead = ch.subhead
+            if (typeof ch.css === 'string') { if (ch.css) n.site_settings.custom_css = ch.css; else delete n.site_settings.custom_css }
+            if (ch.kit?.save_theme) saveThemeAs(n, ch.kit.save_theme)
           })
         }
         setMsgs((m) => [...m, { from: 'cami', text: ai.reply }])
@@ -386,6 +448,34 @@ export default function CamiDesigner() {
   }
 
   if (!form) return <p className="text-sm text-ink-soft">{err ?? 'Loading…'}</p>
+  const kitDone = !!(form.site_settings as any)?.kit?.done
+  const siteEmpty = !form.site_headline && Object.keys(form.site_settings ?? {}).length === 0
+  if (!setupSkipped && !setupFinished && (setupForce || (!kitDone && siteEmpty))) {
+    return (
+      <CamriSetup
+        styles={STYLES} palettes={PALETTES} typeSets={TYPE_SETS} pages={PAGES} fam={fam}
+        onSkip={() => setSetupSkipped(true)}
+        onFinish={async (kit) => {
+          await commit((n) => {
+            const x = (n.site_settings = n.site_settings ?? {})
+            const sty = STYLES.find((st) => st.key === kit.layouts[0])
+            if (sty) { n.site_template = sty.tpl; n.site_font_pair = sty.pair; applyPalette(n, n.site_accent ?? '#C98A8D', sty.bg, sty.text) }
+            const pal = kit.palettes[0]
+            if (pal) applyPalette(n, pal.accent, pal.bg, pal.text)
+            const ts = TYPE_SETS.find((t) => t.key === kit.fonts[0])
+            if (ts) {
+              clearFontOverrides(x)
+              if (ts.pair) n.site_font_pair = ts.pair
+              else { x.fonts = { ...(x.fonts ?? {}), head: ts.head, body: ts.body }; x.hero = { ...(x.hero ?? {}), headline_font: ts.head, para_font: ts.body } }
+            }
+            x.kit = kit
+          })
+          setSetupFinished(true)
+        }}
+      />
+    )
+  }
+
 
   const photos: string[] = form.site_settings?.hero?.photos ?? []
   const set = form.site_settings ?? {}
@@ -728,6 +818,42 @@ export default function CamiDesigner() {
               <img src="/camri/13_face_avatar.png" alt="" className="h-8 w-8 rounded-full" />
               <p className="font-fraunces text-lg font-semibold text-ink">Camri</p>
             </div>
+            {(() => {
+              const kit = (form.site_settings as any)?.kit as Record<string, any> | undefined
+              if (!kit || !kit.done) return null
+              const lab = 'text-[10px] font-semibold uppercase tracking-wider text-ink-soft'
+              const btn = 'rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] text-ink transition hover:border-twilight'
+              return (
+                <div className="mt-2 space-y-2 rounded-xl border border-black/10 bg-white/70 p-3">
+                  <p className="font-fraunces text-sm font-semibold text-ink">My kit</p>
+                  {(kit.layouts ?? []).length > 0 && (
+                    <div><p className={lab}>Layouts</p><div className="mt-1 flex flex-wrap gap-1">
+                      {(kit.layouts as string[]).map((key, i) => <button key={key} type="button" className={btn + (Number(kit.layout_idx ?? 0) === i ? ' !border-twilight' : '')} onClick={() => { void commit((n) => applyKitOps(n, { layout: key })) }}>{STYLES.find((q) => q.key === key)?.name ?? key}</button>)}
+                    </div></div>
+                  )}
+                  {(kit.palettes ?? []).length > 0 && (
+                    <div><p className={lab}>Colors</p><div className="mt-1 flex flex-wrap gap-1.5">
+                      {(kit.palettes as any[]).map((p) => <button key={p.name} type="button" title={p.name} aria-label={p.name} className="h-7 w-7 overflow-hidden rounded-full border border-black/15 transition hover:scale-110" onClick={() => { void commit((n) => applyKitOps(n, { palette: p.name })) }}><span className="block h-1/2 w-full" style={{ background: p.bg }} /><span className="block h-1/2 w-full" style={{ background: p.accent }} /></button>)}
+                    </div></div>
+                  )}
+                  {(kit.fonts ?? []).length > 0 && (
+                    <div><p className={lab}>Fonts</p><div className="mt-1 flex flex-wrap gap-1">
+                      {(kit.fonts as string[]).map((key) => <button key={key} type="button" className={btn} onClick={() => { void commit((n) => applyKitOps(n, { fonts: key })) }}>{TYPE_SETS.find((t) => t.key === key)?.name ?? key}</button>)}
+                    </div></div>
+                  )}
+                  {(kit.themes ?? []).length > 0 && (
+                    <div><p className={lab}>Themes</p><div className="mt-1 flex flex-wrap gap-1">
+                      {(kit.themes as any[]).map((t) => (
+                        <span key={t.name} className="inline-flex items-center overflow-hidden rounded-full border border-black/10 bg-white text-[11px] text-ink">
+                          <button type="button" className="px-2.5 py-1 transition hover:bg-black/5" onClick={() => { void commit((n) => applyKitOps(n, { theme: t.name })) }}>{t.name}</button>
+                          <button type="button" aria-label={'Delete ' + t.name} className="px-1.5 py-1 text-ink-soft transition hover:text-red-600" onClick={() => { void commit((n) => { const k = kitOf(n); k.themes = k.themes.filter((q: any) => q.name !== t.name) }) }}>×</button>
+                        </span>
+                      ))}
+                    </div></div>
+                  )}
+                </div>
+              )
+            })()}
             <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
               {msgs.slice(-4).map((m, i) => (
                 <div key={i} className={'max-w-[88%] rounded-2xl px-3 py-2 text-sm ' + (m.from === 'you' ? 'ml-auto ' + ACC + ' text-white' : 'bg-white text-ink')}>{m.text}</div>
@@ -742,6 +868,9 @@ export default function CamiDesigner() {
               {tour === 3 && SHAPES.map((sh) => <button key={sh.k} type="button" className={chip} onClick={() => tourPick(sh.name, (n) => setButtons(n.site_settings, sh.k), 4)}>{sh.name}</button>)}
               {tour !== null && <button type="button" className="px-2 text-xs text-ink-soft underline" onClick={() => { setTour(null); setMsgs((m) => [...m, { from: 'cami', text: 'Okay, I am here whenever you want to change something.' }]) }}>Skip</button>}
             </div>
+            {form.site_settings?.custom_css && (
+              <button type="button" onClick={() => { void commit((n) => { if (n.site_settings) delete n.site_settings.custom_css }) }} className="mt-2 text-xs text-twilight underline">Reset my custom design</button>
+            )}
             <form onSubmit={(e) => { e.preventDefault(); send(input) }} className="mt-3 flex gap-2">
               <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Tell Camri what to change" className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
               <button type="submit" className={accentBtn + ' !px-4 !py-2'}>Send</button>

@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { adminDb, userFromRequest } from '@/lib/stripeServer'
 import { MODEL_ID, costUsd } from '@/lib/aiRouter'
+import { sanitizeCss } from '@/lib/safeCss'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,10 +28,17 @@ export async function POST(request: Request) {
     const site = body.site ?? {}
     const hist: { from: string; text: string }[] = Array.isArray(body.history) ? body.history.slice(-10) : []
 
+    const kitIn = body.kit ?? {}
+    const kitLayouts: { key: string; name: string }[] = (Array.isArray(kitIn.layouts) ? kitIn.layouts : []).slice(0, 8).map((x: any) => ({ key: String(x?.key ?? ''), name: String(x?.name ?? '') })).filter((x: any) => x.key)
+    const kitPalettes: { name: string }[] = (Array.isArray(kitIn.palettes) ? kitIn.palettes : []).slice(0, 8).map((x: any) => ({ name: String(x?.name ?? '') })).filter((x: any) => x.name)
+    const kitFonts: { key: string; name: string }[] = (Array.isArray(kitIn.fonts) ? kitIn.fonts : []).slice(0, 8).map((x: any) => ({ key: String(x?.key ?? ''), name: String(x?.name ?? '') })).filter((x: any) => x.key)
+    const kitThemes: string[] = (Array.isArray(kitIn.themes) ? kitIn.themes : []).filter((x: unknown) => typeof x === 'string').slice(0, 20)
+    const fontList: { id: string; label: string }[] = (Array.isArray(body.fontList) ? body.fontList : []).slice(0, 200).map((x: any) => ({ id: String(x?.id ?? ''), label: String(x?.label ?? '') })).filter((x: any) => x.id)
+    const fontIds = fontList.map((f) => f.id)
     const system = `You are Camri, a cute, warm camera robot who designs photographers' websites. You know what works for photographers: big photos, lots of white space, one accent color, readable type, a clear Book button, and a look that matches the kind of client they want.
 
 Reply with ONLY a JSON object, no other text:
-{"reply": string, "changes": {"style": string|null, "palette": {"accent": string, "bg": string, "text": string}|null, "font_pair": string|null, "buttons": string|null, "headline": string|null, "subhead": string|null}}
+{"reply": string, "changes": {"style": string|null, "palette": {"accent": string, "bg": string, "text": string}|null, "font_pair": string|null, "buttons": string|null, "headline": string|null, "subhead": string|null, "css": string|null, "kit": {"layout": string|null, "palette": string|null, "fonts": string|null, "heading_font": string|null, "body_font": string|null, "theme": string|null, "save_theme": string|null}|null}}
 
 Rules:
 - reply: 1-3 short, friendly sentences. Say what you changed and why it suits a photographer. No emoji spam.
@@ -41,8 +49,19 @@ Rules:
 - buttons must be one of: ${SHAPES.join(', ')}.
 - headline: under 8 words. subhead: under 18 words. Write real copy in the photographer's voice, never lorem ipsum.
 - If they ask a question or want advice, answer in reply and leave all changes null.
+- css: the COMPLETE custom stylesheet for their site, replacing any previous custom CSS (keep earlier rules you are not changing). Use "" only to remove all custom CSS. Use css for design the other options cannot do: layouts, spacing, hero size, overlays, hover effects, animations, borders, typography details. Prefer the other options for simple color, font pair, button shape or copy changes.
+- CSS hooks that exist: #nav (menu bar), #top (hero), #portfolio, #words, #about, #aboutcta, #investment, #faq, #contact, #explore, #footer; .cr-btn (buttons), .cr-sub (subheads), .el-menu_brand, .el-menu_links, .el-about_text, .el-ex_title, .el-gal_name, .el-pr_name, .el-pr_price, .el-tes_quote, .el-faq_q, .el-con_msg, .el-ft_line. Theme variables you can set on :root: --hero-h (hero height), --space (section padding), --text (base font size), --logo (logo height), --menu (menu font size).
+- The site uses inline styles, so add !important to rules that must win.
+- Not allowed and stripped: url(), @import, position:fixed, scripts. Use @media (max-width: 768px) so phones look right. Keep text readable against its background. Keep the stylesheet under 6000 characters.
+- kit favorites the photographer saved: layouts [${kitLayouts.map((x) => x.key + ' (' + x.name + ')').join(', ') || 'none yet'}]; color schemes [${kitPalettes.map((x) => x.name).join(', ') || 'none yet'}]; font pairs [${kitFonts.map((x) => x.key + ' (' + x.name + ')').join(', ') || 'none yet'}]; saved themes [${kitThemes.join(', ') || 'none yet'}].
+  kit.layout: a layout key from their favorites, or "next" or "prev" to move through them. kit.palette: a color scheme name from their favorites. kit.fonts: a font pair key from their favorites.
+  kit.heading_font and kit.body_font: a font id from this list when they ask for a specific font: ${fontList.map((f) => f.id + '=' + f.label).join(', ') || 'none'}.
+  kit.theme: the name of a saved theme to switch to. kit.save_theme: a short name to save the design as it will look after this reply's changes. Use it when they ask for a new named theme like Christmas or Dark: make the design changes with palette, css and the other fields in the same reply, and set kit.save_theme. The app keeps their current design as "Main" so they can always switch back.
 
-Current site: template ${site.template ?? 'unknown'}, accent ${site.accent ?? 'unknown'}, page color ${site.bg ?? 'unknown'}, text color ${site.text ?? 'unknown'}, fonts ${site.font_pair ?? 'unknown'}, buttons ${site.buttons ?? 'unknown'}, headline "${site.headline ?? ''}", subhead "${site.subhead ?? ''}".`
+Current site: template ${site.template ?? 'unknown'}, accent ${site.accent ?? 'unknown'}, page color ${site.bg ?? 'unknown'}, text color ${site.text ?? 'unknown'}, fonts ${site.font_pair ?? 'unknown'}, buttons ${site.buttons ?? 'unknown'}, headline "${site.headline ?? ''}", subhead "${site.subhead ?? ''}".
+
+Current custom CSS (empty if none):
+${String(site.css ?? '').slice(0, 6000) || '(none)'}`
 
     const messages = [
       ...hist.map((m) => ({ role: (m.from === 'me' ? 'user' : 'assistant') as 'user' | 'assistant', content: String(m.text ?? '').slice(0, 500) })),
@@ -51,7 +70,7 @@ Current site: template ${site.template ?? 'unknown'}, accent ${site.accent ?? 'u
     while (messages.length && messages[0].role !== 'user') messages.shift()
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 500, system, messages })
+    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 1800, system, messages })
 
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0
@@ -65,10 +84,21 @@ Current site: template ${site.template ?? 'unknown'}, accent ${site.accent ?? 'u
     const m = raw.match(/\{[\s\S]*\}/)
     if (!m) return Response.json({ error: 'Camri could not answer. Try again.' }, { status: 502 })
     let parsed: any
-    try { parsed = JSON.parse(m[0]) } catch { return Response.json({ error: 'Camri could not answer. Try again.' }, { status: 502 }) }
+    try { parsed = JSON.parse(m[0]) } catch { try { parsed = JSON.parse(m[0].replace(/\r?\n/g, ' ')) } catch { return Response.json({ error: 'Camri could not answer. Try again.' }, { status: 502 }) } }
 
     const c = parsed.changes ?? {}
     const p = c.palette
+    const kc = c.kit ?? {}
+    const kitOut = {
+      layout: ['next', 'prev', ...kitLayouts.map((x) => x.key)].includes(kc.layout) ? kc.layout : null,
+      palette: kitPalettes.some((x) => x.name === kc.palette) ? kc.palette : null,
+      fonts: kitFonts.some((x) => x.key === kc.fonts) ? kc.fonts : null,
+      heading_font: fontIds.includes(kc.heading_font) ? kc.heading_font : null,
+      body_font: fontIds.includes(kc.body_font) ? kc.body_font : null,
+      theme: kitThemes.includes(kc.theme) ? kc.theme : null,
+      save_theme: clean(kc.save_theme, 30),
+    }
+    const kitAny = Object.values(kitOut).some(Boolean)
     const changes = {
       style: STYLE_KEYS.includes(c.style) ? c.style : null,
       palette: p && HEX.test(p.accent) && HEX.test(p.bg) && HEX.test(p.text) ? { accent: p.accent, bg: p.bg, text: p.text } : null,
@@ -76,6 +106,8 @@ Current site: template ${site.template ?? 'unknown'}, accent ${site.accent ?? 'u
       buttons: SHAPES.includes(c.buttons) ? c.buttons : null,
       headline: clean(c.headline, 80),
       subhead: clean(c.subhead, 160),
+      css: typeof c.css === 'string' ? sanitizeCss(c.css).slice(0, 8000) : null,
+      kit: kitAny ? kitOut : null,
     }
     const reply = clean(parsed.reply, 500) ?? 'Done!'
     return Response.json({ reply, changes })

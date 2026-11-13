@@ -2,10 +2,29 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { usePathname } from 'next/navigation'
 
 type Msg = { role: 'user' | 'camri'; text: string }
 
-const STARTERS = ['Who still owes me money?', 'What is coming up this week?', 'Which contracts are unsigned?']
+type Help = { tip?: string; chips: string[] }
+const DEFAULT_HELP: Help = { chips: ['Who still owes me money?', 'What is coming up this week?', 'Which contracts are unsigned?'] }
+const PAGE_HELP: [string, Help][] = [
+  ['/galleries/', { tip: 'Tap Style this gallery and I will help with the cover and look.', chips: ['Which galleries are due soon?'] }],
+  ['/galleries', { chips: ['Which galleries are due soon?', 'What sessions are coming up that will need a gallery?'] }],
+  ['/edit', { chips: ['Which shoots should I edit first?', 'Which galleries are due this week?'] }],
+  ['/website', { tip: 'I can restyle your site with you. Open my chat on this page and tap Walk me through it.', chips: [] }],
+  ['/questionnaires', { tip: 'Use the Ask Camri box on this page to reword, add or remove questions.', chips: [] }],
+  ['/specials', { tip: 'Use Design with Camri on this page to build your special.', chips: [] }],
+  ['/calendar', { tip: 'Ask Camri on this page about any date, or tell me what to block.', chips: ['What is coming up this week?'] }],
+  ['/contracts', { chips: ['Which contracts are unsigned?', 'Which unsigned contracts have a session coming up soon?'] }],
+  ['/money', { chips: ['Who still owes me money?', 'What payments are due this month?'] }],
+  ['/packages', { chips: ['Who still owes me money?', 'What is coming up this week?'] }],
+  ['/clients', { chips: ['Who has a session coming up?', 'Who still owes me money?'] }],
+  ['/sessions', { chips: ['What is coming up this week?', 'Which galleries are due soon?'] }],
+]
+function helpFor(p: string): Help {
+  return PAGE_HELP.find(([k]) => p.startsWith(k))?.[1] ?? DEFAULT_HELP
+}
 const P = '/camri/'
 
 function bold(t: string) {
@@ -22,6 +41,45 @@ export default function CamriHelper() {
   const [imgOk, setImgOk] = useState(true)
   const [hello, setHello] = useState(false)
   const boxRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
+  const help = helpFor(pathname ?? '')
+  const uidRef = useRef<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [asked, setAsked] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      try {
+        const sb = supabase
+        if (!sb) return
+        const { data: s } = await sb.auth.getSession()
+        const uid = s.session?.user.id
+        if (!uid) return
+        uidRef.current = uid
+        const { data } = await sb.from('camri_chats').select('messages').eq('owner_id', uid).maybeSingle()
+        const saved = (data as { messages?: Msg[] } | null)?.messages
+        if (alive && Array.isArray(saved) && saved.length) setMsgs(saved.filter((m) => m && (m.role === 'user' || m.role === 'camri') && typeof m.text === 'string'))
+      } catch {} finally {
+        if (alive) setLoaded(true)
+      }
+    })()
+    return () => { alive = false }
+  }, [])
+
+  useEffect(() => {
+    if (!loaded || !dirty || busy) return
+    const t = setTimeout(async () => {
+      const sb = supabase
+      const uid = uidRef.current
+      if (!sb || !uid) return
+      await sb.from('camri_chats').upsert({ owner_id: uid, messages: msgs.slice(-60), updated_at: new Date().toISOString() })
+      setDirty(false)
+    }, 600)
+    return () => clearTimeout(t)
+  }, [msgs, loaded, dirty, busy])
 
   useEffect(() => {
     let t: ReturnType<typeof setTimeout> | undefined
@@ -39,6 +97,7 @@ export default function CamriHelper() {
   }, [msgs, busy, open])
 
   function openChat() {
+    setAsked(false)
     setOpen(true)
     setHello(false)
     try { localStorage.setItem('camri_hello', '1') } catch {}
@@ -47,9 +106,11 @@ export default function CamriHelper() {
   async function send(raw: string) {
     const message = raw.trim()
     if (!message || busy) return
-    const history = msgs.slice(-6)
+    const history = msgs.slice(-12)
     setMsgs((m) => [...m, { role: 'user', text: message }])
     setText('')
+    setAsked(true)
+    setDirty(true)
     setBusy(true)
     try {
       const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } }
@@ -98,6 +159,17 @@ export default function CamriHelper() {
               <p className="font-fraunces text-lg leading-none">Camri</p>
               <p className="mt-0.5 text-[11px] text-[#3a2f2a]/55">Your business helper</p>
             </div>
+            {msgs.length > 0 && (
+              <button
+                onClick={() => {
+                  if (!confirmClear) { setConfirmClear(true); setTimeout(() => setConfirmClear(false), 3000); return }
+                  setMsgs([]); setDirty(true); setConfirmClear(false)
+                }}
+                className="rounded-full px-2 py-1 text-[11px] text-[#3a2f2a]/50 transition hover:text-[#3a2f2a]"
+              >
+                {confirmClear ? 'Tap again to clear' : 'Clear chat'}
+              </button>
+            )}
             <button aria-label="Close" onClick={() => setOpen(false)} className="rounded-full px-2 py-1 text-lg leading-none text-[#3a2f2a]/50 transition hover:text-[#3a2f2a]">×</button>
           </div>
 
@@ -107,8 +179,9 @@ export default function CamriHelper() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {imgOk && <img src={`${P}01_waving.png`} alt="" className="h-28 w-auto select-none" />}
                 <p className="mt-2 text-[13px] leading-relaxed text-[#3a2f2a]/75">Hi! I can look at your sessions, payments and contracts. What would you like to know?</p>
+                {help.tip && <p className="mt-2 text-[12px] italic text-[#3a2f2a]/60">{help.tip}</p>}
                 <div className="mt-3 flex flex-wrap justify-center gap-2">
-                  {STARTERS.map((s) => (
+                  {help.chips.map((s) => (
                     <button key={s} onClick={() => send(s)} className="rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[12px] text-[#3a2f2a]/80 transition hover:border-black/25">{s}</button>
                   ))}
                 </div>
@@ -124,6 +197,17 @@ export default function CamriHelper() {
                   <p className="whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-[#EBDDCF] px-3.5 py-2 text-[#3a2f2a]">{bold(m.text)}</p>
                 </div>
               ),
+            )}
+            {msgs.length > 0 && !asked && !busy && (help.chips.length > 0 || help.tip) && (
+              <div className="pt-1">
+                <p className="mb-1.5 text-[11px] uppercase tracking-wider text-[#3a2f2a]/45">Need a hand with something else?</p>
+                {help.tip && <p className="mb-2 text-[12px] italic text-[#3a2f2a]/60">{help.tip}</p>}
+                <div className="flex flex-wrap gap-2">
+                  {help.chips.map((c) => (
+                    <button key={c} onClick={() => send(c)} className="rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[12px] text-[#3a2f2a]/80 transition hover:border-black/25">{c}</button>
+                  ))}
+                </div>
+              </div>
             )}
             {busy && (
               <div className="flex items-center gap-2">
