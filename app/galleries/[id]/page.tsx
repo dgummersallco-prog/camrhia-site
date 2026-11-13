@@ -110,7 +110,7 @@ export default function GalleryManagePage() {
   const [filter, setFilter] = useState<'all' | 'fav' | CullLabel>('all')
   const [cullOpen, setCullOpen] = useState(false)
   const [cullTarget, setCullTarget] = useState('')
-  const [cull, setCull] = useState<{ busy: boolean; done: number; total: number; phase: 'sharp' | 'eyes' }>({ busy: false, done: 0, total: 0, phase: 'sharp' })
+  const [cull, setCull] = useState<{ busy: boolean; done: number; total: number; phase: 'sharp' | 'eyes' | 'dupes' }>({ busy: false, done: 0, total: 0, phase: 'sharp' })
   const [cullEyes, setCullEyes] = useState(true)
   const [enhOpen, setEnhOpen] = useState(false)
   const [enhPicksOnly, setEnhPicksOnly] = useState(false)

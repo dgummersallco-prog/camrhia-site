@@ -150,7 +150,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   const [up, setUp] = useState({ busy: false, done: 0, total: 0, note: null as string | null })
   const [cullTarget, setCullTarget] = useState('')
   const [cullEyes, setCullEyes] = useState(true)
-  const [cull, setCull] = useState<{ busy: boolean; done: number; total: number; phase: 'sharp' | 'eyes' }>({ busy: false, done: 0, total: 0, phase: 'sharp' })
+  const [cull, setCull] = useState<{ busy: boolean; done: number; total: number; phase: 'sharp' | 'eyes' | 'dupes' }>({ busy: false, done: 0, total: 0, phase: 'sharp' })
   const [rescued, setRescued] = useState<Set<string>>(new Set())
   const [confirmCut, setConfirmCut] = useState(false)
   const [choice, setChoice] = useState<Record<string, string>>({})
@@ -590,6 +590,74 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     URL.revokeObjectURL(a.href)
   }
 
+  // ---- AI test (beta, only with ?ai=1) ----
+  const [aiOn, setAiOn] = useState(false)
+  useEffect(() => { setAiOn(new URLSearchParams(window.location.search).has('ai')) }, [])
+  const [aiTest, setAiTest] = useState<{ busy: boolean; done: number; total: number; rows: { p: Photo; score: number; note: string }[]; cost: number; error: string | null }>({ busy: false, done: 0, total: 0, rows: [], cost: 0, error: null })
+  const aiAgree = aiTest.rows.filter((r) => (r.p.cull_label === 'pick') === (r.score >= 7)).length
+  const aiDiffs = aiTest.rows.filter((r) => (r.p.cull_label === 'pick') !== (r.score >= 7))
+
+  async function toJpeg800(url: string): Promise<string | null> {
+    try {
+      const r = await fetch(url)
+      if (!r.ok) return null
+      const bmp = await createImageBitmap(await r.blob(), { imageOrientation: 'from-image' })
+      const sc = Math.min(1, 800 / Math.max(bmp.width, bmp.height))
+      const c = document.createElement('canvas')
+      c.width = Math.round(bmp.width * sc)
+      c.height = Math.round(bmp.height * sc)
+      c.getContext('2d')?.drawImage(bmp, 0, 0, c.width, c.height)
+      bmp.close()
+      const blob: Blob | null = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.8))
+      if (!blob) return null
+      const buf = new Uint8Array(await blob.arrayBuffer())
+      let bin = ''
+      for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000))
+      return btoa(bin)
+    } catch {
+      return null
+    }
+  }
+
+  async function runAiTest() {
+    const sb = supabase
+    if (!sb || aiTest.busy) return
+    const pool = photos.filter((p) => p.cull_label && p.web_path)
+    if (pool.length === 0) { setAiTest((t) => ({ ...t, error: 'Run the cull first.' })); return }
+    const N = Math.min(40, pool.length)
+    const sample = Array.from({ length: N }, (_, k) => pool[Math.floor(((k + 0.5) / N) * pool.length)])
+    setAiTest({ busy: true, done: 0, total: N, rows: [], cost: 0, error: null })
+    const { data: sess } = await sb.auth.getSession()
+    const token = sess.session?.access_token
+    const { data: signed } = await sb.storage.from(BUCKET).createSignedUrls(sample.map((p) => p.web_path as string), 3600)
+    const urlOf: Record<string, string> = {}
+    signed?.forEach((x) => { if (x.path && x.signedUrl) urlOf[x.path] = x.signedUrl })
+    const rows: { p: Photo; score: number; note: string }[] = []
+    let cost = 0
+    for (let i = 0; i < sample.length; i += 8) {
+      const batch = sample.slice(i, i + 8)
+      const imgs: string[] = []
+      const used: Photo[] = []
+      for (const p of batch) {
+        const b = await toJpeg800(urlOf[p.web_path as string] ?? '')
+        if (b) { imgs.push(b); used.push(p) }
+      }
+      if (imgs.length === 0) continue
+      const res = await fetch('/api/ai/judge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ job: 'shortlist', galleryId, images: imgs }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) { setAiTest((t) => ({ ...t, busy: false, error: j.error ?? 'The AI test failed.' })); return }
+      cost += j.usage?.costUsd ?? 0
+      const scores: { n: number; score: number; note?: string }[] = j.result?.scores ?? []
+      scores.forEach((sc) => { const p = used[sc.n - 1]; if (p) rows.push({ p, score: Number(sc.score), note: sc.note ?? '' }) })
+      setAiTest((t) => ({ ...t, done: Math.min(N, i + batch.length), rows: [...rows], cost }))
+    }
+    setAiTest((t) => ({ ...t, busy: false, done: N, rows: [...rows], cost }))
+  }
+
   // ---- Step 3: duplicates ----
   const groupMap = new Map<string, Photo[]>()
   photos.forEach((p) => {
@@ -856,18 +924,37 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
               </div>
             )}
 
-            {cull.busy && (
-              <div className={`${panel} mt-8 text-center`}>
-                <p className="text-sm uppercase tracking-[0.18em] text-white/40">{cull.phase === 'eyes' ? 'Checking faces' : 'Checking sharpness'}</p>
-                <p className="mt-4 font-fraunces text-6xl text-white">
-                  {cull.done}
-                  <span className="text-white/25"> / {cull.total}</span>
-                </p>
-                <div className="mx-auto mt-6 h-1.5 w-full max-w-md overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full bg-twilight transition-all" style={{ width: `${cull.total ? (cull.done / cull.total) * 100 : 0}%` }} />
+            {cull.busy && (() => {
+              const order = ['sharp', 'eyes', 'dupes']
+              const stages = [
+                { key: 'sharp', label: 'Checking sharpness' },
+                ...(cullEyes ? [{ key: 'eyes', label: 'Checking faces' }] : []),
+                { key: 'dupes', label: 'Finding duplicates' },
+              ]
+              const cur = order.indexOf(cull.phase)
+              return (
+                <div className={`${panel} mt-8`}>
+                  <div className="space-y-6">
+                    {stages.map((st) => {
+                      const idx = order.indexOf(st.key)
+                      const state = idx < cur ? 'done' : idx === cur ? 'active' : 'wait'
+                      const pct = state === 'done' ? 100 : state === 'active' && cull.total ? (cull.done / cull.total) * 100 : 0
+                      return (
+                        <div key={st.key} className={state === 'wait' ? 'opacity-40' : ''}>
+                          <div className="flex items-baseline justify-between">
+                            <p className={`text-sm uppercase tracking-[0.18em] ${state === 'active' ? 'animate-pulse text-white' : 'text-white/55'}`}>{state === 'done' ? '✓ ' : ''}{st.label}</p>
+                            {state === 'active' && <p className="text-sm text-white/55">{cull.done} / {cull.total}</p>}
+                          </div>
+                          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                            <div className={`h-full bg-twilight transition-all ${state === 'active' ? 'animate-pulse' : ''}`} style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {labeled && !cull.busy && (
               <>
@@ -877,6 +964,31 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                   <button className={chipCls('cuts')} onClick={() => setCullView('cuts')}><b className="text-white">{cuts.length}</b> suggested cuts</button>
                   <button className={chipCls('dupes')} onClick={() => setCullView('dupes')}><b className="text-white">{groupList.length}</b> duplicate groups</button>
                 </div>
+
+                {aiOn && (
+                  <div className={`${panel} mt-6`}>
+                    <p className="text-sm text-white/70">AI test (beta). Sends up to 40 photos to Haiku and compares its keeper picks with ours.</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <button className={btnQuiet} disabled={aiTest.busy} onClick={runAiTest}>{aiTest.busy ? `Judging ${aiTest.done} of ${aiTest.total}…` : 'Test AI on 40 photos'}</button>
+                      {aiTest.rows.length > 0 && <span className="text-sm text-white/60">Agrees on {aiAgree} of {aiTest.rows.length} · cost ${aiTest.cost.toFixed(4)}</span>}
+                    </div>
+                    {aiTest.error && <p className="mt-3 text-sm text-red-300">{aiTest.error}</p>}
+                    {aiDiffs.length > 0 && (
+                      <>
+                        <p className="mt-5 text-sm text-white/70">Where it disagrees with us</p>
+                        <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+                          {aiDiffs.map((r) => (
+                            <div key={r.p.id}>
+                              <div className="aspect-square overflow-hidden rounded-lg bg-white/5">{img(r.p)}</div>
+                              <p className="mt-1 text-xs text-white/70">AI {r.score}/10 · we said {r.p.cull_label}</p>
+                              <p className="text-[11px] text-white/45">{r.note}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <p className="mt-4 text-xs text-white/40">Keys: ← → move · P keeper · M maybe · X cut · Space keeps or un-keeps a suggested cut</p>
 

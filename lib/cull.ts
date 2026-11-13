@@ -123,7 +123,7 @@ export async function cullPhotos(
   opts: {
     target?: number
     eyes?: boolean
-    onProgress?: (done: number, total: number, phase: 'sharp' | 'eyes') => void
+    onProgress?: (done: number, total: number, phase: 'sharp' | 'eyes' | 'dupes') => void
   } = {},
 ): Promise<{ results: CullResult[]; eyesOk: boolean }> {
   const analyses: Analysis[] = new Array(items.length).fill(null)
@@ -220,6 +220,7 @@ export async function cullPhotos(
     return x
   }
   for (let i = 0; i < items.length; i++) {
+    if (i % 20 === 0) { opts.onProgress?.(i, items.length, 'dupes'); await new Promise((r) => setTimeout(r, 0)) }
     const a = analyses[i]
     if (!a) continue
     for (let j = Math.max(0, i - 60); j < i; j++) {
