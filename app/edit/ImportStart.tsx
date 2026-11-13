@@ -30,7 +30,7 @@ async function filesFromDrop(dt: DataTransfer): Promise<File[]> {
   return out
 }
 
-const primary = 'rounded-full bg-[var(--color-twilight)] px-6 py-2.5 text-sm font-medium text-ink transition hover:opacity-90 disabled:opacity-40'
+const primary = 'rounded-full bg-[var(--color-twilight)] px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
 const quiet = 'rounded-full border border-white/15 px-5 py-2.5 text-sm text-ink-soft transition hover:border-white/35 hover:text-ink disabled:opacity-40'
 
 export default function ImportStart({ rows, userId, onOpen }: { rows: Row[] | null; userId: string | null; onOpen: (id: string) => void }) {
@@ -67,8 +67,8 @@ export default function ImportStart({ rows, userId, onOpen }: { rows: Row[] | nu
           JPEG, PNG, HEIC and RAW from any camera. A whole folder works too. We cull it, edit it and get it ready to send. You don&apos;t need a session yet.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <button className={primary} disabled={busy || !userId} onClick={() => filesRef.current?.click()}>Browse files</button>
-          <button className={quiet} disabled={busy || !userId} onClick={() => folderRef.current?.click()}>Browse a folder</button>
+          <button className={primary} disabled={busy || !userId} onClick={() => folderRef.current?.click()}>Choose a folder</button>
+          <button className={quiet} disabled={busy || !userId} onClick={() => filesRef.current?.click()}>Choose individual photos</button>
         </div>
         <input ref={filesRef} type="file" multiple hidden onChange={(e) => { const l = Array.from(e.target.files ?? []); e.target.value = ''; void start(l) }} />
         <input ref={folderRef} type="file" multiple hidden {...({ webkitdirectory: '' } as object)} onChange={(e) => { const l = Array.from(e.target.files ?? []); e.target.value = ''; void start(l) }} />

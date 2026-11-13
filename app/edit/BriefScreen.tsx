@@ -6,7 +6,7 @@ import { QUESTIONS, type Brief, type Signature } from '@/lib/brief'
 const primary = 'rounded-full bg-[var(--color-twilight)] px-7 py-3 text-sm font-medium text-white transition hover:opacity-90'
 const quiet = 'rounded-full border border-white/15 px-6 py-3 text-sm text-white/70 transition hover:border-white/35 hover:text-white'
 
-const KEEP = ['type', 'style', 'skin']
+const KEEP: string[] = ['type', 'style', 'setting', 'light', 'mood', 'skin']
 const QS = QUESTIONS.filter((x) => KEEP.includes(x.key))
 function clean(b: Brief): Brief {
   const c = { ...b }

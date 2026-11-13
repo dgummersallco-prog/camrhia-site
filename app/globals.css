@@ -279,3 +279,10 @@ html.dash-shell [class*="color-mix(in_srgb,rgb(var(--scene-a"], html.dash-shell 
 .room-light [class*="bg-black/"] { color: #fff; }
 .room-light [class*="bg-black/"] [class*="text-white"], .room-light [class*="bg-black/"][class*="text-white"] { color: rgba(255, 255, 255, 0.88); }
 .room-light [class*="bg-emerald-"][class*="text-white"], .room-light [class*="bg-red-"][class*="text-white"], .room-light [class*="bg-emerald-"] [class*="text-white"] { color: #fff; }
+
+.room-light input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), .room-light textarea, .room-light select {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  color: var(--color-ink, #2a2523) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+.room-light [class*="bg-twilight"][class*="text-white"], .room-light [class*="bg-[var(--color-twilight)]"][class*="text-white"] { color: #fff; }

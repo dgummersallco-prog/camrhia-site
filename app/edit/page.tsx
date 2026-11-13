@@ -74,7 +74,7 @@ function summarize(items: Correction[]) {
 
 const tileBtn = (on: boolean) =>
   `rounded-2xl border p-5 text-left transition ${on ? 'border-[rgb(var(--scene-b,201_133_136))] bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] text-white' : 'border-white/70 bg-white/60 text-ink hover:-translate-y-0.5 hover:border-twilight'}`
-const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-ink transition hover:opacity-90 disabled:opacity-40'
+const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
 const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-ink-soft transition hover:border-white/35 hover:text-ink disabled:opacity-40'
 
 export default function EditingRoom() {
