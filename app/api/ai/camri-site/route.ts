@@ -14,7 +14,7 @@ const HEX = /^#[0-9A-Fa-f]{6}$/
 
 const clean = (v: unknown, max: number) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null)
 
-export async function POST(request: Request) {
+async function handle(request: Request): Promise<Response> {
   try {
     const auth = await userFromRequest(request)
     if (!auth) return Response.json({ error: 'Please sign in again.' }, { status: 401 })
@@ -142,4 +142,27 @@ ${String(site.js ?? '').slice(0, 6000) || '(none)'}`
   } catch (e) {
     return Response.json({ error: 'Camri hit a snag. Try again.' }, { status: 500 })
   }
+}
+
+export const maxDuration = 300
+
+// Long scenes take a while to write. Send a ping every few seconds so the connection stays open,
+// then the finished answer. Leading spaces are ignored by the JSON reader on the other side.
+export async function POST(request: Request) {
+  const enc = new TextEncoder()
+  const stream = new ReadableStream({
+    async start(controller) {
+      const ping = setInterval(() => { try { controller.enqueue(enc.encode(' ')) } catch { /* closed */ } }, 4000)
+      try {
+        const r = await handle(request)
+        controller.enqueue(enc.encode(await r.text()))
+      } catch {
+        controller.enqueue(enc.encode(JSON.stringify({ error: 'Camri hit a snag. Try again.' })))
+      } finally {
+        clearInterval(ping)
+        controller.close()
+      }
+    },
+  })
+  return new Response(stream, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })
 }

@@ -855,7 +855,7 @@ export default function CamiDesigner() {
               <img src="/camri/13_face_avatar.png" alt="" className="h-9 w-9 rounded-full" />
               <p className="font-fraunces text-xl font-semibold text-ink">Camri</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[52px] right-6 z-10 h-14 w-auto" />
+              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[34px] right-6 z-10 h-14 w-auto" />
             </div>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-3">
               {msgs.map((m, i) => (
