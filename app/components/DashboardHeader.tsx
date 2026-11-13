@@ -162,7 +162,7 @@ export function DashboardHeader({ active, hideNav }: { active: Tab; hideNav?: bo
     }
     try {
       const cached = usableAccent(localStorage.getItem('camrhia_accent'))
-      if (cached) apply(cached)
+      if (cached) { clear(); localStorage.removeItem('camrhia_accent') }
     } catch {}
     async function run() {
       const sb = supabase
@@ -172,8 +172,8 @@ export function DashboardHeader({ active, hideNav }: { active: Tab; hideNav?: bo
       const { data: pr } = await sb.from('profiles').select('accent_color').eq('id', data.session.user.id).maybeSingle()
       const a = usableAccent((pr as { accent_color?: string | null } | null)?.accent_color)
       if (a) {
-        apply(a)
-        try { localStorage.setItem('camrhia_accent', a) } catch {}
+        clear()
+        try { localStorage.removeItem('camrhia_accent') } catch {}
       } else {
         clear()
         try { localStorage.removeItem('camrhia_accent') } catch {}
