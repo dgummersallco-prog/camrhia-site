@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { DateCheckWidget } from '../../../p/[token]/DateCheckWidget'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { SiteNav } from '../SiteNav'
+import { BookingDesign, BOOK_ALL, BOOK_NOCAL } from './BookingDesigns'
 import CustomJs from '@/app/site/CustomJs'
 import { sanitizeCss } from '@/lib/safeCss'
 
@@ -79,6 +80,10 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   const photoPath: string | null = t.hero.photos[0] ?? ((Array.isArray(r.cover_paths) && r.cover_paths[0]) || r.cover_path || null)
   const photo = photoPath ? STORAGE_BASE + photoPath : null
   const L = t.availability.layout
+  const bookDesign = String((r as any).site_settings?.bookDesign ?? '')
+  const designed = BOOK_ALL.includes(bookDesign)
+  const calOn = t.calendar.show && !BOOK_NOCAL.includes(bookDesign)
+  const pics = ((t.hero.photos?.length ? t.hero.photos : Array.isArray(r.cover_paths) ? r.cover_paths : []) as string[]).filter(Boolean).slice(0, 4).map((p) => STORAGE_BASE + p)
 
   useEffect(() => installPreviewGlow(), [])
 
@@ -153,7 +158,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const showPhoto = false && !!photo
   const stacked = L === 'centered'
-  const between = L === 'between' && t.calendar.show
+  const between = L === 'between' && t.calendar.show && !designed
   const photoPos: string = (r as any).site_settings?.availability?.photoPos ?? 'side'
   const photoSide = showPhoto && photoPos === 'side'
   const photoBack = showPhoto && photoPos === 'background'
@@ -205,7 +210,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const formBlock = (
     <form id="book-form" onSubmit={submit} className="grid gap-4">
-      <p style={stepLabel}>{t.calendar.show && !between ? 2 : 1} · Tell me about your day</p>
+      <p style={stepLabel}>{calOn && !between ? 2 : 1} · Tell me about your day</p>
       <div><label style={label}>Your name *</label>
         <input style={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} autoComplete="name" /></div>
       <div><label style={label}>Email *</label>
@@ -228,7 +233,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
         <input style={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
       <div><label style={label}>Location (city)</label>
         <input style={input} value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} placeholder="Where would the session be?" /></div>
-      <div><label style={label}>Message</label>
+      <div className="bk-wide"><label style={label}>Message</label>
         <textarea style={{ ...input, minHeight: 100, resize: 'vertical' }} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} placeholder="Tell me a little about what you have in mind" /></div>
       <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={(e) => setWebsite(e.target.value)}
         style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
@@ -240,7 +245,15 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   return (
     <>
       <link rel="stylesheet" href={t.fontsHref} />
-      <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
+      <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}
+#book-form{gap:1.9rem 2.25rem !important}
+#book-form label{display:block !important;font-size:10.5px !important;letter-spacing:.2em !important;text-transform:uppercase !important;opacity:.62 !important;margin:0 0 2px !important;font-weight:500 !important}
+#book-form input:not([aria-hidden]),#book-form select,#book-form textarea{background:transparent !important;border:0 !important;border-bottom:1px solid ${line} !important;border-radius:0 !important;box-shadow:none !important;padding:11px 2px !important;font-size:16px !important;width:100% !important;outline:none !important;transition:border-color .2s}
+#book-form textarea{min-height:84px !important;line-height:1.55}
+#book-form input:not([aria-hidden]):focus,#book-form select:focus,#book-form textarea:focus{border-bottom-color:currentColor !important}
+#book-form ::placeholder{opacity:.4}
+#book-form .bk-btn,#book-btn{width:100% !important;border-radius:0 !important;padding:18px 28px !important;font-size:12px !important;letter-spacing:.24em !important;text-transform:uppercase !important;margin-top:.5rem}
+`}</style>
       <div id={photoBack ? 'book-photo' : undefined} style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <CustomJs code={String((r as any).site_settings?.custom_js ?? '')} />
         {(() => { const cc = sanitizeCss((r as any).site_settings?.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
@@ -253,6 +266,9 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
           </div>
         )}
 
+        {designed ? (
+          <BookingDesign design={bookDesign} sent={sent} title={t.availability.title} intro={t.availability.intro} h1Style={{ ...head, fontFamily: t.availability.family, fontSize: 'var(--book-h)', lineHeight: 1.1 }} calBlock={calBlock} formBlock={formBlock} sentBlock={sentBlock} pics={pics} ink={ink} soft={soft} line={line} bg={bg} />
+        ) : (
         <div className={photoSide ? 'mx-auto grid max-w-6xl gap-8 px-6 pt-4 md:grid-cols-[5fr_7fr] md:gap-12' : ''}>
           {photoSide && (
             <div id="book-photo" className="md:sticky md:top-6 md:self-start">
@@ -273,6 +289,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
           )}
         </main>
         </div>
+        )}
       </div>
     </>
   )

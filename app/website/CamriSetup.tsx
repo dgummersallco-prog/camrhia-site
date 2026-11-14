@@ -152,7 +152,7 @@ export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0])
 const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'nav', title: 'Explore section', rows: ['Explore section designs'] },
   { k: 'galleries', title: 'Galleries', rows: ['Galleries main page designs', 'Photo display designs (inside a gallery)', 'Section designs'] },
-  { k: 'book', title: 'Booking page', rows: ['Page designs'] },
+  { k: 'book', title: 'Booking page', rows: ['With the calendar', 'Without the calendar'] },
   { k: 'testimonials', title: 'Testimonials', rows: ['Section designs'] },
   { k: 'about', title: 'About', rows: ['Page designs', 'Section designs'] },
   { k: 'pricing', title: 'Pricing', rows: ['Page designs', 'Section designs'] },
@@ -193,6 +193,9 @@ const cap = (k: string) => k[0].toUpperCase() + k.slice(1)
 const PRICE_SEC = ['capri', 'skye', 'bali', 'fiji', 'crete', 'malta', 'aruba', 'maui'].map((k) => ({ key: k, name: cap(k) }))
 const PRICE_PAGE = ['corsica', 'sardinia', 'tahiti', 'santorini', 'zanzibar', 'madeira', 'mykonos', 'bermuda', 'tobago', 'lanai', 'azores', 'ibiza'].map((k) => ({ key: k, name: cap(k) }))
 
+const BOOK_CAL_D = ['tahoe', 'como', 'garda', 'bled', 'annecy', 'tekapo'].map((k) => ({ key: k, name: cap(k) }))
+const BOOK_NOCAL_D = ['louise', 'placid', 'lucerne', 'orta', 'maggiore', 'braies'].map((k) => ({ key: k, name: cap(k) }))
+
 const GAL_DESIGNS = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
 const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech', 'sorrel', 'tansy'].map((k) => ({ key: k, name: k === 'hawthorn' ? 'Hawthorne' : k[0].toUpperCase() + k.slice(1) }))
@@ -208,6 +211,8 @@ const PICKERS = (): Record<string, { dir: string; field: string; ar: string; ite
   'testimonials|Section designs': { dir: 'testimonials', ar: '2/1', field: 'testimonials', items: TESTI_DESIGNS },
   'pricing|Page designs': { dir: 'pricing-page', ar: '3/4', field: 'pricing_page', items: PRICE_PAGE },
   'pricing|Section designs': { dir: 'pricing-section', ar: '2/1', field: 'pricing_section', items: PRICE_SEC },
+  'book|With the calendar': { dir: 'booking', ar: '1/1', field: 'book', items: BOOK_CAL_D },
+  'book|Without the calendar': { dir: 'booking', ar: '1/1', field: 'book', items: BOOK_NOCAL_D },
 })
 
 const ROW_TITLE: Record<string, string> = {
