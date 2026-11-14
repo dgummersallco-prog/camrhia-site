@@ -355,6 +355,11 @@ export default function CamiDesigner() {
     if (i >= 0) k.themes[i] = snap
     else k.themes.push(snap)
   }
+  const resetLook = (x: Record<string, any>) => {
+    delete x.custom_css; delete x.custom_js; delete x.calendar; delete x.fonts; delete x.colors; delete x.button
+    if (x.hero) { for (const k of Object.keys(x.hero)) if (/font|align|overlay|size|color|height|canvas|shape|weight|style|opacity/i.test(k)) delete x.hero[k] }
+    if (x.menu) { for (const k of ['logoPos', 'bg', 'solid', 'none', 'icon']) delete x.menu[k] }
+  }
   function applyKitOps(n: Prof, kc: Record<string, any>) {
     const k = kitOf(n)
     const x = n.site_settings as Record<string, any>
@@ -392,7 +397,7 @@ export default function CamiDesigner() {
         else if (L.includes(kc.layout)) i = L.indexOf(kc.layout)
         k.layout_idx = i
         const st = STYLES.find((q) => q.key === L[i])
-        if (st) n.site_template = st.tpl
+        if (st) { n.site_template = st.tpl; n.site_font_pair = st.pair; clearFontOverrides(x); resetLook(x); applyPalette(n, (st as any).acc ?? n.site_accent ?? '#C98A8D', st.bg, st.text); x.button = { ...(x.button ?? {}), shape: (st as any).shape ?? 'square' } }
       }
     }
     if (kc.palette) { const p = (k.palettes ?? []).find((q: any) => q.name === kc.palette); if (p) applyPalette(n, p.accent, p.bg, p.text) }
@@ -631,12 +636,12 @@ export default function CamiDesigner() {
             nn.pinterest_url = links.pinterest_url.trim() || null
             const prev: any = x.kit ?? null
             const same = (a: any, b: any) => JSON.stringify([a?.accent, a?.bg, a?.text]) === JSON.stringify([b?.accent, b?.bg, b?.text])
-            const layoutNew = !prev || prev.layouts?.[0] !== kit.layouts[0]
+            const layoutNew = kit.layouts.length > 0
             const palNew = !prev || !same(prev.palettes?.[0], kit.palettes[0])
             const fontNew = !prev || (['title', 'subtitle', 'paragraph'] as const).some((r) => (prev.type?.[r]?.[0] ?? null) !== (kit.type[r][0] ?? null))
             if (layoutNew) {
               const sty = STYLES.find((st) => st.key === kit.layouts[0])
-              if (sty) { n.site_template = sty.tpl; n.site_font_pair = sty.pair; applyPalette(n, (sty as any).acc ?? n.site_accent ?? '#C98A8D', sty.bg, sty.text); const sx = (n.site_settings = n.site_settings ?? {}); sx.button = { ...(sx.button ?? {}), shape: (sty as any).shape ?? 'square' } }
+              if (sty) { n.site_template = sty.tpl; n.site_font_pair = sty.pair; clearFontOverrides((n.site_settings = n.site_settings ?? {})); resetLook(n.site_settings); applyPalette(n, (sty as any).acc ?? n.site_accent ?? '#C98A8D', sty.bg, sty.text); const sx = (n.site_settings = n.site_settings ?? {}); sx.button = { ...(sx.button ?? {}), shape: (sty as any).shape ?? 'square' } }
             }
             const pal = kit.palettes[0]
             if (pal && (layoutNew || palNew)) applyPalette(n, pal.accent, pal.bg, pal.text)
@@ -927,33 +932,6 @@ export default function CamiDesigner() {
                     {(kitNow.layouts ?? []).length > 0 && (
                       <div><p className={lab}>Layouts</p><div className="mt-1.5 flex flex-wrap gap-1.5">
                         {(kitNow.layouts as string[]).map((key, i) => <button key={key} type="button" className={pill + (Number(kitNow.layout_idx ?? 0) === i ? ' !border-twilight' : '')} onClick={() => { void commit((n) => applyKitOps(n, { layout: key })) }}>{STYLES.find((q) => q.key === key)?.name ?? key}</button>)}
-                      </div></div>
-                    )}
-                    {(kitNow.palettes ?? []).length > 0 && (
-                      <div><p className={lab}>Color schemes</p><div className="mt-1.5 flex flex-wrap gap-2">
-                        {(kitNow.palettes as any[]).map((pl) => (
-                          <button key={pl.name} type="button" className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-2.5 py-1.5 text-xs text-ink transition hover:border-twilight" onClick={() => { void commit((n) => applyKitOps(n, { palette: pl.name })) }}>
-                            <span className="flex overflow-hidden rounded-md border border-black/10"><span className="h-5 w-5" style={{ background: pl.accent }} /><span className="h-5 w-5" style={{ background: pl.bg }} /><span className="h-5 w-5" style={{ background: pl.text }} /></span>
-                            {pl.name}
-                          </button>
-                        ))}
-                      </div></div>
-                    )}
-                    {kitNow.type && (['title', 'subtitle', 'paragraph'] as const).some((r) => (kitNow.type[r] ?? []).length > 0) && (
-                      <div><p className={lab}>Fonts</p>
-                        {(['title', 'subtitle', 'paragraph'] as const).map((r) => {
-                          const curFont = r === 'title' ? (set.hero?.headline_font ?? set.fonts?.head) : r === 'subtitle' ? set.hero?.subhead_font : (set.hero?.para_font ?? set.fonts?.body)
-                          return (kitNow.type[r] ?? []).length > 0 ? (
-                            <div key={r} className="mt-1.5"><p className="text-[11px] capitalize text-ink-soft">{r}</p><div className="mt-1 flex flex-wrap gap-1.5">
-                              {(kitNow.type[r] as string[]).map((id, i) => <button key={id} type="button" className={pill + ((curFont ? curFont === id : i === 0) ? ' !border-twilight' : '')} style={{ fontFamily: fam(id) }} onClick={() => { void commit((n) => applyKitOps(n, { role_font: { role: r, font: id } })) }}>{fname(id)}</button>)}
-                            </div></div>
-                          ) : null
-                        })}
-                      </div>
-                    )}
-                    {(kitNow.fonts ?? []).length > 0 && (
-                      <div><p className={lab}>Fonts</p><div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {(kitNow.fonts as string[]).map((key) => <button key={key} type="button" className={pill} onClick={() => { void commit((n) => applyKitOps(n, { fonts: key })) }}>{TYPE_SETS.find((t) => t.key === key)?.name ?? key}</button>)}
                       </div></div>
                     )}
                     {(kitNow.themes ?? []).length > 0 && (
