@@ -7,7 +7,7 @@ import { safeJs } from '@/lib/safeJs'
 
 export const dynamic = 'force-dynamic'
 
-const STYLE_KEYS = ['airy', 'classic', 'romantic', 'bold', 'moody', 'clean', 'mosaic', 'earthy', 'peony', 'ivy', 'wisteria', 'juniper', 'camellia', 'cedar', 'olive']
+const STYLE_KEYS = ['airy', 'classic', 'romantic', 'bold', 'moody', 'clean', 'mosaic', 'earthy', 'peony', 'ivy', 'wisteria', 'juniper', 'camellia', 'cedar', 'olive', 'magnolia', 'lily', 'orchid', 'lotus', 'aster', 'fern']
 const PAIRS = ['serif', 'modern', 'romantic']
 const SHAPES = ['square', 'rounded', 'pill']
 const HEX = /^#[0-9A-Fa-f]{6}$/

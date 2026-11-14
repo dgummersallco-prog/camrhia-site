@@ -47,6 +47,12 @@ const STYLES = [
   { key: 'camellia', name: 'Camellia', blurb: 'Photo with a caption bar.', tpl: 'camellia', pair: 'serif', bg: '#F3F0EC', text: '#2A1F24' },
   { key: 'cedar', name: 'Cedar', blurb: 'Dark, headline over the photo.', tpl: 'cedar', pair: 'modern', bg: '#0D0D0F', text: '#F4EEE8' },
   { key: 'olive', name: 'Olive', blurb: 'Photo with a label box.', tpl: 'olive', pair: 'serif', bg: '#F1F2EA', text: '#2B3026' },
+  { key: 'magnolia', name: 'Magnolia', blurb: 'Sidebar menu, tall photo.', tpl: 'magnolia', pair: 'serif', bg: '#FAF7F2', text: '#2A1F24' },
+  { key: 'lily', name: 'Lily', blurb: 'Photo with an overlapping panel.', tpl: 'lily', pair: 'serif', bg: '#F6F0E6', text: '#3A2A22' },
+  { key: 'orchid', name: 'Orchid', blurb: 'One big photo, thumbnails below.', tpl: 'orchid', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D' },
+  { key: 'lotus', name: 'Lotus', blurb: 'Menu bar along the bottom.', tpl: 'lotus', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D' },
+  { key: 'aster', name: 'Aster', blurb: 'Arch-shaped photo, words beside it.', tpl: 'aster', pair: 'serif', bg: '#FBF6EE', text: '#27302A' },
+  { key: 'fern', name: 'Fern', blurb: 'Four staggered portraits.', tpl: 'fern', pair: 'romantic', bg: '#FFFFFF', text: '#2A1F24' },
 ]
 const PALETTES = [
   { name: 'Blush', accent: '#C98A8D', bg: '#FBF6F1', text: '#2A1F24' },

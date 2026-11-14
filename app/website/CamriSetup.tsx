@@ -83,7 +83,7 @@ export default function CamriSetup({ styles, palettes, typeSets, pages, fam, str
         )}
 
         {step === 1 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3">
             {styles.map((s) => {
               const i = layouts.indexOf(s.key)
               return (

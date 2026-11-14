@@ -1115,6 +1115,168 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
           </>
         )}
+        {page === 'home' && tpl === 'magnolia' && (
+          <div className="md:flex">
+            <aside id="nav" className="px-6 py-8 md:sticky md:top-0 md:h-screen md:w-72 md:shrink-0 md:py-12" style={{ background: tint, color: ink }}>
+              <a href={hrefs.home} style={{ display: 'inline-flex' }}>
+                {logo && t.menu.show !== 'name' ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} /> : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 26 }}>{t.menu.brand ?? name}</span>}
+              </a>
+              <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 md:mt-12 md:flex-col md:gap-4">
+                {navItems.map((n) => <li key={n.key}><a href={n.href} className="text-[11px] uppercase tracking-[0.22em]" style={{ color: ink, opacity: n.active ? 1 : 0.7 }}>{n.label}</a></li>)}
+              </ul>
+            </aside>
+            <div className="min-w-0 flex-1">
+              <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+                {heroImg('absolute inset-0 h-full w-full')}
+                <div className="absolute inset-0" style={{ background: `linear-gradient(rgba(0,0,0,0), rgba(0,0,0,${Math.min(0.7, ov * 1.4).toFixed(2)}))` }} />
+                <div className="relative mt-auto px-8 pb-12 text-white">
+                  <h1 style={h1Mid}>{headline}</h1>
+                  {subhead && <p className="cr-sub mt-3 text-[11px] uppercase tracking-[0.28em] opacity-90">{subhead}</p>}
+                  <div className="mt-6">{cta()}</div>
+                </div>
+              </header>
+              <section className="px-8 py-14">
+                <div className="grid items-center gap-8 md:grid-cols-[1fr_2fr]">
+                  <div>
+                    <p style={{ ...headStyle, fontSize: 'calc(var(--hl) * 0.6)' }}>Our story</p>
+                    <p className="mt-3 text-[14px] leading-relaxed" style={{ color: soft }}>{aboutText(140)}</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {pickPics(3).map((u, i) => <div key={u + i} className="aspect-square overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>)}
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        )}
+        {page === 'home' && tpl === 'lily' && (
+          <>
+            <header id="top">
+              {renderNav(false, false)}
+              <div className="relative mx-auto max-w-6xl px-6 pb-14 pt-6">
+                <div className="relative ml-auto aspect-[4/3] w-full overflow-hidden md:w-[70%]">{heroImg('absolute inset-0 h-full w-full')}</div>
+                <div className="relative mt-4 p-8 md:absolute md:left-6 md:top-16 md:mt-0 md:w-[44%]" style={{ background: tint, color: ink }}>
+                  {subhead && <p className="cr-sub mb-3 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+                  <h1 style={h1Mid}>{headline}</h1>
+                  {heroPara(soft)}
+                  <div className="mt-6">{cta()}</div>
+                </div>
+              </div>
+            </header>
+            <section className="mx-auto max-w-6xl px-6 pb-16">
+              <div className="grid items-center gap-8 md:grid-cols-2">
+                <div>
+                  <p style={{ ...headStyle, fontSize: 'calc(var(--hl) * 0.6)' }}>Meet {name}</p>
+                  <p className="mt-3 text-[14px] leading-relaxed" style={{ color: soft }}>{aboutText(150)}</p>
+                  <a href={hrefs.about} className="mt-4 inline-block text-[13px] underline" style={{ color: accent }}>Read more</a>
+                </div>
+                <div className="flex gap-4">
+                  {pickPics(2).map((u, i) => <div key={u + i} className={'aspect-[3/4] flex-1 overflow-hidden ' + (i === 1 ? 'mt-10' : '')}><img src={u} alt="" className="h-full w-full object-cover" /></div>)}
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'orchid' && (
+          <>
+            <header id="top">
+              {renderNav(false, true)}
+              <div className="mx-auto max-w-6xl px-6 pt-4">
+                <div className="relative aspect-[16/8] overflow-hidden">{heroImg('absolute inset-0 h-full w-full')}</div>
+                <div className="mt-3 grid grid-cols-5 gap-3">
+                  {pickPics(5).map((u, i) => (
+                    <a key={u + i} href={hrefs.galleries} className="block aspect-[4/3] overflow-hidden" style={{ outline: i === 0 ? `1px solid ${ink}` : undefined, outlineOffset: 2 }}><img src={u} alt="" className="h-full w-full object-cover" /></a>
+                  ))}
+                </div>
+              </div>
+            </header>
+            <section className={`mx-auto flex max-w-3xl flex-col px-6 py-14 ${alignCls}`}>
+              <h1 style={h1Mid}>{headline}</h1>
+              {subhead && <p className="cr-sub mt-3 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
+              <div className="mt-6">{cta()}</div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'lotus' && (
+          <>
+            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+              {heroImg('absolute inset-0 h-full w-full')}
+              <nav id="nav" className="relative z-20 mt-auto flex flex-wrap items-center justify-between gap-4 px-6 py-4" style={{ background: bg, color: ink }}>
+                <a href={hrefs.home} style={{ display: 'inline-flex' }}>
+                  {logo && t.menu.show !== 'name' ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} /> : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 22 }}>{t.menu.brand ?? name}</span>}
+                </a>
+                <ul className="hidden gap-8 md:flex">
+                  {navItems.map((n) => <li key={n.key}><a href={n.href} className="text-[11px] uppercase tracking-[0.22em]" style={{ color: ink, opacity: n.active ? 1 : 0.7 }}>{n.label}</a></li>)}
+                </ul>
+                <div>{cta(true)}</div>
+              </nav>
+            </header>
+            <section className="mx-auto max-w-6xl px-6 py-14">
+              <div className="grid items-center gap-8 md:grid-cols-2">
+                <div>
+                  <h1 style={h1Mid}>{headline}</h1>
+                  {subhead && <p className="cr-sub mt-3 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {pickPics(3).map((u, i) => <div key={u + i} className="aspect-square overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>)}
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'aster' && (
+          <>
+            <header id="top">
+              {renderNav(false, false)}
+              <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-12 md:grid-cols-2">
+                <div>
+                  {subhead && <p className="cr-sub mb-4 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+                  <h1 style={h1Mid}>{headline}</h1>
+                  {heroPara(soft)}
+                  <div className="mt-8">{cta()}</div>
+                </div>
+                <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden" style={{ borderRadius: '999px 999px 0 0' }}>{heroImg('absolute inset-0 h-full w-full')}</div>
+              </div>
+            </header>
+            {(() => {
+              const q3 = (isPreview ? quotesShown : quotes).slice(0, 3)
+              return q3.length > 0 ? (
+                <section className="mx-auto max-w-6xl px-6 pb-16">
+                  <p className="mb-6 text-center text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>Kind words</p>
+                  <div className="grid gap-8 md:grid-cols-3">
+                    {q3.map((q, i) => (
+                      <div key={i} className="text-center">
+                        <p className="text-[14px] leading-relaxed" style={{ color: soft }}>{q.text.slice(0, 120)}</p>
+                        <p className="mt-3 text-[11px] uppercase tracking-[0.22em]">{q.who}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null
+            })()}
+          </>
+        )}
+        {page === 'home' && tpl === 'fern' && (
+          <>
+            <header id="top">
+              {renderNav(false, true)}
+              {(() => {
+                const p = pickPics(4)
+                const four = [shownHero[0] ?? p[0], p[1], p[2], p[3]].filter(Boolean) as string[]
+                return four.length > 0 ? (
+                  <div className="mx-auto grid max-w-6xl grid-cols-4 items-start gap-3 px-6 pt-4 md:gap-4">
+                    {four.map((u, i) => <div key={u + i} className={'aspect-[3/4] overflow-hidden ' + (i % 2 === 1 ? 'mt-8' : '')}><img src={u} alt={i === 0 ? name : ''} className="h-full w-full object-cover" /></div>)}
+                  </div>
+                ) : null
+              })()}
+            </header>
+            <section className={`mx-auto flex max-w-3xl flex-col px-6 py-16 ${alignCls}`}>
+              <h1 style={h1Mid}>{headline}</h1>
+              {subhead && <p className="cr-sub mt-3 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
+              <div className="mt-6">{cta()}</div>
+            </section>
+          </>
+        )}
         {page === 'home' && tpl === 'mosaic' && (
           <header id="top">
             <div className="mx-auto max-w-6xl px-4 pb-4">

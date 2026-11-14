@@ -143,7 +143,7 @@ const SHAPE_WORDS = (t: string): 'square' | 'rounded' | 'pill' | null => {
   return null
 }
 
-const TEMPLATES: [string, string][] = [['editorial', 'editorial'], ['split', 'split'], ['minimal', 'minimal'], ['framed', 'framed'], ['magazine', 'magazine'], ['freestyle', 'mosaic'], ['mosaic', 'mosaic'], ['peony', 'peony'], ['ivy', 'ivy'], ['wisteria', 'wisteria'], ['juniper', 'juniper'], ['camellia', 'camellia'], ['cedar', 'cedar'], ['olive', 'olive']]
+const TEMPLATES: [string, string][] = [['editorial', 'editorial'], ['split', 'split'], ['minimal', 'minimal'], ['framed', 'framed'], ['magazine', 'magazine'], ['freestyle', 'mosaic'], ['mosaic', 'mosaic'], ['peony', 'peony'], ['ivy', 'ivy'], ['wisteria', 'wisteria'], ['juniper', 'juniper'], ['camellia', 'camellia'], ['cedar', 'cedar'], ['olive', 'olive'], ['magnolia', 'magnolia'], ['lily', 'lily'], ['orchid', 'orchid'], ['lotus', 'lotus'], ['aster', 'aster'], ['fern', 'fern']]
 
 export const CAMI_EXAMPLES = [
   'I shoot weddings',
