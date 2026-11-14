@@ -173,17 +173,25 @@ const HELP: Record<string, string> = {
   blog: "Your blog is where you share stories and tips. The main page lists all your posts, and clicking one opens that post. Pick how the list looks and how each opened post looks.",
 }
 
+const PS = [
+  { q: 'Page or section?', a: 'A page is a full page of its own in your site menu. A section is a smaller block you place on your home page or any page you choose.' },
+  { q: 'Can I use both?', a: 'Yes. Many photographers put a section on the home page that links to the full page.' },
+]
+const qaFor = (k: string) => [{ q: 'What is this?', a: HELP[k] ?? '' }, ...(['galleries', 'about', 'pricing'].includes(k) ? PS : [])]
+
 const GAL_DESIGNS = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
 const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech', 'sorrel', 'tansy'].map((k) => ({ key: k, name: k === 'hawthorn' ? 'Hawthorne' : k[0].toUpperCase() + k.slice(1) }))
 
-const PICKERS = (): Record<string, { dir: string; field: string; items: { key: string; name: string }[] }> => ({
-  'nav|Explore section designs': { dir: 'explore', field: 'nav', items: NAV_DESIGNS },
-  'galleries|Galleries main page designs': { dir: 'galleries', field: 'galleries', items: GAL_DESIGNS },
+const PICKERS = (): Record<string, { dir: string; field: string; ar: string; items: { key: string; name: string }[] }> => ({
+  'nav|Explore section designs': { dir: 'explore', ar: '2/1', field: 'nav', items: NAV_DESIGNS },
+  'galleries|Galleries main page designs': { dir: 'galleries', ar: '4/5', field: 'galleries', items: GAL_DESIGNS },
 })
 
 function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {
   const [zoom, setZoom] = useState<string | null>(null)
+  const [ask, setAsk] = useState<string | null>(null)
+  const [ans, setAns] = useState<string | null>(null)
   return (
     <div className="space-y-14">
       {zoom && (
@@ -195,9 +203,15 @@ function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, s
       {DESIGN_SECTIONS.map((sec) => (
         <div key={sec.k}>
           <h3 className="font-fraunces text-2xl text-ink">{sec.title}</h3>
-          {HELP[sec.k] && (
-            <div className="mt-3 max-w-2xl rounded-xl border border-black/10 bg-white/70 p-4 text-sm leading-relaxed text-ink-soft">
-              <span className="mr-2 text-xs font-medium uppercase tracking-wider text-twilight">Camri says</span>{HELP[sec.k]}
+          <button type="button" onClick={() => { setAsk(ask === sec.k ? null : sec.k); setAns(null) }} className="mt-2 rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">Ask Camri about this</button>
+          {ask === sec.k && (
+            <div className="mt-2 max-w-xl rounded-xl border border-black/10 bg-white/80 p-3 text-sm">
+              <div className="flex flex-wrap gap-2">
+                {qaFor(sec.k).map((x) => (
+                  <button key={x.q} type="button" onClick={() => setAns(x.a)} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">{x.q}</button>
+                ))}
+              </div>
+              {ans && <p className="mt-3 leading-relaxed text-ink-soft">{ans}</p>}
             </div>
           )}
           {sec.rows.map((row) => (
@@ -212,8 +226,8 @@ function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, s
                       <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, [pk.field]: on ? '' : d.key })}>
                         <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <div className="relative">
-                          <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'w-full rounded-lg border-2 ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
+                        <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
+                          <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'h-full w-full rounded-lg border-2 object-cover object-top ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
                           <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom('/' + pk.dir + '/' + d.key + '.png') }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
                         </div>
                       </button>
