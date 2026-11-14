@@ -286,7 +286,7 @@ export function resolveTheme(r: Record<string, any>) {
   }
 
   const galpage = {
-    layout: pick(s.galpage?.layout ?? s.gallery?.layout, ['masonry', 'grid', 'single', 'tall', 'editorial', 'custom'] as const, 'masonry'),
+    layout: pick(s.galpage?.layout ?? s.gallery?.layout, ['masonry', 'grid', 'single', 'tall', 'editorial', 'custom', 'lark', 'wren', 'finch', 'heron', 'swift', 'plover', 'egret', 'kestrel', 'osprey', 'sparrow'] as const, 'masonry'),
     showCount: s.galpage?.show_count !== false,
     showMore: s.galpage?.show_more !== false,
     showButton: s.galpage?.show_button !== false,

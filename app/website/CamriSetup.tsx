@@ -179,6 +179,8 @@ const PS = [
 ]
 const qaFor = (k: string) => [{ q: 'What is this?', a: HELP[k] ?? '' }, ...(['galleries', 'about', 'pricing'].includes(k) ? PS : [])]
 
+const PHOTO_DESIGNS = ['lark', 'wren', 'finch', 'heron', 'swift', 'plover', 'egret', 'kestrel', 'osprey', 'sparrow'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+
 const GAL_DESIGNS = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
 const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech', 'sorrel', 'tansy'].map((k) => ({ key: k, name: k === 'hawthorn' ? 'Hawthorne' : k[0].toUpperCase() + k.slice(1) }))
@@ -186,6 +188,7 @@ const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawth
 const PICKERS = (): Record<string, { dir: string; field: string; ar: string; items: { key: string; name: string }[] }> => ({
   'nav|Explore section designs': { dir: 'explore', ar: '2/1', field: 'nav', items: NAV_DESIGNS },
   'galleries|Galleries main page designs': { dir: 'galleries', ar: '4/5', field: 'galleries', items: GAL_DESIGNS },
+  'galleries|Photo display designs (inside a gallery)': { dir: 'photos', ar: '4/5', field: 'photos', items: PHOTO_DESIGNS },
 })
 
 function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {

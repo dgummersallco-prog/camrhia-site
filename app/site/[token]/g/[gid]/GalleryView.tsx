@@ -57,7 +57,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
     <>
       <link rel="stylesheet" href={t.fontsHref} />
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
-      <div style={{ background: bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>{inner}</div>
+      <div style={{ background: t.galpage.layout === 'plover' ? '#14110f' : bg, color: t.galpage.layout === 'plover' ? '#f3ead8' : ink, fontFamily: t.body, minHeight: '100vh' }}>{inner}</div>
     </>
   )
 
@@ -89,6 +89,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
     if (ps.length) groups.push({ id: sec.id, title: sec.title as string, photos: ps })
   }
   const layout = t.galpage.layout
+  const NEWL = ['lark', 'wren', 'finch', 'heron', 'swift', 'plover', 'egret', 'kestrel', 'osprey', 'sparrow']
 
   const imgs = (list: any[]) =>
     list.map((p: any, i: number) => {
@@ -102,16 +103,24 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
         : <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className="block w-full" style={{ cursor: 'zoom-in', marginBottom: layout === 'masonry' ? 'var(--gal-gap)' : 0 }} />
     })
 
+  const pic = (p: any, cls = '', style: any = {}) => {
+    const u = photoUrl(p.storage_path)
+    if (!u) return null
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img key={p.id} src={u} alt="" data-zoom="1" loading="lazy" className={'block object-cover ' + cls} style={{ cursor: 'zoom-in', ...style }} />
+  }
+  const gp = 'var(--gal-gap)'
+
   return shell(
     <>
       <PortfolioLightbox />
       {nav}
-      {layout !== 'custom' && (<header className="px-6 pb-10 pt-8 text-center">
-        <h1 style={{ ...head, fontSize: 'var(--gal-h)', lineHeight: 1.05 }}>{gal.title}</h1>
+      {layout !== 'custom' && layout !== 'egret' && (<header className="px-6 pb-10 pt-8 text-center">
+        <h1 style={{ ...head, fontSize: 'var(--gal-h)', lineHeight: 1.05, color: layout === 'plover' ? '#f3ead8' : undefined }}>{gal.title}</h1>
         {t.galpage.showCount && <p className="mt-3 text-[11px] uppercase tracking-[0.25em]" style={{ color: soft }}>{photos.length} photos</p>}
       </header>)}
 
-      <main id="gal-main" className="mx-auto max-w-6xl px-6 pb-16">
+      <main id="gal-main" className={NEWL.includes(layout) ? 'mx-auto max-w-[1600px] px-4 pb-16 sm:px-8' : 'mx-auto max-w-6xl px-6 pb-16'}>
         {layout === 'custom' ? (<AboutCanvas
             canvas={(r.site_settings?.galpage?.canvases ?? {})[gid]} photo2={null} aboutPhoto={null} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
             title={null} bio="" headStyle={head} ink={ink} soft={soft} tint="rgba(0,0,0,0.04)"
@@ -125,7 +134,15 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
             renderButton={(label) => (
               <Link href={`${base}/availability${qs}`} className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>{label}</Link>
             )}
-          />) : (<div className="flex flex-col gap-14">
+          />) : (<div className={layout === 'egret' ? 'md:grid md:grid-cols-[260px_1fr] md:gap-12' : 'flex flex-col gap-14'}>
+          {layout === 'egret' && (
+            <aside className="mb-10 md:sticky md:top-24 md:mb-0 md:self-start">
+              <h1 style={{ ...head, fontSize: 'var(--gal-h)', lineHeight: 1.05 }}>{gal.title}</h1>
+              {t.galpage.showCount && <p className="mt-3 text-[11px] uppercase tracking-[0.25em]" style={{ color: soft }}>{photos.length} photos</p>}
+              <Link href={`${base}/galleries${qs}`} className="mt-6 inline-block text-xs uppercase tracking-[0.2em]" style={{ color: accent }}>← Back to galleries</Link>
+            </aside>
+          )}
+          <div className="flex flex-col gap-14">
           {groups.map((grp) => (
             <div key={grp.id}>
               {grp.title && <h2 className="mb-6 text-center text-3xl" style={head}>{grp.title}</h2>}
@@ -134,8 +151,19 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
               {layout === 'single' && <div className="mx-auto flex max-w-3xl flex-col" style={{ gap: 'var(--gal-gap)' }}>{imgs(grp.photos)}</div>}
               {layout === 'tall' && <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" style={{ gap: 'var(--gal-gap)' }}>{imgs(grp.photos)}</div>}
               {layout === 'editorial' && <div className="grid grid-cols-2" style={{ gap: 'var(--gal-gap)' }}>{imgs(grp.photos)}</div>}
+              {layout === 'lark' && <div className="flex flex-wrap" style={{ gap: gp }}>{grp.photos.map((p: any) => pic(p, '', { height: 'clamp(170px, 24vw, 360px)', flexGrow: 1, minWidth: 100, maxWidth: '70%' }))}<span style={{ flexGrow: 20 }} /></div>}
+              {layout === 'wren' && <div className="columns-2 lg:columns-3 2xl:columns-4" style={{ columnGap: gp }}>{grp.photos.map((p: any) => pic(p, 'w-full', { marginBottom: gp }))}</div>}
+              {layout === 'finch' && <div className="mx-auto flex max-w-[1200px] flex-col" style={{ gap: gp }}>{grp.photos.map((p: any) => pic(p, 'w-full'))}</div>}
+              {layout === 'heron' && <div className="flex flex-col" style={{ gap: gp }}>{grp.photos[0] && pic(grp.photos[0], 'w-full', { aspectRatio: '21/9' })}<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6" style={{ gap: gp }}>{grp.photos.slice(1).map((p: any) => pic(p, 'w-full', { aspectRatio: '1/1' }))}</div></div>}
+              {layout === 'swift' && <div className="grid grid-flow-dense grid-cols-2 md:grid-cols-4" style={{ gap: gp, gridAutoRows: 'clamp(150px, 20vw, 320px)' }}>{grp.photos.map((p: any, i: number) => pic(p, 'h-full w-full ' + (i % 3 === 0 ? 'col-span-2 row-span-2' + (Math.floor(i / 3) % 2 ? ' md:col-start-3' : '') : 'col-span-1 md:col-span-2')))}</div>}
+              {layout === 'plover' && <div className="columns-2 lg:columns-3 2xl:columns-4" style={{ columnGap: gp }}>{grp.photos.map((p: any) => pic(p, 'w-full', { marginBottom: gp }))}</div>}
+              {layout === 'egret' && <div className="grid grid-cols-2 xl:grid-cols-3" style={{ gap: gp }}>{grp.photos.map((p: any) => pic(p, 'w-full', { aspectRatio: '4/5' }))}</div>}
+              {layout === 'kestrel' && <div className="grid grid-cols-2" style={{ gap: gp }}>{grp.photos.map((p: any, i: number) => pic(p, 'w-full ' + (i % 3 === 0 ? 'col-span-2' : 'col-span-1'), { aspectRatio: i % 3 === 0 ? '21/9' : '16/10' }))}</div>}
+              {layout === 'osprey' && <div className="mx-auto flex max-w-[1200px] flex-col gap-12">{Array.from({ length: Math.ceil(grp.photos.length / 2) }, (_, k) => (<div key={k}><div className="grid grid-cols-2" style={{ gap: '4px' }}>{grp.photos.slice(k * 2, k * 2 + 2).map((p: any) => pic(p, 'w-full', { aspectRatio: '4/5' }))}</div><p className="mt-3 text-center text-[10px] tracking-[0.3em]" style={{ color: soft }}>{k + 1}</p></div>))}</div>}
+              {layout === 'sparrow' && <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" style={{ gap: 'calc(var(--gal-gap) + 24px)' }}>{grp.photos.map((p: any) => pic(p, 'w-full', { aspectRatio: '4/5' }))}</div>}
             </div>
           ))}
+          </div>
         </div>)}
 
         {t.galpage.showButton && layout !== 'custom' && (

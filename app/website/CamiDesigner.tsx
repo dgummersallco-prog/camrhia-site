@@ -631,6 +631,7 @@ export default function CamiDesigner() {
             x.structure = struct
             if (designs?.nav) x.explore = { ...(x.explore ?? {}), layout: designs.nav }
             if (designs?.galleries) x.galindex = { ...(x.galindex ?? {}), layout: designs.galleries }
+            if (designs?.photos) x.galpage = { ...(x.galpage ?? {}), layout: designs.photos }
             const nn = n as any
             nn.instagram_url = links.instagram_url.trim() || null
             nn.facebook_url = links.facebook_url.trim() || null
