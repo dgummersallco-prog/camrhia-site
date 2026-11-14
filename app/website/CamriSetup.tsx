@@ -87,14 +87,13 @@ export default function CamriSetup({ styles, palettes, typeSets, pages, fam, str
             {styles.map((s) => {
               const i = layouts.indexOf(s.key)
               return (
-                <button key={s.key} type="button" onClick={() => setLayouts((l) => toggle(l, s.key, 5))} className={'relative rounded-xl border bg-white/80 p-3 text-left transition hover:bg-white ' + (i >= 0 ? ring : 'border-black/10')}>
+                <button key={s.key} type="button" onClick={() => setLayouts((l) => toggle(l, s.key, 5))} className="relative text-left">
                   <p className="mb-2 text-sm font-medium text-ink">{s.name}</p>
-                  <img src={'/layouts/' + s.key + '.png'} alt={s.name} className="h-auto w-full rounded-lg border border-black/10" onError={(e) => { const el = e.currentTarget; el.style.display = 'none'; el.nextElementSibling?.removeAttribute('hidden') }} />
+                  <img src={'/layouts/' + s.key + '.png'} alt={s.name} className={'h-auto w-full rounded-lg border transition ' + (i >= 0 ? ring : 'border-black/10 hover:border-black/30')} onError={(e) => { const el = e.currentTarget; el.style.display = 'none'; el.nextElementSibling?.removeAttribute('hidden') }} />
                   <div hidden className="h-20 rounded-lg border border-black/10 p-2" style={{ background: s.bg }}>
                     <div className="h-2.5 w-2/3 rounded" style={{ background: s.text }} />
                     <div className="mt-2 h-1.5 w-1/2 rounded opacity-50" style={{ background: s.text }} />
                   </div>
-                  <p className="text-xs text-ink-soft">{s.blurb}</p>
                   {i >= 0 && badge(i + 1)}
                 </button>
               )

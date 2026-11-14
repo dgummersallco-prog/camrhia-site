@@ -41,6 +41,12 @@ const STYLES = [
   { key: 'mosaic', name: 'Photo collage', blurb: 'A wall of your best shots.', tpl: 'mosaic', pair: 'modern', bg: '#FAF7F2', text: '#2A1F24', mock: 'mosaic' },
   { key: 'earthy', name: 'Warm & earthy', blurb: 'Cream, clay and soft serif.', tpl: 'editorial', pair: 'serif', bg: '#F1E8DA', text: '#3A2A22', mock: 'classic' },
   { key: 'peony', name: 'Peony', blurb: 'Soft full-photo hero, centered logo.', tpl: 'peony', pair: 'romantic', bg: '#FBF4F1', text: '#3A2A2E' },
+  { key: 'ivy', name: 'Ivy', blurb: 'Three tall photos, centered title.', tpl: 'ivy', pair: 'serif', bg: '#FFFFFF', text: '#2A1F24' },
+  { key: 'wisteria', name: 'Wisteria', blurb: 'One framed photo on a soft panel.', tpl: 'wisteria', pair: 'romantic', bg: '#F4F0F8', text: '#2E2538' },
+  { key: 'juniper', name: 'Juniper', blurb: 'Two photos and a bold name.', tpl: 'juniper', pair: 'modern', bg: '#F6F1EA', text: '#3A2A22' },
+  { key: 'camellia', name: 'Camellia', blurb: 'Photo with a caption bar.', tpl: 'camellia', pair: 'serif', bg: '#F3F0EC', text: '#2A1F24' },
+  { key: 'cedar', name: 'Cedar', blurb: 'Dark, headline over the photo.', tpl: 'cedar', pair: 'modern', bg: '#0D0D0F', text: '#F4EEE8' },
+  { key: 'olive', name: 'Olive', blurb: 'Photo with a label box.', tpl: 'olive', pair: 'serif', bg: '#F1F2EA', text: '#2B3026' },
 ]
 const PALETTES = [
   { name: 'Blush', accent: '#C98A8D', bg: '#FBF6F1', text: '#2A1F24' },
