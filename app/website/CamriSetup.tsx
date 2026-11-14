@@ -33,7 +33,7 @@ function toggle(list: string[], v: string, max: number) {
   return [...list, v]
 }
 
-export default function CamriSetup({ styles, palettes, typeSets, pages, fam, structure, links: linksIn, fontList, initial, startStep, onCancel, onFinish, onSkip }: {
+function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, links: linksIn, fontList, initial, startStep, onCancel, onFinish, onSkip }: {
   styles: Style[]; palettes: Pal[]; typeSets: TypeSet[]; pages: PageDef[]; structure: Struct; links: Links; fontList: FontItem[]; initial?: { layouts: string[]; palettes: Pal[]; fonts: string[]; type?: FontPick }; startStep?: number; onCancel?: () => void
   fam: (k: string) => string
   onFinish: (kit: Kit, structure: Struct, links: Links) => Promise<void>
@@ -64,7 +64,7 @@ export default function CamriSetup({ styles, palettes, typeSets, pages, fam, str
   }
 
   return (
-    <div className="mx-auto max-w-4xl py-6">
+    <div className="mx-auto w-full max-w-[1400px] py-6">
       <div className="flex items-start gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={step === 0 ? '/camri/01_waving.png' : '/camri/13_face_avatar.png'} alt="" className={(step === 0 ? 'h-32' : 'h-14') + ' w-auto shrink-0'} />
@@ -152,6 +152,17 @@ export default function CamriSetup({ styles, palettes, typeSets, pages, fam, str
           
         </div>
       )}
+    </div>
+  )
+}
+
+export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0]) {
+  return (
+    <div className="fixed inset-0 z-[100] overflow-y-auto bg-[#F6F1EA] px-6 pb-16 md:px-12">
+      <div className="mx-auto flex max-w-[1400px] items-center py-4">
+        <a href="/dashboard" className="rounded-full px-3 py-2 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink">← Dashboard</a>
+      </div>
+      <CamriSetupInner {...props} />
     </div>
   )
 }

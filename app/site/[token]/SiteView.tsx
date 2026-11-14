@@ -201,6 +201,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     return src.length === 0 ? [] : Array.from({ length: n }, (_, i) => src[i % src.length])
   }
   const aboutText = (n: number) => (t.text.about ?? r.bio ?? '').toString().slice(0, n)
+  const galleryCover = (g: any) => photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path)
 
   const cta = (force?: boolean) =>
     t.hero.ctaShow || force ? (
@@ -1274,6 +1275,187 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <h1 style={h1Mid}>{headline}</h1>
               {subhead && <p className="cr-sub mt-3 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
               <div className="mt-6">{cta()}</div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'sage' && (
+          <>
+            <header id="top" className="grid md:grid-cols-3" style={{ minHeight: 'calc(var(--hero-h) * 0.9)' }}>
+              <div className="relative min-h-[50vh] md:min-h-0">{heroImg('absolute inset-0 h-full w-full')}</div>
+              <div id="nav" className="order-first flex flex-col items-center justify-center px-6 py-12 text-center md:order-none" style={{ background: tint, color: ink }}>
+                <a href={hrefs.home} style={{ display: 'inline-flex' }}>
+                  {logo && t.menu.show !== 'name' ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} /> : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 26 }}>{t.menu.brand ?? name}</span>}
+                </a>
+                <ul className="mt-6 space-y-2">
+                  {navItems.map((n) => <li key={n.key}><a href={n.href} className="text-[11px] uppercase tracking-[0.22em]" style={{ color: ink, opacity: n.active ? 1 : 0.7 }}>{n.label}</a></li>)}
+                </ul>
+                <h1 className="mt-8" style={h1Mid}>{headline}</h1>
+                <div className="mt-6">{cta()}</div>
+              </div>
+              <div className="relative hidden md:block">
+                {(() => { const u = pickPics(3)[1]; return u ? <img src={u} alt="" className="absolute inset-0 h-full w-full object-cover" /> : null })()}
+              </div>
+            </header>
+            <section className="mx-auto max-w-6xl px-6 py-14">
+              <p className="text-center" style={{ ...headStyle, fontSize: 'calc(var(--hl) * 0.55)' }}>Recent sessions</p>
+              <div className="mt-8 grid grid-cols-3 gap-3 md:gap-5">
+                {pickPics(3).map((u, i) => <div key={u + i} className="aspect-[4/3] overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>)}
+              </div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'rose' && (
+          <>
+            <header id="top">
+              {renderNav(false, false)}
+              <div className="mx-auto flex max-w-3xl flex-col items-center px-6 pb-10 pt-8 text-center">
+                <div className="relative">
+                  <div className="relative aspect-square overflow-hidden rounded-full" style={{ width: 'min(70vw, 420px)' }}>{heroImg('absolute inset-0 h-full w-full')}</div>
+                  <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap" style={{ ...headStyle, fontStyle: 'italic', fontSize: 'calc(var(--hl) * 0.8)', color: accent }}>{name}</span>
+                </div>
+                <h1 className="mt-12" style={h1Mid}>{headline}</h1>
+                {subhead && <p className="cr-sub mt-3 text-[11px] uppercase tracking-[0.28em]" style={{ color: soft }}>{subhead}</p>}
+                <div className="mt-6">{cta()}</div>
+              </div>
+            </header>
+            <section className="mx-auto max-w-4xl px-6 pb-16">
+              <div className="grid grid-cols-3 gap-6">
+                {pickPics(3).map((u, i) => (
+                  <div key={u + i} className="text-center">
+                    <div className="mx-auto aspect-square w-full max-w-[160px] overflow-hidden rounded-full"><img src={u} alt="" className="h-full w-full object-cover" /></div>
+                    <p className="mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{galleries[i]?.title ?? ['Weddings', 'Families', 'Portraits'][i]}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'hazel' && (
+          <>
+            <header id="top">
+              {renderNav(false, true)}
+              <div className="relative mt-2 overflow-hidden" style={{ height: 'clamp(140px, 22vh, 260px)' }}>{heroImg('absolute inset-0 h-full w-full')}</div>
+              {(() => {
+                const p = pickPics(3)
+                return (
+                  <div className="grid md:grid-cols-2">
+                    <div className="flex flex-col justify-center px-8 py-10 md:px-14" style={{ background: tint }}>
+                      {subhead && <p className="cr-sub mb-3 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
+                      <h1 style={h1Mid}>{headline}</h1>
+                      <div className="mt-6">{cta()}</div>
+                    </div>
+                    <div className="relative min-h-[220px] overflow-hidden">{p[1] && <img src={p[1]} alt="" className="absolute inset-0 h-full w-full object-cover" />}</div>
+                    <div className="relative order-4 min-h-[220px] overflow-hidden md:order-3">{p[2] && <img src={p[2]} alt="" className="absolute inset-0 h-full w-full object-cover" />}</div>
+                    <div className="order-3 flex flex-col justify-center px-8 py-10 md:order-4 md:px-14" style={{ background: tint }}>{heroPara(soft)}</div>
+                  </div>
+                )
+              })()}
+            </header>
+            {(() => {
+              const q = (isPreview ? quotesShown : quotes)[0]
+              return q ? (
+                <section className="mx-auto max-w-2xl px-6 py-14 text-center">
+                  <p style={{ ...headStyle, fontSize: 'calc(var(--hl) * 0.5)', fontStyle: 'italic' }}>{q.text.slice(0, 140)}</p>
+                  <p className="mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{q.who}</p>
+                </section>
+              ) : null
+            })()}
+          </>
+        )}
+        {page === 'home' && tpl === 'saffron' && (
+          <>
+            <header id="top" className="grid md:grid-cols-[2fr_3fr]" style={{ minHeight: 'var(--hero-h)' }}>
+              <div id="nav" className="flex flex-col justify-between gap-10 px-8 py-10 md:px-12" style={{ background: bg, color: ink }}>
+                <div>
+                  <a href={hrefs.home} style={{ display: 'inline-flex' }}>
+                    {logo && t.menu.show !== 'name' ? <img src={logo} alt={name} style={{ height: 'var(--logo)', objectFit: 'contain' }} /> : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 24 }}>{t.menu.brand ?? name}</span>}
+                  </a>
+                  <h1 className="mt-4 italic opacity-80" style={{ ...headStyle, fontSize: 15 }}>{headline}</h1>
+                </div>
+                <div>
+                  {(galleries.length > 0 ? galleries.slice(0, 4).map((g: any) => g.title as string) : doors.map((d) => d.t)).map((title, i) => (
+                    <a key={title + i} href={hrefs.galleries} className="flex items-baseline gap-4 py-3" style={{ borderBottom: `1px solid ${line}` }}>
+                      <span className="text-[11px]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
+                      <span style={{ ...headStyle, fontSize: 'calc(var(--hl) * 0.55)' }}>{title}</span>
+                    </a>
+                  ))}
+                </div>
+                <div>
+                  <ul className="flex flex-wrap gap-x-5 gap-y-2">{navItems.map((n) => <li key={n.key}><a href={n.href} className="text-[10px] uppercase tracking-[0.22em]" style={{ color: ink, opacity: n.active ? 1 : 0.7 }}>{n.label}</a></li>)}</ul>
+                  <div className="mt-5">{cta()}</div>
+                </div>
+              </div>
+              <div className="relative min-h-[60vh] md:min-h-0">{heroImg('absolute inset-0 h-full w-full')}</div>
+            </header>
+            <section className="mx-auto max-w-6xl px-6 py-14">
+              <div className="grid grid-cols-3 gap-4">
+                {pickPics(3).map((u, i) => (
+                  <div key={u + i}>
+                    <div className="aspect-[4/3] overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>
+                    <p className="mt-2 text-[10px] uppercase tracking-[0.22em]" style={{ color: soft }}>{galleries[i]?.title ?? ''}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'cypress' && (
+          <>
+            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+              {heroImg('absolute inset-0 h-full w-full')}
+              <div className="absolute inset-0" style={{ background: `linear-gradient(rgba(0,0,0,0), rgba(0,0,0,${Math.min(0.7, ov * 1.4).toFixed(2)}))` }} />
+              <nav id="nav" className="absolute inset-x-4 top-5 z-20 mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full px-6 py-3" style={{ background: 'rgba(255,255,255,0.93)', color: '#1a1a1a' }}>
+                <a href={hrefs.home} style={{ display: 'inline-flex' }}>
+                  {logo && t.menu.show !== 'name' ? <img src={logo} alt={name} style={{ height: 'calc(var(--logo) * 0.8)', objectFit: 'contain' }} /> : <span className="el-menu_brand" style={{ ...headStyle, fontSize: 20 }}>{t.menu.brand ?? name}</span>}
+                </a>
+                <ul className="hidden gap-6 md:flex">{navItems.map((n) => <li key={n.key}><a href={n.href} className="text-[10px] uppercase tracking-[0.22em]" style={{ color: '#1a1a1a', opacity: n.active ? 1 : 0.7 }}>{n.label}</a></li>)}</ul>
+                <div>{cta(true)}</div>
+              </nav>
+              <div className="relative mx-auto mt-auto w-full max-w-6xl px-6 pb-12 pt-40 text-white">
+                <div className="max-w-xl">
+                  <h1 style={h1Big}>{headline}</h1>
+                  {subhead && <p className="cr-sub mt-3 text-[11px] uppercase tracking-[0.28em] opacity-90">{subhead}</p>}
+                </div>
+              </div>
+              {(() => { const u = pickPics(3)[2]; return u ? <div className="absolute bottom-8 right-8 hidden w-1/4 md:block" style={{ border: '8px solid #fff' }}><img src={u} alt="" className="aspect-[4/3] h-full w-full object-cover" /></div> : null })()}
+            </header>
+            <section className="mx-auto max-w-4xl px-6 py-14 text-center">
+              {heroPara(soft)}
+              <div className="mt-8 grid gap-6 md:grid-cols-3">
+                {doors.map((d, i) => (
+                  <a key={d.k} href={d.href} className="block">
+                    <span className="text-[11px]" style={{ color: accent }}>{String(i + 1).padStart(2, '0')}</span>
+                    <p className="mt-1" style={{ ...headStyle, fontSize: 'calc(var(--hl) * 0.5)' }}>{d.t}</p>
+                  </a>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'laurel' && (
+          <>
+            <div style={{ background: tint }}>
+              <header id="top">
+                {renderNav(false, false)}
+                <div className="relative mx-auto max-w-6xl px-6 pb-10 pt-4">
+                  <span className="absolute left-1 top-1/2 hidden -translate-y-1/2 text-[10px] uppercase tracking-[0.3em] md:block" style={{ writingMode: 'vertical-rl', transform: 'translateY(-50%) rotate(180deg)', color: soft }}>{subhead || name}</span>
+                  <div className="relative aspect-[16/9] overflow-hidden">
+                    {heroImg('absolute inset-0 h-full w-full')}
+                    <div className="absolute bottom-5 left-5">{cta()}</div>
+                  </div>
+                </div>
+              </header>
+            </div>
+            <section className="mx-auto max-w-6xl px-6 py-14">
+              <div className="grid items-center gap-8 md:grid-cols-2">
+                <div className="grid grid-cols-2 gap-4">
+                  {pickPics(2).map((u, i) => <div key={u + i} className="aspect-[3/4] overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>)}
+                </div>
+                <div>
+                  <h1 style={h1Mid}>{headline}</h1>
+                  <p className="mt-3 text-[14px] leading-relaxed" style={{ color: soft }}>{aboutText(120)}</p>
+                </div>
+              </div>
             </section>
           </>
         )}

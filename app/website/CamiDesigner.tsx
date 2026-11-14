@@ -53,6 +53,12 @@ const STYLES = [
   { key: 'lotus', name: 'Lotus', blurb: 'Menu bar along the bottom.', tpl: 'lotus', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D' },
   { key: 'aster', name: 'Aster', blurb: 'Arch-shaped photo, words beside it.', tpl: 'aster', pair: 'serif', bg: '#FBF6EE', text: '#27302A' },
   { key: 'fern', name: 'Fern', blurb: 'Four staggered portraits.', tpl: 'fern', pair: 'romantic', bg: '#FFFFFF', text: '#2A1F24' },
+  { key: 'sage', name: 'Sage', blurb: 'Two photos flank a center column.', tpl: 'sage', pair: 'serif', bg: '#F4F6F0', text: '#27302A' },
+  { key: 'rose', name: 'Rose', blurb: 'A circle photo, soft and round.', tpl: 'rose', pair: 'romantic', bg: '#FBF1EE', text: '#3A2A2E' },
+  { key: 'hazel', name: 'Hazel', blurb: 'Panorama over a checkerboard.', tpl: 'hazel', pair: 'serif', bg: '#FFFFFF', text: '#2A1F24' },
+  { key: 'saffron', name: 'Saffron', blurb: 'Numbered list beside a tall photo.', tpl: 'saffron', pair: 'serif', bg: '#F6EFE4', text: '#3A2A22' },
+  { key: 'cypress', name: 'Cypress', blurb: 'Floating menu, photo on photo.', tpl: 'cypress', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D' },
+  { key: 'laurel', name: 'Laurel', blurb: 'Framed photo with side text.', tpl: 'laurel', pair: 'modern', bg: '#E9E3DA', text: '#2A2622' },
 ]
 const PALETTES = [
   { name: 'Blush', accent: '#C98A8D', bg: '#FBF6F1', text: '#2A1F24' },
