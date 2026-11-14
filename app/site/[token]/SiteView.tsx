@@ -394,7 +394,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       }
       case 'portfolio': {
         const rawGal = (r as any).site_settings?.galindex?.layout
-        const L: string = page === 'galleries' ? (['checker', 'rows', 'custom'].includes(rawGal) ? rawGal : t.galindex.layout) : t.portfolio.layout
+        const L: string = page === 'galleries' ? (['checker', 'rows', 'custom', 'jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].includes(rawGal) ? rawGal : t.galindex.layout) : t.portfolio.layout
         const list = page === 'home' ? galleries.slice(0, 6) : galleries
         const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
         const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'
@@ -440,9 +440,113 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </a>
           )
         }
-        return sec('portfolio', L === 'checker' ? null : t.titles.portfolio,
+        const GL = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone']
+        const gc = (g: any) => {
+          const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
+          return { u: photoUrl(cover?.storage_path) as string | null, href: `${base}/g/${g.id}${qs}` }
+        }
+        const gim = (u: string | null) => (u ? <img src={u} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" /> : null)
+        const shade = <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 50%, rgba(0,0,0,0.6))' }} />
+        return sec('portfolio', L === 'checker' || GL.includes(L) ? null : t.titles.portfolio,
           <>
-            {L === 'checker' ? (
+            {GL.includes(L) ? (
+              <div className="mx-auto max-w-5xl">
+                <h1 className="mb-10 text-center" style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)', color: L === 'jasper' ? '#f3ead8' : undefined }}>{t.titles.portfolio}</h1>
+                {L === 'jade' && (
+                  <div className="space-y-4">
+                    {list[0] && (() => { const c = gc(list[0]); return (
+                      <a href={c.href} className="group relative block overflow-hidden" style={{ aspectRatio: '21/9', background: '#E5E1DB' }}>{gim(c.u)}{shade}<p className="el-gal_name absolute bottom-5 left-6 text-white" style={{ ...headStyle, fontSize: '2rem' }}>{list[0].title}</p></a>
+                    ) })()}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {list.slice(1).map((g) => { const c = gc(g); return (
+                        <a key={g.id} href={c.href} className="group block"><div className="relative overflow-hidden" style={{ aspectRatio: '4/3', background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-2 text-center" style={{ ...headStyle, fontSize: '1.25rem' }}>{g.title}</p></a>
+                      ) })}
+                    </div>
+                  </div>
+                )}
+                {L === 'jasper' && (
+                  <div className="rounded-lg p-5 sm:p-8" style={{ background: '#1a1613' }}>
+                    <div className="columns-1 gap-4 sm:columns-3">
+                      {list.map((g, i) => { const c = gc(g); return (
+                        <a key={g.id} href={c.href} className="group relative mb-4 block break-inside-avoid overflow-hidden" style={{ aspectRatio: ['4/5', '1/1', '3/4'][i % 3], background: '#2b241f' }}>{gim(c.u)}{shade}<p className="el-gal_name absolute bottom-4 left-4 text-white" style={{ ...headStyle, fontSize: '1.4rem' }}>{g.title}</p></a>
+                      ) })}
+                    </div>
+                  </div>
+                )}
+                {L === 'amber' && (
+                  <div className="space-y-12">
+                    {list.map((g, i) => { const c = gc(g); return (
+                      <div key={g.id} className="grid items-center gap-8 md:grid-cols-2">
+                        <a href={c.href} className={'group relative block overflow-hidden ' + (i % 2 ? 'md:order-2' : '')} style={{ aspectRatio: '4/3', background: '#E5E1DB' }}>{gim(c.u)}</a>
+                        <div className={i % 2 ? 'md:order-1 md:text-right' : ''}>
+                          <p className="el-gal_name" style={{ ...headStyle, fontSize: '2rem' }}>{g.title}</p>
+                          {g.line && <p className="el-gal_count mt-1 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{g.line}</p>}
+                          <a href={c.href} className="mt-4 inline-block border px-5 py-2 text-xs uppercase tracking-[0.2em]" style={{ borderColor: accent, color: accent }}>View</a>
+                        </div>
+                      </div>
+                    ) })}
+                  </div>
+                )}
+                {L === 'pearl' && (
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3">
+                    {list.map((g) => { const c = gc(g); return (
+                      <a key={g.id} href={c.href} className="group block"><div className="relative aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 text-center text-xs uppercase tracking-[0.25em]" style={{ fontFamily: t.body }}>{g.title}</p></a>
+                    ) })}
+                  </div>
+                )}
+                {L === 'ruby' && (
+                  <div className="space-y-3">
+                    {list.map((g) => { const c = gc(g); return (
+                      <a key={g.id} href={c.href} className="group relative flex items-center justify-center overflow-hidden" style={{ aspectRatio: '21/8', background: '#E5E1DB' }}>{gim(c.u)}<div className="absolute inset-0 bg-black/30" /><p className="el-gal_name relative text-center text-white" style={{ ...headStyle, fontSize: 'clamp(2.2rem, 7vw, 5rem)', lineHeight: 1 }}>{g.title}</p></a>
+                    ) })}
+                  </div>
+                )}
+                {L === 'topaz' && (
+                  <div className="flex flex-wrap justify-center gap-8">
+                    {list.map((g, i) => { const c = gc(g); return (
+                      <a key={g.id} href={c.href} className="group block w-[44%] bg-white p-3 pb-10 shadow-lg transition hover:rotate-0 sm:w-[30%]" style={{ transform: `rotate(${[-3, 2, -1.5, 3][i % 4]}deg)` }}><div className="relative aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 text-center italic text-black" style={{ ...headStyle, fontSize: '1.25rem' }}>{g.title}</p></a>
+                    ) })}
+                  </div>
+                )}
+                {L === 'garnet' && (
+                  <div className="grid items-start gap-10 md:grid-cols-2">
+                    <div className="space-y-3">
+                      {list.map((g, i) => (
+                        <a key={g.id} href={gc(g).href} className="el-gal_name block" style={{ ...headStyle, fontSize: i === 0 ? '2.6rem' : '1.5rem', opacity: i === 0 ? 1 : 0.6 }}>{g.title}</a>
+                      ))}
+                    </div>
+                    {list[0] && (() => { const c = gc(list[0]); return (
+                      <a href={c.href} className="group relative block overflow-hidden" style={{ aspectRatio: '3/4', background: '#E5E1DB' }}>{gim(c.u)}</a>
+                    ) })()}
+                  </div>
+                )}
+                {L === 'agate' && (
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3">
+                    {list.map((g) => { const c = gc(g); return (
+                      <a key={g.id} href={c.href} className="group block text-center"><div className="relative overflow-hidden" style={{ aspectRatio: '3/4', borderRadius: '9999px 9999px 0 0', background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3" style={{ ...headStyle, fontSize: '1.2rem', color: accent }}>{g.title}</p>{g.line && <p className="el-gal_count text-[10px] uppercase tracking-[0.2em]" style={{ color: soft }}>{g.line}</p>}</a>
+                    ) })}
+                  </div>
+                )}
+                {L === 'quartz' && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4">
+                    {list.map((g) => { const c = gc(g); return (
+                      <a key={g.id} href={c.href} className="group relative block aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}<p className="el-gal_name absolute inset-x-0 bottom-0 bg-black/55 px-2 py-1.5 text-center text-[11px] uppercase tracking-[0.15em] text-white">{g.title}</p></a>
+                    ) })}
+                  </div>
+                )}
+                {L === 'moonstone' && (
+                  <div className="grid gap-x-10 sm:grid-cols-2">
+                    {[0, 1].map((col) => (
+                      <div key={col} className={'space-y-10 ' + (col === 1 ? 'sm:mt-20' : '')}>
+                        {list.filter((_, i) => i % 2 === col).map((g, j) => { const c = gc(g); return (
+                          <a key={g.id} href={c.href} className="group block"><div className="relative overflow-hidden" style={{ aspectRatio: j % 2 ? '1/1' : '4/5', background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 italic" style={{ ...headStyle, fontSize: '1.2rem' }}>{g.title}</p></a>
+                        ) })}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : L === 'checker' ? (
               <div>
                 <div className="mb-10 text-center">
                   <h1 className="text-[13px] uppercase tracking-[0.35em]" style={{ fontFamily: t.body }}>{t.titles.portfolio}</h1>

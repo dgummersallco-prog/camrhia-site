@@ -151,7 +151,7 @@ export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0])
 
 const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'nav', title: 'Explore section', rows: ['Explore section designs'] },
-  { k: 'galleries', title: 'Galleries', rows: ['Galleries main page designs', 'Photo display designs (inside a gallery)'] },
+  { k: 'galleries', title: 'Galleries', rows: ['Galleries main page designs', 'Photo display designs (inside a gallery)', 'Section designs'] },
   { k: 'book', title: 'Booking page', rows: ['Page designs'] },
   { k: 'testimonials', title: 'Testimonials', rows: ['Section designs'] },
   { k: 'about', title: 'About', rows: ['Page designs', 'Section designs'] },
@@ -161,7 +161,14 @@ const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'blog', title: 'Blog', rows: ['Page designs', 'Section designs'] },
 ]
 
+const GAL_DESIGNS = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+
 const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech', 'sorrel', 'tansy'].map((k) => ({ key: k, name: k === 'hawthorn' ? 'Hawthorne' : k[0].toUpperCase() + k.slice(1) }))
+
+const PICKERS = (): Record<string, { dir: string; field: string; items: { key: string; name: string }[] }> => ({
+  'nav|Explore section designs': { dir: 'explore', field: 'nav', items: NAV_DESIGNS },
+  'galleries|Galleries main page designs': { dir: 'galleries', field: 'galleries', items: GAL_DESIGNS },
+})
 
 function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {
   const [zoom, setZoom] = useState<string | null>(null)
@@ -170,7 +177,7 @@ function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, s
       {zoom && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={'/explore/' + zoom + '.png'} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg" />
+          <img src={zoom} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg" />
         </div>
       )}
       {DESIGN_SECTIONS.map((sec) => (
@@ -179,17 +186,18 @@ function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, s
           {sec.rows.map((row) => (
             <div key={row} className="mt-6">
               <p className="text-xs uppercase tracking-wider text-ink-soft">{row}</p>
-              {sec.k === 'nav' ? (
+              {PICKERS()[sec.k + '|' + row] ? (
                 <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
-                  {NAV_DESIGNS.map((d) => {
-                    const on = designs.nav === d.key
+                  {PICKERS()[sec.k + '|' + row].items.map((d) => {
+                    const pk = PICKERS()[sec.k + '|' + row]
+                    const on = designs[pk.field] === d.key
                     return (
-                      <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, nav: on ? '' : d.key })}>
+                      <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, [pk.field]: on ? '' : d.key })}>
                         <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <div className="relative">
-                          <img src={'/explore/' + d.key + '.png'} alt="" className={'w-full rounded-lg border-2 ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
-                          <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom(d.key) }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
+                          <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'w-full rounded-lg border-2 ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
+                          <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom('/' + pk.dir + '/' + d.key + '.png') }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
                         </div>
                       </button>
                     )
