@@ -166,7 +166,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     .map((k) => ({ key: k, href: hrefs[k], label: (t.menu.labels as Record<string, string | undefined>)[k]?.trim() || (NAV_DEFAULTS as Record<string, string>)[k] || t.extraPages.find((e) => e.id === k)?.label || k, active: k === page }))
 
   const ex = ((r as any).site_settings?.explore ?? {}) as { show?: boolean; layout?: string; heading?: string; lines?: Record<string, string>; titles?: Record<string, string> }
-  const exLayout = ['lines', 'tiles', 'list', 'cards', 'stack', 'outline', 'free', 'birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech'].includes(String(ex.layout)) ? String(ex.layout) : 'lines'
+  const exLayout = ['lines', 'tiles', 'list', 'cards', 'stack', 'outline', 'free', 'birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech', 'sorrel', 'tansy'].includes(String(ex.layout)) ? String(ex.layout) : 'lines'
   const doors = [
     ...(galleries.length > 0 ? [{ k: 'galleries', href: hrefs.galleries, t: ex.titles?.galleries?.trim() || t.menu.labels.galleries?.trim() || NAV_DEFAULTS.galleries, s: ex.lines?.galleries?.trim() || 'See my work' }] : []),
     { k: 'about', href: hrefs.about, t: ex.titles?.about?.trim() || t.menu.labels.about?.trim() || NAV_DEFAULTS.about, s: ex.lines?.about?.trim() || 'Get to know me' },
@@ -926,6 +926,41 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 </div>
               )
             })()}
+
+            {exLayout === 'sorrel' && (
+              <div className="mx-auto max-w-5xl rounded-md px-3 py-3" style={{ background: '#1a1613' }}>
+                <div className="mb-3 h-2 rounded-sm" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #f3ead8 0 14px, transparent 14px 28px)', opacity: 0.85 }} />
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {doors.map((b, i) => (
+                    <a key={b.href} href={b.href} className="block">
+                      <div className="relative aspect-[4/3] overflow-hidden" style={{ background: '#2b241f' }}>
+                        {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                      </div>
+                      <div className="mt-3 flex items-center justify-between px-1 pb-1">
+                        <p className="ex-t el-ex_title text-xl sm:text-2xl" style={{ ...headStyle, color: '#f3ead8' }}>{b.t}</p>
+                        <span className="text-lg" style={{ color: '#C9A24B' }}>→</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+                <div className="mt-3 h-2 rounded-sm" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #f3ead8 0 14px, transparent 14px 28px)', opacity: 0.85 }} />
+              </div>
+            )}
+
+            {exLayout === 'tansy' && (
+              <div className="flex h-[460px] flex-col gap-2 sm:flex-row">
+                {doors.map((b, i) => {
+                  const mid = i === (doors.length > 2 ? 1 : 0)
+                  return (
+                    <a key={b.href} href={b.href} className="relative block overflow-hidden transition-all duration-500 hover:flex-[3]" style={{ flex: mid ? 3 : 1, borderRadius: t.radius, background: tint }}>
+                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0) 55%)' }} />
+                      <p className={'ex-t el-ex_title absolute text-xl text-white sm:text-2xl ' + (mid ? 'bottom-5 left-5' : 'bottom-5 left-5 sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 sm:[writing-mode:vertical-rl] sm:rotate-180')} style={headStyle}>{b.t}</p>
+                    </a>
+                  )
+                })}
+              </div>
+            )}
 
             {exLayout === 'lines' && (
               <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>

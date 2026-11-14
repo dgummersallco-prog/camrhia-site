@@ -160,7 +160,7 @@ const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'faq', title: 'FAQ', rows: ['Page designs', 'Section designs'] },
 ]
 
-const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech', 'sorrel', 'tansy'].map((k) => ({ key: k, name: k === 'hawthorn' ? 'Hawthorne' : k[0].toUpperCase() + k.slice(1) }))
 
 function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {
   return (
@@ -172,12 +172,12 @@ function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, s
             <div key={row} className="mt-6">
               <p className="text-xs uppercase tracking-wider text-ink-soft">{row}</p>
               {sec.k === 'nav' ? (
-                <div className="mt-3 grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
                   {NAV_DESIGNS.map((d) => {
                     const on = designs.nav === d.key
                     return (
                       <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, nav: on ? '' : d.key })}>
-                        <p className="mb-2 text-sm font-medium text-ink">{d.name}</p>
+                        <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={'/explore/' + d.key + '.png'} alt="" className={'w-full rounded-lg border-2 ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
                       </button>
@@ -185,7 +185,7 @@ function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, s
                   })}
                 </div>
               ) : (
-                <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-3">
+                <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
                   {[1, 2, 3].map((n) => (
                     <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
                   ))}
