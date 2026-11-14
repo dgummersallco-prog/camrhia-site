@@ -634,6 +634,7 @@ export default function CamiDesigner() {
             if (designs?.photos) x.galpage = { ...(x.galpage ?? {}), layout: designs.photos }
             if (designs?.social) x.socialDesign = designs.social
             if (designs?.faq) x.faqDesign = designs.faq
+            if (designs?.testimonials) x.testiDesign = designs.testimonials
             if (designs?.about_page || designs?.about_section) x.about = { ...(x.about ?? {}), ...(designs.about_page ? { pageDesign: designs.about_page } : {}), ...(designs.about_section ? { sectionDesign: designs.about_section } : {}) }
             const nn = n as any
             nn.instagram_url = links.instagram_url.trim() || null

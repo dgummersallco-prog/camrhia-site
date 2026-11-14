@@ -12,6 +12,7 @@ import { installPreviewSections } from '@/lib/previewSections'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
+import { TestiSlider } from './TestiSlider'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { SiteNav } from './SiteNav'
@@ -968,6 +969,89 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       case 'testimonials': {
         const L: string = t.testi.layout
         const list = quotesShown.slice(0, 6)
+        const td = String((r as any).site_settings?.testiDesign ?? '')
+        if (['linen', 'velvet', 'silk', 'satin', 'tweed', 'mohair', 'lace', 'wool', 'cotton', 'chiffon'].includes(td)) {
+          const cardBg = `color-mix(in srgb, ${bg} 40%, #fff)`
+          const pics = pickPics(3)
+          const who = (w: string) => (w ? <p className="el-tes_name text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{w}</p> : null)
+          const heading = <h2 style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.05 }}>{t.titles.testimonials}</h2>
+          const out = (node: React.ReactNode) => sec('words', null, node, tinted)
+          const three = list.slice(0, 3)
+          if (td === 'linen') return out(
+            <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1fr_1.5fr]">
+              <div>{heading}</div>
+              <div>{three.map((q, i) => (
+                <figure key={i} id={'tm-' + i} className="py-8" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
+                  <blockquote className="el-tes_quote leading-[1.7]" style={{ fontFamily: t.head, fontWeight: 300, fontSize: fsp('fs-testi', 20) }}>{q.text}</blockquote>
+                  <figcaption className="mt-4">{who(q.who)}</figcaption>
+                </figure>
+              ))}</div>
+            </div>)
+          if (td === 'velvet') return out(
+            <div className="mx-auto max-w-6xl"><div className="mb-10 text-center">{heading}</div>
+              <div className="grid gap-6 md:grid-cols-3">{three.map((q, i) => (
+                <figure key={i} id={'tm-' + i} className="flex flex-col rounded-2xl p-8" style={{ background: cardBg }}>
+                  {(q.img ?? pics[i]) && <img src={(q.img ?? pics[i]) as string} alt="" className="mb-5 h-16 w-16 rounded-full object-cover" />}
+                  <blockquote className="el-tes_quote flex-1 leading-[1.8]" style={{ fontWeight: 300, fontSize: fsp('fs-testi', 15) }}>{q.text}</blockquote>
+                  <figcaption className="mt-5">{who(q.who)}</figcaption>
+                </figure>
+              ))}</div></div>)
+          if (td === 'silk') { const q = list[0]; const im = (q?.img ?? pics[0]) as string | null; return out(
+            <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
+              <div>
+                <span style={{ ...headStyle, color: accent, fontSize: 90, lineHeight: 0.6, display: 'block' }}>&ldquo;</span>
+                <blockquote className="el-tes_quote mt-4" style={{ ...headStyle, fontWeight: 300, fontSize: 'clamp(1.4rem, 2.8vw, 2.1rem)', lineHeight: 1.4 }}>{q?.text}</blockquote>
+                <div className="mt-6">{who(q?.who ?? '')}</div>
+              </div>
+              {im && <div className="overflow-hidden" style={{ aspectRatio: '4/5' }}><img src={im} alt="" className="h-full w-full object-cover" /></div>}
+            </div>) }
+          if (td === 'satin') return out(
+            <div className="mx-auto max-w-6xl"><div className="mb-10 text-center">{heading}</div>
+              <TestiSlider mode="satin" list={quotesShown.slice(0, 8)} headStyle={headStyle} ink={ink} soft={soft} accent={accent} card={cardBg} /></div>)
+          if (td === 'tweed') return out(
+            <div className="mx-auto max-w-6xl"><div className="mb-10 text-center">{heading}</div>
+              <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">{list.slice(0, 6).map((q, i) => (
+                <figure key={i} id={'tm-' + i} className="mb-4 break-inside-avoid p-6" style={{ background: i % 2 ? tint : cardBg }}>
+                  <blockquote className="el-tes_quote leading-[1.75]" style={{ fontWeight: 300, fontSize: fsp('fs-testi', 15) }}>{q.text}</blockquote>
+                  <figcaption className="mt-4">{who(q.who)}</figcaption>
+                </figure>
+              ))}</div></div>)
+          if (td === 'mohair') { const q = list[0]; return out(
+            <div className="mx-auto max-w-6xl">
+              <blockquote className="el-tes_quote" style={{ ...headStyle, fontWeight: 300, fontSize: 'clamp(2rem, 5vw, 4rem)', lineHeight: 1.15 }}>{q?.text}</blockquote>
+              <div className="mt-8 flex items-center justify-end gap-4"><span className="h-px w-10" style={{ background: accent }} />{who(q?.who ?? '')}</div>
+            </div>) }
+          if (td === 'lace') return out(
+            <div className="mx-auto max-w-6xl"><div className="mb-10 text-center">{heading}</div>
+              <div className="grid gap-8 md:grid-cols-3">{three.map((q, i) => (
+                <figure key={i} id={'tm-' + i}>
+                  {(q.img ?? pics[i]) && <div className="mb-5 overflow-hidden" style={{ aspectRatio: '4/5' }}><img src={(q.img ?? pics[i]) as string} alt="" className="h-full w-full object-cover" /></div>}
+                  <blockquote className="el-tes_quote italic leading-[1.7]" style={{ ...headStyle, fontWeight: 300, fontSize: fsp('fs-testi', 18) }}>{q.text}</blockquote>
+                  <figcaption className="mt-3">{who(q.who)}</figcaption>
+                </figure>
+              ))}</div></div>)
+          if (td === 'wool') return out(
+            <div className="mx-auto max-w-6xl"><div className="mb-8">{heading}</div>
+              <TestiSlider mode="wool" list={quotesShown.slice(0, 12)} headStyle={headStyle} ink={ink} soft={soft} accent={accent} card={cardBg} /></div>)
+          if (td === 'cotton') return out(
+            <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[140px_1fr]">
+              <span style={{ ...headStyle, color: accent, opacity: 0.45, fontSize: 150, lineHeight: 0.8 }}>&ldquo;</span>
+              <div className="grid gap-x-12 gap-y-10 sm:grid-cols-2">{list.slice(0, 4).map((q, i) => (
+                <figure key={i} id={'tm-' + i}>
+                  <blockquote className="el-tes_quote leading-[1.7]" style={{ ...headStyle, fontWeight: 300, fontSize: fsp('fs-testi', 18) }}>{q.text}</blockquote>
+                  <figcaption className="mt-3">{who(q.who)}</figcaption>
+                </figure>
+              ))}</div>
+            </div>)
+          { const q = list[0]; const im = (q?.img ?? pics[0]) as string | null; return out(
+            <div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
+              {im && <div className="mx-auto w-64 bg-white p-3 pb-10 shadow-lg" style={{ transform: 'rotate(-3deg)' }}><div className="overflow-hidden" style={{ aspectRatio: '1/1' }}><img src={im} alt="" className="h-full w-full object-cover" /></div></div>}
+              <div>
+                <blockquote className="el-tes_quote italic" style={{ ...headStyle, fontSize: 'clamp(1.4rem, 2.8vw, 2.1rem)', lineHeight: 1.45 }}>{q?.text}</blockquote>
+                <p className="mt-5" style={{ ...headStyle, color: accent, fontSize: '1.3rem' }}>&mdash; {q?.who}</p>
+              </div>
+            </div>) }
+        }
         return sec('words', t.titles.testimonials,
           L === 'stacked' ? (
             <div className="mx-auto max-w-2xl">

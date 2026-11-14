@@ -187,6 +187,8 @@ const FAQ_DESIGNS = ['sage', 'basil', 'thyme', 'mint', 'dill'].map((k) => ({ key
 const ABOUT_PAGE = ['lyra', 'vega', 'orion', 'cygnus', 'draco', 'aries', 'libra', 'pavo', 'lynx', 'hydra'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 const ABOUT_SEC = ['saffron', 'cumin', 'clove', 'anise', 'fennel'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
+const TESTI_DESIGNS = ['linen', 'velvet', 'silk', 'satin', 'tweed', 'mohair', 'lace', 'wool', 'cotton', 'chiffon'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+
 const GAL_DESIGNS = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
 const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech', 'sorrel', 'tansy'].map((k) => ({ key: k, name: k === 'hawthorn' ? 'Hawthorne' : k[0].toUpperCase() + k.slice(1) }))
@@ -199,6 +201,7 @@ const PICKERS = (): Record<string, { dir: string; field: string; ar: string; ite
   'faq|Section designs': { dir: 'faq', ar: '2/1', field: 'faq', items: FAQ_DESIGNS },
   'about|Page designs': { dir: 'about-page', ar: '4/5', field: 'about_page', items: ABOUT_PAGE },
   'about|Section designs': { dir: 'about-section', ar: '2/1', field: 'about_section', items: ABOUT_SEC },
+  'testimonials|Section designs': { dir: 'testimonials', ar: '2/1', field: 'testimonials', items: TESTI_DESIGNS },
 })
 
 const ROW_TITLE: Record<string, string> = {
