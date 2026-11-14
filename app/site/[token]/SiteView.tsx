@@ -13,6 +13,7 @@ import { FONT_OPTIONS } from '@/lib/siteTheme'
 import React, { useEffect, useState } from 'react'
 import { FaqAccordion } from '../../p/[token]/FaqAccordion'
 import { TestiSlider } from './TestiSlider'
+import { PricingDesign, PR_SEC, PR_PAGE } from './PricingDesigns'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { SiteNav } from './SiteNav'
@@ -960,6 +961,15 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
 
             </>)
+        const prs: any = (r as any).site_settings?.pricing ?? {}
+        const sectionMode = !['investment', 'pricing'].includes(String(page))
+        const pd = String((sectionMode ? prs.sectionDesign : prs.pageDesign) ?? '')
+        if ((sectionMode ? PR_SEC : PR_PAGE).includes(pd)) {
+          return sec('investment', null,
+            <PricingDesign design={pd} title={t.titles.investment} pkgs={sitePkgs as any} fid={fid ?? ''} intro={t.pricing.intro ?? ''} note={t.pricing.note ?? ''}
+              pkgIntro={t.pricing.pkgIntro} headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} bg={bg} tint={tint}
+              pics={(pickPics(4) as any[]).filter(Boolean) as string[]} fsp={fsp as any} fsr={fsr as any} />, tinted)
+        }
         return sec('investment', t.titles.investment,
           <div className="mx-auto max-w-5xl">
 
