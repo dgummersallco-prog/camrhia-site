@@ -158,8 +158,20 @@ const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'pricing', title: 'Pricing', rows: ['Page designs', 'Section designs'] },
   { k: 'social', title: 'Social links', rows: ['Section designs'] },
   { k: 'faq', title: 'FAQ', rows: ['Section designs'] },
-  { k: 'blog', title: 'Blog', rows: ['Page designs', 'Section designs'] },
+  { k: 'blog', title: 'Blog', rows: ['Blog main page designs', 'Post designs (inside a post)'] },
 ]
+
+const HELP: Record<string, string> = {
+  nav: "These are the three picture boxes on your home page that send visitors to your Galleries, About and Booking pages. Pick the look you like best.",
+  galleries: "Galleries can work three ways. The main page is a page of its own that shows all your galleries as covers. The photo display is how the pictures look after someone opens one gallery. A section is a smaller version you can place on your home page, or any page you choose, to show off a few galleries. You can use the full page, the section, or both.",
+  book: "This is the page where couples check your dates and send you a message. Pick how it looks.",
+  testimonials: "A section that shows what happy clients say about you. Place it on your home page or any page you choose. It doesn't need a page of its own.",
+  about: "Tell people who you are. The page is your full About page. A section is a short version you can place on your home page or any page you choose.",
+  pricing: "Show what you charge. The page is a full Pricing page. A section is a short version for your home page or any page you choose. You can use both.",
+  social: "A small strip with links to your Instagram, Facebook and more. Place it on any page you choose.",
+  faq: "Answers to the questions clients always ask, like how far ahead to book. Place it on any page you choose, often right above your booking form.",
+  blog: "Your blog is where you share stories and tips. The main page lists all your posts, and clicking one opens that post. Pick how the list looks and how each opened post looks.",
+}
 
 const GAL_DESIGNS = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
@@ -183,6 +195,11 @@ function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, s
       {DESIGN_SECTIONS.map((sec) => (
         <div key={sec.k}>
           <h3 className="font-fraunces text-2xl text-ink">{sec.title}</h3>
+          {HELP[sec.k] && (
+            <div className="mt-3 max-w-2xl rounded-xl border border-black/10 bg-white/70 p-4 text-sm leading-relaxed text-ink-soft">
+              <span className="mr-2 text-xs font-medium uppercase tracking-wider text-twilight">Camri says</span>{HELP[sec.k]}
+            </div>
+          )}
           {sec.rows.map((row) => (
             <div key={row} className="mt-6">
               <p className="text-xs uppercase tracking-wider text-ink-soft">{row}</p>
