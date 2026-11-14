@@ -90,6 +90,14 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     book: `${base}/availability${qs}`,
   }
   const availHref = hrefs.book
+  const resolveLink = (val: any, dflt: string): string => {
+    const x = String(val ?? '').trim()
+    if (!x) return dflt
+    if (hrefs[x]) return hrefs[x]
+    if (x.startsWith('g:')) return `${base}/g/${x.slice(2)}${qs}`
+    if (/^https?:\/\//i.test(x)) return x
+    return dflt
+  }
 
   const name: string = r.studio_name ?? r.display_name ?? 'Studio'
   const cityLine = [[r.service_city, r.service_state].filter(Boolean).join(', '), r.location_custom_text || null].filter(Boolean).join(' · ')
@@ -401,6 +409,174 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const y = typeof c?.y === 'number' ? c.y : 50
           const z = typeof c?.z === 'number' ? c.z : 1
           return { objectPosition: `${x}% ${y}%`, transformOrigin: `${x}% ${y}%`, transform: z !== 1 ? `scale(${z})` : undefined }
+        }
+        const sectionMode = page !== 'about'
+        const ad = String(sectionMode ? (aboutSet?.sectionDesign ?? '') : (aboutSet?.pageDesign ?? ''))
+        const AP = ['lyra', 'vega', 'orion', 'cygnus', 'draco', 'aries', 'libra', 'pavo', 'lynx', 'hydra']
+        const AS = ['saffron', 'cumin', 'clove', 'anise', 'fennel']
+        if ((sectionMode ? AS : AP).includes(ad)) {
+          const bio: string = String(t.text.about ?? r.bio ?? '')
+          const paras: string[] = bio.split(/\n\s*\n/).map((x: string) => x.trim()).filter(Boolean)
+          const p1 = paras[0] ?? bio
+          const rest = paras.slice(1)
+          const firstName = String((r as any).display_name ?? name).split(' ')[0]
+          const heading = String(aboutSet?.heading ?? '').trim() || `Hi, I'm ${firstName}`
+          const abSet = (r as any).site_settings?.aboutBtn ?? {}
+          const btnText = String(abSet.text ?? '').trim() || (sectionMode ? 'Read more' : t.aboutBtnText)
+          const btnHref = resolveLink(abSet.link, sectionMode ? hrefs.about : availHref)
+          const btn = (dk = false) => (
+            <a data-name="About button" href={btnHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={dk ? { border: '1px solid #f3ead8', color: '#f3ead8', borderRadius: t.radius } : btnStyle}>{btnText}</a>
+          )
+          const pp = pickPics(4)
+          const main = aboutPhoto ?? pp[0] ?? null
+          const img = () => (main ? <img src={main} alt={name} className="h-full w-full object-cover" style={aboutCrop('side')} /> : null)
+          const small = (u: string | null | undefined, st: any = {}, cls = '') => (u ? <img src={u} alt="" className={'object-cover ' + cls} style={st} /> : null)
+          const H = (st: any = {}) => <h2 className="el-about_title" style={{ ...headStyle, fontSize: 'clamp(1.9rem, 3.8vw, 3rem)', lineHeight: 1.08, ...st }}>{heading}</h2>
+          const P = (list: string[], color: string = soft) => list.map((x, i) => <p key={i} className="el-about_text leading-[1.85]" style={{ color, fontSize: fsp('fs-about', 16) }}>{x}</p>)
+          const dark = '#2b1f17'
+          const out = (node: React.ReactNode) => sec('about', null, node, tinted)
+          const loves: string[] = Array.isArray(aboutSet?.loves) ? aboutSet.loves.filter(Boolean).slice(0, 5) : []
+          const facts: { q: string; a: string }[] = Array.isArray(aboutSet?.facts) ? aboutSet.facts.filter((f: any) => f?.q).slice(0, 8) : []
+          const stats: { n: string; l: string }[] = Array.isArray(aboutSet?.stats) ? aboutSet.stats.filter((f: any) => f?.n).slice(0, 4) : []
+          if (ad === 'lyra') return out(
+            <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+              <div className="overflow-hidden" style={{ aspectRatio: '4/5' }}>{img()}</div>
+              <div className="space-y-5">{H()}{P(paras)}<div className="pt-2">{btn()}</div></div>
+            </div>)
+          if (ad === 'vega') return out(
+            <div className="mx-auto max-w-3xl text-center">
+              <div className="mx-auto h-56 w-56 overflow-hidden rounded-full">{img()}</div>
+              <div className="mt-8">{H()}</div>
+              <div className="mx-auto mt-6 max-w-2xl space-y-4">{P(paras)}</div>
+              <div className="mt-10 grid grid-cols-3 gap-3">{pp.slice(0, 3).map((u, i) => <div key={i} className="overflow-hidden" style={{ aspectRatio: '4/3' }}>{small(u, {}, 'h-full w-full')}</div>)}</div>
+              <div className="mt-10">{btn()}</div>
+            </div>)
+          if (ad === 'orion') {
+            const half = Math.ceil(paras.length / 2)
+            return out(
+              <div className="mx-auto max-w-6xl">
+                <div className="relative overflow-hidden" style={{ aspectRatio: '21/9' }}>
+                  {img()}
+                  <div className="absolute inset-0 bg-black/25" />
+                  <p className="absolute bottom-6 left-8 text-white" style={{ ...headStyle, fontSize: 'clamp(2rem, 6vw, 4.5rem)', lineHeight: 1 }}>{name}</p>
+                </div>
+                <div className="mt-10 grid gap-10 md:grid-cols-2">
+                  <div className="space-y-4">{P(paras.slice(0, half))}</div>
+                  <div className="space-y-4">{P(paras.slice(half))}<div className="pt-2">{btn()}</div></div>
+                </div>
+              </div>)
+          }
+          if (ad === 'cygnus') return out(
+            <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
+              <div className="relative h-[420px] md:h-[520px]">
+                <div className="absolute left-0 top-0 w-3/5 overflow-hidden shadow-lg" style={{ aspectRatio: '4/5', transform: 'rotate(-3deg)' }}>{img()}</div>
+                {small(pp[1], { aspectRatio: '1/1', transform: 'rotate(3deg)' }, 'absolute right-0 top-10 w-1/2 shadow-lg')}
+                {small(pp[2], { aspectRatio: '4/3', transform: 'rotate(-1deg)' }, 'absolute bottom-0 left-1/4 w-2/5 shadow-lg')}
+              </div>
+              <div className="space-y-5">{H()}{P(paras)}<div className="pt-2">{btn()}</div></div>
+            </div>)
+          if (ad === 'draco') return out(
+            <div className="mx-auto max-w-6xl rounded-2xl p-8 md:p-14" style={{ background: dark, color: '#f3ead8' }}>
+              <div className="grid items-center gap-10 md:grid-cols-2">
+                <div className="space-y-5">
+                  {H({ color: '#f3ead8' })}{P(paras, '#e6dccb')}
+                  {loves.length > 0 && (<ol className="space-y-2 pt-2">{loves.map((x, i) => (<li key={i} className="flex gap-3"><span style={{ color: '#C9A24B' }}>{String(i + 1).padStart(2, '0')}</span><span>{x}</span></li>))}</ol>)}
+                  <div className="pt-2">{btn(true)}</div>
+                </div>
+                <div className="overflow-hidden" style={{ aspectRatio: '4/5' }}>{img()}</div>
+              </div>
+            </div>)
+          if (ad === 'aries') {
+            const parts: [string, string][] = ([['My story', paras[0]], ['What I believe', paras[1]], ["Let's work together", paras[2]]] as [string, string | undefined][]).filter((x): x is [string, string] => !!x[1])
+            const list: [string, string][] = parts.length ? parts : [['My story', p1]]
+            return out(
+              <div className="mx-auto max-w-6xl space-y-16">
+                {list.map(([ttl, txt], i) => (
+                  <div key={i} className="grid items-center gap-10 md:grid-cols-2">
+                    <div className={i % 2 ? 'md:order-2' : ''}><h3 style={{ ...headStyle, fontSize: '1.8rem' }}>{ttl}</h3><p className="el-about_text mt-4 leading-[1.85]" style={{ color: soft, fontSize: fsp('fs-about', 16) }}>{txt}</p></div>
+                    <div className={'overflow-hidden ' + (i % 2 ? 'md:order-1' : '')} style={{ aspectRatio: '4/3' }}>{i === 0 ? img() : small(pp[i], {}, 'h-full w-full')}</div>
+                  </div>
+                ))}
+                <div className="text-center">{btn()}</div>
+              </div>)
+          }
+          if (ad === 'libra') {
+            const sentences: string[] = p1.match(/[^.!?]+[.!?]+\s*/g) ?? [p1]
+            const quote = (sentences[0] ?? p1).trim()
+            const remaining: string[] = [sentences.slice(1).join('').trim(), ...rest].filter(Boolean)
+            return out(
+              <div className="mx-auto max-w-5xl">
+                <p className="text-center italic" style={{ ...headStyle, fontSize: 'clamp(1.6rem, 3.6vw, 2.8rem)', lineHeight: 1.2 }}>&ldquo;{quote}&rdquo;</p>
+                <div className="mt-12 grid gap-10 md:grid-cols-[240px_1fr]">
+                  <div className="overflow-hidden" style={{ aspectRatio: '3/4' }}>{img()}</div>
+                  <div className="md:columns-2 md:gap-10">{remaining.map((x, i) => <p key={i} className="el-about_text mb-4 leading-[1.85]" style={{ color: soft, fontSize: fsp('fs-about', 16) }}>{x}</p>)}<div className="pt-2">{btn()}</div></div>
+                </div>
+              </div>)
+          }
+          if (ad === 'pavo') return out(
+            <div className="mx-auto grid max-w-6xl items-start gap-10 md:grid-cols-2">
+              <div className="overflow-hidden" style={{ aspectRatio: '3/4' }}>{img()}</div>
+              <div className="space-y-5">
+                {H()}{P([p1])}
+                {facts.length > 0 && (<dl className="divide-y divide-black/10">{facts.map((f, i) => (<div key={i} className="flex justify-between gap-6 py-3 text-sm"><dt style={{ color: soft }}>{f.q}</dt><dd className="text-right" style={{ color: ink }}>{f.a}</dd></div>))}</dl>)}
+                {P(rest)}<div className="pt-2">{btn()}</div>
+              </div>
+            </div>)
+          if (ad === 'lynx') return out(
+            <div className="mx-auto max-w-6xl">
+              <div className="relative">
+                <div className="overflow-hidden" style={{ aspectRatio: '16/8' }}>{img()}</div>
+                <div className="relative max-w-md p-8 md:absolute md:bottom-0 md:left-8 md:translate-y-10" style={{ background: bg }}>
+                  {H({ fontSize: '1.8rem' })}<p className="el-about_text mt-3 leading-[1.8]" style={{ color: soft }}>{p1}</p><div className="mt-5">{btn()}</div>
+                </div>
+              </div>
+              <div className="mt-8 space-y-4 md:mt-24 md:columns-2 md:gap-10 md:space-y-0">{rest.map((x, i) => <p key={i} className="el-about_text mb-4 leading-[1.85]" style={{ color: soft, fontSize: fsp('fs-about', 16) }}>{x}</p>)}</div>
+            </div>)
+          if (ad === 'hydra') return out(
+            <div className="mx-auto max-w-6xl">
+              <div className="grid items-center gap-10 md:grid-cols-2">
+                <div className="overflow-hidden" style={{ aspectRatio: '4/5' }}>{img()}</div>
+                <div className="space-y-5">{H()}{P(paras)}<div className="pt-2">{btn()}</div></div>
+              </div>
+              {stats.length > 0 && (<div className="mt-14 grid gap-6 text-center" style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))` }}>{stats.map((s, i) => (<div key={i}><p style={{ ...headStyle, color: accent, fontSize: 'clamp(2rem, 5vw, 3.5rem)', lineHeight: 1 }}>{s.n}</p><p className="mt-2 text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>{s.l}</p></div>))}</div>)}
+              <div className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-4">{pp.map((u, i) => <div key={i} className="overflow-hidden" style={{ aspectRatio: '1/1' }}>{small(u, {}, 'h-full w-full')}</div>)}</div>
+            </div>)
+          if (ad === 'saffron') return out(
+            <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-2">
+              <div className="relative overflow-hidden" style={{ aspectRatio: '4/3' }}>{img()}<div className="pointer-events-none absolute inset-y-0 right-0 w-1/3" style={{ background: `linear-gradient(to right, transparent, ${bg})` }} /></div>
+              <div className="space-y-4">{H({ fontSize: 'clamp(1.8rem, 3.4vw, 2.6rem)' })}{P([p1])}<div className="pt-2">{btn()}</div></div>
+            </div>)
+          if (ad === 'cumin') return out(
+            <div className="mx-auto max-w-xl text-center">
+              <div className="mx-auto h-28 w-28 overflow-hidden rounded-full">{img()}</div>
+              <div className="mt-6">{H({ fontSize: 'clamp(1.7rem, 3vw, 2.4rem)' })}</div>
+              <div className="mt-4 space-y-3">{P([p1])}</div>
+              <div className="mt-6">{btn()}</div>
+            </div>)
+          if (ad === 'clove') return out(
+            <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+              <div className="space-y-5">{H({ fontSize: 'clamp(2.2rem, 5vw, 3.8rem)' })}{P([p1])}<div className="pt-2">{btn()}</div></div>
+              <div className="relative mx-auto w-full max-w-sm md:ml-auto">
+                <div className="absolute -bottom-4 -right-4 h-full w-4/5" style={{ background: tint }} />
+                <div className="relative overflow-hidden" style={{ aspectRatio: '4/5' }}>{img()}</div>
+              </div>
+            </div>)
+          if (ad === 'anise') return out(
+            <div className="mx-auto max-w-6xl rounded-2xl p-8 md:p-12" style={{ background: dark, color: '#f3ead8' }}>
+              <div className="grid items-center gap-8 md:grid-cols-[260px_1fr]">
+                <div className="mx-auto w-full max-w-[260px] overflow-hidden" style={{ aspectRatio: '3/4', borderRadius: '9999px 9999px 0 0' }}>{img()}</div>
+                <div className="space-y-4">{H({ color: '#f3ead8' })}{P([p1], '#e6dccb')}<div className="pt-2">{btn(true)}</div></div>
+              </div>
+            </div>)
+          if (ad === 'fennel') return out(
+            <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-2">
+              <div className="mx-auto w-64 bg-white p-3 pb-10 shadow-lg" style={{ transform: 'rotate(-3deg)' }}><div className="overflow-hidden" style={{ aspectRatio: '1/1' }}>{img()}</div></div>
+              <div>
+                <p className="el-about_text italic" style={{ ...headStyle, fontSize: 'clamp(1.4rem, 2.6vw, 2rem)', lineHeight: 1.4 }}>{p1}</p>
+                <p className="mt-4" style={{ ...headStyle, color: accent, fontSize: '1.4rem' }}>&mdash; {firstName}</p>
+                <div className="mt-5">{btn()}</div>
+              </div>
+            </div>)
         }
         if (aboutSet?.layout === 'canvas') {
           return sec('about', null,

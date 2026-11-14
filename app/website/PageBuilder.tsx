@@ -7,7 +7,7 @@ export type Struct = { v: 1; home: string[]; about: string[]; galleries: string[
 type Col = { id: string; label: string; fixed?: boolean; extra?: boolean }
 
 const BLOCKS: Record<string, { label: string; blurb: string }> = {
-  explore: { label: 'Quick links', blurb: 'Pretty cards linking to your other pages' },
+  explore: { label: 'Explore section', blurb: 'Three picture cards linking to your pages' },
   portfolio: { label: 'Galleries', blurb: 'Your galleries' },
   about: { label: 'About', blurb: 'Your story and photo' },
   testimonials: { label: 'Testimonials', blurb: 'Kind words from clients' },

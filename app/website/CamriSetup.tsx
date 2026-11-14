@@ -177,12 +177,15 @@ const PS = [
   { q: 'Page or section?', a: 'A page is a full page of its own in your site menu. A section is a smaller block you place on your home page or any page you choose.' },
   { q: 'Can I use both?', a: 'Yes. Many photographers put a section on the home page that links to the full page.' },
 ]
-const qaFor = (k: string) => [{ q: 'What is this?', a: HELP[k] ?? '' }, ...(['galleries', 'about', 'pricing'].includes(k) ? PS : [])]
+const qaFor = (k: string) => [{ q: 'What is this?', a: HELP[k] ?? '' }, ...(k === 'about' ? PS.slice(0, 1) : ['galleries', 'pricing'].includes(k) ? PS : [])]
 
 const PHOTO_DESIGNS = ['lark', 'wren', 'finch', 'heron', 'swift', 'plover', 'egret', 'kestrel', 'osprey', 'sparrow'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
 const SOCIAL_DESIGNS = ['coral', 'reef', 'ember', 'dune', 'tide'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 const FAQ_DESIGNS = ['sage', 'basil', 'thyme', 'mint', 'dill'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+
+const ABOUT_PAGE = ['lyra', 'vega', 'orion', 'cygnus', 'draco', 'aries', 'libra', 'pavo', 'lynx', 'hydra'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+const ABOUT_SEC = ['saffron', 'cumin', 'clove', 'anise', 'fennel'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
 const GAL_DESIGNS = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
@@ -194,6 +197,8 @@ const PICKERS = (): Record<string, { dir: string; field: string; ar: string; ite
   'galleries|Photo display designs (inside a gallery)': { dir: 'photos', ar: '4/5', field: 'photos', items: PHOTO_DESIGNS },
   'social|Section designs': { dir: 'social', ar: '2/1', field: 'social', items: SOCIAL_DESIGNS },
   'faq|Section designs': { dir: 'faq', ar: '2/1', field: 'faq', items: FAQ_DESIGNS },
+  'about|Page designs': { dir: 'about-page', ar: '4/5', field: 'about_page', items: ABOUT_PAGE },
+  'about|Section designs': { dir: 'about-section', ar: '2/1', field: 'about_section', items: ABOUT_SEC },
 })
 
 const ROW_TITLE: Record<string, string> = {
@@ -259,7 +264,7 @@ function DesignSteps({ designs, setDesigns }: { designs: Record<string, string>;
         <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
           <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            {MODES.map((m) => (
+            {MODES.filter((m) => !(sec.k === 'about' && m.k === 'both')).map((m) => (
               <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
                 <p className="text-sm font-medium text-ink">{m.t}</p>
                 <p className="mt-1 text-xs text-ink-soft">{m.d}</p>
