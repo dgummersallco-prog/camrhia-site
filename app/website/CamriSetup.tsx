@@ -76,8 +76,19 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
 
       <div className="mt-6">
         {step === 0 && (
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-col gap-10">
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+              {[['1', 'Layouts', 'Pick the looks you love'], ['2', 'Pages', 'Choose what goes on your site'], ['3', 'Colors', 'Pick your color palettes'], ['4', 'Fonts', 'Choose how your words look']].map(([n, ttl, d]) => (
+                <div key={n} className="flex aspect-square flex-col items-center justify-center rounded-3xl border border-black/10 bg-white/70 p-6 text-center">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-twilight text-lg font-semibold text-white">{n}</span>
+                  <p className="mt-5 font-fraunces text-2xl text-ink">{ttl}</p>
+                  <p className="mt-2 text-sm text-ink-soft">{d}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
             <button type="button" onClick={() => setStep(1)} className="rounded-full bg-twilight px-7 py-3 text-sm font-medium text-white transition hover:opacity-90">Let&apos;s start</button>
+            </div>
             
           </div>
         )}
