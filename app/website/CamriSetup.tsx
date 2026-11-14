@@ -151,20 +151,28 @@ export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0])
 
 const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'nav', title: 'Explore section', rows: ['Explore section designs'] },
-  { k: 'galleries', title: 'Galleries', rows: ['Page designs', 'Section designs'] },
+  { k: 'galleries', title: 'Galleries', rows: ['Galleries main page designs', 'Photo display designs (inside a gallery)'] },
   { k: 'book', title: 'Booking page', rows: ['Page designs'] },
-  { k: 'testimonials', title: 'Testimonials', rows: ['Page designs', 'Section designs'] },
+  { k: 'testimonials', title: 'Testimonials', rows: ['Section designs'] },
   { k: 'about', title: 'About', rows: ['Page designs', 'Section designs'] },
   { k: 'pricing', title: 'Pricing', rows: ['Page designs', 'Section designs'] },
   { k: 'social', title: 'Social links', rows: ['Section designs'] },
-  { k: 'faq', title: 'FAQ', rows: ['Page designs', 'Section designs'] },
+  { k: 'faq', title: 'FAQ', rows: ['Section designs'] },
+  { k: 'blog', title: 'Blog', rows: ['Page designs', 'Section designs'] },
 ]
 
 const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech', 'sorrel', 'tansy'].map((k) => ({ key: k, name: k === 'hawthorn' ? 'Hawthorne' : k[0].toUpperCase() + k.slice(1) }))
 
 function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {
+  const [zoom, setZoom] = useState<string | null>(null)
   return (
     <div className="space-y-14">
+      {zoom && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={'/explore/' + zoom + '.png'} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg" />
+        </div>
+      )}
       {DESIGN_SECTIONS.map((sec) => (
         <div key={sec.k}>
           <h3 className="font-fraunces text-2xl text-ink">{sec.title}</h3>
@@ -179,7 +187,10 @@ function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, s
                       <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, nav: on ? '' : d.key })}>
                         <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={'/explore/' + d.key + '.png'} alt="" className={'w-full rounded-lg border-2 ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
+                        <div className="relative">
+                          <img src={'/explore/' + d.key + '.png'} alt="" className={'w-full rounded-lg border-2 ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
+                          <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom(d.key) }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
+                        </div>
                       </button>
                     )
                   })}
