@@ -32,33 +32,33 @@ const COLS = 'id, public_token, slug, logo_path, instagram_url, facebook_url, ti
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x))
 
 const STYLES = [
-  { key: 'airy', name: 'Light & airy', blurb: 'Bright white, lots of space.', tpl: 'minimal', pair: 'modern', bg: '#FFFFFF', text: '#2A1F24' },
-  { key: 'classic', name: 'Classic & elegant', blurb: 'Big photo, timeless serif.', tpl: 'editorial', pair: 'serif', bg: '#FAF7F2', text: '#2A1F24' },
-  { key: 'romantic', name: 'Romantic', blurb: 'Soft, framed and dreamy.', tpl: 'framed', pair: 'romantic', bg: '#FBF4F1', text: '#3A2A2E' },
-  { key: 'bold', name: 'Bold editorial', blurb: 'Huge headline, magazine feel.', tpl: 'magazine', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D' },
-  { key: 'moody', name: 'Moody & dark', blurb: 'Dark, cinematic, dramatic.', tpl: 'editorial', pair: 'serif', bg: '#17141A', text: '#F4EEE8' },
-  { key: 'clean', name: 'Clean split', blurb: 'Words one side, photo the other.', tpl: 'split', pair: 'modern', bg: '#F6F1EA', text: '#2A1F24' },
-  { key: 'mosaic', name: 'Photo collage', blurb: 'A wall of your best shots.', tpl: 'mosaic', pair: 'modern', bg: '#FAF7F2', text: '#2A1F24', mock: 'mosaic' },
-  { key: 'earthy', name: 'Warm & earthy', blurb: 'Cream, clay and soft serif.', tpl: 'editorial', pair: 'serif', bg: '#F1E8DA', text: '#3A2A22', mock: 'classic' },
-  { key: 'peony', name: 'Peony', blurb: 'Soft full-photo hero, centered logo.', tpl: 'peony', pair: 'romantic', bg: '#FBF4F1', text: '#3A2A2E' },
-  { key: 'ivy', name: 'Ivy', blurb: 'Three tall photos, centered title.', tpl: 'ivy', pair: 'serif', bg: '#FFFFFF', text: '#2A1F24' },
-  { key: 'wisteria', name: 'Wisteria', blurb: 'One framed photo on a soft panel.', tpl: 'wisteria', pair: 'romantic', bg: '#F4F0F8', text: '#2E2538' },
-  { key: 'juniper', name: 'Juniper', blurb: 'Two photos and a bold name.', tpl: 'juniper', pair: 'modern', bg: '#F6F1EA', text: '#3A2A22' },
-  { key: 'camellia', name: 'Camellia', blurb: 'Photo with a caption bar.', tpl: 'camellia', pair: 'serif', bg: '#F3F0EC', text: '#2A1F24' },
-  { key: 'cedar', name: 'Cedar', blurb: 'Dark, headline over the photo.', tpl: 'cedar', pair: 'modern', bg: '#0D0D0F', text: '#F4EEE8' },
-  { key: 'olive', name: 'Olive', blurb: 'Photo with a label box.', tpl: 'olive', pair: 'serif', bg: '#F1F2EA', text: '#2B3026' },
-  { key: 'magnolia', name: 'Magnolia', blurb: 'Sidebar menu, tall photo.', tpl: 'magnolia', pair: 'serif', bg: '#FAF7F2', text: '#2A1F24' },
-  { key: 'lily', name: 'Lily', blurb: 'Photo with an overlapping panel.', tpl: 'lily', pair: 'serif', bg: '#F6F0E6', text: '#3A2A22' },
-  { key: 'orchid', name: 'Orchid', blurb: 'One big photo, thumbnails below.', tpl: 'orchid', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D' },
-  { key: 'lotus', name: 'Lotus', blurb: 'Menu bar along the bottom.', tpl: 'lotus', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D' },
-  { key: 'aster', name: 'Aster', blurb: 'Arch-shaped photo, words beside it.', tpl: 'aster', pair: 'serif', bg: '#FBF6EE', text: '#27302A' },
-  { key: 'fern', name: 'Fern', blurb: 'Four staggered portraits.', tpl: 'fern', pair: 'romantic', bg: '#FFFFFF', text: '#2A1F24' },
-  { key: 'sage', name: 'Sage', blurb: 'Two photos flank a center column.', tpl: 'sage', pair: 'serif', bg: '#F4F6F0', text: '#27302A' },
-  { key: 'rose', name: 'Rose', blurb: 'A circle photo, soft and round.', tpl: 'rose', pair: 'romantic', bg: '#FBF1EE', text: '#3A2A2E' },
-  { key: 'hazel', name: 'Hazel', blurb: 'Panorama over a checkerboard.', tpl: 'hazel', pair: 'serif', bg: '#FFFFFF', text: '#2A1F24' },
-  { key: 'saffron', name: 'Saffron', blurb: 'Numbered list beside a tall photo.', tpl: 'saffron', pair: 'serif', bg: '#F6EFE4', text: '#3A2A22' },
-  { key: 'cypress', name: 'Cypress', blurb: 'Floating menu, photo on photo.', tpl: 'cypress', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D' },
-  { key: 'laurel', name: 'Laurel', blurb: 'Framed photo with side text.', tpl: 'laurel', pair: 'modern', bg: '#E9E3DA', text: '#2A2622' },
+  { key: 'airy', name: 'Light & airy', blurb: 'Bright white, lots of space.', tpl: 'minimal', pair: 'modern', bg: '#FFFFFF', text: '#2A1F24', acc: '#5C4A44', shape: 'square' },
+  { key: 'classic', name: 'Classic & elegant', blurb: 'Big photo, timeless serif.', tpl: 'editorial', pair: 'serif', bg: '#FAF7F2', text: '#2A1F24', acc: '#8A6F4E', shape: 'square' },
+  { key: 'romantic', name: 'Romantic', blurb: 'Soft, framed and dreamy.', tpl: 'framed', pair: 'romantic', bg: '#FBF4F1', text: '#3A2A2E', acc: '#C98A8D', shape: 'pill' },
+  { key: 'bold', name: 'Bold editorial', blurb: 'Huge headline, magazine feel.', tpl: 'magazine', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D', acc: '#111111', shape: 'square' },
+  { key: 'moody', name: 'Moody & dark', blurb: 'Dark, cinematic, dramatic.', tpl: 'editorial', pair: 'serif', bg: '#17141A', text: '#F4EEE8', acc: '#C9A24D', shape: 'square' },
+  { key: 'clean', name: 'Clean split', blurb: 'Words one side, photo the other.', tpl: 'split', pair: 'modern', bg: '#F6F1EA', text: '#2A1F24', acc: '#B5532F', shape: 'square' },
+  { key: 'mosaic', name: 'Photo collage', blurb: 'A wall of your best shots.', tpl: 'mosaic', pair: 'modern', bg: '#FAF7F2', text: '#2A1F24', mock: 'mosaic', acc: '#2A1F24', shape: 'square' },
+  { key: 'earthy', name: 'Warm & earthy', blurb: 'Cream, clay and soft serif.', tpl: 'editorial', pair: 'serif', bg: '#F1E8DA', text: '#3A2A22', mock: 'classic', acc: '#B5714F', shape: 'rounded' },
+  { key: 'peony', name: 'Peony', blurb: 'Soft full-photo hero, centered logo.', tpl: 'peony', pair: 'romantic', bg: '#FBF4F1', text: '#3A2A2E', acc: '#C98B88', shape: 'rounded' },
+  { key: 'ivy', name: 'Ivy', blurb: 'Three tall photos, centered title.', tpl: 'ivy', pair: 'serif', bg: '#FFFFFF', text: '#2A1F24', acc: '#2A1F24', shape: 'square' },
+  { key: 'wisteria', name: 'Wisteria', blurb: 'One framed photo on a soft panel.', tpl: 'wisteria', pair: 'romantic', bg: '#F4F0F8', text: '#2E2538', acc: '#6E5A87', shape: 'rounded' },
+  { key: 'juniper', name: 'Juniper', blurb: 'Two photos and a bold name.', tpl: 'juniper', pair: 'modern', bg: '#F6F1EA', text: '#3A2A22', acc: '#C06A4D', shape: 'square' },
+  { key: 'camellia', name: 'Camellia', blurb: 'Photo with a caption bar.', tpl: 'camellia', pair: 'serif', bg: '#F3F0EC', text: '#2A1F24', acc: '#2A1F24', shape: 'square' },
+  { key: 'cedar', name: 'Cedar', blurb: 'Dark, headline over the photo.', tpl: 'cedar', pair: 'modern', bg: '#0D0D0F', text: '#F4EEE8', acc: '#C9A24D', shape: 'square' },
+  { key: 'olive', name: 'Olive', blurb: 'Photo with a label box.', tpl: 'olive', pair: 'serif', bg: '#F1F2EA', text: '#2B3026', acc: '#6F7A52', shape: 'square' },
+  { key: 'magnolia', name: 'Magnolia', blurb: 'Sidebar menu, tall photo.', tpl: 'magnolia', pair: 'serif', bg: '#FAF7F2', text: '#2A1F24', acc: '#8A6F63', shape: 'square' },
+  { key: 'lily', name: 'Lily', blurb: 'Photo with an overlapping panel.', tpl: 'lily', pair: 'serif', bg: '#F6F0E6', text: '#3A2A22', acc: '#3A2A22', shape: 'square' },
+  { key: 'orchid', name: 'Orchid', blurb: 'One big photo, thumbnails below.', tpl: 'orchid', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D', acc: '#1B1B1D', shape: 'square' },
+  { key: 'lotus', name: 'Lotus', blurb: 'Menu bar along the bottom.', tpl: 'lotus', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D', acc: '#1B1B1D', shape: 'pill' },
+  { key: 'aster', name: 'Aster', blurb: 'Arch-shaped photo, words beside it.', tpl: 'aster', pair: 'serif', bg: '#FBF6EE', text: '#27302A', acc: '#7C8B6F', shape: 'rounded' },
+  { key: 'fern', name: 'Fern', blurb: 'Four staggered portraits.', tpl: 'fern', pair: 'romantic', bg: '#FFFFFF', text: '#2A1F24', acc: '#2A1F24', shape: 'square' },
+  { key: 'sage', name: 'Sage', blurb: 'Two photos flank a center column.', tpl: 'sage', pair: 'serif', bg: '#F4F6F0', text: '#27302A', acc: '#7C8B6F', shape: 'square' },
+  { key: 'rose', name: 'Rose', blurb: 'A circle photo, soft and round.', tpl: 'rose', pair: 'romantic', bg: '#FBF1EE', text: '#3A2A2E', acc: '#C98A8D', shape: 'pill' },
+  { key: 'hazel', name: 'Hazel', blurb: 'Panorama over a checkerboard.', tpl: 'hazel', pair: 'serif', bg: '#FFFFFF', text: '#2A1F24', acc: '#A67C52', shape: 'square' },
+  { key: 'saffron', name: 'Saffron', blurb: 'Numbered list beside a tall photo.', tpl: 'saffron', pair: 'serif', bg: '#F6EFE4', text: '#3A2A22', acc: '#D08A2E', shape: 'square' },
+  { key: 'cypress', name: 'Cypress', blurb: 'Floating menu, photo on photo.', tpl: 'cypress', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D', acc: '#1B1B1D', shape: 'pill' },
+  { key: 'laurel', name: 'Laurel', blurb: 'Framed photo with side text.', tpl: 'laurel', pair: 'modern', bg: '#E9E3DA', text: '#2A2622', acc: '#2A2622', shape: 'square' },
 ]
 const PALETTES = [
   { name: 'Blush', accent: '#C98A8D', bg: '#FBF6F1', text: '#2A1F24' },
@@ -630,7 +630,7 @@ export default function CamiDesigner() {
             const fontNew = !prev || (['title', 'subtitle', 'paragraph'] as const).some((r) => (prev.type?.[r]?.[0] ?? null) !== (kit.type[r][0] ?? null))
             if (layoutNew) {
               const sty = STYLES.find((st) => st.key === kit.layouts[0])
-              if (sty) { n.site_template = sty.tpl; n.site_font_pair = sty.pair; applyPalette(n, n.site_accent ?? '#C98A8D', sty.bg, sty.text) }
+              if (sty) { n.site_template = sty.tpl; n.site_font_pair = sty.pair; applyPalette(n, (sty as any).acc ?? n.site_accent ?? '#C98A8D', sty.bg, sty.text); const sx = (n.site_settings = n.site_settings ?? {}); sx.button = { ...(sx.button ?? {}), shape: (sty as any).shape ?? 'square' } }
             }
             const pal = kit.palettes[0]
             if (pal && (layoutNew || palNew)) applyPalette(n, pal.accent, pal.bg, pal.text)

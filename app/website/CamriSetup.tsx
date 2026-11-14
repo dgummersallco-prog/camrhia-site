@@ -69,7 +69,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={step === 0 ? '/camri/01_waving.png' : '/camri/13_face_avatar.png'} alt="" className={(step === 0 ? 'h-32' : 'h-14') + ' w-auto shrink-0'} />
         <div className="rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4 text-ink">
-          {step > 0 && <p className="text-xs uppercase tracking-wider text-ink-soft">Step {step} of 4</p>}
+          {step > 0 && <p className="text-xs uppercase tracking-wider text-ink-soft">Step {step} of 2</p>}
           <p className="mt-1 font-fraunces text-xl leading-snug">{LINES[step]}</p>
         </div>
       </div>
@@ -77,8 +77,8 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
       <div className="mt-6">
         {step === 0 && (
           <div className="flex flex-col gap-10">
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-              {[['1', 'Layouts', 'Pick the looks you love'], ['2', 'Pages', 'Choose what goes on your site'], ['3', 'Colors', 'Pick your color palettes'], ['4', 'Fonts', 'Choose how your words look']].map(([n, ttl, d]) => (
+            <div className="mx-auto grid w-full max-w-2xl grid-cols-2 gap-6">
+              {[['1', 'Layouts', 'Pick the looks you love'], ['2', 'Pages', 'Choose what goes on your site']].map(([n, ttl, d]) => (
                 <div key={n} className="flex aspect-square flex-col items-center justify-center rounded-3xl border border-black/10 bg-white/70 p-6 text-center">
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-twilight text-lg font-semibold text-white">{n}</span>
                   <p className="mt-5 font-fraunces text-2xl text-ink">{ttl}</p>
@@ -119,47 +119,12 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
           </div>
         )}
 
-        {step === 3 && (
-          <div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {palettes.map((p) => {
-                const i = picked.findIndex((q) => q.name === p.name)
-                return (
-                  <button key={p.name} type="button" onClick={() => setPicked((l) => (i >= 0 ? l.filter((q) => q.name !== p.name) : l.length >= 3 ? l : [...l, { ...p }]))} className={'relative rounded-xl border bg-white/80 p-3 text-left transition hover:bg-white ' + (i >= 0 ? ring : 'border-black/10')}>
-                    <span className="flex h-12 overflow-hidden rounded-lg border border-black/10"><span className="flex-1" style={{ background: p.bg }} /><span className="flex-1" style={{ background: p.accent }} /><span className="flex-1" style={{ background: p.text }} /></span>
-                    <span className="mt-2 block text-sm text-ink">{p.name}</span>
-                    {i >= 0 && badge(i + 1)}
-                  </button>
-                )
-              })}
-              <button type="button" disabled={picked.length >= 3} onClick={() => setPicked((l) => [...l, { name: 'My colors ' + (l.filter((q) => q.name.startsWith('My colors')).length + 1), accent: '#C98A8D', bg: '#FAF7F2', text: '#2A1F24' }])} className="flex min-h-[96px] items-center justify-center rounded-xl border-2 border-dashed border-black/20 text-sm text-ink-soft disabled:opacity-40">+ Make my own</button>
-            </div>
-            {picked.map((p, i) => (
-              <div key={p.name} className="mt-4 rounded-xl border border-black/10 bg-white/80 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-ink">Fine-tune color choice {i + 1} <span className="font-normal text-ink-soft">({p.name})</span></p>
-                  <button type="button" onClick={() => setPicked((l) => l.filter((_, j) => j !== i))} className="text-xs text-ink-soft underline">Remove</button>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-5">
-                  {([['accent', 'Accent'], ['bg', 'Background'], ['text', 'Main text']] as const).map(([k, label]) => (
-                    <label key={k} className="flex items-center gap-2 text-sm text-ink">
-                      <input type="color" value={p[k]} onChange={(e) => setPicked((l) => l.map((q, j) => (j === i ? { ...q, [k]: e.target.value } : q)))} className="h-9 w-9 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
-                      {label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {step === 4 && <FontStep fonts={fontList} picks={fp} setPicks={setFp} />}
       </div>
 
       {step > 0 && (
         <div className="mt-8 flex items-center gap-4">
           <button type="button" onClick={() => setStep(step - 1)} disabled={busy} className="rounded-full border border-black/15 px-6 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50">Back</button>
-          {step < 4 ? (
+          {step < 2 ? (
             <button type="button" onClick={() => setStep(step + 1)} disabled={!canGo} className="rounded-full bg-twilight px-7 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">Continue</button>
           ) : (
             <button type="button" onClick={finish} disabled={!canGo || busy} className="rounded-full bg-twilight px-7 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site'}</button>

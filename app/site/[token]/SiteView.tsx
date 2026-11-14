@@ -205,7 +205,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   const cta = (force?: boolean) =>
     t.hero.ctaShow || force ? (
-      <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="hero-btn">{force ? t.hero.ctaText : t.hero.heroCtaText}</a>
+      <a data-name="Button" href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="hero-btn">{force ? t.hero.ctaText : t.hero.heroCtaText}</a>
     ) : null
 
   const burger = (r as any).site_settings?.menu?.icon === 'burger'
@@ -216,6 +216,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     return (
       <>
       <nav
+        data-name="Menu bar"
         id="nav"
         className={overlay ? 'absolute inset-x-0 top-0 z-20' : t.menu.none ? 'relative z-20' : 'sticky top-0 z-20'}
         style={overlay ? { color: '#fff' } : t.menu.none ? { color: ink } : { color: ink, background: `color-mix(in srgb, ${t.menu.bg ?? bg} 94%, transparent)`, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${line}` }}
@@ -271,11 +272,11 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   const heroImg = (cls: string) =>
     shownHero.length === 0 ? (
-      <div className={cls} style={{ background: accent, opacity: 0.85 }} />
+      <div data-name="Cover image" className={cls} style={{ background: accent, opacity: 0.85 }} />
     ) : (
       <>
         {shownHero.map((u, i) => (
-          <img key={u} ref={(el) => { if (i === 0 && el) watchHero(el.parentElement) }} src={u} alt={i === 0 ? name : ''} className={cls}
+          <img key={u} ref={(el) => { if (i === 0 && el) watchHero(el.parentElement) }} src={u} alt={i === 0 ? name : ''} data-name="Cover image" className={cls}
             style={{ objectFit: 'cover', objectPosition: (heroFocus[heroPaths[i]]?.x ?? 50) + '% ' + (heroFocus[heroPaths[i]]?.y ?? 50) + '%', opacity: i === slide % shownHero.length ? 1 : 0, transition: 'opacity 1.2s ease-in-out' }} />
         ))}
       </>
@@ -288,7 +289,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const h1Mid: React.CSSProperties = { ...headStyle, fontSize: 'calc(var(--hl) * 0.85)', lineHeight: 1.05 }
   const heroPara = (color?: string) =>
     t.hero.paraText ? (
-      <p className="cr-hpara mt-5 max-w-xl whitespace-pre-line leading-relaxed" style={{ color, marginLeft: t.hero.align === 'left' ? 0 : 'auto', marginRight: t.hero.align === 'right' ? 0 : 'auto' }}>{t.hero.paraText}</p>
+      <p data-name="Hero paragraph" className="cr-hpara mt-5 max-w-xl whitespace-pre-line leading-relaxed" style={{ color, marginLeft: t.hero.align === 'left' ? 0 : 'auto', marginRight: t.hero.align === 'right' ? 0 : 'auto' }}>{t.hero.paraText}</p>
     ) : null
 
   const fsr = (v: string, rem: number) => `calc(${rem}rem * var(--${v}, 1))`
@@ -341,7 +342,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               title={t.titles.about} bio={(t.text.about ?? r.bio ?? '').toString()} headStyle={headStyle} ink={ink} soft={soft} tint={tint}
               bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText}
               renderButton={(label) => (
-                <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+                <a data-name="Button" href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
               )}
             />, false)
         }
@@ -498,7 +499,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 galleryHref={(id) => `${base}/g/${id}${qs}`}
                 fallback={(dv) => galleryStarter(dv, list.map((g) => g.id))}
                 renderButton={(label) => (
-                  <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+                  <a data-name="Button" href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
                 )}
               />
             ) : L === 'carousel' ? (
@@ -700,7 +701,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             title={null} bio="" headStyle={headStyle} ink={ink} soft={soft} tint={tint}
             bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId={cs.id}
             renderButton={(label) => (
-              <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+              <a data-name="Button" href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
             )}
           />, false)
       }
@@ -717,7 +718,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   }, [isPreview, galleries])
 
   const exploreEl = doors.length > 0 && ex.show !== false ? (
-          <section id="explore" className="px-6 py-16">
+          <section data-name="Explore section" id="explore" className="px-6 py-16">
           <div className="mx-auto max-w-6xl">
             {ex.heading?.trim() && (
               <p className="el-ex_label mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
@@ -730,7 +731,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId="explore"
                 fallback={(dv) => exploreStarter(dv)}
                 renderButton={(label) => (
-                  <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+                  <a data-name="Button" href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
                 )}
                 renderSpecial={(type, it) => {
                   if (type !== 'door') return null
@@ -839,7 +840,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         {page === 'home' && tpl === 'editorial' && (
           <>
             {t.menu.solid && renderNav(false, false)}
-            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: t.menu.solid ? 'calc(var(--hero-h) - 4rem)' : 'var(--hero-h)' }}>
+            <header data-name="Cover" id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: t.menu.solid ? 'calc(var(--hero-h) - 4rem)' : 'var(--hero-h)' }}>
               {heroImg('absolute inset-0 h-full w-full')}
               <div className="absolute inset-0" style={{ background: `linear-gradient(rgba(0,0,0,${ov}), rgba(0,0,0,${(ov * 0.35).toFixed(2)}) 40%, rgba(0,0,0,${Math.min(0.85, ov * 1.6).toFixed(2)}))` }} />
               {!t.menu.solid && renderNav(true, false)}
@@ -855,7 +856,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </>
         )}
         {page === 'home' && tpl === 'split' && (
-          <header id="top">
+          <header data-name="Cover" id="top">
             {renderNav(false, false)}
             <div className="grid md:grid-cols-2" style={{ minHeight: 'calc(var(--hero-h) - 4rem)' }}>
               <div className={`order-2 flex flex-col justify-center px-8 py-16 md:order-1 md:px-16 ${t.hero.align === 'center' ? 'items-center text-center' : t.hero.align === 'right' ? 'items-end text-right' : 'items-start text-left'}`}>
@@ -871,7 +872,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </header>
         )}
         {page === 'home' && tpl === 'minimal' && (
-          <header id="top">
+          <header data-name="Cover" id="top">
             {renderNav(false, true)}
             <div className="mx-auto max-w-6xl px-6 pt-6">
               <div className="relative aspect-[16/10] overflow-hidden md:aspect-[21/9]">{heroImg('absolute inset-0 h-full w-full')}</div>
@@ -885,7 +886,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </header>
         )}
         {page === 'home' && tpl === 'framed' && (
-          <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+          <header data-name="Cover" id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
             {heroImg('absolute inset-0 h-full w-full')}
             <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${(ov * 0.6).toFixed(2)})` }} />
             {renderNav(true, false)}
@@ -902,7 +903,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </header>
         )}
         {page === 'home' && tpl === 'magazine' && (
-          <header id="top">
+          <header data-name="Cover" id="top">
             {renderNav(false, false)}
             <div className="mx-auto max-w-6xl px-6 pt-14" style={{ textAlign: t.hero.align }}>
               {subhead && <p className="cr-sub mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
@@ -917,7 +918,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'peony' && (
           <>
-            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+            <header data-name="Cover" id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
               <style>{`#top #nav{color:${ink}!important}`}</style>
               {heroImg('absolute inset-0 h-full w-full')}
               <div className="absolute inset-0" style={{ background: `color-mix(in srgb, ${bg} 38%, transparent)` }} />
@@ -946,7 +947,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </>
         )}
         {page === 'home' && tpl === 'ivy' && (
-          <header id="top">
+          <header data-name="Cover" id="top">
             {renderNav(false, true)}
             {(() => {
               const p = pickPics(3)
@@ -967,7 +968,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'wisteria' && (
           <>
-            <header id="top" style={{ background: tint }}>
+            <header data-name="Cover" id="top" style={{ background: tint }}>
               {renderNav(false, true)}
               <div className="mx-auto max-w-4xl px-6 pt-4">
                 <div className="relative aspect-[16/10] overflow-hidden">{heroImg('absolute inset-0 h-full w-full')}</div>
@@ -992,7 +993,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'juniper' && (
           <>
-            <header id="top">
+            <header data-name="Cover" id="top">
               {renderNav(false, true)}
               {(() => {
                 const p = pickPics(2)
@@ -1026,7 +1027,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'camellia' && (
           <>
-            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'calc(var(--hero-h) * 0.9)' }}>
+            <header data-name="Cover" id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'calc(var(--hero-h) * 0.9)' }}>
               {heroImg('absolute inset-0 h-full w-full')}
               <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${(ov * 0.5).toFixed(2)})` }} />
               {renderNav(true, true)}
@@ -1058,7 +1059,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'cedar' && (
           <>
-            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)', background: '#0B0B0B' }}>
+            <header data-name="Cover" id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)', background: '#0B0B0B' }}>
               {heroImg('absolute inset-0 h-full w-full')}
               <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, rgba(0,0,0,${Math.min(0.8, ov + 0.3).toFixed(2)}), rgba(0,0,0,${(ov * 0.4).toFixed(2)}))` }} />
               {renderNav(true, false)}
@@ -1086,7 +1087,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'olive' && (
           <>
-            <header id="top">
+            <header data-name="Cover" id="top">
               {renderNav(false, false)}
               <div className="mx-auto max-w-6xl px-6 pb-14 pt-4">
                 <div className="relative aspect-[16/9]">
@@ -1127,7 +1128,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </ul>
             </aside>
             <div className="min-w-0 flex-1">
-              <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+              <header data-name="Cover" id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
                 {heroImg('absolute inset-0 h-full w-full')}
                 <div className="absolute inset-0" style={{ background: `linear-gradient(rgba(0,0,0,0), rgba(0,0,0,${Math.min(0.7, ov * 1.4).toFixed(2)}))` }} />
                 <div className="relative mt-auto px-8 pb-12 text-white">
@@ -1152,7 +1153,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'lily' && (
           <>
-            <header id="top">
+            <header data-name="Cover" id="top">
               {renderNav(false, false)}
               <div className="relative mx-auto max-w-6xl px-6 pb-14 pt-6">
                 <div className="relative ml-auto aspect-[4/3] w-full overflow-hidden md:w-[70%]">{heroImg('absolute inset-0 h-full w-full')}</div>
@@ -1180,7 +1181,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'orchid' && (
           <>
-            <header id="top">
+            <header data-name="Cover" id="top">
               {renderNav(false, true)}
               <div className="mx-auto max-w-6xl px-6 pt-4">
                 <div className="relative aspect-[16/8] overflow-hidden">{heroImg('absolute inset-0 h-full w-full')}</div>
@@ -1200,7 +1201,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'lotus' && (
           <>
-            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+            <header data-name="Cover" id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
               {heroImg('absolute inset-0 h-full w-full')}
               <nav id="nav" className="relative z-20 mt-auto flex flex-wrap items-center justify-between gap-4 px-6 py-4" style={{ background: bg, color: ink }}>
                 <a href={hrefs.home} style={{ display: 'inline-flex' }}>
@@ -1227,7 +1228,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'aster' && (
           <>
-            <header id="top">
+            <header data-name="Cover" id="top">
               {renderNav(false, false)}
               <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-12 md:grid-cols-2">
                 <div>
@@ -1259,7 +1260,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'fern' && (
           <>
-            <header id="top">
+            <header data-name="Cover" id="top">
               {renderNav(false, true)}
               {(() => {
                 const p = pickPics(4)
@@ -1280,7 +1281,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'sage' && (
           <>
-            <header id="top" className="grid md:grid-cols-3" style={{ minHeight: 'calc(var(--hero-h) * 0.9)' }}>
+            <header data-name="Cover" id="top" className="grid md:grid-cols-3" style={{ minHeight: 'calc(var(--hero-h) * 0.9)' }}>
               <div className="relative min-h-[50vh] md:min-h-0">{heroImg('absolute inset-0 h-full w-full')}</div>
               <div id="nav" className="order-first flex flex-col items-center justify-center px-6 py-12 text-center md:order-none" style={{ background: tint, color: ink }}>
                 <a href={hrefs.home} style={{ display: 'inline-flex' }}>
@@ -1306,7 +1307,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'rose' && (
           <>
-            <header id="top">
+            <header data-name="Cover" id="top">
               {renderNav(false, false)}
               <div className="mx-auto flex max-w-3xl flex-col items-center px-6 pb-10 pt-8 text-center">
                 <div className="relative">
@@ -1332,7 +1333,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'hazel' && (
           <>
-            <header id="top">
+            <header data-name="Cover" id="top">
               {renderNav(false, true)}
               <div className="relative mt-2 overflow-hidden" style={{ height: 'clamp(140px, 22vh, 260px)' }}>{heroImg('absolute inset-0 h-full w-full')}</div>
               {(() => {
@@ -1364,7 +1365,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'saffron' && (
           <>
-            <header id="top" className="grid md:grid-cols-[2fr_3fr]" style={{ minHeight: 'var(--hero-h)' }}>
+            <header data-name="Cover" id="top" className="grid md:grid-cols-[2fr_3fr]" style={{ minHeight: 'var(--hero-h)' }}>
               <div id="nav" className="flex flex-col justify-between gap-10 px-8 py-10 md:px-12" style={{ background: bg, color: ink }}>
                 <div>
                   <a href={hrefs.home} style={{ display: 'inline-flex' }}>
@@ -1401,7 +1402,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'cypress' && (
           <>
-            <header id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
+            <header data-name="Cover" id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
               {heroImg('absolute inset-0 h-full w-full')}
               <div className="absolute inset-0" style={{ background: `linear-gradient(rgba(0,0,0,0), rgba(0,0,0,${Math.min(0.7, ov * 1.4).toFixed(2)}))` }} />
               <nav id="nav" className="absolute inset-x-4 top-5 z-20 mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full px-6 py-3" style={{ background: 'rgba(255,255,255,0.93)', color: '#1a1a1a' }}>
@@ -1435,7 +1436,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         {page === 'home' && tpl === 'laurel' && (
           <>
             <div style={{ background: tint }}>
-              <header id="top">
+              <header data-name="Cover" id="top">
                 {renderNav(false, false)}
                 <div className="relative mx-auto max-w-6xl px-6 pb-10 pt-4">
                   <span className="absolute left-1 top-1/2 hidden -translate-y-1/2 text-[10px] uppercase tracking-[0.3em] md:block" style={{ writingMode: 'vertical-rl', transform: 'translateY(-50%) rotate(180deg)', color: soft }}>{subhead || name}</span>
@@ -1460,7 +1461,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </>
         )}
         {page === 'home' && tpl === 'mosaic' && (
-          <header id="top">
+          <header data-name="Cover" id="top">
             <div className="mx-auto max-w-6xl px-4 pb-4">
               <AboutCanvas
                 canvas={(r as any).site_settings?.hero?.canvas} photo2={null} aboutPhoto={null} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
@@ -1498,7 +1499,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   return null
                 }}
                 renderButton={(label) => (
-                  <a href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
+                  <a data-name="Button" href={availHref} className="cr-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{label}</a>
                 )}
               />
             </div>
@@ -1525,7 +1526,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <div className="px-6 pb-12 pt-4 text-center"><a href={availHref} id="gal-btn" className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.galBtnText}</a></div>
         )}
 
-        <footer id="footer" className="px-6 pb-12 pt-6 text-center uppercase tracking-[0.2em]" style={{ color: soft, fontSize: 'calc(11px * var(--fs-foot, 1))' }}>
+        <footer data-name="Footer" id="footer" className="px-6 pb-12 pt-6 text-center uppercase tracking-[0.2em]" style={{ color: soft, fontSize: 'calc(11px * var(--fs-foot, 1))' }}>
           {t.text.footer && <p className="el-ft_line mb-3 whitespace-pre-line normal-case tracking-normal" style={{ fontSize: 'calc(13px * var(--fs-foot, 1))' }}>{t.text.footer}</p>}
           <span className="el-ft_copy">{'© ' + (t.text.copyright ? t.text.copyright.replace(/\{year\}/g, String(new Date().getFullYear())) : `${new Date().getFullYear()} ${name}`).replace(/^\s*©\s*/, '')}</span> · <a href="https://camrhia.com" style={{ color: accent }}>Powered by Camrhia</a>
         </footer>
