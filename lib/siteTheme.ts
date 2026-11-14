@@ -522,6 +522,7 @@ export function resolveTheme(r: Record<string, any>) {
     pagesOff,
     aboutBtnText: (str(s.aboutBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability') as string,
     galBtnText: (str(s.galBtn?.text) ?? str(s.hero?.cta_text) ?? 'Check availability') as string,
+    galBtnLink: (str(s.galBtn?.link) ?? '') as string,
     backText: Object.fromEntries(['galleries', 'about', 'book'].map((pg) => [pg, str((s.backBtn ?? {})[pg]?.text)])) as Record<string, string | null>,
     socialHidden: (Array.isArray(s.socials_off) ? s.socials_off : []) as string[],
     galText: (s.galtext && typeof s.galtext === 'object' ? s.galtext : {}) as Record<string, { name?: string; line?: string }>,

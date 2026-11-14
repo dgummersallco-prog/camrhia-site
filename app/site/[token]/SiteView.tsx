@@ -695,14 +695,14 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         return sec('portfolio', L === 'checker' || GL.includes(L) ? null : t.titles.portfolio,
           <>
             {GL.includes(L) ? (
-              <div className="mx-auto max-w-5xl">
-                <h1 className="mb-10 text-center" style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)', color: L === 'jasper' ? '#f3ead8' : undefined }}>{t.titles.portfolio}</h1>
+              <div className="mx-auto" style={{ maxWidth: ['amber', 'garnet'].includes(L) ? 1280 : 1600 }}>
+                {L !== 'jasper' && <h1 className="mb-10 text-center" style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)' }}>{t.titles.portfolio}</h1>}
                 {L === 'jade' && (
                   <div className="space-y-4">
                     {list[0] && (() => { const c = gc(list[0]); return (
                       <a href={c.href} className="group relative block overflow-hidden" style={{ aspectRatio: '21/9', background: '#E5E1DB' }}>{gim(c.u)}{shade}<p className="el-gal_name absolute bottom-5 left-6 text-white" style={{ ...headStyle, fontSize: '2rem' }}>{list[0].title}</p></a>
                     ) })()}
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                       {list.slice(1).map((g) => { const c = gc(g); return (
                         <a key={g.id} href={c.href} className="group block"><div className="relative overflow-hidden" style={{ aspectRatio: '4/3', background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-2 text-center" style={{ ...headStyle, fontSize: '1.25rem' }}>{g.title}</p></a>
                       ) })}
@@ -710,8 +710,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   </div>
                 )}
                 {L === 'jasper' && (
-                  <div className="rounded-lg p-5 sm:p-8" style={{ background: '#1a1613' }}>
-                    <div className="columns-1 gap-4 sm:columns-3">
+                  <div className="px-5 py-12 sm:px-10" style={{ background: '#1a1613', width: '100vw', marginLeft: 'calc(50% - 50vw)' }}>
+                    <h1 className="mb-10 text-center" style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)', color: '#f3ead8' }}>{t.titles.portfolio}</h1>
+                    <div className="mx-auto columns-1 gap-4 sm:columns-3 xl:columns-4 2xl:columns-5" style={{ maxWidth: 1800 }}>
                       {list.map((g, i) => { const c = gc(g); return (
                         <a key={g.id} href={c.href} className="group relative mb-4 block break-inside-avoid overflow-hidden" style={{ aspectRatio: ['4/5', '1/1', '3/4'][i % 3], background: '#2b241f' }}>{gim(c.u)}{shade}<p className="el-gal_name absolute bottom-4 left-4 text-white" style={{ ...headStyle, fontSize: '1.4rem' }}>{g.title}</p></a>
                       ) })}
@@ -733,23 +734,23 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   </div>
                 )}
                 {L === 'pearl' && (
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
                     {list.map((g) => { const c = gc(g); return (
                       <a key={g.id} href={c.href} className="group block"><div className="relative aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 text-center text-xs uppercase tracking-[0.25em]" style={{ fontFamily: t.body }}>{g.title}</p></a>
                     ) })}
                   </div>
                 )}
                 {L === 'ruby' && (
-                  <div className="space-y-3">
+                  <div className="space-y-1" style={{ width: '100vw', marginLeft: 'calc(50% - 50vw)' }}>
                     {list.map((g) => { const c = gc(g); return (
-                      <a key={g.id} href={c.href} className="group relative flex items-center justify-center overflow-hidden" style={{ aspectRatio: '21/8', background: '#E5E1DB' }}>{gim(c.u)}<div className="absolute inset-0 bg-black/30" /><p className="el-gal_name relative text-center text-white" style={{ ...headStyle, fontSize: 'clamp(2.2rem, 7vw, 5rem)', lineHeight: 1 }}>{g.title}</p></a>
+                      <a key={g.id} href={c.href} className="group relative flex items-center justify-center overflow-hidden" style={{ height: 'clamp(240px, 32vw, 520px)', background: '#E5E1DB' }}>{gim(c.u)}<div className="absolute inset-0 bg-black/30" /><p className="el-gal_name relative text-center text-white" style={{ ...headStyle, fontSize: 'clamp(2.2rem, 7vw, 5rem)', lineHeight: 1 }}>{g.title}</p></a>
                     ) })}
                   </div>
                 )}
                 {L === 'topaz' && (
                   <div className="flex flex-wrap justify-center gap-8">
                     {list.map((g, i) => { const c = gc(g); return (
-                      <a key={g.id} href={c.href} className="group block w-[44%] bg-white p-3 pb-10 shadow-lg transition hover:rotate-0 sm:w-[30%]" style={{ transform: `rotate(${[-3, 2, -1.5, 3][i % 4]}deg)` }}><div className="relative aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 text-center italic text-black" style={{ ...headStyle, fontSize: '1.25rem' }}>{g.title}</p></a>
+                      <a key={g.id} href={c.href} className="group block w-[44%] bg-white p-3 pb-10 shadow-lg transition hover:rotate-0 sm:w-[30%] xl:w-[22%]" style={{ transform: `rotate(${[-3, 2, -1.5, 3][i % 4]}deg)` }}><div className="relative aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 text-center italic text-black" style={{ ...headStyle, fontSize: '1.25rem' }}>{g.title}</p></a>
                     ) })}
                   </div>
                 )}
@@ -766,24 +767,24 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   </div>
                 )}
                 {L === 'agate' && (
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
                     {list.map((g) => { const c = gc(g); return (
                       <a key={g.id} href={c.href} className="group block text-center"><div className="relative overflow-hidden" style={{ aspectRatio: '3/4', borderRadius: '9999px 9999px 0 0', background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3" style={{ ...headStyle, fontSize: '1.2rem', color: accent }}>{g.title}</p>{g.line && <p className="el-gal_count text-[10px] uppercase tracking-[0.2em]" style={{ color: soft }}>{g.line}</p>}</a>
                     ) })}
                   </div>
                 )}
                 {L === 'quartz' && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6">
                     {list.map((g) => { const c = gc(g); return (
                       <a key={g.id} href={c.href} className="group relative block aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}<p className="el-gal_name absolute inset-x-0 bottom-0 bg-black/55 px-2 py-1.5 text-center text-[11px] uppercase tracking-[0.15em] text-white">{g.title}</p></a>
                     ) })}
                   </div>
                 )}
                 {L === 'moonstone' && (
-                  <div className="grid gap-x-10 sm:grid-cols-2">
-                    {[0, 1].map((col) => (
-                      <div key={col} className={'space-y-10 ' + (col === 1 ? 'sm:mt-20' : '')}>
-                        {list.filter((_, i) => i % 2 === col).map((g, j) => { const c = gc(g); return (
+                  <div className="grid gap-x-10 sm:grid-cols-3">
+                    {[0, 1, 2].map((col) => (
+                      <div key={col} className={'space-y-10 ' + (col === 1 ? 'sm:mt-20' : col === 2 ? 'sm:mt-10' : '')}>
+                        {list.filter((_, i) => i % 3 === col).map((g, j) => { const c = gc(g); return (
                           <a key={g.id} href={c.href} className="group block"><div className="relative overflow-hidden" style={{ aspectRatio: j % 2 ? '1/1' : '4/5', background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 italic" style={{ ...headStyle, fontSize: '1.2rem' }}>{g.title}</p></a>
                         ) })}
                       </div>
@@ -1147,7 +1148,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             <p className="el-con_msg mb-8 whitespace-pre-line leading-relaxed" style={{ color: soft, fontSize: fsp('fs-contact', 15) }}>
               {t.text.contact ?? 'Tell me about your day. Check a date and send me a message.'}
             </p>
-            <div className="mb-10"><a href={availHref} className="cr-btn ct-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="closing-btn">{t.text.contactBtn}</a></div>
+            <div className="mb-10"><a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="closing-btn">{t.text.contactBtn}</a></div>
             {socials.length > 0 && (
               <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
                 {socials.map((s) => (
@@ -1159,7 +1160,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           </div>, tinted)
       case 'aboutcta':
         return sec('aboutcta', null,
-          <div className="text-center"><a href={availHref} id="about-btn" className="cr-btn ab-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.aboutBtnText}</a></div>, tinted)
+          <div className="text-center"><a href={resolveLink((r as any).site_settings?.aboutBtn?.link, availHref)} id="about-btn" className="cr-btn ab-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.aboutBtnText}</a></div>, tinted)
       default: {
         const cs = t.customs.find((x) => x.id === k)
         if (!cs) return null
@@ -1515,7 +1516,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       {extraFontsHref && <link rel="stylesheet" href={extraFontsHref} />}
       {secCss && <style dangerouslySetInnerHTML={{ __html: secCss }} />}
       {(() => { const cc = sanitizeCss((r as any).site_settings?.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
-      <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${pageBg ?? bg}}`}</style>
+      <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${pageBg ?? bg}}body{overflow-x:clip}`}</style>
       <PortfolioLightbox />
       <div style={{ background: pageBg ?? bg, color: ink, fontFamily: t.body }}>
         {page !== 'home' ? <SiteNav t={t} logo={logo} name={name} homeHref={hrefs.home} headStyle={headStyle} pageBg={pageBg} items={navItems} /> : null}
@@ -2384,7 +2385,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         ))}
 
         {page === 'galleries' && visible.length > 0 && (
-          <div className="px-6 pb-12 pt-4 text-center"><a href={availHref} id="gal-btn" className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.galBtnText}</a></div>
+          <div className="px-6 pb-12 pt-4 text-center"><a href={resolveLink((r as any).site_settings?.galBtn?.link, availHref)} id="gal-btn" className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.galBtnText}</a></div>
         )}
 
         <footer data-name="Footer" id="footer" className="px-6 pb-12 pt-6 text-center uppercase tracking-[0.2em]" style={{ color: soft, fontSize: 'calc(11px * var(--fs-foot, 1))' }}>

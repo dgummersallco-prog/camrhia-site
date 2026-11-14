@@ -132,7 +132,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
               return null
             }}
             renderButton={(label) => (
-              <Link href={`${base}/availability${qs}`} className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>{label}</Link>
+              <Link href={galLink(t.galBtnLink, base, qs, homeHref)} className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>{label}</Link>
             )}
           />) : (<div className={layout === 'egret' ? 'md:grid md:grid-cols-[260px_1fr] md:gap-12' : 'flex flex-col gap-14'}>
           {layout === 'egret' && (
@@ -168,7 +168,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
 
         {t.galpage.showButton && layout !== 'custom' && (
           <div className="mt-14 text-center">
-            <Link href={`${base}/availability${qs}`} id="gal-btn" className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>
+            <Link href={galLink(t.galBtnLink, base, qs, homeHref)} id="gal-btn" className="cr-btn gb-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ background: accent, color: t.btnText, borderRadius: t.radius }}>
               {t.galBtnText}
             </Link>
           </div>
@@ -192,4 +192,14 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
       </footer>
     </>
   )
+}
+
+function galLink(gl: string | undefined, base: string, qs: string, homeHref: string): string {
+  const x = String(gl ?? '').trim()
+  if (x === 'galleries') return `${base}/galleries${qs}`
+  if (x === 'about') return `${base}/about${qs}`
+  if (x === 'home') return `${homeHref}${qs}`
+  if (x.startsWith('g:')) return `${base}/g/${x.slice(2)}${qs}`
+  if (/^https?:\/\//i.test(x)) return x
+  return `${base}/availability${qs}`
 }

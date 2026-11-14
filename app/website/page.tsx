@@ -1,5 +1,6 @@
 'use client'
 
+import { GoesTo } from './GoesTo'
 import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
@@ -2114,6 +2115,7 @@ export default function WebsitePage() {
                   <div>
                     <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
                     <input value={S.contactBtn?.text ?? ''} onChange={(e) => setIn('contactBtn', { text: e.target.value })} placeholder={S.hero?.cta_text || 'Check availability'} className={inputCls} />
+<GoesTo value={S.contactBtn?.link ?? ''} onChange={(l) => setIn('contactBtn', { link: l })} inputCls={inputCls} />
                   </div>
                   <ColorField label="Button color" value={S.contactBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
                     onChange={(h) => setIn('contactBtn', { bg: h })}
@@ -2211,6 +2213,7 @@ export default function WebsitePage() {
 <div>
   <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
   <input value={S.galBtn?.text ?? ''} onChange={(e) => setIn('galBtn', { text: e.target.value })} placeholder={S.hero?.cta_text || 'Check availability'} className={inputCls} />
+<GoesTo value={S.galBtn?.link ?? ''} onChange={(l) => setIn('galBtn', { link: l })} inputCls={inputCls} />
 </div>
 <ColorField label="Button color" value={S.galBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
   onChange={(h) => setIn('galBtn', { bg: h })}
@@ -2430,6 +2433,7 @@ export default function WebsitePage() {
 <div>
   <label className="mb-1 block text-xs font-medium text-ink">Button wording</label>
   <input value={S.aboutBtn?.text ?? ''} onChange={(e) => setIn('aboutBtn', { text: e.target.value })} placeholder={S.hero?.cta_text || 'Check availability'} className={inputCls} />
+<GoesTo value={S.aboutBtn?.link ?? ''} onChange={(l) => setIn('aboutBtn', { link: l })} inputCls={inputCls} />
 </div>
 <ColorField label="Button color" value={S.aboutBtn?.bg ?? form.site_accent ?? brandHex()} swatches={palette()}
   onChange={(h) => setIn('aboutBtn', { bg: h })}

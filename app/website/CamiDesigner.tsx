@@ -400,6 +400,16 @@ export default function CamiDesigner() {
         if (st) { n.site_template = st.tpl; n.site_font_pair = st.pair; clearFontOverrides(x); resetLook(x); applyPalette(n, (st as any).acc ?? n.site_accent ?? '#C98A8D', st.bg, st.text); x.button = { ...(x.button ?? {}), shape: (st as any).shape ?? 'square' } }
       }
     }
+    if (kc.button) {
+      const { which, text, goes_to } = kc.button
+      const key = which === 'closing' ? 'contactBtn' : which === 'gallery' ? 'galBtn' : which === 'about' || which === 'booking' ? 'aboutBtn' : ''
+      if (key) {
+        const b = { ...(x[key] ?? {}) }
+        if (typeof text === 'string' && text.trim()) b.text = text.trim()
+        if (typeof goes_to === 'string' && goes_to.trim()) b.link = goes_to.trim() === 'booking' ? '' : goes_to.trim()
+        x[key] = b
+      }
+    }
     if (kc.palette) { const p = (k.palettes ?? []).find((q: any) => q.name === kc.palette); if (p) applyPalette(n, p.accent, p.bg, p.text) }
     if (kc.fonts) {
       const ts = TYPE_SETS.find((t) => t.key === kc.fonts)
