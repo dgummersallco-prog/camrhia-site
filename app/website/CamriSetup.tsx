@@ -150,7 +150,7 @@ export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0])
 }
 
 const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
-  { k: 'nav', title: 'Nav section', rows: ['Nav section designs'] },
+  { k: 'nav', title: 'Explore section', rows: ['Explore section designs'] },
   { k: 'galleries', title: 'Galleries', rows: ['Page designs', 'Section designs'] },
   { k: 'book', title: 'Booking page', rows: ['Page designs'] },
   { k: 'testimonials', title: 'Testimonials', rows: ['Page designs', 'Section designs'] },

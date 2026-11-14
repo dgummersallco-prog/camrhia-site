@@ -723,7 +723,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   }
 
   const exploreEl = doors.length > 0 && ex.show !== false ? (
-          <section data-name="Nav section" id="explore" className="px-6 py-16">
+          <section data-name="Explore section" id="explore" className="px-6 py-16">
           <div className="mx-auto max-w-6xl">
             {ex.heading?.trim() && (
               <p className="el-ex_label mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
