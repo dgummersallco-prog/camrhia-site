@@ -625,10 +625,11 @@ export default function CamiDesigner() {
         onCancel={review ? () => { setReview(false); setSetupFinished(true) } : undefined}
         initial={review ? (() => { const k0: any = (form.site_settings as any)?.kit ?? {}; return { layouts: (k0.layouts ?? []) as string[], palettes: ((k0.palettes ?? []) as any[]).map((q) => ({ name: String(q.name), accent: String(q.accent), bg: String(q.bg), text: String(q.text) })), fonts: (k0.fonts ?? []) as string[], type: k0.type ?? undefined } })() : undefined}
         onSkip={() => setSetupSkipped(true)}
-        onFinish={async (kit, struct, links) => {
+        onFinish={async (kit, struct, links, designs) => {
           await commit((n) => {
             const x = (n.site_settings = n.site_settings ?? {})
             x.structure = struct
+            if (designs?.nav) x.explore = { ...(x.explore ?? {}), layout: designs.nav }
             const nn = n as any
             nn.instagram_url = links.instagram_url.trim() || null
             nn.facebook_url = links.facebook_url.trim() || null

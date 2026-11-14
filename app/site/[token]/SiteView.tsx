@@ -166,7 +166,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     .map((k) => ({ key: k, href: hrefs[k], label: (t.menu.labels as Record<string, string | undefined>)[k]?.trim() || (NAV_DEFAULTS as Record<string, string>)[k] || t.extraPages.find((e) => e.id === k)?.label || k, active: k === page }))
 
   const ex = ((r as any).site_settings?.explore ?? {}) as { show?: boolean; layout?: string; heading?: string; lines?: Record<string, string>; titles?: Record<string, string> }
-  const exLayout = ['lines', 'tiles', 'list', 'cards', 'stack', 'outline', 'free'].includes(String(ex.layout)) ? String(ex.layout) : 'lines'
+  const exLayout = ['lines', 'tiles', 'list', 'cards', 'stack', 'outline', 'free', 'birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech'].includes(String(ex.layout)) ? String(ex.layout) : 'lines'
   const doors = [
     ...(galleries.length > 0 ? [{ k: 'galleries', href: hrefs.galleries, t: ex.titles?.galleries?.trim() || t.menu.labels.galleries?.trim() || NAV_DEFAULTS.galleries, s: ex.lines?.galleries?.trim() || 'See my work' }] : []),
     { k: 'about', href: hrefs.about, t: ex.titles?.about?.trim() || t.menu.labels.about?.trim() || NAV_DEFAULTS.about, s: ex.lines?.about?.trim() || 'Get to know me' },
@@ -717,8 +717,13 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     window.parent?.postMessage({ type: 'camrhia-featured', list }, '*')
   }, [isPreview, galleries])
 
+  const doorPic = (k: string, i: number): string | null => {
+    const own = k === 'galleries' ? (galleries[0] ? galleryCover(galleries[0] as any) : null) : k === 'about' ? ((aboutPhoto as any) || null) : null
+    return (own as string | null) || pickPics(3)[i] || null
+  }
+
   const exploreEl = doors.length > 0 && ex.show !== false ? (
-          <section data-name="Explore section" id="explore" className="px-6 py-16">
+          <section data-name="Nav section" id="explore" className="px-6 py-16">
           <div className="mx-auto max-w-6xl">
             {ex.heading?.trim() && (
               <p className="el-ex_label mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
@@ -746,6 +751,181 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 }}
               />
             )}
+
+            {exLayout === 'birch' && (
+              <div className="grid gap-3 md:grid-cols-2 md:grid-rows-2 md:h-[560px]">
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className={'relative block min-h-[240px] overflow-hidden ' + (i === 0 || doors.length === 2 ? 'md:row-span-2' : '')} style={{ background: tint, borderRadius: t.radius }}>
+                    {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />
+                    <span className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm" style={{ color: '#2A1F24' }}>→</span>
+                    <p className="ex-t el-ex_title absolute bottom-5 left-6 text-3xl text-white sm:text-4xl" style={headStyle}>{b.t}</p>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'willow' && (
+              <div style={{ borderTop: `1px solid ${line}` }}>
+                {doors.map((b, i) => {
+                  const last = i === doors.length - 1
+                  return (
+                    <a key={b.href} href={b.href} className="flex items-center gap-5 px-2 py-6 transition hover:opacity-80 sm:px-6" style={{ borderBottom: `1px solid ${line}`, background: last ? accent : undefined, color: last ? '#fff' : undefined }}>
+                      <span className="w-8 text-sm tracking-[0.2em]" style={{ color: last ? '#fff' : accent }}>{String(i + 1).padStart(2, '0')}</span>
+                      <span className="ex-t el-ex_title flex-1 text-5xl sm:text-7xl" style={{ ...headStyle, fontWeight: 300, lineHeight: 1.05 }}>{b.t}</span>
+                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="hidden h-[84px] w-[140px] object-cover sm:block" style={{ borderRadius: t.radius }} />}
+                      <span className="text-xl">→</span>
+                    </a>
+                  )
+                })}
+              </div>
+            )}
+
+            {exLayout === 'aspen' && (
+              <div className="grid items-end gap-6 sm:grid-cols-3">
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className={'block text-center ' + (i % 2 === 0 && doors.length === 3 ? 'sm:mt-10' : '')}>
+                    <div className="aspect-[3/4] overflow-hidden" style={{ borderRadius: '9999px 9999px 0 0', background: tint }}>
+                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="h-full w-full object-cover" />}
+                    </div>
+                    <div className="mt-4 flex items-center justify-center gap-3">
+                      <p className="ex-t el-ex_title text-2xl sm:text-3xl" style={headStyle}>{b.t}</p>
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs text-white" style={{ background: accent }}>→</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'alder' && (
+              <div className="grid h-[520px] sm:grid-cols-[1fr_1.25fr_1fr]">
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="relative block min-h-[240px] overflow-hidden" style={{ background: tint }}>
+                    {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />
+                    <div className="absolute inset-x-0 bottom-6 text-center text-white">
+                      <div className="mx-auto mb-3 h-px w-10 bg-white" />
+                      <p className="ex-t el-ex_title text-3xl sm:text-4xl" style={headStyle}>{b.t}</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'maple' && (
+              <div className="grid gap-3">
+                {doors.length > 0 && (
+                  <a href={doors[0].href} className="relative block h-[300px] overflow-hidden sm:h-[340px]" style={{ background: tint, borderRadius: t.radius }}>
+                    {doorPic(doors[0].k, 0) && <img src={doorPic(doors[0].k, 0) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />
+                    <p className="ex-t el-ex_title absolute bottom-5 left-6 text-4xl text-white sm:text-6xl" style={headStyle}>{doors[0].t}</p>
+                    <span className="absolute bottom-6 right-6 flex h-10 w-10 items-center justify-center rounded-full bg-white" style={{ color: '#2A1F24' }}>→</span>
+                  </a>
+                )}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {doors.slice(1).map((b, j) => {
+                    const solid = j === doors.length - 2
+                    return (
+                      <a key={b.href} href={b.href} className="relative block h-[220px] overflow-hidden" style={{ background: solid ? accent : tint, borderRadius: t.radius }}>
+                        {!solid && doorPic(b.k, j + 1) && <img src={doorPic(b.k, j + 1) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                        {!solid && <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />}
+                        <p className="ex-t el-ex_title absolute bottom-5 left-6 text-3xl text-white sm:text-4xl" style={headStyle}>{b.t}</p>
+                        <span className="absolute bottom-6 right-6 text-xl text-white">→</span>
+                      </a>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {exLayout === 'elm' && (
+              <div className="flex flex-col items-center gap-6 py-4 sm:flex-row sm:justify-center sm:gap-0">
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="block w-full max-w-[300px] bg-white p-3 pb-9 text-center shadow-lg sm:-mx-3 sm:w-[32%]" style={{ transform: 'rotate(' + [-3, 0, 3][i % 3] + 'deg)', zIndex: i % 3 === 1 ? 10 : 1, color: '#2A1F24' }}>
+                    <div className="aspect-[4/5] overflow-hidden" style={{ background: tint }}>
+                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="h-full w-full object-cover" />}
+                    </div>
+                    <p className="ex-t el-ex_title mt-4 text-2xl" style={headStyle}>{b.t}</p>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'hawthorn' && (
+              <div className="grid gap-10 sm:grid-cols-3">
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="block text-center">
+                    <div className="relative mx-auto aspect-square w-full max-w-[280px]">
+                      <div className="absolute inset-0 rounded-full" style={{ border: `1px solid ${accent}`, transform: 'translate(10px, -8px) scale(1.04)' }} />
+                      <div className="absolute inset-0 overflow-hidden rounded-full" style={{ background: tint }}>
+                        {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="h-full w-full object-cover" />}
+                      </div>
+                    </div>
+                    <p className="ex-t el-ex_title mt-6 text-2xl sm:text-3xl" style={headStyle}>{b.t}</p>
+                    <div className="mx-auto mt-2 h-px w-10" style={{ background: accent }} />
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'linden' && (
+              <div className="grid gap-5 sm:grid-cols-3">
+                {doors.map((b, i) => (
+                  <a key={b.href} href={b.href} className="block overflow-hidden bg-white transition hover:-translate-y-1" style={{ borderRadius: 14, color: '#2A1F24' }}>
+                    <div className="aspect-[4/3.3] overflow-hidden" style={{ background: tint }}>
+                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="h-full w-full object-cover" />}
+                    </div>
+                    <div className="flex items-center justify-between px-5 py-4">
+                      <p className="ex-t el-ex_title text-2xl" style={headStyle}>{b.t}</p>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full text-sm text-white" style={{ background: accent }}>→</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {exLayout === 'rowan' && (
+              <div className="p-3 sm:p-5" style={{ background: '#1F1B18', borderRadius: t.radius }}>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {doors.map((b, i) => (
+                    <a key={b.href} href={b.href} className="relative block aspect-[3/4] overflow-hidden" style={{ background: '#2A2622' }}>
+                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: 'saturate(0.8)' }} />}
+                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0) 55%)' }} />
+                      <div className="absolute bottom-5 left-5">
+                        <p className="text-xs tracking-[0.2em]" style={{ color: '#C9A24D' }}>{String(i + 1).padStart(2, '0')}</p>
+                        <div className="my-2 h-px w-8" style={{ background: '#C9A24D' }} />
+                        <p className="ex-t el-ex_title text-3xl sm:text-4xl" style={{ ...headStyle, color: '#F3ECE2' }}>{b.t}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {exLayout === 'beech' && (() => {
+              const bk = doors.find((d) => d.k === 'book') ?? doors[doors.length - 1]
+              const rest = doors.filter((d) => d !== bk)
+              return (
+                <div className="grid gap-4 md:h-[520px] md:grid-cols-[3fr_2fr]">
+                  <a href={bk.href} className="relative block min-h-[320px] overflow-hidden" style={{ background: tint, borderRadius: t.radius }}>
+                    {doorPic(bk.k, doors.indexOf(bk)) && <img src={doorPic(bk.k, doors.indexOf(bk)) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 60%)' }} />
+                    <div className="absolute bottom-6 left-6">
+                      <p className="ex-t el-ex_title text-5xl text-white sm:text-7xl" style={headStyle}>{bk.t}</p>
+                      <span className="cr-btn mt-4 inline-block px-7 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ ...btnStyle, background: accent, color: '#fff' }}>{bk.s}</span>
+                    </div>
+                  </a>
+                  <div className="flex flex-col gap-4">
+                    {rest.map((b) => (
+                      <a key={b.href} href={b.href} className="flex min-h-[120px] flex-1 items-center justify-between bg-white px-7 transition hover:-translate-y-0.5" style={{ border: `1px solid ${line}`, borderRadius: t.radius, color: '#2A1F24' }}>
+                        <p className="ex-t el-ex_title text-3xl" style={headStyle}>{b.t}</p>
+                        <span className="text-xl" style={{ color: accent }}>→</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
 
             {exLayout === 'lines' && (
               <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>

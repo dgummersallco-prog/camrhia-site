@@ -36,7 +36,7 @@ function toggle(list: string[], v: string, max: number) {
 function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, links: linksIn, fontList, initial, startStep, onCancel, onFinish, onSkip }: {
   styles: Style[]; palettes: Pal[]; typeSets: TypeSet[]; pages: PageDef[]; structure: Struct; links: Links; fontList: FontItem[]; initial?: { layouts: string[]; palettes: Pal[]; fonts: string[]; type?: FontPick }; startStep?: number; onCancel?: () => void
   fam: (k: string) => string
-  onFinish: (kit: Kit, structure: Struct, links: Links) => Promise<void>
+  onFinish: (kit: Kit, structure: Struct, links: Links, designs: Record<string, string>) => Promise<void>
   onSkip: () => void
 }) {
   const [step, setStep] = useState(startStep ?? 0)
@@ -46,6 +46,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   const [fp, setFp] = useState<FontPick>(initial?.type ?? { title: [], subtitle: [], paragraph: [] })
   const [struct, setStruct] = useState<Struct>(cleanStruct(structure))
   const [ls, setLs] = useState<Links>(linksIn)
+  const [designs, setDesigns] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
 
   
@@ -59,7 +60,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     
     
     const pagesOut = ['home', 'book', ...(struct.off.includes('galleries') ? [] : ['galleries']), ...(struct.off.includes('about') ? [] : ['about']), ...struct.extra.map((e) => e.id)]
-    await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, pages: pagesOut, extra_pages: '', themes: [] }, struct, ls)
+    await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, pages: pagesOut, extra_pages: '', themes: [] }, struct, ls, designs)
     setBusy(false)
   }
 
@@ -115,7 +116,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         {step === 2 && (
           <div className="space-y-16">
             <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} />
-            <DesignPlaceholders />
+            <DesignPlaceholders designs={designs} setDesigns={setDesigns} />
           </div>
         )}
 
@@ -149,7 +150,7 @@ export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0])
 }
 
 const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
-  { k: 'nav', title: 'Nav bar', rows: ['Nav bar designs'] },
+  { k: 'nav', title: 'Nav section', rows: ['Nav section designs'] },
   { k: 'galleries', title: 'Galleries', rows: ['Page designs', 'Section designs'] },
   { k: 'book', title: 'Booking page', rows: ['Page designs'] },
   { k: 'testimonials', title: 'Testimonials', rows: ['Page designs', 'Section designs'] },
@@ -159,7 +160,9 @@ const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'faq', title: 'FAQ', rows: ['Page designs', 'Section designs'] },
 ]
 
-function DesignPlaceholders() {
+const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+
+function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {
   return (
     <div className="space-y-14">
       {DESIGN_SECTIONS.map((sec) => (
@@ -168,11 +171,26 @@ function DesignPlaceholders() {
           {sec.rows.map((row) => (
             <div key={row} className="mt-6">
               <p className="text-xs uppercase tracking-wider text-ink-soft">{row}</p>
-              <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-3">
-                {[1, 2, 3].map((n) => (
-                  <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
-                ))}
-              </div>
+              {sec.k === 'nav' ? (
+                <div className="mt-3 grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+                  {NAV_DESIGNS.map((d) => {
+                    const on = designs.nav === d.key
+                    return (
+                      <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, nav: on ? '' : d.key })}>
+                        <p className="mb-2 text-sm font-medium text-ink">{d.name}</p>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={'/explore/' + d.key + '.png'} alt="" className={'w-full rounded-lg border-2 ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-3">
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
