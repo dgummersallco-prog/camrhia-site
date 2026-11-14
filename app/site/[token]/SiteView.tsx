@@ -1460,6 +1460,184 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </section>
           </>
         )}
+        {page === 'home' && tpl === 'iris' && (
+          <>
+            <header data-name="Cover" id="top" className="relative">
+              <div className="relative aspect-[4/5] overflow-hidden md:aspect-[16/10]">
+                {heroImg('absolute inset-0 h-full w-full')}
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0) 38%, rgba(0,0,0,0.45))' }} />
+                {renderNav(true, true)}
+                <div className="absolute inset-x-0 top-20 px-6 text-center">
+                  <h1 style={{ ...h1Big, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{headline}</h1>
+                </div>
+                <div className="absolute bottom-6 left-6 max-w-xs text-white">
+                  <p className="text-[11px] uppercase tracking-[0.25em]">{subhead || cityLine}</p>
+                  <div className="mt-4">{cta()}</div>
+                </div>
+              </div>
+            </header>
+            <section className="mx-auto max-w-6xl px-6 py-14">
+              <div className="grid gap-6 md:grid-cols-3">
+                {pickPics(3).map((u, i) => (
+                  <div key={u + i}>
+                    <div className="aspect-[3/4] overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>
+                    <p className="mt-3 text-[11px] uppercase tracking-[0.25em]" style={{ color: soft }}>{'No. 0' + (i + 1)}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mx-auto mt-10 max-w-xl text-center text-[14px] leading-relaxed" style={{ color: soft }}>{aboutText(140)}</p>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'poppy' && (
+          <>
+            <div style={{ background: '#000' }}>
+              <header data-name="Cover" id="top" className="relative">
+                {renderNav(true, false)}
+                <div className="relative mx-auto aspect-[21/9] min-h-[50vh] max-w-none overflow-hidden" style={{ marginTop: 0 }}>
+                  {heroImg('absolute inset-0 h-full w-full')}
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />
+                  <div className="absolute bottom-8 left-8 right-8 text-white">
+                    <h1 style={{ ...h1Mid, color: '#fff' }}>{headline}</h1>
+                    <div className="mt-4">{cta()}</div>
+                  </div>
+                </div>
+              </header>
+            </div>
+            <section className="px-6 py-14" style={{ background: '#0B0B0B', color: '#EDE7DE' }}>
+              <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-3">
+                {pickPics(3).map((u, i) => <div key={u + i} className="aspect-video overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>)}
+              </div>
+              <p className="mx-auto mt-10 max-w-xl text-center text-[14px] leading-relaxed opacity-70">{aboutText(130)}</p>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'thistle' && (
+          <>
+            <header data-name="Cover" id="top" style={{ background: tint }}>
+              {renderNav(false, false)}
+              <div className="grid md:grid-cols-[3fr_2fr]" style={{ minHeight: 'calc(var(--hero-h) * 0.9)' }}>
+                <div className="relative min-h-[50vh]" style={{ clipPath: 'polygon(0 0, 100% 0, 84% 100%, 0 100%)' }}>
+                  {heroImg('absolute inset-0 h-full w-full')}
+                </div>
+                <div className="flex flex-col justify-center px-8 py-10 md:pl-4">
+                  <h1 style={h1Mid}>{headline}</h1>
+                  <p className="mt-3 text-[14px] leading-relaxed" style={{ color: soft }}>{subhead}</p>
+                  <div className="mt-6">{cta(true)}</div>
+                </div>
+              </div>
+            </header>
+            <section className="mx-auto max-w-6xl px-6 py-14">
+              <div className="grid gap-4 md:grid-cols-3">
+                {pickPics(3).map((u, i) => <div key={u + i} className="aspect-[4/5] overflow-hidden" style={{ clipPath: 'polygon(12% 0, 100% 0, 88% 100%, 0 100%)' }}><img src={u} alt="" className="h-full w-full object-cover" /></div>)}
+              </div>
+              <p className="mx-auto mt-10 max-w-xl text-center text-[14px] leading-relaxed" style={{ color: soft }}>{aboutText(130)}</p>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'clover' && (
+          <>
+            <header data-name="Cover" id="top">
+              {renderNav(false, true)}
+              <div className="mx-auto max-w-5xl px-6 pb-6 pt-2">
+                <div className="relative aspect-[16/10] bg-white p-3 shadow-lg">
+                  <div className="relative h-full w-full overflow-hidden">
+                    {heroImg('absolute inset-0 h-full w-full')}
+                    <div className="absolute bottom-4 left-4">{cta()}</div>
+                  </div>
+                </div>
+                <h1 className="mt-6 text-center" style={h1Mid}>{headline}</h1>
+              </div>
+            </header>
+            <section className="mx-auto max-w-6xl px-6 py-12">
+              <div className="flex flex-wrap justify-center gap-6">
+                {pickPics(5).map((u, i) => (
+                  <div key={u + i} className="w-40 bg-white p-2 pb-8 shadow-md md:w-48" style={{ transform: 'rotate(' + [-4, 3, -2, 5, -3][i % 5] + 'deg)' }}>
+                    <div className="aspect-square overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>
+                    <p className="mt-2 text-center text-[11px]" style={{ color: soft }}>{name}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'mimosa' && (
+          <>
+            <header data-name="Cover" id="top">
+              {renderNav(false, false)}
+              <div className="mx-auto max-w-6xl px-6 pb-8 pt-2">
+                <div className="relative aspect-[16/9] overflow-hidden">
+                  {heroImg('absolute inset-0 h-full w-full')}
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0) 50%)' }} />
+                  <div className="absolute bottom-6 left-6 text-white">
+                    <h1 style={{ ...h1Mid, color: '#fff' }}>{headline}</h1>
+                    <div className="mt-3">{cta()}</div>
+                  </div>
+                </div>
+              </div>
+            </header>
+            <section className="mx-auto max-w-4xl px-6 py-12">
+              <div className="relative">
+                <div className="absolute bottom-0 left-1/2 top-0 hidden w-px md:block" style={{ background: line }} />
+                {pickPics(3).map((u, i) => (
+                  <div key={u + i} className={'relative mb-10 grid items-center gap-6 md:grid-cols-2 ' + (i % 2 ? 'md:[direction:rtl]' : '')}>
+                    <div className="aspect-[4/3] overflow-hidden"><img src={u} alt="" className="h-full w-full object-cover" /></div>
+                    <div style={{ direction: 'ltr' }}>
+                      <p className="text-[11px] uppercase tracking-[0.25em]" style={{ color: accent }}>{'0' + (i + 1)}</p>
+                      <p className="mt-2 text-[14px] leading-relaxed" style={{ color: soft }}>{aboutText(90)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+        {page === 'home' && tpl === 'yarrow' && (
+          <>
+            <header data-name="Cover" id="top">
+              {renderNav(false, true)}
+              <div className="mx-auto max-w-6xl px-6 pb-8 pt-2">
+                <div className="relative aspect-[16/9] overflow-hidden">
+                  {heroImg('absolute inset-0 h-full w-full')}
+                  <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.25)' }} />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white">
+                    <h1 style={{ ...h1Mid, color: '#fff' }}>{headline}</h1>
+                    <p className="mt-2 text-[12px] uppercase tracking-[0.25em]">{subhead || cityLine}</p>
+                    <div className="mt-5">{cta()}</div>
+                  </div>
+                </div>
+              </div>
+            </header>
+            <section className="mx-auto max-w-6xl px-6 py-12">
+              <div className="grid items-center gap-8 md:grid-cols-2">
+                {(() => {
+                  const d = new Date()
+                  const y = d.getFullYear()
+                  const m = d.getMonth()
+                  const first = new Date(y, m, 1).getDay()
+                  const days = new Date(y, m + 1, 0).getDate()
+                  const mark = Math.min(14, days)
+                  const cells: number[] = [...Array(first).fill(0), ...Array.from({ length: days }, (_, i) => i + 1)]
+                  return (
+                    <div className="mx-auto w-full max-w-sm p-6" style={{ background: tint, border: '1px solid ' + line }}>
+                      <p className="text-center text-[12px] uppercase tracking-[0.25em]">{d.toLocaleString('en-US', { month: 'long' })}</p>
+                      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px]">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((w, i) => <span key={'w' + i} style={{ color: soft }}>{w}</span>)}
+                        {cells.map((c, i) => (
+                          <span key={i} className="py-1" style={c === mark ? { background: accent, color: '#fff', borderRadius: 999 } : undefined}>{c || ''}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+                <div>
+                  <div className="aspect-[4/3] overflow-hidden">{pickPics(1).map((u) => <img key={u} src={u} alt="" className="h-full w-full object-cover" />)}</div>
+                  <p className="mt-4 text-[14px] leading-relaxed" style={{ color: soft }}>{aboutText(110)}</p>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
         {page === 'home' && tpl === 'mosaic' && (
           <header data-name="Cover" id="top">
             <div className="mx-auto max-w-6xl px-4 pb-4">

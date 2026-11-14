@@ -59,6 +59,12 @@ const STYLES = [
   { key: 'saffron', name: 'Saffron', blurb: 'Numbered list beside a tall photo.', tpl: 'saffron', pair: 'serif', bg: '#F6EFE4', text: '#3A2A22', acc: '#D08A2E', shape: 'square' },
   { key: 'cypress', name: 'Cypress', blurb: 'Floating menu, photo on photo.', tpl: 'cypress', pair: 'modern', bg: '#FFFFFF', text: '#1B1B1D', acc: '#1B1B1D', shape: 'pill' },
   { key: 'laurel', name: 'Laurel', blurb: 'Framed photo with side text.', tpl: 'laurel', pair: 'modern', bg: '#E9E3DA', text: '#2A2622', acc: '#2A2622', shape: 'square' },
+  { key: 'iris', name: 'Iris', blurb: 'Magazine cover masthead.', tpl: 'iris', pair: 'serif', bg: '#F4EFE9', text: '#1F1A17', acc: '#1F1A17', shape: 'square' },
+  { key: 'poppy', name: 'Poppy', blurb: 'Cinematic letterbox.', tpl: 'poppy', pair: 'modern', bg: '#101010', text: '#F2EEE8', acc: '#C0452E', shape: 'square' },
+  { key: 'thistle', name: 'Thistle', blurb: 'Diagonal split.', tpl: 'thistle', pair: 'modern', bg: '#EEE9F2', text: '#2B2433', acc: '#6E5A87', shape: 'rounded' },
+  { key: 'clover', name: 'Clover', blurb: 'Polaroid wall.', tpl: 'clover', pair: 'romantic', bg: '#F3EFE6', text: '#2E3A2B', acc: '#5F7A52', shape: 'rounded' },
+  { key: 'mimosa', name: 'Mimosa', blurb: 'Story timeline.', tpl: 'mimosa', pair: 'romantic', bg: '#FBF3DF', text: '#3A2F1E', acc: '#D9A21B', shape: 'pill' },
+  { key: 'yarrow', name: 'Yarrow', blurb: 'Save the date.', tpl: 'yarrow', pair: 'serif', bg: '#F7F3EA', text: '#33302A', acc: '#8A8F5C', shape: 'square' },
 ]
 const PALETTES = [
   { name: 'Blush', accent: '#C98A8D', bg: '#FBF6F1', text: '#2A1F24' },
