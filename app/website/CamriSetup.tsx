@@ -112,7 +112,12 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
           </div>
         )}
 
-        {step === 2 && <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} />}
+        {step === 2 && (
+          <div className="space-y-16">
+            <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} />
+            <DesignPlaceholders />
+          </div>
+        )}
 
         {step === 3 && (
           <div>
@@ -174,6 +179,39 @@ export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0])
         <a href="/dashboard" className="rounded-full px-3 py-2 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink">← Dashboard</a>
       </div>
       <CamriSetupInner {...props} />
+    </div>
+  )
+}
+
+const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
+  { k: 'nav', title: 'Nav bar', rows: ['Nav bar designs'] },
+  { k: 'galleries', title: 'Galleries', rows: ['Page designs', 'Section designs'] },
+  { k: 'book', title: 'Booking page', rows: ['Page designs'] },
+  { k: 'testimonials', title: 'Testimonials', rows: ['Page designs', 'Section designs'] },
+  { k: 'about', title: 'About', rows: ['Page designs', 'Section designs'] },
+  { k: 'pricing', title: 'Pricing', rows: ['Page designs', 'Section designs'] },
+  { k: 'social', title: 'Social links', rows: ['Section designs'] },
+  { k: 'faq', title: 'FAQ', rows: ['Page designs', 'Section designs'] },
+]
+
+function DesignPlaceholders() {
+  return (
+    <div className="space-y-14">
+      {DESIGN_SECTIONS.map((sec) => (
+        <div key={sec.k}>
+          <h3 className="font-fraunces text-2xl text-ink">{sec.title}</h3>
+          {sec.rows.map((row) => (
+            <div key={row} className="mt-6">
+              <p className="text-xs uppercase tracking-wider text-ink-soft">{row}</p>
+              <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-3">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   )
 }
