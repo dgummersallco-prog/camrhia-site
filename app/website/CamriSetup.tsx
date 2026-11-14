@@ -83,12 +83,13 @@ export default function CamriSetup({ styles, palettes, typeSets, pages, fam, str
         )}
 
         {step === 1 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {styles.map((s) => {
               const i = layouts.indexOf(s.key)
               return (
                 <button key={s.key} type="button" onClick={() => setLayouts((l) => toggle(l, s.key, 5))} className={'relative rounded-xl border bg-white/80 p-3 text-left transition hover:bg-white ' + (i >= 0 ? ring : 'border-black/10')}>
-                  <div className="h-20 rounded-lg border border-black/10 p-2" style={{ background: s.bg }}>
+                  <img src={'/layouts/' + s.key + '.png'} alt={s.name} className="aspect-[5/4] w-full rounded-lg border border-black/10 object-cover object-top" onError={(e) => { const el = e.currentTarget; el.style.display = 'none'; el.nextElementSibling?.removeAttribute('hidden') }} />
+                  <div hidden className="h-20 rounded-lg border border-black/10 p-2" style={{ background: s.bg }}>
                     <div className="h-2.5 w-2/3 rounded" style={{ background: s.text }} />
                     <div className="mt-2 h-1.5 w-1/2 rounded opacity-50" style={{ background: s.text }} />
                   </div>
