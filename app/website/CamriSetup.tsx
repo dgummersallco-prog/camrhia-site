@@ -116,7 +116,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         {step === 2 && (
           <div className="space-y-16">
             <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} />
-            <DesignPlaceholders designs={designs} setDesigns={setDesigns} />
+            <DesignSteps designs={designs} setDesigns={setDesigns} />
           </div>
         )}
 
@@ -181,6 +181,9 @@ const qaFor = (k: string) => [{ q: 'What is this?', a: HELP[k] ?? '' }, ...(['ga
 
 const PHOTO_DESIGNS = ['lark', 'wren', 'finch', 'heron', 'swift', 'plover', 'egret', 'kestrel', 'osprey', 'sparrow'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
+const SOCIAL_DESIGNS = ['coral', 'reef', 'ember', 'dune', 'tide'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+const FAQ_DESIGNS = ['sage', 'basil', 'thyme', 'mint', 'dill'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+
 const GAL_DESIGNS = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
 const NAV_DESIGNS = ['birch', 'willow', 'aspen', 'alder', 'maple', 'elm', 'hawthorn', 'linden', 'rowan', 'beech', 'sorrel', 'tansy'].map((k) => ({ key: k, name: k === 'hawthorn' ? 'Hawthorne' : k[0].toUpperCase() + k.slice(1) }))
@@ -189,65 +192,124 @@ const PICKERS = (): Record<string, { dir: string; field: string; ar: string; ite
   'nav|Explore section designs': { dir: 'explore', ar: '2/1', field: 'nav', items: NAV_DESIGNS },
   'galleries|Galleries main page designs': { dir: 'galleries', ar: '4/5', field: 'galleries', items: GAL_DESIGNS },
   'galleries|Photo display designs (inside a gallery)': { dir: 'photos', ar: '4/5', field: 'photos', items: PHOTO_DESIGNS },
+  'social|Section designs': { dir: 'social', ar: '2/1', field: 'social', items: SOCIAL_DESIGNS },
+  'faq|Section designs': { dir: 'faq', ar: '2/1', field: 'faq', items: FAQ_DESIGNS },
 })
 
-function DesignPlaceholders({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {
+const ROW_TITLE: Record<string, string> = {
+  'Explore section designs': 'How should your Explore section look?',
+  'Galleries main page designs': 'How should your Galleries page look?',
+  'Photo display designs (inside a gallery)': 'How should the photos look once someone opens a gallery?',
+  'Section designs': 'How should the section look?',
+  'Page designs': 'How should the page look?',
+  'Blog main page designs': 'How should your Blog page look?',
+  'Post designs (inside a post)': 'How should each blog post look?',
+}
+const rowKind = (r: string) => (/photo display/i.test(r) ? 'always' : /^section designs$/i.test(r) ? 'section' : 'page')
+const MODES = [
+  { k: 'page', t: 'A full page', d: 'Visitors click it in your menu and land on a page of its own.' },
+  { k: 'section', t: 'A section on a page', d: 'A smaller block shown on your home page or any page you choose.' },
+  { k: 'both', t: 'Both', d: 'A block on a page that also links to the full page.' },
+]
+
+function DesignSteps({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {
+  const [step, setStep] = useState(0)
   const [zoom, setZoom] = useState<string | null>(null)
-  const [ask, setAsk] = useState<string | null>(null)
+  const [ask, setAsk] = useState(false)
   const [ans, setAns] = useState<string | null>(null)
+  const sec = DESIGN_SECTIONS[step]
+  const total = DESIGN_SECTIONS.length
+  const hasMode = ['galleries', 'about', 'pricing'].includes(sec.k)
+  const mode = designs[sec.k + '_mode'] || ''
+  const rows = sec.rows.filter((row) => {
+    if (!hasMode) return true
+    if (!mode) return false
+    const kd = rowKind(row)
+    return kd === 'always' || (kd === 'page' ? mode !== 'section' : mode !== 'page')
+  })
+  const go = (n: number) => { setStep(n); setAsk(false); setAns(null); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
   return (
-    <div className="space-y-14">
+    <div>
       {zoom && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={zoom} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg" />
         </div>
       )}
-      {DESIGN_SECTIONS.map((sec) => (
-        <div key={sec.k}>
-          <h3 className="font-fraunces text-2xl text-ink">{sec.title}</h3>
-          <button type="button" onClick={() => { setAsk(ask === sec.k ? null : sec.k); setAns(null) }} className="mt-2 rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">Ask Camri about this</button>
-          {ask === sec.k && (
-            <div className="mt-2 max-w-xl rounded-xl border border-black/10 bg-white/80 p-3 text-sm">
-              <div className="flex flex-wrap gap-2">
-                {qaFor(sec.k).map((x) => (
-                  <button key={x.q} type="button" onClick={() => setAns(x.a)} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">{x.q}</button>
+      <p className="text-xs uppercase tracking-wider text-ink-soft">Part {step + 1} of {total}</p>
+      <div className="mt-2 flex gap-1.5">
+        {DESIGN_SECTIONS.map((x, n) => (
+          <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
+        ))}
+      </div>
+      <h3 className="mt-6 font-fraunces text-3xl text-ink">{sec.title}</h3>
+      <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className="mt-2 rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">Ask Camri about this</button>
+      {ask && (
+        <div className="mt-2 max-w-xl rounded-xl border border-black/10 bg-white/80 p-3 text-sm">
+          <div className="flex flex-wrap gap-2">
+            {qaFor(sec.k).map((x) => (
+              <button key={x.q} type="button" onClick={() => setAns(x.a)} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">{x.q}</button>
+            ))}
+          </div>
+          {ans && <p className="mt-3 leading-relaxed text-ink-soft">{ans}</p>}
+        </div>
+      )}
+
+      {hasMode && (
+        <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
+          <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            {MODES.map((m) => (
+              <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
+                <p className="text-sm font-medium text-ink">{m.t}</p>
+                <p className="mt-1 text-xs text-ink-soft">{m.d}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {rows.map((row, ri) => {
+        const pk = PICKERS()[sec.k + '|' + row]
+        return (
+          <div key={row} className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
+            <p className="text-xs uppercase tracking-wider text-ink-soft">Choice {ri + 1}</p>
+            <p className="mt-1 font-fraunces text-xl text-ink">{ROW_TITLE[row] ?? row}</p>
+            {pk ? (
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
+                {pk.items.map((d) => {
+                  const on = designs[pk.field] === d.key
+                  return (
+                    <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, [pk.field]: on ? '' : d.key })}>
+                      <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
+                      <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'h-full w-full rounded-lg border-2 object-cover object-top ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
+                        <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom('/' + pk.dir + '/' + d.key + '.png') }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
                 ))}
               </div>
-              {ans && <p className="mt-3 leading-relaxed text-ink-soft">{ans}</p>}
-            </div>
-          )}
-          {sec.rows.map((row) => (
-            <div key={row} className="mt-6">
-              <p className="text-xs uppercase tracking-wider text-ink-soft">{row}</p>
-              {PICKERS()[sec.k + '|' + row] ? (
-                <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
-                  {PICKERS()[sec.k + '|' + row].items.map((d) => {
-                    const pk = PICKERS()[sec.k + '|' + row]
-                    const on = designs[pk.field] === d.key
-                    return (
-                      <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, [pk.field]: on ? '' : d.key })}>
-                        <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
-                          <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'h-full w-full rounded-lg border-2 object-cover object-top ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
-                          <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom('/' + pk.dir + '/' + d.key + '.png') }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
-                  {[1, 2, 3].map((n) => (
-                    <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ))}
+            )}
+          </div>
+        )
+      })}
+
+      <div className="mt-10 flex items-center justify-between">
+        {step > 0 ? (
+          <button type="button" onClick={() => go(step - 1)} className="rounded-full border border-black/15 bg-white px-5 py-2 text-sm text-ink">← Back</button>
+        ) : <span />}
+        {step < total - 1 ? (
+          <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-2 text-sm text-white">Next: {DESIGN_SECTIONS[step + 1].title} →</button>
+        ) : <p className="text-sm text-ink-soft">That is every design choice.</p>}
+      </div>
     </div>
   )
 }

@@ -313,7 +313,73 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   const renderSection = (k: string, tinted: boolean): React.ReactNode => {
     switch (k) {
-      case 'social':
+      case 'social': {
+        const sd = String((r as any).site_settings?.socialDesign ?? '')
+        const ig = String(socials.find((s) => s.key === 'instagram_url')?.url ?? '')
+        const handle = ig ? '@' + (ig.replace(/\/+$/, '').split('/').pop() ?? '').split('?')[0] : ''
+        const ab = (l: string) => (l === 'Instagram' ? 'IG' : l === 'Facebook' ? 'FB' : l === 'Pinterest' ? 'PI' : 'TT')
+        if (socials.length > 0 && sd === 'coral') return (
+          <section id="social" className="px-6 py-14 text-center">
+            <p className="mb-5 text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>Follow along</p>
+            <div className="flex flex-wrap justify-center gap-4">
+              {socials.map((s) => (
+                <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="flex h-12 w-12 items-center justify-center rounded-full border text-xs" style={{ borderColor: accent, color: accent }}>{ab(s.label)}</a>
+              ))}
+            </div>
+            {handle && <p className="mt-4 text-sm" style={{ color: soft }}>{handle}</p>}
+          </section>
+        )
+        if (socials.length > 0 && sd === 'reef') return (
+          <section id="social" className="px-6 py-14 text-center">
+            <p className="mb-6 text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>Follow along on Instagram</p>
+            <div className="mx-auto grid max-w-5xl grid-cols-3 gap-2 sm:grid-cols-6">
+              {pickPics(6).map((u, i) => (u ? <img key={i} src={u} alt="" className="aspect-square w-full object-cover" /> : null))}
+            </div>
+            <a href={ig ? socials.find((s) => s.key === 'instagram_url')?.url : socials[0].url} target="_blank" rel="noopener noreferrer" className="cr-btn mt-6 inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>Follow {handle || 'us'}</a>
+          </section>
+        )
+        if (socials.length > 0 && sd === 'ember') return (
+          <section id="social" className="px-6 py-16">
+            <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-2">
+              <div>
+                <p style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.05 }}>Find us on social</p>
+                {handle && <p className="mt-3 text-sm" style={{ color: soft }}>{handle}</p>}
+              </div>
+              <div className="flex flex-col gap-3">
+                {socials.map((s) => (
+                  <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-full border px-6 py-3 text-sm" style={{ borderColor: line, color: ink }}><span>{s.label}</span><span style={{ color: accent }}>→</span></a>
+                ))}
+              </div>
+            </div>
+          </section>
+        )
+        if (socials.length > 0 && sd === 'dune') return (
+          <section id="social" className="px-6 py-14" style={{ background: '#2b1f17', color: '#f3ead8' }}>
+            <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 md:flex-row">
+              <p style={{ ...headStyle, fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', color: '#f3ead8' }}>Let&apos;s stay in touch</p>
+              <div className="flex flex-wrap gap-3">
+                {socials.map((s) => (
+                  <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" className="rounded-full border px-5 py-2 text-[11px] uppercase tracking-[0.2em]" style={{ borderColor: '#f3ead8', color: '#f3ead8' }}>{s.label}</a>
+                ))}
+              </div>
+            </div>
+          </section>
+        )
+        if (socials.length > 0 && sd === 'tide') {
+          const pp = pickPics(4)
+          return (
+            <section id="social" className="px-6 py-14">
+              <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-8">
+                {socials.map((s, i) => (
+                  <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" className="block w-[44%] bg-white p-3 pb-4 shadow-lg sm:w-[22%]" style={{ transform: `rotate(${[-3, 2, -2, 3][i % 4]}deg)` }}>
+                    {pp[i] && <img src={pp[i] as string} alt="" className="aspect-square w-full object-cover" />}
+                    <p className="mt-3 text-center text-[11px] uppercase tracking-[0.2em] text-black">{s.label}</p>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )
+        }
         return socials.length > 0 ? (
           <section id="social" className="px-6 py-12 text-center">
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
@@ -323,6 +389,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </div>
           </section>
         ) : null
+      }
       case 'explore':
         return exploreEl
       case 'about': {
@@ -766,7 +833,33 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </div>
           ), tinted)
       }
-      case 'faq':
+      case 'faq': {
+        const fd = String((r as any).site_settings?.faqDesign ?? '')
+        const qa = faq as any[]
+        const qst: any = { fontFamily: t.head, fontSize: fsp('fs-faqq', 20), color: ink }
+        const ast: any = { fontFamily: t.body, fontSize: fsp('fs-faqa', 15), color: soft, lineHeight: 1.7 }
+        if (fd === 'basil') return sec('faq', t.titles.faq,
+          <div className="mx-auto grid max-w-5xl gap-x-14 gap-y-10 md:grid-cols-2">
+            {qa.map((f, i) => (<div key={i}><p className="el-faq_q" style={qst}>{f.question}</p><p className="el-faq_a mt-2" style={ast}>{f.answer}</p></div>))}
+          </div>, tinted)
+        if (fd === 'thyme') return sec('faq', t.titles.faq,
+          <div className="mx-auto grid max-w-5xl items-start gap-10 md:grid-cols-2">
+            {pickPics(1)[0] && <img src={pickPics(1)[0] as string} alt="" className="aspect-[4/5] w-full object-cover" />}
+            <FaqAccordion items={faq} questionClassName="el-faq_q" answerClassName="el-faq_a" questionStyle={qst} answerStyle={ast} />
+          </div>, tinted)
+        if (fd === 'mint') return sec('faq', t.titles.faq,
+          <div className="mx-auto max-w-3xl space-y-8">
+            {qa.map((f, i) => (
+              <div key={i} className="grid grid-cols-[3.5rem_1fr] gap-4">
+                <span style={{ ...headStyle, color: accent, fontSize: '1.8rem', lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</span>
+                <div><p className="el-faq_q" style={qst}>{f.question}</p><p className="el-faq_a mt-2" style={ast}>{f.answer}</p></div>
+              </div>
+            ))}
+          </div>, tinted)
+        if (fd === 'dill') return sec('faq', t.titles.faq,
+          <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {qa.map((f, i) => (<div key={i} className="rounded-2xl p-6" style={{ background: tint }}><p className="el-faq_q" style={{ ...qst, fontWeight: 600 }}>{f.question}</p><p className="el-faq_a mt-2" style={ast}>{f.answer}</p></div>))}
+          </div>, tinted)
         return sec('faq', t.titles.faq,
           <div className="mx-auto max-w-2xl">
             <FaqAccordion
@@ -777,6 +870,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               answerStyle={{ fontFamily: t.body, fontSize: fsp('fs-faqa', 15), color: soft, lineHeight: 1.7 }}
             />
           </div>, tinted)
+      }
       case 'contact':
         return sec('contact', t.titles.contact,
           <div className="mx-auto max-w-xl text-center">
