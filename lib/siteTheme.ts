@@ -167,7 +167,7 @@ export function resolveTheme(r: Record<string, any>) {
   let orderGalleries = orderOf(s.order_galleries, ['portfolio', ...customIds('galleries')])
 
   const strc = s.structure && typeof s.structure === 'object' && s.structure.v === 1 ? (s.structure as Record<string, any>) : null
-  const MOVABLE_KEYS = ['explore', 'portfolio', 'testimonials', 'contact', 'about', 'investment', 'faq', 'aboutcta', 'social']
+  const MOVABLE_KEYS = ['explore', 'portfolio', 'galsec', 'pricesec', 'testimonials', 'contact', 'about', 'investment', 'faq', 'aboutcta', 'social']
   const extraPages: { id: string; label: string; sections: string[] }[] = []
   const pagesOff: string[] = []
   if (strc) {
@@ -196,7 +196,7 @@ export function resolveTheme(r: Record<string, any>) {
     for (const c of customIds('home')) if (!usedKeys.has(c)) { usedKeys.add(c); orderHome.push(c) }
     for (const c of customIds('about')) if (!usedKeys.has(c)) { usedKeys.add(c); orderAbout.push(c) }
     for (const c of customIds('galleries')) if (!usedKeys.has(c)) { usedKeys.add(c); orderGalleries.push(c) }
-    for (const k of Array.isArray(strc.off) ? (strc.off as unknown[]) : []) if (k === 'about' || k === 'galleries') pagesOff.push(k)
+    for (const k of Array.isArray(strc.off) ? (strc.off as unknown[]) : []) if (k === 'about' || k === 'galleries' || k === 'blog') pagesOff.push(k)
   }
 
   const titles: Record<string, string> = { ...DEFAULT_TITLES }

@@ -9,6 +9,8 @@ type Col = { id: string; label: string; fixed?: boolean; extra?: boolean }
 const BLOCKS: Record<string, { label: string; blurb: string }> = {
   explore: { label: 'Explore section', blurb: 'Three picture cards linking to your pages' },
   portfolio: { label: 'Galleries', blurb: 'Your galleries' },
+  galsec: { label: 'Galleries block', blurb: 'Your galleries as photo tiles' },
+  pricesec: { label: 'Pricing block', blurb: 'Your packages as a home block' },
   about: { label: 'About', blurb: 'Your story and photo' },
   testimonials: { label: 'Testimonials', blurb: 'Kind words from clients' },
   investment: { label: 'Pricing', blurb: 'Your packages' },
@@ -16,7 +18,7 @@ const BLOCKS: Record<string, { label: string; blurb: string }> = {
   contact: { label: 'Booking', blurb: 'Book-now band' },
   social: { label: 'Social links', blurb: 'Instagram, Facebook and more' },
 }
-const ORDER = ['explore', 'portfolio', 'about', 'testimonials', 'investment', 'faq', 'contact', 'social']
+const ORDER = ['explore', 'portfolio', 'galsec', 'about', 'testimonials', 'investment', 'pricesec', 'faq', 'contact', 'social']
 const RESERVED = ['home', 'about', 'galleries', 'book', 'p', 'site']
 
 export function cleanStruct(s: Struct): Struct {

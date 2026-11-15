@@ -33,6 +33,43 @@ function toggle(list: string[], v: string, max: number) {
   return [...list, v]
 }
 
+function withModes(s: Struct, d: Record<string, string>): Struct {
+  const n: Struct = { ...s, home: [...s.home], about: [...s.about], galleries: [...s.galleries], extra: s.extra.map((e) => ({ ...e, sections: [...e.sections] })), off: [...s.off] }
+  const drop = (k: string) => {
+    n.home = n.home.filter((x) => x !== k)
+    n.about = n.about.filter((x) => x !== k)
+    n.galleries = n.galleries.filter((x) => x !== k)
+    n.extra.forEach((e) => { e.sections = e.sections.filter((x) => x !== k) })
+  }
+  const toHome = (k: string) => { drop(k); const i = n.home.indexOf('explore'); n.home.splice(i >= 0 ? i + 1 : 0, 0, k) }
+  const pageOn = (pg: string) => { n.off = n.off.filter((x) => x !== pg) }
+  const pageOff = (pg: string) => { if (!n.off.includes(pg)) n.off.push(pg) }
+  const g = d.galleries_mode
+  if (g === 'page' || g === 'both') {
+    pageOn('galleries')
+    if (!n.galleries.includes('portfolio')) { drop('portfolio'); n.galleries.push('portfolio') }
+    if (g === 'page') drop('galsec'); else toHome('galsec')
+  } else if (g === 'section') {
+    pageOff('galleries'); drop('portfolio'); toHome('galsec')
+  }
+  const a = d.about_mode
+  if (a === 'page') { pageOn('about'); drop('about'); n.about.unshift('about') }
+  else if (a === 'section') { pageOff('about'); toHome('about') }
+  const pr = d.pricing_mode
+  const setPricePage = () => {
+    drop('investment')
+    const e = n.extra.find((q) => q.id === 'pricing')
+    if (e) e.sections = ['investment']; else n.extra.push({ id: 'pricing', label: 'Pricing', sections: ['investment'] })
+  }
+  if (pr === 'page') { drop('pricesec'); setPricePage() }
+  else if (pr === 'both') { setPricePage(); toHome('pricesec') }
+  else if (pr === 'section') { n.extra = n.extra.filter((e) => e.id !== 'pricing'); drop('pricesec'); toHome('investment') }
+  const b = d.blog_mode
+  if (b === 'none') { if (!n.off.includes('blog')) n.off.push('blog') }
+  else if (b === 'page') n.off = n.off.filter((x) => x !== 'blog')
+  return n
+}
+
 function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, links: linksIn, fontList, initial, startStep, onCancel, onFinish, onSkip }: {
   styles: Style[]; palettes: Pal[]; typeSets: TypeSet[]; pages: PageDef[]; structure: Struct; links: Links; fontList: FontItem[]; initial?: { layouts: string[]; palettes: Pal[]; fonts: string[]; type?: FontPick }; startStep?: number; onCancel?: () => void
   fam: (k: string) => string
@@ -59,8 +96,9 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     const list: Pal[] = picked
     
     
-    const pagesOut = ['home', 'book', ...(struct.off.includes('galleries') ? [] : ['galleries']), ...(struct.off.includes('about') ? [] : ['about']), ...struct.extra.map((e) => e.id)]
-    await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, pages: pagesOut, extra_pages: '', themes: [] }, struct, ls, designs)
+    const s2 = withModes(struct, designs)
+    const pagesOut = ['home', 'book', ...(s2.off.includes('galleries') ? [] : ['galleries']), ...(s2.off.includes('about') ? [] : ['about']), ...s2.extra.map((e) => e.id)]
+    await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, pages: pagesOut, extra_pages: '', themes: [] }, s2, ls, designs)
     setBusy(false)
   }
 
@@ -237,6 +275,11 @@ const MODES = [
   { k: 'both', t: 'Both', d: 'A block on a page that also links to the full page.' },
 ]
 
+const BLOG_MODES = [
+  { k: 'page', t: 'Yes, add a blog', d: 'A Blog page in your menu where your posts live.' },
+  { k: 'none', t: 'No blog for now', d: 'You can turn it on later whenever you want.' },
+]
+
 function DesignSteps({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {
   const [step, setStep] = useState(0)
   const [zoom, setZoom] = useState<string | null>(null)
@@ -244,9 +287,10 @@ function DesignSteps({ designs, setDesigns }: { designs: Record<string, string>;
   const [ans, setAns] = useState<string | null>(null)
   const sec = DESIGN_SECTIONS[step]
   const total = DESIGN_SECTIONS.length
-  const hasMode = ['galleries', 'about', 'pricing'].includes(sec.k)
+  const hasMode = ['galleries', 'about', 'pricing', 'blog'].includes(sec.k)
   const mode = designs[sec.k + '_mode'] || ''
   const rows = sec.rows.filter((row) => {
+    if (sec.k === 'blog' && mode === 'none') return false
     if (!hasMode) return true
     if (!mode) return false
     const kd = rowKind(row)
@@ -284,7 +328,7 @@ function DesignSteps({ designs, setDesigns }: { designs: Record<string, string>;
         <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
           <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            {MODES.filter((m) => !(sec.k === 'about' && m.k === 'both')).map((m) => (
+            {(sec.k === 'blog' ? BLOG_MODES : MODES.filter((m) => !(sec.k === 'about' && m.k === 'both'))).map((m) => (
               <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
                 <p className="text-sm font-medium text-ink">{m.t}</p>
                 <p className="mt-1 text-xs text-ink-soft">{m.d}</p>

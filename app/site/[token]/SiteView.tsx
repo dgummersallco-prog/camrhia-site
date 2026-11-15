@@ -160,6 +160,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const showMap: Record<string, boolean> = {
     about: on('about') && !!(t.text.about || r.bio || aboutPhoto),
     portfolio: page === 'galleries' ? galleries.length > 0 : on('portfolio') && galleries.length > 0,
+    galsec: on('galsec') && galleries.length > 0,
+    pricesec: on('pricesec') && sitePkgs.length > 0,
     investment: on('investment') && sitePkgs.length > 0,
     testimonials: on('testimonials') && quotesShown.length > 0,
     faq: on('faq') && faq.length > 0,
@@ -641,6 +643,15 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </div>
           ), tinted)
       }
+      case 'galsec': {
+        const gs0 = String((r as any).site_settings?.galSection ?? '')
+        const gs2 = GALSEC.includes(gs0) ? gs0 : 'sahara'
+        const items2 = galleries.slice(0, 6).map((g: any) => {
+          const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
+          return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}` }
+        })
+        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String(t.titles.portfolio ?? '')} items={items2} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
+      }
       case 'portfolio': {
         const rawGal = (r as any).site_settings?.galindex?.layout
         const L: string = page === 'galleries' ? (['checker', 'rows', 'custom', 'jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].includes(rawGal) ? rawGal : t.galindex.layout) : t.portfolio.layout
@@ -888,6 +899,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
           </>, tinted)
       }
+      case 'pricesec':
       case 'investment': {
         const feats = (d: string | null) => (d ?? '').split('\n').map((x) => x.trim()).filter(Boolean)
         const L = t.pricing.layout
