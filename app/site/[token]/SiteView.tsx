@@ -17,6 +17,7 @@ import { PricingDesign, PR_SEC, PR_PAGE } from './PricingDesigns'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { blogPosts } from '@/lib/blog'
+import { GalleriesSection, GALSEC, GALOWN } from './GalleriesSections'
 import { SiteNav } from './SiteNav'
 
 const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -644,6 +645,14 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const rawGal = (r as any).site_settings?.galindex?.layout
         const L: string = page === 'galleries' ? (['checker', 'rows', 'custom', 'jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].includes(rawGal) ? rawGal : t.galindex.layout) : t.portfolio.layout
         const list = page === 'home' ? galleries.slice(0, 6) : galleries
+        const gsd = String((r as any).site_settings?.galSection ?? '')
+        if (page === 'home' && GALSEC.includes(gsd) && list.length > 0) {
+          const items = list.map((g: any) => {
+            const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
+            return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}` }
+          })
+          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String(t.titles.portfolio ?? '')} items={items} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
+        }
         const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
         const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'
         const shapeFor = (native: string, kind: 'grid' | 'banners' | 'feature' | 'rows'): string => {
