@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export type Links = { instagram_url: string; facebook_url: string; tiktok_url: string; pinterest_url: string }
 export type Struct = { v: 1; home: string[]; about: string[]; galleries: string[]; extra: { id: string; label: string; sections: string[] }[]; off: string[] }
@@ -45,9 +45,39 @@ function strip(s: Struct, sec: string) {
   s.extra.forEach((e) => { e.sections = e.sections.filter((k) => k !== sec) })
 }
 
-export default function PageBuilder({ struct, setStruct, links, setLinks }: { struct: Struct; setStruct: (s: Struct) => void; links: Links; setLinks: (l: Links) => void }) {
+export default function PageBuilder({ struct, setStruct, links, setLinks, thumbs, wires }: { struct: Struct; setStruct: (s: Struct) => void; links: Links; setLinks: (l: Links) => void; thumbs?: Record<string, { src: string; ar: string }>; wires?: boolean }) {
   const [pick, setPick] = useState<string | null>(null)
   const [drag, setDrag] = useState<string | null>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const [paths, setPaths] = useState<{ d: string; x: number; y: number }[]>([])
+  useEffect(() => {
+    if (!wires) return
+    const measure = () => {
+      const w = wrapRef.current
+      const m = menuRef.current
+      if (!w || !m) return
+      const wb = w.getBoundingClientRect()
+      const mb = m.getBoundingClientRect()
+      const x1 = mb.left + mb.width / 2 - wb.left
+      const y1 = mb.bottom - wb.top
+      const next = Object.values(cardRefs.current).filter((el): el is HTMLDivElement => !!el).map((el) => {
+        const b = el.getBoundingClientRect()
+        const x2 = b.left + b.width / 2 - wb.left
+        const y2 = b.top - wb.top
+        const my = (y1 + y2) / 2
+        return { d: 'M' + x1 + ',' + y1 + ' C' + x1 + ',' + my + ' ' + x2 + ',' + my + ' ' + x2 + ',' + y2, x: x2, y: y2 }
+      })
+      const key = JSON.stringify(next)
+      setPaths((prev) => (JSON.stringify(prev) === key ? prev : next))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    if (wrapRef.current) ro.observe(wrapRef.current)
+    window.addEventListener('resize', measure)
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure) }
+  })
 
   const clone = (): Struct => JSON.parse(JSON.stringify(struct))
   const placed = new Set<string>([...struct.home, ...struct.about, ...struct.galleries, ...struct.extra.flatMap((e) => e.sections)])
@@ -144,10 +174,23 @@ export default function PageBuilder({ struct, setStruct, links, setLinks }: { st
         </div>
       </aside>
 
-      <div>
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-5">
+      <div ref={wrapRef} className="relative">
+        {wires && (
+          <>
+            <div ref={menuRef} className="relative z-10 mx-auto mb-16 w-fit rounded-full bg-[#EFE7DC] px-10 py-3.5 font-fraunces text-xl text-ink shadow-sm">Menu</div>
+            <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full" fill="none">
+              {paths.map((q, i) => (
+                <g key={i}>
+                  <path d={q.d} stroke="#B89F8A" strokeWidth="2" strokeDasharray="6 5" />
+                  <circle cx={q.x} cy={q.y} r="5" fill="#B89F8A" />
+                </g>
+              ))}
+            </svg>
+          </>
+        )}
+        <div className={'relative z-10 grid gap-5 ' + (wires ? 'grid-cols-[repeat(auto-fill,minmax(300px,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(250px,1fr))]')}>
           {cols.map((p) => (
-            <div key={p.id}
+            <div key={p.id} ref={(el) => { cardRefs.current[p.id] = el }}
               onDragOver={(e) => { if (drag) e.preventDefault() }}
               onDrop={(e) => { e.preventDefault(); if (drag) place(drag, p.id) }}
               className={'flex min-h-[420px] flex-col rounded-3xl border bg-[#FBF8F4] p-5 shadow-sm transition ' + (pick || drag ? 'border-dashed border-twilight' : 'border-black/10')}>
@@ -161,11 +204,14 @@ export default function PageBuilder({ struct, setStruct, links, setLinks }: { st
               {p.id === 'home' && <div className={locked + ' mb-2.5 py-8 text-center'}>Hero</div>}
               {listOf(struct, p.id).map((sec, i, arr) => (
                 <div key={sec} draggable onDragStart={() => setDrag(sec)} onDragEnd={() => setDrag(null)}
-                  className={'mb-2.5 flex items-center gap-2 rounded-xl border bg-white px-4 py-4 shadow-sm ' + (pick === sec ? 'border-twilight ring-2 ring-twilight' : 'border-black/10')}>
-                  <button type="button" onClick={() => setPick(pick === sec ? null : sec)} className="min-w-0 flex-1 text-left font-fraunces text-base text-ink">{nameOf(sec)}</button>
-                  <button type="button" disabled={i === 0} onClick={() => nudge(p.id, i, -1)} aria-label="Move up" className="px-1 text-ink-soft disabled:opacity-30">↑</button>
-                  <button type="button" disabled={i === arr.length - 1} onClick={() => nudge(p.id, i, 1)} aria-label="Move down" className="px-1 text-ink-soft disabled:opacity-30">↓</button>
-                  <button type="button" onClick={() => place(sec, 'tray')} aria-label="Take off this page" className="px-1 text-ink-soft">✕</button>
+                  className={'mb-2.5 rounded-xl border bg-white px-4 py-3.5 shadow-sm ' + (pick === sec ? 'border-twilight ring-2 ring-twilight' : 'border-black/10')}>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => setPick(pick === sec ? null : sec)} className="min-w-0 flex-1 text-left font-fraunces text-base text-ink">{nameOf(sec)}</button>
+                    <button type="button" disabled={i === 0} onClick={() => nudge(p.id, i, -1)} aria-label="Move up" className="px-1 text-ink-soft disabled:opacity-30">↑</button>
+                    <button type="button" disabled={i === arr.length - 1} onClick={() => nudge(p.id, i, 1)} aria-label="Move down" className="px-1 text-ink-soft disabled:opacity-30">↓</button>
+                    <button type="button" onClick={() => place(sec, 'tray')} aria-label="Take off this page" className="px-1 text-ink-soft">✕</button>
+                  </div>
+                  {thumbs?.[sec] && <img src={thumbs![sec].src} alt="" className="mt-3 w-full rounded-lg border border-black/10 object-cover object-top" style={{ aspectRatio: thumbs![sec].ar }} />}
                 </div>
               ))}
               {pick && !listOf(struct, p.id).includes(pick) ? (
@@ -176,7 +222,7 @@ export default function PageBuilder({ struct, setStruct, links, setLinks }: { st
               <div className={locked + ' mt-auto'}>Footer</div>
             </div>
           ))}
-          <div className="flex min-h-[420px] flex-col rounded-3xl border border-black/10 bg-[#FBF8F4] p-5 shadow-sm">
+          <div ref={(el) => { cardRefs.current['book'] = el }} className="flex min-h-[420px] flex-col rounded-3xl border border-black/10 bg-[#FBF8F4] p-5 shadow-sm">
             <span className="mb-4 font-fraunces text-2xl text-ink">Booking</span>
             <div className={locked + ' mb-2.5'}>Menu</div>
             <div className={locked + ' mb-2.5 py-8 text-center'}>Your booking calendar</div>

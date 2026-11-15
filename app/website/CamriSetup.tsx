@@ -27,8 +27,8 @@ type PageDef = { k: string; label: string; blurb: string; locked?: boolean; soon
 const LINES = [
   "Hi, I'm Camri! I'll help you design your website. Pick the looks you love and I'll remember them, so later you can just say \"switch my layout\" or \"use my dark theme\".",
   'Pick up to five layouts you love. The first one you pick becomes your starting design.',
-  "First, your pages. Home and Booking are always on. Choose whether to add Galleries and About, and drag the sections you want onto each page. You can switch these around later, or just ask me.",
-  "Now it's build-a-bear time! Pick a look for each part of your site and watch it come together on the right. Skip any you like as they are, and you'll see everything at the end.",
+  "Now it's build-a-bear time! Pick a look for each part. Your site comes together on the right, and any full pages stack up beside it. Skip any you like as they are.",
+  "Last look! Here is your whole site with the menu wired to every page. Drag things around if you like, then build it.",
   'Last one: fonts. Pick up to three for your title, subtitle and paragraph. The first one you pick for each is what I start with.',
 ]
 
@@ -104,10 +104,21 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     const list: Pal[] = picked
     
     
-    const s2 = withModes(struct, designs)
+    const s2 = cleanStruct(struct)
     const pagesOut = ['home', 'book', ...(s2.off.includes('galleries') ? [] : ['galleries']), ...(s2.off.includes('about') ? [] : ['about']), ...s2.extra.map((e) => e.id)]
     await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, pages: pagesOut, extra_pages: '', themes: [] }, s2, ls, designs)
     setBusy(false)
+  }
+
+  function goArrange() {
+    const base: Struct = { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] }
+    const s = withModes(base, designs)
+    const th = thumbsOf(designs)
+    const placedAll = new Set<string>([...s.home, ...s.about, ...s.galleries, ...s.extra.flatMap((e) => e.sections)])
+    ;['explore', 'testimonials', 'faq', 'social', 'contact'].forEach((k) => { if (th[k] && !placedAll.has(k)) s.home.push(k) })
+    setStruct(s)
+    setStep(3)
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   usePersist(() => { try { window.localStorage.setItem('camriStep', String(step)) } catch {} }, [step])
@@ -127,8 +138,8 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
       <div className="mt-6">
         {step === 0 && (
           <div className="flex flex-col gap-10">
-            <div className="mx-auto grid w-full max-w-2xl grid-cols-2 gap-6">
-              {[['1', 'Layouts', 'Pick the looks you love'], ['2', 'Pages', 'Choose what goes on your site']].map(([n, ttl, d]) => (
+            <div className="mx-auto grid w-full max-w-4xl grid-cols-3 gap-6">
+              {[['1', 'Layouts', 'Pick the looks you love'], ['2', 'Build', 'Pick a look for each part'], ['3', 'Arrange', 'See it all and move things around']].map(([n, ttl, d]) => (
                 <div key={n} className="flex aspect-square flex-col items-center justify-center rounded-3xl border border-black/10 bg-white/70 p-6 text-center">
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-twilight text-lg font-semibold text-white">{n}</span>
                   <p className="mt-5 font-fraunces text-2xl text-ink">{ttl}</p>
@@ -162,17 +173,25 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
           </div>
         )}
 
-        {step === 2 && <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} />}
-        {step === 3 && (
+        {step === 2 && (
           <div>
-            <DesignSteps designs={designs} setDesigns={setDesigns} onBack={() => setStep(2)} onBuild={finish} busy={busy} />
+            <DesignSteps designs={designs} setDesigns={setDesigns} onBack={() => setStep(1)} onDone={goArrange} baseKey={layouts[0]} baseName={styles.find((x) => x.key === layouts[0])?.name} />
             {onCancel && <button type="button" onClick={onCancel} disabled={busy} className="mt-2 text-sm text-ink-soft underline">Back to my site</button>}
           </div>
         )}
-
+        {step === 3 && (
+          <div>
+            <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} wires />
+            <div className="sticky bottom-0 z-20 mt-8 flex items-center gap-3 bg-[#F6F1EA]/90 py-4 backdrop-blur">
+              <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink disabled:opacity-50">← Back</button>
+              <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site'}</button>
+              {onCancel && <button type="button" onClick={onCancel} disabled={busy} className="ml-auto text-sm text-ink-soft underline">Back to my site</button>}
+            </div>
+          </div>
+        )}
       </div>
 
-      {step > 0 && step < 3 && (
+      {step === 1 && (
         <div className="mt-8 flex items-center gap-4">
           <button type="button" onClick={() => setStep(step - 1)} disabled={busy} className="rounded-full border border-black/15 px-6 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50">Back</button>
           {step < 3 ? (
@@ -292,41 +311,80 @@ const BLOG_MODES = [
   { k: 'none', t: 'No blog for now', d: 'You can turn it on later whenever you want.' },
 ]
 
-function DesignSteps({ designs, setDesigns, onBack, onBuild, busy }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; onBack: () => void; onBuild: () => void; busy: boolean }) {
+type PickT = { title: string; row: string; name: string; src: string; ar: string }
+function planOf(designs: Record<string, string>) {
+  const PK = PICKERS() as unknown as Record<string, { dir: string; ar: string; field: string; items: { key: string; name: string }[] }>
+  const home: (PickT & { k: string })[] = []
+  const pages: { k: string; title: string; picks: PickT[] }[] = []
+  DESIGN_SECTIONS.forEach((s) => {
+    const md = designs[s.k + '_mode'] || ''
+    const moded = ['galleries', 'about', 'pricing', 'blog'].includes(s.k)
+    if (s.k === 'blog' && md === 'none') return
+    if (moded && !md) return
+    s.rows.forEach((row) => {
+      const kd = rowKind(row)
+      if (moded && !(kd === 'always' || (kd === 'page' ? md !== 'section' : md !== 'page'))) return
+      const pk = PK[s.k + '|' + row]
+      const it = pk ? pk.items.find((d) => d.key === designs[pk.field]) : undefined
+      if (!pk || !it) return
+      const t = { title: s.title, row, name: it.name, src: '/' + pk.dir + '/' + it.key + '.png', ar: pk.ar }
+      const toPage = moded ? kd === 'page' || (kd === 'always' && md !== 'section') : s.k === 'book' || s.k === 'booking'
+      if (toPage) {
+        let pg = pages.find((q) => q.k === s.k)
+        if (!pg) { pg = { k: s.k, title: s.title, picks: [] }; pages.push(pg) }
+        pg.picks.push(t)
+      } else home.push({ ...t, k: s.k })
+    })
+  })
+  return { home, pages }
+}
+
+function thumbsOf(designs: Record<string, string>) {
+  const PK = PICKERS() as unknown as Record<string, { dir: string; ar: string; field: string; items: { key: string; name: string }[] }>
+  const out: Record<string, { src: string; ar: string }> = {}
+  const pickOf = (s: (typeof DESIGN_SECTIONS)[number], pred: (kd: string) => boolean) => {
+    for (const row of s.rows) {
+      if (!pred(String(rowKind(row)))) continue
+      const pk = PK[s.k + '|' + row]
+      const it = pk ? pk.items.find((d) => d.key === designs[pk.field]) : undefined
+      if (pk && it) return { src: '/' + pk.dir + '/' + it.key + '.png', ar: pk.ar }
+    }
+    return undefined
+  }
+  DESIGN_SECTIONS.forEach((s) => {
+    const pg = pickOf(s, (kd) => kd !== 'section')
+    const sc = pickOf(s, (kd) => kd === 'section')
+    if (s.k === 'galleries') { if (pg) out.portfolio = pg; if (sc) out.galsec = sc }
+    else if (s.k === 'pricing') { if (pg) out.investment = pg; if (sc) out.pricesec = sc }
+    else { const f = pickOf(s, () => true); if (f) out[s.k] = f }
+  })
+  return out
+}
+
+function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; onBack: () => void; onDone: () => void; baseKey?: string; baseName?: string }) {
   type Pk = { dir: string; ar: string; field: string; items: { key: string; name: string }[] }
-  type Sec = (typeof DESIGN_SECTIONS)[number]
   const PK = PICKERS() as unknown as Record<string, Pk>
   const [step, setStep] = useState(0)
   const [zoom, setZoom] = useState<string | null>(null)
   const [ask, setAsk] = useState(false)
   const [ans, setAns] = useState<string | null>(null)
   const total = DESIGN_SECTIONS.length
-  const review = step >= total
-  const sec = DESIGN_SECTIONS[Math.min(step, total - 1)]
+  const sec = DESIGN_SECTIONS[step]
   const MODED = ['galleries', 'about', 'pricing', 'blog']
   const hasMode = MODED.includes(sec.k)
   const mode = designs[sec.k + '_mode'] || ''
-  const rowsOf = (s: Sec) => {
-    const md = designs[s.k + '_mode'] || ''
-    return s.rows.filter((row) => {
-      if (s.k === 'blog' && md === 'none') return false
-      if (!MODED.includes(s.k)) return true
-      if (!md) return false
-      const kd = rowKind(row)
-      return kd === 'always' || (kd === 'page' ? md !== 'section' : md !== 'page')
-    })
-  }
-  const rows = rowsOf(sec)
-  const picks: { s: Sec; row: string; pk: Pk; it: { key: string; name: string } }[] = []
-  DESIGN_SECTIONS.forEach((s) => rowsOf(s).forEach((row) => {
-    const pk = PK[s.k + '|' + row]
-    const it = pk ? pk.items.find((d) => d.key === designs[pk.field]) : undefined
-    if (pk && it) picks.push({ s, row, pk, it })
-  }))
-  const go = (n: number) => { setStep(n); setAsk(false); setAns(null); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  const rows = sec.rows.filter((row) => {
+    if (sec.k === 'blog' && mode === 'none') return false
+    if (!MODED.includes(sec.k)) return true
+    if (!mode) return false
+    const kd = rowKind(row)
+    return kd === 'always' || (kd === 'page' ? mode !== 'section' : mode !== 'page')
+  })
+  const plan = planOf(designs)
+  const go = (n: number) => { if (n < 0) return; setStep(n); setAsk(false); setAns(null); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const btnPrimary = 'rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_260px]">
+    <div className="grid gap-8 lg:grid-cols-[1fr_440px]">
       <div>
         {zoom && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)}>
@@ -334,126 +392,123 @@ function DesignSteps({ designs, setDesigns, onBack, onBuild, busy }: { designs: 
             <img src={zoom} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg" />
           </div>
         )}
-        <p className="text-xs uppercase tracking-wider text-ink-soft">{review ? 'Last look' : `Part ${step + 1} of ${total}`}</p>
+        <p className="text-xs uppercase tracking-wider text-ink-soft">{`Part ${step + 1} of ${total}`}</p>
         <div className="mt-2 flex gap-1.5">
-          {[...DESIGN_SECTIONS.map((x) => x.k), 'review'].map((k, n) => (
-            <span key={k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
+          {DESIGN_SECTIONS.map((x, n) => (
+            <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
           ))}
         </div>
-
-        {review ? (
-          <div>
-            <h3 className="mt-6 font-fraunces text-3xl text-ink">Here is your site</h3>
-            <p className="mt-2 text-sm text-ink-soft">Check each part. Press Change to go back and swap one, or build it now. You can change anything later.</p>
-            {DESIGN_SECTIONS.map((s, n) => {
-              const its = picks.filter((p) => p.s.k === s.k)
-              return (
-                <div key={s.k} className="mt-4 flex items-center gap-4 rounded-2xl border border-black/10 bg-white/60 p-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-fraunces text-lg text-ink">{s.title}</p>
-                    {its.length > 0 ? its.map((p) => <p key={p.row} className="text-sm text-ink-soft">{p.row}: {p.it.name}</p>) : <p className="text-sm text-ink-soft">Keeping the look from your layout</p>}
-                  </div>
-                  <div className="hidden gap-2 sm:flex">
-                    {its.slice(0, 3).map((p) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img key={p.row} src={'/' + p.pk.dir + '/' + p.it.key + '.png'} alt="" className="h-14 w-auto rounded border border-black/10 object-cover object-top" />
-                    ))}
-                  </div>
-                  <button type="button" onClick={() => go(n)} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-xs text-ink">Change</button>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div>
-            <h3 className="mt-6 font-fraunces text-3xl text-ink">{sec.title}</h3>
-            <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className="mt-2 rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">Ask Camri about this</button>
-            {ask && (
-              <div className="mt-2 max-w-xl rounded-xl border border-black/10 bg-white/80 p-3 text-sm">
-                <div className="flex flex-wrap gap-2">
-                  {qaFor(sec.k).map((x) => (
-                    <button key={x.q} type="button" onClick={() => setAns(x.a)} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">{x.q}</button>
-                  ))}
-                </div>
-                {ans && <p className="mt-3 leading-relaxed text-ink-soft">{ans}</p>}
-              </div>
-            )}
-
-            {hasMode && (
-              <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
-                <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  {(sec.k === 'blog' ? BLOG_MODES : MODES.filter((m) => !(sec.k === 'about' && m.k === 'both'))).map((m) => (
-                    <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
-                      <p className="text-sm font-medium text-ink">{m.t}</p>
-                      <p className="mt-1 text-xs text-ink-soft">{m.d}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {rows.map((row, ri) => {
-              const pk = PK[sec.k + '|' + row]
-              return (
-                <div key={row} className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
-                  <p className="text-xs uppercase tracking-wider text-ink-soft">Choice {ri + 1}</p>
-                  <p className="mt-1 font-fraunces text-xl text-ink">{ROW_TITLE[row] ?? row}</p>
-                  {pk ? (
-                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
-                      {pk.items.map((d) => {
-                        const on = designs[pk.field] === d.key
-                        return (
-                          <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, [pk.field]: on ? '' : d.key })}>
-                            <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
-                            <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'h-full w-full rounded-lg border-2 object-cover object-top ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
-                              <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom('/' + pk.dir + '/' + d.key + '.png') }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
-                      {[1, 2, 3].map((n) => (
-                        <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+        <h3 className="mt-6 font-fraunces text-3xl text-ink">{sec.title}</h3>
+        <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className="mt-2 rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">Ask Camri about this</button>
+        {ask && (
+          <div className="mt-2 max-w-xl rounded-xl border border-black/10 bg-white/80 p-3 text-sm">
+            <div className="flex flex-wrap gap-2">
+              {qaFor(sec.k).map((x) => (
+                <button key={x.q} type="button" onClick={() => setAns(x.a)} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">{x.q}</button>
+              ))}
+            </div>
+            {ans && <p className="mt-3 leading-relaxed text-ink-soft">{ans}</p>}
           </div>
         )}
 
-        <div className="sticky bottom-0 z-10 mt-10 flex items-center gap-3 bg-white/80 py-4 backdrop-blur">
-          <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} disabled={busy} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink disabled:opacity-50">← Back</button>
-          {review ? (
-            <button type="button" onClick={onBuild} disabled={busy} className={btnPrimary}>{busy ? 'Building your site…' : 'Build my site'}</button>
+        {hasMode && (
+          <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
+            <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              {(sec.k === 'blog' ? BLOG_MODES : MODES.filter((m) => !(sec.k === 'about' && m.k === 'both'))).map((m) => (
+                <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
+                  <p className="text-sm font-medium text-ink">{m.t}</p>
+                  <p className="mt-1 text-xs text-ink-soft">{m.d}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {rows.map((row, ri) => {
+          const pk = PK[sec.k + '|' + row]
+          return (
+            <div key={row} className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
+              <p className="text-xs uppercase tracking-wider text-ink-soft">Choice {ri + 1}</p>
+              <p className="mt-1 font-fraunces text-xl text-ink">{ROW_TITLE[row] ?? row}</p>
+              {pk ? (
+                <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3">
+                  {pk.items.map((d) => {
+                    const on = designs[pk.field] === d.key
+                    return (
+                      <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, [pk.field]: on ? '' : d.key })}>
+                        <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
+                        <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'h-full w-full rounded-lg border-2 object-cover object-top ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
+                          <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom('/' + pk.dir + '/' + d.key + '.png') }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3">
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        <div className="sticky bottom-0 z-10 mt-10 flex items-center gap-3 bg-[#F6F1EA]/90 py-4 backdrop-blur">
+          <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink">← Back</button>
+          {step < total - 1 ? (
+            <button type="button" onClick={() => go(step + 1)} className={btnPrimary}>{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
           ) : (
-            <button type="button" onClick={() => go(step + 1)} className={btnPrimary}>{step < total - 1 ? `Next: ${DESIGN_SECTIONS[step + 1].title} →` : 'See my whole site →'}</button>
+            <button type="button" onClick={onDone} className={btnPrimary}>Arrange my site →</button>
           )}
         </div>
       </div>
 
       <aside className="hidden lg:block">
-        <div className="sticky top-6 max-h-[88vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
+        <div className="sticky top-6 max-h-[90vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
           <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
-          {picks.length === 0 ? (
-            <p className="mt-3 text-sm text-ink-soft">Your picks stack up here as you go.</p>
-          ) : (
-            <div className="mt-3 space-y-3">
-              {picks.map((p) => (
-                <button key={p.row + p.s.k} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === p.s.k))} className="block w-full text-left">
-                  <p className="mb-1 text-[11px] text-ink-soft">{p.s.title} · {p.it.name}</p>
+          <div className="mt-3 flex gap-3">
+            {plan.pages.length > 0 && (
+              <div className="w-[128px] shrink-0">
+                <p className="mb-2 text-[11px] uppercase tracking-wider text-ink-soft">Pages</p>
+                <div className="relative">
+                  {plan.pages.map((pg, i) => (
+                    <button key={pg.k} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === pg.k))} className="relative block w-full overflow-hidden rounded-lg border border-black/15 bg-white text-left shadow-md" style={{ marginTop: i === 0 ? 0 : -68, zIndex: i + 1 }}>
+                      <span className="block bg-[#EFE7DC] px-2 py-1 text-[11px] font-medium text-ink">{pg.title}</span>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={pg.picks[0].src} alt="" className="h-[68px] w-full object-cover object-top" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
+              <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
+                <span className="ml-2 text-[10px] text-ink-soft">Home</span>
+              </div>
+              {baseKey ? (
+                <div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={'/' + p.pk.dir + '/' + p.it.key + '.png'} alt="" className="w-full rounded border border-black/10 object-cover object-top" style={{ aspectRatio: p.pk.ar }} />
+                  <img src={'/layouts/' + baseKey + '.png'} alt="" className="h-32 w-full object-cover object-top" />
+                  <p className="px-2 py-1 text-[10px] text-ink-soft">Layout 1{baseName ? ' · ' + baseName : ''}</p>
+                </div>
+              ) : (
+                <div className="h-24 bg-[#F6F1EA]" />
+              )}
+              {plan.home.map((p) => (
+                <button key={p.k + p.row} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === p.k))} className="block w-full border-t border-black/10 text-left">
+                  <p className="px-2 pt-1.5 text-[10px] text-ink-soft">{p.title} · {p.name}</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.src} alt="" className="w-full object-cover object-top" style={{ aspectRatio: p.ar }} />
                 </button>
               ))}
             </div>
-          )}
+          </div>
         </div>
       </aside>
     </div>
