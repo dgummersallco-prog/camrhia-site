@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { type Struct, type Links, cleanStruct } from './PageBuilder'
 import ArrangeStep from './ArrangeStep'
+import TONES from '@/lib/designTones.json'
 import { useEffect as usePersist } from 'react'
 
 function draftGet(k: string): any {
@@ -39,6 +40,37 @@ function toggle(list: string[], v: string, max: number) {
   return [...list, v]
 }
 
+const tone = (hex: string) => {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16) || 0
+  const g = parseInt(h.slice(2, 4), 16) || 0
+  const b = parseInt(h.slice(4, 6), 16) || 0
+  return { l: (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255, w: (r - b) / 255 }
+}
+function camriPick(styleKey: string, styles: Style[]): Record<string, string> {
+  const st = styles.find((x) => x.key === styleKey)
+  const want = tone(st?.bg ?? '#FFFFFF')
+  const T = TONES as unknown as Record<string, { l: number; w: number }>
+  const out: Record<string, string> = {}
+  Object.entries(PICKERS()).forEach(([id, pk]) => {
+    if (id === 'book|Without the calendar') return
+    let best = pk.items[0]?.key ?? ''
+    let bd = 99
+    pk.items.forEach((it) => {
+      const t = T[pk.dir + '/' + it.key]
+      if (!t) return
+      const dd = Math.abs(t.l - want.l) * 3 + Math.abs(t.w - want.w)
+      if (dd < bd) { bd = dd; best = it.key }
+    })
+    out[pk.field] = best
+  })
+  out.galleries_mode = 'both'
+  out.about_mode = 'page'
+  out.pricing_mode = 'section'
+  out.blog_mode = 'none'
+  return out
+}
+
 function withModes(s: Struct, d: Record<string, string>): Struct {
   const n: Struct = { ...s, home: [...s.home], about: [...s.about], galleries: [...s.galleries], extra: s.extra.map((e) => ({ ...e, sections: [...e.sections] })), off: [...s.off] }
   const drop = (k: string) => {
@@ -57,10 +89,13 @@ function withModes(s: Struct, d: Record<string, string>): Struct {
     if (g === 'page') drop('galsec'); else toHome('galsec')
   } else if (g === 'section') {
     pageOff('galleries'); drop('portfolio'); toHome('galsec')
+  } else if (g === 'none') {
+    pageOff('galleries'); drop('portfolio'); drop('galsec')
   }
   const a = d.about_mode
   if (a === 'page') { pageOn('about'); drop('about'); n.about.unshift('about') }
   else if (a === 'section') { pageOff('about'); toHome('about') }
+  else if (a === 'none') { pageOff('about'); drop('about') }
   const pr = d.pricing_mode
   const setPricePage = () => {
     drop('investment')
@@ -70,6 +105,7 @@ function withModes(s: Struct, d: Record<string, string>): Struct {
   if (pr === 'page') { drop('pricesec'); setPricePage() }
   else if (pr === 'both') { setPricePage(); toHome('pricesec') }
   else if (pr === 'section') { n.extra = n.extra.filter((e) => e.id !== 'pricing'); drop('pricesec'); toHome('investment') }
+  else if (pr === 'none') { n.extra = n.extra.filter((e) => e.id !== 'pricing'); drop('pricesec'); drop('investment') }
   const b = d.blog_mode
   if (b === 'none') { if (!n.off.includes('blog')) n.off.push('blog') }
   else if (b === 'page') n.off = n.off.filter((x) => x !== 'blog')
@@ -118,6 +154,19 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     s.about = []
     s.galleries = []
     s.extra = s.extra.map((e) => ({ ...e, sections: [] }))
+    setStruct(s)
+    setStep(3)
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function camriBuild() {
+    const nd = { ...designs, ...camriPick(layouts[0], styles) }
+    const base: Struct = { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] }
+    const s = withModes(base, nd)
+    const had = new Set(s.home)
+    const order = ['explore', 'galsec', 'testimonials', 'investment', 'pricesec', 'faq', 'social', 'contact']
+    s.home = order.filter((k) => !['galsec', 'investment', 'pricesec'].includes(k) || had.has(k))
+    setDesigns(nd)
     setStruct(s)
     setStep(3)
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -177,7 +226,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
 
         {step === 2 && (
           <div>
-            <DesignSteps designs={designs} setDesigns={setDesigns} onBack={() => setStep(1)} onDone={goArrange} baseKey={layouts[0]} baseName={styles.find((x) => x.key === layouts[0])?.name} />
+            <DesignSteps designs={designs} setDesigns={setDesigns} onBack={() => setStep(1)} onDone={goArrange} onAuto={camriBuild} baseKey={layouts[0]} baseName={styles.find((x) => x.key === layouts[0])?.name} />
             {onCancel && <button type="button" onClick={onCancel} disabled={busy} className="mt-2 text-sm text-ink-soft underline">Back to my site</button>}
           </div>
         )}
@@ -248,7 +297,18 @@ const PS = [
   { q: 'Page or section?', a: 'A page is a full page of its own in your site menu. A section is a smaller block you place on your home page or any page you choose.' },
   { q: 'Can I use both?', a: 'Yes. Many photographers put a section on the home page that links to the full page.' },
 ]
-const qaFor = (k: string) => [{ q: 'What is this?', a: HELP[k] ?? '' }, ...(k === 'about' ? PS.slice(0, 1) : ['galleries', 'pricing'].includes(k) ? PS : [])]
+const REC: Record<string, string> = {
+  nav: "Put an Explore section right under your hero. It gives visitors three clear paths: Galleries, About and Booking. Short menus and an obvious next step are what the best photographer sites do.",
+  galleries: "Group your galleries by type, like weddings and portraits, and show a few on your home page that link to the full Galleries page. Show your best work, not everything.",
+  book: "Keep Booking in your menu and put a booking button on every page. A calendar lets couples check your date right away.",
+  testimonials: "Put three to five short, specific testimonials on your home page, with first names. It builds trust right before they decide to book.",
+  about: "Give About its own page so people can meet the person behind the camera. Show your face and let your personality come through.",
+  pricing: "A pricing section on your home page is enough for most photographers. It helps the right clients inquire. A full pricing page is optional.",
+  social: "A small social strip near the bottom of the page is plenty.",
+  faq: "Put your FAQ just above your booking button to answer the last questions before someone inquires.",
+  blog: "A blog is optional. Only add it if you will keep posting. Posts about venues and places can help local search.",
+}
+const qaFor = (k: string) => [{ q: 'What is this?', a: HELP[k] ?? '' }, ...(REC[k] ? [{ q: 'What do you recommend?', a: REC[k] }] : []), ...(k === 'about' ? PS.slice(0, 1) : ['galleries', 'pricing'].includes(k) ? PS : [])]
 
 const PHOTO_DESIGNS = ['lark', 'wren', 'finch', 'heron', 'swift', 'plover', 'egret', 'kestrel', 'osprey', 'sparrow'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
@@ -321,7 +381,7 @@ function planOf(designs: Record<string, string>) {
   DESIGN_SECTIONS.forEach((s) => {
     const md = designs[s.k + '_mode'] || ''
     const moded = ['galleries', 'about', 'pricing', 'blog'].includes(s.k)
-    if (s.k === 'blog' && md === 'none') return
+    if (md === 'none') return
     if (moded && !md) return
     s.rows.forEach((row) => {
       const kd = rowKind(row)
@@ -355,6 +415,7 @@ function thumbsOf(designs: Record<string, string>) {
     return undefined
   }
   DESIGN_SECTIONS.forEach((s) => {
+    if (designs[s.k + '_mode'] === 'none') return
     const pg = pickOf(s, (kd) => kd !== 'section')
     const sc = pickOf(s, (kd) => kd === 'section')
     if (s.k === 'galleries') { if (pg) out.portfolio = pg; if (sc) out.galsec = sc }
@@ -364,13 +425,14 @@ function thumbsOf(designs: Record<string, string>) {
   return out
 }
 
-function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; onBack: () => void; onDone: () => void; baseKey?: string; baseName?: string }) {
+function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, baseName }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; onBack: () => void; onDone: () => void; onAuto: () => void; baseKey?: string; baseName?: string }) {
   type Pk = { dir: string; ar: string; field: string; items: { key: string; name: string }[] }
   const PK = PICKERS() as unknown as Record<string, Pk>
   const [step, setStep] = useState(0)
   const [zoom, setZoom] = useState<string | null>(null)
   const [ask, setAsk] = useState(false)
   const [ans, setAns] = useState<string | null>(null)
+  const [showPlan, setShowPlan] = useState(false)
   const total = DESIGN_SECTIONS.length
   const sec = DESIGN_SECTIONS[step]
   const MODED = ['galleries', 'about', 'pricing', 'blog']
@@ -378,7 +440,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
   const mode = designs[sec.k + '_mode'] || ''
   const rows = sec.rows.filter((row) => {
     if (PK[sec.k + '|' + row]?.field === 'photos') return false
-    if (sec.k === 'blog' && mode === 'none') return false
+    if (mode === 'none') return false
     return true
   })
   const plan = planOf(designs)
@@ -407,6 +469,36 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
             <img src={zoom} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg" />
           </div>
         )}
+        {step === 0 && (
+          <div className="mb-6 rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
+            <div className="flex items-start gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/camri/13_face_avatar.png" alt="" className="h-10 w-auto shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="font-fraunces text-lg leading-snug text-ink">Want me to do this for you? I can pick looks that match your {baseName ? baseName + ' ' : ''}layout, set up your pages the way top photographers do, and take you straight to the last step. You can change anything after.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" onClick={onAuto} className={btnPrimary}>Yes, build it for me</button>
+                  <button type="button" onClick={() => setShowPlan(!showPlan)} className="rounded-full border border-black/15 bg-white px-4 py-2 text-sm text-ink">How would you set it up?</button>
+                </div>
+                {showPlan && (
+                  <div className="mt-4 text-sm leading-relaxed text-ink-soft">
+                    <p className="font-medium text-ink">Pages: Home, Galleries, About and Booking. A short menu works best.</p>
+                    <ol className="mt-2 list-decimal space-y-1 pl-5">
+                      <li>Hero: your best photo and what you shoot. That is your layout.</li>
+                      <li>Explore: three clear paths to Galleries, About and Booking.</li>
+                      <li>Galleries: a few of your best galleries that link to the full page.</li>
+                      <li>Testimonials: three to five short ones, with first names.</li>
+                      <li>Pricing: so people know what to expect before they ask.</li>
+                      <li>FAQ: the last questions before they inquire.</li>
+                      <li>Social links, then a booking button as the next step.</li>
+                    </ol>
+                    <p className="mt-2">Blog is optional. Add it only if you will keep posting.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         <p className="text-xs uppercase tracking-wider text-ink-soft">{`Part ${step + 1} of ${total}`}</p>
         <div className="mt-2 flex gap-1.5">
           {DESIGN_SECTIONS.map((x, n) => (
@@ -415,6 +507,9 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
         </div>
         <h3 className="mt-6 font-fraunces text-3xl text-ink">{sec.title}</h3>
         <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className="mt-2 rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">Ask Camri about this</button>
+        {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
+          <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'ml-2 mt-2 rounded-full border px-3 py-1 text-xs text-ink ' + (mode === 'none' ? 'border-twilight bg-white' : 'border-black/15 bg-white')}>{mode === 'none' ? 'Skipped. Tap to add it back' : "I don't want this"}</button>
+        )}
         {ask && (
           <div className="mt-2 max-w-xl rounded-xl border border-black/10 bg-white/80 p-3 text-sm">
             <div className="flex flex-wrap gap-2">
@@ -430,7 +525,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
           <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
             <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              {(sec.k === 'blog' ? BLOG_MODES : MODES.filter((m) => !(sec.k === 'about' && m.k === 'both'))).map((m) => (
+              {([...(sec.k === 'blog' ? BLOG_MODES : MODES.filter((m) => !(sec.k === 'about' && m.k === 'both'))), ...(sec.k === 'blog' ? [] : [{ k: 'none', t: "I don't want this", d: 'Leave it off my site.' }])] as { k: string; t: string; d: string }[]).map((m) => (
                 <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
                   <p className="text-sm font-medium text-ink">{m.t}</p>
                   <p className="mt-1 text-xs text-ink-soft">{m.d}</p>

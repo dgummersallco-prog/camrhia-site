@@ -1,5 +1,6 @@
 'use client'
 
+import { blogPosts } from '@/lib/blog'
 import { useSiteBase } from '@/app/site/useSiteBase'
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -65,7 +66,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
   )
 
   const nav = (
-    <SiteNav t={t} logo={logo} name={name} homeHref={`${homeHref}${qs}`} headStyle={head} back={{ href: `${base}/galleries${qs}`, label: t.backText.galleries ?? '← Galleries', key: 'galleries' }} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`]] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k)).map(([k, h]) => ({ key: k, href: h, label: t.menu.labels[k]?.trim() || NAV_DEFAULTS[k], active: k === 'galleries' }))} />
+    <SiteNav t={t} logo={logo} name={name} homeHref={`${homeHref}${qs}`} headStyle={head} back={{ href: `${base}/galleries${qs}`, label: t.backText.galleries ?? '← Galleries', key: 'galleries' }} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`], ...(blogPosts((r as any).site_settings).length ? [['blog', `${base}/blog${qs}`]] : []), ...t.extraPages.map((e) => [e.id, `${base}/p/${e.id}${qs}`] as [string, string])] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k) && !(t.pagesOff as string[]).includes(k)).map(([k, h]) => ({ key: k, href: h, label: (t.menu.labels as Record<string, string | undefined>)[k]?.trim() || (NAV_DEFAULTS as Record<string, string>)[k] || t.extraPages.find((e) => e.id === k)?.label || k, active: k === 'galleries' }))} />
   )
 
   if (!gal) {
