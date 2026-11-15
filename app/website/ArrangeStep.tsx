@@ -115,7 +115,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const named = cards.map((c, i) => ({ c, i })).filter((x) => x.c.n.trim())
   const eff = (c: GCard, k = 0) => c.d || (photoDesigns.length ? photoDesigns[k % photoDesigns.length].key : designs.photos || '')
   const wrapRef = useRef<HTMLDivElement>(null)
-  const [geo, setGeo] = useState<{ paths: string[]; dots: [number, number][] }>({ paths: [], dots: [] })
+  const [geo, setGeo] = useState<{ paths: { d: string; k: number }[]; dots: { x: number; y: number; k: number }[] }>({ paths: [], dots: [] })
   useEffect(() => {
     if (!photoDesigns.length) return
     const filled = cards.map((cd, k) => (cd.d ? cd : { ...cd, d: photoDesigns[k % photoDesigns.length].key }))
@@ -129,7 +129,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
       const img = wrap.querySelector('[data-galimg]') as HTMLElement | null
       const frame = wrap.querySelector('[data-frame]') as HTMLElement | null
       const dest = Array.from(wrap.querySelectorAll('[data-dest]')) as HTMLElement[]
-      const next: { paths: string[]; dots: [number, number][] } = { paths: [], dots: [] }
+      const next: { paths: { d: string; k: number }[]; dots: { x: number; y: number; k: number }[] } = { paths: [], dots: [] }
       if (img && frame && dest.length) {
         const wr = wrap.getBoundingClientRect()
         const ir = img.getBoundingClientRect()
@@ -144,18 +144,29 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
         const mid = (fl + frt) / 2
         const xL = Math.min(fl, ...info.map((q) => q.l)) - 26
         const xR = Math.max(frt, ...info.map((q) => q.rt)) + 26
-        const items = A.map(([fx, fy], k) => ({ k, ax: ir.left - wr.left + fx * ir.width, ay: ir.top - wr.top + fy * ir.height }))
-        ;(['L', 'R'] as const).forEach((sd) => {
-          const g = items.filter((a) => (a.ax < mid ? 'L' : 'R') === sd).sort((a, b) => a.ay - b.ay)
-          g.forEach((a, j) => {
-            const cc = info.find((q) => q.k === a.k)
+        const ds = [...info].sort((p, q) => (Math.abs(p.cx - q.cx) > 10 ? p.cx - q.cx : p.cy - q.cy))
+        const rowTops = Array.from(new Set(info.map((q) => Math.round(q.cy / 10)))).sort((p, q) => p - q)
+        const top0 = Math.min(...info.map((q) => q.cy))
+        const items = A.map(([fx, fy]) => ({ ax: ir.left - wr.left + fx * ir.width, ay: ir.top - wr.top + fy * ir.height }))
+        const Lg = items.filter((q) => q.ax < mid).sort((p, q) => p.ay - q.ay)
+        const Rg = items.filter((q) => q.ax >= mid).sort((p, q) => p.ay - q.ay)
+        const dl = ds.slice(0, Lg.length)
+        const dr = ds.slice(Lg.length).reverse()
+        const draw = (g: typeof items, dd: typeof info, side: number) =>
+          g.forEach((q, j) => {
+            const cc = dd[j]
             if (!cc) return
-            const lx = sd === 'L' ? xL - (g.length - 1 - j) * 12 : xR + (g.length - 1 - j) * 12
-            const yb = cc.cy - 24 - j * 10
-            next.paths.push(roundPath([[a.ax, a.ay], [lx, a.ay], [lx, yb], [cc.cx, yb], [cc.cx, cc.cy]]))
-            next.dots.push([a.ax, a.ay], [cc.cx, cc.cy])
+            const row = rowTops.indexOf(Math.round(cc.cy / 10))
+            const lx = side < 0 ? xL - (g.length - 1 - j) * 18 : xR + (g.length - 1 - j) * 18
+            const yb = top0 - 90 - j * 20
+            const pts: [number, number][] = row <= 0
+              ? [[q.ax, q.ay], [lx, q.ay], [lx, yb], [cc.cx, yb], [cc.cx, cc.cy]]
+              : [[q.ax, q.ay], [lx, q.ay], [lx, yb], [cc.l - 14 + (((row - 1) % 3) - 1) * 5, yb], [cc.l - 14 + (((row - 1) % 3) - 1) * 5, cc.cy - 24], [cc.cx, cc.cy - 24], [cc.cx, cc.cy]]
+            next.paths.push({ d: roundPath(pts, 56), k: cc.k })
+            next.dots.push({ x: q.ax, y: q.ay, k: cc.k }, { x: cc.cx, y: cc.cy, k: cc.k })
           })
-        })
+        draw(Lg, dl, -1)
+        draw(Rg, dr, 1)
       }
       setGeo((g) => (JSON.stringify(g) === JSON.stringify(next) ? g : next))
     }
@@ -250,11 +261,11 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const showDest = page.id === 'galleries' || mine.includes('galsec') || mine.includes('portfolio')
   const pickI = Math.min(sel ?? 0, Math.max(vis - 1, 0))
   const DW = 120
-  const DG = 20
+  const DG = 28
   const perRow = vis <= 4 ? Math.max(vis, 1) : vis % 4 === 0 ? 4 : vis % 3 === 0 ? 3 : 4
   const destinations = (
-    <div className="mt-28">
-      <div className="relative z-10 mx-auto flex flex-wrap justify-center gap-x-5 gap-y-14" style={{ maxWidth: perRow * DW + (perRow - 1) * DG }}>
+    <div style={{ marginTop: 150 + 20 * Math.ceil(vis / 2) }}>
+      <div className="relative z-10 mx-auto flex flex-wrap justify-center gap-y-14" style={{ maxWidth: perRow * DW + (perRow - 1) * DG, columnGap: DG }}>
         {cards.map((cd, k) => {
           if (k >= vis) return null
           const d = eff(cd, k)
@@ -496,9 +507,9 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
             </div>
           </div>
           {showDest && destinations}
-          <svg className="pointer-events-none absolute left-0 top-0 z-20 overflow-visible" width="100%" height="100%" fill="none">
-            {geo.paths.map((d, i) => <path key={i} d={d} stroke="rgba(70,50,30,0.5)" strokeWidth="2" strokeDasharray="6 7" strokeLinecap="round" />)}
-            {geo.dots.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={4} fill="rgba(70,50,30,0.6)" />)}
+          <svg className="pointer-events-none absolute left-0 top-0 z-20 overflow-visible" width="100%" height="100%" fill="none" style={{ opacity: act && !(GAL as string[]).includes(String(act)) && String(act) !== String(mainKey) ? 0.1 : 1, transition: 'opacity 0.4s' }}>
+            {[...geo.paths].sort((a, b) => Number(a.k === pickI) - Number(b.k === pickI)).map((p, i) => <path key={i} d={p.d} stroke="rgba(70,50,30,0.6)" strokeWidth={p.k === pickI ? 2.5 : 2} strokeDasharray="6 7" strokeLinecap="round" style={{ opacity: p.k === pickI ? 1 : 0.12, transition: 'opacity 0.3s' }} />)}
+            {geo.dots.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={4} fill="rgba(70,50,30,0.7)" style={{ opacity: p.k === pickI ? 1 : 0.12, transition: 'opacity 0.3s' }} />)}
           </svg>
         </div>
 
