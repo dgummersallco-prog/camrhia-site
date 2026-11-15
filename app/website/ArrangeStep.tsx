@@ -506,7 +506,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
               
             </div>
           </div>
-          {showDest && destinations}
+          {showDest && !(act && !(GAL as string[]).includes(String(act)) && String(act) !== String(mainKey)) && destinations}
           <svg className="pointer-events-none absolute left-0 top-0 z-20 overflow-visible" width="100%" height="100%" fill="none" style={{ opacity: act && !(GAL as string[]).includes(String(act)) && String(act) !== String(mainKey) ? 0.1 : 1, transition: 'opacity 0.4s' }}>
             {[...geo.paths].sort((a, b) => Number(a.k === pickI) - Number(b.k === pickI)).map((p, i) => <path key={i} d={p.d} stroke="rgba(70,50,30,0.6)" strokeWidth={p.k === pickI ? 2.5 : 2} strokeDasharray="6 7" strokeLinecap="round" style={{ opacity: p.k === pickI ? 1 : 0.12, transition: 'opacity 0.3s' }} />)}
             {geo.dots.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={4} fill="rgba(70,50,30,0.7)" style={{ opacity: p.k === pickI ? 1 : 0.12, transition: 'opacity 0.3s' }} />)}
