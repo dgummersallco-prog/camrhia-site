@@ -131,12 +131,16 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
       : 'Your Galleries page has a card for each gallery you shoot, and each opens its own gallery.'
 
   const pageN = cards.length
+  const onGalPage = page.id === 'galleries'
+  const vis = !onGalPage && secN ? Math.min(secN, cards.length) : cards.length
   const galPanel = (
     <div>
       <div className="flex items-start gap-3">
         <img src="/camri/09_holding_photo.png" alt="" className="h-14 w-auto shrink-0" />
         <p className="font-fraunces text-base leading-snug text-ink">
-          {secOnly
+          {!onGalPage && secN
+            ? 'Your galleries block has ' + vis + ' destinations.'
+            : secOnly
             ? 'Your galleries section has ' + secN + ' destinations.'
             : secN && designs.galleries_mode !== 'page'
               ? 'Your Galleries page has ' + pageN + ' destinations, and your home page shows the first ' + secN + '.'
@@ -146,52 +150,81 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     </div>
   )
   const showDest = page.id === 'galleries' || mine.includes('galsec') || mine.includes('portfolio')
+  const pickI = Math.min(sel ?? 0, Math.max(vis - 1, 0))
+  const rowsOf: number[][] = []
+  for (let r = 0; r < vis; r += 3) rowsOf.push(Array.from({ length: Math.min(3, vis - r) }, (_, q) => r + q))
+  const dash = 'border-dashed border-black/30'
   const destinations = (
-    <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-black/10 bg-[#FBF8F4] p-6">
-      <p className="font-fraunces text-xl text-ink">Your {pageN} gallery destinations</p>
-      <p className="mt-1 text-sm text-ink-soft">Each picture on your page opens its own gallery. Name it, then tap it to pick how that gallery is displayed.</p>
-      <div className="mt-5 grid grid-cols-3 gap-x-4 gap-y-7">
-        {cards.map((c, k) => {
-          const d = eff(c)
-          const on = sel === k
-          return (
-            <div key={k}>
-              <button type="button" onClick={() => setSel(on ? null : k)} className="block w-full">
-                <div className={'relative flex items-center justify-center rounded-lg border-2 bg-[#EFE7DC] ' + (on ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/3' }}>
-                  <span className="font-fraunces text-2xl text-ink-soft">{k + 1}</span>
-                  {secN && !secOnly && designs.galleries_mode !== 'page' && k < secN && <span className="absolute right-1.5 top-1.5 rounded-full bg-white px-2 py-0.5 text-[10px] text-ink">Home</span>}
-                </div>
-              </button>
-              <div className="mx-auto h-4 w-0 border-l-2 border-dotted border-black/30" />
-              <input value={c.n} onChange={(e) => setCard(k, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[k % SUGG.length]} className="w-full rounded-full border border-black/10 bg-white px-3 py-1.5 text-center font-fraunces text-sm text-ink outline-none focus:border-twilight" />
-              <button type="button" onClick={() => setSel(on ? null : k)} className="mt-2 flex w-full items-center justify-center gap-2 text-left">
-                {d
-                  ? <img src={'/photos/' + d + '.png'} alt="" className={'w-9 shrink-0 rounded border-2 object-cover object-top ' + (on ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/5' }} />
-                  : <span className="flex w-9 shrink-0 items-center justify-center rounded border-2 border-dashed border-black/20 text-[9px] text-ink-soft" style={{ aspectRatio: '4/5' }}>Pick</span>}
-                <span className="text-[11px] leading-tight text-ink-soft">{c.d ? (photoDesigns.find((x) => x.key === d)?.name ?? d) : 'Default style'}</span>
-              </button>
-            </div>
-          )
-        })}
-      </div>
-      <div className="mt-5 flex flex-wrap gap-1.5">
-        {SUGG.filter((s) => !cards.some((c) => c.n.trim().toLowerCase() === s.toLowerCase())).map((s) => (
-          <button key={s} type="button" onClick={() => fillChip(s)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">{s}</button>
-        ))}
-      </div>
-      {sel !== null && cards[sel] && (
-        <div className="mt-6 rounded-xl border border-black/10 bg-white p-4">
-          <p className="font-fraunces text-base text-ink">Display style for {cards[sel].n.trim() || 'destination ' + (sel + 1)}</p>
-          <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
-            {photoDesigns.map((pd) => (
-              <button key={pd.key} type="button" onClick={() => setCard(sel, { d: cards[sel].d === pd.key ? '' : pd.key })} className="text-left">
-                <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (cards[sel].d === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
-                <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
-              </button>
-            ))}
+    <div className="mt-6">
+      <div className="mx-auto max-w-xl pl-32 pr-10">
+        <div className={'relative mx-auto h-14 w-0 border-l-2 ' + dash}>
+          <div className="absolute left-4 top-1 w-72">
+            <p className="font-fraunces text-base text-ink">Your {vis} gallery destinations</p>
+            <p className="text-xs text-ink-soft">Each picture on your page opens its own gallery.</p>
           </div>
         </div>
-      )}
+      </div>
+      <div className="mx-auto max-w-3xl rounded-2xl border border-black/10 bg-[#FBF8F4] p-6 pl-10">
+        <div className="relative">
+          <div className={'pointer-events-none absolute top-[-24px] h-6 w-0 border-l-2 ' + dash} style={{ left: 'calc(50% + 36px)' }} />
+          {rowsOf.map((idxs, ri) => (
+            <div key={ri} className={'relative pt-4 ' + (ri > 0 ? 'mt-7' : '')}>
+              <div className={'pointer-events-none absolute left-[-20px] right-[16.6%] top-0 border-t-2 ' + dash} />
+              {ri < rowsOf.length - 1 && <div className={'pointer-events-none absolute bottom-[-28px] left-[-20px] top-0 w-0 border-l-2 ' + dash} />}
+              <div className="grid grid-cols-3 gap-x-4">
+                {idxs.map((k) => {
+                  const cd = cards[k]
+                  const d = eff(cd)
+                  const on = pickI === k
+                  return (
+                    <div key={k} className="relative">
+                      <div className={'pointer-events-none absolute -top-4 left-1/2 h-4 w-0 border-l-2 ' + dash} />
+                      <button type="button" onClick={() => setSel(k)} className="block w-full">
+                        <div className={'relative flex items-center justify-center rounded-lg border-2 bg-[#EFE7DC] ' + (on ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/3' }}>
+                          <span className="font-fraunces text-2xl text-ink-soft">{k + 1}</span>
+                          {onGalPage && secN && !secOnly && designs.galleries_mode !== 'page' && k < secN && <span className="absolute right-1.5 top-1.5 rounded-full bg-white px-2 py-0.5 text-[10px] text-ink">Home</span>}
+                        </div>
+                      </button>
+                      <div className={'mx-auto h-4 w-0 border-l-2 ' + dash} />
+                      <input value={cd.n} onFocus={() => setSel(k)} onChange={(e) => setCard(k, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[k % SUGG.length]} className="w-full rounded-full border border-black/10 bg-white px-3 py-1.5 text-center font-fraunces text-sm text-ink outline-none focus:border-twilight" />
+                      <button type="button" onClick={() => setSel(k)} className="mt-2 flex w-full items-center justify-center gap-2 text-left">
+                        {d
+                          ? <img src={'/photos/' + d + '.png'} alt="" className={'w-9 shrink-0 rounded border-2 object-cover object-top ' + (on ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/5' }} />
+                          : <span className="flex w-9 shrink-0 items-center justify-center rounded border-2 border-dashed border-black/20 text-[9px] text-ink-soft" style={{ aspectRatio: '4/5' }}>Pick</span>}
+                        <span className="text-[11px] leading-tight text-ink-soft">{cd.d ? (photoDesigns.find((x) => x.key === d)?.name ?? d) : 'Default style'}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-1.5">
+          {SUGG.filter((s) => !cards.some((x) => x.n.trim().toLowerCase() === s.toLowerCase())).map((s) => (
+            <button key={s} type="button" onClick={() => fillChip(s)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">{s}</button>
+          ))}
+        </div>
+
+        {cards[pickI] && (
+          <div className="mt-8 rounded-xl border border-black/10 bg-white p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-fraunces text-base text-ink">How should {cards[pickI].n.trim() || 'destination ' + (pickI + 1)} look when someone opens it?</p>
+              <button type="button" onClick={() => saveCards(cards.map((x) => ({ ...x, d: eff(cards[pickI]) })))} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">Use this style for all</button>
+            </div>
+            <p className="mt-1 text-xs text-ink-soft">Tap a destination above to pick a different one.</p>
+            <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
+              {photoDesigns.map((pd) => (
+                <button key={pd.key} type="button" onClick={() => setCard(pickI, { d: cards[pickI].d === pd.key ? '' : pd.key })} className="text-left">
+                  <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (eff(cards[pickI]) === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
+                  <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 
@@ -321,7 +354,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
             <p className="mt-1 font-fraunces text-xl leading-snug text-ink">You have {NUM[pages.length] ?? pages.length} pages: {nameList}. Here is the main block of each. Tap a page to build it out, then I will suggest what goes next.</p>
           </div>
         </div>
-        <div className="mt-5 flex items-start overflow-x-auto pb-2">
+        <div className="mt-5 overflow-x-auto pb-2"><div className="mx-auto flex w-max items-start">
           {pages.map((p, k) => {
             const src = MAIN(p)
             const on = k === i
@@ -341,7 +374,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
               </div>
             )
           })}
-        </div>
+        </div></div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
