@@ -3,9 +3,9 @@
 import React, { useState } from 'react'
 
 export const GALSEC = ['sahara', 'gobi', 'mojave', 'atacama', 'namib', 'sonora', 'kalahari', 'thar']
-export const GALOWN = ['mojave', 'atacama', 'namib', 'sonora', 'kalahari', 'thar']
+export const GALOWN = ['sahara', 'gobi', 'mojave', 'atacama', 'namib', 'sonora', 'kalahari', 'thar']
 export type GalItem = { id: string; title: string; line: string; u: string | null; href: string }
-type P = { title: string; items: GalItem[]; viewHref: string; viewText: string; headStyle: React.CSSProperties; ink: string; soft: string; accent: string; line: string }
+type P = { title: string; items: GalItem[]; viewHref: string; viewText: string; headStyle: React.CSSProperties; nameStyle: React.CSSProperties; ink: string; soft: string; accent: string; line: string }
 
 const bleed: React.CSSProperties = { width: '100vw', marginLeft: 'calc(50% - 50vw)' }
 const small: React.CSSProperties = { fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase' }
@@ -23,7 +23,7 @@ function Ph({ u, ratio, style }: { u: string | null; ratio: string; style?: Reac
 function Cap({ g, p, center = false, size = 26, color }: { g: GalItem; p: P; center?: boolean; size?: number; color?: string }) {
   return (
     <div style={{ textAlign: center ? 'center' : 'left', paddingTop: 14, color: color ?? p.ink }}>
-      <p style={{ ...p.headStyle, fontSize: size, lineHeight: 1.2, margin: 0 }}>{g.title}</p>
+      <p style={{ ...p.nameStyle, fontSize: size, lineHeight: 1.2, margin: 0 }}>{g.title}</p>
       {g.line && <p style={{ ...small, color: color ? 'rgba(244,239,231,.7)' : p.soft, margin: '8px 0 0' }}>{g.line}</p>}
     </div>
   )
@@ -39,6 +39,7 @@ const shade = <div style={{ position: 'absolute', inset: 0, background: 'linear-
 function Sahara(p: P) {
   return (
     <div>
+      <h2 style={{ ...h2(p, 'clamp(2.2rem,4.4vw,3.4rem)'), textAlign: 'center', marginBottom: 40 }}>{p.title}</h2>
       <div className="grid gap-8 sm:grid-cols-3">{p.items.slice(0, 3).map((g) => tile(g, <><Ph u={g.u} ratio="4/5" /><Cap g={g} p={p} center /></>))}</div>
       <ViewAll p={p} />
     </div>
@@ -48,7 +49,8 @@ function Gobi(p: P) {
   const [a, ...rest] = p.items
   return (
     <div>
-      {a && tile(a, <><Ph u={a.u} ratio="21/9" />{shade}<div style={{ position: 'absolute', left: 32, bottom: 28, color: '#fff' }}><p style={{ ...p.headStyle, fontSize: 'clamp(26px,3.6vw,44px)', lineHeight: 1.1, margin: 0 }}>{a.title}</p>{a.line && <p style={{ ...small, margin: '8px 0 0', opacity: 0.85 }}>{a.line}</p>}</div></>)}
+      <h2 style={{ ...h2(p, 'clamp(2rem,4vw,3rem)'), textAlign: 'center', marginBottom: 40 }}>{p.title}</h2>
+      {a && tile(a, <><Ph u={a.u} ratio="21/9" />{shade}<div style={{ position: 'absolute', left: 32, bottom: 28, color: '#fff' }}><p style={{ ...p.nameStyle, fontSize: 'clamp(26px,3.6vw,44px)', lineHeight: 1.1, margin: 0 }}>{a.title}</p>{a.line && <p style={{ ...small, margin: '8px 0 0', opacity: 0.85 }}>{a.line}</p>}</div></>)}
       <div className="mt-6 grid gap-6 sm:grid-cols-3">{rest.slice(0, 3).map((g) => tile(g, <><Ph u={g.u} ratio="1/1" /><Cap g={g} p={p} size={20} /></>))}</div>
       <ViewAll p={p} />
     </div>
@@ -60,7 +62,7 @@ function Mojave(p: P) {
     <div>
       <div style={{ position: 'relative', ...bleed }}>
         <div className="grid sm:grid-cols-3">
-          {p.items.slice(0, 3).map((g) => tile(g, <><Ph u={g.u} ratio="3/4" />{shade}<div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 28, color: '#fff' }}><p style={{ ...p.headStyle, fontSize: 26, lineHeight: 1.15, margin: 0 }}>{g.title}</p>{g.line && <p style={{ ...small, margin: '8px 0 0', opacity: 0.85 }}>{g.line}</p>}</div></>))}
+          {p.items.slice(0, 3).map((g) => tile(g, <><Ph u={g.u} ratio="3/4" />{shade}<div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 28, color: '#fff' }}><p style={{ ...p.nameStyle, fontSize: 26, lineHeight: 1.15, margin: 0 }}>{g.title}</p>{g.line && <p style={{ ...small, margin: '8px 0 0', opacity: 0.85 }}>{g.line}</p>}</div></>))}
         </div>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(0,0,0,.5), transparent 38%)', pointerEvents: 'none' }} />
         <h2 style={{ ...h2(p, 'clamp(44px,7vw,96px)', '#fff'), position: 'absolute', top: 36, left: 'max(24px, 5vw)' }}>{p.title}</h2>
@@ -75,8 +77,8 @@ function Atacama(p: P) {
       <div className="mb-8 flex items-end justify-between gap-6" style={{ borderBottom: `1px solid ${p.line}`, paddingBottom: 16 }}>
         <h2 style={h2(p, 'clamp(2rem,4vw,3rem)')}>{p.title}</h2>
       </div>
-      <div className="flex gap-5 overflow-x-auto pb-4" style={{ scrollSnapType: 'x mandatory' }}>
-        {p.items.map((g) => tile(g, <><Ph u={g.u} ratio="4/5" /><Cap g={g} p={p} size={22} /></>, { flex: 'none', width: 'min(300px, 72vw)', scrollSnapAlign: 'start' }))}
+      <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+        {p.items.slice(0, 4).map((g) => tile(g, <><Ph u={g.u} ratio="2/3" /><Cap g={g} p={p} size={22} /></>))}
       </div>
     </div>
   )
@@ -91,7 +93,7 @@ function Namib(p: P) {
         <p style={{ ...small, color: p.accent, margin: '0 0 18px' }}>{p.title}</p>
         {p.items.map((g, k) => (
           <a key={g.id} href={g.href} onMouseEnter={() => setI(k)} onFocus={() => setI(k)} style={{ display: 'block', padding: '18px 0', borderTop: `1px solid ${p.line}`, color: p.ink, textDecoration: 'none', opacity: k === i ? 1 : 0.5, transition: 'opacity .3s' }}>
-            <span style={{ ...p.headStyle, fontSize: 'clamp(28px,3.6vw,46px)', lineHeight: 1.12 }}>{g.title}</span>
+            <span style={{ ...p.nameStyle, fontSize: 'clamp(28px,3.6vw,46px)', lineHeight: 1.12 }}>{g.title}</span>
             {g.line && <span style={{ ...small, color: p.soft, display: 'block', marginTop: 6 }}>{g.line}</span>}
           </a>
         ))}
@@ -104,7 +106,7 @@ function Sonora(p: P) {
   return (
     <div style={{ position: 'relative' }}>
       <div className="grid gap-3 sm:grid-cols-2">
-        {p.items.slice(0, 4).map((g) => tile(g, <><Ph u={g.u} ratio="3/2" />{shade}<div style={{ position: 'absolute', left: 24, bottom: 20, color: '#fff' }}><p style={{ ...p.headStyle, fontSize: 'clamp(20px,2.4vw,28px)', lineHeight: 1.15, margin: 0 }}>{g.title}</p></div></>))}
+        {p.items.slice(0, 4).map((g) => tile(g, <><Ph u={g.u} ratio="3/2" />{shade}<div style={{ position: 'absolute', left: 24, bottom: 20, color: '#fff' }}><p style={{ ...p.nameStyle, fontSize: 'clamp(20px,2.4vw,28px)', lineHeight: 1.15, margin: 0 }}>{g.title}</p></div></>))}
       </div>
       <div className="hidden sm:block" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', background: '#fbf8f3', color: p.ink, padding: '34px 48px', textAlign: 'center', boxShadow: '0 14px 40px rgba(0,0,0,.18)' }}>
         <h2 style={h2(p, 'clamp(1.8rem,3vw,2.6rem)', p.ink)}>{p.title}</h2>
@@ -141,7 +143,28 @@ function Thar(p: P) {
 }
 const DESIGNS: Record<string, (p: P) => React.ReactElement> = { sahara: Sahara, gobi: Gobi, mojave: Mojave, atacama: Atacama, namib: Namib, sonora: Sonora, kalahari: Kalahari, thar: Thar }
 
-export function GalleriesSection({ design, ...p }: { design: string } & P) {
+type FontSpec = { h: string; hw: number; hi?: boolean; hu?: boolean; hl?: string; n: string; nw: number; ni?: boolean; nu?: boolean; nl?: string }
+const FONTS: Record<string, FontSpec> = {
+  sahara: { h: 'Cormorant Garamond', hw: 300, hi: true, n: 'Cormorant Garamond', nw: 400 },
+  gobi: { h: 'Bodoni Moda', hw: 400, hu: true, hl: '0.14em', n: 'Bodoni Moda', nw: 400 },
+  mojave: { h: 'Montserrat', hw: 200, hu: true, hl: '0.06em', n: 'Montserrat', nw: 300, nu: true, nl: '0.14em' },
+  atacama: { h: 'DM Serif Display', hw: 400, n: 'DM Serif Display', nw: 400 },
+  namib: { h: 'Josefin Sans', hw: 300, n: 'Playfair Display', nw: 400, ni: true },
+  sonora: { h: 'Italiana', hw: 400, hu: true, hl: '0.12em', n: 'Italiana', nw: 400, nu: true, nl: '0.1em' },
+  kalahari: { h: 'Fjalla One', hw: 400, hu: true, hl: '0.02em', n: 'Lato', nw: 400, nu: true, nl: '0.16em' },
+  thar: { h: 'Cinzel', hw: 400, hl: '0.08em', n: 'Cormorant Garamond', nw: 400 },
+}
+const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Bodoni+Moda:wght@400&family=Montserrat:wght@200;300&family=DM+Serif+Display&family=Playfair+Display:ital,wght@1,400&family=Josefin+Sans:wght@300&family=Italiana&family=Fjalla+One&family=Lato:wght@400&family=Cinzel:wght@400&display=swap'
+
+export function GalleriesSection({ design, ...p }: { design: string } & Omit<P, 'nameStyle'>) {
   const C = DESIGNS[design] ?? Sahara
-  return <C {...p} />
+  const F = FONTS[design] ?? FONTS.sahara
+  const hs = { fontFamily: `'${F.h}', serif`, fontWeight: F.hw, fontStyle: F.hi ? 'italic' : 'normal', textTransform: F.hu ? 'uppercase' : 'none', letterSpacing: F.hl ?? '0.01em' } as React.CSSProperties
+  const ns = { fontFamily: `'${F.n}', serif`, fontWeight: F.nw, fontStyle: F.ni ? 'italic' : 'normal', textTransform: F.nu ? 'uppercase' : 'none', letterSpacing: F.nl ?? '0.01em' } as React.CSSProperties
+  return (
+    <>
+      <link rel="stylesheet" href={FONT_HREF} />
+      <C {...p} headStyle={hs} nameStyle={ns} />
+    </>
+  )
 }
