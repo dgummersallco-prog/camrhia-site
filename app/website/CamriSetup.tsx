@@ -177,7 +177,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
 
   return (
     <div className="mx-auto w-full max-w-[1400px] py-6">
-      <div className="flex items-start gap-4">
+      <div className={(step === 2 ? 'hidden ' : '') + 'flex items-start gap-4'}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={step === 0 ? '/camri/01_waving.png' : '/camri/13_face_avatar.png'} alt="" className={(step === 0 ? 'h-32' : 'h-14') + ' w-auto shrink-0'} />
         <div className="rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4 text-ink">
@@ -470,12 +470,13 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           </div>
         )}
         {step === 0 && (
-          <div className="mb-6 rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
-            <div className="flex items-start gap-3">
+          <div className="mb-6">
+            <div className="flex items-start gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/13_face_avatar.png" alt="" className="h-10 w-auto shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="font-fraunces text-lg leading-snug text-ink">Want me to do this for you? I can pick looks that match your {baseName ? baseName + ' ' : ''}layout, set up your pages the way top photographers do, and take you straight to the last step. You can change anything after.</p>
+              <img src="/camri/12_open_arms.png" alt="" className="h-32 w-auto shrink-0" />
+              <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4">
+                <p className="text-xs uppercase tracking-wider text-ink-soft">Step 2 of 3</p>
+                <p className="mt-1 font-fraunces text-xl leading-snug text-ink">Now it's build-a-bear time! Want me to do this for you? I can pick looks that match your {baseName ? baseName + ' ' : ''}layout, set up your pages the way top photographers do, and take you straight to the last step. You can change anything after.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" onClick={onAuto} className={btnPrimary}>Yes, build it for me</button>
                   <button type="button" onClick={() => setShowPlan(!showPlan)} className="rounded-full border border-black/15 bg-white px-4 py-2 text-sm text-ink">How would you set it up?</button>
@@ -499,7 +500,13 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             </div>
           </div>
         )}
-        <p className="text-xs uppercase tracking-wider text-ink-soft">{`Part ${step + 1} of ${total}`}</p>
+        <div className="flex items-center gap-3">
+          {step > 0 && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={'/camri/' + ['03_working_laptop', '08_peeking', '09_holding_photo', '10_holding_sliders', '11_thumbs_up', '14_peeking_sliders', '15_thinking_peek', '16_excited', '05_celebrating'][(step - 1) % 9] + '.png'} alt="" className="h-14 w-auto shrink-0" />
+          )}
+          <p className="text-xs uppercase tracking-wider text-ink-soft">{`Step 2 of 3 · Part ${step + 1} of ${total}`}</p>
+        </div>
         <div className="mt-2 flex gap-1.5">
           {DESIGN_SECTIONS.map((x, n) => (
             <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
