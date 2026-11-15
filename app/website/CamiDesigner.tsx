@@ -215,7 +215,7 @@ export default function CamiDesigner() {
   const [review, setReview] = useState(() => { try { return window.localStorage.getItem('camriReview') === '1' } catch { return false } })
   useEffect(() => {
     try {
-      if (setupFinished) { ['camriReview', 'camriStep', 'camriDraft'].forEach((k) => window.localStorage.removeItem(k)) }
+      if (setupFinished) { ['camriReview', 'camriStep', 'camriDraft', 'camriStep2', 'camriDraft2'].forEach((k) => window.localStorage.removeItem(k)) }
       else if (review) window.localStorage.setItem('camriReview', '1')
       else window.localStorage.removeItem('camriReview')
     } catch {}
@@ -649,6 +649,14 @@ export default function CamiDesigner() {
             if (designs?.nav) x.explore = { ...(x.explore ?? {}), layout: designs.nav }
             if (designs?.galleries) x.galindex = { ...(x.galindex ?? {}), layout: designs.galleries }
             if (designs?.photos) x.galpage = { ...(x.galpage ?? {}), layout: designs.photos }
+            if (designs?.galcards) {
+              try {
+                const cards = (JSON.parse(designs.galcards) as { n: string; d: string }[]).filter((q) => q.n && q.n.trim())
+                const byName: Record<string, string> = {}
+                cards.forEach((q) => { if (q.d) byName[q.n.trim().toLowerCase()] = q.d })
+                x.galpage = { ...(x.galpage ?? {}), byName, cards }
+              } catch {}
+            }
             if (designs?.social) x.socialDesign = designs.social
             if (designs?.faq) x.faqDesign = designs.faq
             if (designs?.testimonials) x.testiDesign = designs.testimonials

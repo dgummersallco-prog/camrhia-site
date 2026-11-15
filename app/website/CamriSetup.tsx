@@ -6,7 +6,7 @@ import ArrangeStep from './ArrangeStep'
 import { useEffect as usePersist } from 'react'
 
 function draftGet(k: string): any {
-  try { return JSON.parse(window.localStorage.getItem('camriDraft') || '{}')[k] } catch { return undefined }
+  try { return JSON.parse(window.localStorage.getItem('camriDraft2') || '{}')[k] } catch { return undefined }
 }
 import FontStep, { type FontPick, type FontItem } from './FontStep'
 
@@ -83,7 +83,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   onSkip: () => void
 }) {
   const [step, setStep] = useState<number>(() => {
-    try { const raw = window.localStorage.getItem('camriStep'); if (raw !== null) { const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v <= 3) return v } } catch {}
+    try { const raw = window.localStorage.getItem('camriStep2'); if (raw !== null) { const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v <= 3) return v } } catch {}
     return startStep ?? 0
   })
   const [layouts, setLayouts] = useState<string[]>(initial?.layouts ?? [])
@@ -123,8 +123,8 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  usePersist(() => { try { window.localStorage.setItem('camriStep', String(step)) } catch {} }, [step])
-  usePersist(() => { try { window.localStorage.setItem('camriDraft', JSON.stringify({ struct, designs })) } catch {} }, [struct, designs])
+  usePersist(() => { try { window.localStorage.setItem('camriStep2', String(step)) } catch {} }, [step])
+  usePersist(() => { try { window.localStorage.setItem('camriDraft2', JSON.stringify({ struct, designs })) } catch {} }, [struct, designs])
 
   return (
     <div className="mx-auto w-full max-w-[1400px] py-6">
@@ -183,7 +183,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         )}
         {step === 3 && (
           <div>
-            <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={layouts[0] ? '/layouts/' + layouts[0] + '.png' : undefined} heroName={styles.find((x) => x.key === layouts[0])?.name} />
+            <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={layouts[0] ? '/layouts/' + layouts[0] + '.png' : undefined} heroName={styles.find((x) => x.key === layouts[0])?.name} designs={designs} setDesigns={setDesigns} photoDesigns={PHOTO_DESIGNS as unknown as { key: string; name: string }[]} />
             <div className="sticky bottom-0 z-20 mt-8 flex items-center gap-3 bg-[#F6F1EA]/90 py-4 backdrop-blur">
               <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink disabled:opacity-50">← Back</button>
               <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site'}</button>
@@ -329,6 +329,7 @@ function planOf(designs: Record<string, string>) {
       const pk = PK[s.k + '|' + row]
       const it = pk ? pk.items.find((d) => d.key === designs[pk.field]) : undefined
       if (!pk || !it) return
+      if (pk.field === 'photos') return
       const t = { title: s.title, row, name: it.name, src: '/' + pk.dir + '/' + it.key + '.png', ar: pk.ar }
       const toPage = moded ? kd === 'page' || (kd === 'always' && md !== 'section') : s.k === 'book' || s.k === 'booking'
       if (toPage) {
@@ -385,7 +386,6 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
   const plan = planOf(designs)
   const secs = [
     ...plan.home.map((p) => ({ k: p.k, row: p.row, title: p.title, name: p.name, src: p.src })),
-    ...plan.pages.flatMap((pg) => pg.picks.map((p) => ({ k: pg.k, row: p.row, title: p.title, name: p.name, src: p.src }))),
   ]
   const go = (n: number) => { if (n < 0) return; setStep(n); setAsk(false); setAns(null); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const btnPrimary = 'rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
@@ -504,10 +504,18 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
                     <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
                     <span className="ml-2 text-[10px] text-ink-soft">{pg.title}</span>
                   </div>
-                  <div className="space-y-1.5 bg-[#FBF8F4] p-2.5">
-                    <div className="h-1.5 w-2/3 rounded bg-black/10" />
-                    <div className="h-1.5 w-1/2 rounded bg-black/10" />
-                  </div>
+                  {pg.picks.length > 0 ? (
+                    <button type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === pg.k))} className="block w-full text-left">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={pg.picks[0].src} alt="" className="w-full object-cover object-top" style={{ aspectRatio: pg.picks[0].ar }} />
+                      <p className="px-2 py-1 text-[10px] text-ink-soft">{pg.picks[0].name}</p>
+                    </button>
+                  ) : (
+                    <div className="space-y-1.5 bg-[#FBF8F4] p-2.5">
+                      <div className="h-1.5 w-2/3 rounded bg-black/10" />
+                      <div className="h-1.5 w-1/2 rounded bg-black/10" />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

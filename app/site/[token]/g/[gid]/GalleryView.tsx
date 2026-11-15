@@ -46,6 +46,9 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
 
   const galleries = ((r.site_galleries ?? []) as any[]).filter((g) => (g.photos ?? []).length > 0)
   const gal = galleries.find((g) => g.id === gid)
+  const GP_OK = ['masonry', 'grid', 'single', 'tall', 'editorial', 'lark', 'wren', 'finch', 'heron', 'swift', 'plover', 'egret', 'kestrel', 'osprey', 'sparrow']
+  const ownL = (((r.site_settings as any)?.galpage?.byName ?? {}) as Record<string, string>)[String(gal?.title ?? '').trim().toLowerCase()]
+  const layout0 = (GP_OK.includes(ownL) ? ownL : t.galpage.layout) as typeof t.galpage.layout
 
   useEffect(() => {
     if (!isPreview) return
@@ -57,7 +60,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
     <>
       <link rel="stylesheet" href={t.fontsHref} />
       <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}`}</style>
-      <div style={{ background: t.galpage.layout === 'plover' ? '#14110f' : bg, color: t.galpage.layout === 'plover' ? '#f3ead8' : ink, fontFamily: t.body, minHeight: '100vh' }}>{inner}</div>
+      <div style={{ background: layout0 === 'plover' ? '#14110f' : bg, color: layout0 === 'plover' ? '#f3ead8' : ink, fontFamily: t.body, minHeight: '100vh' }}>{inner}</div>
     </>
   )
 
@@ -88,7 +91,7 @@ export function GalleryView({ initial, token, gid }: { initial: Record<string, a
     const ps = photos.filter((p: any) => p.section_id === sec.id)
     if (ps.length) groups.push({ id: sec.id, title: sec.title as string, photos: ps })
   }
-  const layout = t.galpage.layout
+  const layout = layout0
   const NEWL = ['lark', 'wren', 'finch', 'heron', 'swift', 'plover', 'egret', 'kestrel', 'osprey', 'sparrow']
 
   const imgs = (list: any[]) =>

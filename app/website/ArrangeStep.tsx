@@ -25,11 +25,32 @@ function strip(s: Struct, sec: string) {
   s.extra.forEach((e) => { e.sections = e.sections.filter((k) => k !== sec) })
 }
 
-export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs, heroSrc, heroName }: {
+type GCard = { n: string; d: string }
+const SEC_COUNT: Record<string, number> = { sahara: 3, gobi: 4, mojave: 3, atacama: 4, namib: 4, sonora: 3, kalahari: 4, thar: 3 }
+const SUGG = ['Weddings', 'Engagements', 'Families', 'Seniors', 'Portraits', 'Newborns', 'Maternity', 'Couples', 'Events', 'Headshots']
+
+export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs, heroSrc, heroName, designs, setDesigns, photoDesigns }: {
   struct: Struct; setStruct: (s: Struct) => void; links: Links; setLinks: (l: Links) => void
   thumbs: Record<string, { src: string; ar: string }>; heroSrc?: string; heroName?: string
+  designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; photoDesigns: { key: string; name: string }[]
 }) {
   const [cur, setCur] = useState(0)
+  const [sel, setSel] = useState<number | null>(null)
+  const secN = SEC_COUNT[(designs.galleries_section || '').toLowerCase()]
+  const secOnly = designs.galleries_mode === 'section' && !!secN
+  const maxCards = secOnly ? secN : 10
+  let cards: GCard[] = []
+  try { cards = JSON.parse(designs.galcards || '[]') } catch {}
+  if (!Array.isArray(cards) || cards.length === 0) cards = Array.from({ length: secOnly ? secN : 6 }, () => ({ n: '', d: '' }))
+  const saveCards = (c: GCard[]) => setDesigns({ ...designs, galcards: JSON.stringify(c) })
+  const setCard = (i: number, patch: Partial<GCard>) => saveCards(cards.map((c, k) => (k === i ? { ...c, ...patch } : c)))
+  const fillChip = (s: string) => {
+    const k = cards.findIndex((c) => !c.n.trim())
+    if (k >= 0) setCard(k, { n: s })
+    else if (cards.length < maxCards) saveCards([...cards, { n: s, d: '' }])
+  }
+  const named = cards.map((c, i) => ({ c, i })).filter((x) => x.c.n.trim())
+  const eff = (c: GCard) => c.d || designs.photos || ''
   const pages: Pg[] = [
     { id: 'home', label: 'Home' },
     ...(struct.off.includes('galleries') ? [] : [{ id: 'galleries', label: 'Galleries' }]),
@@ -98,7 +119,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                   <span className="font-fraunces text-base text-ink">{BLOCKS[k].label}</span>
                   <span className="text-[11px] text-ink-soft">{here ? 'On this page' : w ? 'On ' + w.label : 'Not placed yet'}</span>
                 </div>
-                {th && <img src={th.src} alt="" className="h-20 w-full object-cover object-top" />}
+                {th && <img src={th.src} alt="" className="w-full" />}
               </button>
             )
           })}
@@ -122,7 +143,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
           </div>
 
           {page.id === 'home' && (heroSrc
-            ? <div><img src={heroSrc} alt="" className="h-28 w-full object-cover object-top" />{heroName && <p className="bg-[#FBF8F4] px-4 py-1.5 text-[11px] text-ink-soft">Layout 1 · {heroName}</p>}</div>
+            ? <div><img src={heroSrc} alt="" className="w-full" />{heroName && <p className="bg-[#FBF8F4] px-4 py-1.5 text-[11px] text-ink-soft">Layout 1 · {heroName}</p>}</div>
             : <div className={slice + ' py-10 text-center'}>Hero</div>)}
 
           {mine.map((sec, idx) => {
@@ -135,7 +156,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                   <button type="button" disabled={idx === mine.length - 1} onClick={() => nudge(idx, 1)} aria-label="Move down" className="px-1 text-ink-soft disabled:opacity-30">↓</button>
                   <button type="button" onClick={() => take(sec)} aria-label="Take off this page" className="px-1 text-ink-soft">✕</button>
                 </div>
-                {th ? <img src={th.src} alt="" className="h-24 w-full object-cover object-top" /> : <div className="px-4 py-6 text-sm text-ink-soft">{BLOCKS[sec]?.blurb}</div>}
+                {th ? <img src={th.src} alt="" className="w-full" /> : <div className="px-4 py-6 text-sm text-ink-soft">{BLOCKS[sec]?.blurb}</div>}
               </div>
             )
           })}
@@ -144,6 +165,68 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
           {!isBook && mine.length === 0 && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from the left</div>}
           <div className={slice + ' border-t border-black/10'}>Footer</div>
         </div>
+
+        {(page.id === 'galleries' || mine.includes('galsec') || mine.includes('portfolio')) && (
+          <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
+            <div className="flex items-start gap-3">
+              <img src="/camri/13_face_avatar.png" alt="" className="h-10 w-auto shrink-0" />
+              <p className="font-fraunces text-lg leading-snug text-ink">{secOnly ? 'Your galleries section shows ' + secN + ' cards, and each card opens its own gallery. ' : 'Your galleries have cards, and each card opens its own gallery. '}Name your cards, then pick how each gallery is displayed.</p>
+            </div>
+            <p className="mt-5 text-xs uppercase tracking-wider text-ink-soft">1 · Name your cards</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              {cards.map((c, i) => (
+                <input key={i} value={c.n} onChange={(e) => setCard(i, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[i % SUGG.length]} className="rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+              ))}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {SUGG.filter((s) => !cards.some((c) => c.n.trim().toLowerCase() === s.toLowerCase())).map((s) => (
+                <button key={s} type="button" onClick={() => fillChip(s)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">{s}</button>
+              ))}
+              {cards.length < maxCards && <button type="button" onClick={() => saveCards([...cards, { n: '', d: '' }])} className="rounded-full border border-dashed border-black/25 px-3 py-1 text-xs text-ink-soft">+ Add card</button>}
+            </div>
+
+            <p className="mt-6 text-xs uppercase tracking-wider text-ink-soft">2 · Pick the display for each card</p>
+            {named.length === 0 ? (
+              <p className="mt-2 text-sm text-ink-soft">Name a card above and it will show up here.</p>
+            ) : (
+              <div className="mt-3 flex gap-4 overflow-x-auto pb-2">
+                {named.map(({ c, i }) => {
+                  const d = eff(c)
+                  return (
+                    <button key={i} type="button" onClick={() => setSel(sel === i ? null : i)} className="w-32 shrink-0 text-left">
+                      <div className={'rounded-xl border-2 bg-white px-3 py-4 text-center font-fraunces text-base text-ink shadow-sm ' + (sel === i ? 'border-twilight' : 'border-black/10')}>{c.n}</div>
+                      <div className="flex h-7 flex-col items-center justify-center gap-0.5">
+                        <span className="h-1 w-0.5 rounded-full bg-black/30" /><span className="h-1 w-0.5 rounded-full bg-black/30" /><span className="h-1 w-0.5 rounded-full bg-black/30" />
+                      </div>
+                      {d ? (
+                        <div>
+                          <img src={'/photos/' + d + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (sel === i ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/5' }} />
+                          <p className="mt-1 text-[11px] text-ink-soft">{c.d ? (photoDesigns.find((x) => x.key === d)?.name ?? d) : 'Default display'}</p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-black/20 text-xs text-ink-soft" style={{ aspectRatio: '4/5' }}>Pick a display</div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {sel !== null && cards[sel] && cards[sel].n.trim() && (
+              <div className="mt-4 rounded-xl border border-black/10 bg-white p-4">
+                <p className="font-fraunces text-base text-ink">Display for {cards[sel].n}</p>
+                <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
+                  {photoDesigns.map((pd) => (
+                    <button key={pd.key} type="button" onClick={() => setCard(sel, { d: cards[sel].d === pd.key ? '' : pd.key })} className="text-left">
+                      <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (cards[sel].d === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
+                      <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {social && (
           <div className="mx-auto mt-6 max-w-md rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
