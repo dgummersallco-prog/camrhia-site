@@ -195,6 +195,8 @@ const PRICE_PAGE = ['corsica', 'sardinia', 'tahiti', 'santorini', 'zanzibar', 'm
 
 const BOOK_CAL_D = ['tahoe', 'como', 'garda', 'bled', 'annecy', 'tekapo'].map((k) => ({ key: k, name: cap(k) }))
 const BOOK_NOCAL_D = ['louise', 'placid', 'lucerne', 'orta', 'maggiore', 'braies'].map((k) => ({ key: k, name: cap(k) }))
+const BLOG_LIST_D = ['danube', 'loire', 'rhine', 'seine', 'thames', 'tiber', 'volga', 'elbe', 'ebro', 'tagus', 'arno', 'rhone'].map((k) => ({ key: k, name: cap(k) }))
+const BLOG_POST_D = ['eiger', 'rainier', 'denali', 'olympus', 'whitney', 'elbrus', 'etna', 'shasta', 'blanc', 'kenya', 'fuji', 'cervin'].map((k) => ({ key: k, name: cap(k) }))
 
 const GAL_DESIGNS = ['jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 
@@ -213,6 +215,8 @@ const PICKERS = (): Record<string, { dir: string; field: string; ar: string; ite
   'pricing|Section designs': { dir: 'pricing-section', ar: '2/1', field: 'pricing_section', items: PRICE_SEC },
   'book|With the calendar': { dir: 'booking', ar: '1/1', field: 'book', items: BOOK_CAL_D },
   'book|Without the calendar': { dir: 'booking', ar: '1/1', field: 'book', items: BOOK_NOCAL_D },
+  'blog|Blog main page designs': { dir: 'blog-list', ar: '4/3', field: 'blog_list', items: BLOG_LIST_D },
+  'blog|Post designs (inside a post)': { dir: 'blog-post', ar: '3/4', field: 'blog_post', items: BLOG_POST_D },
 })
 
 const ROW_TITLE: Record<string, string> = {

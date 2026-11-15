@@ -102,6 +102,7 @@ export const DEFAULT_TITLES: Record<string, string> = {
   about: 'About', portfolio: 'Portfolio', investment: 'Investment', testimonials: 'Kind words', faq: 'FAQ', contact: "Let's connect",
 }
 export const NAV_DEFAULTS: Record<string, string> = {
+  blog: 'Blog',
   home: 'Home', galleries: 'Galleries', about: 'About', book: 'Book',
 }
 

@@ -161,7 +161,6 @@ export default function PageBuilder({ struct, setStruct, links, setLinks }: { st
             <span className="block text-[11px] text-ink-soft">{BLOCKS[sec].blurb}</span>
           </button>
         ))}
-        <span className="rounded-xl border border-dashed border-black/20 px-3 py-2 text-sm text-ink-soft">Blog · coming soon</span>
         {tray.length === 0 && <span className="py-2 text-xs text-ink-soft">Everything is placed. Take one off a page to see it here.</span>}
       </div>
       {placed.has('social') && (

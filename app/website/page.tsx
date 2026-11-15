@@ -560,13 +560,14 @@ export default function WebsitePage() {
   const [saving, setSaving] = useState(false)
   const [saveErr, setSaveErr] = useState(false)
   const [device, setDevice] = useState<Dev>('desktop')
-  const [previewPage, setPreviewPage] = useState<'home' | 'galleries' | 'gallery' | 'about' | 'availability'>('home')
+  const [previewPage, setPreviewPage] = useState<'home' | 'galleries' | 'gallery' | 'about' | 'availability' | 'blog'>('home')
   const [heroBox, setHeroBox] = useState<{ w: number; h: number } | null>(null)
-  const [tab, setTab] = useState<'style' | 'home' | 'galleries' | 'about' | 'book'>('home')
+  const [tab, setTab] = useState<'style' | 'home' | 'galleries' | 'about' | 'book' | 'blog'>('home')
+  const [blogSel, setBlogSel] = useState<string | null>(null)
   useEffect(() => {
     try {
       const t = sessionStorage.getItem('camrhia-design-tab')
-      if (t === 'style' || t === 'home' || t === 'galleries' || t === 'about' || t === 'book') {
+      if (t === 'style' || t === 'home' || t === 'galleries' || t === 'about' || t === 'book' || t === 'blog') {
         setTab(t)
         setPreviewPage(t === 'book' ? 'availability' : t === 'style' ? 'home' : t)
       }
@@ -725,8 +726,8 @@ export default function WebsitePage() {
         if (frame && pg && e.source === frame.contentWindow && pg !== previewPageRef.current) {
           frame.src = previewSrcRef.current(curKeyRef.current)
           if (pg === 'gallery') setPreviewGid((e.data.gid as string | undefined) ?? null)
-          setTab(pg === 'availability' ? 'book' : pg === 'gallery' ? 'galleries' : (pg as 'home' | 'galleries' | 'about'))
-          setPreviewPage(pg as 'home' | 'galleries' | 'gallery' | 'about' | 'availability')
+          setTab(pg === 'availability' ? 'book' : pg === 'gallery' ? 'galleries' : (pg as 'home' | 'galleries' | 'about' | 'blog'))
+          setPreviewPage(pg as 'home' | 'galleries' | 'gallery' | 'about' | 'availability' | 'blog')
         }
       }
     }
@@ -751,7 +752,7 @@ export default function WebsitePage() {
   }, [curKey, sendPreview])
   useEffect(() => {
     const t = setTimeout(() => setSeen((x) => {
-      const add = ['galleries|0', 'about|0', 'availability|0'].filter((k) => !x.includes(k))
+      const add = ['galleries|0', 'about|0', 'availability|0', 'blog|0'].filter((k) => !x.includes(k))
       return add.length ? [...x, ...add] : x
     }), 2500)
     return () => clearTimeout(t)
@@ -924,6 +925,34 @@ export default function WebsitePage() {
       set('logo_path', path)
     } catch (e) {
       flash((e as { message?: string })?.message ?? 'Logo upload failed.')
+    }
+  }
+
+  const slugOf = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'post'
+  function blogList(): any[] { return Array.isArray(S.blog?.posts) ? (S.blog.posts as any[]) : [] }
+  function setPosts(next: any[]) { setIn('blog', { posts: next }) }
+  function addPost() {
+    const pid = Math.random().toString(36).slice(2, 10)
+    const p = { id: pid, slug: 'new-post-' + pid.slice(0, 4), title: 'New post', date: new Date().toISOString().slice(0, 10), cover: null, excerpt: '', body: '', published: false }
+    setPosts([p, ...blogList()])
+    setBlogSel(pid)
+  }
+  function editPost(pid: string, patch: Record<string, any>) { setPosts(blogList().map((p) => (p.id === pid ? { ...p, ...patch } : p))) }
+  function removePost(pid: string) { setPosts(blogList().filter((p) => p.id !== pid)); setBlogSel(null) }
+  async function uploadPostCover(pid: string, file: File) {
+    const sb = supabase
+    if (!sb) return
+    const { data: sess } = await sb.auth.getSession()
+    const id = sess.session?.user.id
+    if (!id) return
+    try {
+      const v = await makeVersions(file)
+      const path = `${id}/blog_${pid}_${Date.now()}.jpg`
+      const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+      if (up.error) throw up.error
+      editPost(pid, { cover: path })
+    } catch (e) {
+      flash((e as { message?: string })?.message ?? 'Upload failed.')
     }
   }
 
@@ -1548,7 +1577,7 @@ export default function WebsitePage() {
     )
   }
 
-  function pickTab(t: 'style' | 'home' | 'galleries' | 'about' | 'book') {
+  function pickTab(t: 'style' | 'home' | 'galleries' | 'about' | 'book' | 'blog') {
     setTab(t)
     setPreviewPage(t === 'book' ? 'availability' : t === 'style' ? 'home' : t)
   }
@@ -1556,6 +1585,7 @@ export default function WebsitePage() {
     const [pg, sent] = k.split('|')
     const b = `/site/${token}`
     if (pg === 'availability') return `${b}/availability?preview=1${sent === '1' ? '&sent=1' : ''}`
+    if (pg === 'blog') return `${b}/blog?preview=1`
     if (pg === 'about') return `${b}/about?preview=1`
     if (pg === 'galleries') return `${b}/galleries?preview=1`
     if (pg === 'gallery') { const gid = previewGid ?? firstGid; return gid ? `${b}/g/${gid}?preview=1` : `${b}/galleries?preview=1` }
@@ -1718,7 +1748,7 @@ export default function WebsitePage() {
               <div className="cr-cap min-w-0 space-y-4">
                 <div>
                   <div className="flex flex-wrap gap-x-7 border-b border-line">
-                    {([{ v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }] as const).map((o) => (
+                    {([{ v: 'home', label: 'Home' }, { v: 'galleries', label: 'Galleries' }, { v: 'about', label: 'About' }, { v: 'book', label: 'Book' }, { v: 'blog', label: 'Blog' }] as const).map((o) => (
                       <button key={o.v} type="button" onClick={() => pickTab(o.v)}
                         className={`-mb-px border-b-2 pb-3 font-fraunces text-lg transition ${tab === o.v ? 'border-ink text-ink' : 'border-transparent text-ink-soft hover:text-ink'}`}>
                         {o.label}
@@ -2448,6 +2478,47 @@ export default function WebsitePage() {
 </Group>
 {backCard('about')}
 {customBlock('about')}
+</>)}
+{tab === 'blog' && (<>
+<Group title="Blog page" hint="heading and intro" onOpen={() => scrollPreview('')}>
+  <div className="space-y-3">
+    <input value={S.blog?.title ?? ''} onChange={(e) => setIn('blog', { title: e.target.value })} placeholder="Journal" className={inputCls} />
+    <textarea rows={2} value={S.blog?.intro ?? ''} onChange={(e) => setIn('blog', { intro: e.target.value })} placeholder="Stories, tips and a look behind the scenes." className={inputCls} />
+  </div>
+</Group>
+<Group title="Your posts" hint="write, add a cover photo, publish" onOpen={() => scrollPreview('')}>
+  <div className="space-y-3">
+    <button type="button" className={btnGhost} onClick={addPost}>+ New post</button>
+    {blogList().map((p) => (
+      <div key={p.id} className="rounded-lg border border-line">
+        <button type="button" onClick={() => setBlogSel(blogSel === p.id ? null : p.id)} className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left">
+          <span className="truncate text-sm text-ink">{p.title || 'Untitled'}</span>
+          <span className="shrink-0 text-xs text-ink-soft">{p.published === false ? 'Draft' : 'Live'}</span>
+        </button>
+        {blogSel === p.id && (
+          <div className="space-y-3 border-t border-line p-3">
+            <input value={p.title ?? ''} onChange={(e) => { const v = e.target.value; editPost(p.id, { title: v, ...((p.slug === slugOf(p.title ?? '') || String(p.slug).startsWith('new-post-')) ? { slug: slugOf(v) } : {}) }) }} placeholder="Title" className={inputCls} />
+            <input type="date" value={p.date ?? ''} onChange={(e) => editPost(p.id, { date: e.target.value })} className={inputCls} />
+            <input value={p.slug ?? ''} onChange={(e) => editPost(p.id, { slug: slugOf(e.target.value) })} placeholder="web-address-of-post" className={inputCls} />
+            <textarea rows={2} value={p.excerpt ?? ''} onChange={(e) => editPost(p.id, { excerpt: e.target.value })} placeholder="One or two lines shown on the blog page" className={inputCls} />
+            <div className="flex flex-wrap items-center gap-3">
+              {p.cover ? <img src={BASE + p.cover} alt="" className="h-16 w-16 rounded border border-line object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded border border-dashed border-line text-xs text-ink-soft">No cover</div>}
+              <label className={btnGhost + ' cursor-pointer'}>
+                {p.cover ? 'Replace cover' : 'Add cover photo'}
+                <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPostCover(p.id, f); e.target.value = '' }} />
+              </label>
+              {p.cover && <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => editPost(p.id, { cover: null })}>Remove</button>}
+            </div>
+            <textarea rows={14} value={p.body ?? ''} onChange={(e) => editPost(p.id, { body: e.target.value })} placeholder="Write your post here" className={inputCls} />
+            <p className="text-xs text-ink-soft">Leave a blank line between paragraphs. Start a line with ## to make a subheading.</p>
+            <Row label="Published"><Switch on={p.published !== false} onChange={(v) => editPost(p.id, { published: v })} /></Row>
+            <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { if (window.confirm('Delete this post?')) removePost(p.id) }}>Delete post</button>
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+</Group>
 </>)}
 {tab === 'book' && (<>
                 <Group title="1. Layout" hint="photo and form arrangement" onOpen={() => { setShowSent(false); setTimeout(() => scrollPreview('book-main'), 500) }}>

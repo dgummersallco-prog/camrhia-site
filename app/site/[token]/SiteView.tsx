@@ -16,6 +16,7 @@ import { TestiSlider } from './TestiSlider'
 import { PricingDesign, PR_SEC, PR_PAGE } from './PricingDesigns'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
+import { blogPosts } from '@/lib/blog'
 import { SiteNav } from './SiteNav'
 
 const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -171,7 +172,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const visible = pageOrder.filter((k) => showMap[k])
 
   for (const e of t.extraPages) hrefs[e.id] = `${base}/p/${e.id}${qs}`
-  const navItems = ([...['home', 'galleries', 'about', 'book'], ...t.extraPages.map((e) => e.id)] as string[])
+  hrefs.blog = `${base}/blog${qs}`
+  const blogOn = blogPosts((r as any).site_settings).length > 0
+  const navItems = ([...['home', 'galleries', 'about', 'book'], ...(blogOn ? ['blog'] : []), ...t.extraPages.map((e) => e.id)] as string[])
     .filter((k) => !(t.menu.hidden as string[]).includes(k) && !t.pagesOff.includes(k) && !(k === 'galleries' && galleries.length === 0))
     .map((k) => ({ key: k, href: hrefs[k], label: (t.menu.labels as Record<string, string | undefined>)[k]?.trim() || (NAV_DEFAULTS as Record<string, string>)[k] || t.extraPages.find((e) => e.id === k)?.label || k, active: k === page }))
 

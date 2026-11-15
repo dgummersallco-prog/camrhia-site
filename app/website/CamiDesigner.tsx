@@ -95,7 +95,7 @@ const PAGES: { k: string; label: string; blurb: string; locked?: boolean; soon?:
   { k: 'book', label: 'Booking', blurb: 'Check dates, send an inquiry', locked: true },
   { k: 'galleries', label: 'Galleries', blurb: 'Your work, gallery by gallery' },
   { k: 'about', label: 'About', blurb: 'Your story' },
-  { k: 'blog', label: 'Blog', blurb: 'Posts and stories', soon: true },
+  { k: 'blog', label: 'Blog', blurb: 'Posts and stories' },
   { k: 'pricing', label: 'Pricing', blurb: 'Your packages', soon: true },
   { k: 'faq', label: 'FAQ', blurb: 'Common questions', soon: true },
 ]
@@ -648,6 +648,8 @@ export default function CamiDesigner() {
             if (designs?.pricing_page) x.pricing = { ...(x.pricing ?? {}), pageDesign: designs.pricing_page }
             if (designs?.pricing_section) x.pricing = { ...(x.pricing ?? {}), sectionDesign: designs.pricing_section }
             if (designs?.book) x.bookDesign = designs.book
+            if (designs?.blog_list) x.blog = { ...(x.blog ?? {}), listDesign: designs.blog_list }
+            if (designs?.blog_post) x.blog = { ...(x.blog ?? {}), postDesign: designs.blog_post }
             if (designs?.about_page || designs?.about_section) x.about = { ...(x.about ?? {}), ...(designs.about_page ? { pageDesign: designs.about_page } : {}), ...(designs.about_section ? { sectionDesign: designs.about_section } : {}) }
             const nn = n as any
             nn.instagram_url = links.instagram_url.trim() || null
