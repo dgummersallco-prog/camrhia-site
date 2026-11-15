@@ -2,6 +2,11 @@
 
 import { useState } from 'react'
 import PageBuilder, { type Struct, type Links, cleanStruct } from './PageBuilder'
+import { useEffect as usePersist } from 'react'
+
+function draftGet(k: string): any {
+  try { return JSON.parse(window.localStorage.getItem('camriDraft') || '{}')[k] } catch { return undefined }
+}
 import FontStep, { type FontPick, type FontItem } from './FontStep'
 
 export type Kit = {
@@ -76,20 +81,23 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   onFinish: (kit: Kit, structure: Struct, links: Links, designs: Record<string, string>) => Promise<void>
   onSkip: () => void
 }) {
-  const [step, setStep] = useState(startStep ?? 0)
+  const [step, setStep] = useState<number>(() => {
+    try { const raw = window.localStorage.getItem('camriStep'); if (raw !== null) { const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v <= 3) return v } } catch {}
+    return startStep ?? 0
+  })
   const [layouts, setLayouts] = useState<string[]>(initial?.layouts ?? [])
   const [picked, setPicked] = useState<Pal[]>(initial?.palettes ?? [])
   
   const [fp, setFp] = useState<FontPick>(initial?.type ?? { title: [], subtitle: [], paragraph: [] })
-  const [struct, setStruct] = useState<Struct>(cleanStruct(structure))
+  const [struct, setStruct] = useState<Struct>(() => draftGet('struct') ?? { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] })
   const [ls, setLs] = useState<Links>(linksIn)
-  const [designs, setDesigns] = useState<Record<string, string>>({})
+  const [designs, setDesigns] = useState<Record<string, string>>(() => draftGet('designs') ?? ({}))
   const [busy, setBusy] = useState(false)
 
   
   const ring = 'border-twilight ring-2 ring-twilight'
   const badge = (n: number) => <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-twilight text-xs font-semibold text-white">{n}</span>
-  const canGo = step === 1 ? layouts.length > 0 : step === 2 ? struct.home.length > 0 : step === 3 ? true : step === 4 ? (fp.title.length > 0 && fp.subtitle.length > 0 && fp.paragraph.length > 0) : true
+  const canGo = step === 1 ? layouts.length > 0 : step === 2 ? true : step === 3 ? true : step === 4 ? (fp.title.length > 0 && fp.subtitle.length > 0 && fp.paragraph.length > 0) : true
 
   async function finish() {
     setBusy(true)
@@ -101,6 +109,9 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, pages: pagesOut, extra_pages: '', themes: [] }, s2, ls, designs)
     setBusy(false)
   }
+
+  usePersist(() => { try { window.localStorage.setItem('camriStep', String(step)) } catch {} }, [step])
+  usePersist(() => { try { window.localStorage.setItem('camriDraft', JSON.stringify({ struct, designs })) } catch {} }, [struct, designs])
 
   return (
     <div className="mx-auto w-full max-w-[1400px] py-6">

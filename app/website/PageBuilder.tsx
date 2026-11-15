@@ -105,77 +105,96 @@ export default function PageBuilder({ struct, setStruct, links, setLinks }: { st
     if (e) { e.label = label.slice(0, 24); setStruct(s) }
   }
 
-  const slice = 'mb-1.5 rounded-lg bg-black/5 px-2 py-1.5 text-xs text-ink-soft'
+  function addBuiltIn(id: 'galleries' | 'about') {
+    const s = clone()
+    s.off = s.off.filter((q) => q !== id)
+    setStruct(s)
+  }
+  const hasPricing = struct.extra.some((e) => e.id === 'pricing')
+  const galOn = !struct.off.includes('galleries')
+  const aboutOn = !struct.off.includes('about')
+  const locked = 'rounded-xl bg-[#EFE7DC] px-4 py-3 text-sm text-ink-soft'
+  const pageBtn = 'flex w-full items-center justify-between rounded-xl border border-black/10 bg-[#FBF8F4] px-4 py-3 text-left font-fraunces text-base text-ink shadow-sm transition hover:border-twilight disabled:opacity-50'
   return (
-    <div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">
-        {cols.map((p) => (
-          <div key={p.id}
-            onDragOver={(e) => { if (drag) e.preventDefault() }}
-            onDrop={(e) => { e.preventDefault(); if (drag) place(drag, p.id) }}
-            className={'flex min-h-[230px] flex-col rounded-2xl border bg-white/80 p-3 ' + (pick || drag ? 'border-dashed border-twilight' : 'border-black/10')}>
-            <div className="mb-2 flex items-center gap-1">
-              {p.extra
-                ? <input value={p.label} onChange={(e) => rename(p.id, e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink outline-none" />
-                : <span className="flex-1 text-sm font-semibold text-ink">{p.label}</span>}
-              {!p.fixed && <button type="button" onClick={() => removePage(p.id)} aria-label={'Remove ' + p.label} className="text-xs text-ink-soft">✕</button>}
-            </div>
-            <div className={slice}>Menu</div>
-            {p.id === 'home' && <div className={slice}>Hero</div>}
-            {listOf(struct, p.id).map((sec, i, arr) => (
-              <div key={sec} draggable onDragStart={() => setDrag(sec)} onDragEnd={() => setDrag(null)}
-                className={'mb-1.5 flex items-center gap-1 rounded-lg border bg-white px-2 py-1.5 text-xs text-ink ' + (pick === sec ? 'border-twilight ring-2 ring-twilight' : 'border-black/10')}>
-                <button type="button" onClick={() => setPick(pick === sec ? null : sec)} className="min-w-0 flex-1 text-left">{nameOf(sec)}</button>
-                <button type="button" disabled={i === 0} onClick={() => nudge(p.id, i, -1)} aria-label="Move up" className="px-0.5 text-ink-soft disabled:opacity-30">↑</button>
-                <button type="button" disabled={i === arr.length - 1} onClick={() => nudge(p.id, i, 1)} aria-label="Move down" className="px-0.5 text-ink-soft disabled:opacity-30">↓</button>
-                <button type="button" onClick={() => place(sec, 'tray')} aria-label="Take off this page" className="px-0.5 text-ink-soft">✕</button>
-              </div>
-            ))}
-            {pick && !listOf(struct, p.id).includes(pick) && (
-              <button type="button" onClick={() => place(pick, p.id)} className="mt-1 rounded-lg border border-dashed border-twilight py-2 text-xs text-twilight">Put {nameOf(pick)} here</button>
-            )}
-            <div className={slice + ' mt-auto'}>Footer</div>
+    <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+      <aside className="space-y-6 self-start lg:sticky lg:top-6">
+        <div>
+          <p className="mb-3 text-xs uppercase tracking-wider text-ink-soft">Add a page</p>
+          <div className="space-y-2.5">
+            <button type="button" disabled={galOn} onClick={() => addBuiltIn('galleries')} className={pageBtn}>Galleries page <span className="text-xs text-ink-soft">{galOn ? 'Added' : '+'}</span></button>
+            <button type="button" disabled={aboutOn} onClick={() => addBuiltIn('about')} className={pageBtn}>About page <span className="text-xs text-ink-soft">{aboutOn ? 'Added' : '+'}</span></button>
+            <button type="button" disabled={hasPricing || struct.extra.length >= 8} onClick={() => addPage('investment')} className={pageBtn}>Pricing page <span className="text-xs text-ink-soft">{hasPricing ? 'Added' : '+'}</span></button>
+            <button type="button" disabled={struct.extra.length >= 8} onClick={() => addPage(null)} className={pageBtn}>Blank page <span className="text-xs text-ink-soft">+</span></button>
           </div>
-        ))}
-        <div className="flex min-h-[230px] flex-col rounded-2xl border border-black/10 bg-white/60 p-3">
-          <span className="mb-2 text-sm font-semibold text-ink">Booking</span>
-          <div className={slice}>Menu</div>
-          <div className={slice}>Your booking calendar</div>
         </div>
-        {struct.extra.length < 8 && (
-          <button type="button"
-            onClick={() => addPage(pick)}
-            onDragOver={(e) => { if (drag) e.preventDefault() }}
-            onDrop={(e) => { e.preventDefault(); if (drag) addPage(drag) }}
-            className="flex min-h-[230px] items-center justify-center rounded-2xl border-2 border-dashed border-black/20 p-3 text-sm text-ink-soft">
-            + Add page
-          </button>
+        <div onDragOver={(e) => { if (drag) e.preventDefault() }} onDrop={(e) => { e.preventDefault(); if (drag) place(drag, 'tray') }}>
+          <p className="mb-3 text-xs uppercase tracking-wider text-ink-soft">Add a block</p>
+          <div className="space-y-2.5">
+            {tray.map((sec) => (
+              <button key={sec} type="button" draggable onDragStart={() => setDrag(sec)} onDragEnd={() => setDrag(null)}
+                onClick={() => setPick(pick === sec ? null : sec)}
+                className={'w-full rounded-xl border bg-[#FBF8F4] px-4 py-3 text-left shadow-sm transition ' + (pick === sec ? 'border-twilight ring-2 ring-twilight' : 'border-black/10 hover:border-twilight')}>
+                <span className="block font-fraunces text-base text-ink">{BLOCKS[sec].label}</span>
+                <span className="block text-xs text-ink-soft">{BLOCKS[sec].blurb}</span>
+              </button>
+            ))}
+            {tray.length === 0 && <p className="text-xs text-ink-soft">Everything is placed. Take one off a page to see it here.</p>}
+          </div>
+          {pick && <p className="mt-3 text-xs text-ink-soft">Now tap Put here on a page, or drag it across.</p>}
+        </div>
+      </aside>
+
+      <div>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-5">
+          {cols.map((p) => (
+            <div key={p.id}
+              onDragOver={(e) => { if (drag) e.preventDefault() }}
+              onDrop={(e) => { e.preventDefault(); if (drag) place(drag, p.id) }}
+              className={'flex min-h-[420px] flex-col rounded-3xl border bg-[#FBF8F4] p-5 shadow-sm transition ' + (pick || drag ? 'border-dashed border-twilight' : 'border-black/10')}>
+              <div className="mb-4 flex items-center gap-2">
+                {p.extra
+                  ? <input value={p.label} onChange={(e) => rename(p.id, e.target.value)} className="min-w-0 flex-1 bg-transparent font-fraunces text-2xl text-ink outline-none" />
+                  : <span className="flex-1 font-fraunces text-2xl text-ink">{p.label}</span>}
+                {!p.fixed && <button type="button" onClick={() => removePage(p.id)} aria-label={'Remove ' + p.label} className="text-sm text-ink-soft">✕</button>}
+              </div>
+              <div className={locked + ' mb-2.5'}>Menu</div>
+              {p.id === 'home' && <div className={locked + ' mb-2.5 py-8 text-center'}>Hero</div>}
+              {listOf(struct, p.id).map((sec, i, arr) => (
+                <div key={sec} draggable onDragStart={() => setDrag(sec)} onDragEnd={() => setDrag(null)}
+                  className={'mb-2.5 flex items-center gap-2 rounded-xl border bg-white px-4 py-4 shadow-sm ' + (pick === sec ? 'border-twilight ring-2 ring-twilight' : 'border-black/10')}>
+                  <button type="button" onClick={() => setPick(pick === sec ? null : sec)} className="min-w-0 flex-1 text-left font-fraunces text-base text-ink">{nameOf(sec)}</button>
+                  <button type="button" disabled={i === 0} onClick={() => nudge(p.id, i, -1)} aria-label="Move up" className="px-1 text-ink-soft disabled:opacity-30">↑</button>
+                  <button type="button" disabled={i === arr.length - 1} onClick={() => nudge(p.id, i, 1)} aria-label="Move down" className="px-1 text-ink-soft disabled:opacity-30">↓</button>
+                  <button type="button" onClick={() => place(sec, 'tray')} aria-label="Take off this page" className="px-1 text-ink-soft">✕</button>
+                </div>
+              ))}
+              {pick && !listOf(struct, p.id).includes(pick) ? (
+                <button type="button" onClick={() => place(pick, p.id)} className="mb-2.5 rounded-xl border-2 border-dashed border-twilight py-4 text-sm text-twilight">Put {nameOf(pick)} here</button>
+              ) : listOf(struct, p.id).length === 0 ? (
+                <div className="mb-2.5 flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-black/15 py-6 text-center text-sm text-ink-soft">Add blocks from the left</div>
+              ) : null}
+              <div className={locked + ' mt-auto'}>Footer</div>
+            </div>
+          ))}
+          <div className="flex min-h-[420px] flex-col rounded-3xl border border-black/10 bg-[#FBF8F4] p-5 shadow-sm">
+            <span className="mb-4 font-fraunces text-2xl text-ink">Booking</span>
+            <div className={locked + ' mb-2.5'}>Menu</div>
+            <div className={locked + ' mb-2.5 py-8 text-center'}>Your booking calendar</div>
+            <div className={locked + ' mt-auto'}>Footer</div>
+          </div>
+        </div>
+
+        {placed.has('social') && (
+          <div className="mt-6 rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
+            <p className="font-fraunces text-lg text-ink">Your social links</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {([['instagram_url', 'Instagram'], ['facebook_url', 'Facebook'], ['tiktok_url', 'TikTok'], ['pinterest_url', 'Pinterest']] as const).map(([k, label]) => (
+                <input key={k} value={links[k]} onChange={(e) => setLinks({ ...links, [k]: e.target.value })} placeholder={label + ' link'} className="rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+              ))}
+            </div>
+          </div>
         )}
       </div>
-
-      <p className="mb-2 mt-6 text-xs uppercase tracking-wide text-ink-soft">Pieces to add. Drop one on a page, or make it a whole page</p>
-      <div className="flex flex-wrap gap-2" onDragOver={(e) => { if (drag) e.preventDefault() }} onDrop={(e) => { e.preventDefault(); if (drag) place(drag, 'tray') }}>
-        {tray.map((sec) => (
-          <button key={sec} type="button" draggable onDragStart={() => setDrag(sec)} onDragEnd={() => setDrag(null)}
-            onClick={() => setPick(pick === sec ? null : sec)}
-            className={'rounded-xl border bg-white px-3 py-2 text-left text-sm text-ink ' + (pick === sec ? 'border-twilight ring-2 ring-twilight' : 'border-black/10')}>
-            {BLOCKS[sec].label}
-            <span className="block text-[11px] text-ink-soft">{BLOCKS[sec].blurb}</span>
-          </button>
-        ))}
-        {tray.length === 0 && <span className="py-2 text-xs text-ink-soft">Everything is placed. Take one off a page to see it here.</span>}
-      </div>
-      {placed.has('social') && (
-        <div className="mt-5 rounded-xl border border-black/10 bg-white/80 p-4">
-          <p className="text-sm font-medium text-ink">Your social links</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {([['instagram_url', 'Instagram'], ['facebook_url', 'Facebook'], ['tiktok_url', 'TikTok'], ['pinterest_url', 'Pinterest']] as const).map(([k, label]) => (
-              <input key={k} value={links[k]} onChange={(e) => setLinks({ ...links, [k]: e.target.value })} placeholder={label + ' link'} className="rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
-            ))}
-          </div>
-        </div>
-      )}
-      {pick && <p className="mt-2 text-xs text-ink-soft">Tap a page to put it there, or tap + Add page to make it a whole page.</p>}
     </div>
   )
 }

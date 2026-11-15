@@ -212,7 +212,14 @@ export default function CamiDesigner() {
   const [full, setFull] = useState(false)
   const [setupSkipped, setSetupSkipped] = useState(false)
   const [setupFinished, setSetupFinished] = useState(false)
-  const [review, setReview] = useState(false)
+  const [review, setReview] = useState(() => { try { return window.localStorage.getItem('camriReview') === '1' } catch { return false } })
+  useEffect(() => {
+    try {
+      if (setupFinished) { ['camriReview', 'camriStep', 'camriDraft'].forEach((k) => window.localStorage.removeItem(k)) }
+      else if (review) window.localStorage.setItem('camriReview', '1')
+      else window.localStorage.removeItem('camriReview')
+    } catch {}
+  }, [review, setupFinished])
   const [setupForce] = useState(() => typeof window !== 'undefined' && window.location.search.includes('setup=1'))
   const commitRef = useRef<((fn: (n: Prof) => void) => Promise<void>) | null>(null)
 
