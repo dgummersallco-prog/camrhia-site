@@ -114,9 +114,10 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   function goArrange() {
     const base: Struct = { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] }
     const s = withModes(base, designs)
-    const th = thumbsOf(designs)
-    const placedAll = new Set<string>([...s.home, ...s.about, ...s.galleries, ...s.extra.flatMap((e) => e.sections)])
-    ;['explore', 'testimonials', 'faq', 'social', 'contact'].forEach((k) => { if (th[k] && !placedAll.has(k)) s.home.push(k) })
+    s.home = []
+    s.about = []
+    s.galleries = []
+    s.extra = s.extra.map((e) => ({ ...e, sections: [] }))
     setStruct(s)
     setStep(3)
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -382,10 +383,14 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
     return kd === 'always' || (kd === 'page' ? mode !== 'section' : mode !== 'page')
   })
   const plan = planOf(designs)
+  const secs = [
+    ...plan.home.map((p) => ({ k: p.k, row: p.row, title: p.title, name: p.name, src: p.src })),
+    ...plan.pages.flatMap((pg) => pg.picks.map((p) => ({ k: pg.k, row: p.row, title: p.title, name: p.name, src: p.src }))),
+  ]
   const go = (n: number) => { if (n < 0) return; setStep(n); setAsk(false); setAns(null); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const btnPrimary = 'rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_440px]">
+    <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
       <div>
         {zoom && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)}>
@@ -473,48 +478,53 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
         <div className="sticky top-6 max-h-[90vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
           <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
           <div className="mt-3">
-            <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
-              <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1.5">
+            <p className="mb-2 text-[11px] uppercase tracking-wider text-ink-soft">Pages</p>
+            <div className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm">
+              <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
                 <span className="ml-2 text-[10px] text-ink-soft">Home</span>
               </div>
               {baseKey ? (
                 <div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={'/layouts/' + baseKey + '.png'} alt="" className="w-full object-cover object-top" />
+                  <img src={'/layouts/' + baseKey + '.png'} alt="" className="h-24 w-full object-cover object-top" />
                   <p className="px-2 py-1 text-[10px] text-ink-soft">Layout 1{baseName ? ' · ' + baseName : ''}</p>
                 </div>
               ) : (
-                <div className="h-24 bg-[#F6F1EA]" />
+                <div className="h-16 bg-[#F6F1EA]" />
               )}
-              {plan.home.map((p) => (
-                <button key={p.k + p.row} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === p.k))} className="block w-full border-t border-black/10 text-left">
-                  <p className="px-2 pt-1.5 text-[10px] text-ink-soft">{p.title} · {p.name}</p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.src} alt="" className="w-full object-cover object-top" style={{ aspectRatio: p.ar }} />
-                </button>
-              ))}
             </div>
             {plan.pages.map((pg) => (
               <div key={pg.k}>
-                <div className="flex h-9 flex-col items-center justify-center gap-1">
-                  <span className="h-1.5 w-0.5 rounded-full bg-black/30" /><span className="h-1.5 w-0.5 rounded-full bg-black/30" /><span className="h-1.5 w-0.5 rounded-full bg-black/30" />
+                <div className="flex h-7 flex-col items-center justify-center gap-0.5">
+                  <span className="h-1 w-0.5 rounded-full bg-black/30" /><span className="h-1 w-0.5 rounded-full bg-black/30" /><span className="h-1 w-0.5 rounded-full bg-black/30" />
                 </div>
-                <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
-                  <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1.5">
+                <div className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm">
+                  <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
                     <span className="ml-2 text-[10px] text-ink-soft">{pg.title}</span>
                   </div>
-                  {pg.picks.map((p) => (
-                    <button key={p.row} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === pg.k))} className="block w-full text-left">
-                      <p className="px-2 pt-1.5 text-[10px] text-ink-soft">{p.name}</p>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.src} alt="" className="w-full object-cover object-top" style={{ aspectRatio: p.ar }} />
-                    </button>
-                  ))}
+                  <div className="space-y-1.5 bg-[#FBF8F4] p-2.5">
+                    <div className="h-1.5 w-2/3 rounded bg-black/10" />
+                    <div className="h-1.5 w-1/2 rounded bg-black/10" />
+                  </div>
                 </div>
               </div>
             ))}
+            <p className="mb-2 mt-5 text-[11px] uppercase tracking-wider text-ink-soft">Sections</p>
+            {secs.length === 0 ? (
+              <p className="text-xs text-ink-soft">The looks you pick show up here.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {secs.map((p) => (
+                  <button key={p.k + p.row} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === p.k))} className="block overflow-hidden rounded-lg border border-black/10 bg-white text-left shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.src} alt="" className="h-14 w-full object-cover object-top" />
+                    <p className="truncate px-1.5 py-1 text-[10px] text-ink-soft">{p.title} · {p.name}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </aside>

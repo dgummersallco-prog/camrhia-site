@@ -81,13 +81,13 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const arrow = 'flex h-11 w-11 items-center justify-center rounded-full border border-black/15 bg-white text-lg text-ink shadow-sm transition hover:border-twilight disabled:opacity-30'
   const slice = 'bg-[#EFE7DC] px-4 py-3 text-sm text-ink-soft'
   return (
-    <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
+    <div className="grid gap-8 lg:grid-cols-[250px_1fr]">
       <aside className="space-y-4 self-start lg:sticky lg:top-6">
         <div className="rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
           <p className="font-fraunces text-xl leading-snug text-ink">You have {NUM[pages.length] ?? pages.length} pages: {nameList}.</p>
           <p className="mt-2 text-sm text-ink-soft">Add the sections you picked to any page. {isBook ? 'Booking is just your calendar.' : 'Tap one to put it on ' + page.label + '.'}</p>
         </div>
-        <div className="max-h-[68vh] space-y-3 overflow-y-auto pr-1">
+        <div className="max-h-[62vh] space-y-3 overflow-y-auto pr-1">
           {sections.map((k) => {
             const th = thumbs[k]
             const w = where(k)
@@ -98,7 +98,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                   <span className="font-fraunces text-base text-ink">{BLOCKS[k].label}</span>
                   <span className="text-[11px] text-ink-soft">{here ? 'On this page' : w ? 'On ' + w.label : 'Not placed yet'}</span>
                 </div>
-                {th && <img src={th.src} alt="" className="w-full object-cover object-top" style={{ aspectRatio: th.ar }} />}
+                {th && <img src={th.src} alt="" className="h-20 w-full object-cover object-top" />}
               </button>
             )
           })}
@@ -112,7 +112,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
           <button type="button" className={arrow} disabled={i === pages.length - 1} onClick={() => setCur(i + 1)} aria-label="Next page">→</button>
         </div>
 
-        <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
+        <div className="mx-auto max-w-md overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
           <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#EFE7DC] px-3 py-2">
             <span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" />
             {page.extra
@@ -122,7 +122,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
           </div>
 
           {page.id === 'home' && (heroSrc
-            ? <div><img src={heroSrc} alt="" className="w-full object-cover object-top" />{heroName && <p className="bg-[#FBF8F4] px-4 py-1.5 text-[11px] text-ink-soft">Layout 1 · {heroName}</p>}</div>
+            ? <div><img src={heroSrc} alt="" className="h-28 w-full object-cover object-top" />{heroName && <p className="bg-[#FBF8F4] px-4 py-1.5 text-[11px] text-ink-soft">Layout 1 · {heroName}</p>}</div>
             : <div className={slice + ' py-10 text-center'}>Hero</div>)}
 
           {mine.map((sec, idx) => {
@@ -135,18 +135,18 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                   <button type="button" disabled={idx === mine.length - 1} onClick={() => nudge(idx, 1)} aria-label="Move down" className="px-1 text-ink-soft disabled:opacity-30">↓</button>
                   <button type="button" onClick={() => take(sec)} aria-label="Take off this page" className="px-1 text-ink-soft">✕</button>
                 </div>
-                {th ? <img src={th.src} alt="" className="w-full object-cover object-top" style={{ aspectRatio: th.ar }} /> : <div className="px-4 py-6 text-sm text-ink-soft">{BLOCKS[sec]?.blurb}</div>}
+                {th ? <img src={th.src} alt="" className="h-24 w-full object-cover object-top" /> : <div className="px-4 py-6 text-sm text-ink-soft">{BLOCKS[sec]?.blurb}</div>}
               </div>
             )
           })}
 
           {isBook && <div className={slice + ' border-t border-black/10 py-10 text-center'}>Your booking calendar</div>}
-          {!isBook && mine.length === 0 && page.id !== 'home' && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from the left</div>}
+          {!isBook && mine.length === 0 && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from the left</div>}
           <div className={slice + ' border-t border-black/10'}>Footer</div>
         </div>
 
         {social && (
-          <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
+          <div className="mx-auto mt-6 max-w-md rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
             <p className="font-fraunces text-lg text-ink">Your social links</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {([['instagram_url', 'Instagram'], ['facebook_url', 'Facebook'], ['tiktok_url', 'TikTok'], ['pinterest_url', 'Pinterest']] as const).map(([k, label]) => (
