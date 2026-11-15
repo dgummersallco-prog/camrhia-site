@@ -22,8 +22,8 @@ type PageDef = { k: string; label: string; blurb: string; locked?: boolean; soon
 const LINES = [
   "Hi, I'm Camri! I'll help you design your website. Pick the looks you love and I'll remember them, so later you can just say \"switch my layout\" or \"use my dark theme\".",
   'Pick up to five layouts you love. The first one you pick becomes your starting design.',
-  "This is like build-a-bear, but for your pages! Start with an empty page and add the pieces you love. Drag a section onto a page, or make it a whole page of its own. You can switch these around later, or just ask me.",
-  'Now colors. Pick up to three schemes you like. The first one is your starting scheme, and you can fine-tune it.',
+  "First, your pages. Home and Booking are always on. Choose whether to add Galleries and About, and drag the sections you want onto each page. You can switch these around later, or just ask me.",
+  "Now it's build-a-bear time! Pick a look for each part of your site and watch it come together on the right. Skip any you like as they are, and you'll see everything at the end.",
   'Last one: fonts. Pick up to three for your title, subtitle and paragraph. The first one you pick for each is what I start with.',
 ]
 
@@ -89,7 +89,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   
   const ring = 'border-twilight ring-2 ring-twilight'
   const badge = (n: number) => <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-twilight text-xs font-semibold text-white">{n}</span>
-  const canGo = step === 1 ? layouts.length > 0 : step === 2 ? struct.home.length > 0 : step === 3 ? picked.length > 0 : step === 4 ? (fp.title.length > 0 && fp.subtitle.length > 0 && fp.paragraph.length > 0) : true
+  const canGo = step === 1 ? layouts.length > 0 : step === 2 ? struct.home.length > 0 : step === 3 ? true : step === 4 ? (fp.title.length > 0 && fp.subtitle.length > 0 && fp.paragraph.length > 0) : true
 
   async function finish() {
     setBusy(true)
@@ -108,7 +108,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={step === 0 ? '/camri/01_waving.png' : '/camri/13_face_avatar.png'} alt="" className={(step === 0 ? 'h-32' : 'h-14') + ' w-auto shrink-0'} />
         <div className="rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4 text-ink">
-          {step > 0 && <p className="text-xs uppercase tracking-wider text-ink-soft">Step {step} of 2</p>}
+          {step > 0 && <p className="text-xs uppercase tracking-wider text-ink-soft">Step {step} of 3</p>}
           <p className="mt-1 font-fraunces text-xl leading-snug">{LINES[step]}</p>
         </div>
       </div>
@@ -151,19 +151,20 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
           </div>
         )}
 
-        {step === 2 && (
-          <div className="space-y-16">
-            <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} />
-            <DesignSteps designs={designs} setDesigns={setDesigns} />
+        {step === 2 && <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} />}
+        {step === 3 && (
+          <div>
+            <DesignSteps designs={designs} setDesigns={setDesigns} onBack={() => setStep(2)} onBuild={finish} busy={busy} />
+            {onCancel && <button type="button" onClick={onCancel} disabled={busy} className="mt-2 text-sm text-ink-soft underline">Back to my site</button>}
           </div>
         )}
 
       </div>
 
-      {step > 0 && (
+      {step > 0 && step < 3 && (
         <div className="mt-8 flex items-center gap-4">
           <button type="button" onClick={() => setStep(step - 1)} disabled={busy} className="rounded-full border border-black/15 px-6 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50">Back</button>
-          {step < 2 ? (
+          {step < 3 ? (
             <button type="button" onClick={() => setStep(step + 1)} disabled={!canGo} className="rounded-full bg-twilight px-7 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">Continue</button>
           ) : (
             <button type="button" onClick={finish} disabled={!canGo || busy} className="rounded-full bg-twilight px-7 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site'}</button>
@@ -280,105 +281,170 @@ const BLOG_MODES = [
   { k: 'none', t: 'No blog for now', d: 'You can turn it on later whenever you want.' },
 ]
 
-function DesignSteps({ designs, setDesigns }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void }) {
+function DesignSteps({ designs, setDesigns, onBack, onBuild, busy }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; onBack: () => void; onBuild: () => void; busy: boolean }) {
+  type Pk = { dir: string; ar: string; field: string; items: { key: string; name: string }[] }
+  type Sec = (typeof DESIGN_SECTIONS)[number]
+  const PK = PICKERS() as unknown as Record<string, Pk>
   const [step, setStep] = useState(0)
   const [zoom, setZoom] = useState<string | null>(null)
   const [ask, setAsk] = useState(false)
   const [ans, setAns] = useState<string | null>(null)
-  const sec = DESIGN_SECTIONS[step]
   const total = DESIGN_SECTIONS.length
-  const hasMode = ['galleries', 'about', 'pricing', 'blog'].includes(sec.k)
+  const review = step >= total
+  const sec = DESIGN_SECTIONS[Math.min(step, total - 1)]
+  const MODED = ['galleries', 'about', 'pricing', 'blog']
+  const hasMode = MODED.includes(sec.k)
   const mode = designs[sec.k + '_mode'] || ''
-  const rows = sec.rows.filter((row) => {
-    if (sec.k === 'blog' && mode === 'none') return false
-    if (!hasMode) return true
-    if (!mode) return false
-    const kd = rowKind(row)
-    return kd === 'always' || (kd === 'page' ? mode !== 'section' : mode !== 'page')
-  })
+  const rowsOf = (s: Sec) => {
+    const md = designs[s.k + '_mode'] || ''
+    return s.rows.filter((row) => {
+      if (s.k === 'blog' && md === 'none') return false
+      if (!MODED.includes(s.k)) return true
+      if (!md) return false
+      const kd = rowKind(row)
+      return kd === 'always' || (kd === 'page' ? md !== 'section' : md !== 'page')
+    })
+  }
+  const rows = rowsOf(sec)
+  const picks: { s: Sec; row: string; pk: Pk; it: { key: string; name: string } }[] = []
+  DESIGN_SECTIONS.forEach((s) => rowsOf(s).forEach((row) => {
+    const pk = PK[s.k + '|' + row]
+    const it = pk ? pk.items.find((d) => d.key === designs[pk.field]) : undefined
+    if (pk && it) picks.push({ s, row, pk, it })
+  }))
   const go = (n: number) => { setStep(n); setAsk(false); setAns(null); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  const btnPrimary = 'rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
   return (
-    <div>
-      {zoom && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={zoom} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg" />
-        </div>
-      )}
-      <p className="text-xs uppercase tracking-wider text-ink-soft">Part {step + 1} of {total}</p>
-      <div className="mt-2 flex gap-1.5">
-        {DESIGN_SECTIONS.map((x, n) => (
-          <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
-        ))}
-      </div>
-      <h3 className="mt-6 font-fraunces text-3xl text-ink">{sec.title}</h3>
-      <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className="mt-2 rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">Ask Camri about this</button>
-      {ask && (
-        <div className="mt-2 max-w-xl rounded-xl border border-black/10 bg-white/80 p-3 text-sm">
-          <div className="flex flex-wrap gap-2">
-            {qaFor(sec.k).map((x) => (
-              <button key={x.q} type="button" onClick={() => setAns(x.a)} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">{x.q}</button>
-            ))}
+    <div className="grid gap-8 lg:grid-cols-[1fr_260px]">
+      <div>
+        {zoom && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={zoom} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg" />
           </div>
-          {ans && <p className="mt-3 leading-relaxed text-ink-soft">{ans}</p>}
+        )}
+        <p className="text-xs uppercase tracking-wider text-ink-soft">{review ? 'Last look' : `Part ${step + 1} of ${total}`}</p>
+        <div className="mt-2 flex gap-1.5">
+          {[...DESIGN_SECTIONS.map((x) => x.k), 'review'].map((k, n) => (
+            <span key={k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
+          ))}
         </div>
-      )}
 
-      {hasMode && (
-        <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
-          <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            {(sec.k === 'blog' ? BLOG_MODES : MODES.filter((m) => !(sec.k === 'about' && m.k === 'both'))).map((m) => (
-              <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
-                <p className="text-sm font-medium text-ink">{m.t}</p>
-                <p className="mt-1 text-xs text-ink-soft">{m.d}</p>
-              </button>
-            ))}
+        {review ? (
+          <div>
+            <h3 className="mt-6 font-fraunces text-3xl text-ink">Here is your site</h3>
+            <p className="mt-2 text-sm text-ink-soft">Check each part. Press Change to go back and swap one, or build it now. You can change anything later.</p>
+            {DESIGN_SECTIONS.map((s, n) => {
+              const its = picks.filter((p) => p.s.k === s.k)
+              return (
+                <div key={s.k} className="mt-4 flex items-center gap-4 rounded-2xl border border-black/10 bg-white/60 p-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-fraunces text-lg text-ink">{s.title}</p>
+                    {its.length > 0 ? its.map((p) => <p key={p.row} className="text-sm text-ink-soft">{p.row}: {p.it.name}</p>) : <p className="text-sm text-ink-soft">Keeping the look from your layout</p>}
+                  </div>
+                  <div className="hidden gap-2 sm:flex">
+                    {its.slice(0, 3).map((p) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={p.row} src={'/' + p.pk.dir + '/' + p.it.key + '.png'} alt="" className="h-14 w-auto rounded border border-black/10 object-cover object-top" />
+                    ))}
+                  </div>
+                  <button type="button" onClick={() => go(n)} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-xs text-ink">Change</button>
+                </div>
+              )
+            })}
           </div>
-        </div>
-      )}
-
-      {rows.map((row, ri) => {
-        const pk = PICKERS()[sec.k + '|' + row]
-        return (
-          <div key={row} className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
-            <p className="text-xs uppercase tracking-wider text-ink-soft">Choice {ri + 1}</p>
-            <p className="mt-1 font-fraunces text-xl text-ink">{ROW_TITLE[row] ?? row}</p>
-            {pk ? (
-              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
-                {pk.items.map((d) => {
-                  const on = designs[pk.field] === d.key
-                  return (
-                    <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, [pk.field]: on ? '' : d.key })}>
-                      <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
-                      <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'h-full w-full rounded-lg border-2 object-cover object-top ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
-                        <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom('/' + pk.dir + '/' + d.key + '.png') }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
-                {[1, 2, 3].map((n) => (
-                  <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
-                ))}
+        ) : (
+          <div>
+            <h3 className="mt-6 font-fraunces text-3xl text-ink">{sec.title}</h3>
+            <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className="mt-2 rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">Ask Camri about this</button>
+            {ask && (
+              <div className="mt-2 max-w-xl rounded-xl border border-black/10 bg-white/80 p-3 text-sm">
+                <div className="flex flex-wrap gap-2">
+                  {qaFor(sec.k).map((x) => (
+                    <button key={x.q} type="button" onClick={() => setAns(x.a)} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">{x.q}</button>
+                  ))}
+                </div>
+                {ans && <p className="mt-3 leading-relaxed text-ink-soft">{ans}</p>}
               </div>
             )}
-          </div>
-        )
-      })}
 
-      <div className="mt-10 flex items-center justify-between">
-        {step > 0 ? (
-          <button type="button" onClick={() => go(step - 1)} className="rounded-full border border-black/15 bg-white px-5 py-2 text-sm text-ink">← Back</button>
-        ) : <span />}
-        {step < total - 1 ? (
-          <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-2 text-sm text-white">Next: {DESIGN_SECTIONS[step + 1].title} →</button>
-        ) : <p className="text-sm text-ink-soft">That is every design choice.</p>}
+            {hasMode && (
+              <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
+                <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  {(sec.k === 'blog' ? BLOG_MODES : MODES.filter((m) => !(sec.k === 'about' && m.k === 'both'))).map((m) => (
+                    <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
+                      <p className="text-sm font-medium text-ink">{m.t}</p>
+                      <p className="mt-1 text-xs text-ink-soft">{m.d}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {rows.map((row, ri) => {
+              const pk = PK[sec.k + '|' + row]
+              return (
+                <div key={row} className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
+                  <p className="text-xs uppercase tracking-wider text-ink-soft">Choice {ri + 1}</p>
+                  <p className="mt-1 font-fraunces text-xl text-ink">{ROW_TITLE[row] ?? row}</p>
+                  {pk ? (
+                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
+                      {pk.items.map((d) => {
+                        const on = designs[pk.field] === d.key
+                        return (
+                          <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, [pk.field]: on ? '' : d.key })}>
+                            <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
+                            <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'h-full w-full rounded-lg border-2 object-cover object-top ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
+                              <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom('/' + pk.dir + '/' + d.key + '.png') }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
+                      {[1, 2, 3].map((n) => (
+                        <div key={n} className="flex aspect-[5/4] items-center justify-center rounded-lg border border-dashed border-black/20 bg-white/50 text-xs text-ink-soft">Design coming soon</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="sticky bottom-0 z-10 mt-10 flex items-center gap-3 bg-white/80 py-4 backdrop-blur">
+          <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} disabled={busy} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink disabled:opacity-50">← Back</button>
+          {review ? (
+            <button type="button" onClick={onBuild} disabled={busy} className={btnPrimary}>{busy ? 'Building your site…' : 'Build my site'}</button>
+          ) : (
+            <button type="button" onClick={() => go(step + 1)} className={btnPrimary}>{step < total - 1 ? `Next: ${DESIGN_SECTIONS[step + 1].title} →` : 'See my whole site →'}</button>
+          )}
+        </div>
       </div>
+
+      <aside className="hidden lg:block">
+        <div className="sticky top-6 max-h-[88vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
+          <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
+          {picks.length === 0 ? (
+            <p className="mt-3 text-sm text-ink-soft">Your picks stack up here as you go.</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {picks.map((p) => (
+                <button key={p.row + p.s.k} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === p.s.k))} className="block w-full text-left">
+                  <p className="mb-1 text-[11px] text-ink-soft">{p.s.title} · {p.it.name}</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={'/' + p.pk.dir + '/' + p.it.key + '.png'} alt="" className="w-full rounded border border-black/10 object-cover object-top" style={{ aspectRatio: p.pk.ar }} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </aside>
     </div>
   )
 }
