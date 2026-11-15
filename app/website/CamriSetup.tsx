@@ -377,16 +377,25 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
   const hasMode = MODED.includes(sec.k)
   const mode = designs[sec.k + '_mode'] || ''
   const rows = sec.rows.filter((row) => {
+    if (PK[sec.k + '|' + row]?.field === 'photos') return false
     if (sec.k === 'blog' && mode === 'none') return false
-    if (!MODED.includes(sec.k)) return true
-    if (!mode) return false
-    const kd = rowKind(row)
-    return kd === 'always' || (kd === 'page' ? mode !== 'section' : mode !== 'page')
+    return true
   })
   const plan = planOf(designs)
   const secs = [
     ...plan.home.map((p) => ({ k: p.k, row: p.row, title: p.title, name: p.name, src: p.src })),
   ]
+  const pickDesign = (pk: Pk, key: string, row: string) => {
+    const nd: Record<string, string> = { ...designs, [pk.field]: key }
+    if (key && MODED.includes(sec.k) && sec.k !== 'blog') {
+      const kd = rowKind(row)
+      const cur = designs[sec.k + '_mode'] || ''
+      if (sec.k === 'about') nd.about_mode = kd === 'page' ? 'page' : 'section'
+      else if (kd === 'page') nd[sec.k + '_mode'] = cur === 'section' || cur === 'both' ? 'both' : 'page'
+      else if (kd === 'section') nd[sec.k + '_mode'] = cur === 'page' || cur === 'both' ? 'both' : 'section'
+    }
+    setDesigns(nd)
+  }
   const go = (n: number) => { if (n < 0) return; setStep(n); setAsk(false); setAns(null); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const btnPrimary = 'rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
   return (
@@ -442,7 +451,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
                   {pk.items.map((d) => {
                     const on = designs[pk.field] === d.key
                     return (
-                      <button key={d.key} type="button" className="text-left" onClick={() => setDesigns({ ...designs, [pk.field]: on ? '' : d.key })}>
+                      <button key={d.key} type="button" className="text-left" onClick={() => pickDesign(pk, on ? '' : d.key, row)}>
                         <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
                         <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
