@@ -431,6 +431,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   const [ask, setAsk] = useState(false)
   const [ans, setAns] = useState<string | null>(null)
   const [showPlan, setShowPlan] = useState(false)
+  const [pend, setPend] = useState<{ pk: Pk; key: string; row: string } | null>(null)
   const total = DESIGN_SECTIONS.length
   const sec = DESIGN_SECTIONS[step]
   const MODED = ['galleries', 'about', 'pricing', 'blog']
@@ -438,7 +439,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   const mode = designs[sec.k + '_mode'] || ''
   const rows = sec.rows.filter((row) => {
     if (PK[sec.k + '|' + row]?.field === 'photos') return false
-    if (mode === 'none') return false
+    if (mode === 'none' && sec.k !== 'blog') return false
     return true
   })
   const plan = planOf(designs)
@@ -456,6 +457,12 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
     }
     setDesigns(nd)
   }
+  const tryPick = (pk: Pk, key: string, row: string) => {
+    const kd = rowKind(row)
+    const clash = !!key && ['galleries', 'pricing'].includes(sec.k) && ((kd === 'page' && mode === 'section') || (kd === 'section' && mode === 'page'))
+    if (clash) setPend({ pk, key, row })
+    else pickDesign(pk, key, row)
+  }
   const go = (n: number) => { if (n < 0) return; setStep(n); setAsk(false); setAns(null); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const btnPrimary = 'rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
   return (
@@ -465,6 +472,18 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={zoom} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg" />
+          </div>
+        )}
+        {pend && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setPend(null)}>
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <p className="font-fraunces text-xl text-ink">Switch to both?</p>
+              <p className="mt-2 text-sm text-ink-soft">{'You chose ' + (mode === 'section' ? 'a section on a page' : 'a full page') + ' for ' + sec.title + '. To use this design, switch to both a full page and a section on a page.'}</p>
+              <div className="mt-5 flex gap-3">
+                <button type="button" onClick={() => { pickDesign(pend.pk, pend.key, pend.row); setPend(null) }} className={btnPrimary}>Yes, switch to both</button>
+                <button type="button" onClick={() => setPend(null)} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink">No, keep it</button>
+              </div>
+            </div>
           </div>
         )}
         {step === 0 && (
@@ -511,10 +530,18 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           ))}
         </div>
         <h3 className="mt-6 font-fraunces text-3xl text-ink">{sec.title}</h3>
-        <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className="mt-2 rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">Ask Camri about this</button>
-        {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
-          <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'ml-2 mt-2 rounded-full border px-3 py-1 text-xs text-ink ' + (mode === 'none' ? 'border-twilight bg-white' : 'border-black/15 bg-white')}>{mode === 'none' ? 'Skipped. Tap to add it back' : "I don't want this"}</button>
-        )}
+        <div className="mt-4 grid max-w-3xl gap-3 sm:grid-cols-3">
+          <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className={'rounded-xl border-2 p-4 text-left ' + (ask ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
+            <p className="text-sm font-medium text-ink">Ask Camri about this</p>
+            <p className="mt-1 text-xs text-ink-soft">What it is and what she recommends.</p>
+          </button>
+          {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
+            <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-xl border-2 p-4 text-left ' + (mode === 'none' ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
+              <p className="text-sm font-medium text-ink">{mode === 'none' ? 'Skipped' : "I don't want this"}</p>
+              <p className="mt-1 text-xs text-ink-soft">{mode === 'none' ? 'Tap to add it back.' : 'Leave it off my site.'}</p>
+            </button>
+          )}
+        </div>
         {ask && (
           <div className="mt-2 max-w-xl rounded-xl border border-black/10 bg-white/80 p-3 text-sm">
             <div className="flex flex-wrap gap-2">
@@ -551,7 +578,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
                   {pk.items.map((d) => {
                     const on = designs[pk.field] === d.key
                     return (
-                      <button key={d.key} type="button" className="text-left" onClick={() => pickDesign(pk, on ? '' : d.key, row)}>
+                      <button key={d.key} type="button" className="text-left" onClick={() => tryPick(pk, on ? '' : d.key, row)}>
                         <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
                         <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}

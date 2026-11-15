@@ -26,7 +26,7 @@ function strip(s: Struct, sec: string) {
 }
 
 type GCard = { n: string; d: string }
-const SEC_COUNT: Record<string, number> = { sahara: 3, gobi: 4, mojave: 3, atacama: 4, namib: 4, sonora: 3, kalahari: 4, thar: 3 }
+const SEC_COUNT: Record<string, number> = { sahara: 3, gobi: 4, mojave: 3, atacama: 4, namib: 3, sonora: 4, kalahari: 4, thar: 3 }
 const PAGE_COUNT: Record<string, number> = { jade: 7, jasper: 7, amber: 3, pearl: 9, ruby: 4, topaz: 6, garnet: 6, agate: 6, quartz: 12, moonstone: 4 }
 const SUGG = ['Weddings', 'Engagements', 'Families', 'Seniors', 'Portraits', 'Newborns', 'Maternity', 'Couples', 'Events', 'Headshots']
 
@@ -84,8 +84,10 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const names = pages.map((p) => p.label)
   const nameList = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]
   const mine = isBook ? [] : listOf(struct, page.id)
+  const mainKey = page.id === 'galleries' ? 'portfolio' : page.id === 'about' ? 'about' : page.id === 'pricing' ? 'investment' : null
+  const vMain = !!mainKey && !mine.includes(mainKey) && !!thumbs[mainKey]
   const GAL = ['galsec', 'portfolio']
-  const focus: string | null = act && (mine.includes(act) || act === 'hero') ? act : (mine.find((k) => GAL.includes(k) || k === 'social') ?? (page.id === 'galleries' ? 'portfolio' : null))
+  const focus: string | null = act && (mine.includes(act) || act === 'hero' || (vMain && act === mainKey)) ? act : (mine.find((k) => GAL.includes(k) || k === 'social') ?? (page.id === 'galleries' ? 'portfolio' : null))
 
   function add(sec: string) {
     if (isBook) return
@@ -361,6 +363,12 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                 </Row>
               )}
 
+              {vMain && mainKey && (
+                <Row label={BLOCKS[mainKey]?.label ?? page.label} on={focus === mainKey} onClick={() => setAct(mainKey)}>
+                  <img src={thumbs[mainKey].src} alt="" className="block w-full" />
+                </Row>
+              )}
+
               {mine.map((sec, idx) => {
                 const th = thumbs[sec]
                 return (
@@ -380,9 +388,11 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                 )
               })}
 
-              {isBook && <Row label="Calendar" on={false} onClick={() => setAct(null)}><div className={slice + ' py-16 text-center'}>Your booking calendar</div></Row>}
-              {!isBook && mine.length === 0 && page.id !== 'home' && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from Camri's suggestions</div>}
-              <Row label="Footer" on={false} onClick={() => setAct(null)}><div className={slice}>Footer</div></Row>
+              {isBook && (thumbs.book
+                ? <Row label="Booking page" on={false} onClick={() => setAct(null)}><img src={thumbs.book.src} alt="" className="block w-full" /></Row>
+                : <Row label="Calendar" on={false} onClick={() => setAct(null)}><div className={slice + ' py-16 text-center'}>Your booking calendar</div></Row>)}
+              {!isBook && mine.length === 0 && !vMain && page.id !== 'home' && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from Camri's suggestions</div>}
+              {!(vMain || (isBook && thumbs.book) || mine.includes(mainKey ?? '')) && <Row label="Footer" on={false} onClick={() => setAct(null)}><div className={slice}>Footer</div></Row>}
             </div>
           </div>
           {showDest && destinations}
