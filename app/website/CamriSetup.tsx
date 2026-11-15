@@ -420,7 +420,7 @@ function thumbsOf(designs: Record<string, string>) {
     const sc = pickOf(s, (kd) => kd === 'section')
     if (s.k === 'galleries') { if (pg) out.portfolio = pg; if (sc) out.galsec = sc }
     else if (s.k === 'pricing') { if (pg) out.investment = pg; if (sc) out.pricesec = sc }
-    else { const f = pickOf(s, () => true); if (f) out[s.k] = f }
+    else { const f = pickOf(s, () => true); if (f) out[s.k === 'nav' ? 'explore' : s.k] = f }
   })
   return out
 }

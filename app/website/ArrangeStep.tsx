@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { BLOCKS, ORDER, type Struct, type Links } from './PageBuilder'
 
 type Pg = { id: string; label: string; extra?: boolean }
@@ -29,6 +29,19 @@ type GCard = { n: string; d: string }
 const SEC_COUNT: Record<string, number> = { sahara: 3, gobi: 4, mojave: 3, atacama: 4, namib: 4, sonora: 3, kalahari: 4, thar: 3 }
 const SUGG = ['Weddings', 'Engagements', 'Families', 'Seniors', 'Portraits', 'Newborns', 'Maternity', 'Couples', 'Events', 'Headshots']
 
+function Row({ label, on, onClick, controls, children }: { label: string; on: boolean; onClick: () => void; controls?: ReactNode; children: ReactNode }) {
+  return (
+    <div className={'relative ' + (on ? 'z-10 ring-2 ring-inset ring-twilight' : '')}>
+      <div className="absolute right-full top-4 mr-1 flex items-center">
+        <button type="button" onClick={onClick} className={'whitespace-nowrap rounded-full border px-3 py-1 font-fraunces text-sm shadow-sm transition ' + (on ? 'border-twilight bg-twilight text-white' : 'border-black/15 bg-white text-ink hover:border-twilight')}>{label}</button>
+        <span className="h-px w-4 bg-black/30" />
+      </div>
+      <div onClick={onClick} className="cursor-pointer">{children}</div>
+      {controls && <div className="absolute left-full top-3 ml-2 flex flex-col gap-1">{controls}</div>}
+    </div>
+  )
+}
+
 export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs, heroSrc, heroName, designs, setDesigns, photoDesigns }: {
   struct: Struct; setStruct: (s: Struct) => void; links: Links; setLinks: (l: Links) => void
   thumbs: Record<string, { src: string; ar: string }>; heroSrc?: string; heroName?: string
@@ -36,12 +49,13 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
 }) {
   const [cur, setCur] = useState(0)
   const [sel, setSel] = useState<number | null>(null)
+  const [act, setAct] = useState<string | null>(null)
   const secN = SEC_COUNT[(designs.galleries_section || '').toLowerCase()]
   const secOnly = designs.galleries_mode === 'section' && !!secN
-  const maxCards = secOnly ? secN : 10
+  const maxCards = secOnly ? secN : 12
   let cards: GCard[] = []
   try { cards = JSON.parse(designs.galcards || '[]') } catch {}
-  if (!Array.isArray(cards) || cards.length === 0) cards = Array.from({ length: secOnly ? secN : 6 }, () => ({ n: '', d: '' }))
+  if (!Array.isArray(cards) || cards.length === 0) cards = Array.from({ length: secOnly ? secN : 9 }, () => ({ n: '', d: '' }))
   const saveCards = (c: GCard[]) => setDesigns({ ...designs, galcards: JSON.stringify(c) })
   const setCard = (i: number, patch: Partial<GCard>) => saveCards(cards.map((c, k) => (k === i ? { ...c, ...patch } : c)))
   const fillChip = (s: string) => {
@@ -67,7 +81,8 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const names = pages.map((p) => p.label)
   const nameList = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]
   const mine = isBook ? [] : listOf(struct, page.id)
-  const social = pages.some((p) => p.id !== 'book' && listOf(struct, p.id).includes('social'))
+  const GAL = ['galsec', 'portfolio']
+  const focus: string | null = act && (mine.includes(act) || act === 'hero') ? act : (mine.find((k) => GAL.includes(k) || k === 'social') ?? (page.id === 'galleries' ? 'portfolio' : null))
 
   function add(sec: string) {
     if (isBook) return
@@ -75,6 +90,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     strip(s, sec)
     setList(s, page.id, [...listOf(s, page.id), sec])
     setStruct(s)
+    setAct(sec)
   }
   function take(sec: string) { const s = clone(); strip(s, sec); setStruct(s) }
   function nudge(idx: number, d: number) {
@@ -100,9 +116,109 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   }
 
   const arrow = 'flex h-11 w-11 items-center justify-center rounded-full border border-black/15 bg-white text-lg text-ink shadow-sm transition hover:border-twilight disabled:opacity-30'
+  const ctl = 'flex h-7 w-7 items-center justify-center rounded-full border border-black/15 bg-white text-sm text-ink-soft shadow-sm hover:border-twilight disabled:opacity-30'
   const slice = 'bg-[#EFE7DC] px-4 py-3 text-sm text-ink-soft'
+
+  const introG = secOnly
+    ? 'Your galleries section shows ' + secN + ' cards, and each card opens its own gallery.'
+    : secN && designs.galleries_mode !== 'page'
+      ? 'Your home page shows the first ' + secN + ' cards. Your Galleries page has room for all of them.'
+      : 'Your Galleries page has a card for each gallery you shoot, and each opens its own gallery.'
+
+  const galPanel = (
+    <div>
+      <div className="flex items-start gap-3">
+        <img src="/camri/09_holding_photo.png" alt="" className="h-14 w-auto shrink-0" />
+        <p className="font-fraunces text-base leading-snug text-ink">{introG} Name your cards, then pick how each gallery is displayed.</p>
+      </div>
+      <p className="mt-5 text-xs uppercase tracking-wider text-ink-soft">1 · Name your cards</p>
+      <div className="mt-2 space-y-2">
+        {cards.map((c, k) => (
+          <div key={k} className="flex items-center gap-2">
+            <span className="w-4 text-right text-xs text-ink-soft">{k + 1}</span>
+            <input value={c.n} onChange={(e) => setCard(k, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[k % SUGG.length]} className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />
+            {secN && !secOnly && designs.galleries_mode !== 'page' && k < secN && <span className="shrink-0 rounded-full bg-[#EBDDCF] px-2 py-0.5 text-[10px] text-ink">Home</span>}
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {SUGG.filter((s) => !cards.some((c) => c.n.trim().toLowerCase() === s.toLowerCase())).map((s) => (
+          <button key={s} type="button" onClick={() => fillChip(s)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">{s}</button>
+        ))}
+        {cards.length < maxCards && <button type="button" onClick={() => saveCards([...cards, { n: '', d: '' }])} className="rounded-full border border-dashed border-black/25 px-3 py-1 text-xs text-ink-soft">+ Add card</button>}
+      </div>
+
+      <p className="mt-6 text-xs uppercase tracking-wider text-ink-soft">2 · Pick the display for each card</p>
+      {named.length === 0 ? (
+        <p className="mt-2 text-sm text-ink-soft">Name a card above and it will show up here.</p>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {named.map(({ c, i: k }) => {
+            const d = eff(c)
+            return (
+              <button key={k} type="button" onClick={() => setSel(sel === k ? null : k)} className="flex w-full items-center gap-2 text-left">
+                <span className={'min-w-0 flex-1 truncate rounded-full border-2 bg-white px-3 py-1.5 font-fraunces text-sm text-ink shadow-sm ' + (sel === k ? 'border-twilight' : 'border-black/10')}>{c.n}</span>
+                <span className="flex shrink-0 items-center gap-0.5"><span className="h-0.5 w-1 rounded-full bg-black/30" /><span className="h-0.5 w-1 rounded-full bg-black/30" /><span className="h-0.5 w-1 rounded-full bg-black/30" /></span>
+                {d
+                  ? <img src={'/photos/' + d + '.png'} alt="" className={'w-12 shrink-0 rounded-md border-2 object-cover object-top ' + (sel === k ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/5' }} />
+                  : <span className="flex w-12 shrink-0 items-center justify-center rounded-md border-2 border-dashed border-black/20 text-[9px] text-ink-soft" style={{ aspectRatio: '4/5' }}>Pick</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {sel !== null && cards[sel] && cards[sel].n.trim() && (
+        <div className="mt-4 rounded-xl border border-black/10 bg-white p-3">
+          <p className="font-fraunces text-base text-ink">Display for {cards[sel].n}</p>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {photoDesigns.map((pd) => (
+              <button key={pd.key} type="button" onClick={() => setCard(sel, { d: cards[sel].d === pd.key ? '' : pd.key })} className="text-left">
+                <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (cards[sel].d === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
+                <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  const socialPanel = (
+    <div>
+      <p className="font-fraunces text-lg text-ink">Your social links</p>
+      <p className="mt-1 text-sm text-ink-soft">Paste the links you want to show. Leave blank to skip.</p>
+      <div className="mt-3 space-y-2">
+        {([['instagram_url', 'Instagram'], ['facebook_url', 'Facebook'], ['tiktok_url', 'TikTok'], ['pinterest_url', 'Pinterest']] as const).map(([k, label]) => (
+          <input key={k} value={links[k]} onChange={(e) => setLinks({ ...links, [k]: e.target.value })} placeholder={label + ' link'} className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+        ))}
+      </div>
+    </div>
+  )
+
+  let panel: ReactNode
+  if (focus && GAL.includes(focus)) panel = galPanel
+  else if (focus === 'social') panel = socialPanel
+  else if (focus === 'hero') panel = (
+    <div>
+      <p className="font-fraunces text-lg text-ink">Hero</p>
+      <p className="mt-1 text-sm text-ink-soft">{'Layout 1' + (heroName ? ' · ' + heroName : '') + '. This is the first thing visitors see. You pick your photo and words after your site is built.'}</p>
+    </div>
+  )
+  else if (focus && BLOCKS[focus]) panel = (
+    <div>
+      <p className="font-fraunces text-lg text-ink">{BLOCKS[focus].label}</p>
+      <p className="mt-1 text-sm text-ink-soft">{BLOCKS[focus].blurb}</p>
+    </div>
+  )
+  else panel = (
+    <div className="flex items-start gap-3">
+      <img src="/camri/08_peeking.png" alt="" className="h-14 w-auto shrink-0" />
+      <p className="font-fraunces text-base leading-snug text-ink">{isBook ? 'Booking is just your calendar, so there is nothing to add here.' : 'Tap any block on the page to see what it does and fill out what it needs.'}</p>
+    </div>
+  )
+
   return (
-    <div className="grid gap-8 lg:grid-cols-[250px_1fr]">
+    <div className="grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)_320px]">
       <aside className="space-y-4 self-start lg:sticky lg:top-6">
         <div className="rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
           <p className="font-fraunces text-xl leading-snug text-ink">You have {NUM[pages.length] ?? pages.length} pages: {nameList}.</p>
@@ -128,117 +244,56 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
 
       <div>
         <div className="mb-5 flex items-center justify-center gap-5">
-          <button type="button" className={arrow} disabled={i === 0} onClick={() => setCur(i - 1)} aria-label="Previous page">←</button>
+          <button type="button" className={arrow} disabled={i === 0} onClick={() => { setCur(i - 1); setAct(null) }} aria-label="Previous page">←</button>
           <p className="min-w-[200px] text-center font-fraunces text-2xl text-ink">{page.label}<span className="ml-3 text-xs text-ink-soft">{i + 1} of {pages.length}</span></p>
-          <button type="button" className={arrow} disabled={i === pages.length - 1} onClick={() => setCur(i + 1)} aria-label="Next page">→</button>
+          <button type="button" className={arrow} disabled={i === pages.length - 1} onClick={() => { setCur(i + 1); setAct(null) }} aria-label="Next page">→</button>
         </div>
 
-        <div className="mx-auto max-w-md overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
-          <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#EFE7DC] px-3 py-2">
-            <span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" />
-            {page.extra
-              ? <input value={page.label} onChange={(e) => rename(e.target.value)} className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none" />
-              : <span className="ml-2 flex-1 text-sm text-ink-soft">{page.label}</span>}
-            {page.id !== 'home' && page.id !== 'book' && <button type="button" onClick={removePage} aria-label={'Remove ' + page.label} className="text-sm text-ink-soft">✕</button>}
+        <div className="mx-auto max-w-xl pl-32 pr-10">
+          <div className="border-x border-black/10 bg-white shadow-sm">
+            <div className="flex items-center gap-1.5 rounded-t-2xl border-b border-black/10 bg-[#EFE7DC] px-3 py-2">
+              <span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" />
+              {page.extra
+                ? <input value={page.label} onChange={(e) => rename(e.target.value)} className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none" />
+                : <span className="ml-2 flex-1 text-sm text-ink-soft">{page.label}</span>}
+              {page.id !== 'home' && page.id !== 'book' && <button type="button" onClick={removePage} aria-label={'Remove ' + page.label} className="text-sm text-ink-soft">✕</button>}
+            </div>
+
+            {page.id === 'home' && (
+              <Row label="Hero" on={focus === 'hero'} onClick={() => setAct('hero')}>
+                {heroSrc ? <img src={heroSrc} alt="" className="block w-full" /> : <div className={slice + ' py-10 text-center'}>Hero</div>}
+              </Row>
+            )}
+
+            {mine.map((sec, idx) => {
+              const th = thumbs[sec]
+              return (
+                <Row
+                  key={sec}
+                  label={BLOCKS[sec]?.label ?? 'Section'}
+                  on={focus === sec}
+                  onClick={() => setAct(sec)}
+                  controls={<>
+                    <button type="button" disabled={idx === 0} onClick={() => nudge(idx, -1)} aria-label="Move up" className={ctl}>↑</button>
+                    <button type="button" disabled={idx === mine.length - 1} onClick={() => nudge(idx, 1)} aria-label="Move down" className={ctl}>↓</button>
+                    <button type="button" onClick={() => take(sec)} aria-label="Take off this page" className={ctl}>✕</button>
+                  </>}
+                >
+                  {th ? <img src={th.src} alt="" className="block w-full" /> : <div className="bg-[#FBF8F4] px-4 py-8 text-sm text-ink-soft">{BLOCKS[sec]?.label}</div>}
+                </Row>
+              )
+            })}
+
+            {isBook && <Row label="Calendar" on={false} onClick={() => setAct(null)}><div className={slice + ' py-16 text-center'}>Your booking calendar</div></Row>}
+            {!isBook && mine.length === 0 && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from the left</div>}
+            <Row label="Footer" on={false} onClick={() => setAct(null)}><div className={slice + ' rounded-b-2xl'}>Footer</div></Row>
           </div>
-
-          {page.id === 'home' && (heroSrc
-            ? <div><img src={heroSrc} alt="" className="w-full" />{heroName && <p className="bg-[#FBF8F4] px-4 py-1.5 text-[11px] text-ink-soft">Layout 1 · {heroName}</p>}</div>
-            : <div className={slice + ' py-10 text-center'}>Hero</div>)}
-
-          {mine.map((sec, idx) => {
-            const th = thumbs[sec]
-            return (
-              <div key={sec} className="border-t border-black/10">
-                <div className="flex items-center gap-2 bg-[#FBF8F4] px-4 py-2">
-                  <span className="flex-1 font-fraunces text-base text-ink">{BLOCKS[sec]?.label ?? 'Section'}</span>
-                  <button type="button" disabled={idx === 0} onClick={() => nudge(idx, -1)} aria-label="Move up" className="px-1 text-ink-soft disabled:opacity-30">↑</button>
-                  <button type="button" disabled={idx === mine.length - 1} onClick={() => nudge(idx, 1)} aria-label="Move down" className="px-1 text-ink-soft disabled:opacity-30">↓</button>
-                  <button type="button" onClick={() => take(sec)} aria-label="Take off this page" className="px-1 text-ink-soft">✕</button>
-                </div>
-                {th ? <img src={th.src} alt="" className="w-full" /> : <div className="px-4 py-6 text-sm text-ink-soft">{BLOCKS[sec]?.blurb}</div>}
-              </div>
-            )
-          })}
-
-          {isBook && <div className={slice + ' border-t border-black/10 py-10 text-center'}>Your booking calendar</div>}
-          {!isBook && mine.length === 0 && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from the left</div>}
-          <div className={slice + ' border-t border-black/10'}>Footer</div>
         </div>
-
-        {(page.id === 'galleries' || mine.includes('galsec') || mine.includes('portfolio')) && (
-          <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
-            <div className="flex items-start gap-3">
-              <img src="/camri/13_face_avatar.png" alt="" className="h-10 w-auto shrink-0" />
-              <p className="font-fraunces text-lg leading-snug text-ink">{secOnly ? 'Your galleries section shows ' + secN + ' cards, and each card opens its own gallery. ' : 'Your galleries have cards, and each card opens its own gallery. '}Name your cards, then pick how each gallery is displayed.</p>
-            </div>
-            <p className="mt-5 text-xs uppercase tracking-wider text-ink-soft">1 · Name your cards</p>
-            <div className="mt-2 grid gap-2 sm:grid-cols-3">
-              {cards.map((c, i) => (
-                <input key={i} value={c.n} onChange={(e) => setCard(i, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[i % SUGG.length]} className="rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
-              ))}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {SUGG.filter((s) => !cards.some((c) => c.n.trim().toLowerCase() === s.toLowerCase())).map((s) => (
-                <button key={s} type="button" onClick={() => fillChip(s)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">{s}</button>
-              ))}
-              {cards.length < maxCards && <button type="button" onClick={() => saveCards([...cards, { n: '', d: '' }])} className="rounded-full border border-dashed border-black/25 px-3 py-1 text-xs text-ink-soft">+ Add card</button>}
-            </div>
-
-            <p className="mt-6 text-xs uppercase tracking-wider text-ink-soft">2 · Pick the display for each card</p>
-            {named.length === 0 ? (
-              <p className="mt-2 text-sm text-ink-soft">Name a card above and it will show up here.</p>
-            ) : (
-              <div className="mt-3 flex gap-4 overflow-x-auto pb-2">
-                {named.map(({ c, i }) => {
-                  const d = eff(c)
-                  return (
-                    <button key={i} type="button" onClick={() => setSel(sel === i ? null : i)} className="w-32 shrink-0 text-left">
-                      <div className={'rounded-xl border-2 bg-white px-3 py-4 text-center font-fraunces text-base text-ink shadow-sm ' + (sel === i ? 'border-twilight' : 'border-black/10')}>{c.n}</div>
-                      <div className="flex h-7 flex-col items-center justify-center gap-0.5">
-                        <span className="h-1 w-0.5 rounded-full bg-black/30" /><span className="h-1 w-0.5 rounded-full bg-black/30" /><span className="h-1 w-0.5 rounded-full bg-black/30" />
-                      </div>
-                      {d ? (
-                        <div>
-                          <img src={'/photos/' + d + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (sel === i ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/5' }} />
-                          <p className="mt-1 text-[11px] text-ink-soft">{c.d ? (photoDesigns.find((x) => x.key === d)?.name ?? d) : 'Default display'}</p>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-black/20 text-xs text-ink-soft" style={{ aspectRatio: '4/5' }}>Pick a display</div>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-
-            {sel !== null && cards[sel] && cards[sel].n.trim() && (
-              <div className="mt-4 rounded-xl border border-black/10 bg-white p-4">
-                <p className="font-fraunces text-base text-ink">Display for {cards[sel].n}</p>
-                <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
-                  {photoDesigns.map((pd) => (
-                    <button key={pd.key} type="button" onClick={() => setCard(sel, { d: cards[sel].d === pd.key ? '' : pd.key })} className="text-left">
-                      <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (cards[sel].d === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
-                      <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {social && (
-          <div className="mx-auto mt-6 max-w-md rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
-            <p className="font-fraunces text-lg text-ink">Your social links</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {([['instagram_url', 'Instagram'], ['facebook_url', 'Facebook'], ['tiktok_url', 'TikTok'], ['pinterest_url', 'Pinterest']] as const).map(([k, label]) => (
-                <input key={k} value={links[k]} onChange={(e) => setLinks({ ...links, [k]: e.target.value })} placeholder={label + ' link'} className="rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      <aside className="self-start rounded-2xl border border-black/10 bg-[#FBF8F4] p-5 lg:sticky lg:top-6 lg:max-h-[88vh] lg:overflow-y-auto">
+        {panel}
+      </aside>
     </div>
   )
 }
