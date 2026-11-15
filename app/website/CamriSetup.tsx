@@ -479,7 +479,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
           <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
           <div className="mt-3">
             <p className="mb-2 text-[11px] uppercase tracking-wider text-ink-soft">Pages</p>
-            <div className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm">
+            <div className="mx-auto w-[72%] overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm">
               <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
                 <span className="ml-2 text-[10px] text-ink-soft">Home</span>
@@ -487,7 +487,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
               {baseKey ? (
                 <div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={'/layouts/' + baseKey + '.png'} alt="" className="h-24 w-full object-cover object-top" />
+                  <img src={'/layouts/' + baseKey + '.png'} alt="" className="w-full" />
                   <p className="px-2 py-1 text-[10px] text-ink-soft">Layout 1{baseName ? ' · ' + baseName : ''}</p>
                 </div>
               ) : (
@@ -499,7 +499,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
                 <div className="flex h-7 flex-col items-center justify-center gap-0.5">
                   <span className="h-1 w-0.5 rounded-full bg-black/30" /><span className="h-1 w-0.5 rounded-full bg-black/30" /><span className="h-1 w-0.5 rounded-full bg-black/30" />
                 </div>
-                <div className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm">
+                <div className="mx-auto w-[72%] overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm">
                   <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
                     <span className="ml-2 text-[10px] text-ink-soft">{pg.title}</span>
