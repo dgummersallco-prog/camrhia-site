@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { BLOCKS, ORDER, type Struct, type Links } from './PageBuilder'
+import { supabase } from '@/lib/supabase'
 
 type Pg = { id: string; label: string; extra?: boolean }
 const NUM = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
@@ -119,6 +120,17 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const eff = (c: GCard, k = 0) => c.d || (photoDesigns.length ? photoDesigns[k % photoDesigns.length].key : designs.photos || '')
   const wrapRef = useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = useState<string | null>(null)
+  const [siteGals, setSiteGals] = useState<string[]>([])
+  const [newIdx, setNewIdx] = useState<number[]>([])
+  useEffect(() => {
+    const sb = supabase
+    if (!sb) return
+    sb.auth.getSession().then(({ data }) => {
+      const uid = data.session?.user.id
+      if (!uid) return
+      sb.from('website_galleries').select('title').eq('photographer_id', uid).order('sort_order', { ascending: true }).then(({ data: g }) => setSiteGals(((g ?? []) as { title: string }[]).map((x) => x.title)))
+    })
+  }, [])
   const [geo, setGeo] = useState<{ paths: { d: string; k: number }[]; dots: { x: number; y: number; k: number }[] }>({ paths: [], dots: [] })
   useEffect(() => {
     if (!photoDesigns.length) return
@@ -283,7 +295,22 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                   {onGalPage && secN && !secOnly && designs.galleries_mode !== 'page' && k < secN && <span className="absolute right-1.5 top-1.5 rounded-full bg-white px-2 py-0.5 text-[10px] text-ink">Home</span>}
                 </div>
               </button>
-              <input value={cd.n} onFocus={() => setSel(k)} onChange={(e) => setCard(k, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[k % SUGG.length]} className="mt-2 w-full rounded-full border border-black/10 bg-white px-2 py-1.5 text-center font-fraunces text-sm text-ink outline-none focus:border-twilight" />
+              {(() => {
+                const inList = siteGals.includes(cd.n)
+                const isNew = newIdx.includes(k) || (!!cd.n && !inList)
+                const txt = <input value={cd.n} onFocus={() => setSel(k)} onChange={(e) => setCard(k, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[k % SUGG.length]} className="mt-2 w-full rounded-full border border-black/10 bg-white px-2 py-1.5 text-center font-fraunces text-sm text-ink outline-none focus:border-twilight" />
+                if (siteGals.length === 0) return txt
+                return (
+                  <>
+                    <select value={inList ? cd.n : isNew ? '__new' : ''} onFocus={() => setSel(k)} onChange={(e) => { const v = e.target.value; if (v === '__new') { setNewIdx((a) => (a.includes(k) ? a : [...a, k])); if (inList) setCard(k, { n: '' }) } else { setNewIdx((a) => a.filter((x) => x !== k)); setCard(k, { n: v }) } }} className="mt-2 w-full rounded-full border border-black/10 bg-white px-2 py-1.5 text-center font-fraunces text-sm text-ink outline-none focus:border-twilight">
+                      <option value="">Choose a gallery</option>
+                      {siteGals.map((t) => <option key={t} value={t} disabled={cards.some((x, j) => j !== k && x.n === t)}>{t}</option>)}
+                      <option value="__new">+ New gallery…</option>
+                    </select>
+                    {isNew && txt}
+                  </>
+                )
+              })()}
               <button type="button" onClick={() => setSel(k)} className="mt-1.5 block w-full text-center text-[11px] text-ink-soft">{photoDesigns.find((x) => x.key === d)?.name ?? d}</button>
             </div>
           )

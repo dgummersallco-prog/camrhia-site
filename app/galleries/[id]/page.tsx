@@ -100,6 +100,11 @@ export default function GalleryManagePage() {
   const [favCounts, setFavCounts] = useState<Record<string, number>>({})
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const [designOpen, setDesignOpen] = useState(false)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search)
+    if (q.get('design')) setDesignOpen(true)
+    if (q.get('share')) setShareOpen(true)
+  }, [])
   const [title, setTitle] = useState('')
   const [pin, setPin] = useState('')
   const [expiry, setExpiry] = useState('')
