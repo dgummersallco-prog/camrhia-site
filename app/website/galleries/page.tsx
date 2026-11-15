@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
@@ -21,6 +21,7 @@ const SUGGEST = ['Weddings', 'Engagements', 'Couples', 'Families', 'Seniors', 'N
 
 export default function WebsiteGalleries() {
   const router = useRouter()
+  const embedded = (usePathname() ?? '').startsWith('/galleries')
   const [uid, setUid] = useState<string | null>(null)
   const [gals, setGals] = useState<Gal[]>([])
   const [secs, setSecs] = useState<Sec[]>([])
@@ -256,8 +257,8 @@ export default function WebsiteGalleries() {
   }
 
   return (
-    <div className="min-h-screen bg-paper xl:pl-60">
-      <DashboardHeader active="website" />
+    <div className={embedded ? '' : 'min-h-screen bg-paper xl:pl-60'}>
+      {!embedded && <DashboardHeader active="website" />}
       <main className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
