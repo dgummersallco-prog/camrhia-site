@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { BLOCKS, ORDER, type Struct, type Links } from './PageBuilder'
 
 type Pg = { id: string; label: string; extra?: boolean }
@@ -28,6 +28,52 @@ function strip(s: Struct, sec: string) {
 type GCard = { n: string; d: string }
 const SEC_COUNT: Record<string, number> = { sahara: 3, gobi: 4, mojave: 3, atacama: 4, namib: 3, sonora: 4, kalahari: 4, thar: 3 }
 const PAGE_COUNT: Record<string, number> = { jade: 7, jasper: 7, amber: 3, pearl: 9, ruby: 4, topaz: 6, garnet: 6, agate: 6, quartz: 12, moonstone: 4 }
+const SEC_ANCH: Record<string, [number, number][]> = {
+  sahara: [[0.18, 0.87], [0.5, 0.87], [0.82, 0.87]],
+  gobi: [[0.5, 0.55], [0.23, 0.92], [0.5, 0.92], [0.77, 0.92]],
+  mojave: [[0.17, 0.9], [0.5, 0.9], [0.83, 0.9]],
+  atacama: [[0.15, 0.83], [0.38, 0.83], [0.62, 0.83], [0.86, 0.83]],
+  namib: [[0.92, 0.3], [0.92, 0.58], [0.92, 0.86]],
+  sonora: [[0.25, 0.5], [0.75, 0.5], [0.25, 0.98], [0.75, 0.98]],
+  kalahari: [[0.48, 0.47], [0.75, 0.52], [0.48, 0.9], [0.75, 0.94]],
+  thar: [[0.2, 0.84], [0.5, 0.84], [0.8, 0.84]],
+}
+const PAGE_COLS: Record<string, number> = { pearl: 3, jade: 2, jasper: 2, amber: 1, ruby: 1, topaz: 2, garnet: 1, agate: 3, quartz: 4, moonstone: 2 }
+function anchorsFor(key: string, n: number): [number, number][] {
+  if (SEC_ANCH[key] && SEC_ANCH[key].length === n) return SEC_ANCH[key]
+  const cols = PAGE_COLS[key] ?? 3
+  const hero = key === 'jade' || key === 'jasper'
+  const out: [number, number][] = []
+  let rest = n
+  let top = 0.2
+  if (hero) { out.push([0.5, 0.34]); rest -= 1; top = 0.42 }
+  const rows = Math.max(1, Math.ceil(rest / cols))
+  for (let q = 0; q < rest; q++) {
+    const r = Math.floor(q / cols)
+    const ci = q % cols
+    const inRow = Math.min(cols, rest - r * cols)
+    const x = inRow === 1 ? 0.5 : 0.18 + (ci * 0.64) / (inRow - 1)
+    const y = top + ((r + 1) / rows) * (0.9 - top) - 0.02
+    out.push([x, y])
+  }
+  return out
+}
+function roundPath(raw: [number, number][], r = 14) {
+  const p = raw.filter((q, i) => i === 0 || q[0] !== raw[i - 1][0] || q[1] !== raw[i - 1][1])
+  let d = `M ${p[0][0]} ${p[0][1]}`
+  for (let i = 1; i < p.length - 1; i++) {
+    const [x0, y0] = p[i - 1]
+    const [x1, y1] = p[i]
+    const [x2, y2] = p[i + 1]
+    const l1 = Math.hypot(x1 - x0, y1 - y0)
+    const l2 = Math.hypot(x2 - x1, y2 - y1)
+    const rr = Math.min(r, l1 / 2, l2 / 2)
+    d += ` L ${x1 - ((x1 - x0) / l1) * rr} ${y1 - ((y1 - y0) / l1) * rr} Q ${x1} ${y1} ${x1 + ((x2 - x1) / l2) * rr} ${y1 + ((y2 - y1) / l2) * rr}`
+  }
+  const last = p[p.length - 1]
+  return d + ` L ${last[0]} ${last[1]}`
+}
+const baseOf = (s?: string) => (s || '').split('/').pop()?.replace('.png', '') || ''
 const SUGG = ['Weddings', 'Engagements', 'Families', 'Seniors', 'Portraits', 'Newborns', 'Maternity', 'Couples', 'Events', 'Headshots']
 
 function Row({ label, on, onClick, controls, children }: { label: string; on: boolean; onClick: () => void; controls?: ReactNode; children: ReactNode }) {
@@ -67,7 +113,59 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     else if (cards.length < maxCards) saveCards([...cards, { n: s, d: '' }])
   }
   const named = cards.map((c, i) => ({ c, i })).filter((x) => x.c.n.trim())
-  const eff = (c: GCard) => c.d || designs.photos || ''
+  const eff = (c: GCard, k = 0) => c.d || (photoDesigns.length ? photoDesigns[k % photoDesigns.length].key : designs.photos || '')
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [geo, setGeo] = useState<{ paths: string[]; dots: [number, number][] }>({ paths: [], dots: [] })
+  useEffect(() => {
+    if (!photoDesigns.length) return
+    const filled = cards.map((cd, k) => (cd.d ? cd : { ...cd, d: photoDesigns[k % photoDesigns.length].key }))
+    const next = JSON.stringify(filled)
+    if (next !== (designs.galcards || '')) setDesigns({ ...designs, galcards: next })
+  }, [designs.galcards, want, photoDesigns.length])
+  useEffect(() => {
+    const calc = () => {
+      const wrap = wrapRef.current
+      if (!wrap) return
+      const img = wrap.querySelector('[data-galimg]') as HTMLElement | null
+      const frame = wrap.querySelector('[data-frame]') as HTMLElement | null
+      const dest = Array.from(wrap.querySelectorAll('[data-dest]')) as HTMLElement[]
+      const next: { paths: string[]; dots: [number, number][] } = { paths: [], dots: [] }
+      if (img && frame && dest.length) {
+        const wr = wrap.getBoundingClientRect()
+        const ir = img.getBoundingClientRect()
+        const fr = frame.getBoundingClientRect()
+        const A = anchorsFor(img.getAttribute('data-galimg') || '', dest.length)
+        const info = dest.map((el) => {
+          const r = el.getBoundingClientRect()
+          return { k: Number(el.getAttribute('data-dest')), cx: r.left - wr.left + r.width / 2, cy: r.top - wr.top, l: r.left - wr.left, rt: r.right - wr.left }
+        })
+        const fl = fr.left - wr.left
+        const frt = fr.right - wr.left
+        const mid = (fl + frt) / 2
+        const xL = Math.min(fl, ...info.map((q) => q.l)) - 26
+        const xR = Math.max(frt, ...info.map((q) => q.rt)) + 26
+        const items = A.map(([fx, fy], k) => ({ k, ax: ir.left - wr.left + fx * ir.width, ay: ir.top - wr.top + fy * ir.height }))
+        ;(['L', 'R'] as const).forEach((sd) => {
+          const g = items.filter((a) => (a.ax < mid ? 'L' : 'R') === sd).sort((a, b) => a.ay - b.ay)
+          g.forEach((a, j) => {
+            const cc = info.find((q) => q.k === a.k)
+            if (!cc) return
+            const lx = sd === 'L' ? xL - (g.length - 1 - j) * 12 : xR + (g.length - 1 - j) * 12
+            const yb = cc.cy - 24 - j * 10
+            next.paths.push(roundPath([[a.ax, a.ay], [lx, a.ay], [lx, yb], [cc.cx, yb], [cc.cx, cc.cy]]))
+            next.dots.push([a.ax, a.ay], [cc.cx, cc.cy])
+          })
+        })
+      }
+      setGeo((g) => (JSON.stringify(g) === JSON.stringify(next) ? g : next))
+    }
+    calc()
+    const t = setTimeout(calc, 350)
+    window.addEventListener('resize', calc)
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(calc) : null
+    if (ro && wrapRef.current) ro.observe(wrapRef.current)
+    return () => { clearTimeout(t); window.removeEventListener('resize', calc); ro?.disconnect() }
+  })
   const pages: Pg[] = [
     { id: 'home', label: 'Home' },
     ...(struct.off.includes('galleries') ? [] : [{ id: 'galleries', label: 'Galleries' }]),
@@ -151,95 +249,43 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   )
   const showDest = page.id === 'galleries' || mine.includes('galsec') || mine.includes('portfolio')
   const pickI = Math.min(sel ?? 0, Math.max(vis - 1, 0))
-  const DW = 120, DG = 20, DL = 28, DR = 44, DP = 292
+  const DW = 120
+  const DG = 20
   const perRow = vis <= 4 ? Math.max(vis, 1) : vis % 4 === 0 ? 4 : vis % 3 === 0 ? 3 : 4
-  const rowsOf: number[][] = []
-  for (let r = 0; r < vis; r += perRow) rowsOf.push(Array.from({ length: Math.min(perRow, vis - r) }, (_, q) => r + q))
-  const nR = rowsOf.length
-  const Wc = perRow * DW + (perRow - 1) * DG
-  const CW = Wc + 2 * DL
-  const cx = CW / 2
-  const sx = 12
-  const yr = (r: number) => r * DP + 22
-  const tp = (r: number) => r * DP + DR
-  const xsOf = (r: number) => {
-    const n = rowsOf[r].length
-    const rw = n * DW + (n - 1) * DG
-    const left = DL + (Wc - rw) / 2
-    return rowsOf[r].map((_, q) => left + DW / 2 + q * (DW + DG))
-  }
-  const paths: string[] = []
-  if (nR > 0) {
-    paths.push(`M ${cx} 0 V ${yr(0)}`)
-    rowsOf.forEach((_, r) => {
-      const x = xsOf(r)
-      const y = yr(r)
-      const t = tp(r)
-      const x0 = x[0]
-      const xe = x[x.length - 1]
-      if (nR === 1) {
-        if (x.length > 1) paths.push(`M ${x0} ${t} V ${y + 14} Q ${x0} ${y} ${x0 + 14} ${y} H ${xe - 14} Q ${xe} ${y} ${xe} ${y + 14} V ${t}`)
-        else paths.push(`M ${x0} ${y} V ${t}`)
-        x.slice(1, -1).forEach((xi) => paths.push(`M ${xi} ${y} V ${t}`))
-        return
-      }
-      if (r === 0) paths.push(`M ${sx} ${y + 14} Q ${sx} ${y} ${sx + 14} ${y} H ${xe - 14} Q ${xe} ${y} ${xe} ${y + 14} V ${t}`)
-      else if (r < nR - 1) paths.push(`M ${sx} ${y} H ${xe - 14} Q ${xe} ${y} ${xe} ${y + 14} V ${t}`)
-      else paths.push(`M ${sx} ${yr(0) + 14} V ${y - 14} Q ${sx} ${y} ${sx + 14} ${y} H ${xe - 14} Q ${xe} ${y} ${xe} ${y + 14} V ${t}`)
-      x.slice(0, -1).forEach((xi) => paths.push(`M ${xi} ${y} V ${t}`))
-    })
-  }
   const destinations = (
-    <div>
-      <div className="mx-auto max-w-xl pl-32 pr-10">
-        <div className="relative left-1/2 -translate-x-1/2" style={{ width: CW, height: nR * DP }}>
-          <svg className="pointer-events-none absolute left-0 top-0" width={CW} height={nR * DP} fill="none">
-            {paths.map((d, i) => <path key={i} d={d} stroke="rgba(70,50,30,0.4)" strokeWidth="2" strokeDasharray="5 7" strokeLinecap="round" />)}
-          </svg>
-          <p className="absolute whitespace-nowrap font-fraunces text-sm text-ink" style={{ left: cx + 16, top: 0 }}>Your {vis} gallery destinations</p>
-          {rowsOf.map((idxs, ri) => (
-            <div key={ri} className="relative flex justify-center" style={{ height: DP, paddingTop: DR, columnGap: DG, paddingLeft: DL, paddingRight: DL }}>
-              {idxs.map((k) => {
-                const cd = cards[k]
-                const d = eff(cd)
-                const on = pickI === k
-                return (
-                  <div key={k} style={{ width: DW }}>
-                    <button type="button" onClick={() => setSel(k)} className="block w-full">
-                      <div className={'relative flex items-center justify-center overflow-hidden rounded-lg border-2 bg-[#EFE7DC] ' + (on ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/5' }}>
-                        {d ? <img src={'/photos/' + d + '.png'} alt="" className="h-full w-full object-cover object-top" /> : null}
-                        <span className={d ? 'absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-xs text-ink' : 'font-fraunces text-2xl text-ink-soft'}>{k + 1}</span>
-                        {onGalPage && secN && !secOnly && designs.galleries_mode !== 'page' && k < secN && <span className="absolute right-1.5 top-1.5 rounded-full bg-white px-2 py-0.5 text-[10px] text-ink">Home</span>}
-                      </div>
-                    </button>
-                    <div className="mx-auto h-4 w-0 border-l-2 border-dashed border-black/30" />
-                    <input value={cd.n} onFocus={() => setSel(k)} onChange={(e) => setCard(k, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[k % SUGG.length]} className="w-full rounded-full border border-black/10 bg-white px-2 py-1.5 text-center font-fraunces text-sm text-ink outline-none focus:border-twilight" />
-                    <button type="button" onClick={() => setSel(k)} className="mt-2 block w-full text-center text-[11px] text-ink-soft">{cd.d ? (photoDesigns.find((x) => x.key === d)?.name ?? d) : 'Default style'}</button>
-                  </div>
-                )
-              })}
+    <div className="mt-28">
+      <div className="relative z-10 mx-auto flex flex-wrap justify-center gap-x-5 gap-y-14" style={{ maxWidth: perRow * DW + (perRow - 1) * DG }}>
+        {cards.map((cd, k) => {
+          if (k >= vis) return null
+          const d = eff(cd, k)
+          const on = pickI === k
+          return (
+            <div key={k} data-dest={k} style={{ width: DW }}>
+              <button type="button" onClick={() => setSel(k)} className="block w-full">
+                <div className={'relative flex items-center justify-center overflow-hidden rounded-lg border-2 bg-[#EFE7DC] ' + (on ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/5' }}>
+                  {d ? <img src={'/photos/' + d + '.png'} alt="" className="h-full w-full object-cover object-top" /> : null}
+                  <span className="absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-xs text-ink">{k + 1}</span>
+                  {onGalPage && secN && !secOnly && designs.galleries_mode !== 'page' && k < secN && <span className="absolute right-1.5 top-1.5 rounded-full bg-white px-2 py-0.5 text-[10px] text-ink">Home</span>}
+                </div>
+              </button>
+              <input value={cd.n} onFocus={() => setSel(k)} onChange={(e) => setCard(k, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[k % SUGG.length]} className="mt-2 w-full rounded-full border border-black/10 bg-white px-2 py-1.5 text-center font-fraunces text-sm text-ink outline-none focus:border-twilight" />
+              <button type="button" onClick={() => setSel(k)} className="mt-1.5 block w-full text-center text-[11px] text-ink-soft">{photoDesigns.find((x) => x.key === d)?.name ?? d}</button>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-auto mt-2 flex max-w-xl flex-wrap justify-center gap-1.5">
-        {SUGG.filter((s) => !cards.some((x) => x.n.trim().toLowerCase() === s.toLowerCase())).map((s) => (
-          <button key={s} type="button" onClick={() => fillChip(s)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">{s}</button>
-        ))}
+          )
+        })}
       </div>
 
       {cards[pickI] && (
-        <div className="mx-auto mt-6 max-w-3xl rounded-xl border border-black/10 bg-white p-4">
+        <div className="mx-auto mt-10 max-w-3xl rounded-xl border border-black/10 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="font-fraunces text-base text-ink">How should {cards[pickI].n.trim() || 'destination ' + (pickI + 1)} look when someone opens it?</p>
-            <button type="button" onClick={() => saveCards(cards.map((x) => ({ ...x, d: eff(cards[pickI]) })))} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">Use this style for all</button>
+            <button type="button" onClick={() => saveCards(cards.map((x) => ({ ...x, d: eff(cards[pickI], pickI) })))} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">Use this style for all</button>
           </div>
           <p className="mt-1 text-xs text-ink-soft">Tap a destination above to pick a different one.</p>
           <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
             {photoDesigns.map((pd) => (
-              <button key={pd.key} type="button" onClick={() => setCard(pickI, { d: cards[pickI].d === pd.key ? '' : pd.key })} className="text-left">
-                <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (eff(cards[pickI]) === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
+              <button key={pd.key} type="button" onClick={() => setCard(pickI, { d: pd.key })} className="text-left">
+                <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (eff(cards[pickI], pickI) === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
                 <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
               </button>
             ))}
@@ -399,10 +445,10 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div>
+        <div ref={wrapRef} className="relative">
           <p className="mb-5 text-center font-fraunces text-2xl text-ink">{page.label}<span className="ml-3 text-xs text-ink-soft">{i + 1} of {pages.length}</span></p>
           <div className="mx-auto max-w-xl pl-32 pr-10">
-            <div className="border-x border-black/10 bg-white shadow-sm">
+            <div data-frame="1" className="border-x border-black/10 bg-white shadow-sm">
               <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#EFE7DC] px-3 py-2">
                 <span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" />
                 {page.extra
@@ -419,7 +465,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
 
               {vMain && mainKey && (
                 <Row label={BLOCKS[mainKey]?.label ?? page.label} on={focus === mainKey} onClick={() => setAct(mainKey)}>
-                  <img src={thumbs[mainKey].src} alt="" className="block w-full" />
+                  <img src={thumbs[mainKey].src} alt="" data-galimg={mainKey === 'portfolio' ? baseOf(thumbs[mainKey].src) : undefined} className="block w-full" />
                 </Row>
               )}
 
@@ -437,7 +483,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                       <button type="button" onClick={() => take(sec)} aria-label="Take off this page" className={ctl}>✕</button>
                     </>}
                   >
-                    {th ? <img src={th.src} alt="" className="block w-full" /> : <div className="bg-[#FBF8F4] px-4 py-8 text-sm text-ink-soft">{BLOCKS[sec]?.label}</div>}
+                    {th ? <img src={th.src} alt="" data-galimg={sec === 'galsec' || sec === 'portfolio' ? baseOf(th.src) : undefined} className="block w-full" /> : <div className="bg-[#FBF8F4] px-4 py-8 text-sm text-ink-soft">{BLOCKS[sec]?.label}</div>}
                   </Row>
                 )
               })}
@@ -446,10 +492,14 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                 ? <Row label="Booking page" on={false} onClick={() => setAct(null)}><img src={thumbs.book.src} alt="" className="block w-full" /></Row>
                 : <Row label="Calendar" on={false} onClick={() => setAct(null)}><div className={slice + ' py-16 text-center'}>Your booking calendar</div></Row>)}
               {!isBook && mine.length === 0 && !vMain && page.id !== 'home' && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from Camri's suggestions</div>}
-              {!(vMain || (isBook && thumbs.book) || mine.includes(mainKey ?? '')) && <Row label="Footer" on={false} onClick={() => setAct(null)}><div className={slice}>Footer</div></Row>}
+              
             </div>
           </div>
           {showDest && destinations}
+          <svg className="pointer-events-none absolute left-0 top-0 z-20 overflow-visible" width="100%" height="100%" fill="none">
+            {geo.paths.map((d, i) => <path key={i} d={d} stroke="rgba(70,50,30,0.5)" strokeWidth="2" strokeDasharray="6 7" strokeLinecap="round" />)}
+            {geo.dots.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={4} fill="rgba(70,50,30,0.6)" />)}
+          </svg>
         </div>
 
         <aside className="self-start rounded-2xl border border-black/10 bg-[#FBF8F4] p-5 lg:sticky lg:top-6 lg:max-h-[88vh] lg:overflow-y-auto">
