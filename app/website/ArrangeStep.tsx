@@ -151,80 +151,101 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   )
   const showDest = page.id === 'galleries' || mine.includes('galsec') || mine.includes('portfolio')
   const pickI = Math.min(sel ?? 0, Math.max(vis - 1, 0))
+  const DW = 120, DG = 20, DL = 28, DR = 44, DP = 292
+  const perRow = vis <= 4 ? Math.max(vis, 1) : vis % 4 === 0 ? 4 : vis % 3 === 0 ? 3 : 4
   const rowsOf: number[][] = []
-  for (let r = 0; r < vis; r += 3) rowsOf.push(Array.from({ length: Math.min(3, vis - r) }, (_, q) => r + q))
-  const dash = 'border-dashed border-black/30'
+  for (let r = 0; r < vis; r += perRow) rowsOf.push(Array.from({ length: Math.min(perRow, vis - r) }, (_, q) => r + q))
+  const nR = rowsOf.length
+  const Wc = perRow * DW + (perRow - 1) * DG
+  const CW = Wc + 2 * DL
+  const cx = CW / 2
+  const sx = 12
+  const yr = (r: number) => r * DP + 22
+  const tp = (r: number) => r * DP + DR
+  const xsOf = (r: number) => {
+    const n = rowsOf[r].length
+    const rw = n * DW + (n - 1) * DG
+    const left = DL + (Wc - rw) / 2
+    return rowsOf[r].map((_, q) => left + DW / 2 + q * (DW + DG))
+  }
+  const paths: string[] = []
+  if (nR > 0) {
+    paths.push(`M ${cx} 0 V ${yr(0)}`)
+    rowsOf.forEach((_, r) => {
+      const x = xsOf(r)
+      const y = yr(r)
+      const t = tp(r)
+      const x0 = x[0]
+      const xe = x[x.length - 1]
+      if (nR === 1) {
+        if (x.length > 1) paths.push(`M ${x0} ${t} V ${y + 14} Q ${x0} ${y} ${x0 + 14} ${y} H ${xe - 14} Q ${xe} ${y} ${xe} ${y + 14} V ${t}`)
+        else paths.push(`M ${x0} ${y} V ${t}`)
+        x.slice(1, -1).forEach((xi) => paths.push(`M ${xi} ${y} V ${t}`))
+        return
+      }
+      if (r === 0) paths.push(`M ${sx} ${y + 14} Q ${sx} ${y} ${sx + 14} ${y} H ${xe - 14} Q ${xe} ${y} ${xe} ${y + 14} V ${t}`)
+      else if (r < nR - 1) paths.push(`M ${sx} ${y} H ${xe - 14} Q ${xe} ${y} ${xe} ${y + 14} V ${t}`)
+      else paths.push(`M ${sx} ${yr(0) + 14} V ${y - 14} Q ${sx} ${y} ${sx + 14} ${y} H ${xe - 14} Q ${xe} ${y} ${xe} ${y + 14} V ${t}`)
+      x.slice(0, -1).forEach((xi) => paths.push(`M ${xi} ${y} V ${t}`))
+    })
+  }
   const destinations = (
-    <div className="mt-6">
+    <div>
       <div className="mx-auto max-w-xl pl-32 pr-10">
-        <div className={'relative mx-auto h-14 w-0 border-l-2 ' + dash}>
-          <div className="absolute left-4 top-1 w-72">
-            <p className="font-fraunces text-base text-ink">Your {vis} gallery destinations</p>
-            <p className="text-xs text-ink-soft">Each picture on your page opens its own gallery.</p>
-          </div>
-        </div>
-      </div>
-      <div className="mx-auto max-w-3xl rounded-2xl border border-black/10 bg-[#FBF8F4] p-6 pl-10">
-        <div className="relative">
-          <div className={'pointer-events-none absolute top-[-24px] h-6 w-0 border-l-2 ' + dash} style={{ left: 'calc(50% + 36px)' }} />
+        <div className="relative left-1/2 -translate-x-1/2" style={{ width: CW, height: nR * DP }}>
+          <svg className="pointer-events-none absolute left-0 top-0" width={CW} height={nR * DP} fill="none">
+            {paths.map((d, i) => <path key={i} d={d} stroke="rgba(70,50,30,0.4)" strokeWidth="2" strokeDasharray="5 7" strokeLinecap="round" />)}
+          </svg>
+          <p className="absolute whitespace-nowrap font-fraunces text-sm text-ink" style={{ left: cx + 16, top: 0 }}>Your {vis} gallery destinations</p>
           {rowsOf.map((idxs, ri) => (
-            <div key={ri} className={'relative pt-4 ' + (ri > 0 ? 'mt-7' : '')}>
-              <div className={'pointer-events-none absolute left-[-20px] right-[16.6%] top-0 border-t-2 ' + dash} />
-              {ri < rowsOf.length - 1 && <div className={'pointer-events-none absolute bottom-[-28px] left-[-20px] top-0 w-0 border-l-2 ' + dash} />}
-              <div className="grid grid-cols-3 gap-x-4">
-                {idxs.map((k) => {
-                  const cd = cards[k]
-                  const d = eff(cd)
-                  const on = pickI === k
-                  return (
-                    <div key={k} className="relative">
-                      <div className={'pointer-events-none absolute -top-4 left-1/2 h-4 w-0 border-l-2 ' + dash} />
-                      <button type="button" onClick={() => setSel(k)} className="block w-full">
-                        <div className={'relative flex items-center justify-center rounded-lg border-2 bg-[#EFE7DC] ' + (on ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/3' }}>
-                          <span className="font-fraunces text-2xl text-ink-soft">{k + 1}</span>
-                          {onGalPage && secN && !secOnly && designs.galleries_mode !== 'page' && k < secN && <span className="absolute right-1.5 top-1.5 rounded-full bg-white px-2 py-0.5 text-[10px] text-ink">Home</span>}
-                        </div>
-                      </button>
-                      <div className={'mx-auto h-4 w-0 border-l-2 ' + dash} />
-                      <input value={cd.n} onFocus={() => setSel(k)} onChange={(e) => setCard(k, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[k % SUGG.length]} className="w-full rounded-full border border-black/10 bg-white px-3 py-1.5 text-center font-fraunces text-sm text-ink outline-none focus:border-twilight" />
-                      <button type="button" onClick={() => setSel(k)} className="mt-2 flex w-full items-center justify-center gap-2 text-left">
-                        {d
-                          ? <img src={'/photos/' + d + '.png'} alt="" className={'w-9 shrink-0 rounded border-2 object-cover object-top ' + (on ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/5' }} />
-                          : <span className="flex w-9 shrink-0 items-center justify-center rounded border-2 border-dashed border-black/20 text-[9px] text-ink-soft" style={{ aspectRatio: '4/5' }}>Pick</span>}
-                        <span className="text-[11px] leading-tight text-ink-soft">{cd.d ? (photoDesigns.find((x) => x.key === d)?.name ?? d) : 'Default style'}</span>
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
+            <div key={ri} className="relative flex justify-center" style={{ height: DP, paddingTop: DR, columnGap: DG, paddingLeft: DL, paddingRight: DL }}>
+              {idxs.map((k) => {
+                const cd = cards[k]
+                const d = eff(cd)
+                const on = pickI === k
+                return (
+                  <div key={k} style={{ width: DW }}>
+                    <button type="button" onClick={() => setSel(k)} className="block w-full">
+                      <div className={'relative flex items-center justify-center overflow-hidden rounded-lg border-2 bg-[#EFE7DC] ' + (on ? 'border-twilight' : 'border-black/10')} style={{ aspectRatio: '4/5' }}>
+                        {d ? <img src={'/photos/' + d + '.png'} alt="" className="h-full w-full object-cover object-top" /> : null}
+                        <span className={d ? 'absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-xs text-ink' : 'font-fraunces text-2xl text-ink-soft'}>{k + 1}</span>
+                        {onGalPage && secN && !secOnly && designs.galleries_mode !== 'page' && k < secN && <span className="absolute right-1.5 top-1.5 rounded-full bg-white px-2 py-0.5 text-[10px] text-ink">Home</span>}
+                      </div>
+                    </button>
+                    <div className="mx-auto h-4 w-0 border-l-2 border-dashed border-black/30" />
+                    <input value={cd.n} onFocus={() => setSel(k)} onChange={(e) => setCard(k, { n: e.target.value.slice(0, 24) })} placeholder={SUGG[k % SUGG.length]} className="w-full rounded-full border border-black/10 bg-white px-2 py-1.5 text-center font-fraunces text-sm text-ink outline-none focus:border-twilight" />
+                    <button type="button" onClick={() => setSel(k)} className="mt-2 block w-full text-center text-[11px] text-ink-soft">{cd.d ? (photoDesigns.find((x) => x.key === d)?.name ?? d) : 'Default style'}</button>
+                  </div>
+                )
+              })}
             </div>
           ))}
         </div>
-
-        <div className="mt-5 flex flex-wrap gap-1.5">
-          {SUGG.filter((s) => !cards.some((x) => x.n.trim().toLowerCase() === s.toLowerCase())).map((s) => (
-            <button key={s} type="button" onClick={() => fillChip(s)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">{s}</button>
-          ))}
-        </div>
-
-        {cards[pickI] && (
-          <div className="mt-8 rounded-xl border border-black/10 bg-white p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-fraunces text-base text-ink">How should {cards[pickI].n.trim() || 'destination ' + (pickI + 1)} look when someone opens it?</p>
-              <button type="button" onClick={() => saveCards(cards.map((x) => ({ ...x, d: eff(cards[pickI]) })))} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">Use this style for all</button>
-            </div>
-            <p className="mt-1 text-xs text-ink-soft">Tap a destination above to pick a different one.</p>
-            <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
-              {photoDesigns.map((pd) => (
-                <button key={pd.key} type="button" onClick={() => setCard(pickI, { d: cards[pickI].d === pd.key ? '' : pd.key })} className="text-left">
-                  <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (eff(cards[pickI]) === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
-                  <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      <div className="mx-auto mt-2 flex max-w-xl flex-wrap justify-center gap-1.5">
+        {SUGG.filter((s) => !cards.some((x) => x.n.trim().toLowerCase() === s.toLowerCase())).map((s) => (
+          <button key={s} type="button" onClick={() => fillChip(s)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">{s}</button>
+        ))}
+      </div>
+
+      {cards[pickI] && (
+        <div className="mx-auto mt-6 max-w-3xl rounded-xl border border-black/10 bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-fraunces text-base text-ink">How should {cards[pickI].n.trim() || 'destination ' + (pickI + 1)} look when someone opens it?</p>
+            <button type="button" onClick={() => saveCards(cards.map((x) => ({ ...x, d: eff(cards[pickI]) })))} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">Use this style for all</button>
+          </div>
+          <p className="mt-1 text-xs text-ink-soft">Tap a destination above to pick a different one.</p>
+          <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
+            {photoDesigns.map((pd) => (
+              <button key={pd.key} type="button" onClick={() => setCard(pickI, { d: cards[pickI].d === pd.key ? '' : pd.key })} className="text-left">
+                <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (eff(cards[pickI]) === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
+                <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 
