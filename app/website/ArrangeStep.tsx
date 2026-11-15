@@ -217,83 +217,170 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     </div>
   )
 
-  return (
-    <div className="grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)_320px]">
-      <aside className="space-y-4 self-start lg:sticky lg:top-6">
-        <div className="rounded-2xl border border-black/10 bg-[#FBF8F4] p-5">
-          <p className="font-fraunces text-xl leading-snug text-ink">You have {NUM[pages.length] ?? pages.length} pages: {nameList}.</p>
-          <p className="mt-2 text-sm text-ink-soft">Add the sections you picked to any page. {isBook ? 'Booking is just your calendar.' : 'Tap one to put it on ' + page.label + '.'}</p>
+  const MAIN = (p: Pg): string | undefined => {
+    if (p.id === 'home') return heroSrc
+    if (p.id === 'galleries') return thumbs.portfolio?.src
+    if (p.id === 'about') return thumbs.about?.src
+    if (p.id === 'book') return thumbs.book?.src
+    const f = listOf(struct, p.id)[0]
+    return (f && thumbs[f]?.src) || thumbs.investment?.src
+  }
+  const WHY: Record<string, string> = {
+    galsec: 'Show your best work first. Pick a few galleries, not everything, and link to the full Galleries page.',
+    testimonials: 'Three to five short, specific reviews right after your work build trust before the ask.',
+    pricesec: 'Showing pricing helps the right clients inquire and saves you time.',
+    investment: 'Your packages and what is included, in plain words.',
+    faq: 'Answer the last questions, like backup gear and delivery time, just before they inquire.',
+    social: 'A small social strip near the bottom is plenty.',
+    contact: 'A booking button at the bottom of every page keeps the next step easy to find.',
+    about: 'Let people meet the person behind the camera.',
+    explore: 'Your menu already links your pages, so only add this if you want a visual shortcut.',
+  }
+  const RECS: Record<string, string[]> = {
+    home: ['galsec', 'testimonials', 'pricesec', 'faq', 'social', 'contact'],
+    galleries: ['testimonials', 'contact'],
+    about: ['testimonials', 'contact'],
+  }
+  const SAY: Record<string, string> = {
+    home: 'Your home page is the first impression. Start with the hero, then show a few galleries, reviews, pricing and FAQ, and finish with a booking button.',
+    galleries: 'Keep this page about your work. Group galleries by type and end with a booking button.',
+    about: 'People often read About right before they book. Add a few reviews and a booking button.',
+    book: 'Booking is just your calendar, so there is nothing to add here.',
+  }
+  const okRec = (k: string) => !!BLOCKS[k] && (!['galsec', 'pricesec', 'investment', 'portfolio'].includes(k) || !!thumbs[k] || !!where(k))
+  const recKeys = (RECS[page.id] ?? (page.extra ? ['faq', 'testimonials', 'contact'] : [])).filter(okRec)
+  const others = sections.filter((k) => !recKeys.includes(k) && !mine.includes(k))
+  function addAll() {
+    const s = clone()
+    recKeys.forEach((k) => { if (!listOf(s, page.id).includes(k)) { strip(s, k); setList(s, page.id, [...listOf(s, page.id), k]) } })
+    setStruct(s)
+  }
+
+  const rightPanel = (
+    <div className="space-y-6">
+      <div>
+        <div className="flex items-start gap-3">
+          <img src={isBook ? '/camri/11_thumbs_up.png' : '/camri/04_thinking.png'} alt="" className="h-14 w-auto shrink-0" />
+          <p className="font-fraunces text-base leading-snug text-ink">{SAY[page.id] ?? 'Add what this page needs and finish with a booking button.'}</p>
         </div>
-        <div className="max-h-[62vh] space-y-3 overflow-y-auto pr-1">
-          {sections.map((k) => {
-            const th = thumbs[k]
-            const w = where(k)
-            const here = w?.id === page.id
-            return (
-              <button key={k} type="button" disabled={isBook || here} onClick={() => add(k)} className="block w-full overflow-hidden rounded-xl border border-black/10 bg-white text-left shadow-sm transition hover:border-twilight disabled:opacity-60">
-                <div className="flex items-center justify-between gap-2 px-3 py-2">
-                  <span className="font-fraunces text-base text-ink">{BLOCKS[k].label}</span>
-                  <span className="text-[11px] text-ink-soft">{here ? 'On this page' : w ? 'On ' + w.label : 'Not placed yet'}</span>
+        {recKeys.length > 0 && (
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wider text-ink-soft">Camri suggests</p>
+              <button type="button" onClick={addAll} className="rounded-full bg-twilight px-3 py-1 text-xs font-medium text-white">Add all</button>
+            </div>
+            {recKeys.map((k) => {
+              const th = thumbs[k]
+              const here = mine.includes(k)
+              const w = where(k)
+              return (
+                <div key={k} className="rounded-xl border border-black/10 bg-white p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-fraunces text-base text-ink">{BLOCKS[k].label}</span>
+                    <button type="button" disabled={here} onClick={() => add(k)} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink disabled:opacity-50">{here ? 'Added' : w ? 'Move here' : '+ Add'}</button>
+                  </div>
+                  <p className="mt-1 text-xs leading-snug text-ink-soft">{WHY[k]}</p>
+                  {th && <img src={th.src} alt="" className="mt-2 max-h-28 w-full rounded-lg object-cover object-top" />}
                 </div>
-                {th && <img src={th.src} alt="" className="w-full" />}
-              </button>
+              )
+            })}
+          </div>
+        )}
+        {!isBook && others.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs uppercase tracking-wider text-ink-soft">Other sections you picked</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {others.map((k) => <button key={k} type="button" onClick={() => add(k)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">+ {BLOCKS[k].label}</button>)}
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="border-t border-black/10 pt-5">{panel}</div>
+    </div>
+  )
+
+  return (
+    <div>
+      <div className="mb-8">
+        <div className="flex items-start gap-4">
+          <img src="/camri/12_open_arms.png" alt="" className="h-20 w-auto shrink-0" />
+          <div className="rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4">
+            <p className="text-xs uppercase tracking-wider text-ink-soft">Step 3 of 3</p>
+            <p className="mt-1 font-fraunces text-xl leading-snug text-ink">You have {NUM[pages.length] ?? pages.length} pages: {nameList}. Here is the main block of each. Tap a page to build it out, then I will suggest what goes next.</p>
+          </div>
+        </div>
+        <div className="mt-5 flex items-start overflow-x-auto pb-2">
+          {pages.map((p, k) => {
+            const src = MAIN(p)
+            const on = k === i
+            return (
+              <div key={p.id} className="flex items-start">
+                {k > 0 && (
+                  <div className="mt-16 flex w-10 shrink-0 items-center justify-center gap-1">
+                    <span className="h-0.5 w-1.5 rounded-full bg-black/30" /><span className="h-0.5 w-1.5 rounded-full bg-black/30" /><span className="h-0.5 w-1.5 rounded-full bg-black/30" />
+                  </div>
+                )}
+                <button type="button" onClick={() => { setCur(k); setAct(null) }} className={'w-44 shrink-0 rounded-2xl border-2 bg-white p-2 text-left shadow-sm transition ' + (on ? 'border-twilight' : 'border-black/10 hover:border-twilight')}>
+                  <p className="px-1 pb-1.5 font-fraunces text-base text-ink">{p.label}</p>
+                  {src
+                    ? <img src={src} alt="" className="h-32 w-full rounded-lg object-cover object-top" />
+                    : <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-black/20 text-xs text-ink-soft">{p.id === 'book' ? 'Your calendar' : 'Add sections'}</div>}
+                </button>
+              </div>
             )
           })}
         </div>
-      </aside>
-
-      <div>
-        <div className="mb-5 flex items-center justify-center gap-5">
-          <button type="button" className={arrow} disabled={i === 0} onClick={() => { setCur(i - 1); setAct(null) }} aria-label="Previous page">←</button>
-          <p className="min-w-[200px] text-center font-fraunces text-2xl text-ink">{page.label}<span className="ml-3 text-xs text-ink-soft">{i + 1} of {pages.length}</span></p>
-          <button type="button" className={arrow} disabled={i === pages.length - 1} onClick={() => { setCur(i + 1); setAct(null) }} aria-label="Next page">→</button>
-        </div>
-
-        <div className="mx-auto max-w-xl pl-32 pr-10">
-          <div className="border-x border-black/10 bg-white shadow-sm">
-            <div className="flex items-center gap-1.5 rounded-t-2xl border-b border-black/10 bg-[#EFE7DC] px-3 py-2">
-              <span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" />
-              {page.extra
-                ? <input value={page.label} onChange={(e) => rename(e.target.value)} className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none" />
-                : <span className="ml-2 flex-1 text-sm text-ink-soft">{page.label}</span>}
-              {page.id !== 'home' && page.id !== 'book' && <button type="button" onClick={removePage} aria-label={'Remove ' + page.label} className="text-sm text-ink-soft">✕</button>}
-            </div>
-
-            {page.id === 'home' && (
-              <Row label="Hero" on={focus === 'hero'} onClick={() => setAct('hero')}>
-                {heroSrc ? <img src={heroSrc} alt="" className="block w-full" /> : <div className={slice + ' py-10 text-center'}>Hero</div>}
-              </Row>
-            )}
-
-            {mine.map((sec, idx) => {
-              const th = thumbs[sec]
-              return (
-                <Row
-                  key={sec}
-                  label={BLOCKS[sec]?.label ?? 'Section'}
-                  on={focus === sec}
-                  onClick={() => setAct(sec)}
-                  controls={<>
-                    <button type="button" disabled={idx === 0} onClick={() => nudge(idx, -1)} aria-label="Move up" className={ctl}>↑</button>
-                    <button type="button" disabled={idx === mine.length - 1} onClick={() => nudge(idx, 1)} aria-label="Move down" className={ctl}>↓</button>
-                    <button type="button" onClick={() => take(sec)} aria-label="Take off this page" className={ctl}>✕</button>
-                  </>}
-                >
-                  {th ? <img src={th.src} alt="" className="block w-full" /> : <div className="bg-[#FBF8F4] px-4 py-8 text-sm text-ink-soft">{BLOCKS[sec]?.label}</div>}
-                </Row>
-              )
-            })}
-
-            {isBook && <Row label="Calendar" on={false} onClick={() => setAct(null)}><div className={slice + ' py-16 text-center'}>Your booking calendar</div></Row>}
-            {!isBook && mine.length === 0 && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from the left</div>}
-            <Row label="Footer" on={false} onClick={() => setAct(null)}><div className={slice + ' rounded-b-2xl'}>Footer</div></Row>
-          </div>
-        </div>
       </div>
 
-      <aside className="self-start rounded-2xl border border-black/10 bg-[#FBF8F4] p-5 lg:sticky lg:top-6 lg:max-h-[88vh] lg:overflow-y-auto">
-        {panel}
-      </aside>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div>
+          <p className="mb-5 text-center font-fraunces text-2xl text-ink">{page.label}<span className="ml-3 text-xs text-ink-soft">{i + 1} of {pages.length}</span></p>
+          <div className="mx-auto max-w-xl pl-32 pr-10">
+            <div className="border-x border-black/10 bg-white shadow-sm">
+              <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#EFE7DC] px-3 py-2">
+                <span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" />
+                {page.extra
+                  ? <input value={page.label} onChange={(e) => rename(e.target.value)} className="ml-2 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none" />
+                  : <span className="ml-2 flex-1 text-sm text-ink-soft">{page.label}</span>}
+                {page.id !== 'home' && page.id !== 'book' && <button type="button" onClick={removePage} aria-label={'Remove ' + page.label} className="text-sm text-ink-soft">✕</button>}
+              </div>
+
+              {page.id === 'home' && (
+                <Row label="Hero" on={focus === 'hero'} onClick={() => setAct('hero')}>
+                  {heroSrc ? <img src={heroSrc} alt="" className="block w-full" /> : <div className={slice + ' py-10 text-center'}>Hero</div>}
+                </Row>
+              )}
+
+              {mine.map((sec, idx) => {
+                const th = thumbs[sec]
+                return (
+                  <Row
+                    key={sec}
+                    label={BLOCKS[sec]?.label ?? 'Section'}
+                    on={focus === sec}
+                    onClick={() => setAct(sec)}
+                    controls={<>
+                      <button type="button" disabled={idx === 0} onClick={() => nudge(idx, -1)} aria-label="Move up" className={ctl}>↑</button>
+                      <button type="button" disabled={idx === mine.length - 1} onClick={() => nudge(idx, 1)} aria-label="Move down" className={ctl}>↓</button>
+                      <button type="button" onClick={() => take(sec)} aria-label="Take off this page" className={ctl}>✕</button>
+                    </>}
+                  >
+                    {th ? <img src={th.src} alt="" className="block w-full" /> : <div className="bg-[#FBF8F4] px-4 py-8 text-sm text-ink-soft">{BLOCKS[sec]?.label}</div>}
+                  </Row>
+                )
+              })}
+
+              {isBook && <Row label="Calendar" on={false} onClick={() => setAct(null)}><div className={slice + ' py-16 text-center'}>Your booking calendar</div></Row>}
+              {!isBook && mine.length === 0 && page.id !== 'home' && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from Camri's suggestions</div>}
+              <Row label="Footer" on={false} onClick={() => setAct(null)}><div className={slice}>Footer</div></Row>
+            </div>
+          </div>
+        </div>
+
+        <aside className="self-start rounded-2xl border border-black/10 bg-[#FBF8F4] p-5 lg:sticky lg:top-6 lg:max-h-[88vh] lg:overflow-y-auto">
+          {rightPanel}
+        </aside>
+      </div>
     </div>
   )
 }

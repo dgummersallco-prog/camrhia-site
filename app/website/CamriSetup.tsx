@@ -163,9 +163,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     const nd = { ...designs, ...camriPick(layouts[0], styles) }
     const base: Struct = { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] }
     const s = withModes(base, nd)
-    const had = new Set(s.home)
-    const order = ['explore', 'galsec', 'testimonials', 'investment', 'pricesec', 'faq', 'social', 'contact']
-    s.home = order.filter((k) => !['galsec', 'investment', 'pricesec'].includes(k) || had.has(k))
+    s.home = []
     setDesigns(nd)
     setStruct(s)
     setStep(3)
@@ -177,7 +175,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
 
   return (
     <div className="mx-auto w-full max-w-[1400px] py-6">
-      <div className={(step === 2 ? 'hidden ' : '') + 'flex items-start gap-4'}>
+      <div className={(step >= 2 ? 'hidden ' : '') + 'flex items-start gap-4'}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={step === 0 ? '/camri/01_waving.png' : '/camri/13_face_avatar.png'} alt="" className={(step === 0 ? 'h-32' : 'h-14') + ' w-auto shrink-0'} />
         <div className="rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4 text-ink">
