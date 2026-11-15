@@ -6,6 +6,7 @@ import { installPreviewGlow } from '@/lib/previewGlow'
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DateCheckWidget } from '../../../p/[token]/DateCheckWidget'
+import { FaqAccordion } from '../../../p/[token]/FaqAccordion'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { SiteNav } from '../SiteNav'
 import { BookingDesign, BOOK_ALL, BOOK_NOCAL } from './BookingDesigns'
@@ -72,6 +73,8 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   }, [])
 
   const t = resolveTheme(r)
+  const siteFaq = (r as any).site_settings?.faq
+  const bookFaq = (Array.isArray(siteFaq) ? siteFaq : (r.faq ?? [])) as any[]
   const { accent, ink, soft, line, bg } = t
   const studio: string = r.studio_name ?? r.display_name ?? 'Studio'
   const qs = isPreview ? '?preview=1' : ''
@@ -290,6 +293,12 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
           )}
         </main>
         </div>
+        )}
+        {!sent && t.orderBook.includes('faq') && bookFaq.length > 0 && (
+          <section className="mx-auto max-w-2xl px-6 pb-24">
+            <h2 className="mb-6 text-center" style={{ ...head, fontSize: 28, color: ink }}>{t.titles.faq}</h2>
+            <FaqAccordion items={bookFaq} questionClassName="el-faq_q" answerClassName="el-faq_a" questionStyle={{ fontFamily: t.head, fontSize: 20, color: ink }} answerStyle={{ fontFamily: t.body, fontSize: 15, color: soft, lineHeight: 1.7 }} />
+          </section>
         )}
       </div>
     </>

@@ -10,18 +10,21 @@ function listOf(s: Struct, id: string): string[] {
   if (id === 'home') return s.home
   if (id === 'about') return s.about
   if (id === 'galleries') return s.galleries
+  if (id === 'book') return s.book ?? []
   return s.extra.find((e) => e.id === id)?.sections ?? []
 }
 function setList(s: Struct, id: string, l: string[]) {
   if (id === 'home') s.home = l
   else if (id === 'about') s.about = l
   else if (id === 'galleries') s.galleries = l
+  else if (id === 'book') s.book = l
   else { const e = s.extra.find((q) => q.id === id); if (e) e.sections = l }
 }
 function strip(s: Struct, sec: string) {
   s.home = s.home.filter((k) => k !== sec)
   s.about = s.about.filter((k) => k !== sec)
   s.galleries = s.galleries.filter((k) => k !== sec)
+  s.book = (s.book ?? []).filter((k) => k !== sec)
   s.extra.forEach((e) => { e.sections = e.sections.filter((k) => k !== sec) })
 }
 
@@ -189,18 +192,18 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const page = pages[i]
   const isBook = page.id === 'book'
   const clone = (): Struct => JSON.parse(JSON.stringify(struct))
-  const where = (k: string) => pages.find((p) => p.id !== 'book' && listOf(struct, p.id).includes(k))
+  const where = (k: string) => pages.find((p) => listOf(struct, p.id).includes(k))
   const sections = ORDER.filter((k) => thumbs[k] || where(k))
   const names = pages.map((p) => p.label)
   const nameList = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]
-  const mine = isBook ? [] : listOf(struct, page.id)
+  const mine = listOf(struct, page.id)
   const mainKey = page.id === 'galleries' ? 'portfolio' : page.id === 'about' ? 'about' : page.id === 'pricing' ? 'investment' : null
   const vMain = !!mainKey && !mine.includes(mainKey) && !!thumbs[mainKey]
   const GAL = ['galsec', 'portfolio']
   const focus: string | null = act && (mine.includes(act) || act === 'hero' || (vMain && act === mainKey)) ? act : (mine.find((k) => GAL.includes(k) || k === 'social') ?? (page.id === 'galleries' ? 'portfolio' : null))
 
   function add(sec: string) {
-    if (isBook) return
+    if (page.id === 'galleries' || (isBook && sec !== 'faq')) return
     const s = clone()
     strip(s, sec)
     setList(s, page.id, [...listOf(s, page.id), sec])
@@ -374,36 +377,39 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     home: ['galsec', 'testimonials', 'pricesec', 'faq', 'social', 'contact'],
     galleries: ['testimonials', 'contact'],
     about: ['testimonials', 'contact'],
+    book: ['faq'],
   }
   const SAY: Record<string, string> = {
     home: 'Your home page is the first impression. Start with the hero, then show a few galleries, reviews, pricing and FAQ, and finish with a booking button.',
-    galleries: 'Keep this page about your work. Group galleries by type and end with a booking button.',
+    galleries: 'This page is just your galleries and a booking button. Your other sections live on your home page.',
     about: 'People often read About right before they book. Add a few reviews and a booking button.',
-    book: 'Booking is just your calendar, so there is nothing to add here.',
+    book: 'Booking is your calendar. A short FAQ right under it answers the last questions before someone inquires.',
   }
   const okRec = (k: string) => !!BLOCKS[k] && (!['galsec', 'pricesec', 'investment', 'portfolio'].includes(k) || !!thumbs[k] || !!where(k))
   const recKeys = (RECS[page.id] ?? (page.extra ? ['faq', 'testimonials', 'contact'] : [])).filter(okRec)
   const others = sections.filter((k) => !recKeys.includes(k) && !mine.includes(k))
   function addAll() {
     const s = clone()
-    recKeys.forEach((k) => { if (!listOf(s, page.id).includes(k)) { strip(s, k); setList(s, page.id, [...listOf(s, page.id), k]) } })
+    cardKeys.forEach((k) => { if (!listOf(s, page.id).includes(k)) { strip(s, k); setList(s, page.id, [...listOf(s, page.id), k]) } })
     setStruct(s)
   }
 
+  const ALLOW: string[] | null = page.id === 'galleries' ? [] : isBook ? ['faq'] : page.id === 'about' ? ['testimonials', 'social', 'contact'] : page.id === 'blog' ? ['social', 'contact'] : page.extra ? ['faq', 'testimonials', 'social', 'contact'] : null
+  const cardKeys = [...recKeys, ...others].filter((k) => !ALLOW || ALLOW.includes(k))
   const rightPanel = (
     <div className="space-y-6">
       <div>
         <div className="flex items-start gap-3">
           <img src={isBook ? '/camri/11_thumbs_up.png' : '/camri/04_thinking.png'} alt="" className="h-14 w-auto shrink-0" />
-          <p className="font-fraunces text-base leading-snug text-ink">{SAY[page.id] ?? 'Add what this page needs and finish with a booking button.'}</p>
+          <p className="font-fraunces text-base leading-snug text-ink">{isBook || page.id === 'galleries' ? SAY[page.id] : 'Below are the sections you loved most. Add them to your ' + page.label.toLowerCase() + ' page and watch it grow.'}</p>
         </div>
-        {recKeys.length > 0 && (
+        {cardKeys.length > 0 && (
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-wider text-ink-soft">Camri suggests</p>
+              <p className="text-xs uppercase tracking-wider text-ink-soft">Sections you loved</p>
               <button type="button" onClick={addAll} className="rounded-full bg-twilight px-3 py-1 text-xs font-medium text-white">Add all</button>
             </div>
-            {recKeys.map((k) => {
+            {cardKeys.map((k) => {
               const th = thumbs[k]
               const here = mine.includes(k)
               const w = where(k)
@@ -420,16 +426,8 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
             })}
           </div>
         )}
-        {!isBook && others.length > 0 && (
-          <div className="mt-4">
-            <p className="text-xs uppercase tracking-wider text-ink-soft">Other sections you picked</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {others.map((k) => <button key={k} type="button" onClick={() => add(k)} className="rounded-full border border-black/15 bg-white px-3 py-1 text-xs text-ink">+ {BLOCKS[k].label}</button>)}
-            </div>
-          </div>
-        )}
       </div>
-      <div className="border-t border-black/10 pt-5">{panel}</div>
+      {!isBook && <div className="border-t border-black/10 pt-5">{panel}</div>}
     </div>
   )
 

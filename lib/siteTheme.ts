@@ -163,6 +163,7 @@ export function resolveTheme(r: Record<string, any>) {
         o.splice(0, 0, 'explore')
         return o
       })().filter((k) => k !== 'portfolio')
+  let orderBook: string[] = []
   let orderAbout = orderOf(s.order_about, ['about', 'investment', 'faq', 'aboutcta', ...customIds('about')])
   let orderGalleries = orderOf(s.order_galleries, ['portfolio', ...customIds('galleries')])
 
@@ -184,6 +185,7 @@ export function resolveTheme(r: Record<string, any>) {
     }
     orderHome = cleanKeys(strc.home, 'home')
     orderAbout = cleanKeys(strc.about, 'about')
+    orderBook = cleanKeys(strc.book, '__none')
     orderGalleries = cleanKeys(strc.galleries, 'galleries')
     for (const p of (Array.isArray(strc.extra) ? (strc.extra as any[]) : []).slice(0, 8)) {
       const id = typeof p?.id === 'string' ? p.id : ''
@@ -528,6 +530,7 @@ export function resolveTheme(r: Record<string, any>) {
     socialHidden: (Array.isArray(s.socials_off) ? s.socials_off : []) as string[],
     galText: (s.galtext && typeof s.galtext === 'object' ? s.galtext : {}) as Record<string, { name?: string; line?: string }>,
     orderAbout,
+    orderBook,
     titles,
     text,
     hero,

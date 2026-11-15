@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 export type Links = { instagram_url: string; facebook_url: string; tiktok_url: string; pinterest_url: string }
-export type Struct = { v: 1; home: string[]; about: string[]; galleries: string[]; extra: { id: string; label: string; sections: string[] }[]; off: string[] }
+export type Struct = { v: 1; home: string[]; about: string[]; galleries: string[]; book?: string[]; extra: { id: string; label: string; sections: string[] }[]; off: string[] }
 type Col = { id: string; label: string; fixed?: boolean; extra?: boolean }
 
 export const BLOCKS: Record<string, { label: string; blurb: string }> = {
@@ -23,25 +23,28 @@ const RESERVED = ['home', 'about', 'galleries', 'book', 'p', 'site']
 
 export function cleanStruct(s: Struct): Struct {
   const keep = (l: string[]) => l.filter((k) => !!BLOCKS[k])
-  return { v: 1, home: keep(s.home), about: keep(s.about), galleries: keep(s.galleries), extra: s.extra.map((e) => ({ ...e, sections: keep(e.sections) })), off: [...s.off] }
+  return { v: 1, home: keep(s.home), about: keep(s.about), galleries: keep(s.galleries), ...(s.book ? { book: keep(s.book) } : {}), extra: s.extra.map((e) => ({ ...e, sections: keep(e.sections) })), off: [...s.off] }
 }
 
 function listOf(s: Struct, id: string): string[] {
   if (id === 'home') return s.home
   if (id === 'about') return s.about
   if (id === 'galleries') return s.galleries
+  if (id === 'book') return s.book ?? []
   return s.extra.find((e) => e.id === id)?.sections ?? []
 }
 function setList(s: Struct, id: string, l: string[]) {
   if (id === 'home') s.home = l
   else if (id === 'about') s.about = l
   else if (id === 'galleries') s.galleries = l
+  else if (id === 'book') s.book = l
   else { const e = s.extra.find((q) => q.id === id); if (e) e.sections = l }
 }
 function strip(s: Struct, sec: string) {
   s.home = s.home.filter((k) => k !== sec)
   s.about = s.about.filter((k) => k !== sec)
   s.galleries = s.galleries.filter((k) => k !== sec)
+  s.book = (s.book ?? []).filter((k) => k !== sec)
   s.extra.forEach((e) => { e.sections = e.sections.filter((k) => k !== sec) })
 }
 
@@ -80,7 +83,7 @@ export default function PageBuilder({ struct, setStruct, links, setLinks, thumbs
   })
 
   const clone = (): Struct => JSON.parse(JSON.stringify(struct))
-  const placed = new Set<string>([...struct.home, ...struct.about, ...struct.galleries, ...struct.extra.flatMap((e) => e.sections)])
+  const placed = new Set<string>([...struct.home, ...struct.about, ...struct.galleries, ...(struct.book ?? []), ...struct.extra.flatMap((e) => e.sections)])
   const tray = ORDER.filter((k) => !placed.has(k))
   const cols: Col[] = [
     { id: 'home', label: 'Home', fixed: true },
