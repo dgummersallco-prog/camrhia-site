@@ -659,6 +659,7 @@ export default function CamiDesigner() {
             }
             if (designs?.social) x.socialDesign = designs.social
             if (designs?.faq) x.faqDesign = designs.faq
+            if (designs?.contact) x.contactDesign = designs.contact
             if (designs?.testimonials) x.testiDesign = designs.testimonials
             if (designs?.pricing_page) x.pricing = { ...(x.pricing ?? {}), pageDesign: designs.pricing_page }
             if (designs?.pricing_section) x.pricing = { ...(x.pricing ?? {}), sectionDesign: designs.pricing_section }

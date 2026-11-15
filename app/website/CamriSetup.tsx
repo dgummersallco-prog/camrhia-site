@@ -276,6 +276,7 @@ const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'pricing', title: 'Pricing', rows: ['Page designs', 'Section designs'] },
   { k: 'social', title: 'Social links', rows: ['Section designs'] },
   { k: 'faq', title: 'FAQ', rows: ['Section designs'] },
+  { k: 'contact', title: 'Booking button', rows: ['Section designs'] },
   { k: 'blog', title: 'Blog', rows: ['Blog main page designs', 'Post designs (inside a post)'] },
 ]
 
@@ -288,6 +289,7 @@ const HELP: Record<string, string> = {
   pricing: "Show what you charge. The page is a full Pricing page. A section is a short version for your home page or any page you choose. You can use both.",
   social: "A small strip with links to your Instagram, Facebook and more. Place it on any page you choose.",
   faq: "Answers to the questions clients always ask, like how far ahead to book. Place it on any page you choose, often right above your booking form.",
+  contact: "The booking button is the closing strip that sends visitors to check your dates. Pick the look you like best, then place it at the bottom of any page.",
   blog: "Your blog is where you share stories and tips. The main page lists all your posts, and clicking one opens that post. Pick how the list looks and how each opened post looks.",
 }
 
@@ -304,6 +306,7 @@ const REC: Record<string, string> = {
   pricing: "A pricing section on your home page is enough for most photographers. It helps the right clients inquire. A full pricing page is optional.",
   social: "A small social strip near the bottom of the page is plenty.",
   faq: "Put your FAQ just above your booking button to answer the last questions before someone inquires.",
+  contact: "End every page with a booking button. It is the one next step you always want, so make it easy to find.",
   blog: "A blog is optional. Only add it if you will keep posting. Posts about venues and places can help local search.",
 }
 const qaFor = (k: string) => [{ q: 'What is this?', a: HELP[k] ?? '' }, ...(REC[k] ? [{ q: 'What do you recommend?', a: REC[k] }] : []), ...(k === 'about' ? PS.slice(0, 1) : ['galleries', 'pricing'].includes(k) ? PS : [])]
@@ -312,6 +315,7 @@ const PHOTO_DESIGNS = ['lark', 'wren', 'finch', 'heron', 'swift', 'plover', 'egr
 
 const SOCIAL_DESIGNS = ['coral', 'reef', 'ember', 'dune', 'tide'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 const FAQ_DESIGNS = ['sage', 'basil', 'thyme', 'mint', 'dill'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
+const CONTACT_DESIGNS = [{ key: 'center', name: 'Centered' }, { key: 'split', name: 'Split' }, { key: 'bar', name: 'Slim bar' }, { key: 'framed', name: 'Framed' }, { key: 'photo', name: 'Photo' }, { key: 'duo', name: 'Duo' }]
 
 const ABOUT_PAGE = ['lyra', 'vega', 'orion', 'cygnus', 'draco', 'aries', 'libra', 'pavo', 'lynx', 'hydra'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
 const ABOUT_SEC = ['saffron', 'cumin', 'clove', 'anise', 'fennel'].map((k) => ({ key: k, name: k[0].toUpperCase() + k.slice(1) }))
@@ -338,6 +342,7 @@ const PICKERS = (): Record<string, { dir: string; field: string; ar: string; ite
   'galleries|Photo display designs (inside a gallery)': { dir: 'photos', ar: '4/5', field: 'photos', items: PHOTO_DESIGNS },
   'social|Section designs': { dir: 'social', ar: '2/1', field: 'social', items: SOCIAL_DESIGNS },
   'faq|Section designs': { dir: 'faq', ar: '2/1', field: 'faq', items: FAQ_DESIGNS },
+  'contact|Section designs': { dir: 'contact', ar: '2/1', field: 'contact', items: CONTACT_DESIGNS },
   'about|Page designs': { dir: 'about-page', ar: '4/5', field: 'about_page', items: ABOUT_PAGE },
   'about|Section designs': { dir: 'about-section', ar: '2/1', field: 'about_section', items: ABOUT_SEC },
   'testimonials|Section designs': { dir: 'testimonials', ar: '2/1', field: 'testimonials', items: TESTI_DESIGNS },

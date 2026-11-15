@@ -1166,22 +1166,80 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             />
           </div>, tinted)
       }
-      case 'contact':
+      case 'contact': {
+        const cd = String((r as any).site_settings?.contactDesign ?? '')
+        const msg = t.text.contact ?? 'Tell me about your day. Check a date and send me a message.'
+        const btn = <a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="closing-btn">{t.text.contactBtn}</a>
+        const soc = socials.length > 0 ? (
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
+            {socials.map((s) => (
+              <a key={s.label} id={'soc-' + s.key} href={String(s.url).startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
+                className="el-con_social uppercase tracking-[0.22em]" style={{ color: accent, fontSize: fsp('fs-social', 11) }}>{s.label}</a>
+            ))}
+          </div>
+        ) : null
+        const big: any = { fontFamily: t.head, color: ink, fontSize: 'clamp(1.8rem, 3.6vw, 2.8rem)', lineHeight: 1.15 }
+        const msgStyle: any = { color: soft, fontSize: fsp('fs-contact', 15) }
+        if (cd === 'split') return sec('contact', null,
+          <div className="mx-auto max-w-5xl">
+            <div className="grid items-center gap-8 md:grid-cols-[1fr_auto]">
+              <div><h3 style={big}>{t.titles.contact}</h3><p className="el-con_msg mt-3 max-w-xl whitespace-pre-line leading-relaxed" style={msgStyle}>{msg}</p></div>
+              <div>{btn}</div>
+            </div>
+            {soc && <div className="mt-10">{soc}</div>}
+          </div>, tinted)
+        if (cd === 'bar') return sec('contact', null,
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+              <p className="el-con_msg whitespace-pre-line leading-relaxed" style={{ ...msgStyle, fontFamily: t.head, fontSize: 'clamp(1.2rem, 2.2vw, 1.6rem)', color: ink }}>{msg}</p>
+              {btn}
+            </div>
+            {soc && <div className="mt-8">{soc}</div>}
+          </div>, tinted)
+        if (cd === 'framed') return sec('contact', null,
+          <div className="mx-auto max-w-2xl px-8 py-14 text-center" style={{ border: '1px solid ' + soft }}>
+            <h3 style={big}>{t.titles.contact}</h3>
+            <p className="el-con_msg mx-auto mb-8 mt-4 max-w-md whitespace-pre-line leading-relaxed" style={msgStyle}>{msg}</p>
+            {btn}
+            {soc && <div className="mt-8">{soc}</div>}
+          </div>, tinted)
+        if (cd === 'photo') {
+          const pic = pickPics(1)[0]
+          return sec('contact', null,
+            <div className="relative mx-auto max-w-5xl overflow-hidden text-center">
+              {pic && <img src={pic as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+              <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.45)' }} />
+              <div className="relative px-6 py-20">
+                <h3 style={{ ...big, color: '#fff' }}>{t.titles.contact}</h3>
+                <p className="el-con_msg mx-auto mb-8 mt-4 max-w-md whitespace-pre-line leading-relaxed" style={{ ...msgStyle, color: 'rgba(255,255,255,0.9)' }}>{msg}</p>
+                {btn}
+                {soc && <div className="mt-8">{soc}</div>}
+              </div>
+            </div>, tinted)
+        }
+        if (cd === 'duo') {
+          const pp = pickPics(2)
+          return sec('contact', null,
+            <div className="mx-auto max-w-5xl">
+              <div className="grid items-center gap-6 md:grid-cols-[1fr_1.2fr_1fr]">
+                {pp[0] ? <img src={pp[0] as string} alt="" className="aspect-[3/4] w-full object-cover" /> : <div />}
+                <div className="text-center">
+                  <h3 style={big}>{t.titles.contact}</h3>
+                  <p className="el-con_msg mb-8 mt-4 whitespace-pre-line leading-relaxed" style={msgStyle}>{msg}</p>
+                  {btn}
+                </div>
+                {pp[1] ? <img src={pp[1] as string} alt="" className="aspect-[3/4] w-full object-cover" /> : <div />}
+              </div>
+              {soc && <div className="mt-10">{soc}</div>}
+            </div>, tinted)
+        }
         return sec('contact', t.titles.contact,
           <div className="mx-auto max-w-xl text-center">
-            <p className="el-con_msg mb-8 whitespace-pre-line leading-relaxed" style={{ color: soft, fontSize: fsp('fs-contact', 15) }}>
-              {t.text.contact ?? 'Tell me about your day. Check a date and send me a message.'}
-            </p>
-            <div className="mb-10"><a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="closing-btn">{t.text.contactBtn}</a></div>
-            {socials.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
-                {socials.map((s) => (
-                  <a key={s.label} id={'soc-' + s.key} href={String(s.url).startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
-                    className="el-con_social uppercase tracking-[0.22em]" style={{ color: accent, fontSize: fsp('fs-social', 11) }}>{s.label}</a>
-                ))}
-              </div>
-            )}
+            <p className="el-con_msg mb-8 whitespace-pre-line leading-relaxed" style={msgStyle}>{msg}</p>
+            <div className="mb-10">{btn}</div>
+            {soc}
           </div>, tinted)
+      }
       case 'aboutcta':
         return sec('aboutcta', null,
           <div className="text-center"><a href={resolveLink((r as any).site_settings?.aboutBtn?.link, availHref)} id="about-btn" className="cr-btn ab-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>{t.aboutBtnText}</a></div>, tinted)
