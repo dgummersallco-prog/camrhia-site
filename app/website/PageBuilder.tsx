@@ -6,7 +6,7 @@ export type Links = { instagram_url: string; facebook_url: string; tiktok_url: s
 export type Struct = { v: 1; home: string[]; about: string[]; galleries: string[]; extra: { id: string; label: string; sections: string[] }[]; off: string[] }
 type Col = { id: string; label: string; fixed?: boolean; extra?: boolean }
 
-const BLOCKS: Record<string, { label: string; blurb: string }> = {
+export const BLOCKS: Record<string, { label: string; blurb: string }> = {
   explore: { label: 'Explore section', blurb: 'Three picture cards linking to your pages' },
   portfolio: { label: 'Galleries', blurb: 'Your galleries' },
   galsec: { label: 'Galleries block', blurb: 'Your galleries as photo tiles' },
@@ -18,7 +18,7 @@ const BLOCKS: Record<string, { label: string; blurb: string }> = {
   contact: { label: 'Booking', blurb: 'Book-now band' },
   social: { label: 'Social links', blurb: 'Instagram, Facebook and more' },
 }
-const ORDER = ['explore', 'portfolio', 'galsec', 'about', 'testimonials', 'investment', 'pricesec', 'faq', 'contact', 'social']
+export const ORDER = ['explore', 'portfolio', 'galsec', 'about', 'testimonials', 'investment', 'pricesec', 'faq', 'contact', 'social']
 const RESERVED = ['home', 'about', 'galleries', 'book', 'p', 'site']
 
 export function cleanStruct(s: Struct): Struct {

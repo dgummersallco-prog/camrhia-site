@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import PageBuilder, { type Struct, type Links, cleanStruct } from './PageBuilder'
+import { type Struct, type Links, cleanStruct } from './PageBuilder'
+import ArrangeStep from './ArrangeStep'
 import { useEffect as usePersist } from 'react'
 
 function draftGet(k: string): any {
@@ -28,7 +29,7 @@ const LINES = [
   "Hi, I'm Camri! I'll help you design your website. Pick the looks you love and I'll remember them, so later you can just say \"switch my layout\" or \"use my dark theme\".",
   'Pick up to five layouts you love. The first one you pick becomes your starting design.',
   "Now it's build-a-bear time! Pick a look for each part. Your site comes together on the right, and any full pages stack up beside it. Skip any you like as they are.",
-  "Last look! Here is your whole site with the menu wired to every page. Drag things around if you like, then build it.",
+  "Last look! Add the sections you picked to any of your pages. Use the arrows to flip between pages, then build your site.",
   'Last one: fonts. Pick up to three for your title, subtitle and paragraph. The first one you pick for each is what I start with.',
 ]
 
@@ -181,7 +182,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         )}
         {step === 3 && (
           <div>
-            <PageBuilder struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} wires />
+            <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={layouts[0] ? '/layouts/' + layouts[0] + '.png' : undefined} heroName={styles.find((x) => x.key === layouts[0])?.name} />
             <div className="sticky bottom-0 z-20 mt-8 flex items-center gap-3 bg-[#F6F1EA]/90 py-4 backdrop-blur">
               <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink disabled:opacity-50">← Back</button>
               <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site'}</button>
@@ -471,22 +472,8 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
       <aside className="hidden lg:block">
         <div className="sticky top-6 max-h-[90vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
           <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
-          <div className="mt-3 flex gap-3">
-            {plan.pages.length > 0 && (
-              <div className="w-[128px] shrink-0">
-                <p className="mb-2 text-[11px] uppercase tracking-wider text-ink-soft">Pages</p>
-                <div className="relative">
-                  {plan.pages.map((pg, i) => (
-                    <button key={pg.k} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === pg.k))} className="relative block w-full overflow-hidden rounded-lg border border-black/15 bg-white text-left shadow-md" style={{ marginTop: i === 0 ? 0 : -68, zIndex: i + 1 }}>
-                      <span className="block bg-[#EFE7DC] px-2 py-1 text-[11px] font-medium text-ink">{pg.title}</span>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={pg.picks[0].src} alt="" className="h-[68px] w-full object-cover object-top" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
+          <div className="mt-3">
+            <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
               <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
                 <span className="ml-2 text-[10px] text-ink-soft">Home</span>
@@ -494,7 +481,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
               {baseKey ? (
                 <div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={'/layouts/' + baseKey + '.png'} alt="" className="h-32 w-full object-cover object-top" />
+                  <img src={'/layouts/' + baseKey + '.png'} alt="" className="w-full object-cover object-top" />
                   <p className="px-2 py-1 text-[10px] text-ink-soft">Layout 1{baseName ? ' · ' + baseName : ''}</p>
                 </div>
               ) : (
@@ -508,6 +495,26 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, baseKey, baseName }:
                 </button>
               ))}
             </div>
+            {plan.pages.map((pg) => (
+              <div key={pg.k}>
+                <div className="flex h-9 flex-col items-center justify-center gap-1">
+                  <span className="h-1.5 w-0.5 rounded-full bg-black/30" /><span className="h-1.5 w-0.5 rounded-full bg-black/30" /><span className="h-1.5 w-0.5 rounded-full bg-black/30" />
+                </div>
+                <div className="overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
+                  <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
+                    <span className="ml-2 text-[10px] text-ink-soft">{pg.title}</span>
+                  </div>
+                  {pg.picks.map((p) => (
+                    <button key={p.row} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === pg.k))} className="block w-full text-left">
+                      <p className="px-2 pt-1.5 text-[10px] text-ink-soft">{p.name}</p>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.src} alt="" className="w-full object-cover object-top" style={{ aspectRatio: p.ar }} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </aside>
