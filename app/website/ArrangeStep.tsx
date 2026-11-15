@@ -115,6 +115,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const named = cards.map((c, i) => ({ c, i })).filter((x) => x.c.n.trim())
   const eff = (c: GCard, k = 0) => c.d || (photoDesigns.length ? photoDesigns[k % photoDesigns.length].key : designs.photos || '')
   const wrapRef = useRef<HTMLDivElement>(null)
+  const [zoom, setZoom] = useState<string | null>(null)
   const [geo, setGeo] = useState<{ paths: { d: string; k: number }[]; dots: { x: number; y: number; k: number }[] }>({ paths: [], dots: [] })
   useEffect(() => {
     if (!photoDesigns.length) return
@@ -293,12 +294,22 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
             <button type="button" onClick={() => saveCards(cards.map((x) => ({ ...x, d: eff(cards[pickI], pickI) })))} className="rounded-full border border-black/15 px-3 py-1 text-xs text-ink">Use this style for all</button>
           </div>
           <p className="mt-1 text-xs text-ink-soft">Tap a destination above to pick a different one.</p>
+          {zoom && (
+            <div className="fixed inset-0 z-50 flex cursor-zoom-out items-center justify-center bg-black/70 p-6" onClick={() => setZoom(null)}>
+              <img src={'/photos/' + zoom + '.png'} alt="" className="max-h-full max-w-full rounded-xl bg-white shadow-2xl" />
+            </div>
+          )}
           <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
             {photoDesigns.map((pd) => (
-              <button key={pd.key} type="button" onClick={() => setCard(pickI, { d: pd.key })} className="text-left">
-                <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (eff(cards[pickI], pickI) === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
-                <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
-              </button>
+              <div key={pd.key} className="relative">
+                <button type="button" onClick={() => setCard(pickI, { d: pd.key })} className="block w-full text-left">
+                  <img src={'/photos/' + pd.key + '.png'} alt="" className={'w-full rounded-lg border-2 object-cover object-top ' + (eff(cards[pickI], pickI) === pd.key ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} style={{ aspectRatio: '4/5' }} />
+                  <p className="mt-1 text-[11px] text-ink">{pd.name}</p>
+                </button>
+                <button type="button" aria-label={'Zoom ' + pd.name} onClick={() => setZoom(pd.key)} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4M11 8v6M8 11h6" /></svg>
+                </button>
+              </div>
             ))}
           </div>
         </div>
