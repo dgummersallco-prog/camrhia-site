@@ -1,6 +1,8 @@
 'use client'
-import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import Wordmark from '@/app/components/Wordmark'
 import { supabase } from '@/lib/supabase'
 
 const COPY: Record<string, { title: string; blurb: string; includes: string[]; month: number; year: number; trial: boolean }> = {
@@ -35,25 +37,58 @@ const COPY: Record<string, { title: string; blurb: string; includes: string[]; m
   },
 }
 
+const field =
+  'w-full rounded-xl border border-line bg-card px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25'
+
 export default function UpgradePage() {
   const params = useParams<{ product: string }>()
-  const router = useRouter()
   const product = String(params?.product || '')
   const c = COPY[product]
   const [interval, setInterval] = useState<'month' | 'year'>('month')
+  const [signedIn, setSignedIn] = useState<boolean | null>(null)
+  const [first, setFirst] = useState('')
+  const [last, setLast] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const [exists, setExists] = useState(false)
 
-  if (!c) return <div style={{ padding: 48 }}>That plan doesn&apos;t exist.</div>
+  useEffect(() => {
+    const sb = supabase
+    if (!sb) { setSignedIn(false); return }
+    sb.auth.getSession().then(({ data }) => setSignedIn(!!data.session)).catch(() => setSignedIn(false))
+  }, [])
+
+  if (!c) return <div className="p-12 text-ink">That plan does not exist.</div>
 
   async function go() {
     setBusy(true)
     setErr('')
+    setExists(false)
     try {
       const sb = supabase
-      const { data } = sb ? await sb.auth.getSession() : { data: { session: null } }
+      if (!sb) { setErr('Service not configured.'); setBusy(false); return }
+      let { data } = await sb.auth.getSession()
+
+      if (!data.session) {
+        if (!first.trim() || !email.trim()) { setErr('Add your name and email.'); setBusy(false); return }
+        if (password.length < 8) { setErr('Use a password with at least 8 characters.'); setBusy(false); return }
+        const r = await fetch('/api/billing/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ first, last, email, password }),
+        })
+        const j = await r.json().catch(() => ({}))
+        if (r.status === 409) { setExists(true); setBusy(false); return }
+        if (!r.ok) { setErr(j.error || 'Could not create your account.'); setBusy(false); return }
+        const { error: se } = await sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
+        if (se) { setErr(se.message); setBusy(false); return }
+        data = (await sb.auth.getSession()).data
+      }
+
       const token = data.session?.access_token
-      if (!token) { router.push('/login'); return }
+      if (!token) { setErr('Something went wrong. Please try again.'); setBusy(false); return }
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -71,45 +106,88 @@ export default function UpgradePage() {
   const price = interval === 'month' ? c.month : c.year
 
   return (
-    <div style={{ maxWidth: 520, margin: '0 auto', padding: '56px 24px' }}>
-      <h1 style={{ fontSize: 30, margin: '0 0 8px' }}>{c.title}</h1>
-      <p style={{ opacity: 0.75, margin: '0 0 24px' }}>{c.blurb}</p>
+    <div className="flex min-h-screen flex-col bg-paper">
+      <header className="border-b border-line bg-paper px-6 py-4">
+        <Link href="/"><Wordmark className="text-3xl" /></Link>
+      </header>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {(['month', 'year'] as const).map((i) => (
-          <button
-            key={i}
-            onClick={() => setInterval(i)}
-            style={{
-              flex: 1, padding: '12px 0', borderRadius: 10, cursor: 'pointer', fontSize: 15,
-              border: interval === i ? '2px solid currentColor' : '1px solid rgba(0,0,0,0.2)',
-              background: 'transparent', fontWeight: interval === i ? 700 : 500,
-            }}
-          >
-            {i === 'month' ? 'Monthly' : 'Yearly · 2 months free'}
-          </button>
-        ))}
-      </div>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 md:py-20">
+        <div className="grid gap-10 md:grid-cols-2 md:gap-16">
+          <div>
+            <p className="mb-4 font-mono text-xs uppercase tracking-widest text-brass">Camrhia</p>
+            <h1 className="font-fraunces text-4xl font-semibold text-ink md:text-5xl">{c.title}</h1>
+            <p className="mt-5 text-lg text-ink-soft">{c.blurb}</p>
+            <ul className="mt-8 space-y-3">
+              {c.includes.map((t) => (
+                <li key={t} className="flex gap-3 text-ink">
+                  <span className="mt-0.5 text-twilight">✓</span>
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-      <div style={{ fontSize: 40, fontWeight: 700, marginBottom: 4 }}>
-        ${price}<span style={{ fontSize: 16, fontWeight: 500, opacity: 0.6 }}>/{interval === 'month' ? 'mo' : 'yr'}</span>
-      </div>
-      {c.trial && <div style={{ opacity: 0.7, marginBottom: 20 }}>14 days free. Cancel anytime.</div>}
+          <div className="h-fit rounded-3xl border border-line bg-card p-8 shadow-sm">
+            <div className="flex rounded-full bg-paper-deep p-1">
+              {(['month', 'year'] as const).map((i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setInterval(i)}
+                  className={'flex-1 rounded-full px-4 py-2 text-sm transition ' + (interval === i ? 'bg-card font-medium text-ink shadow-sm' : 'text-ink-soft')}
+                >
+                  {i === 'month' ? 'Monthly' : 'Yearly · 2 months free'}
+                </button>
+              ))}
+            </div>
 
-      <ul style={{ padding: 0, listStyle: 'none', margin: '20px 0 28px' }}>
-        {c.includes.map((t) => (
-          <li key={t} style={{ padding: '6px 0' }}>✓ {t}</li>
-        ))}
-      </ul>
+            <p className="mt-6 font-fraunces text-5xl text-ink">
+              ${price}<span className="text-base text-ink-soft"> /{interval === 'month' ? 'month' : 'year'}</span>
+            </p>
+            {c.trial && <p className="mt-1 text-sm text-ink-soft">14 days free. Cancel anytime.</p>}
 
-      <button
-        onClick={go}
-        disabled={busy}
-        style={{ width: '100%', padding: '14px 0', borderRadius: 12, border: 'none', cursor: 'pointer', fontSize: 16, fontWeight: 700, background: '#111', color: '#fff' }}
-      >
-        {busy ? 'One moment…' : c.trial ? 'Start 14-day free trial' : 'Subscribe'}
-      </button>
-      {err && <div style={{ color: '#b00020', marginTop: 12 }}>{err}</div>}
+            {signedIn === false && (
+              <div className="mt-6 space-y-3">
+                <p className="font-mono text-xs uppercase tracking-widest text-brass">Create your account</p>
+                <div className="flex gap-3">
+                  <input value={first} onChange={(e) => setFirst(e.target.value)} placeholder="First name" autoComplete="given-name" className={field} />
+                  <input value={last} onChange={(e) => setLast(e.target.value)} placeholder="Last name" autoComplete="family-name" className={field} />
+                </div>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" className={field} />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password (8+ characters)" autoComplete="new-password" className={field} />
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={go}
+              disabled={busy || signedIn === null}
+              className="mt-6 w-full rounded-full bg-twilight px-6 py-3.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
+            >
+              {busy
+                ? 'One moment...'
+                : signedIn === false
+                  ? (c.trial ? 'Create account and start free trial' : 'Create account and subscribe')
+                  : (c.trial ? 'Start 14-day free trial' : 'Subscribe')}
+            </button>
+
+            {exists && (
+              <p className="mt-3 text-sm text-ink">
+                You already have an account with that email.{' '}
+                <Link href={`/login?next=/upgrade/${product}`} className="font-medium text-twilight underline">Sign in</Link> to continue.
+              </p>
+            )}
+            {err && <p className="mt-3 text-sm text-red-700">{err}</p>}
+
+            {signedIn === false && !exists && (
+              <p className="mt-5 text-center text-sm text-ink-soft">
+                Already have an account?{' '}
+                <Link href={`/login?next=/upgrade/${product}`} className="font-medium text-twilight underline">Sign in</Link>
+              </p>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   )
 }
