@@ -1,6 +1,7 @@
 'use client'
 
 import { Fragment, type CSSProperties } from 'react'
+import ReviewCard from './ReviewCard'
 import { resolveDesign, type GalleryDesign } from '@/lib/galleryDesign'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -283,6 +284,23 @@ export default function GalleryViewPage() {
     return <h2 className={`mb-4 mt-8 text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
   }
   const current = openIndex !== null ? list[openIndex] : null
+  const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+  async function savePhoto(p: { id: string; filename: string | null }) {
+    const url = `/api/gallery/download?access=${encodeURIComponent(data!.access)}&photo=${p.id}`
+    if (isTouch) {
+      try {
+        const res = await fetch(url)
+        if (res.ok) {
+          const blob = await res.blob()
+          const file = new File([blob], p.filename || 'photo.jpg', { type: blob.type || 'image/jpeg' })
+          if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file] }); return }
+        }
+      } catch (e) {
+        if ((e as { name?: string })?.name === 'AbortError') return
+      }
+    }
+    window.location.href = url
+  }
   const heart = brand?.accent || '#fb7185'
 
   const imgEl = cover?.web ? (
@@ -405,6 +423,11 @@ export default function GalleryViewPage() {
           </div>
         )}
       </main>
+      {data && (
+        <div className="px-4">
+          <ReviewCard access={data.access} visitorId={visitorId()} studio={brand?.name ?? null} accent={brand?.accent ?? null} />
+        </div>
+      )}
 
       <footer className="py-10 text-center text-xs" style={{ color: pal.soft }}>{brand?.name ? `${brand.name} · ` : ''}Delivered with Camrhia</footer>
 
@@ -417,12 +440,13 @@ export default function GalleryViewPage() {
                 <Heart filled={favs.has(current.id)} className="h-6 w-6" />
               </button>
               {data.allowDownloads && (
-                <a
-                  href={`/api/gallery/download?access=${encodeURIComponent(data.access)}&photo=${current.id}`}
+                <button
+                  type="button"
+                  onClick={() => savePhoto(current)}
                   className="rounded-full border border-white/40 px-4 py-1.5 text-sm hover:bg-white/10"
                 >
-                  Download
-                </a>
+                  {isTouch ? 'Save photo' : 'Download'}
+                </button>
               )}
               <button onClick={() => setOpenIndex(null)} className="text-2xl leading-none">×</button>
             </div>
