@@ -6,23 +6,36 @@ import { supabase } from '@/lib/supabase'
 import { COVERS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type GalleryDesign } from '@/lib/galleryDesign'
 
 function CoverMock({ k }: { k: string }) {
-  const img = '#cdb7a5'
+  const SAMPLE = '/samples/cover-sample.jpg'
+  const serif = 'Georgia, "Times New Roman", serif'
+  const ph = (x: number, y: number, w: number, h: number, dim?: boolean) => (
+    <g>
+      <image href={SAMPLE} x={x} y={y} width={w} height={h} preserveAspectRatio="xMidYMid slice" />
+      {dim && <rect x={x} y={y} width={w} height={h} fill="#000" opacity=".3" />}
+    </g>
+  )
+  const title = (x: number, y: number, size: number, fill: string, anchor: 'start' | 'middle' = 'start') => (
+    <text x={x} y={y} fontSize={size} fill={fill} textAnchor={anchor} fontFamily={serif}>Emma &amp; Luke</text>
+  )
+  const sub = (x: number, y: number, fill: string, anchor: 'start' | 'middle' = 'start', o = 0.8) => (
+    <text x={x} y={y} fontSize={3.1} fill={fill} opacity={o} textAnchor={anchor} letterSpacing={0.7} fontFamily={serif}>JUNE 14 · 2026</text>
+  )
   return (
     <svg viewBox="0 0 120 76" className="block w-full" role="img" aria-label={k}>
       <rect width="120" height="76" fill="#fff" />
-      {k === 'bottom' && (<g><rect width="120" height="76" fill={img} /><rect x="8" y="52" width="46" height="5" fill="#fff" /><rect x="8" y="61" width="28" height="3" fill="#fff" opacity=".7" /></g>)}
-      {k === 'center' && (<g><rect width="120" height="76" fill={img} /><rect x="30" y="32" width="60" height="5" fill="#fff" /><rect x="42" y="42" width="36" height="3" fill="#fff" opacity=".7" /></g>)}
-      {k === 'split' && (<g><rect x="60" y="0" width="60" height="76" fill={img} /><rect x="10" y="30" width="38" height="5" fill="#2A1F24" /><rect x="10" y="40" width="24" height="3" fill="#2A1F24" opacity=".4" /></g>)}
-      {k === 'frame' && (<g><rect x="14" y="8" width="92" height="46" fill="none" stroke="#2A1F24" strokeOpacity=".4" /><rect x="18" y="12" width="84" height="38" fill={img} /><rect x="36" y="62" width="48" height="5" fill="#2A1F24" /></g>)}
-      {k === 'below' && (<g><rect width="120" height="48" fill={img} /><rect x="34" y="57" width="52" height="5" fill="#2A1F24" /></g>)}
-      {k === 'text' && (<g><rect x="28" y="32" width="64" height="6" fill="#2A1F24" /><rect x="44" y="44" width="32" height="3" fill="#2A1F24" opacity=".4" /></g>)}
+      {k === 'bottom' && (<g>{ph(0, 0, 120, 76, true)}{title(8, 58, 8.5, '#fff')}{sub(8, 66, '#fff')}</g>)}
+      {k === 'center' && (<g>{ph(0, 0, 120, 76, true)}{title(60, 36, 9.5, '#fff', 'middle')}{sub(60, 45, '#fff', 'middle')}</g>)}
+      {k === 'split' && (<g>{ph(60, 0, 60, 76)}{title(9, 35, 7.5, '#2A1F24')}{sub(9, 43, '#2A1F24', 'start', 0.55)}</g>)}
+      {k === 'frame' && (<g><rect x="14" y="7" width="92" height="46" fill="none" stroke="#2A1F24" strokeOpacity=".35" />{ph(18, 11, 84, 38)}{title(60, 64, 7.5, '#2A1F24', 'middle')}{sub(60, 71, '#2A1F24', 'middle', 0.55)}</g>)}
+      {k === 'below' && (<g>{ph(0, 0, 120, 48)}{title(60, 61, 8, '#2A1F24', 'middle')}{sub(60, 69, '#2A1F24', 'middle', 0.55)}</g>)}
+      {k === 'text' && (<g>{title(60, 36, 10.5, '#2A1F24', 'middle')}{sub(60, 46, '#2A1F24', 'middle', 0.55)}</g>)}
     </svg>
   )
 }
 
-export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, onClose, onSaved }: {
+export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, onClose, onSaved, onSend }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
-  onClose: () => void; onSaved: (d: GalleryDesign) => void
+  onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
@@ -98,6 +111,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     onSaved(latest.current)
     onClose()
   }
+  function closeAndSend() { close(); onSend?.() }
 
   useEffect(() => {
     function onMsg(e: MessageEvent) {
@@ -111,7 +125,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const head = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
 
   return (
-    <div className="glass mb-6 flex h-[58vh] min-h-[400px] max-h-[560px] overflow-hidden rounded-2xl">
+    <div className="fixed inset-0 z-50 flex overflow-hidden bg-paper">
       <aside className="flex w-[290px] shrink-0 flex-col overflow-y-auto border-r border-line bg-white/50 p-4">
         <div className="mb-5 flex items-center justify-between">
           <button type="button" onClick={close} className="text-sm text-ink-soft hover:text-ink">✕ Close</button>
@@ -206,7 +220,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
               <button key={x} type="button" onClick={() => setDevice(x)} className={'px-4 py-2 font-medium transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
             ))}
           </div>
-          <button type="button" onClick={close} className="rounded-xl bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90">Done</button>
+          {onSend && <button type="button" onClick={closeAndSend} className="rounded-xl bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90">Done and send</button>}
+          <button type="button" onClick={close} className={onSend ? 'rounded-xl border border-line bg-white px-5 py-2 text-sm font-medium text-ink transition hover:opacity-90' : 'rounded-xl bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90'}>Done</button>
         </div>
         <div className="flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
           <iframe ref={frameRef} src={`/g/${token}?preview=1`} title="Gallery preview" style={{ width: device === 'phone' ? 390 : '100%', height: '100%', border: 0, background: '#fff' }} />

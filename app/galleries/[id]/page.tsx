@@ -111,6 +111,8 @@ export default function GalleryManagePage() {
   const [message, setMessage] = useState<string | null>(null)
   const [origin, setOrigin] = useState('')
   const [sessInfo, setSessInfo] = useState<string | null>(null)
+  const [clientName, setClientName] = useState<string | null>(null)
+  const [publishedOpen, setPublishedOpen] = useState(false)
   const [dragging, setDragging] = useState(false)
   const [filter, setFilter] = useState<'all' | 'fav' | CullLabel>('all')
   const [cullOpen, setCullOpen] = useState(false)
@@ -165,6 +167,7 @@ export default function GalleryManagePage() {
       const label = ((st ?? []) as { key: string; label: string }[]).find((t) => t.key === wd?.session_type)?.label ?? wd?.session_type ?? null
       const date = wd?.wedding_date ? new Date(`${wd.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null
       const nm = wd?.names && wd.names.trim().toLowerCase() !== g.title.trim().toLowerCase() ? wd.names : null
+      setClientName(wd?.names?.trim() || null)
       setSessInfo([label, date, nm].filter(Boolean).join(' · ') || null)
     }
   }, [galleryId])
@@ -739,7 +742,7 @@ export default function GalleryManagePage() {
                     const ok = await saveSettings({ status: publishing ? 'published' : 'draft' })
                     if (ok && publishing) {
                       await syncCover(gallery.cover_photo_id)
-                      router.push('/galleries')
+                      setPublishedOpen(true)
                     }
                   }}
                   disabled={!isPublished && photos.length === 0}
@@ -760,6 +763,14 @@ export default function GalleryManagePage() {
                 initial={(gallery.design ?? null) as unknown as GalleryDesign | null}
                 coverUrl={coverThumb}
                 onClose={() => setDesignOpen(false)}
+                onSend={async () => {
+                  if (!isPublished) {
+                    const ok = await saveSettings({ status: 'published' })
+                    if (!ok) return
+                    await syncCover(gallery.cover_photo_id)
+                  }
+                  setShareOpen(true)
+                }}
                 onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as Record<string, unknown> } : g))}
               />
             )}
@@ -1015,6 +1026,19 @@ export default function GalleryManagePage() {
               {!isPublished && (
                 <p className="mt-3 text-xs text-ink-soft">This gallery is a draft. Publish it before sharing the link.</p>
               )}
+            </div>
+          </div>
+        )}
+        {gallery && publishedOpen && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
+            <div className={`${card} w-full max-w-md text-center`}>
+              <p className="font-fraunces text-2xl text-ink">Gallery published</p>
+              <p className="mt-2 text-sm text-ink-soft">{clientName ? `${clientName}'s` : 'Your client'} link is now active. Style the gallery the way you want it, then send it over.</p>
+              <div className="mt-6 flex flex-col gap-3">
+                <button className={btn} onClick={() => { setPublishedOpen(false); setDesignOpen(true) }}>Design gallery</button>
+                <button className={btn} onClick={() => { setPublishedOpen(false); setShareOpen(true) }}>Send to {clientName ?? 'client'}</button>
+                <button className={btnGhost} onClick={() => router.push('/galleries')}>Done</button>
+              </div>
             </div>
           </div>
         )}
