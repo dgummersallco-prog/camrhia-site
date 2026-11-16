@@ -317,14 +317,14 @@ export default function Home() {
 
         {/* PRICING */}
         <section id="pricing" className="bg-paper-deep border-y border-line">
-          <div className="mx-auto max-w-4xl px-6 py-24">
+          <div className="mx-auto max-w-5xl px-6 py-24">
             <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink text-center">
               Simple pricing. Try it free first.
             </h2>
             <p className="mt-4 text-center text-ink-soft">
-              Every plan starts with 14 free days.
+              Start with the app, then add what your business needs. Showcase and Retouch include 14 free days.
             </p>
-            <div className="mt-12 grid md:grid-cols-2 gap-6">
+            <div className="mt-12 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <div className="rounded-3xl bg-card border-2 border-twilight p-8">
                 <p className="font-fraunces text-2xl font-semibold text-ink">Solo</p>
                 <p className="mt-1 text-sm text-ink-soft">For the photographer running their own show.</p>
@@ -340,6 +340,51 @@ export default function Home() {
             </div>
             <div className="mt-10 text-center">
               <AppStoreButton />
+            </div>
+
+            <h3 className="mt-20 font-fraunces text-3xl md:text-4xl font-medium text-ink text-center">
+              Then add what you need
+            </h3>
+            <p className="mt-3 text-center text-ink-soft">Subscribe on camrhia.com. Cancel anytime.</p>
+            <div className="mt-10 grid md:grid-cols-3 gap-6">
+              <div className="flex flex-col rounded-3xl bg-card border-2 border-twilight p-8">
+                <p className="font-fraunces text-2xl font-semibold text-ink">Camrhia Showcase</p>
+                <p className="mt-1 text-sm text-ink-soft">Your website, ad specials, and gallery delivery.</p>
+                <p className="mt-6 font-fraunces text-5xl text-ink">$33<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="mt-1 text-sm text-ink-soft">or $330 /year</p>
+                <ul className="mt-6 space-y-2 text-sm text-ink">
+                  <li>A professional website, set up with Camri</li>
+                  <li>Ad specials that sell your sessions</li>
+                  <li>Custom gallery delivery with no expiration</li>
+                  <li>The Camrhia app included</li>
+                </ul>
+                <a href="/upgrade/showcase" className="mt-8 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
+              </div>
+              <div className="flex flex-col rounded-3xl bg-card border border-line p-8">
+                <p className="font-fraunces text-2xl font-semibold text-ink">Camri Retouch</p>
+                <p className="mt-1 text-sm text-ink-soft">AI editing with Camri beside you.</p>
+                <p className="mt-6 font-fraunces text-5xl text-ink">$22<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="mt-1 text-sm text-ink-soft">or $220 /year</p>
+                <ul className="mt-6 space-y-2 text-sm text-ink">
+                  <li>AI editing in your own style</li>
+                  <li>Camri guides every step and gives advice</li>
+                  <li>Simple settings applied in one click</li>
+                  <li>Camri Cull included</li>
+                </ul>
+                <a href="/upgrade/retouch" className="mt-8 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
+              </div>
+              <div className="flex flex-col rounded-3xl bg-card border border-line p-8">
+                <p className="font-fraunces text-2xl font-semibold text-ink">Camri Cull</p>
+                <p className="mt-1 text-sm text-ink-soft">Your best shots, picked for you.</p>
+                <p className="mt-6 font-fraunces text-5xl text-ink">$11<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="mt-1 text-sm text-ink-soft">or $110 /year</p>
+                <ul className="mt-6 space-y-2 text-sm text-ink">
+                  <li>AI culling for every session</li>
+                  <li>Start editing faster</li>
+                  <li>Already included with Camri Retouch</li>
+                </ul>
+                <a href="/upgrade/cull" className="mt-8 rounded-full border border-twilight px-6 py-3 text-center text-sm font-medium text-twilight transition hover:opacity-90">Get Camri Cull</a>
+              </div>
             </div>
           </div>
         </section>
