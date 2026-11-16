@@ -9,6 +9,7 @@ import { makeVersions } from '@/lib/galleryImages'
 import { camiSite, applyPalette, setButtons, type SiteState } from '@/lib/camiSite'
 import { FONT_OPTIONS, PAIR_PRESETS } from '@/lib/siteTheme'
 import CamriSetup from './CamriSetup'
+import { useEntitlements } from '@/lib/useEntitlements'
 
 type Prof = SiteState & {
   id: string; public_token: string | null; slug: string | null; logo_path: string | null
@@ -165,6 +166,7 @@ function FontPick({ label, hint, value, onPick }: { label: string; hint: string;
 const HOME_SECS: [string, string][] = [['explore', 'Explore'], ['portfolio', 'Portfolio'], ['testimonials', 'Testimonials'], ['contact', 'Contact']]
 
 export default function CamiDesigner() {
+  const ent = useEntitlements()
   const router = useRouter()
   const [form, setForm] = useState<Prof | null>(null)
   const [history, setHistory] = useState<Prof[]>([])
@@ -309,6 +311,8 @@ export default function CamiDesigner() {
   }
 
   async function publish() {
+    if (ent.loading) return
+    if (!ent.showcase) { window.location.href = '/upgrade/showcase'; return }
     const sb = supabase
     if (!sb || !form) return
     setBusy(true)
@@ -1020,7 +1024,7 @@ export default function CamiDesigner() {
         <div className="flex gap-3 border-t border-black/10 p-4">
           <button type="button" onClick={() => setFull(true)} className="flex-1 rounded-lg bg-black/5 py-3 text-sm font-medium text-ink transition hover:bg-black/10">Preview</button>
           <button type="button" onClick={publish} disabled={busy} className={'relative flex-1 rounded-lg py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60 ' + ACC}>
-            Publish
+            {ent.showcase || ent.loading ? 'Publish' : 'Upgrade to publish'}
             {dirty && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-400" />}
           </button>
         </div>

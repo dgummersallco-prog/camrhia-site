@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { productForPrice } from '../../../../lib/products'
 
 // Force dynamic — this route reads request body and must never be prerendered
 export const dynamic = 'force-dynamic'
@@ -64,6 +65,36 @@ export async function POST(request: Request) {
           } catch (err: unknown) {
             console.error('[stripe webhook] subscription retrieve error:', err instanceof Error ? err.message : err)
           }
+        }
+
+        // New products: Camrhia Showcase / Camri Retouch / Camri Cull
+        let addon: 'showcase' | 'retouch' | 'cull' | null = null
+        if (subscriptionId) {
+          try {
+            const sub = await stripe.subscriptions.retrieve(subscriptionId)
+            addon = productForPrice(sub.items.data[0]?.price?.id)
+            if (addon) {
+              const end = (sub.items.data[0] as unknown as { current_period_end?: number })?.current_period_end
+              const { error: entError } = await supabase.from('entitlements').upsert({
+                user_id: userId,
+                product: addon,
+                status: sub.status,
+                stripe_customer_id: customerId,
+                stripe_subscription_id: subscriptionId,
+                current_period_end: end ? new Date(end * 1000).toISOString() : null,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'user_id,product' })
+              if (entError) console.error('[stripe webhook] entitlements upsert error:', entError.message)
+            }
+          } catch (err: unknown) {
+            console.error('[stripe webhook] addon entitlement error:', err instanceof Error ? err.message : err)
+          }
+        }
+        // Retouch and Cull never touch the profile or the referral. Only Showcase unlocks the app.
+        if (addon === 'retouch' || addon === 'cull') break
+        if (addon === 'showcase') {
+          const { data: cur } = await supabase.from('profiles').select('plan_tier').eq('id', userId).maybeSingle()
+          if (cur?.plan_tier === 'studio') planTier = 'studio'
         }
 
         const { error: profileError } = await supabase
@@ -215,6 +246,15 @@ export async function POST(request: Request) {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
 
+        {
+          const end = (subscription.items.data[0] as unknown as { current_period_end?: number })?.current_period_end
+          await supabase.from('entitlements').update({
+            status: subscription.status,
+            current_period_end: end ? new Date(end * 1000).toISOString() : null,
+            updated_at: new Date().toISOString(),
+          }).eq('stripe_subscription_id', subscription.id)
+        }
+
         if (subscription.status === 'past_due' || subscription.status === 'canceled') {
           const { error } = await supabase
             .from('profiles')
@@ -253,6 +293,11 @@ export async function POST(request: Request) {
       // ── Subscription fully canceled ─────────────────────────────────────────
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
+
+        await supabase.from('entitlements').update({
+          status: 'canceled',
+          updated_at: new Date().toISOString(),
+        }).eq('stripe_subscription_id', subscription.id)
 
         // Fetch profile first — needed for churn log and referral churn
         const { data: profile } = await supabase

@@ -9,6 +9,7 @@ import { makeVersions } from '@/lib/galleryImages'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import DesignGroup from '@/app/components/DesignGroup'
+import { useEntitlements } from '@/lib/useEntitlements'
 import SpecialView, { DECOR_EMOJI, DEFAULT_THEME, readTheme, themeToContent, type Decor, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
@@ -381,6 +382,7 @@ function FontPicker({ label, value, onChange }: { label: string; value: string; 
 }
 
 export default function SpecialsPage() {
+  const ent = useEntitlements()
   const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
   const [items, setItems] = useState<Funnel[]>([])
@@ -616,7 +618,7 @@ export default function SpecialsPage() {
         content,
         cta_label: form.cta_label.trim() || 'Claim my spot',
         cta_url: null,
-        published: form.published,
+        published: ent.showcase ? form.published : false,
         updated_at: new Date().toISOString(),
       }
       let saved: Funnel | null = null
@@ -985,8 +987,9 @@ export default function SpecialsPage() {
 
                 <StepCard n={4} title="Publish">
                   <label className="flex items-center gap-2 text-sm text-ink">
-                    <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="accent-twilight" />
+                    <input type="checkbox" checked={form.published && ent.showcase} disabled={!ent.showcase} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="accent-twilight" />
                     Published (anyone with the link can see it)
+                    {!ent.loading && !ent.showcase && <a href="/upgrade/showcase" className="ml-2 font-medium underline">Upgrade to publish</a>}
                   </label>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <button type="button" onClick={save} disabled={saving} className="rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{saving ? 'Saving…' : 'Save'}</button>
