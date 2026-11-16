@@ -753,6 +753,37 @@ export default function GalleryManagePage() {
               </div>
             </div>
 
+            {gallery && (
+              <div className="mb-5 grid gap-2 sm:grid-cols-5">
+                {([
+                  { label: 'Add photos', done: photos.length > 0, go: () => fileInput.current?.click() },
+                  { label: 'Cull & enhance', hint: 'optional', done: false, go: () => setCullOpen(true) },
+                  { label: 'Style', done: !!gallery.design && Object.keys(gallery.design).length > 0, go: () => setDesignOpen(true) },
+                  {
+                    label: 'Publish',
+                    done: isPublished,
+                    off: photos.length === 0,
+                    go: async () => {
+                      if (isPublished) return
+                      const ok = await saveSettings({ status: 'published' })
+                      if (ok) { await syncCover(gallery.cover_photo_id); setPublishedOpen(true) }
+                    },
+                  },
+                  { label: 'Send', done: false, off: !isPublished, go: () => setShareOpen(true) },
+                ] as { label: string; hint?: string; done: boolean; off?: boolean; go: () => void }[]).map((st, i) => (
+                  <button
+                    key={st.label}
+                    type="button"
+                    disabled={st.off}
+                    onClick={st.go}
+                    className={'flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition disabled:opacity-50 ' + (st.done ? 'border-emerald-200 bg-emerald-50/70 text-ink' : 'border-line bg-white/60 text-ink hover:bg-white')}
+                  >
+                    <span className={'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ' + (st.done ? 'bg-emerald-500 text-white' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
+                    <span className="leading-tight">{st.label}{st.hint && <span className="block text-[11px] text-ink-soft">{st.hint}</span>}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {message && <p className="mb-4 text-sm text-twilight">{message}</p>}
 
             {designOpen && (

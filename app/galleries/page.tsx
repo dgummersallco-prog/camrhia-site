@@ -43,6 +43,7 @@ export default function GalleriesPage() {
   const [showNew, setShowNew] = useState(false)
   const [creating, setCreating] = useState(false)
   const [importFrom, setImportFrom] = useState('')
+  const [photoMode, setPhotoMode] = useState<'upload' | 'import'>('upload')
   const [importMsg, setImportMsg] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -319,28 +320,47 @@ export default function GalleriesPage() {
               </div>
             </div>
             <div className="mt-4">
-              <label className="mb-1.5 block text-sm font-medium text-ink">Photos <span className="font-normal text-ink-soft">(optional)</span></label>
-              <Select
-                value={importFrom}
-                onChange={(e) => setImportFrom(e.target.value)}
-                className="w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
-              >
-                <option value="">I will upload photos (Lightroom or any editor)</option>
-                {(rows ?? [])
-                  .filter((g) => ((g as unknown as { gallery_photos?: { count: number }[] }).gallery_photos?.[0]?.count ?? 0) > 0)
-                  .map((g) => (
-                    <option key={g.id} value={g.id}>
-                      Import from The Editing Room · {g.title} ({(g as unknown as { gallery_photos?: { count: number }[] }).gallery_photos?.[0]?.count ?? 0} photos)
-                    </option>
-                  ))}
-              </Select>
-              <p className="mt-1.5 text-xs text-ink-soft">{importFrom ? 'Copies the photos you kept. The original shoot stays in the Editing Room.' : 'Add photos from your computer after you create the gallery.'}</p>
+              <label className="mb-1.5 block text-sm font-medium text-ink">Photos</label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => { setPhotoMode('upload'); setImportFrom('') }}
+                  className={'rounded-xl border p-4 text-left transition ' + (photoMode === 'upload' ? 'border-twilight bg-twilight/5' : 'border-line bg-paper hover:bg-white')}
+                >
+                  <p className="text-sm font-medium text-ink">Upload from my computer</p>
+                  <p className="mt-1 text-xs text-ink-soft">Edited in Lightroom or any editor. You will pick your files on the next screen.</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPhotoMode('import')}
+                  className={'rounded-xl border p-4 text-left transition ' + (photoMode === 'import' ? 'border-twilight bg-twilight/5' : 'border-line bg-paper hover:bg-white')}
+                >
+                  <p className="text-sm font-medium text-ink">Use edits from the Editing Room</p>
+                  <p className="mt-1 text-xs text-ink-soft">Copies the photos you kept. The original shoot stays in the Editing Room.</p>
+                </button>
+              </div>
+              {photoMode === 'import' && (
+                <Select
+                  value={importFrom}
+                  onChange={(e) => setImportFrom(e.target.value)}
+                  className="mt-3 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm text-ink focus:border-twilight focus:outline-none focus:ring-2 focus:ring-twilight/25"
+                >
+                  <option value="">Choose a shoot…</option>
+                  {(rows ?? [])
+                    .filter((g) => ((g as unknown as { gallery_photos?: { count: number }[] }).gallery_photos?.[0]?.count ?? 0) > 0)
+                    .map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.title} ({(g as unknown as { gallery_photos?: { count: number }[] }).gallery_photos?.[0]?.count ?? 0} photos)
+                      </option>
+                    ))}
+                </Select>
+              )}
               {importMsg && <p className="mt-2 text-sm text-twilight">{importMsg}</p>}
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
               <button
                 type="submit"
-                disabled={creating || !title.trim()}
+                disabled={creating || !title.trim() || (photoMode === 'import' && !importFrom)}
                 className="whitespace-nowrap rounded-xl bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
               >
                 {creating ? 'Creating…' : 'Create gallery'}
