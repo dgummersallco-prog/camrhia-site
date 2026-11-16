@@ -19,6 +19,8 @@ const btn = 'rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white t
 const btnGhost = 'rounded-xl border border-line px-3 py-2 text-sm text-ink transition hover:border-twilight disabled:opacity-40'
 const SUGGEST = ['Weddings', 'Engagements', 'Couples', 'Families', 'Seniors', 'Newborn', 'Maternity', 'Portraits', 'Branding']
 
+const MAX_PER_GALLERY = 24
+
 export default function WebsiteGalleries() {
   const router = useRouter()
   const embedded = (usePathname() ?? '').startsWith('/galleries')
@@ -31,6 +33,7 @@ export default function WebsiteGalleries() {
   const [newSec, setNewSec] = useState<Record<string, string>>({})
   const [progress, setProgress] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
+  const [picker, setPicker] = useState<{ g: Gal; cid: string | null; items: { id: string; web_path: string | null; url: string }[]; sel: string[]; busy: boolean } | null>(null)
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -143,8 +146,12 @@ export default function WebsiteGalleries() {
     const sb = supabase
     if (!sb || !uid || !files || files.length === 0) return
     const existing = photos.filter((p) => p.gallery_id === g.id && (p.section_id ?? null) === sectionId).length
-    const list = Array.from(files).filter((f) => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name))
-    if (list.length === 0) { setMsg('Please choose image files.'); return }
+    const room = MAX_PER_GALLERY - photos.filter((p) => p.gallery_id === g.id).length
+    if (room <= 0) { setMsg(`This gallery is full (${MAX_PER_GALLERY} photos). Remove one to add another.`); return }
+    const picked = Array.from(files).filter((f) => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name))
+    if (picked.length === 0) { setMsg('Please choose image files.'); return }
+    const list = picked.slice(0, room)
+    if (picked.length > room) setMsg(`Only ${room} more fit in this gallery (limit ${MAX_PER_GALLERY}). Adding the first ${room}.`)
     try {
       let done = 0
       const failed: string[] = []
@@ -222,6 +229,65 @@ export default function WebsiteGalleries() {
     await load()
   }
 
+  function openPicker(g: Gal) {
+    const room = MAX_PER_GALLERY - photos.filter((p) => p.gallery_id === g.id).length
+    if (room <= 0) { setMsg(`This gallery is full (${MAX_PER_GALLERY} photos). Remove one to add another.`); return }
+    setPicker({ g, cid: null, items: [], sel: [], busy: false })
+  }
+
+  async function pickClient(cid: string) {
+    const sb = supabase
+    if (!sb || !picker) return
+    setPicker({ ...picker, cid, items: [], sel: [], busy: true })
+    const { data } = await sb.from('gallery_photos').select('id, web_path, thumb_path, sort_order').eq('gallery_id', cid).order('sort_order', { ascending: true })
+    const rows = (data ?? []) as { id: string; web_path: string | null; thumb_path: string | null }[]
+    const paths = rows.map((r) => r.thumb_path ?? r.web_path).filter((x): x is string => !!x)
+    const res = paths.length ? await sb.storage.from('galleries').createSignedUrls(paths, 3600) : null
+    const urlOf = new Map((res?.data ?? []).map((x) => [x.path ?? '', x.signedUrl] as const))
+    const items = rows
+      .map((r) => ({ id: r.id, web_path: r.web_path, url: urlOf.get(r.thumb_path ?? r.web_path ?? '') ?? '' }))
+      .filter((x) => x.url && x.web_path)
+    setPicker((p) => (p ? { ...p, cid, items, sel: [], busy: false } : p))
+  }
+
+  async function addPicked() {
+    const sb = supabase
+    if (!sb || !uid || !picker) return
+    const g = picker.g
+    const chosen = picker.items.filter((x) => picker.sel.includes(x.id))
+    if (chosen.length === 0) return
+    const base = photos.filter((p) => p.gallery_id === g.id).length
+    setPicker(null)
+    let done = 0
+    let failed = 0
+    const queue = chosen.map((c, i) => ({ c, i }))
+    setProgress(`Adding 0 of ${chosen.length}…`)
+    const worker = async () => {
+      for (let it = queue.shift(); it; it = queue.shift()) {
+        try {
+          const dl = await sb.storage.from('galleries').download(it.c.web_path as string)
+          if (dl.error || !dl.data) throw dl.error
+          const path = `${uid}/web_${g.id}_${Date.now()}_${it.i}.jpg`
+          const up = await sb.storage.from('portfolio').upload(path, dl.data, { contentType: 'image/jpeg', upsert: true })
+          if (up.error) throw up.error
+          const { error } = await sb.from('website_photos').insert({ gallery_id: g.id, photographer_id: uid, section_id: null, storage_path: path, sort_order: base + it.i })
+          if (error) { await sb.storage.from('portfolio').remove([path]); throw error }
+        } catch {
+          failed++
+        }
+        done++
+        setProgress(`Adding ${done} of ${chosen.length}…`)
+      }
+    }
+    await Promise.all([worker(), worker(), worker()])
+    setProgress(null)
+    if (failed) setMsg(`${failed} photo${failed === 1 ? '' : 's'} could not be added.`)
+    else flash('Photos added')
+    await load()
+  }
+
+  const pickerRoom = picker ? MAX_PER_GALLERY - photos.filter((p) => p.gallery_id === picker.g.id).length : 0
+
   const renderGroup = (g: Gal, sec: Sec | null, coverId: string | null) => {
     const list = photos
       .filter((p) => p.gallery_id === g.id && (p.section_id ?? null) === (sec?.id ?? null))
@@ -247,7 +313,7 @@ export default function WebsiteGalleries() {
           onDrop={(e) => { e.preventDefault(); upload(g, sec?.id ?? null, e.dataTransfer.files) }}
         >
           <span className="text-xl text-ink">+</span>
-          Add photos
+          From my computer
           <span className="mt-0.5 opacity-70">or drop them here</span>
           <input type="file" accept="image/*,.heic,.heif" multiple className="hidden"
             onChange={(e) => { upload(g, sec?.id ?? null, e.target.files); e.target.value = '' }} />
@@ -265,7 +331,7 @@ export default function WebsiteGalleries() {
             <Link href="/website" className="text-sm text-ink-soft hover:text-ink">← Your website</Link>
             <h1 className="mt-2 font-fraunces text-3xl font-semibold text-ink">Website galleries</h1>
             <p className="mt-1 max-w-xl text-sm text-ink-soft">
-              Make a gallery for each kind of work, like Weddings, Seniors or Families. Inside a gallery you can add sections, for example a few photos from each wedding. These are separate from your app portfolio.
+              Your website galleries show your best work to visitors. Make one for each kind of session, like Weddings, Seniors, or Families, and add up to 24 of your strongest photos to each. Come back anytime to add, swap, or remove photos. When you design your site, you will choose which gallery shows where. These are separate from your client galleries and your app portfolio.
             </p>
           </div>
           {msg && <span className="text-sm text-twilight">{msg}</span>}
@@ -299,7 +365,7 @@ export default function WebsiteGalleries() {
               <section key={g.id} className={card}>
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                   <input key={g.id + g.title} className={input + ' max-w-xs font-medium'} defaultValue={g.title} onBlur={(e) => rename(g, e.target.value)} />
-                  <span className="text-xs text-ink-soft">{g.source_gallery_id ? (clients.find((c) => c.id === g.source_gallery_id)?.count ?? 0) : all.length} photos</span>
+                  <span className="text-xs text-ink-soft">{g.source_gallery_id ? `${clients.find((c) => c.id === g.source_gallery_id)?.count ?? 0} photos` : `${all.length} of ${MAX_PER_GALLERY} photos`}</span>
                   <div className="ml-auto flex gap-2">
                     <button className={btnGhost} disabled={gi === 0} onClick={() => moveGallery(g, -1)} aria-label="Move up">↑</button>
                     <button className={btnGhost} disabled={gi === gals.length - 1} onClick={() => moveGallery(g, 1)} aria-label="Move down">↓</button>
@@ -308,12 +374,14 @@ export default function WebsiteGalleries() {
                 </div>
 
                 <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
-                  <span className="text-ink-soft">Photos from</span>
-                  <select className={input + ' max-w-xs'} value={g.source_gallery_id ?? ''} onChange={(e) => connect(g, e.target.value || null)}>
-                    <option value="">Photos I add here</option>
-                    {clients.map((c) => <option key={c.id} value={c.id}>{c.title} ({c.count})</option>)}
-                  </select>
-                  {g.source_gallery_id && <span className="text-xs text-ink-soft">Showing this client gallery. Add or remove photos there and they update here.</span>}
+                  {g.source_gallery_id ? (
+                    <>
+                      <span className="text-xs text-ink-soft">Showing the client gallery {clients.find((c) => c.id === g.source_gallery_id)?.title ?? ''}. Changes there update here.</span>
+                      <button className={btnGhost} onClick={() => connect(g, null)}>Stop showing it</button>
+                    </>
+                  ) : (
+                    <button className={btnGhost} onClick={() => openPicker(g)}>Add from a client gallery</button>
+                  )}
                 </div>
 
                 {!g.source_gallery_id && (loose.length > 0 || mySecs.length === 0) && (
@@ -348,6 +416,61 @@ export default function WebsiteGalleries() {
             )
           })}
         </div>
+        {picker && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setPicker(null)}>
+            <div className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-line bg-card p-5" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-3 flex items-center justify-between">
+                <p className="font-fraunces text-xl text-ink">{picker.cid ? clients.find((c) => c.id === picker.cid)?.title : 'Choose a client gallery'}</p>
+                <button className="text-2xl leading-none text-ink-soft" onClick={() => setPicker(null)} aria-label="Close">×</button>
+              </div>
+              {!picker.cid ? (
+                <div className="space-y-2 overflow-y-auto">
+                  {clients.length === 0 && <p className="text-sm text-ink-soft">No client galleries yet.</p>}
+                  {clients.map((c) => (
+                    <button key={c.id} onClick={() => pickClient(c.id)} className="flex w-full items-center justify-between rounded-xl border border-line bg-paper px-4 py-3 text-left text-sm text-ink hover:border-twilight">
+                      <span>{c.title}</span>
+                      <span className="text-xs text-ink-soft">{c.count} photos</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <p className="mb-3 text-xs text-ink-soft">Tap the photos you want on your website. {picker.sel.length} of {pickerRoom} selected.</p>
+                  {picker.busy ? (
+                    <p className="text-sm text-ink-soft">Loading…</p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-5">
+                      {picker.items.map((it) => {
+                        const on = picker.sel.includes(it.id)
+                        return (
+                          <button
+                            key={it.id}
+                            type="button"
+                            onClick={() => setPicker((p) => {
+                              if (!p) return p
+                              const has = p.sel.includes(it.id)
+                              if (!has && p.sel.length >= pickerRoom) return p
+                              return { ...p, sel: has ? p.sel.filter((x) => x !== it.id) : [...p.sel, it.id] }
+                            })}
+                            className={`relative aspect-square overflow-hidden rounded-lg ${on ? 'ring-2 ring-twilight' : ''}`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={it.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                            {on && <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-twilight text-[11px] text-white">✓</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                  <div className="mt-4 flex justify-between gap-2">
+                    <button className={btnGhost} onClick={() => setPicker((p) => (p ? { ...p, cid: null, items: [], sel: [] } : p))}>Back</button>
+                    <button className={btn} disabled={picker.sel.length === 0} onClick={addPicked}>Add {picker.sel.length} photo{picker.sel.length === 1 ? '' : 's'}</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )

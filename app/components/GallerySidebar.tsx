@@ -10,7 +10,7 @@ export function GallerySidebar({ active }: { active: 'galleries' | 'send' | 'sit
     <SceneSidebar
       groups={[
         { items: [{ href: '/dashboard', label: '← Back to dashboard' }] },
-        { label: 'Galleries', items: [{ href: '/galleries', label: 'All galleries' }, { href: '/galleries/send', label: 'Design & send' }] },
+        { label: 'Galleries', items: [{ href: '/galleries', label: 'All galleries' }] },
         { label: 'Website', items: [{ href: '/galleries/site', label: 'Website galleries' }, { href: '/galleries/photos', label: 'Website photos' }] },
         { label: 'Account', items: [{ href: '/storage', label: 'Storage' }] },
       ]}

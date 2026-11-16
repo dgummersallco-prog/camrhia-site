@@ -4,6 +4,7 @@ import GalleryDesigner from './GalleryDesigner'
 import type { GalleryDesign } from '@/lib/galleryDesign'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { sendGalleryToClient } from '@/lib/sendGallery'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -112,6 +113,9 @@ export default function GalleryManagePage() {
   const [origin, setOrigin] = useState('')
   const [sessInfo, setSessInfo] = useState<string | null>(null)
   const [clientName, setClientName] = useState<string | null>(null)
+  const [openedAt, setOpenedAt] = useState<string | null>(null)
+  const [coupleUserId, setCoupleUserId] = useState<string | null>(null)
+  const [sentAt, setSentAt] = useState<string | null>(null)
   const [publishedOpen, setPublishedOpen] = useState(false)
   const [dragging, setDragging] = useState(false)
   const [filter, setFilter] = useState<'all' | 'fav' | CullLabel>('all')
@@ -160,14 +164,17 @@ export default function GalleryManagePage() {
     setExpiry(g.expires_at ? toDateInput(g.expires_at) : '')
     if (g.session_id) {
       const [{ data: w }, { data: st }] = await Promise.all([
-        sb.from('weddings').select('names, wedding_date, session_type').eq('id', g.session_id).maybeSingle(),
+        sb.from('weddings').select('names, wedding_date, session_type, gallery_opened_at, couple_user_id, gallery_sent_at').eq('id', g.session_id).maybeSingle(),
         sb.from('session_types').select('key, label'),
       ])
-      const wd = w as { names: string | null; wedding_date: string | null; session_type: string | null } | null
+      const wd = w as { names: string | null; wedding_date: string | null; session_type: string | null; gallery_opened_at: string | null; couple_user_id: string | null; gallery_sent_at: string | null } | null
       const label = ((st ?? []) as { key: string; label: string }[]).find((t) => t.key === wd?.session_type)?.label ?? wd?.session_type ?? null
       const date = wd?.wedding_date ? new Date(`${wd.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null
       const nm = wd?.names && wd.names.trim().toLowerCase() !== g.title.trim().toLowerCase() ? wd.names : null
       setClientName(wd?.names?.trim() || null)
+      setOpenedAt(wd?.gallery_opened_at ?? null)
+      setCoupleUserId(wd?.couple_user_id ?? null)
+      setSentAt(wd?.gallery_sent_at ?? null)
       setSessInfo([label, date, nm].filter(Boolean).join(' · ') || null)
     }
   }, [galleryId])
@@ -754,13 +761,13 @@ export default function GalleryManagePage() {
             </div>
 
             {gallery && (
-              <div className="mb-5 grid gap-2 sm:grid-cols-5">
+              <div className="mb-5 grid gap-2 sm:grid-cols-4">
                 {([
-                  { label: 'Add photos', done: photos.length > 0, go: () => fileInput.current?.click() },
-                  { label: 'Cull & enhance', hint: 'optional', done: false, go: () => setCullOpen(true) },
-                  { label: 'Style', done: !!gallery.design && Object.keys(gallery.design).length > 0, go: () => setDesignOpen(true) },
+                  { label: 'Add photos', hint: 'Client-ready edited photos', done: photos.length > 0, go: () => fileInput.current?.click() },
+                  { label: 'Style', hint: 'Design your cover photo and photo layout', done: !!gallery.design && Object.keys(gallery.design).length > 0, go: () => setDesignOpen(true) },
                   {
                     label: 'Publish',
+                    hint: 'Make the link live and active',
                     done: isPublished,
                     off: photos.length === 0,
                     go: async () => {
@@ -769,17 +776,17 @@ export default function GalleryManagePage() {
                       if (ok) { await syncCover(gallery.cover_photo_id); setPublishedOpen(true) }
                     },
                   },
-                  { label: 'Send', done: false, off: !isPublished, go: () => setShareOpen(true) },
+                  { label: 'Send', hint: openedAt ? `Opened by client ${new Date(openedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Send straight to your customer by the Camrhia app, text, or email', done: !!openedAt, off: !isPublished, go: () => setShareOpen(true) },
                 ] as { label: string; hint?: string; done: boolean; off?: boolean; go: () => void }[]).map((st, i) => (
                   <button
                     key={st.label}
                     type="button"
                     disabled={st.off}
                     onClick={st.go}
-                    className={'flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition disabled:opacity-50 ' + (st.done ? 'border-emerald-200 bg-emerald-50/70 text-ink' : 'border-line bg-white/60 text-ink hover:bg-white')}
+                    className={'flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition disabled:opacity-50 ' + (st.done ? 'border-emerald-200 bg-emerald-50/70 text-ink' : 'border-line bg-white/60 text-ink hover:bg-white')}
                   >
                     <span className={'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ' + (st.done ? 'bg-emerald-500 text-white' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
-                    <span className="leading-tight">{st.label}{st.hint && <span className="block text-[11px] text-ink-soft">{st.hint}</span>}</span>
+                    <span className="leading-tight">{st.label}{st.hint && <span className="mt-0.5 block text-xs text-ink-soft">{st.hint}</span>}</span>
                   </button>
                 ))}
               </div>
@@ -1046,7 +1053,29 @@ export default function GalleryManagePage() {
                 <button className="text-2xl leading-none text-ink-soft" onClick={() => setShareOpen(false)} aria-label="Close">×</button>
               </div>
               <input readOnly value={shareUrl} className={input} onFocus={(e) => e.currentTarget.select()} />
+              {gallery.session_id && coupleUserId && (
+                <button
+                  className={`${btn} mt-3 w-full`}
+                  disabled={!!sentAt}
+                  onClick={async () => {
+                    const sb = supabase
+                    if (!sb || !gallery.session_id) return
+                    const err = await sendGalleryToClient(sb, { weddingId: gallery.session_id, coupleUserId, token: gallery.token, expiresAt: gallery.expires_at, pin: '', alreadySent: !!sentAt })
+                    if (err) { flash(err); return }
+                    setSentAt(new Date().toISOString())
+                    flash('Sent to their Camrhia app')
+                  }}
+                >
+                  {sentAt ? 'Sent to their Camrhia app' : `Send to ${clientName ?? 'client'}'s Camrhia app`}
+                </button>
+              )}
               <div className="mt-3 grid grid-cols-2 gap-2">
+                <a className={`${btnGhost} text-center`} href={`mailto:?subject=${encodeURIComponent('Your photos are ready')}&body=${encodeURIComponent(`Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}`)}`}>
+                  Email
+                </a>
+                <a className={`${btnGhost} text-center`} href={`sms:?&body=${encodeURIComponent(`Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}`)}`}>
+                  Text
+                </a>
                 <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }}>
                   Copy link
                 </button>
