@@ -1681,7 +1681,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </svg>
             </div>
           )
-          const pics = (mosaicSrcs.length > 0 ? mosaicSrcs : shownHero).slice(0, 3)
+          const covers = realGalleries.map((g) => photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path)).filter(Boolean) as string[]
+          const rest = realGalleries.flatMap((g) => g.photos.map((x: any) => photoUrl(x?.storage_path))).filter(Boolean) as string[]
+          const pics = Array.from(new Set([...covers, ...rest])).slice(0, 3)
           return (
             <>
               <header data-name="Cover" id="top" style={{ fontFamily: PF, background: '#fff', color: '#000' }}>
@@ -1707,11 +1709,11 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 </div>
               </header>
               <section data-name="Featured work" id="featured" style={{ background: '#000', color: '#fff', fontFamily: PF }}>
-                <div className="w-full px-8 pb-8 pt-7">
-                  <h2 data-name="Featured work title" className="uppercase" style={{ fontFamily: PF, fontWeight: 700, fontSize: 'clamp(1rem, 1.6vw, 1.5rem)', letterSpacing: '0.18em', marginBottom: 16 }}>Featured work</h2>
-                  <div className="grid grid-cols-3 gap-2">
+                <div className="w-full px-8 pb-7 pt-5">
+                  <h2 data-name="Featured work title" className="uppercase" style={{ fontFamily: PF, fontWeight: 600, fontSize: 'clamp(0.8rem, 1.15vw, 1.1rem)', letterSpacing: '0.16em', marginBottom: 12 }}>Featured work</h2>
+                  <div className="grid grid-cols-3 gap-1">
                     {[0, 1, 2].map((k) => (
-                      <div key={k} data-name={'Featured photo ' + (k + 1)} className="relative overflow-hidden" style={{ aspectRatio: '1.25 / 1', background: '#222' }}>
+                      <div key={k} data-name={'Featured photo ' + (k + 1)} className="relative overflow-hidden" style={{ aspectRatio: '1.85 / 1', background: '#222' }}>
                         {pics[k] ? <img src={pics[k]} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#2b2b2b', '#4a4a4a')}
                       </div>
                     ))}
