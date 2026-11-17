@@ -21,7 +21,7 @@ type PP = { post: BlogPostT; backHref: string; sty: BlogSty }
 
 function Pic({ p, ratio, style }: { p: BlogPostT; ratio: string; style?: React.CSSProperties }) {
   const u = cv(p)
-  if (!u) return <div style={{ aspectRatio: ratio, background: 'rgba(128,128,128,.14)', ...style }} />
+  if (!u) return <div style={{ aspectRatio: ratio, overflow: 'hidden', background: '#e4e2de', ...style }}><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg></div>
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={u} alt="" className="w-full object-cover" style={{ aspectRatio: ratio, ...style }} />
 }
@@ -49,34 +49,66 @@ function A({ p, hrefFor, sty, children, style }: { p: BlogPostT; hrefFor: (s: st
 /* ---------- LIST DESIGNS ---------- */
 function Danube({ title, intro, posts, hrefFor, sty }: LP) {
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-        {posts.map((p) => <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}><Pic p={p} ratio="4/5" /><Meta p={p} sty={sty} /></A>)}
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'A collection of stories, sessions, and inspiration from behind the lens.'}</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ marginTop: 'clamp(28px, 4.4vw, 56px)', columnGap: 'clamp(24px, 4.6vw, 64px)', rowGap: 'clamp(36px, 5vw, 64px)' }}>
+        {posts.map((p) => (
+          <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}>
+            <Pic p={p} ratio="11/9" />
+            <p style={{ ...small, fontSize: 12, color: sty.accent, margin: '14px 0 8px' }}>{fmtDate(p.date)}</p>
+            <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.4rem, 2.2vw, 1.9rem)', lineHeight: 1.2, margin: 0 }}>{p.title}</h2>
+            {p.excerpt && <p style={{ color: sty.soft, fontSize: 'clamp(0.9rem, 1.2vw, 1rem)', lineHeight: 1.5, margin: '10px 0 0' }}>{p.excerpt}</p>}
+          </A>
+        ))}
       </div>
     </main>
   )
 }
 function Loire({ title, intro, posts, hrefFor, sty }: LP) {
   const [first, ...rest] = posts
+  const dt = (p: BlogPostT) => <p style={{ ...small, fontSize: 12, fontWeight: 600, color: sty.accent, margin: '14px 0 8px' }}>{fmtDate(p.date)}</p>
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-12"><A p={first} hrefFor={hrefFor} sty={sty}><Pic p={first} ratio="21/9" /><Meta p={first} sty={sty} size={38} /></A></div>
-      {rest.length > 0 && <div className="mt-16 grid gap-x-8 gap-y-14 sm:grid-cols-2">{rest.map((p) => <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}><Pic p={p} ratio="3/2" /><Meta p={p} sty={sty} /></A>)}</div>}
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'Stories, shoots, and a look behind the lens.'}</p>
+      <div style={{ marginTop: 'clamp(24px, 3.6vw, 44px)' }}>
+        <A p={first} hrefFor={hrefFor} sty={sty}>
+          <Pic p={first} ratio="4/1" />
+          {dt(first)}
+          <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2rem, 4.6vw, 3.8rem)', lineHeight: 1.1, margin: 0 }}>{first.title}</h2>
+        </A>
+      </div>
+      {rest.length > 0 && (
+        <div className="grid sm:grid-cols-2" style={{ marginTop: 'clamp(32px, 5vw, 64px)', columnGap: 'clamp(28px, 6vw, 90px)', rowGap: 'clamp(32px, 5vw, 64px)' }}>
+          {rest.map((p) => (
+            <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}>
+              <Pic p={p} ratio="5/2" />
+              {dt(p)}
+              <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.5rem, 2.6vw, 2.2rem)', lineHeight: 1.15, margin: 0 }}>{p.title}</h2>
+              {p.excerpt && <p style={{ color: sty.soft, fontSize: 'clamp(0.95rem, 1.3vw, 1.1rem)', lineHeight: 1.45, margin: '10px 0 0' }}>{p.excerpt}</p>}
+            </A>
+          ))}
+        </div>
+      )}
     </main>
   )
 }
 function Rhine({ title, intro, posts, hrefFor, sty }: LP) {
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-14 space-y-16">
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and inspiration from behind the camera.'}</p>
+      <div style={{ marginTop: 'clamp(28px, 4.4vw, 56px)', display: 'flex', flexDirection: 'column', gap: 'clamp(36px, 5vw, 64px)' }}>
         {posts.map((p, i) => (
           <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}>
-            <div className="grid items-center gap-10 md:grid-cols-2">
-              <div className={i % 2 ? 'md:order-2' : ''}><Pic p={p} ratio="4/3" /></div>
-              <div><Meta p={p} sty={sty} size={32} /></div>
+            <div className="grid items-center md:grid-cols-2" style={{ columnGap: 'clamp(28px, 5vw, 70px)', rowGap: 24 }}>
+              <div className={i % 2 ? 'md:order-2' : ''}><Pic p={p} ratio="37/20" /></div>
+              <div style={{ padding: '0 clamp(0px, 1.4vw, 20px)' }}>
+                <p style={{ ...small, fontSize: 13, color: sty.accent, margin: '0 0 14px' }}>{fmtDate(p.date)}</p>
+                <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2rem, 4.2vw, 3.5rem)', lineHeight: 1.1, margin: 0 }}>{p.title}</h2>
+                {p.excerpt && <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.6vw, 1.3rem)', lineHeight: 1.5, margin: '20px 0 0', maxWidth: 480 }}>{p.excerpt}</p>}
+              </div>
             </div>
           </A>
         ))}
@@ -85,42 +117,92 @@ function Rhine({ title, intro, posts, hrefFor, sty }: LP) {
   )
 }
 function Seine({ title, intro, posts, hrefFor, sty }: LP) {
-  const rs = ['4/5', '1/1', '3/4', '4/3']
+  const rs = ['9/10', '4/3', '37/13', '5/4']
+  const ws = ['75%', '72%', '100%', '90%']
+  const card = (p: BlogPostT, i: number) => (
+    <div key={p.id} style={{ width: i % 4 === 0 ? '88%' : '100%', marginLeft: i % 4 === 0 ? '12%' : 0, marginBottom: 'clamp(28px, 4.4vw, 52px)' }}>
+      <div style={{ width: ws[i % 4] }}>
+        <A p={p} hrefFor={hrefFor} sty={sty}>
+          <Pic p={p} ratio={rs[i % 4]} />
+        </A>
+      </div>
+      <A p={p} hrefFor={hrefFor} sty={sty}>
+        <p style={{ ...small, fontSize: 12, color: sty.accent, margin: '10px 0 6px' }}>{fmtDate(p.date)}</p>
+        <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.5rem, 2.6vw, 2.2rem)', lineHeight: 1.15, margin: 0 }}>{p.title}</h2>
+        {p.excerpt && <p style={{ color: sty.soft, fontSize: 'clamp(0.95rem, 1.3vw, 1.1rem)', lineHeight: 1.45, margin: '8px 0 0' }}>{p.excerpt}</p>}
+      </A>
+    </div>
+  )
+  const hd = (
+    <div style={{ marginBottom: 'clamp(20px, 3vw, 36px)' }}>
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and inspiration from behind the camera.'}</p>
+    </div>
+  )
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-12 columns-1 gap-8 sm:columns-2">
-        {posts.map((p, i) => <div key={p.id} className="mb-12 break-inside-avoid"><A p={p} hrefFor={hrefFor} sty={sty}><Pic p={p} ratio={rs[i % 4]} /><Meta p={p} sty={sty} /></A></div>)}
+    <main className="mx-auto px-6 pb-24 pt-6" style={{ maxWidth: 1150 }}>
+      <div className="md:hidden">{hd}{posts.map((p, i) => card(p, i))}</div>
+      <div className="hidden md:grid md:grid-cols-2" style={{ columnGap: 'clamp(28px, 5vw, 70px)' }}>
+        <div>{hd}{posts.map((p, i) => (i % 2 === 0 ? card(p, i) : null))}</div>
+        <div>{posts.map((p, i) => (i % 2 === 1 ? card(p, i) : null))}</div>
       </div>
     </main>
   )
 }
 function Thames({ title, intro, posts, hrefFor, sty }: LP) {
   const [a, b, c, ...rest] = posts
+  const dt = (p: BlogPostT) => <p style={{ ...small, fontSize: 12, fontWeight: 600, color: sty.accent, margin: '12px 0 6px' }}>{fmtDate(p.date)}</p>
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-12 grid gap-8 lg:grid-cols-5">
-        <div className="lg:col-span-3"><A p={a} hrefFor={hrefFor} sty={sty}><Pic p={a} ratio="4/3" /><Meta p={a} sty={sty} size={32} /></A></div>
-        <div className="flex flex-col gap-8 lg:col-span-2">
-          {[b, c].filter(Boolean).map((p) => <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}><Pic p={p} ratio="3/2" /><Meta p={p} sty={sty} size={20} excerpt={false} /></A>)}
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and inspiration from behind the camera.'}</p>
+      <div className="grid lg:grid-cols-[1.62fr_1fr]" style={{ marginTop: 'clamp(20px, 3vw, 36px)', columnGap: 'clamp(24px, 3.6vw, 52px)', rowGap: 28 }}>
+        <A p={a} hrefFor={hrefFor} sty={sty}>
+          <Pic p={a} ratio="2/1" />
+          <p style={{ ...small, fontSize: 13, fontWeight: 600, color: sty.accent, margin: '16px 0 6px' }}>{fmtDate(a.date)}</p>
+          <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2rem, 3.8vw, 3.2rem)', lineHeight: 1.1, margin: 0 }}>{a.title}</h2>
+          {a.excerpt && <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.4vw, 1.2rem)', lineHeight: 1.45, margin: '10px 0 0' }}>{a.excerpt}</p>}
+        </A>
+        <div className="flex flex-col" style={{ gap: 'clamp(20px, 2.8vw, 36px)' }}>
+          {[b, c].filter(Boolean).map((p) => (
+            <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}>
+              <Pic p={p} ratio="23/8" />
+              {dt(p)}
+              <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.4rem, 2.2vw, 1.9rem)', lineHeight: 1.15, margin: 0 }}>{p.title}</h2>
+            </A>
+          ))}
         </div>
       </div>
-      {rest.length > 0 && <div className="mt-16 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">{rest.map((p) => <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}><Pic p={p} ratio="4/5" /><Meta p={p} sty={sty} /></A>)}</div>}
+      {rest.length > 0 && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ marginTop: 'clamp(32px, 4.6vw, 60px)', columnGap: 'clamp(20px, 3.2vw, 40px)', rowGap: 'clamp(28px, 4vw, 48px)' }}>
+          {rest.map((p) => (
+            <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}>
+              <Pic p={p} ratio="9/5" />
+              {dt(p)}
+              <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.35rem, 2vw, 1.8rem)', lineHeight: 1.2, margin: 0 }}>{p.title}</h2>
+              {p.excerpt && <p style={{ color: sty.soft, fontSize: 'clamp(0.9rem, 1.2vw, 1.05rem)', lineHeight: 1.45, margin: '8px 0 0' }}>{p.excerpt}</p>}
+            </A>
+          ))}
+        </div>
+      )}
     </main>
   )
 }
 function Tiber({ title, intro, posts, hrefFor, sty }: LP) {
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-12">
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and inspiration from behind the camera.'}</p>
+      <div style={{ marginTop: 'clamp(24px, 3.6vw, 44px)', borderBottom: `1px solid ${sty.line}` }}>
         {posts.map((p) => (
           <A key={p.id} p={p} hrefFor={hrefFor} sty={sty} style={{ borderTop: `1px solid ${sty.line}` }}>
-            <div className="grid items-center gap-5 py-8 sm:grid-cols-[130px_1fr_170px]">
-              <p style={{ ...small, color: sty.accent, margin: 0 }}>{fmtDate(p.date)}</p>
-              <div><h2 style={{ ...sty.head, fontSize: 28, lineHeight: 1.2, margin: 0 }}>{p.title}</h2>{p.excerpt && <p style={{ color: sty.soft, fontSize: 15, lineHeight: 1.65, marginTop: 8 }}>{p.excerpt}</p>}</div>
-              <Pic p={p} ratio="4/3" />
+            <div className="grid items-center sm:grid-cols-[clamp(110px,14vw,200px)_1fr_clamp(200px,31%,420px)]" style={{ columnGap: 'clamp(16px, 2.4vw, 32px)', rowGap: 14, padding: 'clamp(14px, 1.8vw, 22px) 0 clamp(14px, 1.8vw, 22px) 10px' }}>
+              <p style={{ ...small, fontSize: 13, fontWeight: 500, letterSpacing: '0.28em', lineHeight: 1.9, color: sty.accent, margin: 0, maxWidth: 150 }}>{fmtDate(p.date)}</p>
+              <div>
+                <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.7rem, 3.2vw, 2.9rem)', lineHeight: 1.12, margin: 0 }}>{p.title}</h2>
+                {p.excerpt && <p style={{ color: sty.soft, fontSize: 'clamp(0.95rem, 1.4vw, 1.2rem)', lineHeight: 1.45, margin: '12px 0 0' }}>{p.excerpt}</p>}
+              </div>
+              <Pic p={p} ratio="12/5" />
             </div>
           </A>
         ))}
@@ -129,16 +211,18 @@ function Tiber({ title, intro, posts, hrefFor, sty }: LP) {
   )
 }
 function Volga({ title, intro, posts, hrefFor, sty }: LP) {
+  const ab = (d: string) => { const x = new Date(d); return isNaN(x.getTime()) ? '' : x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-12 grid sm:grid-cols-2" style={bleed}>
+    <main className="mx-auto max-w-6xl px-6 pt-6" style={{ paddingBottom: 0 }}>
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and notes from behind the lens.'}</p>
+      <div className="grid sm:grid-cols-2" style={{ ...bleed, marginTop: 'clamp(24px, 3.6vw, 44px)' }}>
         {posts.map((p) => (
           <A key={p.id} p={p} hrefFor={hrefFor} sty={sty} style={{ position: 'relative', color: '#fff' }}>
-            <Pic p={p} ratio="3/2" />
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 32, background: 'linear-gradient(transparent 35%, rgba(0,0,0,.68))' }}>
-              <p style={{ ...small, margin: '0 0 8px', opacity: 0.85 }}>{fmtDate(p.date)}</p>
-              <h2 style={{ ...sty.head, fontSize: 30, lineHeight: 1.2, margin: 0 }}>{p.title}</h2>
+            <Pic p={p} ratio="17/10" />
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 'clamp(16px, 2.6vw, 38px)', background: 'linear-gradient(transparent 50%, rgba(0,0,0,.62))' }}>
+              <p style={{ ...small, fontSize: 12, fontWeight: 600, letterSpacing: '0.2em', margin: '0 0 4px', opacity: 0.95 }}>{ab(p.date)}</p>
+              <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.5rem, 2.6vw, 2.4rem)', lineHeight: 1.15, margin: 0, color: '#fff' }}>{p.title}</h2>
             </div>
           </A>
         ))}
@@ -147,29 +231,38 @@ function Volga({ title, intro, posts, hrefFor, sty }: LP) {
   )
 }
 function Elbe({ title, intro, posts, hrefFor, sty }: LP) {
-  const d: BlogSty = { ...sty, ink: CREAM, soft: '#bdb3a4' }
+  const ab = (d: string) => { const x = new Date(d); return isNaN(x.getTime()) ? '' : x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }
   return (
-    <div style={{ background: DARK, color: CREAM }}>
-      <main className={wrap}>
-        <Head title={title} intro={intro} sty={d} />
-        <div className="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((p) => <A key={p.id} p={p} hrefFor={hrefFor} sty={d}><Pic p={p} ratio="1/1" /><Meta p={p} sty={d} /></A>)}
+    <div style={{ background: '#121212', color: CREAM, minHeight: '100vh' }}>
+      <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
+        <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: CREAM }}>{title}</h1>
+        <p style={{ color: CREAM, fontSize: 'clamp(1rem, 1.6vw, 1.25rem)', letterSpacing: '0.04em', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and reflections from behind the lens.'}</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ marginTop: 'clamp(28px, 4vw, 48px)', columnGap: 'clamp(28px, 8.5vw, 120px)', rowGap: 'clamp(32px, 4vw, 48px)' }}>
+          {posts.map((p) => (
+            <A key={p.id} p={p} hrefFor={hrefFor} sty={sty} style={{ color: CREAM }}>
+              <Pic p={p} ratio="11/10" />
+              <p style={{ ...small, fontSize: 12, fontWeight: 700, letterSpacing: '0.3em', color: '#e6b84a', margin: '14px 0 6px' }}>{ab(p.date)}</p>
+              <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.4rem, 2.2vw, 1.9rem)', lineHeight: 1.2, margin: 0, color: CREAM }}>{p.title}</h2>
+              {p.excerpt && <p style={{ color: '#e4ddd0', fontSize: 'clamp(0.9rem, 1.2vw, 1.05rem)', lineHeight: 1.45, letterSpacing: '0.02em', margin: '8px 0 0' }}>{p.excerpt}</p>}
+            </A>
+          ))}
         </div>
       </main>
     </div>
   )
 }
 function Ebro({ title, intro, posts, hrefFor, sty }: LP) {
-  const rot = [-1.6, 1.2, -0.8, 1.8]
+  const rot = [-2.4, 0.8, 1.2, -0.8, 0.5, 1]
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-14 grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and inspiration from behind the camera.'}</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ marginTop: 'clamp(28px, 4.4vw, 56px)', gap: 'clamp(24px, 3.4vw, 44px)' }}>
         {posts.map((p, i) => (
-          <A key={p.id} p={p} hrefFor={hrefFor} sty={sty} style={{ background: '#fff', padding: '14px 14px 22px', boxShadow: '0 10px 30px rgba(0,0,0,.14)', transform: `rotate(${rot[i % 4]}deg)`, color: '#2a1f24' }}>
-            <Pic p={p} ratio="1/1" />
-            <p style={{ ...small, color: sty.accent, margin: '16px 0 6px' }}>{fmtDate(p.date)}</p>
-            <h2 style={{ ...sty.head, fontSize: 22, lineHeight: 1.25, margin: 0 }}>{p.title}</h2>
+          <A key={p.id} p={p} hrefFor={hrefFor} sty={sty} style={{ background: '#fbf8f3', padding: '14px 14px 18px', boxShadow: '0 10px 28px rgba(60,40,20,.18)', transform: `rotate(${rot[i % 6]}deg)`, color: '#2a2320' }}>
+            <Pic p={p} ratio="11/8" />
+            <p style={{ ...small, fontSize: 12, fontWeight: 700, color: sty.accent, margin: '14px 0 6px 6px' }}>{fmtDate(p.date)}</p>
+            <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.3rem, 2vw, 1.75rem)', lineHeight: 1.2, margin: '0 0 0 6px' }}>{p.title}</h2>
           </A>
         ))}
       </div>
@@ -178,33 +271,52 @@ function Ebro({ title, intro, posts, hrefFor, sty }: LP) {
 }
 function Tagus({ title, intro, posts, hrefFor, sty }: LP) {
   const [a, ...rest] = posts
+  const my = (d: string) => { const x = new Date(d); return isNaN(x.getTime()) ? '' : x.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-12" style={bleed}>
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and inspiration from behind the camera.'}</p>
+      <div style={{ ...bleed, marginTop: 'clamp(20px, 3vw, 36px)' }}>
         <A p={a} hrefFor={hrefFor} sty={sty} style={{ position: 'relative', color: '#fff' }}>
-          <Pic p={a} ratio="16/7" style={{ aspectRatio: 'auto', height: 'min(70vh, 640px)' }} />
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '48px max(24px, 6vw)', background: 'linear-gradient(transparent 30%, rgba(0,0,0,.7))' }}>
-            <p style={{ ...small, margin: '0 0 10px', opacity: 0.85 }}>Latest · {fmtDate(a.date)}</p>
-            <h2 style={{ ...sty.head, fontSize: 'clamp(30px,4.5vw,52px)', lineHeight: 1.12, margin: 0, maxWidth: 800 }}>{a.title}</h2>
-            {a.excerpt && <p style={{ maxWidth: 600, lineHeight: 1.65, marginTop: 12, opacity: 0.9 }}>{a.excerpt}</p>}
+          <Pic p={a} ratio="3/1" style={{ aspectRatio: 'auto', height: 'clamp(300px, 33.4vw, 560px)' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 'clamp(20px, 3vw, 44px) max(24px, 4vw)', background: 'linear-gradient(to right, rgba(0,0,0,.62), rgba(0,0,0,0) 62%), linear-gradient(transparent 55%, rgba(0,0,0,.35))' }}>
+            <p style={{ ...small, fontWeight: 600, letterSpacing: '0.3em', margin: '0 0 10px' }}>Latest · {my(a.date)}</p>
+            <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2rem, 4.4vw, 3.6rem)', lineHeight: 1.1, margin: 0, maxWidth: 800 }}>{a.title}</h2>
+            {a.excerpt && <p style={{ maxWidth: 640, fontSize: 'clamp(0.95rem, 1.3vw, 1.15rem)', lineHeight: 1.5, margin: '10px 0 0' }}>{a.excerpt}</p>}
           </div>
         </A>
       </div>
-      {rest.length > 0 && <div className="mt-16 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">{rest.map((p) => <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}><Pic p={p} ratio="1/1" /><Meta p={p} sty={sty} size={19} excerpt={false} /></A>)}</div>}
+      {rest.length > 0 && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4" style={{ marginTop: 'clamp(24px, 3.4vw, 44px)', columnGap: 'clamp(16px, 2.6vw, 32px)', rowGap: 'clamp(28px, 4vw, 48px)' }}>
+          {rest.map((p) => (
+            <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}>
+              <Pic p={p} ratio="7/5" />
+              <p style={{ ...small, fontSize: 12, fontWeight: 600, color: sty.accent, margin: '12px 0 6px' }}>{fmtDate(p.date)}</p>
+              <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.3rem, 2vw, 1.8rem)', lineHeight: 1.2, margin: 0 }}>{p.title}</h2>
+            </A>
+          ))}
+        </div>
+      )}
     </main>
   )
 }
 function Arno({ title, intro, posts, hrefFor, sty }: LP) {
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-24 pt-10">
-      <Head title={title} intro={intro} sty={sty} center />
-      <div className="mt-16 space-y-24">
+    <main className="mx-auto px-6 pb-24 pt-6" style={{ maxWidth: 900 }}>
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 9vw, 7rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+        <p style={{ color: sty.soft, fontSize: 'clamp(1.05rem, 1.9vw, 1.5rem)', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and inspiration from behind the camera.'}</p>
+      </div>
+      <div style={{ marginTop: 'clamp(36px, 6vw, 72px)' }}>
         {posts.map((p) => (
-          <A key={p.id} p={p} hrefFor={hrefFor} sty={sty}>
-            <Pic p={p} ratio="3/2" />
-            <Meta p={p} sty={sty} size={32} center />
-            <p style={{ ...small, color: sty.ink, textAlign: 'center', marginTop: 18 }}>Read →</p>
+          <A key={p.id} p={p} hrefFor={hrefFor} sty={sty} style={{ paddingBottom: 'clamp(28px, 4vw, 44px)', marginBottom: 'clamp(28px, 4vw, 44px)', borderBottom: `1px solid ${sty.line}` }}>
+            <Pic p={p} ratio="2/1" />
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ ...small, color: sty.accent, fontWeight: 600, letterSpacing: '0.3em', margin: 'clamp(16px, 2.4vw, 28px) 0 8px' }}>{fmtDate(p.date)}</p>
+              <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.9rem, 4.2vw, 3.4rem)', lineHeight: 1.15, margin: 0 }}>{p.title}</h2>
+              {p.excerpt && <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.6vw, 1.25rem)', lineHeight: 1.5, margin: '12px 0 0' }}>{p.excerpt}</p>}
+              <p style={{ ...small, color: sty.ink, fontWeight: 700, letterSpacing: '0.3em', margin: '22px 0 0' }}>Read →</p>
+            </div>
           </A>
         ))}
       </div>
@@ -213,15 +325,18 @@ function Arno({ title, intro, posts, hrefFor, sty }: LP) {
 }
 function Rhone({ title, intro, posts, hrefFor, sty }: LP) {
   return (
-    <main className={wrap}>
-      <Head title={title} intro={intro} sty={sty} />
-      <div className="mt-12 grid gap-8 sm:grid-cols-2">
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
+      <h1 style={{ fontWeight: 300, fontSize: 'clamp(3.4rem, 8vw, 6.4rem)', lineHeight: 1, letterSpacing: '-0.01em', margin: 0, color: sty.ink }}>{title}</h1>
+      <p style={{ color: sty.soft, fontSize: 'clamp(1rem, 1.7vw, 1.3rem)', margin: '10px 0 0' }}>{intro || 'Stories, sessions, and inspiration from behind the camera.'}</p>
+      <div className="grid sm:grid-cols-2" style={{ marginTop: 'clamp(24px, 3.6vw, 44px)', gap: 'clamp(16px, 2vw, 24px)' }}>
         {posts.map((p) => (
           <A key={p.id} p={p} hrefFor={hrefFor} sty={sty} style={{ border: `1px solid ${sty.line}` }}>
-            <Pic p={p} ratio="3/2" />
-            <div style={{ padding: '4px 26px 28px' }}>
-              <Meta p={p} sty={sty} />
-              <p style={{ ...small, color: sty.accent, marginTop: 18 }}>Read more →</p>
+            <Pic p={p} ratio="27/10" />
+            <div style={{ padding: 'clamp(16px, 2.4vw, 26px) clamp(18px, 2.4vw, 34px) clamp(18px, 2.4vw, 28px)' }}>
+              <p style={{ ...small, fontSize: 12, fontWeight: 700, color: sty.accent, margin: '0 0 6px' }}>{fmtDate(p.date)}</p>
+              <h2 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(1.5rem, 2.6vw, 2.3rem)', lineHeight: 1.15, margin: 0 }}>{p.title}</h2>
+              {p.excerpt && <p style={{ color: sty.soft, fontSize: 'clamp(0.95rem, 1.3vw, 1.1rem)', lineHeight: 1.45, margin: '10px 0 0' }}>{p.excerpt}</p>}
+              <p style={{ ...small, fontSize: 12, fontWeight: 700, color: sty.accent, margin: '18px 0 0' }}>Read more →</p>
             </div>
           </A>
         ))}
@@ -248,12 +363,30 @@ export function BlogList({ design, title, intro, posts, hrefFor, sty }: { design
 function Back({ href, sty }: { href: string; sty: BlogSty }) {
   return <Link href={href} style={{ ...small, color: sty.soft, textDecoration: 'none' }}>← All posts</Link>
 }
-function Body({ post, sty, size = 17 }: { post: BlogPostT; sty: BlogSty; size?: number }) {
+function inl(t: string): React.ReactNode[] {
+  return t.split(/(\*\*[^*]+\*\*)/g).map((x, i) => (x.length > 4 && x.startsWith('**') && x.endsWith('**') ? <strong key={i} style={{ fontWeight: 700 }}>{x.slice(2, -2)}</strong> : x))
+}
+function Body({ post, sty, size = 17, serif = false, from = 0, to }: { post: BlogPostT; sty: BlogSty; size?: number; serif?: boolean; from?: number; to?: number }) {
+  const ff = serif ? (sty.head as any).fontFamily : undefined
   return (
-    <div style={{ color: sty.ink }}>
-      {blogBlocks(post.body).map((b, i) => b.t === 'h'
-        ? <h2 key={i} style={{ ...sty.head, fontSize: 26, margin: '36px 0 12px' }}>{b.s}</h2>
-        : <p key={i} style={{ fontSize: size, lineHeight: 1.85, margin: '0 0 20px', whiteSpace: 'pre-line' }}>{b.s}</p>)}
+    <div style={{ color: sty.ink, fontFamily: ff, letterSpacing: serif ? '0.02em' : undefined }}>
+      {blogBlocks(post.body).slice(from, to).map((b, i) => {
+        if (b.t === 'h') return <h2 key={i} style={{ ...sty.head, ...(serif ? { fontWeight: 400, fontSize: 'clamp(1.8rem, 3.2vw, 2.5rem)', margin: '40px 0 18px' } : { fontSize: 26, margin: '36px 0 12px' }) }}>{b.s}</h2>
+        const lines = b.s.split('\n').map((x) => x.trim()).filter(Boolean)
+        if (lines.length > 0 && lines.every((l) => /^\d+[.)]\s/.test(l))) {
+          return (
+            <div key={i} style={{ margin: '0 0 20px' }}>
+              {lines.map((l, j) => (
+                <div key={j} style={{ display: 'flex', gap: 14, margin: '0 0 14px' }}>
+                  <span style={{ color: sty.accent, fontWeight: 700, minWidth: 26, fontSize: size + 2 }}>{j + 1}.</span>
+                  <span style={{ fontSize: size, lineHeight: 1.75 }}>{inl(l.replace(/^\d+[.)]\s+/, ''))}</span>
+                </div>
+              ))}
+            </div>
+          )
+        }
+        return <p key={i} style={{ fontSize: size, lineHeight: 1.85, margin: '0 0 20px', whiteSpace: 'pre-line' }}>{inl(b.s)}</p>
+      })}
     </div>
   )
 }
@@ -267,157 +400,199 @@ function DT({ post, sty, center = false, size = 'clamp(32px,5vw,54px)', color }:
 }
 
 function Eiger({ post, backHref, sty }: PP) {
+  const ff = (sty.head as any).fontFamily
   return (
-    <main className="mx-auto max-w-5xl px-6 pb-24 pt-10">
-      <Back href={backHref} sty={sty} />
-      <div className="mt-8"><Pic p={post} ratio="21/9" /></div>
-      <div className="mx-auto mt-12 max-w-2xl"><DT post={post} sty={sty} center /><div className="mt-10"><Body post={post} sty={sty} /></div></div>
+    <main className="pb-24 pt-6">
+      <div className="mx-auto max-w-6xl px-6"><Back href={backHref} sty={sty} /></div>
+      <div style={{ ...bleed, marginTop: 'clamp(14px, 2vw, 24px)' }}><Pic p={post} ratio="14/5" /></div>
+      <div className="mx-auto px-6" style={{ maxWidth: 780 }}>
+        <p style={{ ...small, fontSize: 14, fontWeight: 700, letterSpacing: '0.2em', color: sty.accent, fontFamily: ff, textAlign: 'center', margin: 'clamp(24px, 3.6vw, 44px) 0 12px' }}>{fmtDate(post.date)}</p>
+        <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.2rem, 5vw, 4.2rem)', lineHeight: 1.1, textAlign: 'center', margin: '0 0 clamp(28px, 4vw, 48px)' }}>{post.title}</h1>
+        <Body post={post} sty={sty} serif />
+      </div>
     </main>
   )
 }
 function Rainier({ post, backHref, sty }: PP) {
+  const ff = (sty.head as any).fontFamily
   return (
     <>
       <div style={{ position: 'relative', color: '#fff' }}>
-        <Pic p={post} ratio="16/7" style={{ aspectRatio: 'auto', height: 'min(78vh, 720px)' }} />
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '56px max(24px, 6vw)', background: 'linear-gradient(transparent 30%, rgba(0,0,0,.7))' }}>
-          <DT post={post} sty={sty} color="#fff" size="clamp(34px,5.5vw,66px)" />
+        <Pic p={post} ratio="16/7" style={{ aspectRatio: 'auto', height: 'clamp(380px, 58vw, 720px)' }} />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 'clamp(20px, 3vw, 44px) max(24px, 5vw)', background: 'linear-gradient(transparent 45%, rgba(0,0,0,.72))' }}>
+          <p style={{ ...small, fontSize: 14, fontWeight: 500, letterSpacing: '0.25em', fontFamily: ff, margin: '0 0 8px' }}>{fmtDate(post.date)}</p>
+          <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 6vw, 5rem)', lineHeight: 1.08, margin: 0, color: '#fff' }}>{post.title}</h1>
         </div>
       </div>
-      <main className="mx-auto max-w-2xl px-6 pb-24 pt-12"><Back href={backHref} sty={sty} /><div className="mt-8"><Body post={post} sty={sty} /></div></main>
+      <main className="pb-24 pt-8">
+        <div style={{ padding: '0 max(24px, 5vw)' }}><Back href={backHref} sty={sty} /></div>
+        <div className="mx-auto px-6" style={{ maxWidth: 780, marginTop: 'clamp(16px, 2.4vw, 28px)' }}><Body post={post} sty={sty} serif /></div>
+      </main>
     </>
   )
 }
 function Denali({ post, backHref, sty }: PP) {
+  const ff = (sty.head as any).fontFamily
   return (
-    <main className="mx-auto max-w-6xl px-6 pb-24 pt-10">
-      <div className="grid gap-14 lg:grid-cols-[1fr_1.5fr]">
-        <div className="self-start lg:sticky lg:top-10"><Back href={backHref} sty={sty} /><div className="mt-10"><DT post={post} sty={sty} size="clamp(30px,4vw,46px)" /></div></div>
-        <div><Pic p={post} ratio="3/2" /><div className="mt-10"><Body post={post} sty={sty} /></div></div>
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-14">
+      <div className="grid lg:grid-cols-[28%_1fr]" style={{ columnGap: 'clamp(24px, 2.4vw, 32px)', rowGap: 28 }}>
+        <div className="self-start lg:sticky lg:top-10">
+          <Back href={backHref} sty={sty} />
+          <p style={{ ...small, fontSize: 14, fontWeight: 700, letterSpacing: '0.2em', color: sty.accent, fontFamily: ff, margin: 'clamp(20px, 3vw, 36px) 0 14px' }}>{fmtDate(post.date)}</p>
+          <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.2rem, 4.6vw, 3.9rem)', lineHeight: 1.15, margin: 0 }}>{post.title}</h1>
+        </div>
+        <div>
+          <Pic p={post} ratio="3/2" />
+          <div style={{ marginTop: 'clamp(24px, 3.4vw, 40px)', maxWidth: 700 }}><Body post={post} sty={sty} serif /></div>
+        </div>
       </div>
     </main>
   )
 }
 function Olympus({ post, backHref, sty }: PP) {
-  const d: BlogSty = { ...sty, ink: CREAM, soft: '#bdb3a4' }
+  const d: BlogSty = { ...sty, ink: '#f4efe7', soft: '#bdb3a4', accent: '#f0c14b' }
+  const ff = (sty.head as any).fontFamily
   return (
-    <div style={{ background: DARK, color: CREAM, minHeight: '100vh' }}>
-      <main className="mx-auto max-w-3xl px-6 pb-24 pt-10">
+    <div style={{ background: '#1c1c1c', color: '#f4efe7', minHeight: '100vh' }}>
+      <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
         <Back href={backHref} sty={d} />
-        <div className="mt-10"><DT post={post} sty={d} center color={CREAM} /></div>
-        <div className="mt-12" style={{ border: '1px solid rgba(255,255,255,.2)', padding: 10 }}><Pic p={post} ratio="3/2" /></div>
-        <div className="mt-12"><Body post={post} sty={d} /></div>
+        <p style={{ ...small, fontSize: 12, fontWeight: 700, letterSpacing: '0.25em', color: '#f0c14b', fontFamily: ff, textAlign: 'center', margin: 'clamp(20px, 3vw, 36px) 0 14px' }}>{fmtDate(post.date)}</p>
+        <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 5.8vw, 4.9rem)', lineHeight: 1.1, textAlign: 'center', margin: '0 auto', maxWidth: 900, color: '#fff' }}>{post.title}</h1>
+        <div className="mx-auto" style={{ maxWidth: 880, marginTop: 'clamp(22px, 3.2vw, 38px)', border: '1px solid rgba(255,255,255,.75)' }}><Pic p={post} ratio="2/1" /></div>
+        <div className="mx-auto" style={{ maxWidth: 640, marginTop: 'clamp(26px, 3.8vw, 46px)' }}><Body post={post} sty={d} serif /></div>
       </main>
     </div>
   )
 }
 function Whitney({ post, backHref, sty }: PP) {
+  const ff = (sty.head as any).fontFamily
   return (
-    <main className="mx-auto max-w-4xl px-6 pb-24 pt-10">
-      <style>{`.bp-cap p:first-of-type::first-letter{float:left;font-size:4.4em;line-height:.8;padding:8px 12px 0 0;color:${sty.accent}}`}</style>
+    <main className="mx-auto px-6 pb-24 pt-6" style={{ maxWidth: 1040 }}>
+      <style>{`.bp-cap p:first-of-type::first-letter{float:left;font-size:5em;line-height:.78;padding:8px 12px 0 0;color:${sty.accent}}`}</style>
       <Back href={backHref} sty={sty} />
-      <div className="mt-10"><DT post={post} sty={sty} center /></div>
-      <div className="mt-10"><Pic p={post} ratio="16/9" /></div>
-      <div className="bp-cap mx-auto mt-12 max-w-2xl"><Body post={post} sty={sty} /></div>
+      <p style={{ ...small, fontSize: 14, fontWeight: 700, letterSpacing: '0.25em', color: sty.accent, fontFamily: ff, textAlign: 'center', margin: 'clamp(8px, 1.4vw, 16px) 0 10px' }}>{fmtDate(post.date)}</p>
+      <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 6vw, 5rem)', lineHeight: 1.1, textAlign: 'center', margin: 0 }}>{post.title}</h1>
+      <div style={{ marginTop: 'clamp(20px, 3vw, 36px)' }}><Pic p={post} ratio="17/8" /></div>
+      <div className="bp-cap mx-auto" style={{ maxWidth: 780, marginTop: 'clamp(26px, 3.8vw, 46px)' }}><Body post={post} sty={sty} serif /></div>
     </main>
   )
 }
 function Elbrus({ post, backHref, sty }: PP) {
+  const ff = (sty.head as any).fontFamily
   return (
-    <main className="mx-auto max-w-6xl px-6 pb-24 pt-10">
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
       <Back href={backHref} sty={sty} />
-      <div className="mt-10 grid items-end gap-12 md:grid-cols-[1.2fr_1fr]">
-        <DT post={post} sty={sty} size="clamp(34px,5vw,60px)" />
-        <Pic p={post} ratio="4/5" />
+      <div className="grid items-center lg:grid-cols-[1fr_54%]" style={{ marginTop: 'clamp(14px, 2vw, 24px)', columnGap: 'clamp(20px, 2.8vw, 40px)', rowGap: 28 }}>
+        <div>
+          <p style={{ ...small, fontSize: 14, fontWeight: 700, letterSpacing: '0.2em', color: sty.accent, fontFamily: ff, margin: '0 0 clamp(14px, 2vw, 24px)' }}>{fmtDate(post.date)}</p>
+          <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 5.8vw, 5rem)', lineHeight: 1.1, margin: 0 }}>{post.title}</h1>
+        </div>
+        <Pic p={post} ratio="6/7" />
       </div>
-      <div className="mx-auto mt-16 max-w-2xl"><Body post={post} sty={sty} /></div>
+      <div className="mx-auto" style={{ maxWidth: 740, marginTop: 'clamp(28px, 4vw, 48px)' }}><Body post={post} sty={sty} serif /></div>
     </main>
   )
 }
 function Etna({ post, backHref, sty }: PP) {
-  const bl = blogBlocks(post.body)
-  const item = (b: { t: 'h' | 'p'; s: string }, i: number) => b.t === 'h'
-    ? <h2 key={i} style={{ ...sty.head, fontSize: 26, margin: '36px 0 12px' }}>{b.s}</h2>
-    : <p key={i} style={{ fontSize: 17, lineHeight: 1.85, margin: '0 0 20px', whiteSpace: 'pre-line' }}>{b.s}</p>
+  const ff = (sty.head as any).fontFamily
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-24 pt-10" style={{ color: sty.ink }}>
+    <main className="mx-auto px-6 pb-24 pt-6" style={{ maxWidth: 1000 }}>
       <Back href={backHref} sty={sty} />
-      <div className="mt-12"><DT post={post} sty={sty} size="clamp(36px,6vw,64px)" /></div>
-      <div className="mt-10">
-        {bl.slice(0, 1).map(item)}
-        <div className="my-12 lg:-mx-28"><Pic p={post} ratio="3/2" /></div>
-        {bl.slice(1).map((b, i) => item(b, i + 1))}
-      </div>
+      <p style={{ ...small, fontSize: 14, fontWeight: 700, letterSpacing: '0.2em', color: sty.accent, fontFamily: ff, margin: 'clamp(14px, 2vw, 24px) 0 8px' }}>{fmtDate(post.date)}</p>
+      <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 6.2vw, 5.2rem)', lineHeight: 1.08, margin: '0 0 clamp(16px, 2.4vw, 28px)' }}>{post.title}</h1>
+      <div style={{ padding: '0 clamp(0px, 1.6vw, 18px)' }}><Body post={post} sty={sty} serif from={0} to={1} /></div>
+      <div style={{ margin: 'clamp(16px, 2.4vw, 28px) 0' }}><Pic p={post} ratio="2/1" /></div>
+      <div style={{ padding: '0 clamp(0px, 1.6vw, 18px)' }}><Body post={post} sty={sty} serif from={1} /></div>
     </main>
   )
 }
 function Shasta({ post, backHref, sty }: PP) {
+  const ff = (sty.head as any).fontFamily
   return (
-    <main className="mx-auto max-w-3xl px-6 pb-24 pt-10">
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
       <Back href={backHref} sty={sty} />
-      <div className="mt-12 flex flex-col items-center gap-12 sm:flex-row">
-        <div style={{ background: '#fff', padding: '14px 14px 36px', boxShadow: '0 12px 34px rgba(0,0,0,.16)', transform: 'rotate(-2deg)', width: 280, flexShrink: 0 }}><Pic p={post} ratio="4/5" /></div>
-        <DT post={post} sty={sty} size="clamp(30px,4.5vw,48px)" />
+      <div className="grid items-center lg:grid-cols-[50%_1fr]" style={{ marginTop: 'clamp(24px, 3.6vw, 48px)', columnGap: 'clamp(28px, 4vw, 52px)', rowGap: 36 }}>
+        <div style={{ background: '#fff', padding: 'clamp(10px, 1.6vw, 18px) clamp(10px, 1.6vw, 18px) clamp(30px, 4.6vw, 52px)', boxShadow: '0 14px 36px rgba(60,40,20,.2)', transform: 'rotate(-3deg)' }}><Pic p={post} ratio="6/5" /></div>
+        <div>
+          <p style={{ ...small, fontSize: 13, fontWeight: 600, letterSpacing: '0.25em', color: sty.accent, fontFamily: ff, margin: '0 0 clamp(10px, 1.6vw, 18px)' }}>{fmtDate(post.date)}</p>
+          <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 6.4vw, 5.4rem)', lineHeight: 1.1, margin: 0 }}>{post.title}</h1>
+        </div>
       </div>
-      <div className="mt-16"><Body post={post} sty={sty} /></div>
+      <div className="mx-auto" style={{ maxWidth: 760, marginTop: 'clamp(32px, 5vw, 64px)' }}><Body post={post} sty={sty} serif /></div>
     </main>
   )
 }
 function Blanc({ post, backHref, sty }: PP) {
+  const u = cv(post)
+  const ff = (sty.head as any).fontFamily
+  const fill: React.CSSProperties = { position: 'absolute', inset: 0, width: '100%', height: '100%' }
   return (
-    <main className="mx-auto max-w-6xl px-6 pb-24 pt-10">
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-8">
       <Back href={backHref} sty={sty} />
-      <div className="mt-10"><DT post={post} sty={sty} size="clamp(34px,5vw,58px)" /></div>
-      <div className="mt-14 grid gap-12 lg:grid-cols-[340px_1fr]">
-        <div className="self-start lg:sticky lg:top-10"><Pic p={post} ratio="3/4" /></div>
-        <div className="max-w-2xl"><Body post={post} sty={sty} /></div>
+      <p style={{ ...small, fontSize: 14, fontWeight: 700, letterSpacing: '0.2em', color: sty.accent, fontFamily: ff, margin: 'clamp(16px, 2.4vw, 30px) 0 6px' }}>{fmtDate(post.date)}</p>
+      <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.6rem, 7.4vw, 6rem)', lineHeight: 1.05, margin: 0 }}>{post.title}</h1>
+      <div className="grid lg:grid-cols-[36%_1fr]" style={{ marginTop: 'clamp(24px, 3.4vw, 44px)', columnGap: 'clamp(28px, 4.4vw, 56px)', rowGap: 32 }}>
+        <div className="relative aspect-[3/4] lg:aspect-auto" style={{ background: '#e4e2de' }}>
+          {u
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={u} alt="" className="object-cover" style={fill} />
+            : <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={fill}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg>}
+        </div>
+        <div style={{ maxWidth: 620 }}><Body post={post} sty={sty} serif /></div>
       </div>
     </main>
   )
 }
 function Kenya({ post, backHref, sty }: PP) {
+  const ff = (sty.head as any).fontFamily
   return (
     <>
       <div style={{ position: 'relative', color: '#fff' }}>
-        <Pic p={post} ratio="16/7" style={{ aspectRatio: 'auto', height: 'min(60vh, 560px)' }} />
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(0,0,0,.42)' }}>
-          <DT post={post} sty={sty} center color="#fff" size="clamp(34px,5.5vw,64px)" />
+        <Pic p={post} ratio="16/7" style={{ aspectRatio: 'auto', height: 'clamp(380px, 55vw, 640px)' }} />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', textAlign: 'center', padding: '24px 24px clamp(100px, 13vw, 150px)', background: 'linear-gradient(transparent 40%, rgba(0,0,0,.22))' }}>
+          <p style={{ ...small, fontSize: 14, fontWeight: 500, letterSpacing: '0.3em', fontFamily: ff, margin: '0 0 12px' }}>{fmtDate(post.date)}</p>
+          <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.2rem, 5.6vw, 4.8rem)', lineHeight: 1.1, margin: 0, color: '#fff' }}>{post.title}</h1>
         </div>
       </div>
-      <main className="relative mx-auto max-w-2xl px-6 pb-24">
-        <div style={{ background: sty.bg, marginTop: -80, padding: '44px 44px 12px', boxShadow: '0 20px 50px rgba(0,0,0,.12)', position: 'relative' }}>
+      <main className="relative mx-auto px-6 pb-24" style={{ maxWidth: 1000 }}>
+        <div style={{ background: '#fbf8f4', marginTop: 'clamp(-110px, -12vw, -60px)', padding: 'clamp(24px, 4vw, 44px) clamp(22px, 5vw, 58px) 16px', boxShadow: '0 20px 50px rgba(0,0,0,.14)', borderRadius: 4, position: 'relative' }}>
           <Back href={backHref} sty={sty} />
-          <div className="mt-8"><Body post={post} sty={sty} /></div>
+          <div className="mt-6"><Body post={post} sty={sty} serif /></div>
         </div>
       </main>
     </>
   )
 }
 function Fuji({ post, backHref, sty }: PP) {
+  const ff = (sty.head as any).fontFamily
   return (
-    <main className="mx-auto max-w-5xl px-6 pb-24 pt-10">
+    <main className="mx-auto max-w-6xl px-6 pb-24 pt-6">
       <Back href={backHref} sty={sty} />
-      <div className="mt-10"><DT post={post} sty={sty} center /></div>
-      <div className="mt-10"><Pic p={post} ratio="16/9" /></div>
-      <div className="mt-12 gap-12 lg:columns-2"><Body post={post} sty={sty} size={16} /></div>
+      <p style={{ ...small, fontSize: 14, fontWeight: 500, letterSpacing: '0.3em', color: sty.accent, fontFamily: ff, textAlign: 'center', margin: 'clamp(24px, 3.6vw, 44px) 0 14px' }}>{fmtDate(post.date)}</p>
+      <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 5.8vw, 4.9rem)', lineHeight: 1.1, textAlign: 'center', margin: '0 auto', maxWidth: 900 }}>{post.title}</h1>
+      <div style={{ marginTop: 'clamp(24px, 3.4vw, 44px)' }}><Pic p={post} ratio="2/1" /></div>
+      <div className="lg:columns-2" style={{ marginTop: 'clamp(28px, 4vw, 52px)', columnGap: 'clamp(28px, 5vw, 56px)', padding: '0 clamp(0px, 0.6vw, 8px)' }}><Body post={post} sty={sty} serif size={16.5} /></div>
     </main>
   )
 }
 function Cervin({ post, backHref, sty }: PP) {
   const u = cv(post)
+  const ff = (sty.head as any).fontFamily
+  const fill: React.CSSProperties = { position: 'absolute', inset: 0, width: '100%', height: '100%' }
   return (
-    <div className="grid lg:grid-cols-2">
-      <div className="relative lg:sticky lg:top-0 lg:h-screen" style={{ minHeight: '45vh', background: 'rgba(128,128,128,.14)' }}>
-        {u && (
+    <div className="grid lg:grid-cols-[44.7%_1fr]">
+      <div className="relative lg:sticky lg:top-0 lg:h-screen" style={{ minHeight: '55vh', background: '#e4e2de' }}>
+        {u
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={u} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        )}
+          ? <img src={u} alt="" className="object-cover" style={fill} />
+          : <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={fill}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg>}
       </div>
-      <div className="px-8 pb-24 pt-14 lg:px-16">
-        <div className="max-w-xl">
+      <div className="px-6 pb-24 pt-10 lg:px-12">
+        <div style={{ maxWidth: 560 }}>
           <Back href={backHref} sty={sty} />
-          <div className="mt-10"><DT post={post} sty={sty} size="clamp(32px,4vw,50px)" /></div>
-          <div className="mt-10"><Body post={post} sty={sty} /></div>
+          <p style={{ ...small, fontSize: 14, fontWeight: 700, letterSpacing: '0.2em', color: sty.accent, fontFamily: ff, margin: 'clamp(20px, 3vw, 36px) 0 10px' }}>{fmtDate(post.date)}</p>
+          <h1 style={{ ...sty.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 5.5vw, 4.6rem)', lineHeight: 1.08, margin: '0 0 clamp(24px, 3.4vw, 40px)' }}>{post.title}</h1>
+          <Body post={post} sty={sty} serif />
         </div>
       </div>
     </div>

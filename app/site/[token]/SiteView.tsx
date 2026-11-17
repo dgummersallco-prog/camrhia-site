@@ -17,7 +17,7 @@ import { PricingDesign, PR_SEC, PR_PAGE } from './PricingDesigns'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { blogPosts } from '@/lib/blog'
-import { GalleriesSection, GALSEC, GALOWN } from './GalleriesSections'
+import { GalleriesSection, GALSEC, GALOWN, GalleryGarnet } from './GalleriesSections'
 import { SiteNav } from './SiteNav'
 
 const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -450,138 +450,324 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               <div className="overflow-hidden" style={{ aspectRatio: '4/5' }}>{img()}</div>
               <div className="space-y-5">{H()}{P(paras)}<div className="pt-2">{btn()}</div></div>
             </div>)
-          if (ad === 'vega') return out(
-            <div className="mx-auto max-w-3xl text-center">
-              <div className="mx-auto h-56 w-56 overflow-hidden rounded-full">{img()}</div>
-              <div className="mt-8">{H()}</div>
-              <div className="mx-auto mt-6 max-w-2xl space-y-4">{P(paras)}</div>
-              <div className="mt-10 grid grid-cols-3 gap-3">{pp.slice(0, 3).map((u, i) => <div key={i} className="overflow-hidden" style={{ aspectRatio: '4/3' }}>{small(u, {}, 'h-full w-full')}</div>)}</div>
-              <div className="mt-10">{btn()}</div>
-            </div>)
+          if (ad === 'vega') {
+            const ph = <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg>
+            const txt = (k: string, d: string) => String((r as any).site_settings?.text?.[k] ?? d)
+            const sf = (headStyle as any).fontFamily
+            const row: (string | undefined)[] = [pp[1], pp[2], pp[3]]
+            const ratios = ['1.155 / 1', '1 / 1', '1.155 / 1']
+            return out(
+              <div className="mx-auto max-w-6xl text-center">
+                <div className="mx-auto overflow-hidden" style={{ width: 'clamp(220px, 43.5%, 440px)', aspectRatio: '1 / 1', borderRadius: '50%', background: tint }}>{main ? <img src={main} alt="" className="h-full w-full object-cover" style={aboutCrop('side')} /> : ph}</div>
+                <h1 data-name="Heading" className="el-ab_h1" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(3rem, 9vw, 7.4rem)', lineHeight: 1, margin: 'clamp(4px, 1vw, 12px) 0 clamp(14px, 2.4vw, 32px)', color: ink }}>{txt('ab_h1', 'Hi I am ' + firstName)}</h1>
+                <div className="el-about_text mx-auto" data-name="Bio text" style={{ maxWidth: 'min(100%, 720px)' }}>{paras.map((x: string, i: number) => <p key={i} style={{ fontFamily: sf, color: ink, fontSize: 'clamp(1.05rem, 1.9vw, 1.55rem)', lineHeight: 1.4, margin: '0 0 1em' }}>{x}</p>)}</div>
+                <div className="grid" style={{ gridTemplateColumns: '1.155fr 1fr 1.155fr', gap: 'clamp(8px, 1.8vw, 18px)', marginTop: 'clamp(28px, 5vw, 64px)' }}>
+                  {row.map((src, i) => <div key={i} className="overflow-hidden" style={{ aspectRatio: ratios[i], background: tint }}>{src ? <img src={src} alt="" className="h-full w-full object-cover" /> : ph}</div>)}
+                </div>
+                <div style={{ marginTop: 'clamp(20px, 3.4vw, 44px)' }}>{btn(true)}</div>
+              </div>)
+          }
           if (ad === 'orion') {
+            const ph = <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg>
+            const txt = (k: string, d: string) => String((r as any).site_settings?.text?.[k] ?? d)
             const half = Math.ceil(paras.length / 2)
+            const colA = paras.slice(0, half)
+            const colB = paras.slice(half)
+            const sf = (headStyle as any).fontFamily
+            const bigName = String(name ?? '').replace(/\s*photography\s*$/i, '')
+            const ptxt = (list: string[]) => list.map((x: string, i: number) => <p key={i} style={{ fontFamily: sf, color: ink, fontSize: 'clamp(1.05rem, 1.7vw, 1.4rem)', lineHeight: 1.45, margin: '0 0 1.2em' }}>{x}</p>)
+            const hh = (k: string, d: string) => <h2 data-name="Heading" className={'el-' + k} style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(2rem, 3.8vw, 3.2rem)', lineHeight: 1.05, margin: '0 0 clamp(18px, 2.6vw, 34px)', color: ink }}>{txt(k, d)}</h2>
             return out(
               <div className="mx-auto max-w-6xl">
-                <div className="relative overflow-hidden" style={{ aspectRatio: '21/9' }}>
-                  {img()}
-                  <div className="absolute inset-0 bg-black/25" />
-                  <p className="absolute bottom-6 left-8 text-white" style={{ ...headStyle, fontSize: 'clamp(2rem, 6vw, 4.5rem)', lineHeight: 1 }}>{name}</p>
+                <div className="relative overflow-hidden" style={{ aspectRatio: '1003 / 765', background: tint }}>
+                  {main ? <img src={main} alt="" className="h-full w-full object-cover" style={aboutCrop('side')} /> : ph}
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.28) 100%)' }} />
+                  <div className="absolute inset-x-0 text-center" style={{ bottom: '8%' }}>
+                    <h1 data-name="Heading" className="el-ab_h1" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(2.6rem, 9vw, 8rem)', lineHeight: 1, margin: 0, color: '#fff' }}>{txt('ab_h1', bigName)}</h1>
+                    <div className="flex items-center justify-center" style={{ gap: 'clamp(12px, 3vw, 40px)', marginTop: 'clamp(8px, 1.6vw, 24px)' }}>
+                      <span style={{ width: 'clamp(30px, 10vw, 100px)', height: 1, background: 'rgba(255,255,255,0.7)' }} />
+                      <span data-name="Tagline" className="el-ab_tag" style={{ color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5em', fontSize: 'clamp(0.8rem, 2.3vw, 1.7rem)' }}>{txt('ab_tag', 'Photography')}</span>
+                      <span style={{ width: 'clamp(30px, 10vw, 100px)', height: 1, background: 'rgba(255,255,255,0.7)' }} />
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-10 grid gap-10 md:grid-cols-2">
-                  <div className="space-y-4">{P(paras.slice(0, half))}</div>
-                  <div className="space-y-4">{P(paras.slice(half))}<div className="pt-2">{btn()}</div></div>
+                <div className="grid md:grid-cols-2" style={{ marginTop: 'clamp(28px, 5vw, 64px)' }}>
+                  <div style={{ paddingRight: 'clamp(14px, 3.4vw, 56px)' }}><div className="el-about_text" data-name="Bio text">{hh('ab_h2', 'My Story')}{ptxt(colA)}</div></div>
+                  <div style={{ borderLeft: `1px solid ${line}`, paddingLeft: 'clamp(14px, 3.4vw, 56px)' }}>{colB.length > 0 && <div className="el-about_text" data-name="Bio text">{hh('ab_h3', 'The Heart Behind My Work')}{ptxt(colB)}</div>}</div>
+                </div>
+                <div className="text-center" style={{ marginTop: 'clamp(16px, 3vw, 40px)' }}>{btn()}</div>
+              </div>)
+          }
+          if (ad === 'cygnus') {
+            const ph = <svg viewBox="0 0 100 95" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="95" fill="#e4e2de" /><path d="M0 74 L28 40 L44 58 L62 28 L100 74 Z" fill="#c9c6c1" /><circle cx="74" cy="22" r="7" fill="#d3d0cb" /></svg>
+            const txt = (k: string, d: string) => String((r as any).site_settings?.text?.[k] ?? d)
+            const shots = [{ u: main, ar: '0.8 / 1', rot: -4, w: '92%', ml: '0%', mt: 0 }, { u: pp[1] ?? null, ar: '1.1 / 1', rot: 3, w: '90%', ml: '8%', mt: '-9%' }, { u: pp[2] ?? null, ar: '1 / 1', rot: -3, w: '88%', ml: '2%', mt: '-9%' }]
+            return out(
+              <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-[46%_1fr]">
+                <div style={{ padding: '2% 0' }}>{shots.map((sh, i) => (
+                  <div key={i} style={{ width: sh.w, marginLeft: sh.ml, marginTop: sh.mt, transform: `rotate(${sh.rot}deg)`, background: '#fbf8f3', padding: '3.4%', boxShadow: '0 10px 28px rgba(0,0,0,.16)', position: 'relative', zIndex: i + 1 }}>
+                    <div className="overflow-hidden" style={{ aspectRatio: sh.ar, background: tint }}>{sh.u ? <img src={sh.u} alt="" className="h-full w-full object-cover" style={i === 0 ? aboutCrop('side') : undefined} /> : ph}</div>
+                  </div>))}</div>
+                <div style={{ padding: 'clamp(8px, 2vw, 32px)' }}>
+                  <h2 data-name="Heading" className="el-ab_h1 text-center" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(3.4rem, 8vw, 7rem)', lineHeight: 1, margin: 0, color: ink }}>{txt('ab_h1', 'My story')}</h2>
+                  <p data-name="By line" className="el-ab_by mt-5 text-center uppercase" style={{ color: ink, fontSize: 'clamp(0.9rem, 1.8vw, 1.5rem)', letterSpacing: '0.4em' }}>{txt('ab_by', 'By ' + name)}</p>
+                  <div className="mx-auto" style={{ width: 90, height: 2, background: accent, margin: 'clamp(18px, 3vw, 40px) auto' }} />
+                  <div data-name="Bio text" className="el-about_text">{paras.map((x: string, i: number) => <p key={i} style={{ fontFamily: (headStyle as any).fontFamily, color: ink, fontSize: 'clamp(1.1rem, 1.8vw, 1.45rem)', lineHeight: 1.45, margin: '0 0 1.3em' }}>{x}</p>)}</div>
+                  <div className="mt-8">{btn()}</div>
                 </div>
               </div>)
           }
-          if (ad === 'cygnus') return out(
-            <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
-              <div className="relative h-[420px] md:h-[520px]">
-                <div className="absolute left-0 top-0 w-3/5 overflow-hidden shadow-lg" style={{ aspectRatio: '4/5', transform: 'rotate(-3deg)' }}>{img()}</div>
-                {small(pp[1], { aspectRatio: '1/1', transform: 'rotate(3deg)' }, 'absolute right-0 top-10 w-1/2 shadow-lg')}
-                {small(pp[2], { aspectRatio: '4/3', transform: 'rotate(-1deg)' }, 'absolute bottom-0 left-1/4 w-2/5 shadow-lg')}
-              </div>
-              <div className="space-y-5">{H()}{P(paras)}<div className="pt-2">{btn()}</div></div>
-            </div>)
-          if (ad === 'draco') return out(
-            <div className="mx-auto max-w-6xl rounded-2xl p-8 md:p-14" style={{ background: dark, color: '#f3ead8' }}>
-              <div className="grid items-center gap-10 md:grid-cols-2">
-                <div className="space-y-5">
-                  {H({ color: '#f3ead8' })}{P(paras, '#e6dccb')}
-                  {loves.length > 0 && (<ol className="space-y-2 pt-2">{loves.map((x, i) => (<li key={i} className="flex gap-3"><span style={{ color: '#C9A24B' }}>{String(i + 1).padStart(2, '0')}</span><span>{x}</span></li>))}</ol>)}
-                  <div className="pt-2">{btn(true)}</div>
-                </div>
-                <div className="overflow-hidden" style={{ aspectRatio: '4/5' }}>{img()}</div>
-              </div>
-            </div>)
-          if (ad === 'aries') {
-            const parts: [string, string][] = ([['My story', paras[0]], ['What I believe', paras[1]], ["Let's work together", paras[2]]] as [string, string | undefined][]).filter((x): x is [string, string] => !!x[1])
-            const list: [string, string][] = parts.length ? parts : [['My story', p1]]
+          if (ad === 'draco') {
+            const cream = '#f3ead8'
+            const dh = String(aboutSet?.heading ?? '').trim() || ('Hi I am\n' + name)
+            const txt = (k: string, d: string) => String((r as any).site_settings?.text?.[k] ?? d)
             return out(
-              <div className="mx-auto max-w-6xl space-y-16">
-                {list.map(([ttl, txt], i) => (
-                  <div key={i} className="grid items-center gap-10 md:grid-cols-2">
-                    <div className={i % 2 ? 'md:order-2' : ''}><h3 style={{ ...headStyle, fontSize: '1.8rem' }}>{ttl}</h3><p className="el-about_text mt-4 leading-[1.85]" style={{ color: soft, fontSize: fsp('fs-about', 16) }}>{txt}</p></div>
-                    <div className={'overflow-hidden ' + (i % 2 ? 'md:order-1' : '')} style={{ aspectRatio: '4/3' }}>{i === 0 ? img() : small(pp[i], {}, 'h-full w-full')}</div>
+              <div style={{ background: dark, boxShadow: `0 0 0 100vmax ${dark}`, clipPath: 'inset(0 -100vmax)' }}>
+                <div className="mx-auto grid max-w-6xl md:grid-cols-[48%_1fr]">
+                  <div style={{ padding: 'clamp(24px, 4vw, 56px) clamp(16px, 3vw, 44px) clamp(24px, 4vw, 56px) 0' }}>
+                    <h2 data-name="Heading" className="el-about_title" style={{ ...headStyle, color: cream, fontWeight: 400, fontSize: 'clamp(3rem, 6.6vw, 5.8rem)', lineHeight: 1, margin: 0, whiteSpace: 'pre-line' }}>{dh}</h2>
+                    <div style={{ width: 80, height: 3, background: accent, margin: 'clamp(16px, 2.6vw, 34px) 0' }} />
+                    <div data-name="Bio text" className="el-about_text">{paras.map((x: string, i: number) => <p key={i} style={{ fontFamily: (headStyle as any).fontFamily, color: cream, fontSize: 'clamp(1.1rem, 1.9vw, 1.5rem)', lineHeight: 1.4, margin: '0 0 1.3em' }}>{x}</p>)}</div>
+                    {loves.length > 0 && <div style={{ marginTop: 'clamp(24px, 4vw, 52px)' }}>
+                      <p data-name="Loves label" className="el-ab_loves uppercase" style={{ color: cream, fontSize: 'clamp(0.8rem, 1.5vw, 1.2rem)', letterSpacing: '0.4em', margin: '0 0 1.2em' }}>{txt('ab_loves', 'A few things I love')}</p>
+                      {loves.map((x: string, i: number) => (
+                        <div key={i} className="grid items-center" style={{ gridTemplateColumns: 'clamp(46px, 7vw, 72px) 1px 1fr', gap: 'clamp(12px, 2vw, 24px)', marginBottom: 'clamp(16px, 2.4vw, 30px)' }}>
+                          <span style={{ ...headStyle, fontStyle: 'italic', color: accent, fontSize: 'clamp(1.6rem, 3vw, 2.4rem)' }}>{String(i + 1).padStart(2, '0')}</span>
+                          <span aria-hidden="true" style={{ alignSelf: 'stretch', background: accent }} />
+                          <span className="el-about_loves" style={{ fontFamily: (headStyle as any).fontFamily, color: cream, fontSize: 'clamp(1rem, 1.7vw, 1.35rem)', lineHeight: 1.3 }}>{x}</span>
+                        </div>))}
+                    </div>}
+                    <div style={{ marginTop: 'clamp(16px, 3vw, 40px)' }}><a data-name="About button" href={btnHref} className="cr-btn inline-block px-8 py-3 text-[12px] uppercase tracking-[0.25em]" style={{ border: `1px solid ${accent}`, color: cream, background: 'transparent' }}>{btnText} &rarr;</a></div>
                   </div>
-                ))}
-                <div className="text-center">{btn()}</div>
+                  <div className="relative min-h-[420px] overflow-hidden" style={{ background: '#3a2c22' }}>
+                    {main ? <img src={main} alt="" className="absolute inset-0 h-full w-full object-cover" style={aboutCrop('side')} /> : <svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid slice" className="absolute inset-0" style={{ width: '100%', height: '100%' }}><rect width="100" height="150" fill="#e4e2de" /><path d="M0 112 L28 64 L44 92 L62 48 L100 112 Z" fill="#c9c6c1" /><circle cx="74" cy="34" r="8" fill="#d3d0cb" /></svg>}
+                  </div>
+                </div>
               </div>)
+          }
+          if (ad === 'aries') {
+            const ph = (ar: string) => <svg viewBox="0 0 100 95" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="95" fill="#e4e2de" /><path d="M0 74 L28 40 L44 58 L62 28 L100 74 Z" fill="#c9c6c1" /><circle cx="74" cy="22" r="7" fill="#d3d0cb" /></svg>
+            const txt = (k: string, d: string) => String((r as any).site_settings?.text?.[k] ?? d)
+            const rows = [
+              { h: txt('ab_h1', 'My story'), hk: 'ab_h1', body: p1, u: main },
+              { h: txt('ab_h2', 'What I believe'), hk: 'ab_h2', body: rest[0] ?? '', u: pp[1] ?? null },
+              { h: txt('ab_h3', "Let's work together"), hk: 'ab_h3', body: txt('ab_p3', "If you're looking for a photographer who values connection, keeps things comfortable, and cares about telling your story, I'd love to hear from you. Let's create something meaningful together."), u: pp[2] ?? null, cta: true },
+            ]
+            return out(
+              <div className="mx-auto max-w-6xl">{rows.map((row, i) => (
+                <div key={i} className="grid items-stretch md:grid-cols-2" style={{ background: i === 1 ? tint : 'transparent' }}>
+                  <div className="overflow-hidden" style={{ order: i === 1 ? 2 : 1, aspectRatio: '1.05 / 1', background: tint }}>
+                    {row.u ? <img src={row.u} alt="" className="h-full w-full object-cover" style={i === 0 ? aboutCrop('side') : undefined} /> : ph('1.05 / 1')}
+                  </div>
+                  <div className="flex flex-col justify-center" style={{ order: i === 1 ? 1 : 2, padding: 'clamp(24px, 5vw, 72px)' }}>
+                    <h2 data-name="Heading" className={'el-' + row.hk} style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(2.4rem, 5vw, 4.4rem)', lineHeight: 1.05, margin: 0, color: ink }}>{row.h}</h2>
+                    <div style={{ width: 80, height: 2, background: accent, margin: 'clamp(16px, 2.4vw, 30px) 0' }} />
+                    {row.body && <p data-name={row.cta ? 'Invitation text' : 'Bio text'} className={row.cta ? 'el-ab_p3' : 'el-about_text'} style={{ fontFamily: (headStyle as any).fontFamily, color: ink, fontSize: 'clamp(1.1rem, 1.9vw, 1.5rem)', lineHeight: 1.45, margin: 0, whiteSpace: 'pre-line' }}>{row.body}</p>}
+                    {row.cta && <div className="mt-8">{btn()}</div>}
+                  </div>
+                </div>))}</div>)
           }
           if (ad === 'libra') {
-            const sentences: string[] = p1.match(/[^.!?]+[.!?]+\s*/g) ?? [p1]
-            const quote = (sentences[0] ?? p1).trim()
-            const remaining: string[] = [sentences.slice(1).join('').trim(), ...rest].filter(Boolean)
+            const ph = <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg>
+            const txt = (k: string, d: string) => String((r as any).site_settings?.text?.[k] ?? d)
+            const half = Math.ceil(paras.length / 2)
+            const colA = paras.slice(0, half)
+            const colB = paras.slice(half)
+            const sf = (headStyle as any).fontFamily
+            const ptxt = (list: string[]) => list.map((x: string, i: number) => <p key={i} style={{ fontFamily: sf, color: ink, fontSize: 'clamp(1.05rem, 1.7vw, 1.4rem)', lineHeight: 1.45, margin: '0 0 1.3em' }}>{x}</p>)
+            const hh = (k: string, d: string) => <><h2 data-name="Heading" className={'el-' + k} style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(2rem, 3.8vw, 3.2rem)', lineHeight: 1.05, margin: 0, color: ink }}>{txt(k, d)}</h2><div style={{ width: 64, height: 2, background: accent, margin: 'clamp(14px, 2vw, 26px) 0 clamp(18px, 2.6vw, 34px)' }} /></>
             return out(
-              <div className="mx-auto max-w-5xl">
-                <p className="text-center italic" style={{ ...headStyle, fontSize: 'clamp(1.6rem, 3.6vw, 2.8rem)', lineHeight: 1.2 }}>&ldquo;{quote}&rdquo;</p>
-                <div className="mt-12 grid gap-10 md:grid-cols-[240px_1fr]">
-                  <div className="overflow-hidden" style={{ aspectRatio: '3/4' }}>{img()}</div>
-                  <div className="md:columns-2 md:gap-10">{remaining.map((x, i) => <p key={i} className="el-about_text mb-4 leading-[1.85]" style={{ color: soft, fontSize: fsp('fs-about', 16) }}>{x}</p>)}<div className="pt-2">{btn()}</div></div>
+              <div className="mx-auto max-w-6xl">
+                <blockquote data-name="Quote" className="el-ab_quote" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(2.4rem, 6.4vw, 6rem)', lineHeight: 1.05, margin: 0, color: ink, paddingLeft: '0.45em', textIndent: '-0.45em' }}>&ldquo;{txt('ab_quote', "I'm here to capture the real, the honest, and the beautifully ordinary.")}&rdquo;</blockquote>
+                <div style={{ width: '10%', minWidth: 60, height: 2, background: accent, margin: 'clamp(20px, 3.4vw, 46px) auto clamp(24px, 4vw, 56px)' }} />
+                <div className="grid items-stretch md:grid-cols-[30%_1fr_1fr]" style={{ gap: 'clamp(16px, 3vw, 44px)' }}>
+                  <div className="overflow-hidden" style={{ aspectRatio: '0.4 / 1', background: tint }}>{main ? <img src={main} alt="" className="h-full w-full object-cover" style={aboutCrop('side')} /> : ph}</div>
+                  <div className="flex flex-col"><div className="el-about_text" data-name="Bio text">{hh('ab_h1', 'About Me')}{ptxt(colA)}</div>
+                    <p data-name="Signature" className="el-ab_sig mt-auto" style={{ fontFamily: "'Snell Roundhand','Segoe Script','Apple Chancery','Brush Script MT',cursive", color: ink, fontSize: 'clamp(2rem, 4.2vw, 3.6rem)', lineHeight: 1.1, transform: 'rotate(-3deg)', transformOrigin: 'left center', margin: '1em 0 0' }}>{txt('ab_sig', name)}</p></div>
+                  <div className="flex flex-col" style={{ borderLeft: `1px solid ${line}`, paddingLeft: 'clamp(14px, 2.4vw, 34px)' }}>{colB.length > 0 && <div className="el-about_text" data-name="Bio text">{hh('ab_h2', 'My Approach')}{ptxt(colB)}</div>}
+                    <div className="mt-auto pt-6">{btn()}</div></div>
                 </div>
               </div>)
           }
-          if (ad === 'pavo') return out(
-            <div className="mx-auto grid max-w-6xl items-start gap-10 md:grid-cols-2">
-              <div className="overflow-hidden" style={{ aspectRatio: '3/4' }}>{img()}</div>
-              <div className="space-y-5">
-                {H()}{P([p1])}
-                {facts.length > 0 && (<dl className="divide-y divide-black/10">{facts.map((f, i) => (<div key={i} className="flex justify-between gap-6 py-3 text-sm"><dt style={{ color: soft }}>{f.q}</dt><dd className="text-right" style={{ color: ink }}>{f.a}</dd></div>))}</dl>)}
-                {P(rest)}<div className="pt-2">{btn()}</div>
+          if (ad === 'pavo') {
+            const ph = <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg>
+            const tx: any = (r as any).site_settings?.text ?? {}
+            const txt = (k: string, d: string) => String(tx[k] ?? d)
+            const sf = (headStyle as any).fontFamily
+            const bigName = String(name ?? '').replace(/\s*photography\s*$/i, '')
+            const ic = (kind: number) => {
+              const c = { fill: 'none', stroke: accent, strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+              return <svg viewBox="0 0 40 40" width="40" height="40" style={{ flex: 'none' }}>
+                {kind === 0 && <g {...c}><rect x="5" y="12" width="30" height="21" rx="3" /><path d="M13 12l2-4h10l2 4" /><circle cx="20" cy="22" r="6" /></g>}
+                {kind === 1 && <g {...c}><path d="M7 15h22v8a8 8 0 0 1-8 8h-6a8 8 0 0 1-8-8z" /><path d="M29 17h3a3 3 0 0 1 0 6h-3" /><path d="M10 35h18" /></g>}
+                {kind === 2 && <g {...c}><path d="M5 22l9-2 9-11 4 1-5 11 9 1 3-3 2 1-2 4 2 4-2 1-3-3-9 1 5 11-4 1-9-11-9-2z" transform="scale(0.8) translate(4 4)" /></g>}
+                {kind === 3 && <g {...c}><path d="M20 33S6 24 6 15a7 7 0 0 1 14-2 7 7 0 0 1 14 2c0 9-14 18-14 18z" /></g>}
+                {kind === 4 && <g {...c}><path d="M3 30l9-12 5 6 7-11 13 17z" transform="translate(0 -2)" /><path d="M24 13l3 4" /></g>}
+              </svg>
+            }
+            const facts: [string, string, string, string][] = [
+              ['ab_f1t', 'Favorite lens', 'ab_f1d', '35mm — it’s versatile and feels the most natural to me.'],
+              ['ab_f2t', 'Coffee order', 'ab_f2d', 'Iced vanilla latte, always.'],
+              ['ab_f3t', 'Dream location', 'ab_f3d', 'Tuscany, Italy.'],
+              ['ab_f4t', 'What I love most', 'ab_f4d', 'Working with kind, laid-back people who value real moments.'],
+              ['ab_f5t', 'Outside of photography', 'ab_f5d', 'Hiking, cooking new recipes, and planning my next trip.'],
+            ]
+            const shown = facts.map((f, i) => ({ f, i })).filter(({ f }) => isPreview || tx[f[0]] != null || tx[f[2]] != null)
+            return out(
+              <div className="mx-auto max-w-6xl">
+                <div className="grid md:grid-cols-[46.5%_1fr] items-stretch" style={{ gap: 'clamp(20px, 4vw, 48px)' }}>
+                  <div className="overflow-hidden" style={{ minHeight: 'clamp(320px, 60vw, 700px)', background: tint }}>{main ? <img src={main} alt="" className="h-full w-full object-cover" style={aboutCrop('side')} /> : ph}</div>
+                  <div className="flex flex-col" style={{ paddingTop: 'clamp(0px, 1vw, 16px)' }}>
+                    <p data-name="Greeting" className="el-ab_hi" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.8rem, 4vw, 3.6rem)', lineHeight: 1.05, margin: 0, color: ink }}>{txt('ab_hi', 'Hi, I’m')}</p>
+                    <h1 data-name="Heading" className="el-ab_h1" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(2.6rem, 6vw, 5.4rem)', lineHeight: 1.02, margin: 0, color: ink }}>{txt('ab_h1', bigName)}</h1>
+                    <div style={{ width: 80, height: 2, background: accent, margin: 'clamp(16px, 2.6vw, 34px) 0 clamp(16px, 2.6vw, 30px)' }} />
+                    <div className="el-about_text" data-name="Bio text">{paras.map((x: string, i: number) => <p key={i} style={{ fontFamily: sf, color: ink, fontSize: 'clamp(1.05rem, 1.9vw, 1.6rem)', lineHeight: 1.4, margin: '0 0 1em' }}>{x}</p>)}</div>
+                    <div className="flex items-center" style={{ gap: 'clamp(14px, 2vw, 28px)', margin: 'clamp(16px, 2.6vw, 34px) 0 clamp(8px, 1.4vw, 16px)' }}>
+                      <h2 data-name="Heading" className="el-ab_h2" style={{ fontFamily: "'Snell Roundhand','Segoe Script','Apple Chancery','Brush Script MT',cursive", fontWeight: 400, fontSize: 'clamp(2.2rem, 4.6vw, 4.2rem)', lineHeight: 1.1, margin: 0, color: ink }}>{txt('ab_h2', 'Quick Facts')}</h2>
+                      <span style={{ flex: 1, height: 1, background: ink, opacity: 0.6 }} />
+                    </div>
+                    <div>
+                      {shown.map(({ f, i }, n) => (
+                        <div key={i} className="flex items-start" style={{ gap: 'clamp(14px, 2.4vw, 30px)', padding: 'clamp(12px, 1.8vw, 22px) 0', borderBottom: n < shown.length - 1 ? `1px solid ${line}` : 'none' }}>
+                          <div style={{ width: 56, display: 'flex', justifyContent: 'center', paddingTop: 4 }}>{ic(i)}</div>
+                          <div>
+                            <p data-name="Fact title" className={'el-' + f[0]} style={{ ...headStyle, fontStyle: 'italic', fontWeight: 600, fontSize: 'clamp(1.2rem, 2.1vw, 1.8rem)', lineHeight: 1.15, margin: 0, color: ink }}>{txt(f[0], f[1])}</p>
+                            <p data-name="Fact text" className={'el-' + f[2]} style={{ fontFamily: sf, color: ink, fontSize: 'clamp(1rem, 1.6vw, 1.3rem)', lineHeight: 1.35, margin: '4px 0 0' }}>{txt(f[2], f[3])}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-center" style={{ marginTop: 'clamp(18px, 3vw, 44px)' }}>{btn()}</div>
+                  </div>
+                </div>
+              </div>)
+          }
+          if (ad === 'lynx') {
+            const ph = <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg>
+            const txt = (k: string, d: string) => String((r as any).site_settings?.text?.[k] ?? d)
+            const pool = paras.length > 1 ? paras.slice(1) : paras
+            const half = Math.ceil(pool.length / 2)
+            const colA = pool.slice(0, half)
+            const colB = pool.slice(half)
+            const sf = (headStyle as any).fontFamily
+            const ptxt = (list: string[]) => list.map((x: string, i: number) => <p key={i} style={{ fontFamily: sf, color: ink, fontSize: 'clamp(1.05rem, 1.7vw, 1.4rem)', lineHeight: 1.45, margin: '0 0 1.2em' }}>{x}</p>)
+            const hh = (k: string, d: string) => <><h2 data-name="Heading" className={'el-' + k} style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(2rem, 3.8vw, 3.2rem)', lineHeight: 1.05, margin: 0, color: ink }}>{txt(k, d)}</h2><div style={{ width: 60, height: 2, background: accent, margin: 'clamp(14px, 2vw, 26px) 0 clamp(18px, 2.6vw, 34px)' }} /></>
+            return out(
+              <div className="mx-auto max-w-6xl">
+                <div className="relative">
+                  <div className="overflow-hidden" style={{ aspectRatio: '1003 / 965', background: tint }}>{main ? <img src={main} alt="" className="h-full w-full object-cover" style={aboutCrop('side')} /> : ph}</div>
+                  <div className="md:absolute" style={{ left: '2.4%', bottom: '2.6%', width: 'min(100%, 48.8%)', background: tint, padding: 'clamp(20px, 3.4vw, 56px)', boxSizing: 'border-box' }}>
+                    <div style={{ width: 64, height: 2, background: accent, marginBottom: 'clamp(12px, 2vw, 26px)' }} />
+                    <h1 data-name="Heading" className="el-ab_h1" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(2.2rem, 4.6vw, 4.2rem)', lineHeight: 1.05, margin: 0, color: ink }}>{txt('ab_h1', 'Hi we are ' + name)}</h1>
+                    <div className="el-about_text" data-name="Bio text" style={{ margin: 'clamp(14px, 2.2vw, 30px) 0 clamp(16px, 2.4vw, 34px)' }}><p style={{ fontFamily: sf, color: ink, fontSize: 'clamp(1rem, 1.6vw, 1.3rem)', lineHeight: 1.4, margin: 0 }}>{paras[0] ?? ''}</p></div>
+                    {btn()}
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2" style={{ marginTop: 'clamp(28px, 5vw, 72px)' }}>
+                  <div style={{ paddingRight: 'clamp(14px, 3.4vw, 56px)' }}><div className="el-about_text" data-name="Bio text">{hh('ab_h2', 'Our Story')}{ptxt(colA)}</div></div>
+                  <div style={{ borderLeft: `1px solid ${line}`, paddingLeft: 'clamp(14px, 3.4vw, 56px)' }}>{colB.length > 0 && <div className="el-about_text" data-name="Bio text">{hh('ab_h3', 'What We Love')}{ptxt(colB)}</div>}</div>
+                </div>
+              </div>)
+          }
+          if (ad === 'hydra') {
+            const ph = <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg>
+            const txt = (k: string, d: string) => String((r as any).site_settings?.text?.[k] ?? d)
+            const sv = (k: string, d: string) => String((r as any).site_settings?.text?.[k] ?? (isPreview ? d : ''))
+            const stats = [[sv('ab_n1', '12'), sv('ab_l1', 'Years behind the lens'), 'ab_n1', 'ab_l1'], [sv('ab_n2', '160+'), sv('ab_l2', 'Couples photographed'), 'ab_n2', 'ab_l2'], [sv('ab_n3', '18'), sv('ab_l3', 'Countries visited'), 'ab_n3', 'ab_l3']].filter((x) => x[0].trim())
+            const strip = pickPics(8) as any[]
+            const hn = String(aboutSet?.heading ?? '').trim() || name
+            return out(
+              <div className="mx-auto max-w-6xl">
+                <div className="grid items-center md:grid-cols-[46%_1fr]" style={{ gap: 'clamp(20px, 4vw, 56px)' }}>
+                  <div className="overflow-hidden" style={{ aspectRatio: '0.64 / 1', background: tint }}>{main ? <img src={main} alt="" className="h-full w-full object-cover" style={aboutCrop('side')} /> : ph}</div>
+                  <div>
+                    <p data-name="Greeting" className="el-ab_hi" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.8rem, 3.6vw, 3.2rem)', lineHeight: 1.1, margin: 0, color: ink }}>{txt('ab_hi', "Hi, I'm")}</p>
+                    <h2 data-name="Heading" className="el-about_title" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(2.8rem, 6vw, 5.4rem)', lineHeight: 1.02, margin: 0, color: ink }}>{hn}</h2>
+                    <div style={{ width: 80, height: 2, background: accent, margin: 'clamp(16px, 2.4vw, 30px) 0' }} />
+                    <div data-name="Bio text" className="el-about_text">{paras.map((x: string, i: number) => <p key={i} style={{ fontFamily: (headStyle as any).fontFamily, color: ink, fontSize: 'clamp(1.1rem, 1.9vw, 1.5rem)', lineHeight: 1.4, margin: '0 0 1.1em' }}>{x}</p>)}</div>
+                    <div className="mt-6">{btn()}</div>
+                  </div>
+                </div>
+                {stats.length > 0 && <div className="grid text-center" style={{ gridTemplateColumns: `repeat(${stats.length}, 1fr)`, borderTop: `1px solid ${line}`, marginTop: 'clamp(24px, 4vw, 56px)', padding: 'clamp(18px, 3vw, 40px) 0' }}>{stats.map((st, i) => (
+                  <div key={i} style={{ borderLeft: i > 0 ? `1px solid ${line}` : undefined, padding: '0 3%' }}>
+                    <p data-name="Stat" className={'el-' + st[2]} style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(3rem, 7vw, 6rem)', lineHeight: 1, margin: 0, color: ink }}>{st[0]}</p>
+                    <p data-name="Stat label" className={'el-' + st[3] + ' uppercase'} style={{ color: ink, fontSize: 'clamp(0.7rem, 1.4vw, 1.2rem)', letterSpacing: '0.3em', marginTop: 10 }}>{st[1]}</p>
+                  </div>))}</div>}
+                <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 'clamp(4px, 0.6vw, 8px)', marginTop: 'clamp(16px, 3vw, 40px)' }}>{[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="overflow-hidden" style={{ aspectRatio: '0.7 / 1', background: tint }}>{strip[4 + i] ? <img src={strip[4 + i]} alt="" className="h-full w-full object-cover" /> : ph}</div>))}</div>
+              </div>)
+          }
+          if (ad === 'saffron') return out(
+            <div className="relative mx-auto grid max-w-6xl items-center overflow-hidden md:aspect-[2/1] md:block" style={{ background: '#ece8e4', color: dark }}>
+              <div className="relative min-h-[320px] overflow-hidden md:absolute md:[left:0] md:[top:0] md:[bottom:0] md:[width:47.5%] md:[-webkit-mask-image:linear-gradient(to_right,#000_86%,transparent)] md:[mask-image:linear-gradient(to_right,#000_86%,transparent)]" style={{ background: 'transparent' }}>
+                {main ? img() : (
+                  <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="300" fill="#d8d0c6" /><circle cx="290" cy="80" r="20" fill="#b8aa98" opacity="0.55" /><path d="M0 300 L110 120 L180 210 L260 100 L400 300 Z" fill="#b8aa98" opacity="0.8" /></svg>
+                )}
               </div>
-            </div>)
-          if (ad === 'lynx') return out(
-            <div className="mx-auto max-w-6xl">
-              <div className="relative">
-                <div className="overflow-hidden" style={{ aspectRatio: '16/8' }}>{img()}</div>
-                <div className="relative max-w-md p-8 md:absolute md:bottom-0 md:left-8 md:translate-y-10" style={{ background: bg }}>
-                  {H({ fontSize: '1.8rem' })}<p className="el-about_text mt-3 leading-[1.8]" style={{ color: soft }}>{p1}</p><div className="mt-5">{btn()}</div>
+              <div className="relative px-6 py-8 md:absolute md:px-0 md:py-0" style={{ left: undefined, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className="md:[margin-left:52.7%] md:[width:44%]">
+                  {H({ color: '#16130f', fontSize: 'clamp(2.2rem, 5vw, 4.6rem)', lineHeight: 1.05 })}
+                  <svg viewBox="0 0 240 12" fill="none" stroke={accent} strokeWidth="3" strokeLinecap="round" style={{ width: 'clamp(110px, 13vw, 230px)', marginTop: 'clamp(6px, 1.2vw, 20px)', marginLeft: '1%' }}><path d="M2 10 C 70 5, 160 3, 238 2" /></svg>
+                  <div className="space-y-2" style={{ marginTop: 'clamp(16px, 3vw, 50px)', fontSize: 'clamp(14px, 1.75vw, 31px)', lineHeight: 1.5 }}>{P(paras, '#2a2a26')}</div>
+                  <a data-name="About button" href={btnHref} className="inline-flex items-center" style={{ ...headStyle, background: accent, color: '#f6f2ea', borderRadius: 'clamp(10px, 1.2vw, 18px)', fontSize: 'clamp(14px, 1.65vw, 28px)', padding: 'clamp(12px, 1.8vw, 28px) clamp(24px, 3.2vw, 56px)', gap: 'clamp(12px, 1.8vw, 30px)', marginTop: 'clamp(18px, 3.4vw, 58px)' }}>{btnText}<span aria-hidden="true">&rarr;</span></a>
                 </div>
               </div>
-              <div className="mt-8 space-y-4 md:mt-24 md:columns-2 md:gap-10 md:space-y-0">{rest.map((x, i) => <p key={i} className="el-about_text mb-4 leading-[1.85]" style={{ color: soft, fontSize: fsp('fs-about', 16) }}>{x}</p>)}</div>
-            </div>)
-          if (ad === 'hydra') return out(
-            <div className="mx-auto max-w-6xl">
-              <div className="grid items-center gap-10 md:grid-cols-2">
-                <div className="overflow-hidden" style={{ aspectRatio: '4/5' }}>{img()}</div>
-                <div className="space-y-5">{H()}{P(paras)}<div className="pt-2">{btn()}</div></div>
-              </div>
-              {stats.length > 0 && (<div className="mt-14 grid gap-6 text-center" style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))` }}>{stats.map((s, i) => (<div key={i}><p style={{ ...headStyle, color: accent, fontSize: 'clamp(2rem, 5vw, 3.5rem)', lineHeight: 1 }}>{s.n}</p><p className="mt-2 text-[11px] uppercase tracking-[0.2em]" style={{ color: soft }}>{s.l}</p></div>))}</div>)}
-              <div className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-4">{pp.map((u, i) => <div key={i} className="overflow-hidden" style={{ aspectRatio: '1/1' }}>{small(u, {}, 'h-full w-full')}</div>)}</div>
-            </div>)
-          if (ad === 'saffron') return out(
-            <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-2">
-              <div className="relative overflow-hidden" style={{ aspectRatio: '4/3' }}>{img()}<div className="pointer-events-none absolute inset-y-0 right-0 w-1/3" style={{ background: `linear-gradient(to right, transparent, ${bg})` }} /></div>
-              <div className="space-y-4">{H({ fontSize: 'clamp(1.8rem, 3.4vw, 2.6rem)' })}{P([p1])}<div className="pt-2">{btn()}</div></div>
             </div>)
           if (ad === 'cumin') return out(
-            <div className="mx-auto max-w-xl text-center">
-              <div className="mx-auto h-28 w-28 overflow-hidden rounded-full">{img()}</div>
-              <div className="mt-6">{H({ fontSize: 'clamp(1.7rem, 3vw, 2.4rem)' })}</div>
-              <div className="mt-4 space-y-3">{P([p1])}</div>
-              <div className="mt-6">{btn()}</div>
+            <div className="mx-auto flex max-w-6xl flex-col items-center justify-center text-center md:aspect-[2/1]" style={{ background: '#ebe6e0', color: dark, padding: 'clamp(24px, 3.2vw, 48px) 16px clamp(24px, 3vw, 44px)' }}>
+              <div className="relative shrink-0 overflow-hidden" style={{ width: 'clamp(150px, 21.2vw, 376px)', aspectRatio: '1 / 1', borderRadius: '9999px', background: '#d8d0c6' }}>
+                {main ? img() : (
+                  <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="200" height="200" fill="#d8d0c6" /><circle cx="140" cy="62" r="14" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L58 92 L98 146 L136 84 L200 200 Z" fill="#b8aa98" opacity="0.8" /></svg>
+                )}
+              </div>
+              {H({ color: '#1f1812', fontSize: 'clamp(2.4rem, 6.2vw, 5.6rem)', lineHeight: 1.05, marginTop: 'clamp(4px, 0.6vw, 10px)' })}
+              <div style={{ width: 'clamp(48px, 6.9vw, 122px)', height: 4, background: accent, marginTop: 'clamp(12px, 2.2vw, 36px)' }} />
+              <div className="space-y-2" style={{ width: '100%', maxWidth: '57.5%', minWidth: 'min(100%, 300px)', marginTop: 'clamp(14px, 2.4vw, 40px)' }}>{P(paras, '#2a2119')}</div>
+              <a data-name="About button" href={btnHref} className="inline-flex items-center justify-center" style={{ ...headStyle, background: accent, color: '#f6f0e4', textTransform: 'uppercase', letterSpacing: '0.16em', fontSize: 'clamp(12px, 1.5vw, 24px)', padding: 'clamp(12px, 1.8vw, 28px) clamp(22px, 3.4vw, 54px)', gap: 'clamp(10px, 1.4vw, 20px)', marginTop: 'clamp(18px, 2.8vw, 46px)' }}>{btnText}<span aria-hidden="true">&rarr;</span></a>
             </div>)
           if (ad === 'clove') return out(
-            <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
-              <div className="space-y-5">{H({ fontSize: 'clamp(2.2rem, 5vw, 3.8rem)' })}{P([p1])}<div className="pt-2">{btn()}</div></div>
-              <div className="relative mx-auto w-full max-w-sm md:ml-auto">
-                <div className="absolute -bottom-4 -right-4 h-full w-4/5" style={{ background: tint }} />
-                <div className="relative overflow-hidden" style={{ aspectRatio: '4/5' }}>{img()}</div>
+            <div className="relative mx-auto grid max-w-6xl items-center overflow-hidden md:aspect-[2/1] md:block" style={{ background: '#f3ece4', color: dark }}>
+              <div className="hidden md:block absolute" style={{ right: 0, top: '8.8%', width: '22.2%', height: '82.2%', background: `color-mix(in srgb, ${accent} 45%, #f3ece4)` }} />
+              <div className="relative order-2 min-h-[300px] overflow-hidden md:absolute md:order-none" style={{ left: '52.7%', width: '35.8%', top: 0, bottom: 0, background: 'transparent' }}>
+                {main ? img() : (
+                  <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#d8cdbf" /><circle cx="300" cy="58" r="16" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b8aa98" opacity="0.8" /></svg>
+                )}
+              </div>
+              <div className="relative md:absolute" style={{ left: '7.6%', width: '45%', top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '28px 0' }}>
+                {H({ color: '#1f1812', fontSize: 'clamp(2.4rem, 6vw, 5rem)', lineHeight: 1.05 })}
+                <svg viewBox="0 0 300 12" fill="none" stroke={accent} strokeWidth="4" strokeLinecap="round" style={{ width: '38%', marginTop: 'clamp(4px, 0.8vw, 12px)' }}><path d="M2 9 C 70 3, 190 2, 298 4" /></svg>
+                <div className="space-y-3" style={{ marginTop: 'clamp(16px, 2.6vw, 38px)' }}>{P(paras, '#2a2119')}</div>
+                <a data-name="About button" href={btnHref} className="inline-flex items-center self-start" style={{ ...headStyle, background: accent, color: '#f6ecd9', fontSize: 'clamp(14px, 1.7vw, 22px)', padding: 'clamp(10px, 1.4vw, 18px) clamp(22px, 3vw, 42px)', gap: 'clamp(10px, 1.4vw, 18px)', marginTop: 'clamp(18px, 3vw, 44px)' }}>{btnText}<span aria-hidden="true">&rarr;</span></a>
               </div>
             </div>)
           if (ad === 'anise') return out(
-            <div className="mx-auto max-w-6xl rounded-2xl p-8 md:p-12" style={{ background: dark, color: '#f3ead8' }}>
-              <div className="grid items-center gap-8 md:grid-cols-[260px_1fr]">
-                <div className="mx-auto w-full max-w-[260px] overflow-hidden" style={{ aspectRatio: '3/4', borderRadius: '9999px 9999px 0 0' }}>{img()}</div>
-                <div className="space-y-4">{H({ color: '#f3ead8' })}{P([p1], '#e6dccb')}<div className="pt-2">{btn(true)}</div></div>
+            <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-[35.5%_1fr] md:aspect-[2/1]" style={{ background: '#2a1510', padding: 'clamp(18px, 5.6%, 56px) 6%', color: '#f3ead8' }}>
+              <div className="relative w-full overflow-hidden" style={{ aspectRatio: '0.8 / 1', borderRadius: '9999px 9999px 0 0', background: '#4a3329' }}>
+                {main ? img() : (
+                  <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#6b5546" /><circle cx="300" cy="58" r="16" fill="#8d7766" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#8d7766" opacity="0.8" /></svg>
+                )}
+              </div>
+              <div style={{ paddingLeft: '4%' }}>
+                {H({ color: '#fbf3e2', fontSize: 'clamp(2.4rem, 5.6vw, 4.6rem)', lineHeight: 1.05 })}
+                <div className="space-y-3" style={{ marginTop: 'clamp(14px, 2vw, 28px)' }}>{P(paras, '#f3ead8')}</div>
+                <a data-name="About button" href={btnHref} className="inline-block" style={{ ...headStyle, border: '1.5px solid #f3ead8', color: '#f3ead8', fontSize: 'clamp(14px, 1.7vw, 22px)', padding: 'clamp(8px, 1.1vw, 14px) clamp(26px, 4.2vw, 58px)', marginTop: 'clamp(18px, 3vw, 42px)' }}>{btnText}</a>
               </div>
             </div>)
           if (ad === 'fennel') return out(
-            <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-2">
-              <div className="mx-auto w-64 bg-white p-3 pb-10 shadow-lg" style={{ transform: 'rotate(-3deg)' }}><div className="overflow-hidden" style={{ aspectRatio: '1/1' }}>{img()}</div></div>
-              <div>
-                <p className="el-about_text italic" style={{ ...headStyle, fontSize: 'clamp(1.4rem, 2.6vw, 2rem)', lineHeight: 1.4 }}>{p1}</p>
-                <p className="mt-4" style={{ ...headStyle, color: accent, fontSize: '1.4rem' }}>&mdash; {firstName}</p>
-                <div className="mt-5">{btn()}</div>
+            <div className="relative mx-auto max-w-6xl overflow-hidden px-5 py-8 md:aspect-[2/1] md:px-0 md:py-0" style={{ background: '#f6f2ee', color: dark }}>
+              <div className="relative mx-auto w-[78%] max-w-[340px] md:absolute md:w-[35.5%] md:max-w-none md:[left:6.4%] md:[top:7.6%]" style={{ transform: 'rotate(-5deg)', background: '#f3f0ec', padding: '5% 5% 0', boxShadow: '0 10px 28px rgba(60,45,30,0.22)', aspectRatio: '0.915 / 1' }}>
+                <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1 / 1', background: '#d8d0c6' }}>
+                  {main ? img() : (
+                    <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="200" height="200" fill="#d8d0c6" /><circle cx="140" cy="62" r="14" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L58 92 L98 146 L136 84 L200 200 Z" fill="#b8aa98" opacity="0.8" /></svg>
+                  )}
+                </div>
+              </div>
+              <div className="relative mt-8 md:absolute md:mt-0 md:[left:45.5%] md:[top:16%] md:[width:51%]">
+                <div style={{ fontFamily: "'Snell Roundhand','Segoe Script','Apple Chancery','Brush Script MT',cursive", fontSize: 'clamp(19px, 2.35vw, 42px)', lineHeight: 1.75, color: '#2a2119' }}>{P(paras, '#2a2119')}</div>
+                <div style={{ marginTop: 'clamp(12px, 3vw, 54px)', marginLeft: '3%' }}>
+                  {H({ color: '#1f1812', fontFamily: "'Snell Roundhand','Segoe Script','Apple Chancery','Brush Script MT',cursive", fontSize: 'clamp(2.6rem, 5.2vw, 5.6rem)', lineHeight: 1, fontWeight: 400 })}
+                  <svg viewBox="0 0 140 12" fill="none" stroke="#1f1812" strokeWidth="1.6" strokeLinecap="round" style={{ width: 'clamp(80px, 7.6vw, 136px)', marginLeft: '2%' }}><path d="M2 10 C 40 8, 92 4, 138 2" /></svg>
+                </div>
               </div>
             </div>)
         }
@@ -647,9 +833,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const gs2 = GALSEC.includes(gs0) ? gs0 : 'sahara'
         const items2 = galleries.slice(0, 6).map((g: any) => {
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
-          return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}` }
+          return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
         })
-        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String(t.titles.portfolio ?? '')} items={items2} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
+        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={items2} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
       }
       case 'portfolio': {
         const rawGal = (r as any).site_settings?.galindex?.layout
@@ -659,9 +845,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         if (page === 'home' && GALSEC.includes(gsd) && list.length > 0) {
           const items = list.map((g: any) => {
             const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
-            return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}` }
+            return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
           })
-          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String(t.titles.portfolio ?? '')} items={items} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
+          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={items} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
         }
         const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
         const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'
@@ -718,101 +904,191 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           <>
             {GL.includes(L) ? (
               <div className="mx-auto" style={{ maxWidth: ['amber', 'garnet'].includes(L) ? 1280 : 1600 }}>
-                {L !== 'jasper' && <h1 className="mb-10 text-center" style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)' }}>{t.titles.portfolio}</h1>}
-                {L === 'jade' && (
-                  <div className="space-y-4">
-                    {list[0] && (() => { const c = gc(list[0]); return (
-                      <a href={c.href} className="group relative block overflow-hidden" style={{ aspectRatio: '21/9', background: '#E5E1DB' }}>{gim(c.u)}{shade}<p className="el-gal_name absolute bottom-5 left-6 text-white" style={{ ...headStyle, fontSize: '2rem' }}>{list[0].title}</p></a>
-                    ) })()}
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-                      {list.slice(1).map((g) => { const c = gc(g); return (
-                        <a key={g.id} href={c.href} className="group block"><div className="relative overflow-hidden" style={{ aspectRatio: '4/3', background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-2 text-center" style={{ ...headStyle, fontSize: '1.25rem' }}>{g.title}</p></a>
-                      ) })}
-                    </div>
-                  </div>
-                )}
-                {L === 'jasper' && (
-                  <div className="px-5 py-12 sm:px-10" style={{ background: '#1a1613', width: '100vw', marginLeft: 'calc(50% - 50vw)' }}>
-                    <h1 className="mb-10 text-center" style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)', color: '#f3ead8' }}>{t.titles.portfolio}</h1>
-                    <div className="mx-auto columns-1 gap-4 sm:columns-3 xl:columns-4 2xl:columns-5" style={{ maxWidth: 1800 }}>
-                      {list.map((g, i) => { const c = gc(g); return (
-                        <a key={g.id} href={c.href} className="group relative mb-4 block break-inside-avoid overflow-hidden" style={{ aspectRatio: ['4/5', '1/1', '3/4'][i % 3], background: '#2b241f' }}>{gim(c.u)}{shade}<p className="el-gal_name absolute bottom-4 left-4 text-white" style={{ ...headStyle, fontSize: '1.4rem' }}>{g.title}</p></a>
-                      ) })}
-                    </div>
-                  </div>
-                )}
-                {L === 'amber' && (
-                  <div className="space-y-12">
-                    {list.map((g, i) => { const c = gc(g); return (
-                      <div key={g.id} className="grid items-center gap-8 md:grid-cols-2">
-                        <a href={c.href} className={'group relative block overflow-hidden ' + (i % 2 ? 'md:order-2' : '')} style={{ aspectRatio: '4/3', background: '#E5E1DB' }}>{gim(c.u)}</a>
-                        <div className={i % 2 ? 'md:order-1 md:text-right' : ''}>
-                          <p className="el-gal_name" style={{ ...headStyle, fontSize: '2rem' }}>{g.title}</p>
-                          {g.line && <p className="el-gal_count mt-1 text-[11px] uppercase tracking-[0.22em]" style={{ color: soft }}>{g.line}</p>}
-                          <a href={c.href} className="mt-4 inline-block border px-5 py-2 text-xs uppercase tracking-[0.2em]" style={{ borderColor: accent, color: accent }}>View</a>
+                {L !== 'jasper' && L !== 'jade' && L !== 'amber' && L !== 'pearl' && L !== 'ruby' && L !== 'topaz' && L !== 'garnet' && L !== 'agate' && L !== 'quartz' && L !== 'moonstone' && <h1 className="mb-10 text-center" style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)' }}>{t.titles.portfolio}</h1>}
+                {L === 'jade' && (() => {
+                  const mt = (<svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#d8cfc4" /><circle cx="300" cy="58" r="16" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b8aa98" opacity="0.8" /></svg>)
+                  return (
+                    <div>
+                      <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, fontSize: 'clamp(2.4rem, 5vw, 4.4rem)', lineHeight: 1.1, margin: '0 0 clamp(14px, 2.6vw, 34px)' }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                      {list[0] && (() => { const c = gc(list[0]); return (
+                        <div className="[--ja:16/9] sm:[--ja:3.02/1]">
+                          <a href={c.href} className="group relative block overflow-hidden" style={{ aspectRatio: 'var(--ja)', background: '#E5E1DB' }}>{c.u ? gim(c.u) : mt}<div className="absolute inset-0" style={{ background: 'linear-gradient(to top right, rgba(30,22,15,.62), transparent 58%)' }} /><p data-name="Gallery name" className="el-gal_name absolute text-white" style={{ ...headStyle, left: '2.9%', bottom: '8%', fontSize: 'clamp(1.5rem, 3.6vw, 3.2rem)', lineHeight: 1.1, margin: 0 }}>{list[0].title}</p></a>
                         </div>
-                      </div>
-                    ) })}
-                  </div>
-                )}
-                {L === 'pearl' && (
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
-                    {list.map((g) => { const c = gc(g); return (
-                      <a key={g.id} href={c.href} className="group block"><div className="relative aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 text-center text-xs uppercase tracking-[0.25em]" style={{ fontFamily: t.body }}>{g.title}</p></a>
-                    ) })}
-                  </div>
-                )}
-                {L === 'ruby' && (
-                  <div className="space-y-1" style={{ width: '100vw', marginLeft: 'calc(50% - 50vw)' }}>
-                    {list.map((g) => { const c = gc(g); return (
-                      <a key={g.id} href={c.href} className="group relative flex items-center justify-center overflow-hidden" style={{ height: 'clamp(240px, 32vw, 520px)', background: '#E5E1DB' }}>{gim(c.u)}<div className="absolute inset-0 bg-black/30" /><p className="el-gal_name relative text-center text-white" style={{ ...headStyle, fontSize: 'clamp(2.2rem, 7vw, 5rem)', lineHeight: 1 }}>{g.title}</p></a>
-                    ) })}
-                  </div>
-                )}
-                {L === 'topaz' && (
-                  <div className="flex flex-wrap justify-center gap-8">
-                    {list.map((g, i) => { const c = gc(g); return (
-                      <a key={g.id} href={c.href} className="group block w-[44%] bg-white p-3 pb-10 shadow-lg transition hover:rotate-0 sm:w-[30%] xl:w-[22%]" style={{ transform: `rotate(${[-3, 2, -1.5, 3][i % 4]}deg)` }}><div className="relative aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 text-center italic text-black" style={{ ...headStyle, fontSize: '1.25rem' }}>{g.title}</p></a>
-                    ) })}
-                  </div>
-                )}
-                {L === 'garnet' && (
-                  <div className="grid items-start gap-10 md:grid-cols-2">
-                    <div className="space-y-3">
-                      {list.map((g, i) => (
-                        <a key={g.id} href={gc(g).href} className="el-gal_name block" style={{ ...headStyle, fontSize: i === 0 ? '2.6rem' : '1.5rem', opacity: i === 0 ? 1 : 0.6 }}>{g.title}</a>
-                      ))}
-                    </div>
-                    {list[0] && (() => { const c = gc(list[0]); return (
-                      <a href={c.href} className="group relative block overflow-hidden" style={{ aspectRatio: '3/4', background: '#E5E1DB' }}>{gim(c.u)}</a>
-                    ) })()}
-                  </div>
-                )}
-                {L === 'agate' && (
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
-                    {list.map((g) => { const c = gc(g); return (
-                      <a key={g.id} href={c.href} className="group block text-center"><div className="relative overflow-hidden" style={{ aspectRatio: '3/4', borderRadius: '9999px 9999px 0 0', background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3" style={{ ...headStyle, fontSize: '1.2rem', color: accent }}>{g.title}</p>{g.line && <p className="el-gal_count text-[10px] uppercase tracking-[0.2em]" style={{ color: soft }}>{g.line}</p>}</a>
-                    ) })}
-                  </div>
-                )}
-                {L === 'quartz' && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6">
-                    {list.map((g) => { const c = gc(g); return (
-                      <a key={g.id} href={c.href} className="group relative block aspect-square overflow-hidden" style={{ background: '#E5E1DB' }}>{gim(c.u)}<p className="el-gal_name absolute inset-x-0 bottom-0 bg-black/55 px-2 py-1.5 text-center text-[11px] uppercase tracking-[0.15em] text-white">{g.title}</p></a>
-                    ) })}
-                  </div>
-                )}
-                {L === 'moonstone' && (
-                  <div className="grid gap-x-10 sm:grid-cols-3">
-                    {[0, 1, 2].map((col) => (
-                      <div key={col} className={'space-y-10 ' + (col === 1 ? 'sm:mt-20' : col === 2 ? 'sm:mt-10' : '')}>
-                        {list.filter((_, i) => i % 3 === col).map((g, j) => { const c = gc(g); return (
-                          <a key={g.id} href={c.href} className="group block"><div className="relative overflow-hidden" style={{ aspectRatio: j % 2 ? '1/1' : '4/5', background: '#E5E1DB' }}>{gim(c.u)}</div><p className="el-gal_name mt-3 italic" style={{ ...headStyle, fontSize: '1.2rem' }}>{g.title}</p></a>
+                      ) })()}
+                      <div className="grid grid-cols-1 sm:grid-cols-2" style={{ columnGap: '2.1%', rowGap: 'clamp(14px, 2.6vw, 34px)', marginTop: 'clamp(14px, 2.9vw, 36px)' }}>
+                        {list.slice(1).map((g) => { const c = gc(g); return (
+                          <a key={g.id} href={c.href} className="group block"><div className="relative overflow-hidden" style={{ aspectRatio: '2.3/1', background: '#E5E1DB' }}>{c.u ? gim(c.u) : mt}</div><p data-name="Gallery name" className="el-gal_name" style={{ ...headStyle, fontSize: 'clamp(1.1rem, 2.1vw, 1.8rem)', lineHeight: 1.2, margin: 0, paddingTop: 'clamp(4px, 0.5vw, 8px)', paddingLeft: '0.3%' }}>{g.title}</p></a>
                         ) })}
                       </div>
-                    ))}
+                    </div>
+                  )
+                })()}
+                {L === 'jasper' && (() => {
+                  const mt = (<svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#2b241f" /><circle cx="300" cy="58" r="16" fill="#4a423a" opacity="0.7" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#4a423a" opacity="0.85" /></svg>)
+                  const PAT: [number, number, number][] = [[481, 443, 3.29], [426, 497, 3.57], [452, 473, 3.29]]
+                  const rest = list.slice(1)
+                  const rows: any[][] = []
+                  for (let k = 0; k < rest.length; k += 2) rows.push(rest.slice(k, k + 2))
+                  const ov = <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,8,6,.62), transparent 45%)' }} />
+                  return (
+                    <div style={{ background: '#171717', width: '100vw', marginLeft: 'calc(50% - 50vw)', padding: 'clamp(18px, 3.2vw, 40px) clamp(14px, 3.2vw, 56px) clamp(24px, 4vw, 70px)' }}>
+                      <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, color: '#f6f1e8', fontSize: 'clamp(2.4rem, 5vw, 4.6rem)', lineHeight: 1.1, margin: '0 0 clamp(14px, 2.6vw, 34px)' }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                      {list[0] && (() => { const c = gc(list[0]); return (
+                        <div className="[--jr:16/9] sm:[--jr:2.365/1]">
+                          <a href={c.href} className="group relative block overflow-hidden" style={{ aspectRatio: 'var(--jr)', background: '#2b241f' }}>{c.u ? gim(c.u) : mt}{ov}<p data-name="Gallery name" className="el-gal_name absolute text-white" style={{ ...headStyle, left: '3%', bottom: '8%', fontSize: 'clamp(1.5rem, 3.6vw, 3.2rem)', lineHeight: 1.1, margin: 0 }}>{list[0].title}</p></a>
+                        </div>
+                      ) })()}
+                      {rows.map((row, ri) => { const pt = PAT[ri % 3]; return (
+                        <div key={ri} className="flex flex-col sm:flex-row sm:[aspect-ratio:var(--r)]" style={{ ['--r' as any]: pt[2], gap: 'clamp(8px, 1.4vw, 16px)', marginTop: 'clamp(8px, 1.4vw, 16px)' }}>
+                          {row.map((g: any, gi: number) => { const c = gc(g); return (
+                            <a key={g.id} href={c.href} className="group relative block aspect-[4/3] overflow-hidden sm:aspect-auto" style={{ flex: `${pt[gi]} 1 0`, background: '#2b241f' }}>{c.u ? gim(c.u) : mt}{ov}<p data-name="Gallery name" className="el-gal_name absolute text-white" style={{ ...headStyle, left: '5%', bottom: '8%', fontSize: 'clamp(1.15rem, 2.7vw, 2.4rem)', lineHeight: 1.1, margin: 0 }}>{g.title}</p></a>
+                          ) })}
+                        </div>
+                      ) })}
+                    </div>
+                  )
+                })()}
+                {L === 'amber' && (() => {
+                  const mt = (<svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#d8cfc4" /><circle cx="300" cy="58" r="16" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b8aa98" opacity="0.8" /></svg>)
+                  const AR = ['1.48/1', '1.69/1', '1.59/1']
+                  return (
+                    <div>
+                      <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, color: ink, fontSize: 'clamp(2.6rem, 6.2vw, 5.6rem)', lineHeight: 1.1, margin: 0 }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                      <div style={{ width: 'clamp(60px, 9.5vw, 120px)', height: 1, background: ink, margin: 'clamp(10px, 1.8vw, 24px) auto clamp(20px, 4.2vw, 56px)' }} />
+                      {list.map((g, i) => { const c = gc(g); const odd = i % 2 === 1; return (
+                        <div key={g.id} className={'grid items-center md:gap-0 ' + (odd ? 'md:grid-cols-[41%_59%]' : 'md:grid-cols-[58%_42%]')} style={{ borderTop: i > 0 ? `1px solid ${line}` : 'none', padding: 'clamp(12px, 2.2vw, 26px) 0' }}>
+                          <a href={c.href} className={'group relative block overflow-hidden ' + (odd ? 'md:order-2' : '')} style={{ aspectRatio: AR[i % 3], background: '#E5E1DB' }}>{c.u ? gim(c.u) : mt}</a>
+                          <div className={odd ? 'md:order-1' : ''} style={{ padding: odd ? '18px 0 0 6%' : '18px 0 0 5%' }}>
+                            <div style={{ width: 'clamp(30px, 5.5vw, 70px)', height: 1, background: ink, marginBottom: 'clamp(14px, 3.4vw, 44px)' }} />
+                            <p data-name="Gallery name" className="el-gal_name" style={{ ...headStyle, color: ink, fontSize: 'clamp(1.8rem, 4.6vw, 4.2rem)', lineHeight: 1.1, margin: 0 }}>{g.title}</p>
+                            {g.line && <p data-name="Gallery count" className="el-gal_count" style={{ color: soft, fontSize: 'clamp(0.65rem, 1.5vw, 1.2rem)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 'clamp(8px, 1.4vw, 18px) 0 0' }}>{g.line}</p>}
+                            <a data-name="View button" href={c.href} className="el-gal_link inline-block" style={{ marginTop: 'clamp(14px, 3vw, 40px)', border: `1px solid ${ink}`, color: ink, fontSize: 'clamp(0.6rem, 1.2vw, 1rem)', letterSpacing: '0.3em', textTransform: 'uppercase', padding: 'clamp(8px, 1vw, 14px) clamp(26px, 5vw, 70px)' }}>View</a>
+                          </div>
+                        </div>
+                      ) })}
+                    </div>
+                  )
+                })()}
+                {L === 'pearl' && (() => {
+                  const mt = (<svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#d8cfc4" /><circle cx="300" cy="58" r="16" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b8aa98" opacity="0.8" /></svg>)
+                  return (
+                    <div>
+                      <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, fontStyle: 'italic', color: ink, fontSize: 'clamp(2.6rem, 5.6vw, 5rem)', lineHeight: 1.1, margin: '0 0 clamp(20px, 5vw, 62px)' }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                      <div className="mx-auto grid grid-cols-1 sm:grid-cols-3" style={{ width: '88%', columnGap: '3.2%', rowGap: 'clamp(20px, 3.4vw, 44px)' }}>
+                        {list.map((g) => { const c = gc(g); return (
+                          <a key={g.id} href={c.href} className="group block"><div className="relative overflow-hidden" style={{ aspectRatio: '1.03/1', background: '#E5E1DB' }}>{c.u ? gim(c.u) : mt}</div><p data-name="Gallery name" className="el-gal_name text-center" style={{ ...headStyle, color: ink, fontSize: 'clamp(0.75rem, 1.5vw, 1.3rem)', letterSpacing: '0.2em', textTransform: 'uppercase', lineHeight: 1.2, margin: 0, paddingTop: 'clamp(8px, 1.4vw, 18px)' }}>{g.title}</p></a>
+                        ) })}
+                      </div>
+                    </div>
+                  )
+                })()}
+                {L === 'ruby' && (() => {
+                  const mt = (<svg viewBox="0 0 400 100" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="100" fill="#cfc5b8" /><circle cx="310" cy="30" r="10" fill="#b8aa98" opacity="0.55" /><path d="M0 100 L110 40 L170 72 L245 28 L400 100 Z" fill="#b8aa98" opacity="0.8" /></svg>)
+                  const BR = ['3.16/1', '3.2/1', '3.6/1', '3.54/1']
+                  return (
+                    <div style={{ width: '100vw', marginLeft: 'calc(50% - 50vw)', padding: '0 1.2vw' }}>
+                      <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, color: ink, fontSize: 'clamp(2.6rem, 6.8vw, 6rem)', lineHeight: 1.1, margin: 0 }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                      <div style={{ width: 'clamp(60px, 9.5vw, 120px)', height: 1, background: ink, margin: 'clamp(8px, 1.6vw, 22px) auto clamp(14px, 2.6vw, 34px)' }} />
+                      <div className="flex flex-col" style={{ gap: '1.3vw' }}>
+                        {list.map((g, i) => { const c = gc(g); return (
+                          <a key={g.id} href={c.href} className="group relative flex items-center overflow-hidden" style={{ aspectRatio: BR[i % 4], minHeight: 150, background: '#E5E1DB' }}>{c.u ? gim(c.u) : mt}<div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(0,0,0,.4), rgba(0,0,0,.08) 62%)' }} /><p data-name="Gallery name" className="el-gal_name relative text-white" style={{ ...headStyle, fontSize: 'clamp(2.2rem, 8.4vw, 7.4rem)', lineHeight: 1, margin: 0, paddingLeft: '6%' }}>{g.title}</p></a>
+                        ) })}
+                      </div>
+                    </div>
+                  )
+                })()}
+                {L === 'topaz' && (() => {
+                  const mt = (<svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#d8cfc4" /><circle cx="300" cy="58" r="16" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b8aa98" opacity="0.8" /></svg>)
+                  const ROT = [-4, 4, 2, -2, -1, 5]
+                  const script = "'Snell Roundhand','Segoe Script','Apple Chancery','Brush Script MT',cursive"
+                  const card = (g: any, i: number) => { const c = gc(g); return (
+                    <a key={g.id} href={c.href} className="group block hover:[--rot:0deg]" style={{ ['--rot' as any]: ROT[i % 6] + 'deg', transform: 'rotate(var(--rot))', transition: 'transform .3s', background: '#f4f1ec', padding: '4.2% 4.2% 0', boxShadow: '0 8px 22px rgba(60,45,30,.25)', marginBottom: '-1.5%', position: 'relative' }}>
+                      <div className="relative overflow-hidden" style={{ aspectRatio: '1.17/1', background: '#E5E1DB' }}>{c.u ? gim(c.u) : mt}</div>
+                      <p data-name="Gallery name" className="el-gal_name text-center" style={{ fontFamily: script, color: '#1f1812', fontSize: 'clamp(1.3rem, 4.4vw, 4rem)', lineHeight: 1.1, margin: 0, padding: 'clamp(8px, 1.8vw, 26px) 0 clamp(8px, 1.8vw, 24px)' }}>{g.title}</p>
+                    </a>
+                  ) }
+                  return (
+                    <div>
+                      <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, color: ink, fontSize: 'clamp(2.6rem, 6.6vw, 6rem)', lineHeight: 1.1, margin: 0 }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                      <div style={{ width: 'clamp(60px, 9.5vw, 120px)', height: 1, background: ink, margin: 'clamp(8px, 1.6vw, 22px) auto clamp(20px, 4vw, 56px)' }} />
+                      <div className="mx-auto grid grid-cols-2 items-start" style={{ width: '92%', columnGap: '2%' }}>
+                        <div>{list.filter((_, i) => i % 2 === 0).map((g, j) => card(g, j * 2))}</div>
+                        <div style={{ marginTop: '4.5%' }}>{list.filter((_, i) => i % 2 === 1).map((g, j) => card(g, j * 2 + 1))}</div>
+                      </div>
+                    </div>
+                  )
+                })()}
+                {L === 'garnet' && (
+                  <div>
+                    <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, color: ink, fontSize: 'clamp(2.6rem, 6.6vw, 6rem)', lineHeight: 1.1, margin: 0 }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                    <div style={{ width: 'clamp(60px, 9.5vw, 120px)', height: 1, background: ink, margin: 'clamp(8px, 1.6vw, 22px) auto clamp(20px, 4vw, 56px)' }} />
+                    <GalleryGarnet items={list.map((g) => { const c = gc(g); return { id: String(g.id), title: String(g.title ?? ''), u: c.u, href: c.href } })} headStyle={headStyle} ink={ink} />
                   </div>
                 )}
+                {L === 'agate' && (() => {
+                  const mt = (<svg viewBox="0 0 300 450" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="300" height="450" fill="#d8cfc4" /><circle cx="220" cy="120" r="20" fill="#b8aa98" opacity="0.55" /><path d="M0 450 L80 230 L140 340 L210 210 L300 450 Z" fill="#b8aa98" opacity="0.8" /></svg>)
+                  return (
+                    <div>
+                      <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, fontStyle: 'italic', color: accent, fontSize: 'clamp(2.8rem, 8vw, 7rem)', lineHeight: 1.1, margin: 0 }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                      <div style={{ width: 'clamp(60px, 12vw, 150px)', height: 1, background: accent, margin: 'clamp(10px, 2vw, 28px) auto clamp(20px, 3.6vw, 48px)' }} />
+                      <div className="mx-auto grid grid-cols-1 sm:grid-cols-3" style={{ width: '95.6%', columnGap: '2.3%', rowGap: 'clamp(24px, 5.7vw, 70px)' }}>
+                        {list.map((g) => { const c = gc(g); const yr = g.line || ((g as any).created_at ? String(new Date((g as any).created_at).getFullYear()) : ''); return (
+                          <a key={g.id} href={c.href} className="group block text-center">
+                            <div className="relative overflow-hidden" style={{ aspectRatio: '2/3', borderRadius: '9999px 9999px 0 0', background: '#E5E1DB' }}>{c.u ? gim(c.u) : mt}</div>
+                            <p data-name="Gallery name" className="el-gal_name" style={{ ...headStyle, color: accent, fontSize: 'clamp(1.1rem, 2.8vw, 2.4rem)', letterSpacing: '0.2em', textTransform: 'uppercase', lineHeight: 1.15, margin: 0, paddingTop: 'clamp(10px, 3.2vw, 40px)' }}>{g.title}</p>
+                            {yr && <div className="flex items-center justify-center" style={{ gap: '1.8%', marginTop: 'clamp(8px, 1.6vw, 22px)' }}><span style={{ width: '20%', height: 1, background: accent }} /><span data-name="Gallery count" className="el-gal_count" style={{ ...headStyle, color: accent, fontSize: 'clamp(0.65rem, 1.5vw, 1.2rem)', letterSpacing: '0.25em' }}>{yr}</span><span style={{ width: '20%', height: 1, background: accent }} /></div>}
+                          </a>
+                        ) })}
+                      </div>
+                    </div>
+                  )
+                })()}
+                {L === 'quartz' && (() => {
+                  const mt = (<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="300" height="400" fill="#d8cfc4" /><circle cx="220" cy="100" r="20" fill="#b8aa98" opacity="0.55" /><path d="M0 400 L80 200 L140 300 L210 180 L300 400 Z" fill="#b8aa98" opacity="0.8" /></svg>)
+                  return (
+                    <div>
+                      <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, color: ink, fontSize: 'clamp(2.6rem, 7vw, 6.4rem)', lineHeight: 1.1, margin: 0 }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                      <div style={{ width: 'clamp(60px, 10.9vw, 130px)', height: 1, background: ink, margin: 'clamp(8px, 1.6vw, 24px) auto clamp(20px, 3.8vw, 52px)' }} />
+                      <div className="mx-auto grid grid-cols-2 sm:grid-cols-4" style={{ width: '97%', gap: 3 }}>
+                        {list.map((g) => { const c = gc(g); return (
+                          <a key={g.id} href={c.href} className="group block">
+                            <div className="relative overflow-hidden" style={{ aspectRatio: '0.76/1', background: '#E5E1DB' }}>{c.u ? gim(c.u) : mt}</div>
+                            <p data-name="Gallery name" className="el-gal_name text-center" style={{ ...headStyle, background: '#5a4a3f', color: '#f3ece2', fontSize: 'clamp(0.85rem, 2.2vw, 1.9rem)', letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1.2, margin: 0, padding: 'clamp(8px, 1.5vw, 20px) 4px' }}>{g.title}</p>
+                          </a>
+                        ) })}
+                      </div>
+                    </div>
+                  )
+                })()}
+                {L === 'moonstone' && (() => {
+                  const mt = (<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="300" fill="#d8cfc4" /><circle cx="300" cy="80" r="20" fill="#b8aa98" opacity="0.55" /><path d="M0 300 L110 120 L180 210 L260 100 L400 300 Z" fill="#b8aa98" opacity="0.8" /></svg>)
+                  const PR = [1.056, 1.069, 1.15, 1.284]
+                  const LR = [1.95, 2.65, 2.7, 2.5]
+                  const nameEl = (g: any, k: number) => (<span data-name="Gallery name" className="el-gal_name" style={{ ...headStyle, fontStyle: 'italic', color: ink, fontSize: 'clamp(1.5rem, 4.4vw, 3.8rem)', lineHeight: 1.1 }}>{g.title}</span>)
+                  const photo = (g: any, k: number) => { const c = gc(g); return (
+                    <a key={g.id + 'p'} href={c.href} className="group relative block overflow-hidden" style={{ aspectRatio: String(PR[k % 4]) + '/1', background: '#E5E1DB' }}>{c.u ? gim(c.u) : mt}</a>
+                  ) }
+                  const label = (g: any, k: number, lineSide: 'left' | 'right') => { const c = gc(g); return (
+                    <a key={g.id + 'l'} href={c.href} className="flex items-center" style={{ aspectRatio: String(LR[k % 4]) + '/1', gap: '4.4%', color: ink, textDecoration: 'none', justifyContent: lineSide === 'right' ? 'flex-end' : 'flex-start' }}>
+                      {lineSide === 'left' && <span style={{ width: '15%', height: 1, background: ink, flexShrink: 0 }} />}
+                      {nameEl(g, k)}
+                      {lineSide === 'right' && <span style={{ width: '30%', height: 1, background: ink, flexShrink: 0 }} />}
+                    </a>
+                  ) }
+                  return (
+                    <div>
+                      <h1 data-name="Page title" className="el-gp_title text-center" style={{ ...headStyle, color: ink, fontSize: 'clamp(2.6rem, 7.6vw, 6.8rem)', lineHeight: 1.1, margin: 0 }}>{String((r as any).site_settings?.text?.gp_title ?? 'Galleries')}</h1>
+                      <div style={{ width: 'clamp(60px, 12.8vw, 130px)', height: 1, background: accent, margin: 'clamp(8px, 1.6vw, 22px) auto clamp(20px, 3.6vw, 48px)' }} />
+                      <div className="md:hidden" style={{ width: '92%', margin: '0 auto' }}>
+                        {list.map((g, k) => (<div key={g.id} style={{ marginBottom: 24 }}>{photo(g, k)}<p className="text-center" style={{ margin: '10px 0 0' }}><a href={gc(g).href} style={{ color: ink }}>{nameEl(g, k)}</a></p></div>))}
+                      </div>
+                      <div className="mx-auto hidden md:grid" style={{ width: '92.4%', gridTemplateColumns: '48.5% 48.5%', columnGap: '3%' }}>
+                        <div>{list.map((g, k) => (k % 2 === 0 ? photo(g, k) : label(g, k, 'right')))}</div>
+                        <div>{list.map((g, k) => (k % 2 === 0 ? label(g, k, 'left') : photo(g, k)))}</div>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             ) : L === 'checker' ? (
               <div>
@@ -1012,77 +1288,132 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const out = (node: React.ReactNode) => sec('words', null, node, tinted)
           const three = list.slice(0, 3)
           if (td === 'linen') return out(
-            <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1fr_1.5fr]">
-              <div>{heading}</div>
-              <div>{three.map((q, i) => (
-                <figure key={i} id={'tm-' + i} className="py-8" style={{ borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
-                  <blockquote className="el-tes_quote leading-[1.7]" style={{ fontFamily: t.head, fontWeight: 300, fontSize: fsp('fs-testi', 20) }}>{q.text}</blockquote>
-                  <figcaption className="mt-4">{who(q.who)}</figcaption>
+            <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-[40%_1fr] md:gap-[3%]">
+              <h2 data-name="Title" className="el-tes_title" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(3.2rem, 10vw, 9.5rem)', lineHeight: 0.92, letterSpacing: '-0.02em', margin: 0, color: ink, whiteSpace: 'pre-line' }}>{String((r as any).site_settings?.text?.tes_title ?? 'Kind\nwords.')}</h2>
+              <div>{list.slice(0, 3).map((q, i) => (
+                <figure key={i} id={'tm-' + i} style={{ margin: 0, padding: 'clamp(16px, 2.8vw, 38px) 0', borderTop: i > 0 ? `1px solid ${accent}` : undefined }}>
+                  <blockquote data-name="Quote" className="el-tes_quote" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(1.2rem, 2.7vw, 2.6rem)', lineHeight: 1.2, margin: 0, color: ink, paddingLeft: '0.6em', textIndent: '-0.6em' }}>&ldquo;{q.text}&rdquo;</blockquote>
+                  {q.who && <p data-name="Name" className="el-tes_name" style={{ color: ink, fontSize: 'clamp(0.65rem, 1.3vw, 1.2rem)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 'clamp(10px, 1.8vw, 24px) 0 0 0.6em' }}>{q.who}</p>}
                 </figure>
               ))}</div>
             </div>)
           if (td === 'velvet') return out(
-            <div className="mx-auto max-w-6xl"><div className="mb-10 text-center">{heading}</div>
-              <div className="grid gap-6 md:grid-cols-3">{three.map((q, i) => (
-                <figure key={i} id={'tm-' + i} className="flex flex-col rounded-2xl p-8" style={{ background: cardBg }}>
-                  {(q.img ?? pics[i]) && <img src={(q.img ?? pics[i]) as string} alt="" className="mb-5 h-16 w-16 rounded-full object-cover" />}
-                  <blockquote className="el-tes_quote flex-1 leading-[1.8]" style={{ fontWeight: 300, fontSize: fsp('fs-testi', 15) }}>{q.text}</blockquote>
-                  <figcaption className="mt-5">{who(q.who)}</figcaption>
-                </figure>
-              ))}</div></div>)
-          if (td === 'silk') { const q = list[0]; const im = (q?.img ?? pics[0]) as string | null; return out(
-            <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
-              <div>
-                <span style={{ ...headStyle, color: accent, fontSize: 90, lineHeight: 0.6, display: 'block' }}>&ldquo;</span>
-                <blockquote className="el-tes_quote mt-4" style={{ ...headStyle, fontWeight: 300, fontSize: 'clamp(1.4rem, 2.8vw, 2.1rem)', lineHeight: 1.4 }}>{q?.text}</blockquote>
-                <div className="mt-6">{who(q?.who ?? '')}</div>
+            <div className="mx-auto max-w-6xl">
+              <div className="flex items-center justify-center gap-[3%]" style={{ marginBottom: 'clamp(20px, 4vw, 56px)' }}>
+                <span className="hidden sm:block" style={{ height: 1, width: '9%', background: ink, opacity: 0.55 }} />
+                <h2 data-name="Title" className="el-tes_title" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(2.4rem, 6.4vw, 6rem)', lineHeight: 1, margin: 0, color: ink, textAlign: 'center' }}>{String((r as any).site_settings?.text?.tes_title ?? 'Kind words')}</h2>
+                <span className="hidden sm:block" style={{ height: 1, width: '9%', background: ink, opacity: 0.55 }} />
               </div>
-              {im && <div className="overflow-hidden" style={{ aspectRatio: '4/5' }}><img src={im} alt="" className="h-full w-full object-cover" /></div>}
-            </div>) }
+              <div className="grid gap-6 md:grid-cols-3" style={{ columnGap: 'clamp(12px, 2.4vw, 34px)' }}>{list.slice(0, 3).map((q, i) => {
+                const im: any = (q as any).img || (pics as any)[i]
+                return (
+                  <figure key={i} id={'tm-' + i} style={{ margin: 0, padding: 'clamp(24px, 3.6vw, 48px) clamp(16px, 2.4vw, 32px)', borderRadius: 'clamp(18px, 2.8vw, 36px)', background: cardBg, textAlign: 'center' }}>
+                    <div style={{ width: '50%', aspectRatio: '1 / 1', margin: '0 auto', borderRadius: '50%', overflow: 'hidden', background: tint }}>
+                      {im ? <img src={typeof im === 'string' ? im : (im.u ?? im)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="100" fill="#e4e2de" /><path d="M0 78 L28 42 L44 62 L62 30 L100 78 Z" fill="#c9c6c1" /><circle cx="74" cy="26" r="7" fill="#d3d0cb" /></svg>}
+                    </div>
+                    <blockquote data-name="Quote" className="el-tes_quote" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(1.15rem, 2.2vw, 2.1rem)', lineHeight: 1.22, margin: 'clamp(14px, 2.4vw, 32px) 0 0', color: ink }}>&ldquo;{q.text}&rdquo;</blockquote>
+                    <div style={{ width: '30%', height: 1, background: accent, margin: 'clamp(16px, 2.6vw, 36px) auto' }} />
+                    {q.who && <p data-name="Name" className="el-tes_name" style={{ color: ink, fontSize: 'clamp(0.65rem, 1.3vw, 1.2rem)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>{q.who}</p>}
+                  </figure>
+                )
+              })}</div>
+            </div>)
+          if (td === 'silk') { const q = list[0]; if (!q) return null; const im: any = (q as any).img || (pics as any)[0]; return out(
+            <figure id="tm-0" className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-[1fr_40%] md:gap-[6%]" style={{ margin: 0 }}>
+              <div>
+                <span aria-hidden="true" style={{ ...headStyle, color: accent, fontSize: 'clamp(6rem, 15vw, 14rem)', lineHeight: 1, display: 'block', height: '0.5em', fontWeight: 700 }}>&ldquo;</span>
+                <blockquote data-name="Quote" className="el-tes_quote" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(1.7rem, 4.6vw, 4.4rem)', lineHeight: 1.12, margin: 'clamp(12px, 2vw, 28px) 0 0', color: ink }}>{q.text}&rdquo;</blockquote>
+                <div style={{ width: 'clamp(50px, 8vw, 140px)', height: 1, background: accent, margin: 'clamp(18px, 3.2vw, 46px) 0' }} />
+                {q.who && <p data-name="Name" className="el-tes_name" style={{ color: ink, fontSize: 'clamp(0.7rem, 1.5vw, 1.4rem)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>{q.who}</p>}
+              </div>
+              <div style={{ aspectRatio: '0.86 / 1', width: '100%', overflow: 'hidden', background: tint }}>
+                {im ? <img src={typeof im === 'string' ? im : (im.u ?? im)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : <svg viewBox="0 0 100 80" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="80" fill="#e4e2de" /><path d="M0 62 L28 30 L44 48 L62 22 L100 62 Z" fill="#c9c6c1" /><circle cx="76" cy="20" r="6" fill="#d3d0cb" /></svg>}
+              </div>
+            </figure>) }
           if (td === 'satin') return out(
-            <div className="mx-auto max-w-6xl"><div className="mb-10 text-center">{heading}</div>
+            <div className="mx-auto max-w-6xl"><div className="flex items-center justify-center gap-[3%]" style={{ marginBottom: 'clamp(20px, 4vw, 56px)' }}>
+                <span className="hidden sm:block" style={{ height: 1, width: '9%', background: accent }} />
+                <h2 data-name="Title" className="el-tes_title" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(2.4rem, 6.4vw, 6rem)', lineHeight: 1, margin: 0, color: ink, textAlign: 'center' }}>{String((r as any).site_settings?.text?.tes_title ?? 'Kind words')}</h2>
+                <span className="hidden sm:block" style={{ height: 1, width: '9%', background: accent }} />
+              </div>
               <TestiSlider mode="satin" list={quotesShown.slice(0, 8)} headStyle={headStyle} ink={ink} soft={soft} accent={accent} card={cardBg} /></div>)
           if (td === 'tweed') return out(
-            <div className="mx-auto max-w-6xl"><div className="mb-10 text-center">{heading}</div>
-              <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">{list.slice(0, 6).map((q, i) => (
-                <figure key={i} id={'tm-' + i} className="mb-4 break-inside-avoid p-6" style={{ background: i % 2 ? tint : cardBg }}>
-                  <blockquote className="el-tes_quote leading-[1.75]" style={{ fontWeight: 300, fontSize: fsp('fs-testi', 15) }}>{q.text}</blockquote>
-                  <figcaption className="mt-4">{who(q.who)}</figcaption>
-                </figure>
-              ))}</div></div>)
-          if (td === 'mohair') { const q = list[0]; return out(
             <div className="mx-auto max-w-6xl">
-              <blockquote className="el-tes_quote" style={{ ...headStyle, fontWeight: 300, fontSize: 'clamp(2rem, 5vw, 4rem)', lineHeight: 1.15 }}>{q?.text}</blockquote>
-              <div className="mt-8 flex items-center justify-end gap-4"><span className="h-px w-10" style={{ background: accent }} />{who(q?.who ?? '')}</div>
-            </div>) }
+              <div className="flex items-center justify-center gap-[3%]" style={{ marginBottom: 'clamp(20px, 4vw, 56px)' }}>
+                <span className="hidden sm:block" style={{ height: 1, width: '9%', background: ink, opacity: 0.55 }} />
+                <h2 data-name="Title" className="el-tes_title" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(2.4rem, 6.4vw, 6rem)', lineHeight: 1, margin: 0, color: ink, textAlign: 'center' }}>{String((r as any).site_settings?.text?.tes_title ?? 'Kind words')}</h2>
+                <span className="hidden sm:block" style={{ height: 1, width: '9%', background: ink, opacity: 0.55 }} />
+              </div>
+              <div className="columns-1 sm:columns-2 lg:columns-3" style={{ columnGap: 'clamp(12px, 2.4vw, 34px)' }}>{list.slice(0, 6).map((q, i) => {
+                const dark = [0, 1, 1, 0, 0, 1][i] === 1
+                const fg = dark ? '#ffffff' : ink
+                return (
+                  <figure key={i} id={'tm-' + i} className="break-inside-avoid" style={{ margin: 0, marginBottom: 'clamp(12px, 2.4vw, 34px)', padding: 'clamp(20px, 3.4vw, 46px) clamp(20px, 3.6vw, 50px)', borderRadius: 'clamp(12px, 1.8vw, 24px)', background: dark ? `color-mix(in srgb, ${accent} 78%, #4a3322)` : cardBg, color: fg }}>
+                    <blockquote data-name="Quote" className="el-tes_quote" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.2rem, 2.4vw, 2.3rem)', lineHeight: 1.2, margin: 0, color: fg }}>&ldquo;{q.text}&rdquo;</blockquote>
+                    <div style={{ width: 'clamp(36px, 5vw, 84px)', height: 1, background: fg, opacity: 0.8, margin: 'clamp(14px, 2.2vw, 30px) 0' }} />
+                    {q.who && <p data-name="Name" className="el-tes_name" style={{ color: fg, fontSize: 'clamp(0.65rem, 1.3vw, 1.2rem)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>{q.who}</p>}
+                  </figure>
+                )
+              })}</div>
+            </div>)
+          if (td === 'mohair') { const q = list[0]; if (!q) return null; return out(
+            <figure id="tm-0" className="mx-auto max-w-6xl" style={{ margin: 0 }}>
+              <blockquote data-name="Quote" className="el-tes_quote" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(1.7rem, 5.6vw, 5.4rem)', lineHeight: 1.12, margin: 0, color: ink, textAlign: 'center' }}>&ldquo;{String(q.text).split(/\*([^*]+)\*/).map((seg, k) => k % 2 ? <em key={k}>{seg}</em> : seg)}&rdquo;</blockquote>
+              {q.who && <div className="flex items-center justify-end gap-[2%]" style={{ marginTop: 'clamp(24px, 6vw, 80px)' }}>
+                <span style={{ height: 1, width: 'clamp(40px, 9vw, 150px)', background: ink }} />
+                <p data-name="Name" className="el-tes_name" style={{ color: ink, fontSize: 'clamp(0.7rem, 1.5vw, 1.4rem)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>{q.who}</p>
+              </div>}
+            </figure>) }
           if (td === 'lace') return out(
-            <div className="mx-auto max-w-6xl"><div className="mb-10 text-center">{heading}</div>
-              <div className="grid gap-8 md:grid-cols-3">{three.map((q, i) => (
-                <figure key={i} id={'tm-' + i}>
-                  {(q.img ?? pics[i]) && <div className="mb-5 overflow-hidden" style={{ aspectRatio: '4/5' }}><img src={(q.img ?? pics[i]) as string} alt="" className="h-full w-full object-cover" /></div>}
-                  <blockquote className="el-tes_quote italic leading-[1.7]" style={{ ...headStyle, fontWeight: 300, fontSize: fsp('fs-testi', 18) }}>{q.text}</blockquote>
-                  <figcaption className="mt-3">{who(q.who)}</figcaption>
-                </figure>
-              ))}</div></div>)
+            <div className="mx-auto max-w-6xl">
+              <div className="flex items-center justify-center gap-[3%]" style={{ marginBottom: 'clamp(20px, 4vw, 56px)' }}>
+                <span className="hidden sm:block" style={{ height: 1, width: '9%', background: accent }} />
+                <h2 data-name="Title" className="el-tes_title" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(2.4rem, 6.4vw, 6rem)', lineHeight: 1, margin: 0, color: ink, textAlign: 'center' }}>{String((r as any).site_settings?.text?.tes_title ?? 'Kind words')}</h2>
+                <span className="hidden sm:block" style={{ height: 1, width: '9%', background: accent }} />
+              </div>
+              <div className="grid gap-10 md:grid-cols-3" style={{ columnGap: '4%' }}>{list.slice(0, 3).map((q, i) => {
+                const im = (q as any).img || (pics as any)[i]
+                return (
+                  <figure key={i} id={'tm-' + i} style={{ margin: 0, textAlign: 'center' }}>
+                    <div style={{ aspectRatio: '1.2 / 1', width: '100%', overflow: 'hidden', background: tint }}>
+                      {im ? <img src={typeof im === 'string' ? im : (im.u ?? im)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : <svg viewBox="0 0 100 80" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}><rect width="100" height="80" fill="#e4e2de" /><path d="M0 62 L28 30 L44 48 L62 22 L100 62 Z" fill="#c9c6c1" /><circle cx="76" cy="20" r="6" fill="#d3d0cb" /></svg>}
+                    </div>
+                    <blockquote data-name="Quote" className="el-tes_quote" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.2rem, 2.3vw, 2.2rem)', lineHeight: 1.25, margin: 'clamp(16px, 2.6vw, 34px) 4% 0', color: ink }}>&ldquo;{q.text}&rdquo;</blockquote>
+                    <div style={{ width: '26%', height: 1, background: accent, margin: 'clamp(14px, 2.4vw, 32px) auto' }} />
+                    {q.who && <p data-name="Name" className="el-tes_name" style={{ color: ink, fontSize: 'clamp(0.7rem, 1.4vw, 1.3rem)', letterSpacing: '0.35em', textTransform: 'uppercase', margin: 0 }}>{q.who}</p>}
+                  </figure>
+                )
+              })}</div>
+            </div>)
           if (td === 'wool') return out(
-            <div className="mx-auto max-w-6xl"><div className="mb-8">{heading}</div>
+            <div className="mx-auto max-w-6xl"><div className="flex items-center gap-[3%]" style={{ marginBottom: 'clamp(20px, 4vw, 56px)' }}>
+                <h2 data-name="Title" className="el-tes_title" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(2.4rem, 6.4vw, 6rem)', lineHeight: 1, margin: 0, color: ink }}>{String((r as any).site_settings?.text?.tes_title ?? 'What clients say.')}</h2>
+                <span className="hidden sm:block" style={{ height: 1, flex: 1, maxWidth: '26%', background: accent }} />
+              </div>
               <TestiSlider mode="wool" list={quotesShown.slice(0, 12)} headStyle={headStyle} ink={ink} soft={soft} accent={accent} card={cardBg} /></div>)
           if (td === 'cotton') return out(
-            <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[140px_1fr]">
-              <span style={{ ...headStyle, color: accent, opacity: 0.45, fontSize: 150, lineHeight: 0.8 }}>&ldquo;</span>
-              <div className="grid gap-x-12 gap-y-10 sm:grid-cols-2">{list.slice(0, 4).map((q, i) => (
-                <figure key={i} id={'tm-' + i}>
-                  <blockquote className="el-tes_quote leading-[1.7]" style={{ ...headStyle, fontWeight: 300, fontSize: fsp('fs-testi', 18) }}>{q.text}</blockquote>
-                  <figcaption className="mt-3">{who(q.who)}</figcaption>
+            <div className="mx-auto grid max-w-6xl items-center gap-6 md:grid-cols-[26%_1fr] md:gap-0">
+              <span aria-hidden="true" style={{ ...headStyle, color: accent, fontSize: 'clamp(7rem, 24vw, 22rem)', lineHeight: 0.8, display: 'block', height: '0.55em', paddingLeft: '2%' }}>&ldquo;</span>
+              <div className="grid sm:grid-cols-2" style={{ columnGap: '6%', rowGap: 'clamp(16px, 2.4vw, 32px)' }}>{list.slice(0, 4).map((q, i) => (
+                <figure key={i} id={'tm-' + i} style={{ margin: 0, paddingBottom: i < 2 ? 'clamp(14px, 2.6vw, 36px)' : 0, borderBottom: i < 2 ? `1px solid ${accent}` : undefined }}>
+                  <blockquote data-name="Quote" className="el-tes_quote" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(1.25rem, 3vw, 2.8rem)', lineHeight: 1.2, margin: 0, color: ink }}>&ldquo;{q.text}&rdquo;</blockquote>
+                  {q.who && <p data-name="Name" className="el-tes_name" style={{ color: ink, fontSize: 'clamp(0.65rem, 1.4vw, 1.3rem)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 'clamp(10px, 2vw, 26px) 0 0 2%' }}>{q.who}</p>}
                 </figure>
               ))}</div>
             </div>)
-          { const q = list[0]; const im = (q?.img ?? pics[0]) as string | null; return out(
-            <div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
-              {im && <div className="mx-auto w-64 bg-white p-3 pb-10 shadow-lg" style={{ transform: 'rotate(-3deg)' }}><div className="overflow-hidden" style={{ aspectRatio: '1/1' }}><img src={im} alt="" className="h-full w-full object-cover" /></div></div>}
-              <div>
-                <blockquote className="el-tes_quote italic" style={{ ...headStyle, fontSize: 'clamp(1.4rem, 2.8vw, 2.1rem)', lineHeight: 1.45 }}>{q?.text}</blockquote>
-                <p className="mt-5" style={{ ...headStyle, color: accent, fontSize: '1.3rem' }}>&mdash; {q?.who}</p>
+          { const q = list[0]; const im = (q?.img ?? pics[0]) as string | null; const script = "'Snell Roundhand','Segoe Script','Apple Chancery','Brush Script MT',cursive"; return out(
+            <div className="relative mx-auto grid max-w-6xl items-center gap-8 overflow-hidden px-2 md:block md:aspect-[2/1] md:px-0">
+              <div className="mx-auto w-[78%] max-w-[340px] md:absolute md:w-[38%] md:max-w-none md:[left:2.9%] md:[top:5%]" style={{ transform: 'rotate(-6deg)', background: '#f4f1ec', padding: '4.8% 4.8% 0', boxShadow: '0 10px 28px rgba(60,45,30,.22)', aspectRatio: '0.89 / 1' }}>
+                <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1 / 1', background: '#d8d0c6' }}>
+                  {im ? <img src={im} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                    <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="200" height="200" fill="#d8d0c6" /><circle cx="140" cy="62" r="14" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L58 92 L98 146 L136 84 L200 200 Z" fill="#b8aa98" opacity="0.8" /></svg>
+                  )}
+                </div>
+              </div>
+              <div className="md:absolute md:[left:44%] md:[top:9%] md:[width:53%]">
+                <blockquote data-name="Quote" className="el-tes_quote" style={{ fontFamily: script, fontSize: 'clamp(1.5rem, 4.2vw, 3.9rem)', lineHeight: 1.4, color: ink, margin: 0 }}>&ldquo;{q?.text}&rdquo;</blockquote>
+                <svg viewBox="0 0 320 12" fill="none" stroke={ink} strokeWidth="2.4" strokeLinecap="round" style={{ width: '33%', marginLeft: '11%', marginTop: 'clamp(12px, 3.4vw, 60px)', display: 'block' }}><path d="M2 10 C 90 5, 200 3, 318 2" /></svg>
+                <p data-name="Name" className="el-tes_name" style={{ fontFamily: script, fontSize: 'clamp(1.5rem, 4.2vw, 3.9rem)', lineHeight: 1.2, color: ink, margin: 'clamp(8px, 1.6vw, 28px) 0 0 8%' }}>{q?.who}</p>
               </div>
             </div>) }
         }
@@ -1132,37 +1463,68 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const qa = faq as any[]
         const qst: any = { fontFamily: t.head, fontSize: fsp('fs-faqq', 20), color: ink }
         const ast: any = { fontFamily: t.body, fontSize: fsp('fs-faqa', 15), color: soft, lineHeight: 1.7 }
-        if (fd === 'basil') return sec('faq', t.titles.faq,
-          <div className="mx-auto grid max-w-5xl gap-x-14 gap-y-10 md:grid-cols-2">
-            {qa.map((f, i) => (<div key={i}><p className="el-faq_q" style={qst}>{f.question}</p><p className="el-faq_a mt-2" style={ast}>{f.answer}</p></div>))}
+        if (fd === 'basil') return sec('faq', null,
+          <div className="mx-auto max-w-6xl">
+            <h2 data-name="Title" className="el-faq_title text-center" style={{ fontFamily: t.head, fontWeight: 400, fontSize: 'clamp(2.6rem, 6.4vw, 6rem)', lineHeight: 1, margin: 0, color: ink }}>{String((r as any).site_settings?.text?.faq_title ?? 'Good to know.')}</h2>
+            <div className="mx-auto" style={{ width: '20%', height: 1, background: ink, opacity: 0.6, margin: 'clamp(18px, 3vw, 40px) auto clamp(20px, 4vw, 56px)' }} />
+            <div className="grid sm:grid-cols-2" style={{ columnGap: 'clamp(24px, 6vw, 90px)' }}>{qa.map((f, i) => (
+              <div key={i} style={{ padding: 'clamp(16px, 2.6vw, 36px) 0', borderBottom: i < qa.length - (qa.length % 2 || 2) ? `1px solid ${line}` : undefined }}>
+                <p className="el-faq_q" style={{ ...qst, fontSize: fsp('fs-faqq', 34), lineHeight: 1.15 }}>{f.question}</p>
+                <p className="el-faq_a mt-3" style={{ ...ast, fontSize: fsp('fs-faqa', 17), color: ink, letterSpacing: '0.02em' }}>{f.answer}</p>
+              </div>))}</div>
           </div>, tinted)
-        if (fd === 'thyme') return sec('faq', t.titles.faq,
-          <div className="mx-auto grid max-w-5xl items-start gap-10 md:grid-cols-2">
-            {pickPics(1)[0] && <img src={pickPics(1)[0] as string} alt="" className="aspect-[4/5] w-full object-cover" />}
-            <FaqAccordion items={faq} questionClassName="el-faq_q" answerClassName="el-faq_a" questionStyle={qst} answerStyle={ast} />
+        if (fd === 'thyme') { const im: any = (pickPics(1) as any[])[0]; const src = im ? (typeof im === 'string' ? im : (im.u ?? im)) : null; return sec('faq', null,
+          <div className="mx-auto grid max-w-6xl md:grid-cols-[37%_1fr]">
+            <div className="relative min-h-[320px] overflow-hidden" style={{ background: tint }}>
+              {src ? <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" /> : <svg viewBox="0 0 100 130" preserveAspectRatio="xMidYMid slice" className="absolute inset-0" style={{ width: '100%', height: '100%' }}><rect width="100" height="130" fill="#e4e2de" /><path d="M0 98 L28 56 L44 80 L62 42 L100 98 Z" fill="#c9c6c1" /><circle cx="74" cy="30" r="8" fill="#d3d0cb" /></svg>}
+            </div>
+            <div style={{ padding: 'clamp(20px, 4vw, 56px)' }}>
+              <h2 data-name="Title" className="el-faq_title" style={{ fontFamily: t.head, fontWeight: 400, fontSize: 'clamp(2.6rem, 6vw, 5.6rem)', lineHeight: 1, margin: 0, color: ink }}>{String((r as any).site_settings?.text?.faq_title ?? 'Questions')}</h2>
+              <div style={{ width: '24%', height: 1, background: ink, opacity: 0.55, margin: 'clamp(16px, 2.6vw, 34px) 0 clamp(18px, 3vw, 40px)' }} />
+              <div>{qa.map((f, i) => (
+                <details key={i} open={i === 0} className="group" style={{ borderBottom: `1px solid ${line}` }}>
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-6 [&::-webkit-details-marker]:hidden" style={{ padding: 'clamp(14px, 1.8vw, 24px) 0' }}>
+                    <span className="el-faq_q" style={{ ...qst, fontSize: fsp('fs-faqq', 30), lineHeight: 1.2 }}>{f.question}</span>
+                    <span className="text-3xl leading-none group-open:hidden" style={{ color: ink }}>+</span><span className="hidden text-3xl leading-none group-open:inline" style={{ color: ink }}>&minus;</span>
+                  </summary>
+                  <p className="el-faq_a max-w-2xl" style={{ ...ast, fontSize: fsp('fs-faqa', 17), paddingBottom: 'clamp(16px, 2.4vw, 30px)' }}>{f.answer}</p>
+                </details>))}</div>
+            </div>
+          </div>, tinted) }
+        if (fd === 'mint') return sec('faq', null,
+          <div className="mx-auto max-w-5xl">
+            <h2 data-name="Title" className="el-faq_title text-center" style={{ fontFamily: t.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 5.6vw, 5.2rem)', lineHeight: 1.05, margin: 0, color: ink }}>{String((r as any).site_settings?.text?.faq_title ?? 'Frequently asked.')}</h2>
+            <div style={{ width: '14%', height: 1, background: accent, margin: 'clamp(16px, 2.6vw, 34px) auto clamp(18px, 3vw, 40px)' }} />
+            <div>{qa.map((f, i) => (
+              <div key={i} className="grid items-center" style={{ gridTemplateColumns: 'clamp(70px, 14vw, 190px) 1fr', padding: 'clamp(14px, 2.2vw, 28px) 0', borderTop: i > 0 ? `1px solid ${line}` : undefined }}>
+                <span aria-hidden="true" style={{ fontFamily: t.head, color: accent, fontSize: 'clamp(2.6rem, 6vw, 5.4rem)', lineHeight: 1, textAlign: 'center', paddingRight: '8%' }}>{String(i + 1).padStart(2, '0')}</span>
+                <div style={{ borderLeft: `1px solid ${accent}`, paddingLeft: 'clamp(16px, 3vw, 44px)' }}>
+                  <p className="el-faq_q" style={{ ...qst, fontSize: fsp('fs-faqq', 36), lineHeight: 1.1 }}>{f.question}</p>
+                  <p className="el-faq_a mt-2" style={{ ...ast, fontSize: fsp('fs-faqa', 17), color: ink, letterSpacing: '0.02em' }}>{f.answer}</p>
+                </div>
+              </div>))}</div>
           </div>, tinted)
-        if (fd === 'mint') return sec('faq', t.titles.faq,
-          <div className="mx-auto max-w-3xl space-y-8">
-            {qa.map((f, i) => (
-              <div key={i} className="grid grid-cols-[3.5rem_1fr] gap-4">
-                <span style={{ ...headStyle, color: accent, fontSize: '1.8rem', lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</span>
-                <div><p className="el-faq_q" style={qst}>{f.question}</p><p className="el-faq_a mt-2" style={ast}>{f.answer}</p></div>
-              </div>
-            ))}
+        if (fd === 'dill') return sec('faq', null,
+          <div className="mx-auto max-w-6xl">
+            <h2 data-name="Title" className="el-faq_title text-center" style={{ fontFamily: t.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 5.6vw, 5.2rem)', lineHeight: 1.05, margin: 0, color: ink }}>{String((r as any).site_settings?.text?.faq_title ?? 'Your questions answered.')}</h2>
+            <div style={{ width: '14%', height: 1, background: accent, margin: 'clamp(16px, 2.6vw, 34px) auto clamp(22px, 4vw, 56px)' }} />
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3" style={{ gap: 'clamp(12px, 1.6vw, 22px)' }}>{qa.map((f, i) => (
+              <div key={i} style={{ background: `color-mix(in srgb, ${bg} 45%, #fff)`, borderRadius: 'clamp(20px, 2.6vw, 34px)', padding: 'clamp(20px, 2.6vw, 38px)', boxShadow: '0 1px 8px rgba(0,0,0,.05)' }}>
+                <p className="el-faq_q" style={{ ...qst, fontSize: fsp('fs-faqq', 30), fontWeight: 600, lineHeight: 1.12 }}>{f.question}</p>
+                <p className="el-faq_a mt-3" style={{ ...ast, fontSize: fsp('fs-faqa', 17), color: ink, lineHeight: 1.55, letterSpacing: '0.02em' }}>{f.answer}</p>
+              </div>))}</div>
           </div>, tinted)
-        if (fd === 'dill') return sec('faq', t.titles.faq,
-          <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {qa.map((f, i) => (<div key={i} className="rounded-2xl p-6" style={{ background: tint }}><p className="el-faq_q" style={{ ...qst, fontWeight: 600 }}>{f.question}</p><p className="el-faq_a mt-2" style={ast}>{f.answer}</p></div>))}
-          </div>, tinted)
-        return sec('faq', t.titles.faq,
-          <div className="mx-auto max-w-2xl">
-            <FaqAccordion
-              items={faq}
-              questionClassName="el-faq_q"
-              answerClassName="el-faq_a"
-              questionStyle={{ fontFamily: t.head, fontSize: fsp('fs-faqq', 20), color: ink }}
-              answerStyle={{ fontFamily: t.body, fontSize: fsp('fs-faqa', 15), color: soft, lineHeight: 1.7 }}
-            />
+        return sec('faq', null,
+          <div className="mx-auto max-w-4xl">
+            <h2 data-name="Title" className="el-faq_title text-center" style={{ fontFamily: t.head, fontWeight: 400, fontSize: 'clamp(2.4rem, 5.6vw, 5.2rem)', lineHeight: 1.05, margin: 0, color: ink }}>{String((r as any).site_settings?.text?.faq_title ?? 'Questions.')}</h2>
+            <div style={{ marginTop: 'clamp(20px, 4vw, 52px)' }}>{qa.map((f, i) => (
+              <details key={i} open={i === 0} className="group" style={{ borderBottom: `1px solid ${line}` }}>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 [&::-webkit-details-marker]:hidden" style={{ padding: 'clamp(16px, 2vw, 26px) 0' }}>
+                  <span className="el-faq_q" style={{ ...qst, fontFamily: t.body, fontSize: fsp('fs-faqq', 28), lineHeight: 1.2 }}>{f.question}</span>
+                  <span className="text-3xl leading-none group-open:hidden" style={{ color: ink }}>+</span><span className="hidden text-3xl leading-none group-open:inline" style={{ color: ink }}>&minus;</span>
+                </summary>
+                <p className="el-faq_a max-w-3xl" style={{ ...ast, fontSize: fsp('fs-faqa', 18), paddingBottom: 'clamp(18px, 2.6vw, 34px)' }}>{f.answer}</p>
+              </details>))}</div>
           </div>, tinted)
       }
       case 'contact': {
@@ -1303,44 +1665,56 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
 
             {exLayout === 'birch' && (
-              <div className="grid gap-3 md:grid-cols-2 md:grid-rows-2 md:h-[560px]">
+              <div className="grid gap-3 md:aspect-[2.04/1] md:[grid-template-columns:834fr_830fr] md:[grid-template-rows:1fr_1fr] md:gap-[1%]">
                 {doors.map((b, i) => (
-                  <a key={b.href} href={b.href} className={'relative block min-h-[240px] overflow-hidden ' + (i === 0 || doors.length === 2 ? 'md:row-span-2' : '')} style={{ background: tint, borderRadius: t.radius }}>
-                    {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />
-                    <span className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm" style={{ color: '#2A1F24' }}>→</span>
-                    <p className="ex-t el-ex_title absolute bottom-5 left-6 text-3xl text-white sm:text-4xl" style={headStyle}>{b.t}</p>
+                  <a key={b.href} href={b.href} className={'relative block min-h-[240px] overflow-hidden ' + (i === 0 || doors.length === 2 ? 'md:row-span-2' : '')} style={{ background: tint }}>
+                    {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                      <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                    )}
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.62), rgba(0,0,0,0) 42%)' }} />
+                    <span className="absolute flex items-center justify-center rounded-full bg-white" style={{ right: '2.4%', top: '3.4%', width: 'clamp(30px, 3.8vw, 44px)', height: 'clamp(30px, 3.8vw, 44px)', color: '#2A1F24', fontSize: 'clamp(14px, 1.8vw, 22px)' }}>&rarr;</span>
+                    <p className="ex-t el-ex_title absolute text-white" style={{ ...headStyle, left: '4.4%', bottom: '3.4%', fontSize: 'clamp(2rem, 4.8vw, 3.8rem)', lineHeight: 1.05 }}>{b.t}</p>
                   </a>
                 ))}
               </div>
             )}
 
             {exLayout === 'willow' && (
-              <div style={{ borderTop: `1px solid ${line}` }}>
+              <div>
                 {doors.map((b, i) => {
                   const last = i === doors.length - 1
+                  const fg = last ? '#fbf3e2' : ink
                   return (
-                    <a key={b.href} href={b.href} className="flex items-center gap-5 px-2 py-6 transition hover:opacity-80 sm:px-6" style={{ borderBottom: `1px solid ${line}`, background: last ? accent : undefined, color: last ? '#fff' : undefined }}>
-                      <span className="w-8 text-sm tracking-[0.2em]" style={{ color: last ? '#fff' : accent }}>{String(i + 1).padStart(2, '0')}</span>
-                      <span className="ex-t el-ex_title flex-1 text-5xl sm:text-7xl" style={{ ...headStyle, fontWeight: 300, lineHeight: 1.05 }}>{b.t}</span>
-                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="hidden h-[84px] w-[140px] object-cover sm:block" style={{ borderRadius: t.radius }} />}
-                      <span className="text-xl">→</span>
-                    </a>
+                    <div key={b.href}>
+                      {i > 0 && <div style={{ height: 1.5, background: ink }} />}
+                      <a href={b.href} className="flex items-center transition hover:opacity-90 md:aspect-[5.7/1]" style={{ background: last ? accent : 'transparent', color: fg, padding: 'clamp(12px, 2vw, 24px) 2.4% clamp(12px, 2vw, 24px) 2.8%', marginTop: last ? 6 : 0, gap: 'clamp(12px, 2.4vw, 32px)' }}>
+                        <span style={{ ...headStyle, color: last ? '#fbf3e2' : accent, fontSize: 'clamp(1.2rem, 2.8vw, 2.3rem)', width: 'clamp(30px, 4.4vw, 70px)', flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+                        <span className="ex-t el-ex_title flex-1" style={{ ...headStyle, fontWeight: 300, fontSize: 'clamp(2.6rem, 9vw, 7.2rem)', lineHeight: 1.02, color: fg }}>{b.t}</span>
+                        <div className="relative hidden shrink-0 overflow-hidden sm:block" style={{ width: '25.8%', aspectRatio: '1.87 / 1', background: tint }}>
+                          {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                            <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                          )}
+                        </div>
+                        <svg viewBox="0 0 58 24" fill="none" stroke={last ? '#fbf3e2' : accent} strokeWidth="2.4" style={{ width: 'clamp(30px, 3.7vw, 56px)', flexShrink: 0 }}><path d="M2 12 H54 M44 3 L55 12 L44 21" /></svg>
+                      </a>
+                    </div>
                   )
                 })}
               </div>
             )}
 
             {exLayout === 'aspen' && (
-              <div className="grid items-end gap-6 sm:grid-cols-3">
+              <div className={'grid items-end gap-4 ' + (doors.length === 3 ? 'md:[grid-template-columns:496fr_547fr_496fr] md:gap-[1.2%]' : 'sm:grid-flow-col sm:auto-cols-fr')}>
                 {doors.map((b, i) => (
-                  <a key={b.href} href={b.href} className={'block text-center ' + (i % 2 === 0 && doors.length === 3 ? 'sm:mt-10' : '')}>
-                    <div className="aspect-[3/4] overflow-hidden" style={{ borderRadius: '9999px 9999px 0 0', background: tint }}>
-                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="h-full w-full object-cover" />}
+                  <a key={b.href} href={b.href} className="block text-center">
+                    <div className="relative w-full overflow-hidden" style={{ aspectRatio: doors.length === 3 && i === 1 ? '0.787 / 1' : '0.83 / 1', borderRadius: '9999px 9999px 0 0', background: tint }}>
+                      {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                        <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                      )}
                     </div>
-                    <div className="mt-4 flex items-center justify-center gap-3">
-                      <p className="ex-t el-ex_title text-2xl sm:text-3xl" style={headStyle}>{b.t}</p>
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs text-white" style={{ background: accent }}>→</span>
+                    <div className="flex items-center justify-center" style={{ gap: 'clamp(8px, 1.4vw, 18px)', marginTop: 'clamp(8px, 1.4vw, 18px)' }}>
+                      <p className="ex-t el-ex_title" style={{ ...headStyle, fontSize: 'clamp(1.6rem, 3.6vw, 3.2rem)', lineHeight: 1.1 }}>{b.t}</p>
+                      <span className="flex shrink-0 items-center justify-center rounded-full text-white" style={{ background: accent, width: 'clamp(28px, 3.6vw, 42px)', height: 'clamp(28px, 3.6vw, 42px)', fontSize: 'clamp(14px, 1.8vw, 22px)' }}>&rarr;</span>
                     </div>
                   </a>
                 ))}
@@ -1348,86 +1722,112 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
 
             {exLayout === 'alder' && (
-              <div className="grid h-[520px] sm:grid-cols-[1fr_1.25fr_1fr]">
-                {doors.map((b, i) => (
-                  <a key={b.href} href={b.href} className="relative block min-h-[240px] overflow-hidden" style={{ background: tint }}>
-                    {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />
-                    <div className="absolute inset-x-0 bottom-6 text-center text-white">
-                      <div className="mx-auto mb-3 h-px w-10 bg-white" />
-                      <p className="ex-t el-ex_title text-3xl sm:text-4xl" style={headStyle}>{b.t}</p>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            )}
-
-            {exLayout === 'maple' && (
-              <div className="grid gap-3">
-                {doors.length > 0 && (
-                  <a href={doors[0].href} className="relative block h-[300px] overflow-hidden sm:h-[340px]" style={{ background: tint, borderRadius: t.radius }}>
-                    {doorPic(doors[0].k, 0) && <img src={doorPic(doors[0].k, 0) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />
-                    <p className="ex-t el-ex_title absolute bottom-5 left-6 text-4xl text-white sm:text-6xl" style={headStyle}>{doors[0].t}</p>
-                    <span className="absolute bottom-6 right-6 flex h-10 w-10 items-center justify-center rounded-full bg-white" style={{ color: '#2A1F24' }}>→</span>
-                  </a>
-                )}
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {doors.slice(1).map((b, j) => {
-                    const solid = j === doors.length - 2
-                    return (
-                      <a key={b.href} href={b.href} className="relative block h-[220px] overflow-hidden" style={{ background: solid ? accent : tint, borderRadius: t.radius }}>
-                        {!solid && doorPic(b.k, j + 1) && <img src={doorPic(b.k, j + 1) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-                        {!solid && <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />}
-                        <p className="ex-t el-ex_title absolute bottom-5 left-6 text-3xl text-white sm:text-4xl" style={headStyle}>{b.t}</p>
-                        <span className="absolute bottom-6 right-6 text-xl text-white">→</span>
-                      </a>
-                    )
-                  })}
+              <div className="grid md:aspect-[2/1]" style={doors.length === 3 ? { gridTemplateColumns: undefined } : undefined}>
+                <div className={'grid h-full ' + (doors.length === 3 ? 'md:[grid-template-columns:505fr_702fr_567fr]' : 'md:grid-flow-col md:auto-cols-fr')}>
+                  {doors.map((b, i) => (
+                    <a key={b.href} href={b.href} className="relative block min-h-[260px] overflow-hidden" style={{ background: tint }}>
+                      {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                        <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                      )}
+                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0) 46%)' }} />
+                      <div className="absolute inset-x-0 text-center text-white" style={{ bottom: '6%' }}>
+                        <div className="mx-auto h-[2px] w-[24%] bg-white" style={{ marginBottom: 'clamp(4px, 0.8vw, 10px)' }} />
+                        <p className="ex-t el-ex_title" style={{ ...headStyle, fontSize: 'clamp(1.9rem, 4.4vw, 3.6rem)', lineHeight: 1.1 }}>{b.t}</p>
+                      </div>
+                    </a>
+                  ))}
                 </div>
               </div>
             )}
 
-            {exLayout === 'elm' && (
-              <div className="flex flex-col items-center gap-6 py-4 sm:flex-row sm:justify-center sm:gap-0">
-                {doors.map((b, i) => (
-                  <a key={b.href} href={b.href} className="block w-full max-w-[300px] bg-white p-3 pb-9 text-center shadow-lg sm:-mx-3 sm:w-[32%]" style={{ transform: 'rotate(' + [-3, 0, 3][i % 3] + 'deg)', zIndex: i % 3 === 1 ? 10 : 1, color: '#2A1F24' }}>
-                    <div className="aspect-[4/5] overflow-hidden" style={{ background: tint }}>
-                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="h-full w-full object-cover" />}
-                    </div>
-                    <p className="ex-t el-ex_title mt-4 text-2xl" style={headStyle}>{b.t}</p>
-                  </a>
-                ))}
-              </div>
-            )}
+            {exLayout === 'maple' && (() => {
+              const mtnSvg = <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+              return (
+                <div className="grid gap-3 md:gap-[1.3%]">
+                  {doors.length > 0 && (
+                    <a href={doors[0].href} className="relative block min-h-[220px] overflow-hidden md:aspect-[3.17/1]" style={{ background: tint }}>
+                      {doorPic(doors[0].k, 0) ? <img src={doorPic(doors[0].k, 0) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtnSvg}
+                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.62), rgba(0,0,0,0) 45%)' }} />
+                      <div className="absolute flex items-center" style={{ left: '2.5%', bottom: '8%', gap: 'clamp(10px, 1.6vw, 20px)' }}>
+                        <p className="ex-t el-ex_title text-white" style={{ ...headStyle, fontSize: 'clamp(2.4rem, 5.4vw, 4.4rem)', lineHeight: 1 }}>{doors[0].t}</p>
+                        <span className="flex shrink-0 items-center justify-center rounded-full bg-white" style={{ width: 'clamp(32px, 3.9vw, 46px)', height: 'clamp(32px, 3.9vw, 46px)', color: '#2A1F24', fontSize: 'clamp(14px, 1.8vw, 22px)' }}>&rarr;</span>
+                      </div>
+                    </a>
+                  )}
+                  <div className="grid gap-3 sm:grid-cols-2 md:gap-[1.2%]">
+                    {doors.slice(1).map((b, k) => {
+                      const solid = k === doors.length - 2
+                      return (
+                        <a key={b.href} href={b.href} className="relative block min-h-[170px] overflow-hidden md:aspect-[2.82/1]" style={{ background: solid ? accent : tint }}>
+                          {!solid && (doorPic(b.k, k + 1) ? <img src={doorPic(b.k, k + 1) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtnSvg)}
+                          {!solid && <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.62), rgba(0,0,0,0) 45%)' }} />}
+                          <div className="absolute flex items-center" style={{ left: '6%', bottom: '10%', gap: 'clamp(8px, 1.2vw, 16px)' }}>
+                            <p className="ex-t el-ex_title" style={{ ...headStyle, color: solid ? '#f6ecd9' : '#fff', fontSize: 'clamp(2rem, 4.4vw, 3.6rem)', lineHeight: 1 }}>{b.t}</p>
+                            <span className="flex shrink-0 items-center justify-center rounded-full" style={{ background: solid ? '#f6ecd9' : '#fff', width: 'clamp(26px, 3vw, 36px)', height: 'clamp(26px, 3vw, 36px)', color: '#2A1F24', fontSize: 'clamp(12px, 1.5vw, 18px)' }}>&rarr;</span>
+                          </div>
+                        </a>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {exLayout === 'elm' && (() => {
+              // left%, top%, width%, rotate, z
+              const pos = [
+                ['2.3%', '10%', '31%', '-5.5deg', 1],
+                ['33.5%', '5.4%', '32.9%', '0deg', 3],
+                ['66.5%', '10.7%', '31.3%', '6deg', 2],
+              ] as const
+              return (
+                <div className="flex flex-col items-center gap-8 py-4 md:relative md:block md:aspect-[2/1] md:py-0">
+                  {doors.slice(0, 3).map((b, i) => (
+                    <a key={b.href} href={b.href} className="flex w-full max-w-[300px] flex-col bg-white md:absolute md:max-w-none md:aspect-[0.756/1] md:[left:var(--l)] md:[top:var(--t)] md:[width:var(--w)] md:[transform:rotate(var(--r))]" style={{ ['--l' as any]: pos[i][0], ['--t' as any]: pos[i][1], ['--w' as any]: pos[i][2], ['--r' as any]: pos[i][3], zIndex: pos[i][4], padding: '3.8% 3.8% 0', boxShadow: '0 6px 18px rgba(60,40,20,0.22)', color: '#2A1F24' }}>
+                      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '0.884 / 1', background: tint }}>
+                        {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                          <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                        )}
+                      </div>
+                      <div className="flex flex-1 items-center justify-center py-4 md:py-0">
+                        <p className="ex-t el-ex_title" style={{ ...headStyle, fontSize: 'clamp(1.7rem, 3.8vw, 3rem)', lineHeight: 1.1 }}>{b.t}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )
+            })()}
 
             {exLayout === 'hawthorn' && (
-              <div className="grid gap-10 sm:grid-cols-3">
+              <div className={'grid gap-8 ' + (doors.length === 3 ? 'md:grid-cols-3 md:gap-[2%]' : 'sm:grid-flow-col sm:auto-cols-fr')}>
                 {doors.map((b, i) => (
                   <a key={b.href} href={b.href} className="block text-center">
-                    <div className="relative mx-auto aspect-square w-full max-w-[280px]">
-                      <div className="absolute inset-0 rounded-full" style={{ border: `1px solid ${accent}`, transform: 'translate(10px, -8px) scale(1.04)' }} />
-                      <div className="absolute inset-0 overflow-hidden rounded-full" style={{ background: tint }}>
-                        {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="h-full w-full object-cover" />}
+                    <div className="relative mx-auto w-full" style={{ aspectRatio: '1 / 1', borderRadius: '50%', border: '2.5px solid ' + accent, padding: '2.2%', background: '#fff' }}>
+                      <div className="relative h-full w-full overflow-hidden" style={{ borderRadius: '50%', background: tint }}>
+                        {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                          <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                        )}
                       </div>
                     </div>
-                    <p className="ex-t el-ex_title mt-6 text-2xl sm:text-3xl" style={headStyle}>{b.t}</p>
-                    <div className="mx-auto mt-2 h-px w-10" style={{ background: accent }} />
+                    <p className="ex-t el-ex_title" style={{ ...headStyle, fontSize: 'clamp(1.9rem, 4.4vw, 3.5rem)', lineHeight: 1.1, marginTop: 'clamp(10px, 2vw, 26px)' }}>{b.t}</p>
+                    <div className="mx-auto" style={{ width: '34%', height: 4, background: accent, marginTop: 'clamp(8px, 1.6vw, 22px)' }} />
                   </a>
                 ))}
               </div>
             )}
 
             {exLayout === 'linden' && (
-              <div className="grid gap-5 sm:grid-cols-3">
+              <div className={'grid gap-4 ' + (doors.length === 3 ? 'md:grid-cols-3 md:gap-[1.1%]' : 'sm:grid-flow-col sm:auto-cols-fr')}>
                 {doors.map((b, i) => (
-                  <a key={b.href} href={b.href} className="block overflow-hidden bg-white transition hover:-translate-y-1" style={{ borderRadius: 14, color: '#2A1F24' }}>
-                    <div className="aspect-[4/3.3] overflow-hidden" style={{ background: tint }}>
-                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="h-full w-full object-cover" />}
+                  <a key={b.href} href={b.href} className="block overflow-hidden bg-white" style={{ borderRadius: 'clamp(14px, 1.6vw, 26px)' }}>
+                    <div className="relative w-full overflow-hidden" style={{ aspectRatio: '0.883 / 1', background: tint }}>
+                      {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                        <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between px-5 py-4">
-                      <p className="ex-t el-ex_title text-2xl" style={headStyle}>{b.t}</p>
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full text-sm text-white" style={{ background: accent }}>→</span>
+                    <div className="flex items-center justify-between" style={{ padding: 'clamp(10px, 2.2vw, 28px) 6%' }}>
+                      <p className="ex-t el-ex_title" style={{ ...headStyle, fontSize: 'clamp(1.7rem, 3.8vw, 3rem)', lineHeight: 1.1 }}>{b.t}</p>
+                      <span className="flex shrink-0 items-center justify-center rounded-full text-white" style={{ background: accent, width: 'clamp(32px, 3.9vw, 48px)', height: 'clamp(32px, 3.9vw, 48px)', fontSize: 'clamp(14px, 1.8vw, 22px)' }}>&rarr;</span>
                     </div>
                   </a>
                 ))}
@@ -1435,16 +1835,20 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
 
             {exLayout === 'rowan' && (
-              <div className="p-3 sm:p-5" style={{ background: '#1F1B18', borderRadius: t.radius }}>
-                <div className="grid gap-3 sm:grid-cols-3">
+              <div style={{ background: '#1d1613', padding: '2.1% 2.9%' }}>
+                <div className={'grid gap-3 ' + (doors.length === 3 ? 'md:grid-cols-3 md:gap-[1.1%]' : 'sm:grid-flow-col sm:auto-cols-fr')}>
                   {doors.map((b, i) => (
-                    <a key={b.href} href={b.href} className="relative block aspect-[3/4] overflow-hidden" style={{ background: '#2A2622' }}>
-                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: 'saturate(0.8)' }} />}
-                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0) 55%)' }} />
-                      <div className="absolute bottom-5 left-5">
-                        <p className="text-xs tracking-[0.2em]" style={{ color: '#C9A24D' }}>{String(i + 1).padStart(2, '0')}</p>
-                        <div className="my-2 h-px w-8" style={{ background: '#C9A24D' }} />
-                        <p className="ex-t el-ex_title text-3xl sm:text-4xl" style={{ ...headStyle, color: '#F3ECE2' }}>{b.t}</p>
+                    <a key={b.href} href={b.href} className="relative block min-h-[320px] overflow-hidden md:aspect-[0.668/1]" style={{ background: tint }}>
+                      {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                        <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                      )}
+                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(18,12,10,0.82), rgba(18,12,10,0) 40%)' }} />
+                      <div className="absolute" style={{ left: '8%', right: '6%', bottom: '5.5%' }}>
+                        <div className="flex items-center" style={{ gap: 'clamp(8px, 1.4vw, 18px)' }}>
+                          <span style={{ ...headStyle, color: '#c9a35a', fontSize: 'clamp(1.2rem, 2.6vw, 2.2rem)', lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</span>
+                          <span style={{ display: 'block', height: 2, width: 'clamp(40px, 6.2vw, 80px)', background: '#c9a35a' }} />
+                        </div>
+                        <p className="ex-t el-ex_title" style={{ ...headStyle, color: '#f2e8d8', fontSize: 'clamp(2rem, 4.8vw, 3.8rem)', lineHeight: 1.05, marginTop: 'clamp(2px, 0.5vw, 8px)' }}>{b.t}</p>
                       </div>
                     </a>
                   ))}
@@ -1453,66 +1857,84 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
 
             {exLayout === 'beech' && (() => {
-              const bk = doors.find((d) => d.k === 'book') ?? doors[doors.length - 1]
-              const rest = doors.filter((d) => d !== bk)
+              const big = doors.find((x) => x.k === 'book') ?? doors[doors.length - 1]
+              const small = doors.filter((x) => x !== big)
+              const bigIdx = doors.indexOf(big)
+              const mtnSvg = <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
               return (
-                <div className="grid gap-4 md:h-[520px] md:grid-cols-[3fr_2fr]">
-                  <a href={bk.href} className="relative block min-h-[320px] overflow-hidden" style={{ background: tint, borderRadius: t.radius }}>
-                    {doorPic(bk.k, doors.indexOf(bk)) && <img src={doorPic(bk.k, doors.indexOf(bk)) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 60%)' }} />
-                    <div className="absolute bottom-6 left-6">
-                      <p className="ex-t el-ex_title text-5xl text-white sm:text-7xl" style={headStyle}>{bk.t}</p>
-                      <span className="cr-btn mt-4 inline-block px-7 py-3 text-[11px] uppercase tracking-[0.22em]" style={{ ...btnStyle, background: accent, color: '#fff' }}>{bk.s}</span>
+                <div className="grid gap-3 md:aspect-[2.09/1] md:[grid-template-columns:974fr_668fr] md:[grid-template-rows:1fr_1fr] md:gap-[1.2%]">
+                  <a href={big.href} className="relative block min-h-[320px] overflow-hidden md:row-span-2" style={{ background: tint, border: '1px solid ' + ink }}>
+                    {doorPic(big.k, bigIdx) ? <img src={doorPic(big.k, bigIdx) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtnSvg}
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0) 45%)' }} />
+                    <div className="absolute" style={{ left: '3.4%', bottom: '3.4%' }}>
+                      <p className="ex-t el-ex_title text-white" style={{ ...headStyle, fontSize: 'clamp(2.6rem, 6vw, 4.8rem)', lineHeight: 1 }}>{big.t}</p>
+                      <span className="ex-s el-ex_sub inline-block text-white" style={{ ...headStyle, background: accent, fontSize: 'clamp(1rem, 2.1vw, 1.6rem)', padding: 'clamp(6px, 0.9vw, 12px) clamp(14px, 2vw, 26px)', marginTop: 'clamp(8px, 1.4vw, 18px)', letterSpacing: 0 }}>{big.s}</span>
                     </div>
                   </a>
-                  <div className="flex flex-col gap-4">
-                    {rest.map((b) => (
-                      <a key={b.href} href={b.href} className="flex min-h-[120px] flex-1 items-center justify-between bg-white px-7 transition hover:-translate-y-0.5" style={{ border: `1px solid ${line}`, borderRadius: t.radius, color: '#2A1F24' }}>
-                        <p className="ex-t el-ex_title text-3xl" style={headStyle}>{b.t}</p>
-                        <span className="text-xl" style={{ color: accent }}>→</span>
-                      </a>
-                    ))}
-                  </div>
+                  {small.map((b) => (
+                    <a key={b.href} href={b.href} className="flex min-h-[140px] items-center justify-between" style={{ background: '#fff', border: '1.5px solid ' + ink, padding: '0 6%' }}>
+                      <p className="ex-t el-ex_title" style={{ ...headStyle, fontSize: 'clamp(1.9rem, 4.6vw, 3.6rem)', lineHeight: 1.1 }}>{b.t}</p>
+                      <svg viewBox="0 0 58 24" fill="none" stroke={accent} strokeWidth="2.4" style={{ width: 'clamp(32px, 3.6vw, 52px)', flexShrink: 0 }}><path d="M2 12 H54 M44 3 L55 12 L44 21" /></svg>
+                    </a>
+                  ))}
                 </div>
               )
             })()}
 
-            {exLayout === 'sorrel' && (
-              <div className="mx-auto max-w-5xl rounded-md px-3 py-3" style={{ background: '#1a1613' }}>
-                <div className="mb-3 h-2 rounded-sm" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #f3ead8 0 14px, transparent 14px 28px)', opacity: 0.85 }} />
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {doors.map((b, i) => (
-                    <a key={b.href} href={b.href} className="block">
-                      <div className="relative aspect-[4/3] overflow-hidden" style={{ background: '#2b241f' }}>
-                        {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-                      </div>
-                      <div className="mt-3 flex items-center justify-between px-1 pb-1">
-                        <p className="ex-t el-ex_title text-xl sm:text-2xl" style={{ ...headStyle, color: '#f3ead8' }}>{b.t}</p>
-                        <span className="text-lg" style={{ color: '#C9A24B' }}>→</span>
-                      </div>
-                    </a>
+            {exLayout === 'sorrel' && (() => {
+              const holes = (
+                <div className="flex justify-between" style={{ padding: '1.05% 1.6% 1.05% 1.5%' }} aria-hidden="true">
+                  {Array.from({ length: 30 }, (_, k) => (
+                    <span key={k} style={{ display: 'block', width: '1.58%', aspectRatio: '1 / 1', borderRadius: '26%', background: '#f6f1ea' }} />
                   ))}
                 </div>
-                <div className="mt-3 h-2 rounded-sm" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #f3ead8 0 14px, transparent 14px 28px)', opacity: 0.85 }} />
-              </div>
-            )}
+              )
+              return (
+                <div style={{ background: '#1f1917' }}>
+                  {holes}
+                  <div className={'grid gap-3 ' + (doors.length === 3 ? 'md:grid-cols-3 md:gap-[1.2%]' : 'sm:grid-flow-col sm:auto-cols-fr')} style={{ padding: '0 1.3%' }}>
+                    {doors.map((b, i) => (
+                      <a key={b.href} href={b.href} className="block">
+                        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1.35 / 1', background: tint }}>
+                          {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                            <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-center" style={{ gap: 'clamp(8px, 1.2vw, 16px)', padding: 'clamp(6px, 1.2vw, 14px) 0' }}>
+                          <p className="ex-t el-ex_title" style={{ ...headStyle, color: '#f6f1ea', fontSize: 'clamp(1.5rem, 3.4vw, 2.7rem)', lineHeight: 1.1 }}>{b.t}</p>
+                          <svg viewBox="0 0 40 18" fill="none" stroke="#e3a83c" strokeWidth="2.2" style={{ width: 'clamp(22px, 2.8vw, 36px)', flexShrink: 0 }}><path d="M1 9 H37 M29 2 L38 9 L29 16" /></svg>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                  {holes}
+                </div>
+              )
+            })()}
 
             {exLayout === 'tansy' && (
-              <div className="flex h-[460px] flex-col gap-2 sm:flex-row">
+              <div className={'grid gap-3 ' + (doors.length === 3 ? 'md:[grid-template-columns:324fr_976fr_324fr] md:aspect-[2.01/1] md:gap-[0.7%]' : 'sm:grid-flow-col sm:auto-cols-fr')}>
                 {doors.map((b, i) => {
-                  const mid = i === (doors.length > 2 ? 1 : 0)
+                  const center = doors.length === 3 ? i === 1 : true
                   return (
-                    <a key={b.href} href={b.href} className="relative block overflow-hidden transition-all duration-500 hover:flex-[3]" style={{ flex: mid ? 3 : 1, borderRadius: t.radius, background: tint }}>
-                      {doorPic(b.k, i) && <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0) 55%)' }} />
-                      <p className={'ex-t el-ex_title absolute text-xl text-white sm:text-2xl ' + (mid ? 'bottom-5 left-5' : 'bottom-5 left-5 sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 sm:[writing-mode:vertical-rl] sm:rotate-180')} style={headStyle}>{b.t}</p>
+                    <a key={b.href} href={b.href} className="relative block min-h-[280px] overflow-hidden" style={{ background: tint }}>
+                      {doorPic(b.k, i) ? <img src={doorPic(b.k, i) as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                        <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#cfc4b8" /><circle cx="300" cy="58" r="16" fill="#b0a496" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#b0a496" opacity="0.8" /></svg>
+                      )}
+                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.62), rgba(0,0,0,0) 45%)' }} />
+                      {center ? (
+                        <div className="absolute flex items-center" style={{ left: '4%', bottom: '5.5%', gap: 'clamp(10px, 1.6vw, 20px)' }}>
+                          <p className="ex-t el-ex_title text-white" style={{ ...headStyle, fontSize: 'clamp(2.4rem, 5.4vw, 4.4rem)', lineHeight: 1 }}>{b.t}</p>
+                          <span className="flex shrink-0 items-center justify-center rounded-full bg-white" style={{ width: 'clamp(32px, 4vw, 48px)', height: 'clamp(32px, 4vw, 48px)', color: '#2A1F24', fontSize: 'clamp(14px, 1.8vw, 22px)' }}>&rarr;</span>
+                        </div>
+                      ) : (
+                        <p className="ex-t el-ex_title absolute text-white" style={{ ...headStyle, left: '11%', bottom: '4%', writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontSize: 'clamp(2rem, 4.6vw, 3.8rem)', lineHeight: 1 }}>{b.t}</p>
+                      )}
                     </a>
                   )
                 })}
               </div>
-            )}
-
-            {exLayout === 'lines' && (
+            )}{exLayout === 'lines' && (
               <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${Math.min(3, doors.length)}, minmax(0, 1fr))` }}>
                 {doors.map((b, i) => (
                   <a key={b.href} href={b.href} className="block px-3 py-8 text-center sm:px-6" style={{ borderTop: `1px solid ${line}`, borderLeft: i > 0 ? `1px solid ${line}` : undefined }}>
