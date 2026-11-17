@@ -333,62 +333,173 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const ig = String(socials.find((s) => s.key === 'instagram_url')?.url ?? '')
         const handle = ig ? '@' + (ig.replace(/\/+$/, '').split('/').pop() ?? '').split('?')[0] : ''
         const ab = (l: string) => (l === 'Instagram' ? 'IG' : l === 'Facebook' ? 'FB' : l === 'Pinterest' ? 'PI' : 'TT')
-        if (socials.length > 0 && sd === 'coral') return (
-          <section id="social" className="px-6 py-14 text-center">
-            <p className="mb-5 text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>Follow along</p>
-            <div className="flex flex-wrap justify-center gap-4">
-              {socials.map((s) => (
-                <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="flex h-12 w-12 items-center justify-center rounded-full border text-xs" style={{ borderColor: accent, color: accent }}>{ab(s.label)}</a>
-              ))}
-            </div>
-            {handle && <p className="mt-4 text-sm" style={{ color: soft }}>{handle}</p>}
-          </section>
-        )
-        if (socials.length > 0 && sd === 'reef') return (
-          <section id="social" className="px-6 py-14 text-center">
-            <p className="mb-6 text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>Follow along on Instagram</p>
-            <div className="mx-auto grid max-w-5xl grid-cols-3 gap-2 sm:grid-cols-6">
-              {pickPics(6).map((u, i) => (u ? <img key={i} src={u} alt="" className="aspect-square w-full object-cover" /> : null))}
-            </div>
-            <a href={ig ? socials.find((s) => s.key === 'instagram_url')?.url : socials[0].url} target="_blank" rel="noopener noreferrer" className="cr-btn mt-6 inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle}>Follow {handle || 'us'}</a>
-          </section>
-        )
-        if (socials.length > 0 && sd === 'ember') return (
-          <section id="social" className="px-6 py-16">
-            <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-2">
-              <div>
-                <p style={{ ...headStyle, fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.05 }}>Find us on social</p>
-                {handle && <p className="mt-3 text-sm" style={{ color: soft }}>{handle}</p>}
-              </div>
-              <div className="flex flex-col gap-3">
-                {socials.map((s) => (
-                  <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-full border px-6 py-3 text-sm" style={{ borderColor: line, color: ink }}><span>{s.label}</span><span style={{ color: accent }}>→</span></a>
-                ))}
-              </div>
-            </div>
-          </section>
-        )
-        if (socials.length > 0 && sd === 'dune') return (
-          <section id="social" className="px-6 py-14" style={{ background: '#2b1f17', color: '#f3ead8' }}>
-            <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 md:flex-row">
-              <p style={{ ...headStyle, fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', color: '#f3ead8' }}>Let&apos;s stay in touch</p>
-              <div className="flex flex-wrap gap-3">
-                {socials.map((s) => (
-                  <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" className="rounded-full border px-5 py-2 text-[11px] uppercase tracking-[0.2em]" style={{ borderColor: '#f3ead8', color: '#f3ead8' }}>{s.label}</a>
-                ))}
-              </div>
-            </div>
-          </section>
-        )
-        if (socials.length > 0 && sd === 'tide') {
-          const pp = pickPics(4)
+        if (sd === 'coral' && (socials.length > 0 || isPreview)) {
+          const txt = (kk: string, d: string) => String((r as any).site_settings?.text?.[kk] ?? d)
+          const list = socials.length > 0 ? socials : [
+            { key: 'instagram_url', label: 'Instagram', url: '#' },
+            { key: 'facebook_url', label: 'Facebook', url: '#' },
+            { key: 'pinterest_url', label: 'Pinterest', url: '#' },
+            { key: 'tiktok_url', label: 'TikTok', url: '#' },
+            { key: 'youtube_url', label: 'YouTube', url: '#' },
+          ]
+          const icon = (key: string) => {
+            const c = { fill: 'none', stroke: 'currentColor', strokeWidth: 2 }
+            if (key === 'instagram_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><rect x="3.5" y="3.5" width="17" height="17" rx="5" {...c} /><circle cx="12" cy="12" r="4" {...c} /><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" /></svg>
+            if (key === 'facebook_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M14 8.5V7c0-.7.2-1 1.1-1H17V3h-2.6C11.6 3 10.5 4.5 10.5 6.8v1.7H8v3h2.5V21H14v-9.5h2.6l.4-3z" /></svg>
+            if (key === 'pinterest_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607 0 11.985-5.365 11.985-11.987C23.97 5.39 18.592.026 11.985.026L12.017 0z" /></svg>
+            if (key === 'tiktok_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg>
+            return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" fillRule="evenodd" d="M6 5h12a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4zm4 3.5v7l6-3.5z" /></svg>
+          }
+          const hd = handle || (isPreview ? '@lenahartphoto' : '')
           return (
-            <section id="social" className="px-6 py-14">
-              <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-8">
-                {socials.map((s, i) => (
-                  <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" className="block w-[44%] bg-white p-3 pb-4 shadow-lg sm:w-[22%]" style={{ transform: `rotate(${[-3, 2, -2, 3][i % 4]}deg)` }}>
-                    {pp[i] && <img src={pp[i] as string} alt="" className="aspect-square w-full object-cover" />}
-                    <p className="mt-3 text-center text-[11px] uppercase tracking-[0.2em] text-black">{s.label}</p>
+            <section id="social" className="px-6 py-14 text-center">
+              <div className="mx-auto flex max-w-4xl items-center justify-center" style={{ gap: 'clamp(14px, 3vw, 44px)' }}>
+                <span style={{ flex: '0 1 140px', height: 1, background: line }} />
+                <h2 data-name="Heading" className="el-soc_title" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(2.2rem, 5.2vw, 4.6rem)', lineHeight: 1.1, margin: 0, color: ink }}>{txt('soc_title', 'Follow along')}</h2>
+                <span style={{ flex: '0 1 140px', height: 1, background: line }} />
+              </div>
+              <div className="flex flex-wrap justify-center" style={{ gap: 'clamp(12px, 2.6vw, 40px)', marginTop: 'clamp(24px, 4vw, 52px)' }}>
+                {list.map((x) => (
+                  <a key={x.key} href={x.url} target="_blank" rel="noopener noreferrer" aria-label={x.label} className="flex items-center justify-center rounded-full" style={{ width: 'clamp(52px, 8.4vw, 84px)', height: 'clamp(52px, 8.4vw, 84px)', border: `1px solid ${line}`, background: 'rgba(0,0,0,0.035)', color: ink }}>
+                    <span style={{ width: '46%', height: '46%', display: 'block' }}>{icon(x.key)}</span>
+                  </a>
+                ))}
+              </div>
+              {hd && <p data-name="Handle" className="el-soc_handle" style={{ color: ink, fontWeight: 300, fontSize: 'clamp(1.1rem, 2.4vw, 2.1rem)', letterSpacing: '0.2em', margin: 'clamp(20px, 3vw, 40px) 0 0' }}>{txt('soc_handle', hd)}</p>}
+            </section>
+          )
+        }
+        if (sd === 'reef' && (socials.length > 0 || isPreview)) {
+          const txt = (kk: string, d: string) => String((r as any).site_settings?.text?.[kk] ?? d)
+          const raw: any[] = (pickPics(6) as any) || []
+          const src = (q: any) => (typeof q === 'string' ? q : q?.url ?? q?.src ?? q?.thumb ?? q?.path ?? '')
+          const pics: any[] = Array.from({ length: 6 }, (_, i) => raw[i] ?? null)
+          const hd = handle || (isPreview ? '@lenahartphoto' : '')
+          const ig = (socials.find((x: any) => x.key === 'instagram_url') as any)?.url || (socials[0] as any)?.url || '#'
+          return (
+            <section id="social" className="px-4 py-14 text-center" style={{ color: ink }}>
+              <h2 data-name="Heading" className="el-soc_title" style={{ ...headStyle, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(2rem, 5.2vw, 4.8rem)', lineHeight: 1.1, margin: 0, color: ink }}>{txt('soc_title', 'Follow along on Instagram')}</h2>
+              <div className="mx-auto grid grid-cols-3 md:grid-cols-6" style={{ gap: 'clamp(6px, 1vw, 16px)', marginTop: 'clamp(24px, 5vw, 72px)', maxWidth: 1600 }}>
+                {pics.map((q, i) => (
+                  <div key={i} style={{ aspectRatio: '0.96 / 1', overflow: 'hidden', background: '#e4e1dc' }}>
+                    {q && src(q) ? (
+                      <img src={src(q)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    ) : (
+                      <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#e4e1dc" /><path d="M10 72 36 42l14 16 12-14 28 28z" fill="#c9c5be" /><circle cx="68" cy="30" r="6" fill="#c9c5be" /></svg>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {hd && (
+                <a href={ig} target="_blank" rel="noopener noreferrer" data-name="Button" className="el-soc_handle inline-block" style={{ ...headStyle, background: accent, color: '#f6f2ea', borderRadius: 6, padding: 'clamp(14px, 1.8vw, 24px) clamp(36px, 6vw, 92px)', fontSize: 'clamp(1rem, 1.9vw, 1.8rem)', letterSpacing: '0.04em', marginTop: 'clamp(24px, 4vw, 60px)' }}>{txt('soc_handle', 'Follow ' + hd)}</a>
+              )}
+            </section>
+          )
+        }
+        if (sd === 'ember' && (socials.length > 0 || isPreview)) {
+          const txt = (kk: string, d: string) => String((r as any).site_settings?.text?.[kk] ?? d)
+          const list = (socials.length > 0 ? socials : [
+            { key: 'instagram_url', label: 'Instagram', url: '#' },
+            { key: 'facebook_url', label: 'Facebook', url: '#' },
+            { key: 'pinterest_url', label: 'Pinterest', url: '#' },
+            { key: 'tiktok_url', label: 'TikTok', url: '#' },
+          ]).filter((x: any) => x.key !== 'youtube_url')
+          const icon = (key: string) => {
+            const c = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.4 }
+            if (key === 'instagram_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" {...c} /><circle cx="12" cy="12" r="4.4" {...c} /><circle cx="17.4" cy="6.6" r="1.2" fill="currentColor" /></svg>
+            if (key === 'facebook_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><circle cx="12" cy="12" r="11" fill="currentColor" /><path fill="#f8f0ea" d="M13.2 21v-7.6h2.5l.4-3h-2.9V8.6c0-.8.3-1.4 1.5-1.4h1.5V4.5c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.2H7.8v3h2.5V21z" /></svg>
+            if (key === 'pinterest_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><circle cx="12" cy="12" r="11" fill="currentColor" /><path fill="#f8f0ea" d="M12.2 5.2c-3.3 0-5 2.2-5 4.6 0 1.1.6 2.5 1.5 2.9.2.1.3 0 .3-.2l.2-.9c0-.1 0-.2-.1-.3-.3-.4-.5-1-.5-1.7 0-1.6 1.2-3.1 3.3-3.1 1.8 0 3 1.2 3 2.9 0 2-1 3.3-2.200 3.300-.7 0-1.200-.6-1-1.300.2-.8.6-1.700.6-2.300 0-.5-.3-1-.9-1-.7 0-1.300.7-1.300 1.700 0 .6.2 1 .2 1l-.9 3.700c-.1.700 0 1.600 0 1.800h.2c.2-.3 1.100-1.400 1.400-2.600l.5-1.800c.3.500 1 .9 1.800.9 2.300 0 3.900-2.100 3.900-4.800 0-2.100-1.700-4-4.200-4z" /></svg>
+            return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg>
+          }
+          const hd = handle || (isPreview ? '@lenahartphoto' : '')
+          return (
+            <section id="social" className="px-6 py-14" style={{ color: ink }}>
+              <div className="mx-auto grid items-center md:grid-cols-2" style={{ maxWidth: 1300, gap: 'clamp(28px, 5vw, 80px)', padding: '0 clamp(0px, 3vw, 48px)' }}>
+                <div>
+                  <h2 data-name="Heading" className="el-soc_title" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(2.6rem, 6.4vw, 6rem)', lineHeight: 1.02, letterSpacing: '-0.02em', margin: 0, color: ink }}>{txt('soc_title', 'Find us on social')}</h2>
+                  <span style={{ display: 'block', width: 'clamp(48px, 6vw, 86px)', height: 1, background: ink, margin: 'clamp(20px, 3vw, 40px) 0' }} />
+                  {hd && <p data-name="Handle" className="el-soc_handle" style={{ color: ink, fontWeight: 300, fontSize: 'clamp(1rem, 1.9vw, 1.7rem)', letterSpacing: '0.28em', margin: 0 }}>{txt('soc_handle', hd)}</p>}
+                </div>
+                <div className="flex flex-col" style={{ gap: 'clamp(10px, 1.4vw, 18px)' }}>
+                  {list.map((x: any) => (
+                    <a key={x.key} href={x.url} target="_blank" rel="noopener noreferrer" className="flex items-center" style={{ border: `1px solid ${accent}`, borderRadius: 999, padding: 'clamp(12px, 1.8vw, 26px) clamp(18px, 3vw, 44px)', color: ink, gap: 'clamp(14px, 2.4vw, 36px)' }}>
+                      <span style={{ width: 'clamp(28px, 3.6vw, 48px)', height: 'clamp(28px, 3.6vw, 48px)', display: 'block', flex: 'none' }}>{icon(x.key)}</span>
+                      <span style={{ flex: 1, ...headStyle, fontSize: 'clamp(0.95rem, 1.7vw, 1.6rem)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>{x.label}</span>
+                      <svg viewBox="0 0 40 16" style={{ width: 'clamp(26px, 3.2vw, 44px)', flex: 'none' }} fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M0 8h38M31 1l7 7-7 7" /></svg>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )
+        }
+        if (sd === 'dune' && (socials.length > 0 || isPreview)) {
+          const txt = (kk: string, d: string) => String((r as any).site_settings?.text?.[kk] ?? d)
+          const list = (socials.length > 0 ? socials : [
+            { key: 'instagram_url', label: 'Instagram', url: '#' },
+            { key: 'facebook_url', label: 'Facebook', url: '#' },
+            { key: 'pinterest_url', label: 'Pinterest', url: '#' },
+            { key: 'tiktok_url', label: 'TikTok', url: '#' },
+          ]).filter((x: any) => x.key !== 'youtube_url')
+          const icon = (key: string) => {
+            const c = { fill: 'none', stroke: 'currentColor', strokeWidth: 2 }
+            if (key === 'instagram_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><rect x="3.5" y="3.5" width="17" height="17" rx="5" {...c} /><circle cx="12" cy="12" r="4" {...c} /><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" /></svg>
+            if (key === 'facebook_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M14 8.5V7c0-.7.2-1 1.1-1H17V3h-2.6C11.6 3 10.5 4.5 10.5 6.8v1.7H8v3h2.5V21H14v-9.5h2.6l.4-3z" /></svg>
+            if (key === 'pinterest_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607 0 11.985-5.365 11.985-11.987C23.97 5.39 18.592.026 11.985.026L12.017 0z" /></svg>
+            if (key === 'tiktok_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg>
+            return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" fillRule="evenodd" d="M6 5h12a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4zm4 3.5v7l6-3.5z" /></svg>
+          }
+          const cream = '#f3ebe0'
+          return (
+            <section id="social" style={{ background: '#2b1a11', color: cream, padding: 'clamp(48px, 9vw, 120px) clamp(20px, 5vw, 80px)' }}>
+              <div className="mx-auto flex flex-wrap items-center justify-between" style={{ maxWidth: 1400, gap: 'clamp(20px, 3vw, 40px)' }}>
+                <h2 data-name="Heading" className="el-soc_title" style={{ ...headStyle, fontWeight: 400, fontSize: 'clamp(2.1rem, 5.4vw, 5.2rem)', lineHeight: 1.1, margin: 0, color: cream }}>{txt('soc_title', 'Let us stay in touch.')}</h2>
+                <div className="flex" style={{ gap: 'clamp(10px, 1.6vw, 26px)' }}>
+                  {list.map((x: any) => (
+                    <a key={x.key} href={x.url} target="_blank" rel="noopener noreferrer" aria-label={x.label} className="flex items-center justify-center" style={{ width: 'clamp(46px, 5.8vw, 92px)', height: 'clamp(46px, 5.8vw, 92px)', border: `2px solid ${cream}`, borderRadius: '24%', color: cream }}>
+                      <span style={{ width: '50%', height: '50%', display: 'block' }}>{icon(x.key)}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )
+        }
+        if (sd === 'tide' && (socials.length > 0 || isPreview)) {
+          const list = (socials.length > 0 ? socials : [
+            { key: 'instagram_url', label: 'Instagram', url: '#' },
+            { key: 'facebook_url', label: 'Facebook', url: '#' },
+            { key: 'pinterest_url', label: 'Pinterest', url: '#' },
+            { key: 'tiktok_url', label: 'TikTok', url: '#' },
+          ]).filter((x: any) => x.key !== 'youtube_url').slice(0, 4)
+          const raw: any[] = (pickPics(4) as any) || []
+          const src = (q: any) => (typeof q === 'string' ? q : q?.url ?? q?.src ?? q?.thumb ?? q?.path ?? '')
+          const card = '#fbf8f3'
+          const tilt = [-2.5, 1.2, -0.8, 2.4]
+          const drop = [0, 10, -8, 12]
+          const icon = (key: string) => {
+            const c = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.4 }
+            if (key === 'instagram_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" {...c} /><circle cx="12" cy="12" r="4.4" {...c} /><circle cx="17.4" cy="6.6" r="1.2" fill="currentColor" /></svg>
+            if (key === 'facebook_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><circle cx="12" cy="12" r="11" fill="currentColor" /><path fill={card} d="M13.2 21v-7.6h2.5l.4-3h-2.9V8.6c0-.8.3-1.4 1.5-1.4h1.5V4.5c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2.2H7.8v3h2.5V21z" /></svg>
+            if (key === 'pinterest_url') return <svg viewBox="0 0 24 24" width="100%" height="100%"><circle cx="12" cy="12" r="11" fill="currentColor" /><path fill={card} d="M12.2 5.2c-3.3 0-5 2.2-5 4.6 0 1.1.6 2.5 1.5 2.9.2.1.3 0 .3-.2l.2-.9c0-.1 0-.2-.1-.3-.3-.4-.5-1-.5-1.7 0-1.6 1.2-3.1 3.3-3.1 1.8 0 3 1.2 3 2.9 0 2-1 3.3-2.2 3.3-.7 0-1.2-.6-1-1.3.2-.8.6-1.7.6-2.3 0-.5-.3-1-.9-1-.7 0-1.3.7-1.3 1.7 0 .6.2 1 .2 1l-.9 3.7c-.1.7 0 1.6 0 1.8h.2c.2-.3 1.1-1.4 1.4-2.6l.5-1.8c.3.5 1 .9 1.8.9 2.3 0 3.9-2.1 3.9-4.8 0-2.1-1.7-4-4.2-4z" /></svg>
+            return <svg viewBox="0 0 24 24" width="100%" height="100%"><path fill="currentColor" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg>
+          }
+          return (
+            <section id="social" className="px-5 py-16" style={{ color: ink }}>
+              <div className="mx-auto grid grid-cols-2 md:grid-cols-4" style={{ maxWidth: 1500, gap: 'clamp(18px, 2.4vw, 40px)' }}>
+                {list.map((x: any, i: number) => (
+                  <a key={x.key} href={x.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: card, padding: 'clamp(8px, 1.2vw, 18px) clamp(8px, 1.2vw, 18px) 0', boxShadow: '0 6px 18px rgba(60,40,20,0.18)', transform: `rotate(${tilt[i % 4]}deg) translateY(${drop[i % 4]}px)`, color: ink }}>
+                    <div style={{ aspectRatio: '1 / 1', overflow: 'hidden', background: '#e4e1dc' }}>
+                      {raw[i] && src(raw[i]) ? (
+                        <img src={src(raw[i])} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      ) : (
+                        <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#e4e1dc" /><path d="M10 72 36 42l14 16 12-14 28 28z" fill="#c9c5be" /><circle cx="68" cy="30" r="6" fill="#c9c5be" /></svg>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-center" style={{ gap: 'clamp(8px, 1.2vw, 18px)', padding: 'clamp(14px, 2vw, 30px) 0' }}>
+                      <span style={{ width: 'clamp(22px, 2.6vw, 38px)', height: 'clamp(22px, 2.6vw, 38px)', display: 'block', flex: 'none' }}>{icon(x.key)}</span>
+                      <span style={{ ...headStyle, fontSize: 'clamp(0.7rem, 1.35vw, 1.3rem)', letterSpacing: '0.24em', textTransform: 'uppercase' }}>{x.label}</span>
+                    </div>
                   </a>
                 ))}
               </div>

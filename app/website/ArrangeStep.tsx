@@ -412,9 +412,9 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     about: 'People often read About right before they book. Add a few reviews and a booking button.',
     book: 'Booking is your calendar. A short FAQ right under it answers the last questions before someone inquires.',
   }
-  const okRec = (k: string) => !!BLOCKS[k] && (!['galsec', 'pricesec', 'investment', 'portfolio'].includes(k) || !!thumbs[k] || !!where(k))
+  const okRec = (k: string) => !!BLOCKS[k] && k !== 'portfolio' && !(k === 'about' && designs.about_mode !== 'section') && !(k === 'galsec' && designs.galleries_mode === 'page') && (!['galsec', 'pricesec', 'investment'].includes(k) || !!thumbs[k] || !!where(k))
   const recKeys = (RECS[page.id] ?? (page.extra ? ['faq', 'testimonials', 'contact'] : [])).filter(okRec)
-  const others = sections.filter((k) => !recKeys.includes(k) && !mine.includes(k))
+  const others = sections.filter((k) => okRec(k) && !recKeys.includes(k) && !mine.includes(k))
   function addAll() {
     const s = clone()
     cardKeys.forEach((k) => { if (!listOf(s, page.id).includes(k)) { strip(s, k); setList(s, page.id, [...listOf(s, page.id), k]) } })
@@ -422,7 +422,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   }
 
   const ALLOW: string[] | null = page.id === 'galleries' ? [] : isBook ? ['faq'] : page.id === 'about' ? ['testimonials', 'social', 'contact'] : page.id === 'blog' ? ['social', 'contact'] : page.extra ? ['faq', 'testimonials', 'social', 'contact'] : null
-  const cardKeys = [...recKeys, ...others].filter((k) => !ALLOW || ALLOW.includes(k))
+  const cardKeys = [...recKeys, ...others].filter((k) => !mine.includes(k) && (!ALLOW || ALLOW.includes(k)))
   const rightPanel = (
     <div className="space-y-6">
       <div>
