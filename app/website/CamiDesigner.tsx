@@ -109,8 +109,8 @@ const fam = (k: string) => FONT_OPTIONS[k]?.family ?? 'serif'
 const fname = (k: string) => { const o = FONT_OPTIONS[k] as unknown as Record<string, string> | undefined; return o?.label ?? o?.name ?? k }
 const FONT_IDS = Object.keys(FONT_OPTIONS)
 type Pick = { key: string; text: string; left: number; top: number; color: string }
-const PICK_LABELS: Record<string, string> = { hero_headline: 'Headline', menu_links: 'Menu links', menu_brand: 'Your name', ex_label: 'Section label', ex_title: 'Section title', ex_sub: 'Section subtitle', con_msg: 'Contact message', con_social: 'Social links', ft_line: 'Footer line', ft_copy: 'Copyright', gal_name: 'Gallery name', gal_count: 'Gallery count', gal_link: 'Gallery link', tes_quote: 'Testimonial', tes_name: 'Testimonial name', about_text: 'About text', pr_intro: 'Package intro', pr_group: 'Package group', pr_name: 'Package name', pr_price: 'Package price', pr_list: 'Package list', pr_note: 'Package note', faq_q: 'Question', faq_a: 'Answer' }
-const TEXT_KEYS = ['hero_headline', 'menu_brand', 'about_text', 'con_msg', 'ft_line', 'ft_copy']
+const PICK_LABELS: Record<string, string> = { hero_headline: 'Headline', menu_links: 'Menu links', menu_brand: 'Your name', ex_label: 'Section label', ex_title: 'Section title', ex_sub: 'Section subtitle', con_msg: 'Contact message', con_social: 'Social links', ft_line: 'Footer line', ft_copy: 'Copyright', gal_name: 'Gallery name', gal_count: 'Gallery count', gal_link: 'Gallery link', tes_quote: 'Testimonial', tes_name: 'Testimonial name', about_text: 'About text', pr_intro: 'Package intro', pr_group: 'Package group', pr_name: 'Package name', pr_price: 'Package price', pr_list: 'Package list', pr_note: 'Package note', faq_q: 'Question', faq_a: 'Answer', feat_title: 'Featured work title', hero_btn: 'Button text' }
+const TEXT_KEYS = ['hero_headline', 'menu_brand', 'about_text', 'con_msg', 'ft_line', 'ft_copy', 'feat_title', 'hero_btn']
 const LONG_TEXT = ['about_text', 'con_msg']
 const PICK_COLORS = [...TEXTS.slice(0, 7), ...ACCENTS.slice(0, 14), '#FFFFFF']
 const rgbHex = (c: string) => { const m = c.match(/\d+/g); if (!m || m.length < 3) return '#2A1F24'; return '#' + m.slice(0, 3).map((x) => Number(x).toString(16).padStart(2, '0')).join('').toUpperCase() }
@@ -798,7 +798,7 @@ export default function CamiDesigner() {
       const s = (n.site_settings = n.site_settings ?? {})
       if (key === 'hero_headline') n.site_headline = v
       else if (key === 'menu_brand') s.menu = { ...(s.menu ?? {}), brand: v }
-      else { const f = key === 'about_text' ? 'about' : key === 'con_msg' ? 'contact' : key === 'ft_line' ? 'footer' : 'copyright'; s.text = { ...(s.text ?? {}), [f]: v } }
+      else { const f = key === 'about_text' ? 'about' : key === 'con_msg' ? 'contact' : key === 'ft_line' ? 'footer' : key === 'feat_title' ? 'feat_title' : key === 'hero_btn' ? 'hero_btn' : 'copyright'; s.text = { ...(s.text ?? {}), [f]: v } }
     })
   }
 

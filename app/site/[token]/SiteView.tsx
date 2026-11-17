@@ -1705,12 +1705,12 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 </div>
                 <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2.9 / 1', minHeight: 240 }}>
                   {shownHero.length === 0 ? <div data-name="Cover image" className="absolute inset-0">{mtn('#d8d3cb', '#a9a299')}</div> : heroImg('absolute inset-0 h-full w-full')}
-                  <a data-name="Button" id="hero-btn" href={availHref} className="absolute bottom-6 left-6 uppercase" style={{ background: '#000', color: '#fff', fontFamily: PF, fontWeight: 700, fontSize: 11, letterSpacing: '0.16em', padding: '14px 26px' }}>{ctaLabel}</a>
+                  <a data-name="Button" id="hero-btn" href={availHref} className="el-hero_btn absolute bottom-6 left-6 uppercase" style={{ background: '#000', color: '#fff', fontFamily: PF, fontWeight: 700, fontSize: 11, letterSpacing: '0.16em', padding: '14px 26px' }}>{String((r as any).site_settings?.text?.hero_btn ?? '').trim() || ctaLabel}</a>
                 </div>
               </header>
               <section data-name="Featured work" id="featured" style={{ background: '#000', color: '#fff', fontFamily: PF }}>
                 <div className="w-full px-8 pb-7 pt-5">
-                  <h2 data-name="Featured work title" className="uppercase" style={{ fontFamily: PF, fontWeight: 600, fontSize: 'clamp(0.8rem, 1.15vw, 1.1rem)', letterSpacing: '0.16em', marginBottom: 12 }}>Featured work</h2>
+                  <h2 data-name="Featured work title" className="el-feat_title uppercase" style={{ fontFamily: PF, fontWeight: 600, fontSize: 'clamp(0.8rem, 1.15vw, 1.1rem)', letterSpacing: '0.16em', marginBottom: 12 }}>{String((r as any).site_settings?.text?.feat_title ?? '').trim() || 'Featured work'}</h2>
                   <div className="grid grid-cols-3 gap-1">
                     {[0, 1, 2].map((k) => (
                       <div key={k} data-name={'Featured photo ' + (k + 1)} className="relative overflow-hidden" style={{ aspectRatio: '1.85 / 1', background: '#222' }}>
