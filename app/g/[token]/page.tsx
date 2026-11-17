@@ -536,10 +536,10 @@ export default function GalleryViewPage() {
         const sub = coverSub ? String(coverSub) : ''
         const big1 = l1.length <= 8
         const f1 = big1 ? 71 : Math.max(24, 270 / (0.62 * l1.length))
-        const f2 = big1 ? 100 : Math.min(100, f1 * 1.41)
+        const f2 = big1 ? 105.9 : Math.min(105.9, f1 * 1.41)
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;800&display=swap" />
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;800&family=DM+Serif+Display&display=swap" />
             <div className="absolute overflow-hidden" style={{ left: '2.9cqw', top: '6.2cqw', width: '57.6cqw', height: '37cqw', background: pal.line }}>
               <div className="absolute inset-0">{imgEl}</div>
             </div>
@@ -548,7 +548,7 @@ export default function GalleryViewPage() {
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
               {l1 && <text data-gk="title" x="716" y="181" textAnchor="middle" style={{ ...tt, fontSize: f1 }} textLength={big1 ? Math.min(270, 33.6 * l1.length) : undefined} lengthAdjust="spacingAndGlyphs">{l1}</text>}
-              {l2 && <text data-gk="title2" x="716" y={one ? 240 : big1 ? 265 : 181 + f2 * 0.84} textAnchor="middle" style={{ ...tt, fontSize: f2 }} textLength={Math.min(250, 0.49 * f2 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
+              {l2 && <text data-gk="title2" x="716" y={one ? 240 : big1 ? 264.1 : 181 + f2 * 0.84} textAnchor="middle" style={{ ...tt, fontFamily: "'DM Serif Display', Georgia, serif", fontWeight: 400, fontSize: f2 }} textLength={Math.min(250, 0.4694 * f2 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
               {sub && <text data-gk="brand" x="718" y="310" textAnchor="middle" style={{ ...tt, fontWeight: 500, fontSize: 14 }} textLength={Math.min(270, 15 * sub.length)} lengthAdjust="spacing">{sub.toUpperCase()}</text>}
             </svg>
           </div>
@@ -601,7 +601,7 @@ export default function GalleryViewPage() {
         const one = words.length <= 1
         const l1 = one ? (words[0] || '') : words.slice(0, -1).join(' ')
         const l2 = one ? '' : words[words.length - 1]
-        const sc: CSSProperties = { fontFamily: "'Whisper', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#3A2A22', pointerEvents: 'auto' }
+        const sc: CSSProperties = { fontFamily: "'Qwigley', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#3A2A22', pointerEvents: 'auto' }
         const pm: CSSProperties = { ...sc, fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, color: '#2A2018' }
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
         const ci = sub.indexOf(',')
@@ -610,7 +610,7 @@ export default function GalleryViewPage() {
         const pmL: string[] = !sub ? [] : ci > 0 ? [sub.slice(0, ci + 1).trim(), sub.slice(ci + 1).trim()] : sw.length > 1 ? [sw.slice(0, half).join(' '), sw.slice(half).join(' ')] : [sub]
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#E8D5BA' }}>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Whisper&family=Playfair+Display:wght@500&display=swap" />
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Qwigley&family=Playfair+Display:wght@500&display=swap" />
             <div className="absolute overflow-hidden" style={{ left: '6.92cqw', top: '5.16cqw', width: '46.67cqw', height: '40.67cqw', transform: 'rotate(-3deg)', background: pal.line }}>
               <div className="absolute inset-0">{imgEl}</div>
             </div>
@@ -620,8 +620,8 @@ export default function GalleryViewPage() {
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
               {pmL[0] && <text data-gk="brand" x="631" y={pmL[1] ? 84 : 99} textAnchor="middle" style={{ ...pm, fontSize: 17 }} textLength={Math.min(80, 10 * pmL[0].length)} lengthAdjust="spacing">{pmL[0]}</text>}
               {pmL[1] && <text data-gk="brand" x="631" y="105" textAnchor="middle" style={{ ...pm, fontSize: 17 }} textLength={Math.min(80, 10.8 * pmL[1].length)} lengthAdjust="spacing">{pmL[1]}</text>}
-              {l1 && <text data-gk="title" x="684.8" y="234.2" textAnchor="middle" transform="rotate(-4.5 684.8 234.2)" style={{ ...sc, fontSize: 92 }} textLength={Math.min(332, 29.87 * l1.length)} lengthAdjust="spacingAndGlyphs">{l1}</text>}
-              {l2 && <text data-gk="title2" x="670.7" y="295.0" textAnchor="middle" transform="rotate(-4.5 670.7 295.0)" style={{ ...sc, fontSize: 92 }} textLength={Math.min(266, 43.71 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
+              {l1 && <text data-gk="title" x="685.0" y="237.0" textAnchor="middle" transform="rotate(-4.5 685.0 237.0)" style={{ ...sc, fontSize: 105 }} textLength={Math.min(331, 30.05 * l1.length)} lengthAdjust="spacingAndGlyphs">{l1}</text>}
+              {l2 && <text data-gk="title2" x="670.3" y="289.7" textAnchor="middle" transform="rotate(-4.5 670.3 289.7)" style={{ ...sc, fontSize: 105 }} textLength={Math.min(265, 44.07 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
             </svg>
           </div>
         )
@@ -697,12 +697,12 @@ export default function GalleryViewPage() {
         ]
         const title = String(coverTitle)
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
-        const sc: CSSProperties = { fontFamily: "'Whisper', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#5A3A28', pointerEvents: 'auto' }
+        const sc: CSSProperties = { fontFamily: "'Qwigley', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#5A3A28', pointerEvents: 'auto' }
         const ss: CSSProperties = { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: 0, fill: 'currentColor', color: '#6B4F3C', pointerEvents: 'auto' }
         const box = (cx: number, cy: number, w: number, h: number, a: number): CSSProperties => ({ left: ((cx - w / 2) / 9) + 'cqw', top: ((cy - h / 2) / 9) + 'cqw', width: (w / 9) + 'cqw', height: (h / 9) + 'cqw', transform: 'rotate(' + a + 'deg)' })
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#F3E4CB' }}>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Whisper&family=Playfair+Display:wght@500&display=swap" />
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Qwigley&family=Playfair+Display:wght@500&display=swap" />
             {slots.map((sl, k) => (
               <div key={k} className="absolute overflow-hidden" style={{ ...box(sl.cx, sl.cy, sl.w, sl.h, sl.a), background: pal.line }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -716,7 +716,7 @@ export default function GalleryViewPage() {
             <img src="/gallery-cover/stack-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              <text data-gk="title" x="450.5" y="399.4" textAnchor="middle" style={{ ...sc, fontSize: 68.9 }} textLength={Math.min(478, 23.81 * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
+              <text data-gk="title" x="450.5" y="393.8" textAnchor="middle" style={{ ...sc, fontSize: 70 }} textLength={Math.min(478, 23.85 * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
               {sub && <text data-gk="brand" x="448" y="430" textAnchor="middle" style={{ ...ss, fontSize: 14 }} textLength={Math.min(230, 19.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
             </svg>
           </div>
@@ -772,7 +772,7 @@ export default function GalleryViewPage() {
               <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
                 <g data-gk="initials" style={{ fontFamily: "'Libre Caslon Display', Georgia, serif", fontWeight: 400, fill: 'currentColor', color: 'rgba(255,255,255,0.58)' }}>
                   <text transform="translate(175.5 363.3) scale(0.89 1)" textAnchor="middle" style={{ fontSize: 448.3, pointerEvents: 'auto' }}>{L}</text>
-                  <text x="461" y="348.1" textAnchor="middle" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: 310, pointerEvents: 'auto' }} textLength="206.8" lengthAdjust="spacingAndGlyphs">&amp;</text>
+                  <text transform="translate(447 346.2) skewX(-8) scale(0.871 1)" textAnchor="middle" style={{ fontSize: 288.7, pointerEvents: 'auto' }}>&amp;</text>
                   <text transform="translate(701 365) scale(0.89 1)" textAnchor="middle" style={{ fontSize: 459.2, pointerEvents: 'auto' }}>{R}</text>
                 </g>
               </svg>
