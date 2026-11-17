@@ -3,34 +3,36 @@
 import CamriTyping from '@/app/components/CamriTyping'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { COVERS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type GalleryDesign } from '@/lib/galleryDesign'
+import { FONT_OPTIONS } from '@/lib/siteTheme'
+import { COVERS, LAYOUTS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign } from '@/lib/galleryDesign'
 
-function CoverMock({ k }: { k: string }) {
-  const SAMPLE = '/samples/cover-sample.jpg'
-  const serif = 'Georgia, "Times New Roman", serif'
-  const ph = (x: number, y: number, w: number, h: number, dim?: boolean) => (
-    <g>
-      <image href={SAMPLE} x={x} y={y} width={w} height={h} preserveAspectRatio="xMidYMid slice" />
-      {dim && <rect x={x} y={y} width={w} height={h} fill="#000" opacity=".3" />}
-    </g>
-  )
-  const title = (x: number, y: number, size: number, fill: string, anchor: 'start' | 'middle' = 'start') => (
-    <text x={x} y={y} fontSize={size} fill={fill} textAnchor={anchor} fontFamily={serif}>Emma &amp; Luke</text>
-  )
-  const sub = (x: number, y: number, fill: string, anchor: 'start' | 'middle' = 'start', o = 0.8) => (
-    <text x={x} y={y} fontSize={3.1} fill={fill} opacity={o} textAnchor={anchor} letterSpacing={0.7} fontFamily={serif}>JUNE 14 · 2026</text>
-  )
+const THUMBS: Record<string, number[][]> = {
+  masonry: [[2, 2, 16, 14], [2, 18, 16, 20], [22, 2, 16, 22], [22, 26, 16, 12], [42, 2, 16, 12], [42, 16, 16, 22]],
+  grid: [[2, 2, 16, 17], [22, 2, 16, 17], [42, 2, 16, 17], [2, 21, 16, 17], [22, 21, 16, 17], [42, 21, 16, 17]],
+  square: [[2, 3, 16, 16], [22, 3, 16, 16], [42, 3, 16, 16], [2, 21, 16, 16], [22, 21, 16, 16], [42, 21, 16, 16]],
+  rows: [[2, 2, 26, 16], [30, 2, 28, 16], [2, 20, 18, 18], [22, 20, 18, 18], [42, 20, 16, 18]],
+  feature: [[2, 2, 34, 36], [38, 2, 20, 17], [38, 21, 20, 17]],
+  wide: [[2, 2, 27, 22], [2, 26, 27, 12], [31, 2, 27, 12], [31, 16, 27, 22]],
+  mosaic: [[2, 2, 27, 17], [31, 2, 27, 17], [2, 21, 17, 17], [21, 21, 17, 17], [40, 21, 18, 17]],
+  polaroid: [[4, 5, 16, 22], [22, 9, 16, 22], [40, 5, 16, 22]],
+  story: [[12, 2, 36, 16], [12, 20, 36, 18]],
+  stagger: [[2, 2, 27, 16], [2, 20, 27, 18], [31, 8, 27, 16], [31, 26, 27, 12]],
+  filmstrip: [[0, 8, 14, 24], [16, 8, 26, 24], [44, 8, 16, 24]],
+}
+function LayoutThumb({ k }: { k: string }) {
   return (
-    <svg viewBox="0 0 120 76" className="block w-full" role="img" aria-label={k}>
-      <rect width="120" height="76" fill="#fff" />
-      {k === 'bottom' && (<g>{ph(0, 0, 120, 76, true)}{title(8, 58, 8.5, '#fff')}{sub(8, 66, '#fff')}</g>)}
-      {k === 'center' && (<g>{ph(0, 0, 120, 76, true)}{title(60, 36, 9.5, '#fff', 'middle')}{sub(60, 45, '#fff', 'middle')}</g>)}
-      {k === 'split' && (<g>{ph(60, 0, 60, 76)}{title(9, 35, 7.5, '#2A1F24')}{sub(9, 43, '#2A1F24', 'start', 0.55)}</g>)}
-      {k === 'frame' && (<g><rect x="14" y="7" width="92" height="46" fill="none" stroke="#2A1F24" strokeOpacity=".35" />{ph(18, 11, 84, 38)}{title(60, 64, 7.5, '#2A1F24', 'middle')}{sub(60, 71, '#2A1F24', 'middle', 0.55)}</g>)}
-      {k === 'below' && (<g>{ph(0, 0, 120, 48)}{title(60, 61, 8, '#2A1F24', 'middle')}{sub(60, 69, '#2A1F24', 'middle', 0.55)}</g>)}
-      {k === 'text' && (<g>{title(60, 36, 10.5, '#2A1F24', 'middle')}{sub(60, 46, '#2A1F24', 'middle', 0.55)}</g>)}
+    <svg viewBox="0 0 60 40" className="block w-full" role="img" aria-label={k}>
+      <rect width="60" height="40" fill="#FBF8F2" />
+      {(THUMBS[k] ?? []).map((r, i) => <rect key={i} x={r[0]} y={r[1]} width={r[2]} height={r[3]} rx="1" fill="#CDBFAE" />)}
     </svg>
   )
+}
+
+const FONT_LIST = Object.entries(FONT_OPTIONS).map(([k, o]) => ({ k, label: o.label })).sort((a, b) => a.label.localeCompare(b.label))
+const toHex = (c: string) => {
+  const m = c.match(/\d+/g)
+  if (!m || m.length < 3) return '#000000'
+  return '#' + m.slice(0, 3).map((n) => Number(n).toString(16).padStart(2, '0')).join('')
 }
 
 export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, onClose, onSaved, onSend }: {
@@ -41,6 +43,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean } | null>(null)
   const frameRef = useRef<HTMLIFrameElement>(null)
   const latest = useRef<GalleryDesign>(initial ?? {})
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -50,7 +53,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [gBusy, setGBusy] = useState(false)
   const [gUndo, setGUndo] = useState<GalleryDesign | null>(null)
   const [gTour, setGTour] = useState<number | null>(null)
-  const G_Q = ["Let's style your gallery. How should the opening photo look?", 'Now pick a mood.', 'Last one: colors.', 'All set! Check the preview. Want me to tweak anything, like moving the focal point?']
+  const G_Q = ["Let's style your gallery. How should the opening photo look?", 'Now pick a photo layout.', 'All set! Check the preview. Click any line in it to change its font, size or color.']
   const gChip = 'rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] text-ink transition hover:border-twilight'
   const gSay = (text: string) => setGMsgs((m) => [...m, { from: 'cami', text }])
   const gPick = (label: string, patch: Partial<GalleryDesign>, next: number) => {
@@ -58,7 +61,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     setGUndo({ ...latest.current })
     change(patch)
     gSay(G_Q[next])
-    setGTour(next === 3 ? null : next)
+    setGTour(next === 2 ? null : next)
   }
   async function gAsk(raw: string) {
     const t = raw.trim()
@@ -106,6 +109,16 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     setSaving(true)
     timer.current = setTimeout(() => { void save(latest.current) }, 500)
   }
+  function setEl(key: string, patch: Partial<ElStyle>) {
+    const el = { ...(latest.current.el ?? {}) }
+    el[key] = { ...(el[key] ?? {}), ...patch }
+    change({ el })
+  }
+  function resetEl(key: string) {
+    const el = { ...(latest.current.el ?? {}) }
+    delete el[key]
+    change({ el })
+  }
   function close() {
     if (timer.current) { clearTimeout(timer.current); timer.current = null; void save(latest.current) }
     onSaved(latest.current)
@@ -115,7 +128,10 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
 
   useEffect(() => {
     function onMsg(e: MessageEvent) {
-      if (e.data && e.data.type === 'camrhia-gallery-ready' && e.source === frameRef.current?.contentWindow) postDesign(latest.current)
+      const m = e.data
+      if (!m || e.source !== frameRef.current?.contentWindow) return
+      if (m.type === 'camrhia-gallery-ready') postDesign(latest.current)
+      if (m.type === 'camrhia-gallery-pick') setPick({ key: String(m.key), name: String(m.name), size: Number(m.size) || 16, color: toHex(String(m.color)), bold: !!m.bold })
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
@@ -123,6 +139,14 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
 
   const ring = 'border-twilight ring-2 ring-twilight'
   const head = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
+  const cur = pick ? d.el?.[pick.key] : undefined
+  const colorRow = (label: string, value: string, isSet: boolean, onSet: (v: string) => void, onReset: () => void) => (
+    <div className="flex items-center gap-2 rounded-lg border border-line bg-white px-2.5 py-2">
+      <input type="color" value={value} onChange={(e) => onSet(e.target.value)} className="h-8 w-8 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
+      <span className="flex-1 text-sm text-ink">{label}</span>
+      {isSet && <button type="button" onClick={onReset} className="text-[11px] text-twilight underline">Reset</button>}
+    </div>
+  )
 
   return (
     <div className="fixed inset-0 z-50 flex overflow-hidden bg-paper">
@@ -155,11 +179,10 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           <div className="mt-2 flex flex-wrap gap-1">
             {gTour === null && <button type="button" className={gChip} onClick={() => { gSay(G_Q[0]); setGTour(0) }}>Walk me through it</button>}
             {gTour === 0 && COVERS.map((c) => <button key={c.k} type="button" className={gChip} onClick={() => gPick(c.name, { cover: c.k } as Partial<GalleryDesign>, 1)}>{c.name}</button>)}
-            {gTour === 1 && LOOK_KEYS.map((k) => <button key={k} type="button" className={gChip} onClick={() => gPick(LOOKS[k].name, { look: k } as Partial<GalleryDesign>, 2)}>{LOOKS[k].name}</button>)}
-            {gTour === 2 && PALETTES.map((p) => <button key={p.key} type="button" className={gChip} onClick={() => gPick(p.name, { colors: p.key } as Partial<GalleryDesign>, 3)}>{p.name}</button>)}
+            {gTour === 1 && LAYOUTS.map((l) => <button key={l.k} type="button" className={gChip} onClick={() => gPick(l.name, { layout: l.k } as Partial<GalleryDesign>, 2)}>{l.name}</button>)}
             {gTour !== null && <button type="button" className="px-1 text-[11px] text-ink-soft underline" onClick={() => { setGTour(null); gSay('Okay, I am here whenever you want a change.') }}>Skip</button>}
           </div>
-          {gUndo && <button type="button" onClick={() => { const u = gUndo; setGUndo(null); change({ cover: u.cover, look: u.look, colors: u.colors, focal: u.focal } as Partial<GalleryDesign>) }} className="mt-1.5 text-[11px] text-twilight underline">Undo Camri&apos;s last change</button>}
+          {gUndo && <button type="button" onClick={() => { const u = gUndo; setGUndo(null); change({ cover: u.cover, look: u.look, colors: u.colors, focal: u.focal, layout: u.layout } as Partial<GalleryDesign>) }} className="mt-1.5 text-[11px] text-twilight underline">Undo Camri&apos;s last change</button>}
           <form onSubmit={(e) => { e.preventDefault(); gAsk(gInput) }} className="mt-2 flex gap-1.5">
             <input value={gInput} onChange={(e) => setGInput(e.target.value)} placeholder="Ask Camri to restyle" className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-xs text-ink outline-none focus:border-twilight" />
             <button type="submit" disabled={gBusy} className="rounded-lg bg-twilight px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60">Send</button>
@@ -193,24 +216,32 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           </div>
         )}
 
-        <p className={head + ' mt-8'}>Mood</p>
+        <p className={head + ' mt-8'}>Photo layout</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
-          {LOOK_KEYS.map((k) => (
-            <button key={k} type="button" onClick={() => change({ look: k })} className={'rounded-lg border bg-white px-2 py-3 text-sm text-ink transition hover:bg-paper ' + ((d.look ?? 'classic') === k ? ring : 'border-line')}>{LOOKS[k].name}</button>
-          ))}
-        </div>
-        <p className="mt-2 text-xs text-ink-soft">{eff.look.blurb}</p>
-
-        <p className={head + ' mt-8'}>Colors</p>
-        <div className="mt-3 flex flex-wrap gap-3">
-          {PALETTES.map((p) => (
-            <button key={p.key} type="button" title={p.name} aria-label={p.name} onClick={() => change({ colors: p.key })} className={'h-9 w-9 overflow-hidden rounded-full border transition hover:scale-110 ' + (eff.pal.key === p.key ? ring : 'border-black/15')}>
-              <span className="block h-1/2 w-full" style={{ background: p.bg }} />
-              <span className="block h-1/2 w-full" style={{ background: p.accent }} />
+          {LAYOUTS.map((l) => (
+            <button key={l.k} type="button" onClick={() => change({ layout: l.k })} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.layout === l.k ? ring : 'border-line')}>
+              <div className="overflow-hidden rounded border border-black/5"><LayoutThumb k={l.k} /></div>
+              <span className="mt-1 block text-[11px] text-ink">{l.name}</span>
             </button>
           ))}
         </div>
-        <p className="mt-2 text-xs text-ink-soft">{eff.pal.name}</p>
+
+        <p className={head + ' mt-8'}>Colors</p>
+        <div className="mt-3 space-y-2">
+          {colorRow('Background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
+          {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
+        </div>
+
+        <p className={head + ' mt-8'}>Photo spacing</p>
+        <div className="mt-3 space-y-3 rounded-lg border border-line bg-white p-3">
+          <label className="block text-xs text-ink-soft">Space between photos
+            <input type="range" min={0} max={48} value={eff.look.gap} onChange={(e) => change({ gap: Number(e.target.value) })} className="mt-1 w-full" />
+          </label>
+          <label className="block text-xs text-ink-soft">Rounded corners
+            <input type="range" min={0} max={40} value={eff.look.radius} onChange={(e) => change({ radius: Number(e.target.value) })} className="mt-1 w-full" />
+          </label>
+        </div>
+        <p className="mt-4 text-xs text-ink-soft">Click any line in the preview to change its font, size and color.</p>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col p-3">
@@ -223,8 +254,48 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           {onSend && <button type="button" onClick={closeAndSend} className="rounded-xl bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90">Done and send</button>}
           <button type="button" onClick={close} className={onSend ? 'rounded-xl border border-line bg-white px-5 py-2 text-sm font-medium text-ink transition hover:opacity-90' : 'rounded-xl bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90'}>Done</button>
         </div>
-        <div className="flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+        <div className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
           <iframe ref={frameRef} src={`/g/${token}?preview=1`} title="Gallery preview" style={{ width: device === 'phone' ? 390 : '100%', height: '100%', border: 0, background: '#fff' }} />
+          {pick && (
+            <div className="absolute right-3 top-3 z-20 max-h-[92%] w-64 overflow-y-auto rounded-xl border border-line bg-white p-3 shadow-lg">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="font-fraunces text-base font-semibold text-ink">{pick.name}</p>
+                <button type="button" onClick={() => setPick(null)} className="text-ink-soft hover:text-ink">✕</button>
+              </div>
+              {pick.key === 'photos' ? (
+                <div className="space-y-3">
+                  <label className="block text-xs text-ink-soft">Space between photos
+                    <input type="range" min={0} max={48} value={eff.look.gap} onChange={(e) => change({ gap: Number(e.target.value) })} className="mt-1 w-full" />
+                  </label>
+                  <label className="block text-xs text-ink-soft">Rounded corners
+                    <input type="range" min={0} max={40} value={eff.look.radius} onChange={(e) => change({ radius: Number(e.target.value) })} className="mt-1 w-full" />
+                  </label>
+                  <p className="text-[11px] text-ink-soft">These apply to every photo. Pick a different layout on the left.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <label className="block text-xs text-ink-soft">Font
+                    <select value={cur?.font ?? ''} onChange={(e) => setEl(pick.key, { font: e.target.value || undefined })} className="mt-1 w-full rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
+                      <option value="">Gallery default</option>
+                      {FONT_LIST.map((f) => <option key={f.k} value={f.k}>{f.label}</option>)}
+                    </select>
+                  </label>
+                  <label className="block text-xs text-ink-soft">Size ({cur?.size ?? pick.size}px)
+                    <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(pick.key, { size: Number(e.target.value) })} className="mt-1 w-full" />
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-ink-soft">
+                    <input type="color" value={cur?.color ?? pick.color} onChange={(e) => setEl(pick.key, { color: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
+                    Color
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-ink-soft">
+                    <input type="checkbox" checked={cur?.bold ?? pick.bold} onChange={(e) => setEl(pick.key, { bold: e.target.checked })} />
+                    Bold
+                  </label>
+                  <button type="button" onClick={() => resetEl(pick.key)} className="text-[11px] text-twilight underline">Reset this line</button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

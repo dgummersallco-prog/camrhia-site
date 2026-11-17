@@ -1,4 +1,8 @@
-export type GalleryDesign = { look?: string; cover?: string; colors?: string; focal?: { x: number; y: number } }
+export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean }
+export type GalleryDesign = {
+  look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }
+  layout?: string; bg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
+}
 
 export type LookSpec = {
   name: string; blurb: string; font: string; upper: boolean; italic?: boolean; weight: number
@@ -53,12 +57,72 @@ export const COVERS = [
 ]
 const LEGACY_COVER: Record<string, string> = { bottom: 'cinema', center: 'monogram', split: 'diptych', frame: 'arch', below: 'bigtype', text: 'cinema' }
 
+export const LAYOUTS = [
+  { k: 'masonry', name: 'Masonry' },
+  { k: 'grid', name: 'Even grid' },
+  { k: 'square', name: 'Squares' },
+  { k: 'rows', name: 'Wide rows' },
+  { k: 'feature', name: 'Big and small' },
+  { k: 'wide', name: 'Two columns' },
+  { k: 'mosaic', name: 'Mosaic' },
+  { k: 'polaroid', name: 'Polaroid' },
+  { k: 'story', name: 'Story' },
+  { k: 'stagger', name: 'Staggered' },
+  { k: 'filmstrip', name: 'Filmstrip' },
+]
+
+export const EL_NAMES: Record<string, string> = {
+  title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button',
+  favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos',
+}
+const EL_SEL: Record<string, string> = {
+  title: '.gal-root h1,.gal-root [data-gk="title"]',
+  brand: '.gal-root [data-gk="brand"]',
+  count: '.gal-root [data-gk="count"]',
+  download: '.gal-root [data-gk="download"]',
+  all: '.gal-root [data-gk="all"]',
+  favs: '.gal-root [data-gk="favs"]',
+  moment: '.gal-root [data-gk="moment"]',
+  footer: '.gal-root [data-gk="footer"]',
+}
+const HEX = /^#[0-9a-f]{6}$/i
+
+export function elCss(el: Record<string, ElStyle>, famOf: (k: string) => string | undefined): string {
+  let out = ''
+  for (const [k, s] of Object.entries(el)) {
+    const sel = EL_SEL[k]
+    if (!sel || !s) continue
+    const r: string[] = []
+    if (s.font) { const f = famOf(s.font); if (f) r.push(`font-family:${f}!important`) }
+    if (typeof s.size === 'number' && Number.isFinite(s.size)) r.push(`font-size:${Math.min(160, Math.max(6, s.size))}px!important`)
+    if (s.color && HEX.test(s.color)) r.push(`color:${s.color}!important`)
+    if (typeof s.bold === 'boolean') r.push(`font-weight:${s.bold ? 700 : 400}!important`)
+    if (r.length) out += `${sel}{${r.join(';')}}`
+  }
+  return out
+}
+
+const lum = (h: string) => {
+  const n = parseInt(h.slice(1), 16)
+  return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+}
+const isHex = (c?: string): c is string => !!c && HEX.test(c)
+const clampN = (v: unknown, lo: number, hi: number, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d)
+
 export function resolveDesign(d?: GalleryDesign | null) {
-  const look = LOOKS[d?.look ?? ''] ?? LOOKS.classic
+  const base = LOOKS[d?.look ?? ''] ?? LOOKS.classic
+  const look = { ...base, gap: clampN(d?.gap, 0, 60, base.gap), radius: clampN(d?.radius, 0, 40, base.radius) }
   const cv = LEGACY_COVER[d?.cover ?? ''] ?? d?.cover
-  const cover = cv && COVERS.some((c) => c.k === cv) ? cv : look.cover
-  const pal = PALETTES.find((p) => p.key === d?.colors) ?? PALETTES.find((p) => p.key === look.colors) ?? PALETTES[0]
+  const cover = cv && COVERS.some((c) => c.k === cv) ? cv : base.cover
+  let pal: Palette = PALETTES.find((p) => p.key === d?.colors) ?? PALETTES.find((p) => p.key === base.colors) ?? PALETTES[0]
+  if (isHex(d?.bg)) {
+    const dark = lum(d.bg) < 0.5
+    pal = { ...pal, bg: d.bg, ink: dark ? '#F4EEE8' : '#2A1F24', soft: dark ? '#A9A39D' : '#7B6E70', line: dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.12)' }
+  }
+  if (isHex(d?.accent)) pal = { ...pal, accent: d.accent, onAccent: lum(d.accent) < 0.6 ? '#FFFFFF' : '#1B1B1D' }
   const f = d?.focal
   const focal = f && Number.isFinite(f.x) && Number.isFinite(f.y) ? { x: Math.min(100, Math.max(0, f.x)), y: Math.min(100, Math.max(0, f.y)) } : { x: 50, y: 50 }
-  return { look, cover, pal, focal }
+  const layout = LAYOUTS.some((l) => l.k === d?.layout) ? (d?.layout as string) : base.grid === 'masonry' ? 'masonry' : 'grid'
+  const el: Record<string, ElStyle> = d?.el ?? {}
+  return { look, cover, pal, focal, layout, el }
 }

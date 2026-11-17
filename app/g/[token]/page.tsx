@@ -2,7 +2,8 @@
 
 import { Fragment, type CSSProperties } from 'react'
 import ReviewCard from './ReviewCard'
-import { resolveDesign, type GalleryDesign } from '@/lib/galleryDesign'
+import { resolveDesign, type GalleryDesign, elCss } from '@/lib/galleryDesign'
+import { FONT_OPTIONS } from '@/lib/siteTheme'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -220,6 +221,56 @@ export default function GalleryViewPage() {
     return () => window.removeEventListener('message', onMsg)
   }, [])
 
+  // Preview only: hover names and click-to-edit for the gallery lines.
+  useEffect(() => {
+    if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
+    const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos' }
+    const box = document.createElement('div')
+    box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:1.5px dashed #d9a21b;border-radius:3px;display:none'
+    const tag = document.createElement('div')
+    tag.style.cssText = 'position:absolute;left:-1.5px;bottom:100%;margin-bottom:3px;background:#1f1a14;color:#fff;font:600 11px/1 system-ui,sans-serif;padding:4px 7px;border-radius:4px;white-space:nowrap'
+    box.appendChild(tag)
+    document.body.appendChild(box)
+    const hit = (t: EventTarget | null) => {
+      const el = (t as HTMLElement | null)?.closest?.('[data-gk],h1') as HTMLElement | null
+      if (!el) return null
+      const k = el.getAttribute('data-gk') ?? 'title'
+      return NAMES[k] ? { el, k } : null
+    }
+    const over = (e: MouseEvent) => {
+      const h = hit(e.target)
+      if (!h) { box.style.display = 'none'; return }
+      const r = h.el.getBoundingClientRect()
+      box.style.display = 'block'
+      box.style.left = r.left + 'px'
+      box.style.top = r.top + 'px'
+      box.style.width = r.width + 'px'
+      box.style.height = r.height + 'px'
+      tag.textContent = NAMES[h.k] + ' · click to edit'
+      const flip = r.top < 28
+      tag.style.bottom = flip ? 'auto' : '100%'
+      tag.style.top = flip ? '100%' : 'auto'
+    }
+    const hide = () => { box.style.display = 'none' }
+    const click = (e: MouseEvent) => {
+      const h = hit(e.target)
+      if (!h) return
+      e.preventDefault()
+      e.stopPropagation()
+      const cs = getComputedStyle(h.el)
+      window.parent?.postMessage({ type: 'camrhia-gallery-pick', key: h.k, name: NAMES[h.k], size: Math.round(parseFloat(cs.fontSize)), color: cs.color, bold: parseInt(cs.fontWeight, 10) >= 600 }, '*')
+    }
+    document.addEventListener('mouseover', over, true)
+    document.addEventListener('scroll', hide, true)
+    document.addEventListener('click', click, true)
+    return () => {
+      document.removeEventListener('mouseover', over, true)
+      document.removeEventListener('scroll', hide, true)
+      document.removeEventListener('click', click, true)
+      box.remove()
+    }
+  }, [])
+
   if (phase === 'loading') {
     return <div className="flex min-h-screen items-center justify-center bg-paper text-sm text-ink-soft">Loading gallery…</div>
   }
@@ -268,7 +319,12 @@ export default function GalleryViewPage() {
   }
 
   if (!data) return null
-  const { look, cover: coverKind, pal, focal } = resolveDesign(designPreview ?? data.design ?? null)
+  const { look, cover: coverKind, pal, focal, layout, el } = resolveDesign(designPreview ?? data.design ?? null)
+  const elRules = elCss(el, (k) => FONT_OPTIONS[k]?.family)
+  const fontHref = (() => {
+    const g = Array.from(new Set(Object.values(el).map((x) => FONT_OPTIONS[x?.font ?? '']?.gf).filter(Boolean) as string[]))
+    return g.length ? 'https://fonts.googleapis.com/css2?' + g.map((x) => 'family=' + x.replace(/^family=/, '')).join('&') + '&display=swap' : ''
+  })()
   const pos = `${focal.x}% ${focal.y}%`
   const headCls = look.font === 'fraunces' ? 'font-fraunces' : ''
   const headStyle: CSSProperties = { ...(look.font === 'fraunces' ? {} : { fontFamily: look.font }), fontWeight: look.weight, letterSpacing: look.track, textTransform: look.upper ? 'uppercase' : 'none', fontStyle: look.italic ? 'italic' : 'normal' }
@@ -281,7 +337,7 @@ export default function GalleryViewPage() {
     if (i > 0 && m === prev) return null
     const name = m ? momentMeta.find((x) => x.id === m)?.name : null
     if (!name) return null
-    return <h2 className={`mb-4 mt-8 text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
+    return <h2 data-gk="moment" className={`mb-4 mt-8 w-full basis-full text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
   }
   const current = openIndex !== null ? list[openIndex] : null
   const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
@@ -308,13 +364,13 @@ export default function GalleryViewPage() {
     <img src={cover.web} alt="" className="h-full w-full object-cover" style={{ objectPosition: pos }} />
   ) : null
   const brandLine = brand?.name ? (
-    <p className="mb-3 font-mono text-xs uppercase tracking-widest" style={{ color: pal.soft }}>{brand.name}</p>
+    <p data-gk="brand" className="mb-3 font-mono text-xs uppercase tracking-widest" style={{ color: pal.soft }}>{brand.name}</p>
   ) : null
   const titleEl = (extra: string) => <h1 className={`${headCls} ${extra}`} style={headStyle}>{data.title}</h1>
   const renderItem = (p: (typeof list)[number], i: number, uniform: boolean) => (
     <Fragment key={p.id}>
       {momentHead(p, i)}
-      <div className={`group relative overflow-hidden ${uniform ? '' : 'break-inside-avoid'}`} style={{ marginBottom: uniform ? 0 : look.gap, borderRadius: look.radius, background: pal.line }}>
+      <div data-gk="photos" className={`group relative overflow-hidden ${uniform ? '' : 'break-inside-avoid'}`} style={{ marginBottom: uniform ? 0 : look.gap, borderRadius: look.radius, background: pal.line }}>
         {p.thumb && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -337,10 +393,107 @@ export default function GalleryViewPage() {
       </div>
     </Fragment>
   )
+  const heartBtn = (p: (typeof list)[number]) => (
+    <button
+      onClick={() => toggleFav(p.id)}
+      aria-label="Favorite"
+      style={favs.has(p.id) ? { color: heart } : undefined}
+      className={`absolute right-2 top-2 z-10 rounded-full bg-black/40 p-2 text-white transition hover:bg-black/60 ${favs.has(p.id) ? '' : 'sm:opacity-0 sm:group-hover:opacity-100'}`}
+    >
+      <Heart filled={favs.has(p.id)} className="h-4 w-4" />
+    </button>
+  )
+  const tile = (p: (typeof list)[number], i: number, o: { wrap?: string; style?: CSSProperties; fill?: boolean; ratio?: number; head?: boolean } = {}) => {
+    const fill = !!o.fill || !!o.ratio
+    return (
+      <Fragment key={p.id}>
+        {o.head === false ? null : momentHead(p, i)}
+        <div data-gk="photos" className={`group relative overflow-hidden ${o.wrap ?? ''}`} style={{ borderRadius: look.radius, background: pal.line, ...o.style }}>
+          {o.ratio ? <span className="block" style={{ paddingBottom: `${100 / o.ratio}%` }} /> : null}
+          {p.thumb && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={p.thumb}
+              alt={p.filename ?? ''}
+              loading="lazy"
+              onClick={() => setOpenIndex(i)}
+              className={fill ? 'absolute inset-0 h-full w-full cursor-zoom-in object-cover' : 'block w-full cursor-zoom-in'}
+              style={!fill && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : undefined}
+            />
+          )}
+          {heartBtn(p)}
+        </div>
+      </Fragment>
+    )
+  }
+  const arOf = (p: (typeof list)[number]) => (p.width && p.height ? p.width / p.height : 1.5)
+  const MOSAIC = ['md:col-span-3 aspect-[4/3]', 'md:col-span-3 aspect-[4/3]', 'md:col-span-2 aspect-square', 'md:col-span-2 aspect-square', 'md:col-span-2 aspect-square', 'col-span-2 md:col-span-6 aspect-[21/9]']
+  const gridEl = (() => {
+    switch (layout) {
+      case 'grid':
+        return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap }}>{list.map((p, i) => renderItem(p, i, true))}</div>
+      case 'square':
+        return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap }}>{list.map((p, i) => tile(p, i, { wrap: 'aspect-square', fill: true }))}</div>
+      case 'rows':
+        return (
+          <div className="flex flex-wrap" style={{ gap: look.gap }}>
+            {list.map((p, i) => tile(p, i, { ratio: arOf(p), style: { width: `${arOf(p) * 220}px`, flexGrow: arOf(p) * 100, maxWidth: '100%' } }))}
+            <div style={{ flexGrow: 100000 }} />
+          </div>
+        )
+      case 'feature':
+        return <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: look.gap, gridAutoFlow: 'dense' }}>{list.map((p, i) => tile(p, i, { fill: true, wrap: i % 7 === 0 ? 'col-span-2 row-span-2' : 'aspect-square' }))}</div>
+      case 'wide':
+        return <div className="columns-1 sm:columns-2" style={{ columnGap: look.gap }}>{list.map((p, i) => renderItem(p, i, false))}</div>
+      case 'mosaic':
+        return <div className="grid grid-cols-2 md:grid-cols-6" style={{ gap: look.gap }}>{list.map((p, i) => tile(p, i, { fill: true, wrap: MOSAIC[i % 6] }))}</div>
+      case 'polaroid':
+        return (
+          <div className="flex flex-wrap justify-center" style={{ gap: Math.max(look.gap, 24) }}>
+            {list.map((p, i) => (
+              <Fragment key={p.id}>
+                {momentHead(p, i)}
+                <div data-gk="photos" className="group relative w-[44%] max-w-[300px] sm:w-[260px]" style={{ background: '#fff', padding: '10px 10px 34px', boxShadow: '0 6px 18px rgba(0,0,0,.18)', transform: `rotate(${[-2, 1.5, -1, 2][i % 4]}deg)`, borderRadius: Math.min(look.radius, 4) }}>
+                  <div className="relative" style={{ aspectRatio: '4 / 5', background: pal.line }}>
+                    {p.thumb && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.thumb} alt={p.filename ?? ''} loading="lazy" onClick={() => setOpenIndex(i)} className="absolute inset-0 h-full w-full cursor-zoom-in object-cover" />
+                    )}
+                  </div>
+                  {heartBtn(p)}
+                </div>
+              </Fragment>
+            ))}
+          </div>
+        )
+      case 'story':
+        return <div className="mx-auto flex max-w-3xl flex-col" style={{ gap: Math.max(look.gap, 16) * 2 }}>{list.map((p, i) => tile(p, i))}</div>
+      case 'stagger':
+        return (
+          <div className="grid grid-cols-2" style={{ gap: look.gap }}>
+            {[0, 1].map((c) => (
+              <div key={c} className="flex flex-col" style={{ gap: look.gap, paddingTop: c ? 'clamp(24px, 8vw, 96px)' : 0 }}>
+                {list.map((p, i) => (i % 2 === c ? tile(p, i, { head: false }) : null))}
+              </div>
+            ))}
+          </div>
+        )
+      case 'filmstrip':
+        return (
+          <div className="flex overflow-x-auto pb-4" style={{ gap: look.gap, scrollSnapType: 'x mandatory' }}>
+            {list.map((p, i) => tile(p, i, { head: false, fill: true, style: { flex: '0 0 auto', height: '72vh', width: `calc(72vh * ${arOf(p)})`, maxWidth: '92vw', scrollSnapAlign: 'center' } }))}
+          </div>
+        )
+      default:
+        return <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: look.gap }}>{list.map((p, i) => renderItem(p, i, false))}</div>
+    }
+  })()
   const pill = (on: boolean): CSSProperties => (on ? { background: pal.accent, color: pal.onAccent, border: '1px solid transparent' } : { border: `1px solid ${pal.line}`, color: pal.ink })
 
   return (
-    <div className="min-h-screen" style={{ background: pal.bg, color: pal.ink }}>
+    <div className="gal-root min-h-screen" style={{ background: pal.bg, color: pal.ink }}>
+      {fontHref && <link rel="stylesheet" href={fontHref} />}
+      {elRules && <style>{elRules}</style>}
       {coverKind === 'ticket' && cover?.web ? (() => {
         const longest = Math.max(...String(data.title).split(/\s+/).map((w) => w.length), 4)
         const fs = Math.min(5.6, 27 / (0.72 * longest))
@@ -601,18 +754,18 @@ export default function GalleryViewPage() {
 
       <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 backdrop-blur" style={{ background: `${pal.bg}F2`, borderBottom: `1px solid ${pal.line}` }}>
         {!cover?.web ? (
-          <h2 className={`${headCls} text-xl`} style={headStyle}>{data.title}</h2>
+          <h2 data-gk="title" className={`${headCls} text-xl`} style={headStyle}>{data.title}</h2>
         ) : (
-          <span className="text-sm" style={{ color: pal.soft }}>{data.photos.length} photos</span>
+          <span data-gk="count" className="text-sm" style={{ color: pal.soft }}>{data.photos.length} photos</span>
         )}
         <div className="flex items-center gap-2 text-sm">
           {data.allowDownloads && list.length > 0 && (
-            <button onClick={downloadAll} disabled={zip.busy} className="rounded-full px-4 py-1.5 transition disabled:opacity-60" style={pill(false)}>
+            <button data-gk="download" onClick={downloadAll} disabled={zip.busy} className="rounded-full px-4 py-1.5 transition disabled:opacity-60" style={pill(false)}>
               {zip.busy ? (zip.total ? `Zipping ${zip.done}/${zip.total}` : 'Preparing…') : onlyFavs ? 'Download favorites' : 'Download all'}
             </button>
           )}
-          <button onClick={() => setOnlyFavs(false)} className="rounded-full px-4 py-1.5 transition" style={pill(!onlyFavs)}>All</button>
-          <button onClick={() => setOnlyFavs(true)} className="flex items-center gap-1.5 rounded-full px-4 py-1.5 transition" style={pill(onlyFavs)}>
+          <button data-gk="all" onClick={() => setOnlyFavs(false)} className="rounded-full px-4 py-1.5 transition" style={pill(!onlyFavs)}>All</button>
+          <button data-gk="favs" onClick={() => setOnlyFavs(true)} className="flex items-center gap-1.5 rounded-full px-4 py-1.5 transition" style={pill(onlyFavs)}>
             <Heart filled={onlyFavs} className="h-4 w-4" /> {favs.size}
           </button>
         </div>
@@ -628,14 +781,8 @@ export default function GalleryViewPage() {
           <p className="py-20 text-center text-sm" style={{ color: pal.soft }}>
             {onlyFavs ? 'No favorites yet. Tap the heart on any photo.' : 'No photos in this gallery yet.'}
           </p>
-        ) : look.grid === 'masonry' ? (
-          <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: look.gap }}>
-            {list.map((p, i) => renderItem(p, i, false))}
-          </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap }}>
-            {list.map((p, i) => renderItem(p, i, true))}
-          </div>
+          gridEl
         )}
       </main>
       {data && (
@@ -644,7 +791,7 @@ export default function GalleryViewPage() {
         </div>
       )}
 
-      <footer className="py-10 text-center text-xs" style={{ color: pal.soft }}>{brand?.name ? `${brand.name} · ` : ''}Delivered with Camrhia</footer>
+      <footer data-gk="footer" className="py-10 text-center text-xs" style={{ color: pal.soft }}>{brand?.name ? `${brand.name} · ` : ''}Delivered with Camrhia</footer>
 
       {current && openIndex !== null && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black/95" onClick={() => setOpenIndex(null)}>
