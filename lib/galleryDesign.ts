@@ -1,4 +1,4 @@
-export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean; dy?: number }
+export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean; dy?: number; text?: string }
 export type GalleryDesign = {
   look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
@@ -87,7 +87,7 @@ export const LAYOUT_PRESETS: Record<string, { bg: string; accent: string; gap: n
 
 export const EL_NAMES: Record<string, string> = {
   title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button',
-  favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos',
+  favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials',
 }
 const EL_SEL: Record<string, string> = {
   title: '.gal-root h1,.gal-root [data-gk="title"]',
@@ -98,6 +98,7 @@ const EL_SEL: Record<string, string> = {
   favs: '.gal-root [data-gk="favs"]',
   moment: '.gal-root [data-gk="moment"]',
   footer: '.gal-root [data-gk="footer"]',
+  initials: '.gal-root [data-gk="initials"]',
 }
 const HEX = /^#[0-9a-f]{6}$/i
 

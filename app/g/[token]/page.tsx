@@ -224,7 +224,7 @@ export default function GalleryViewPage() {
   // Preview only: hover names and click-to-edit for the gallery lines.
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
-    const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos' }
+    const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials' }
     const box = document.createElement('div')
     box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:1.5px dashed #d9a21b;border-radius:3px;display:none'
     const tag = document.createElement('div')
@@ -525,147 +525,218 @@ export default function GalleryViewPage() {
       {fontHref && <link rel="stylesheet" href={fontHref} />}
       {elRules && <style>{elRules}</style>}
       <div style={{ background: coverPal.bg, color: coverPal.ink }}>{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
-        const longest = Math.max(...String(data.title).split(/\s+/).map((w) => w.length), 4)
-        const fs = Math.min(5.6, 27 / (0.72 * longest))
         const notch = (x: string, y: string) => 'radial-gradient(circle 2.3cqw at ' + x + ' ' + y + ', transparent 96%, #000 100%)'
         const mask = [notch('0', '50%'), notch('100%', '50%'), notch('62.6%', '0'), notch('62.6%', '100%')].join(',')
+        const noise = "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.28  0 0 0 0 0.1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
+        const stains = "<svg xmlns='http://www.w3.org/2000/svg' width='900' height='360'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='0.012' numOctaves='3' seed='11'/><feColorMatrix values='0 0 0 0 0.6  0 0 0 0 0.38  0 0 0 0 0.15  0 0 0 1.3 -0.38'/></filter><rect width='100%' height='100%' filter='url(#s)'/></svg>"
+        const words = String(data.title).trim().split(/\s+/).filter(Boolean)
+        const one = words.length <= 1
+        const l1 = one ? '' : words.slice(0, -1).join(' ')
+        const l2 = one ? (words[0] || '') : words[words.length - 1]
+        const tt: React.CSSProperties = { ...headStyle, fontWeight: 800, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: '#3A1F12', pointerEvents: 'auto' }
+        const sub = brand?.name ? String(brand.name) : ''
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#EFE3CB' }}>
-            <div className="absolute" style={{ left: '1.3cqw', top: '5cqw', width: '97.3cqw', height: '39.4cqw', filter: 'drop-shadow(0 0.8cqw 1.6cqw rgba(70,45,20,0.28))' }}>
-              <div className="absolute inset-0" style={{ background: '#E9D6AC', WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect' }}>
-                <div className="absolute" style={{ inset: '0.7cqw', border: '0.25cqw solid rgba(150,105,55,0.65)', borderRadius: '1cqw' }} />
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: 'radial-gradient(ellipse at 50% 50%, #F8E0C3 0%, #F4D9B9 62%, #EDCDA3 100%)' }}>
+            <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+              <filter id="tix-rough" x="-3%" y="-3%" width="106%" height="106%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="4" result="n" />
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="10" xChannelSelector="R" yChannelSelector="G" />
+              </filter>
+            </svg>
+            <div className="absolute" style={{ left: '1.3cqw', top: '5cqw', width: '97.3cqw', height: '39.7cqw', filter: 'drop-shadow(0 0.7cqw 1.3cqw rgba(70,45,20,0.3))' }}>
+              <div className="absolute inset-0" style={{ WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect' }}>
+                <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 52% 48%, #FBE8CC 0%, #F8DEBF 55%, #EFC699 100%)', boxShadow: 'inset 0 0 2.4cqw rgba(176,108,48,0.7), inset 0 0 0.5cqw rgba(150,90,40,0.85)', filter: 'url(#tix-rough)' }} />
+                <div className="absolute inset-0" style={{ backgroundImage: 'url("data:image/svg+xml,' + encodeURIComponent(stains) + '")', backgroundSize: '100% 100%', opacity: 0.55, mixBlendMode: 'multiply' }} />
+                <div className="absolute inset-0" style={{ backgroundImage: 'url("data:image/svg+xml,' + encodeURIComponent(noise) + '")', opacity: 0.4, mixBlendMode: 'multiply' }} />
+                <div className="absolute" style={{ inset: '0.9cqw', border: '0.22cqw solid rgba(150,98,50,0.6)', borderRadius: '1cqw' }} />
                 <div className="absolute overflow-hidden" style={{ left: '1.8cqw', top: '1.5cqw', width: '56.9cqw', height: '36.3cqw', background: pal.line }}>
                   <div className="absolute inset-0">{imgEl}</div>
                 </div>
-                <div className="absolute" style={{ left: '60.9cqw', top: '1.4cqw', bottom: '1.4cqw', borderLeft: '0.25cqw dashed #3A1F12' }} />
-                <div className="absolute" style={{ left: '62.6cqw', right: '2.2cqw', top: '5.4cqw', height: '0.2cqw', background: '#3A1F12' }} />
-                <div className="absolute flex items-center justify-center text-center" style={{ left: '62.6cqw', right: '2.2cqw', top: '7.5cqw', height: '17cqw' }}>
-                  <h1 className={headCls} style={{ ...headStyle, color: '#3A1F12', fontWeight: 800, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: '0.01em', lineHeight: 1.08, fontSize: 'max(16px, ' + fs + 'cqw)', margin: 0 }}>{data.title}</h1>
-                </div>
-                {brand?.name && <p className="absolute text-center" style={{ left: '62.6cqw', right: '2.2cqw', top: '27.6cqw', margin: 0, color: '#3A1F12', textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 'max(7px, 1.4cqw)' }}>{brand.name}</p>}
-                <div className="absolute" style={{ left: '62.6cqw', right: '2.2cqw', top: '33.3cqw', height: '0.2cqw', background: '#3A1F12' }} />
+                <div className="absolute" style={{ left: '60.9cqw', top: '1.4cqw', bottom: '1.4cqw', borderLeft: '0.33cqw dashed #3A1F12' }} />
               </div>
             </div>
+            <h1 className="sr-only">{data.title}</h1>
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+              <rect x="597" y="94" width="243" height="2" fill="#3A1F12" />
+              <rect x="597" y="344" width="235" height="2" fill="#3A1F12" />
+              {l1 && <text data-gk="title" x="716" y="181" textAnchor="middle" style={{ ...tt, fontSize: 71 }} textLength={Math.min(270, 33.6 * l1.length)} lengthAdjust="spacingAndGlyphs">{l1}</text>}
+              {l2 && <text data-gk="title" x="716" y={one ? 240 : 265} textAnchor="middle" style={{ ...tt, fontSize: 100 }} textLength={Math.min(250, 49.3 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
+              {sub && <text data-gk="brand" x="718" y="310" textAnchor="middle" style={{ ...tt, fontWeight: 500, fontSize: 14 }} textLength={Math.min(270, 15 * sub.length)} lengthAdjust="spacing">{sub.toUpperCase()}</text>}
+            </svg>
           </div>
         )
       })() : coverKind === 'circle' && cover?.web ? (
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
-          <div className="absolute overflow-hidden" style={{ left: '31.1cqw', top: '0.9cqw', width: '37.8cqw', height: '37.8cqw', borderRadius: '50%', border: '0.3cqw solid ' + pal.accent, background: pal.line }}>
+          <div className="absolute overflow-hidden" style={{ left: '30.9cqw', top: '0.8cqw', width: '38.1cqw', height: '38.1cqw', borderRadius: '50%', border: '0.33cqw solid ' + pal.accent, background: pal.line }}>
             <div className="absolute inset-0">{imgEl}</div>
           </div>
-          <div className="absolute inset-x-0 text-center" style={{ top: '36cqw' }}>
-            <h1 className={headCls} style={{ ...headStyle, color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '-0.01em', lineHeight: 1.05, fontSize: 'max(22px, ' + Math.min(9.5, 46 / (0.46 * Math.max(String(data.title).length, 6))) + 'cqw)', margin: 0 }}>{data.title}</h1>
-            {brand?.name && <p style={{ color: pal.ink, textTransform: 'uppercase', letterSpacing: '0.42em', fontSize: 'max(8px, 1.25cqw)', margin: '1.4cqw 0 0' }}>{brand.name}</p>}
-          </div>
+          <h1 className="sr-only">{data.title}</h1>
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+            <text data-gk="title" x="450.5" y="404" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 83, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(407, 40.7 * Math.max(String(data.title).length, 1))} lengthAdjust="spacingAndGlyphs">{data.title}</text>
+            {brand?.name && <text data-gk="brand" x="450" y="434" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 11.5, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(288, 16 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+          </svg>
         </div>
       ) : coverKind === 'mosaic' && cover?.web ? (() => {
-        const pool = data.photos.filter((p) => p.id !== cover.id && (p.thumb || p.web))
-        const src = (i: number) => { const p = pool.length ? pool[i % pool.length] : cover; return p.thumb || p.web || cover.web || undefined }
-        const parts = String(data.title).split(/\s*(?:&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean)
-        const lines = parts.length >= 2 ? [parts[0], '& ' + parts[1]] : [String(data.title)]
-        const longest = Math.max(...lines.map((x) => x.length), 4)
-        const fs = Math.min(9.6, 30 / (0.5 * longest))
-        const cell = (s: string | undefined, st: CSSProperties) => (
-          <div style={{ position: 'relative', overflow: 'hidden', background: pal.line, ...st }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={s} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          </div>
-        )
+        const pool = [cover, ...data.photos.filter((p) => p.id !== cover.id)].filter((p) => p.thumb || p.web)
+        const tiles = [
+          { x: 8, y: 8, w: 198, h: 433 }, { x: 210, y: 7, w: 195, h: 243 }, { x: 409, y: 8, w: 176, h: 242 },
+          { x: 210, y: 254, w: 175, h: 187 }, { x: 390, y: 254, w: 195, h: 187 },
+        ]
+        const raw = String(data.title).trim()
+        const parts = raw.split(/\s*(?:&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean)
+        const words = raw.split(/\s+/).filter(Boolean)
+        const l1 = parts.length >= 2 ? parts[0] : words.length > 1 ? words.slice(0, -1).join(' ') : raw
+        const l2 = parts.length >= 2 ? '& ' + parts[parts.length - 1] : words.length > 1 ? words[words.length - 1] : ''
+        const ts: CSSProperties = { ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }
+        const sub = brand?.name ? String(brand.name).toUpperCase() : ''
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
-            <div className="absolute grid" style={{ left: '0.9cqw', top: '0.9cqw', width: '64cqw', height: '48.2cqw', gap: '0.7cqw', gridTemplateColumns: '1fr 1fr 0.95fr', gridTemplateRows: '1.3fr 1fr' }}>
-              <div style={{ position: 'relative', overflow: 'hidden', background: pal.line, gridRow: '1 / 3' }}><div className="absolute inset-0">{imgEl}</div></div>
-              {cell(src(0), {})}
-              {cell(src(1), {})}
-              {cell(src(2), {})}
-              {cell(src(3), {})}
-            </div>
-            <div className="absolute flex flex-col items-center justify-center text-center" style={{ left: '66cqw', right: '2cqw', top: 0, bottom: 0 }}>
-              <h1 className={headCls} style={{ ...headStyle, color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '-0.01em', lineHeight: 1.08, fontSize: 'max(20px, ' + fs + 'cqw)', margin: 0 }}>
-                {lines.map((l, i) => <span key={i} style={{ display: 'block' }}>{l}</span>)}
-              </h1>
-              {brand?.name && <p style={{ color: pal.ink, textTransform: 'uppercase', letterSpacing: '0.38em', fontSize: 'max(8px, 1.3cqw)', margin: '4.5cqw 0 0' }}>{brand.name}</p>}
-            </div>
+            <h1 className="sr-only">{data.title}</h1>
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
+              {tiles.map((t, i) => {
+                const ph = pool[i % pool.length]
+                return (
+                  <svg key={i} x={t.x} y={t.y} width={t.w} height={t.h} style={{ overflow: 'hidden' }}>
+                    <rect width="100%" height="100%" fill={pal.line} />
+                    <image href={ph.thumb || ph.web || undefined} width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+                  </svg>
+                )
+              })}
+              <text data-gk="title" x="745.5" y="190" textAnchor="middle" style={{ ...ts, fontSize: 94 }} textLength={Math.min(261, 43.5 * Math.max(l1.length, 1))} lengthAdjust="spacingAndGlyphs">{l1}</text>
+              {l2 && <text data-gk="title" x="745.5" y="267" textAnchor="middle" style={{ ...ts, fontSize: 94 }} textLength={Math.min(221, 36.8 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
+              {sub && <text data-gk="brand" x="745.5" y="308.5" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontSize: 11.5 }} textLength={Math.min(233, 14.6 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+            </svg>
           </div>
         )
       })() : coverKind === 'postcard' && cover?.web ? (() => {
-        const fs = Math.min(8.4, 36 / (0.36 * Math.max(String(data.title).length, 8)))
+        const words = String(data.title).trim().split(/\s+/).filter(Boolean)
+        const one = words.length <= 1
+        const l1 = one ? (words[0] || '') : words.slice(0, -1).join(' ')
+        const l2 = one ? '' : words[words.length - 1]
+        const ink = '#3A2A22'
+        const sc: CSSProperties = { fontFamily: "'Mrs Saint Delafield', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: ink, pointerEvents: 'auto' }
+        const sub = brand?.name ? String(brand.name).toUpperCase() : ''
+        const noise = "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' seed='5'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.33  0 0 0 0 0.15  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
+        const wave = (y: number) => 'M644 ' + y + ' q9 -5 18 0 t18 0 t18 0 t18 0'
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#E4D3B6' }}>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" />
-            <div className="absolute" style={{ left: '4cqw', top: '1.6cqw', width: '92cqw', height: '46cqw', background: '#EFE2C8', border: '0.2cqw solid #D8C7A4', borderRadius: '0.8cqw', boxShadow: '0 1.4cqw 3.4cqw rgba(70,45,20,0.28)', transform: 'rotate(-1.6deg)' }}>
-              <div className="absolute overflow-hidden" style={{ left: '3.4cqw', top: '2.4cqw', width: '47cqw', height: '41cqw', background: pal.line }}>
-                <div className="absolute inset-0">{imgEl}</div>
-              </div>
-              <div className="absolute" style={{ left: '52cqw', top: '4cqw', bottom: '4cqw', width: '0.15cqw', background: '#5a4332' }} />
-              <div className="absolute" style={{ right: '2.6cqw', top: '2.2cqw', width: '11.4cqw', height: '13.6cqw', background: '#EBDDBE', padding: '0.7cqw', outline: '0.35cqw dotted #EFE2C8', boxShadow: '0 0.2cqw 0.6cqw rgba(60,40,20,0.3)' }}>
-                <svg viewBox="0 0 100 120" width="100%" height="100%"><rect width="100" height="120" fill="#CFD8D2" /><path d="M0 90 28 44l14 20 16-30 42 56z" fill="#8E9A95" /><path d="M60 100V60M60 28l-12 24h8l-10 20h28l-10-20h8z" fill="#2F4A3A" /><rect y="92" width="100" height="28" fill="#9BAA8F" /></svg>
-              </div>
-              <div className="absolute flex items-center justify-center text-center" style={{ left: '56.5cqw', top: '2.8cqw', width: '11.4cqw', height: '11.4cqw', borderRadius: '50%', border: '0.3cqw solid #4a3b30', color: '#4a3b30', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: 'max(6px, 1.1cqw)', lineHeight: 1.3, padding: '1cqw' }}>{brand?.name ?? ''}</div>
-              <svg className="absolute" style={{ left: '68.2cqw', top: '4.6cqw', width: '8cqw', height: '6cqw' }} viewBox="0 0 80 60" fill="none" stroke="#4a3b30" strokeWidth="1.6" strokeLinecap="round"><path d="M0 8c10-6 14 6 24 0s14 6 24 0 14 6 24 0" /><path d="M0 24c10-6 14 6 24 0s14 6 24 0 14 6 24 0" /><path d="M0 40c10-6 14 6 24 0s14 6 24 0 14 6 24 0" /></svg>
-              {[27, 33, 39].map((t) => <div key={t} className="absolute" style={{ left: '56cqw', right: '4cqw', top: t + 'cqw', height: '0.12cqw', background: '#9c8a74' }} />)}
-              <div className="absolute flex items-center justify-center text-center" style={{ left: '54cqw', right: '3cqw', top: '15cqw', height: '24cqw' }}>
-                <h1 style={{ fontFamily: "'Pinyon Script', 'Snell Roundhand', cursive", color: '#4A2C1C', fontWeight: 400, textTransform: 'none', fontStyle: 'normal', fontSize: 'max(18px, ' + fs + 'cqw)', lineHeight: 1.05, margin: 0 }}>{data.title}</h1>
-              </div>
-            </div>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: 'radial-gradient(ellipse at 50% 50%, #F0D8BC 0%, #EBD1B5 70%, #E2C3A0 100%)' }}>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&display=swap" />
+            <h1 className="sr-only">{data.title}</h1>
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
+              <defs>
+                <filter id="pc-shadow" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="6" stdDeviation="7" floodColor="#46280F" floodOpacity="0.32" /></filter>
+                <filter id="pc-rough" x="-2%" y="-2%" width="104%" height="104%"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="9" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" /></filter>
+                <linearGradient id="pc-paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F3DFC1" /><stop offset="0.5" stopColor="#F4E1C6" /><stop offset="1" stopColor="#EBCFA8" /></linearGradient>
+                <clipPath id="pc-photo"><rect x="18.5" y="16.8" width="416.5" height="357" /></clipPath>
+                <linearGradient id="pc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#D5DDD0" /><stop offset="1" stopColor="#E9E6D2" /></linearGradient>
+              </defs>
+              <g transform="rotate(-3 456.5 222)">
+                <g transform="translate(45 25)">
+                  <g filter="url(#pc-shadow)">
+                    <rect width="823" height="394" rx="12" fill="url(#pc-paper)" stroke="#D3B07C" strokeWidth="3" filter="url(#pc-rough)" />
+                  </g>
+                  <rect x="2" y="2" width="819" height="390" rx="11" fill="none" stroke="rgba(170,115,55,0.35)" strokeWidth="9" filter="url(#pc-rough)" />
+                  <image href={'data:image/svg+xml,' + encodeURIComponent(noise)} width="823" height="394" opacity="0.35" style={{ mixBlendMode: 'multiply' }} />
+                  <rect x="14" y="12" width="424.5" height="365" fill="#F7EBD6" />
+                  <rect x="18.5" y="16.8" width="416.5" height="357" fill={pal.line} />
+                  <image href={cover.web || undefined} x="18.5" y="16.8" width="416.5" height="357" preserveAspectRatio="xMidYMid slice" clipPath="url(#pc-photo)" />
+                  <rect x="18.5" y="16.8" width="416.5" height="357" fill="none" stroke="rgba(120,80,40,0.45)" strokeWidth="1.5" />
+                  <line x1="450" y1="37" x2="450" y2="369" stroke={ink} strokeWidth="1.5" />
+                  <circle cx="591.8" cy="71.3" r="50" fill="none" stroke={ink} strokeWidth="2.6" opacity="0.85" />
+                  <circle cx="591.8" cy="71.3" r="43.5" fill="none" stroke={ink} strokeWidth="1.2" opacity="0.8" />
+                  {sub && <text data-gk="brand" x="591.8" y="77" textAnchor="middle" style={{ fontFamily: 'Georgia, serif', fill: 'currentColor', color: ink, fontSize: 15, pointerEvents: 'auto' }} textLength={Math.min(70, 9.5 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+                  {[40, 56, 72, 87].map((y) => <path key={y} d={wave(y)} fill="none" stroke={ink} strokeWidth="1.7" opacity="0.8" />)}
+                  <rect x="703.5" y="11.7" width="100" height="118" fill="#F6E7CC" stroke="#D8B88A" strokeWidth="3.5" strokeDasharray="3 3" />
+                  <rect x="711" y="19" width="85" height="103" fill="url(#pc-sky)" />
+                  <path d="M711 92 L738 48 L752 66 L764 52 L796 92 Z" fill="#9AA6AB" />
+                  <path d="M738 48 L730 62 L744 58 Z" fill="#F2F2EE" />
+                  <path d="M711 92 L796 92 L796 122 L711 122 Z" fill="#7D915B" />
+                  <path d="M774 40 l7 24 h-14 z M774 58 l9 30 h-18 z M774 82 l11 34 h-22 z" fill="#2F4A33" />
+                  <path d="M722 82 l5 18 h-10 z M722 96 l6 20 h-12 z" fill="#3E5A3A" />
+                  {[278, 317, 354].map((y) => <line key={y} x1="486" y1={y} x2="791" y2={y} stroke="#A8957C" strokeWidth="1.2" opacity="0.75" />)}
+                  <text data-gk="title" x="638" y="226" textAnchor="middle" style={{ ...sc, fontSize: 88 }} textLength={Math.min(335, 30.5 * Math.max(l1.length, 1))} lengthAdjust="spacingAndGlyphs">{l1}</text>
+                  {l2 && <text data-gk="title" x="649" y="306" textAnchor="middle" style={{ ...sc, fontSize: 88 }} textLength={Math.min(213, 35.5 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
+                </g>
+              </g>
+            </svg>
           </div>
         )
       })() : coverKind === 'bigtype' && cover?.web ? (() => {
-        const tstyle: CSSProperties = { ...headStyle, bottom: '-0.2cqw', fontWeight: 300, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: '0.01em', lineHeight: 0.9, whiteSpace: 'nowrap', margin: 0, fontSize: Math.min(15, 96 / (0.62 * Math.max(String(data.title).length, 6))) + 'cqw' }
+        const t = String(data.title).toUpperCase()
+        const n = Math.max(t.length, 1)
+        const len = Math.min(868, 78.9 * n)
+        const ts: CSSProperties = { ...headStyle, fontWeight: 300, fontStyle: 'normal', letterSpacing: 0, textTransform: 'uppercase' }
+        const sub = brand?.name ? String(brand.name).toUpperCase() : ''
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
-            {brand?.name && <p className="absolute text-right" style={{ right: '6cqw', top: '1.4cqw', margin: 0, color: pal.ink, textTransform: 'uppercase', letterSpacing: '0.38em', fontSize: 'max(8px, 1.3cqw)' }}>{brand.name}</p>}
-            <div className="absolute overflow-hidden" style={{ left: '6cqw', top: '4.7cqw', width: '88cqw', height: '37.5cqw', background: pal.line }}>
+            <div className="absolute overflow-hidden" style={{ left: '5.9cqw', top: '4.55cqw', width: '88.1cqw', height: '37.8cqw', background: pal.line }}>
               <div className="absolute inset-0">{imgEl}</div>
             </div>
-            <h1 className={'absolute inset-x-0 text-center ' + headCls} style={{ ...tstyle, color: pal.ink }}>{data.title}</h1>
-            <div className="pointer-events-none absolute inset-0" style={{ clipPath: 'inset(4.7cqw 6cqw calc(100% - 42.2cqw) 6cqw)' }}>
-              <div aria-hidden="true" className={'absolute inset-x-0 text-center ' + headCls} style={{ ...tstyle, color: pal.bg }}>{data.title}</div>
-            </div>
+            <h1 className="sr-only">{data.title}</h1>
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+              <defs><clipPath id="bt-photo"><rect x="53" y="41" width="793" height="340" /></clipPath></defs>
+              {sub && <text data-gk="brand" x="840" y="22.5" textAnchor="end" style={{ ...ts, fontWeight: 400, fontSize: 9, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(202, 11.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+              <text data-gk="title" x="454" y="434" textAnchor="middle" style={{ ...ts, fontSize: 144, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text>
+              <text x="454" y="434" textAnchor="middle" clipPath="url(#bt-photo)" style={{ ...ts, fontSize: 144, fill: pal.bg }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text>
+            </svg>
           </div>
         )
       })() : coverKind === 'strip' && cover?.web ? (() => {
         const pool = [cover, ...data.photos.filter((p) => p.id !== cover.id)].filter((p) => p.thumb || p.web)
         const frames = Array.from({ length: 5 }, (_, i) => pool[i % pool.length])
-        const holes = (
-          <div style={{ height: '1.5cqw', margin: '0 0.8cqw', background: 'repeating-linear-gradient(90deg, #D79A62 0 1.5cqw, transparent 1.5cqw 3.1cqw)', borderRadius: '0.3cqw', opacity: 0.9 }} />
-        )
+        const FX = [8, 180, 352, 555, 727]
+        const FW = [163, 163, 192, 161, 165]
+        const ts: CSSProperties = { ...headStyle, fontWeight: 400, fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', pointerEvents: 'auto' }
+        const title = String(data.title)
+        const sub = brand?.name ? String(brand.name).toUpperCase() : ''
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#2B1B12' }}>
-            <div className="absolute inset-x-0 text-center" style={{ top: '4.5cqw', padding: '0 4cqw' }}>
-              <h1 className={headCls} style={{ ...headStyle, color: '#FBF4EA', fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '0', lineHeight: 1.05, fontSize: 'max(22px, ' + Math.min(11, 56 / (0.48 * Math.max(String(data.title).length, 6))) + 'cqw)', margin: 0 }}>{data.title}</h1>
-              {brand?.name && <p style={{ color: 'rgba(251,244,234,0.8)', textTransform: 'uppercase', letterSpacing: '0.42em', fontSize: 'max(8px, 1.5cqw)', margin: '2cqw 0 0' }}>{brand.name}</p>}
-            </div>
-            <div className="absolute inset-x-0" style={{ bottom: '3.9cqw', height: '24cqw', background: '#1B100B', borderTop: '0.2cqw solid #3a261a', borderBottom: '0.2cqw solid #3a261a', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1.3cqw 0' }}>
-              {holes}
-              <div className="flex" style={{ gap: '1.4cqw', padding: '0 0.8cqw' }}>
-                {frames.map((p, i) => (
-                  <div key={i} style={{ flex: 1, aspectRatio: '1.01 / 1', overflow: 'hidden', background: pal.line, borderRadius: '0.3cqw' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.thumb || p.web || undefined} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  </div>
-                ))}
-              </div>
-              {holes}
-            </div>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#271407' }}>
+            <h1 className="sr-only">{data.title}</h1>
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
+              <defs>
+                <linearGradient id="strip-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2A1608" /><stop offset="1" stopColor="#1B0D04" /></linearGradient>
+                <filter id="strip-noise" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" /><feColorMatrix values="0 0 0 0 0.6  0 0 0 0 0.4  0 0 0 0 0.25  0 0 0 0.16 0" /></filter>
+                <linearGradient id="strip-hole" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#E8A870" /><stop offset="1" stopColor="#C98A52" /></linearGradient>
+              </defs>
+              <rect width="900" height="450" fill="url(#strip-bg)" />
+              <rect width="900" height="450" filter="url(#strip-noise)" />
+              <rect x="0" y="198" width="900" height="224" fill="#1E130B" />
+              <rect x="0" y="198" width="900" height="2" fill="#4A3020" />
+              <rect x="0" y="420" width="900" height="2" fill="#3A261A" />
+              {Array.from({ length: 32 }, (_, i) => (
+                <g key={i}>
+                  <rect x={8 + i * 28.5} y="208" width="12" height="13" rx="2.5" fill="url(#strip-hole)" />
+                  <rect x={8 + i * 28.5} y="397" width="12" height="13" rx="2.5" fill="url(#strip-hole)" />
+                </g>
+              ))}
+              {frames.map((p, i) => (
+                <svg key={i} x={FX[i]} y="229" width={FW[i]} height="160" style={{ overflow: 'hidden' }}>
+                  <rect width="100%" height="100%" fill={pal.line} />
+                  <image href={p.thumb || p.web || undefined} width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+                </svg>
+              ))}
+              <text data-gk="title" x="450.5" y="116" textAnchor="middle" style={{ ...ts, color: '#FFF6EA', fontSize: 94 }} textLength={Math.min(427, 47.4 * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
+              {sub && <text data-gk="brand" x="450" y="159.5" textAnchor="middle" style={{ ...ts, color: 'rgba(255,246,234,0.9)', textTransform: 'uppercase', fontSize: 11.5 }} textLength={Math.min(326, 17.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+            </svg>
           </div>
         )
       })() : coverKind === 'arch' && cover?.web ? (
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
-          <div className="absolute overflow-hidden" style={{ left: '4.2cqw', top: '1.7cqw', width: '40.5cqw', height: '48cqw', borderTopLeftRadius: '20.25cqw', borderTopRightRadius: '20.25cqw', background: pal.line }}>
+          <div className="absolute overflow-hidden" style={{ left: '4.2cqw', top: '0.8cqw', width: '40.6cqw', height: '48.2cqw', borderTopLeftRadius: '20.3cqw', borderTopRightRadius: '20.3cqw', background: pal.line }}>
             <div className="absolute inset-0">{imgEl}</div>
           </div>
-          <div className="absolute flex flex-col items-center justify-center text-center" style={{ left: '46cqw', right: '2cqw', top: 0, bottom: 0 }}>
-            <h1 className={headCls} style={{ ...headStyle, color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '-0.01em', lineHeight: 1.05, fontSize: 'max(22px, ' + Math.min(8.5, 45 / (0.45 * Math.max(String(data.title).length, 6))) + 'cqw)', margin: 0 }}>{data.title}</h1>
-            {brand?.name && <p style={{ color: pal.ink, textTransform: 'uppercase', letterSpacing: '0.42em', fontSize: 'max(8px, 1.5cqw)', margin: '2.4cqw 0 0' }}>{brand.name}</p>}
-          </div>
+          <h1 className="sr-only">{data.title}</h1>
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+            <text data-gk="title" x="654.5" y="229" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 87, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(409, 34.1 * Math.max(String(data.title).length, 1))} lengthAdjust="spacingAndGlyphs">{data.title}</text>
+            {brand?.name && <text data-gk="brand" x="660.5" y="275" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 17, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(275, 21.2 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+          </svg>
         </div>
       ) : coverKind === 'stack' && cover?.web ? (() => {
         const others = data.photos.filter((p) => p.id !== cover.id && (p.thumb || p.web)).slice(0, 3)
         const pic = (i: number) => (others[i]?.thumb || others[i]?.web || cover.web || undefined)
         const fs = Math.min(6.4, 53 / (0.38 * Math.max(String(data.title).length, 6)))
         const print = (src: string | undefined, st: CSSProperties, ar: string) => (
-          <div className="absolute" style={{ background: '#FBF9F4', padding: '1.5cqw 1.5cqw 4.6cqw', boxShadow: '0 1.2cqw 3cqw rgba(60,40,20,0.22)', ...st }}>
+          <div className="absolute" style={{ background: '#FBF9F4', padding: '1.35cqw 1.35cqw 4.7cqw', boxShadow: '0 1.2cqw 3cqw rgba(60,40,20,0.22)', ...st }}>
             <div style={{ aspectRatio: ar, overflow: 'hidden', background: pal.line }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -675,10 +746,10 @@ export default function GalleryViewPage() {
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" />
-            {print(pic(0), { left: '20cqw', top: '0.8cqw', width: '22.8cqw', transform: 'rotate(-6deg)', zIndex: 0 }, '1.1 / 1')}
-            {print(pic(1), { left: '6cqw', top: '11cqw', width: '26cqw', transform: 'rotate(-9deg)', zIndex: 1 }, '1.1 / 1')}
-            {print(pic(2), { left: '69cqw', top: '9cqw', width: '25cqw', transform: 'rotate(8deg)', zIndex: 1 }, '1.1 / 1')}
-            {print(cover.web || undefined, { left: '33cqw', top: '3cqw', width: '38cqw', transform: 'rotate(-1.5deg)', zIndex: 2 }, '1.2 / 1')}
+            {print(pic(0), { left: '18.5cqw', top: '3.7cqw', width: '23cqw', transform: 'rotate(-6deg)', zIndex: 0 }, '1.1 / 1')}
+            {print(pic(1), { left: '7.9cqw', top: '10.4cqw', width: '22.3cqw', transform: 'rotate(-11deg)', zIndex: 1 }, '1.1 / 1')}
+            {print(pic(2), { left: '68.5cqw', top: '11.4cqw', width: '22.3cqw', transform: 'rotate(14deg)', zIndex: 1 }, '1.09 / 1')}
+            {print(cover.web || undefined, { left: '34.2cqw', top: '3.4cqw', width: '35.5cqw', transform: 'rotate(3deg)', zIndex: 2 }, '1.18 / 1')}
             <div className="absolute inset-x-0 text-center" style={{ bottom: '1.6cqw', zIndex: 3 }}>
               <h1 style={{ fontFamily: "'Pinyon Script', 'Snell Roundhand', cursive", color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', fontSize: 'max(20px, ' + fs + 'cqw)', lineHeight: 1.1, margin: 0 }}>{data.title}</h1>
               {brand?.name && <p style={{ color: pal.soft, textTransform: 'uppercase', letterSpacing: '0.4em', fontSize: 'max(8px, 1.15cqw)', margin: '0.6cqw 0 0' }}>{brand.name}</p>}
@@ -688,58 +759,77 @@ export default function GalleryViewPage() {
       })() : coverKind === 'diptych' && cover?.web ? (() => {
         const second = data.photos.find((p) => p.id !== cover.id && p.web)
         const lines = String(data.title).split(/\s*(&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean).map((x) => (/^(and)$/i.test(x) ? '&' : x === '+' ? '&' : x))
-        const longest = Math.max(...lines.map((x) => x.length), 4)
-        const fs = Math.min(4.6, 11 / (longest * 0.5)) + 'cqw'
+        const ts: CSSProperties = { ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }
         return (
-          <div className="grid w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', gridTemplateColumns: '1fr minmax(84px, 13%) 1fr', background: pal.bg }}>
+          <div className="relative grid w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', gridTemplateColumns: '1fr minmax(84px, 13%) 1fr', background: pal.bg }}>
             <div className="relative overflow-hidden" style={{ background: pal.line }}><div className="absolute inset-0">{imgEl}</div></div>
-            <div className={'flex flex-col items-center justify-center text-center ' + headCls} style={{ ...headStyle, background: pal.bg, color: pal.ink, textTransform: 'none', fontStyle: 'normal', fontWeight: 400, letterSpacing: '0.01em', fontSize: 'max(15px, ' + fs + ')', lineHeight: 1.35, padding: '0 6px', gap: '0.4em' }}>
-              {lines.map((l, i) => <span key={i}>{l}</span>)}
-            </div>
+            <div style={{ background: pal.bg }} />
             <div className="relative overflow-hidden" style={{ background: pal.line }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={second?.web || cover.web || undefined} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: second ? '50% 50%' : '85% 50%' }} />
             </div>
+            <h1 className="sr-only">{data.title}</h1>
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+              {lines.map((l, i) => (
+                <text key={i} data-gk="title" x="450" y={202 + (i - (lines.length - 1) / 2) * 51} textAnchor="middle" style={{ ...ts, fontSize: 38 }} textLength={l === '&' ? 25 : Math.min(104, 20.5 * l.length)} lengthAdjust="spacingAndGlyphs">{l}</text>
+              ))}
+              {brand?.name && <text data-gk="brand" x="450" y="292" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontWeight: 500, fontSize: 9 }} textLength={Math.min(104, 7.25 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+            </svg>
           </div>
         )
       })() : coverKind === 'magazine' && cover?.web ? (
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.line }}>
           <div className="absolute inset-0">{imgEl}</div>
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.38), rgba(0,0,0,0) 45%)' }} />
-          <div className="absolute inset-x-0 top-0" style={{ padding: '0.4cqw 4.5cqw 0' }}>
-            <h1 className={headCls} style={{ ...headStyle, color: '#FBF2E4', fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '-0.01em', lineHeight: 1, textAlign: 'center', whiteSpace: 'nowrap', fontSize: Math.min(18, 220 / Math.max(String(data.title).length, 6)) + 'cqw', margin: 0, textShadow: '0 1px 18px rgba(0,0,0,0.25)' }}>{data.title}</h1>
-            <div className="flex items-center justify-between" style={{ color: '#FBF2E4', textTransform: 'uppercase', letterSpacing: '0.32em', fontSize: 'clamp(8px, 1.4cqw, 16px)', marginTop: '1.2cqw' }}>
-              <span>{brand?.name ?? ''}</span>
-              <span>{data.photos.length} photos</span>
-            </div>
-          </div>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0) 42%)' }} />
+          <h1 className="sr-only">{data.title}</h1>
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+            <text data-gk="title" x="451.5" y="103" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 136, fill: 'currentColor', color: '#FCF4E6', pointerEvents: 'auto' }} textLength={Math.min(811, 62.4 * Math.max(String(data.title).length, 1))} lengthAdjust="spacingAndGlyphs">{data.title}</text>
+            {brand?.name && <text data-gk="brand" x="44" y="133" textAnchor="start" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 13, fill: 'currentColor', color: '#FCF4E6', pointerEvents: 'auto' }} textLength={Math.min(160, 10.7 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+            <text x="857" y="133" textAnchor="end" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 13, fill: '#FCF4E6' }} textLength={14.6 * (String(data.photos.length).length + 7)} lengthAdjust="spacing">{data.photos.length + ' PHOTOS'}</text>
+          </svg>
         </div>
-      ) : coverKind === 'monogram' && cover?.web ? (() => {
+) : coverKind === 'monogram' && cover?.web ? (() => {
         const parts = String(data.title).split(/\s*(?:&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean)
-        const mono = (parts.length >= 2 ? parts[0][0] + ' & ' + parts[1][0] : (parts[0] || '').split(/\s+/).slice(0, 2).map((w) => w[0]).join(' ')).toUpperCase()
+        const custom = String((el as Record<string, { text?: string }> | undefined)?.initials?.text ?? '').trim()
+        const cch = custom.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        const pair = custom ? cch.length >= 2 : parts.length >= 2
+        const L = custom ? (cch[0] || '') : pair ? parts[0][0].toUpperCase() : ''
+        const R = custom ? (cch[1] || '') : pair ? parts[1][0].toUpperCase() : ''
+        const mono = custom ? custom.toUpperCase() : (parts[0] || '').split(/\s+/).slice(0, 2).map((w) => w[0]).join(' ').toUpperCase()
+        const ff = "'Cormorant Garamond', 'Playfair Display', Georgia, serif"
+        const big = { position: 'absolute' as const, fontFamily: ff, fontWeight: 300, lineHeight: 1, color: 'rgba(255,255,255,0.58)', whiteSpace: 'nowrap' as const }
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.line }}>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&display=swap" />
             <div className="absolute inset-0">{imgEl}</div>
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.4))' }} />
-            <div className={'absolute inset-0 flex items-center justify-center ' + headCls} style={{ ...headStyle, fontWeight: 300, fontStyle: 'normal', textTransform: 'none', letterSpacing: '-0.02em', color: 'rgba(255,255,255,0.55)', fontSize: '50cqw', lineHeight: 1, whiteSpace: 'nowrap', paddingBottom: '4cqw' }}>{mono}</div>
-            <div className="absolute inset-x-0 bottom-0 text-center text-white" style={{ padding: '0 16px clamp(14px, 3vw, 52px)' }}>
-              <h1 className={headCls} style={{ ...headStyle, color: '#fff', fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '0.1em', fontSize: 'clamp(1.1rem, 2.7vw, 2.7rem)', margin: 0 }}>{data.title}</h1>
-              {brand?.name && <p style={{ color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.32em', fontSize: 'clamp(8px, 1vw, 14px)', margin: 'clamp(4px, 0.8vw, 12px) 0 0' }}>{brand.name}</p>}
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28))' }} />
+            {pair ? (
+              <>
+                <div data-gk="initials" style={{ ...big, fontSize: '57cqw', left: '6.5cqw', top: '-6.4cqw' }}>{L}</div>
+                <div style={{ ...big, fontSize: '40cqw', fontStyle: 'italic', left: '50%', transform: 'translateX(-50%)', top: '8.5cqw' }}>&amp;</div>
+                <div data-gk="initials" style={{ ...big, fontSize: '57cqw', right: '4.5cqw', top: '-6.4cqw' }}>{R}</div>
+              </>
+            ) : (
+              <div data-gk="initials" className="absolute inset-0 flex items-center justify-center" style={{ ...big, position: 'absolute', fontSize: '50cqw', paddingBottom: '4cqw' }}>{mono}</div>
+            )}
+            <div className="absolute inset-x-0 text-center text-white" style={{ top: '41.6cqw' }}>
+              <h1 style={{ fontFamily: ff, color: '#fff', fontWeight: 500, textTransform: 'none', fontStyle: 'normal', letterSpacing: '0.16em', fontSize: 'max(14px, 3.5cqw)', lineHeight: 1.1, margin: 0 }}>{data.title}</h1>
+              {brand?.name && <p style={{ fontFamily: ff, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.4em', fontSize: 'max(7px, 1.3cqw)', margin: '1.3cqw 0 0' }}>{brand.name}</p>}
             </div>
           </div>
         )
       })() : coverKind === 'cinema' && cover?.web ? (
-        <div style={{ background: '#000' }}>
-          <div style={{ height: 'clamp(14px, 3vw, 56px)' }} />
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2.57 / 1' }}>
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#000' }}>
+          <div className="absolute overflow-hidden" style={{ left: 0, right: 0, top: '4.1cqw', height: '39.1cqw' }}>
             <div className="absolute inset-0">{imgEl}</div>
           </div>
-          <div className="text-center" style={{ padding: 'clamp(14px, 2.4vw, 44px) 16px clamp(16px, 2.8vw, 52px)' }}>
-            <h1 style={{ ...headStyle, color: '#F1E6D2', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.32em', fontSize: 'clamp(0.95rem, 2.3vw, 2.3rem)', margin: 0 }}>{data.title}</h1>
-            {brand?.name && <p style={{ color: 'rgba(241,230,210,0.7)', textTransform: 'uppercase', letterSpacing: '0.3em', fontSize: 'clamp(8px, 1vw, 14px)', margin: 'clamp(6px, 1vw, 16px) 0 0' }}>{brand.name}</p>}
-          </div>
+          <h1 className="sr-only">{data.title}</h1>
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+            <text data-gk="title" x="450" y="417" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 21.5, fill: 'currentColor', color: '#F1E6D2', pointerEvents: 'auto' }} textLength={Math.min(304, 27.6 * Math.max(String(data.title).length, 1))} lengthAdjust="spacing">{String(data.title).toUpperCase()}</text>
+            {brand?.name && <text data-gk="brand" x="450" y="438" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 10, fill: 'currentColor', color: 'rgba(241,230,210,0.8)', pointerEvents: 'auto' }} textLength={Math.min(152, 11.7 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+          </svg>
         </div>
-      ) : coverKind === 'text' || !cover?.web ? (
+) : coverKind === 'text' || !cover?.web ? (
         <div className="px-6 py-20 text-center">
           {brandLine}
           {titleEl('text-4xl sm:text-5xl')}
