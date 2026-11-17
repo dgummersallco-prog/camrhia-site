@@ -97,9 +97,9 @@ export function heroStarter(dev: Dev, srcs: string[]): Board {
   const list: (string | null)[] = srcs.length > 0 ? srcs.slice(0, 3) : [null]
   const n = list.length
   const d: number[][][] = [
-    [[2, 38, 96, 40]],
-    [[2, 38, 58, 40], [62, 38, 36, 40]],
-    [[2, 38, 56, 40], [62, 38, 36, 19], [62, 59, 36, 19]],
+    [[2, 25, 96, 44]],
+    [[2, 25, 58, 44], [62, 25, 36, 44]],
+    [[2, 25, 56, 44], [62, 25, 36, 21.5], [62, 47.5, 36, 21.5]],
   ]
   const p: number[][][] = [
     [[0, 54, 100, 60]],
@@ -119,11 +119,11 @@ export function heroStarter(dev: Dev, srcs: string[]): Board {
     : [
         { id: 'logo', type: 'logo', x: 2, y: 1, w: 16, h: 7, z: 10, align: 'left' },
         { id: 'menu', type: 'menu', x: 36, y: 2, w: 62, h: 5, z: 10, align: 'right' },
-        { id: 'sub', type: 'subtitle', x: 2, y: 12, w: 56, h: 3, z: 10, align: 'left' },
-        { id: 'title', type: 'title', x: 2, y: 16, w: 56, h: 12, z: 10, align: 'left' },
-        { id: 'btn', type: 'button', x: 2, y: 30, w: 20, h: 5, z: 10 },
+        { id: 'title', type: 'title', x: 2, y: 8, w: 76, h: 12, z: 10, align: 'left' },
+        { id: 'sub', type: 'subtitle', x: 2, y: 21, w: 56, h: 3, z: 10, align: 'left' },
+        { id: 'btn', type: 'button', x: 4, y: 62, w: 18, h: 5, z: 10 },
       ]
-  return { h: ph ? 172 : 88, items: [...photos, ...text] }
+  return { h: ph ? 172 : 72, items: [...photos, ...text] }
 }
 
 export function galleryPhotosStarter(dev: Dev, paths: string[]): Board {

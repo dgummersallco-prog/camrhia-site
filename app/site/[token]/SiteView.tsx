@@ -29,7 +29,7 @@ function photoUrl(path: string | null | undefined): string | null {
 }
 
 // Shown only inside the designer preview, so every section is visible while building.
-const PH_SCENES = [1, 2, 3, 4, 5, 6].map((n) => 'https://picsum.photos/seed/camrhia' + n + '/800/1000')
+const PH_SCENES: string[] = []
 const PH_AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#E6E3DE"/><circle cx="100" cy="80" r="34" fill="#BDB8B0"/><path d="M32 200c0-42 30-68 68-68s68 26 68 68z" fill="#BDB8B0"/></svg>')
 const PH_ABOUT = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000"><rect width="800" height="1000" fill="#EFECE7"/><g fill=\"none\" stroke=\"#BDB7AD\" stroke-width=\"14\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><circle cx="560" cy="430" r="55"/><path d="M170 700 L340 500 L450 630 L520 550 L630 700 Z"/></g></svg>')
 const PH_ABOUT_W = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><rect width="1600" height="900" fill="#EFECE7"/><g fill=\"none\" stroke=\"#BDB7AD\" stroke-width=\"14\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><circle cx="930" cy="330" r="60"/><path d="M600 610 L780 400 L890 530 L960 450 L1080 610 Z"/></g></svg>')
@@ -110,11 +110,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const logo = photoUrl(r.logo_path)
   const aboutPhoto = photoUrl((r as any).site_settings?.about?.photo ?? null) ?? (isPreview ? (['stacked', 'textfirst'].includes((r as any).site_settings?.about?.layout) ? PH_ABOUT_W : PH_ABOUT) : null)
 
-  const coverFallback = ((Array.isArray(r.cover_paths) && r.cover_paths.length > 0 ? r.cover_paths[0] : r.cover_path) as string | null) ?? ''
-  const allCovers: string[] = Array.isArray(r.cover_paths) ? (r.cover_paths as string[]).filter(Boolean) : []
-  const heroPaths: string[] = t.hero.photos.length > 0 ? t.hero.photos : allCovers.length > 0 ? allCovers : [coverFallback].filter(Boolean)
+  const heroPaths: string[] = t.hero.photos
   const heroUrlsReal = heroPaths.map((p) => photoUrl(p)).filter(Boolean) as string[]
-  const heroUrls = isPreview && heroUrlsReal.length === 0 ? [PH_SCENES[0]] : heroUrlsReal
+  const heroUrls = heroUrlsReal
   const shownHero = t.hero.slideshow ? heroUrls : heroUrls.slice(0, 1)
   const heroFocus: Record<string, { x: number; y: number }> = (r.site_settings?.hero?.focus ?? {}) as Record<string, { x: number; y: number }>
 
@@ -213,7 +211,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const btnStyle: React.CSSProperties = { background: accent, color: t.btnText, fontFamily: t.body, borderRadius: t.radius }
   const pickPics = (n: number): string[] => {
     const a = [...galleryCovers, ...heroUrls].filter(Boolean)
-    const src: string[] = a.length > 0 ? a : isPreview ? (PH_SCENES as string[]) : []
+    const src: string[] = a
     return src.length === 0 ? [] : Array.from({ length: n }, (_, i) => src[i % src.length])
   }
   const aboutText = (n: number) => (t.text.about ?? r.bio ?? '').toString().slice(0, n)
@@ -1696,7 +1694,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
             </header>
             {(() => {
-              const pics = (mosaicSrcs.length > 0 ? mosaicSrcs : shownHero.length > 0 ? shownHero : isPreview ? PH_SCENES : []).slice(0, 3)
+              const pics = (mosaicSrcs.length > 0 ? mosaicSrcs : shownHero.length > 0 ? shownHero : []).slice(0, 3)
               return (
                 <section className="mx-auto max-w-6xl px-6 py-20 md:py-28">
                   <div className="mx-auto flex max-w-xl flex-col items-center text-center">{heroPara(soft)}</div>
@@ -2411,7 +2409,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 canvas={(r as any).site_settings?.hero?.canvas} photo2={null} aboutPhoto={null} toUrl={(pth) => photoUrl(pth)} editing={isPreview}
                 title={null} bio="" headStyle={headStyle} ink={ink} soft={soft} tint={tint}
                 bodyFont={t.body} headWeight={t.headWeight} defaultButton={t.hero.ctaText} boardId="hero"
-                fallback={(dev) => heroStarter(dev, mosaicSrcs.length > 0 ? mosaicSrcs : isPreview ? PH_SCENES.slice(0, 3) : [])}
+                fallback={(dev) => heroStarter(dev, mosaicSrcs.length > 0 ? mosaicSrcs : [])}
                 renderSpecial={(type, it, dev) => {
                   if (type === 'logo') {
                     return (
