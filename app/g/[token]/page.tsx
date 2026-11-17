@@ -525,6 +525,7 @@ export default function GalleryViewPage() {
   return (
     <div className="gal-root min-h-screen" style={{ background: pal.bg, color: pal.ink }}>
       {fontHref && <link rel="stylesheet" href={fontHref} />}
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&display=swap" />
       {elRules && <style>{elRules}</style>}
       <div style={{ background: coverPal.bg, color: coverPal.ink }}>{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
         const words = String(coverTitle).trim().split(/\s+/).filter(Boolean)
@@ -559,8 +560,8 @@ export default function GalleryViewPage() {
           </div>
           <h1 className="sr-only">{coverTitle}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-            <text data-gk="title" x="450.5" y="404" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 83, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(407, 40.7 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacingAndGlyphs">{coverTitle}</text>
-            {coverSub && <text data-gk="brand" x="450" y="434" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 11.5, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(288, 16 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+            <text data-gk="title" x="450" y="400.4" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 87.2, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(408, 40.8 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacingAndGlyphs">{coverTitle}</text>
+            {coverSub && <text data-gk="brand" x="450" y="434.8" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 10.9, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(288, 16.0 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
           </svg>
         </div>
       ) : coverKind === 'mosaic' && cover?.web ? (() => {
@@ -589,9 +590,9 @@ export default function GalleryViewPage() {
                   </svg>
                 )
               })}
-              <text data-gk="title" x="745.5" y="190" textAnchor="middle" style={{ ...ts, fontSize: 94 }} textLength={Math.min(261, 43.5 * Math.max(l1.length, 1))} lengthAdjust="spacingAndGlyphs">{l1}</text>
-              {l2 && <text data-gk="title" x="745.5" y="267" textAnchor="middle" style={{ ...ts, fontSize: 94 }} textLength={Math.min(221, 36.8 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
-              {sub && <text data-gk="brand" x="745.5" y="308.5" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontSize: 11.5 }} textLength={Math.min(233, 14.6 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+              <text data-gk="title" x="745" y="190.3" textAnchor="middle" style={{ ...ts, fontSize: 91.5, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(262, 43.68 * Math.max(l1.length, 1))} lengthAdjust="spacingAndGlyphs">{l1}</text>
+              {l2 && <text data-gk="title" x="745.5" y="266.2" textAnchor="middle" style={{ ...ts, fontSize: 89.9, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(221, 36.84 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
+              {sub && <text data-gk="brand" x="745.5" y="309.1" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontSize: 11.1, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(233, 14.56 * sub.length)} lengthAdjust="spacing">{sub}</text>}
             </svg>
           </div>
         )
@@ -653,7 +654,7 @@ export default function GalleryViewPage() {
         const FW = [163, 163, 192, 161, 165]
         const ts: CSSProperties = { ...headStyle, fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', pointerEvents: 'auto' }
         const title = String(coverTitle)
-        const tf = Math.min(94, (94 * 10) / Math.max(title.length, 10))
+        const tf = Math.min(78.2, (78.2 * 10) / Math.max(title.length, 10))
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#271407' }}>
@@ -670,8 +671,8 @@ export default function GalleryViewPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/gallery-cover/strip-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              <text data-gk="title" x="450.5" y="116" textAnchor="middle" style={{ ...ts, color: '#FFF6EA', fontSize: tf }} textLength={Math.min(433, 0.51 * tf * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
-              {sub && <text data-gk="brand" x="450" y="159.5" textAnchor="middle" style={{ ...ts, color: 'rgba(255,246,234,0.9)', textTransform: 'uppercase', fontSize: 11.5 }} textLength={Math.min(326, 17.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+              <text data-gk="title" x="451.5" y="106.7" textAnchor="middle" style={{ ...ts, color: '#FFF6EA', fontSize: tf, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(429, 0.611 * tf * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
+              {sub && <text data-gk="brand" x="450.5" y="159.2" textAnchor="middle" style={{ ...ts, color: 'rgba(255,246,234,0.9)', textTransform: 'uppercase', fontSize: 11.4, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(327, 17.21 * sub.length)} lengthAdjust="spacing">{sub}</text>}
             </svg>
           </div>
         )
@@ -682,8 +683,8 @@ export default function GalleryViewPage() {
           </div>
           <h1 className="sr-only">{coverTitle}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-            <text data-gk="title" x="654.5" y="229" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 87, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(409, 34.1 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacingAndGlyphs">{coverTitle}</text>
-            {coverSub && <text data-gk="brand" x="660.5" y="275" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 17, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(275, 21.2 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+            <text data-gk="title" x="655.0" y="234.5" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 95.8, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(405, 33.74 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacingAndGlyphs">{coverTitle}</text>
+            {coverSub && <text data-gk="brand" x="660.5" y="275.7" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 17.75, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(275, 21.15 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
           </svg>
         </div>
       ) : coverKind === 'stack' && cover?.web ? (() => {
@@ -735,9 +736,9 @@ export default function GalleryViewPage() {
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
               {lines.map((l, i) => (
-                <text key={i} data-gk="title" x="450" y={202 + (i - (lines.length - 1) / 2) * 51} textAnchor="middle" style={{ ...ts, fontSize: 38 }} textLength={l === '&' ? 25 : Math.min(104, 20.5 * l.length)} lengthAdjust="spacingAndGlyphs">{l}</text>
+                <text key={i} data-gk="title" x="451" y={[155.3, 206.2, 252.6][i] ?? 202 + (i - (lines.length - 1) / 2) * 51} textAnchor="middle" style={{ ...ts, fontSize: [35.1, 39.9, 39.5][i] ?? 38, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={l === '&' ? 26 : Math.min(86, 20.7 * l.length)} lengthAdjust="spacingAndGlyphs">{l}</text>
               ))}
-              {coverSub && <text data-gk="brand" x="450" y="292" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontWeight: 500, fontSize: 9 }} textLength={Math.min(104, 7.25 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+              {coverSub && <text data-gk="brand" x="450.5" y="290.9" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontWeight: 400, fontSize: 6.8, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(89, 7.42 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
             </svg>
           </div>
         )
@@ -789,8 +790,8 @@ export default function GalleryViewPage() {
           </div>
           <h1 className="sr-only">{coverTitle}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-            <text data-gk="title" x="450" y="417" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 21.5, fill: 'currentColor', color: '#F1E6D2', pointerEvents: 'auto' }} textLength={Math.min(304, 27.6 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacing">{String(coverTitle).toUpperCase()}</text>
-            {coverSub && <text data-gk="brand" x="450" y="438" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 10, fill: 'currentColor', color: 'rgba(241,230,210,0.8)', pointerEvents: 'auto' }} textLength={Math.min(152, 11.7 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+            <text data-gk="title" x="450" y="417.6" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 22, fill: 'currentColor', color: '#F1E6D2', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(304, 27.64 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacing">{String(coverTitle).toUpperCase()}</text>
+            {coverSub && <text data-gk="brand" x="450.5" y="436.6" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 7.9, fill: 'currentColor', color: 'rgba(241,230,210,0.8)', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(147, 11.28 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
           </svg>
         </div>
 ) : coverKind === 'text' || !cover?.web ? (
