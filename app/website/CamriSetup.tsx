@@ -28,7 +28,7 @@ type PageDef = { k: string; label: string; blurb: string; locked?: boolean; soon
 
 const LINES = [
   "Hi, I'm Camri! I'll help you design your website. Pick the looks you love and I'll remember them, so later you can just say \"switch my layout\" or \"use my dark theme\".",
-  'Pick up to five layouts you love. The first one you pick becomes your starting design.',
+  'Pick up to three layouts you love. The first one you pick becomes your starting design.',
   "Now it's build-a-bear time! Pick a look for each part. Your site comes together on the right, and any full pages stack up beside it. Skip any you like as they are.",
   "Last look! Add the sections you picked to any of your pages. Use the arrows to flip between pages, then build your site.",
   'Last one: fonts. Pick up to three for your title, subtitle and paragraph. The first one you pick for each is what I start with.',
@@ -123,6 +123,8 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     return startStep ?? 0
   })
   const [layouts, setLayouts] = useState<string[]>(initial?.layouts ?? [])
+  const [heroList, setHeroList] = useState<string[]>([])
+  const hl = heroList.length === layouts.length && heroList.every((x) => layouts.includes(x)) ? heroList : layouts
   const [picked, setPicked] = useState<Pal[]>(initial?.palettes ?? [])
   
   const [fp, setFp] = useState<FontPick>(initial?.type ?? { title: [], subtitle: [], paragraph: [] })
@@ -208,7 +210,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
             {styles.map((s) => {
               const i = layouts.indexOf(s.key)
               return (
-                <button key={s.key} type="button" onClick={() => setLayouts((l) => toggle(l, s.key, 5))} className="relative text-left">
+                <button key={s.key} type="button" onClick={() => setLayouts((l) => toggle(l, s.key, 3))} className="relative text-left">
                   <p className="mb-2 text-sm font-medium text-ink">{s.name}</p>
                   <img src={'/layouts/' + s.key + '.png'} alt={s.name} className={'h-auto w-full rounded-lg border transition ' + (i >= 0 ? ring : 'border-black/10 hover:border-black/30')} onError={(e) => { const el = e.currentTarget; el.style.display = 'none'; el.nextElementSibling?.removeAttribute('hidden') }} />
                   <div hidden className="h-20 rounded-lg border border-black/10 p-2" style={{ background: s.bg }}>
@@ -230,7 +232,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         )}
         {step === 3 && (
           <div>
-            <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={layouts[0] ? '/layouts/' + layouts[0] + '.png' : undefined} heroName={styles.find((x) => x.key === layouts[0])?.name} designs={designs} setDesigns={setDesigns} photoDesigns={PHOTO_DESIGNS as unknown as { key: string; name: string }[]} />
+            <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={layouts[0] ? '/layouts/' + layouts[0] + '.png' : undefined} heroName={styles.find((x) => x.key === layouts[0])?.name} heroList={hl.map((k) => ({ key: k, name: styles.find((x) => x.key === k)?.name ?? k }))} heroActive={layouts[0]} onHero={(k) => { setHeroList(hl); setLayouts([k, ...layouts.filter((x) => x !== k)]) }} secAlts={altsOf(designs)} designs={designs} setDesigns={setDesigns} photoDesigns={PHOTO_DESIGNS as unknown as { key: string; name: string }[]} />
             <div className="sticky bottom-0 z-20 mt-8 flex items-center gap-3 bg-[#F6F1EA]/90 py-4 backdrop-blur">
               <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink disabled:opacity-50">← Back</button>
               <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site'}</button>
@@ -405,6 +407,29 @@ function planOf(designs: Record<string, string>) {
   return { home, pages }
 }
 
+function altsOf(designs: Record<string, string>) {
+  const PK = PICKERS() as unknown as Record<string, { dir: string; ar: string; field: string; items: { key: string; name: string }[] }>
+  const out: Record<string, { field: string; keys: string[]; active: string }> = {}
+  const pickOf = (s: (typeof DESIGN_SECTIONS)[number], pred: (kd: string) => boolean) => {
+    for (const row of s.rows) {
+      if (!pred(String(rowKind(row)))) continue
+      const pk = PK[s.k + '|' + row]
+      const it = pk ? pk.items.find((d) => d.key === designs[pk.field]) : undefined
+      if (pk && it && pk.field !== 'photos') return { field: pk.field, keys: (designs[pk.field + '_alts'] || '').split(',').filter(Boolean), active: it.key }
+    }
+    return undefined
+  }
+  DESIGN_SECTIONS.forEach((s) => {
+    if (designs[s.k + '_mode'] === 'none') return
+    const pg = pickOf(s, (kd) => kd !== 'section')
+    const sc = pickOf(s, (kd) => kd === 'section')
+    if (s.k === 'galleries') { if (pg) out.portfolio = pg; if (sc) out.galsec = sc }
+    else if (s.k === 'pricing') { if (pg) out.investment = pg; if (sc) out.pricesec = sc }
+    else { const f = pickOf(s, () => true); if (f) out[s.k === 'nav' ? 'explore' : s.k] = f }
+  })
+  return out
+}
+
 function thumbsOf(designs: Record<string, string>) {
   const PK = PICKERS() as unknown as Record<string, { dir: string; ar: string; field: string; items: { key: string; name: string }[] }>
   const out: Record<string, { src: string; ar: string }> = {}
@@ -452,8 +477,12 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
     ...plan.home.map((p) => ({ k: p.k, row: p.row, title: p.title, name: p.name, src: p.src })),
   ]
   const pickDesign = (pk: Pk, key: string, row: string) => {
-    const nd: Record<string, string> = { ...designs, [pk.field]: key }
-    if (key && MODED.includes(sec.k) && sec.k !== 'blog') {
+    const have = (designs[pk.field + '_alts'] || designs[pk.field] || '').split(',').filter(Boolean)
+    if (key && !have.includes(key) && have.length >= 3) return
+    const alts = !key ? [] : have.includes(key) ? have.filter((x) => x !== key) : [...have, key]
+    const added = !!key && alts.includes(key)
+    const nd: Record<string, string> = { ...designs, [pk.field]: alts.includes(designs[pk.field]) ? designs[pk.field] : (alts[0] ?? ''), [pk.field + '_alts']: alts.join(',') }
+    if (added && MODED.includes(sec.k) && sec.k !== 'blog') {
       const kd = rowKind(row)
       const cur = designs[sec.k + '_mode'] || ''
       if (sec.k === 'about') nd.about_mode = kd === 'page' ? 'page' : 'section'
@@ -464,7 +493,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   }
   const tryPick = (pk: Pk, key: string, row: string) => {
     const kd = rowKind(row)
-    const clash = !!key && ['galleries', 'pricing'].includes(sec.k) && ((kd === 'page' && mode === 'section') || (kd === 'section' && mode === 'page'))
+    const clash = !!key && !(designs[pk.field + '_alts'] || designs[pk.field] || '').split(',').includes(key) && ['galleries', 'pricing'].includes(sec.k) && ((kd === 'page' && mode === 'section') || (kd === 'section' && mode === 'page'))
     if (clash) setPend({ pk, key, row })
     else pickDesign(pk, key, row)
   }
@@ -581,13 +610,15 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
               {pk ? (
                 <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3">
                   {pk.items.map((d) => {
-                    const on = designs[pk.field] === d.key
+                    const picks = (designs[pk.field + '_alts'] || designs[pk.field] || '').split(',').filter(Boolean)
+                    const on = picks.includes(d.key)
                     return (
-                      <button key={d.key} type="button" className="text-left" onClick={() => tryPick(pk, on ? '' : d.key, row)}>
+                      <button key={d.key} type="button" className="text-left" onClick={() => tryPick(pk, d.key, row)}>
                         <p className="mb-1.5 text-xs font-medium text-ink">{d.name}</p>
                         <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: pk.ar }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={'/' + pk.dir + '/' + d.key + '.png'} alt="" className={'h-full w-full rounded-lg border-2 object-cover object-top ' + (on ? 'border-twilight ring-2 ring-twilight' : 'border-transparent')} />
+                          {on && <span className="absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-twilight text-xs font-medium text-white">{picks.indexOf(d.key) + 1}</span>}
                           <span role="button" aria-label="Zoom" onClick={(e) => { e.stopPropagation(); setZoom('/' + pk.dir + '/' + d.key + '.png') }} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white">⤢</span>
                         </div>
                       </button>

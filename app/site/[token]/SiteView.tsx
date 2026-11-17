@@ -157,9 +157,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   const on = (k: string) => r.site_sections?.[k] !== false
   const showMap: Record<string, boolean> = {
-    about: on('about') && !!(t.text.about || r.bio || aboutPhoto),
-    portfolio: page === 'galleries' ? galleries.length > 0 : on('portfolio') && galleries.length > 0,
-    galsec: on('galsec') && galleries.length > 0,
+    about: on('about') && (isPreview || !!(t.text.about || r.bio || aboutPhoto)),
+    portfolio: page === 'galleries' ? (isPreview || galleries.length > 0) : on('portfolio') && galleries.length > 0,
+    galsec: on('galsec') && (isPreview || galleries.length > 0),
     pricesec: on('pricesec') && sitePkgs.length > 0,
     investment: on('investment') && sitePkgs.length > 0,
     testimonials: on('testimonials') && quotesShown.length > 0,
@@ -167,7 +167,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     contact: true,
     explore: true,
     aboutcta: on('aboutcta'),
-    social: ['instagram_url', 'facebook_url', 'pinterest_url', 'tiktok_url'].some((k) => !!(r as any)[k] && !t.socialHidden.includes(k)),
+    social: isPreview || ['instagram_url', 'facebook_url', 'pinterest_url', 'tiktok_url'].some((k) => !!(r as any)[k] && !t.socialHidden.includes(k)),
   }
   for (const c of t.customs) showMap[c.id] = on(c.id)
   const pageOrder: string[] = page === 'home' ? t.orderHome : page === 'about' ? t.orderAbout : page === 'galleries' ? t.orderGalleries : (t.extraPages.find((e) => e.id === page)?.sections ?? [])
@@ -1640,7 +1640,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       }
       case 'contact': {
         const cd = String((r as any).site_settings?.contactDesign ?? '')
-        const msg = t.text.contact ?? 'Tell me about your day. Check a date and send me a message.'
+        const msg0 = t.text.contact
+        const msg = (!msg0 || msg0 === 'Tell me about your day. Check a date and send me a message.') ? 'Check my availability and send a note. I would love to hear about your day.' : msg0
+        const ctitle = String((r as any).site_settings?.text?.con_title ?? 'Ready to book your session?')
         const btn = <a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block px-8 py-3 text-[11px] uppercase tracking-[0.22em]" style={btnStyle} id="closing-btn">{t.text.contactBtn}</a>
         const soc = socials.length > 0 ? (
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
@@ -1653,63 +1655,78 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const big: any = { fontFamily: t.head, color: ink, fontSize: 'clamp(1.8rem, 3.6vw, 2.8rem)', lineHeight: 1.15 }
         const msgStyle: any = { color: soft, fontSize: fsp('fs-contact', 15) }
         if (cd === 'split') return sec('contact', null,
-          <div className="mx-auto max-w-5xl">
-            <div className="grid items-center gap-8 md:grid-cols-[1fr_auto]">
-              <div><h3 style={big}>{t.titles.contact}</h3><p className="el-con_msg mt-3 max-w-xl whitespace-pre-line leading-relaxed" style={msgStyle}>{msg}</p></div>
-              <div>{btn}</div>
+          <div style={{ width: '100vw', marginLeft: 'calc(50% - 50vw)', padding: '0 clamp(16px, 4.4vw, 80px)' }}>
+            <div className="flex flex-wrap items-center justify-between" style={{ gap: 'clamp(20px, 3vw, 54px)' }}>
+              <div style={{ flex: '1 1 320px', maxWidth: 1100 }}>
+                <h3 data-name="Heading" className="el-con_title" style={{ ...big, fontWeight: 600, fontSize: 'clamp(1.9rem, 5.2vw, 5.2rem)', lineHeight: 1.1, margin: 0 }}>{ctitle}</h3>
+                <p data-name="Paragraph" className="el-con_msg whitespace-pre-line" style={{ ...msgStyle, fontSize: 'clamp(15px, 2.1vw, 34px)', letterSpacing: '0.02em', lineHeight: 1.55, maxWidth: '34ch', margin: 'clamp(12px, 1.8vw, 30px) 0 0' }}>{msg}</p>
+              </div>
+              <a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block uppercase" id="closing-btn" style={{ ...btnStyle, borderRadius: 4, fontSize: 'clamp(11px, 1.8vw, 29px)', fontWeight: 500, letterSpacing: '0.2em', padding: 'clamp(14px, 2vw, 34px) clamp(22px, 2.4vw, 42px)' }}>{t.text.contactBtn}</a>
             </div>
-            {soc && <div className="mt-10">{soc}</div>}
           </div>, tinted)
         if (cd === 'bar') return sec('contact', null,
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
-              <p className="el-con_msg whitespace-pre-line leading-relaxed" style={{ ...msgStyle, fontFamily: t.head, fontSize: 'clamp(1.2rem, 2.2vw, 1.6rem)', color: ink }}>{msg}</p>
-              {btn}
+          <div style={{ width: '100vw', marginLeft: 'calc(50% - 50vw)', borderTop: '1px solid ' + line, borderBottom: '1px solid ' + line }}>
+            <div className="flex flex-wrap items-center justify-between" style={{ gap: 'clamp(14px, 2.4vw, 36px)', padding: 'clamp(18px, 2.6vw, 44px) clamp(16px, 2vw, 40px)' }}>
+              <h3 data-name="Heading" className="el-con_title" style={{ ...big, fontWeight: 400, fontSize: 'clamp(1.7rem, 4.6vw, 4.6rem)', lineHeight: 1.1, margin: 0 }}>{ctitle}</h3>
+              <a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block uppercase" id="closing-btn" style={{ ...btnStyle, borderRadius: 4, fontSize: 'clamp(11px, 1.55vw, 24px)', letterSpacing: '0.2em', padding: 'clamp(12px, 1.7vw, 28px) clamp(22px, 3.2vw, 54px)' }}>{t.text.contactBtn}</a>
             </div>
-            {soc && <div className="mt-8">{soc}</div>}
           </div>, tinted)
         if (cd === 'framed') return sec('contact', null,
-          <div className="mx-auto max-w-2xl px-8 py-14 text-center" style={{ border: '1px solid ' + soft }}>
-            <h3 style={big}>{t.titles.contact}</h3>
-            <p className="el-con_msg mx-auto mb-8 mt-4 max-w-md whitespace-pre-line leading-relaxed" style={msgStyle}>{msg}</p>
-            {btn}
-            {soc && <div className="mt-8">{soc}</div>}
+          <div className="mx-auto text-center" style={{ width: '88%', maxWidth: 1600, border: '2px solid ' + ink, padding: 'clamp(28px, 5.6vw, 100px) clamp(16px, 3vw, 56px)' }}>
+            <h3 data-name="Heading" className="el-con_title" style={{ ...big, fontWeight: 600, fontSize: 'clamp(1.8rem, 5vw, 5rem)', lineHeight: 1.1, margin: 0 }}>{ctitle}</h3>
+            <p data-name="Paragraph" className="el-con_msg mx-auto whitespace-pre-line" style={{ ...msgStyle, fontSize: 'clamp(14px, 1.75vw, 28px)', letterSpacing: '0.02em', lineHeight: 1.6, maxWidth: '34ch', margin: 'clamp(14px, 2vw, 34px) auto 0' }}>{msg}</p>
+            <div style={{ marginTop: 'clamp(22px, 3.4vw, 60px)' }}>
+              <a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block uppercase" id="closing-btn" style={{ ...btnStyle, borderRadius: 4, fontSize: 'clamp(11px, 1.9vw, 30px)', fontWeight: 500, letterSpacing: '0.2em', padding: 'clamp(14px, 2vw, 34px) clamp(24px, 3.4vw, 60px)' }}>{t.text.contactBtn}</a>
+            </div>
           </div>, tinted)
         if (cd === 'photo') {
           const pic = pickPics(1)[0]
           return sec('contact', null,
-            <div className="relative mx-auto max-w-5xl overflow-hidden text-center">
-              {pic && <img src={pic as string} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-              <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.45)' }} />
-              <div className="relative px-6 py-20">
-                <h3 style={{ ...big, color: '#fff' }}>{t.titles.contact}</h3>
-                <p className="el-con_msg mx-auto mb-8 mt-4 max-w-md whitespace-pre-line leading-relaxed" style={{ ...msgStyle, color: 'rgba(255,255,255,0.9)' }}>{msg}</p>
-                {btn}
-                {soc && <div className="mt-8">{soc}</div>}
+            <div className="relative overflow-hidden text-center" style={{ width: '100vw', marginLeft: 'calc(50% - 50vw)', minHeight: 'clamp(380px, 50vw, 900px)', background: '#6f685e' }}>
+              {pic ? <img src={pic as string} alt="" className="absolute inset-0 h-full w-full object-cover" /> : (
+                <svg viewBox="0 0 100 50" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="100" height="50" fill="#6f685e" /><path d="M0 50 28 22l12 12 18-16 42 32z" fill="#857e72" /><circle cx="76" cy="14" r="5" fill="#857e72" /></svg>
+              )}
+              <div className="absolute inset-0" style={{ background: 'rgba(40,25,15,0.5)' }} />
+              <div className="relative flex flex-col items-center justify-center" style={{ minHeight: 'inherit', padding: 'clamp(40px, 6vw, 110px) clamp(16px, 4vw, 70px)' }}>
+                <h3 data-name="Heading" className="el-con_title" style={{ ...big, color: '#fff', fontWeight: 600, fontSize: 'clamp(2rem, 5.6vw, 5.6rem)', lineHeight: 1.1, margin: 0 }}>{ctitle}</h3>
+                <p data-name="Paragraph" className="el-con_msg mx-auto whitespace-pre-line" style={{ ...msgStyle, color: 'rgba(255,255,255,0.92)', fontSize: 'clamp(15px, 1.8vw, 29px)', letterSpacing: '0.02em', lineHeight: 1.6, maxWidth: '34ch', margin: 'clamp(14px, 2vw, 34px) auto 0' }}>{msg}</p>
+                <div style={{ marginTop: 'clamp(22px, 3.4vw, 60px)' }}>
+                  <a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block uppercase" id="closing-btn" style={{ ...btnStyle, background: '#fff', color: '#2B1D14', borderRadius: 4, fontSize: 'clamp(11px, 1.9vw, 30px)', fontWeight: 500, letterSpacing: '0.2em', padding: 'clamp(14px, 2vw, 34px) clamp(24px, 3.4vw, 60px)' }}>{t.text.contactBtn}</a>
+                </div>
               </div>
             </div>, tinted)
         }
         if (cd === 'duo') {
           const pp = pickPics(2)
+          const ph = (q: any, extra: string) => (
+            <div className={extra} style={{ aspectRatio: '0.69 / 1', overflow: 'hidden', background: '#e4e1dc' }}>
+              {q ? <img src={q as string} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : (
+                <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#e4e1dc" /><path d="M10 72 36 42l14 16 12-14 28 28z" fill="#c9c5be" /><circle cx="68" cy="30" r="6" fill="#c9c5be" /></svg>
+              )}
+            </div>
+          )
           return sec('contact', null,
-            <div className="mx-auto max-w-5xl">
-              <div className="grid items-center gap-6 md:grid-cols-[1fr_1.2fr_1fr]">
-                {pp[0] ? <img src={pp[0] as string} alt="" className="aspect-[3/4] w-full object-cover" /> : <div />}
-                <div className="text-center">
-                  <h3 style={big}>{t.titles.contact}</h3>
-                  <p className="el-con_msg mb-8 mt-4 whitespace-pre-line leading-relaxed" style={msgStyle}>{msg}</p>
-                  {btn}
+            <div style={{ width: '100vw', marginLeft: 'calc(50% - 50vw)', padding: '0 clamp(14px, 2.7vw, 48px)' }}>
+              <div className="grid grid-cols-2 items-center md:grid-cols-[1fr_1.75fr_1fr]" style={{ gap: 'clamp(14px, 2vw, 36px)' }}>
+                {ph(pp[0], 'order-2 md:order-1')}
+                <div className="order-1 col-span-2 text-center md:order-2 md:col-span-1">
+                  <h3 data-name="Heading" className="el-con_title" style={{ ...big, fontWeight: 600, fontSize: 'clamp(2rem, 4.4vw, 4.6rem)', lineHeight: 1.12, margin: 0 }}>{ctitle}</h3>
+                  <p data-name="Paragraph" className="el-con_msg mx-auto whitespace-pre-line" style={{ ...msgStyle, fontSize: 'clamp(15px, 1.7vw, 28px)', letterSpacing: '0.02em', lineHeight: 1.55, maxWidth: '30ch', margin: 'clamp(16px, 2vw, 34px) auto 0' }}>{msg}</p>
+                  <div style={{ marginTop: 'clamp(22px, 3.4vw, 60px)' }}>
+                    <a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block uppercase" id="closing-btn" style={{ ...btnStyle, borderRadius: 4, fontSize: 'clamp(11px, 1.7vw, 27px)', fontWeight: 500, letterSpacing: '0.2em', padding: 'clamp(14px, 1.9vw, 32px) clamp(22px, 3.2vw, 56px)' }}>{t.text.contactBtn}</a>
+                  </div>
                 </div>
-                {pp[1] ? <img src={pp[1] as string} alt="" className="aspect-[3/4] w-full object-cover" /> : <div />}
+                {ph(pp[1], 'order-3')}
               </div>
-              {soc && <div className="mt-10">{soc}</div>}
             </div>, tinted)
         }
-        return sec('contact', t.titles.contact,
-          <div className="mx-auto max-w-xl text-center">
-            <p className="el-con_msg mb-8 whitespace-pre-line leading-relaxed" style={msgStyle}>{msg}</p>
-            <div className="mb-10">{btn}</div>
-            {soc}
+        return sec('contact', null,
+          <div className="mx-auto text-center" style={{ maxWidth: 1400 }}>
+            <h3 data-name="Heading" className="el-con_title" style={{ ...big, fontWeight: 600, fontSize: 'clamp(2rem, 5.6vw, 5.6rem)', lineHeight: 1.1, margin: 0 }}>{ctitle}</h3>
+            <p data-name="Paragraph" className="el-con_msg mx-auto whitespace-pre-line" style={{ ...msgStyle, fontSize: 'clamp(15px, 1.9vw, 30px)', letterSpacing: '0.02em', lineHeight: 1.5, maxWidth: '62ch', margin: 'clamp(16px, 2.4vw, 40px) auto 0' }}>{msg}</p>
+            <div style={{ marginTop: 'clamp(24px, 4.4vw, 76px)' }}>
+              <a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block uppercase" id="closing-btn" style={{ ...btnStyle, borderRadius: 4, fontSize: 'clamp(11px, 1.9vw, 30px)', fontWeight: 500, letterSpacing: '0.2em', padding: 'clamp(14px, 2vw, 34px) clamp(26px, 3.4vw, 58px)' }}>{t.text.contactBtn}</a>
+            </div>
           </div>, tinted)
       }
       case 'aboutcta':

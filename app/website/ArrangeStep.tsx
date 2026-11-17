@@ -80,22 +80,29 @@ function roundPath(raw: [number, number][], r = 14) {
 const baseOf = (s?: string) => (s || '').split('/').pop()?.replace('.png', '') || ''
 const SUGG = ['Weddings', 'Engagements', 'Families', 'Seniors', 'Portraits', 'Newborns', 'Maternity', 'Couples', 'Events', 'Headshots']
 
-function Row({ label, on, onClick, controls, children }: { label: string; on: boolean; onClick: () => void; controls?: ReactNode; children: ReactNode }) {
+function Row({ label, on, onClick, controls, alts, children }: { label: string; on: boolean; onClick: () => void; controls?: ReactNode; alts?: { n: number; on: boolean; click: () => void }[]; children: ReactNode }) {
   return (
     <div className={'relative ' + (on ? 'z-10 ring-2 ring-inset ring-twilight' : '')}>
       <div className="absolute right-full top-4 mr-1 flex items-center">
         <button type="button" onClick={onClick} className={'whitespace-nowrap rounded-full border px-3 py-1 font-fraunces text-sm shadow-sm transition ' + (on ? 'border-twilight bg-twilight text-white' : 'border-black/15 bg-white text-ink hover:border-twilight')}>{label}</button>
         <span className="h-px w-4 bg-black/30" />
       </div>
+      {alts && alts.length > 1 && (
+        <div className="absolute right-full top-14 mr-5 flex gap-1">
+          {alts.map((x) => (
+            <button key={x.n} type="button" onClick={x.click} className={'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-medium shadow-sm transition ' + (x.on ? 'border-twilight bg-twilight text-white' : 'border-black/15 bg-white text-ink hover:border-twilight')}>{x.n}</button>
+          ))}
+        </div>
+      )}
       <div onClick={onClick} className="cursor-pointer">{children}</div>
       {controls && <div className="absolute left-full top-3 ml-2 flex flex-col gap-1">{controls}</div>}
     </div>
   )
 }
 
-export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs, heroSrc, heroName, designs, setDesigns, photoDesigns }: {
+export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs, heroSrc, heroName, heroList, heroActive, onHero, secAlts, designs, setDesigns, photoDesigns }: {
   struct: Struct; setStruct: (s: Struct) => void; links: Links; setLinks: (l: Links) => void
-  thumbs: Record<string, { src: string; ar: string }>; heroSrc?: string; heroName?: string
+  thumbs: Record<string, { src: string; ar: string }>; heroSrc?: string; heroName?: string; heroList?: { key: string; name: string }[]; heroActive?: string; onHero?: (k: string) => void; secAlts?: Record<string, { field: string; keys: string[]; active: string }>
   designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; photoDesigns: { key: string; name: string }[]
 }) {
   const [cur, setCur] = useState(0)
@@ -422,7 +429,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   }
 
   const ALLOW: string[] | null = page.id === 'galleries' ? [] : isBook ? ['faq'] : page.id === 'about' ? ['testimonials', 'social', 'contact'] : page.id === 'blog' ? ['social', 'contact'] : page.extra ? ['faq', 'testimonials', 'social', 'contact'] : null
-  const cardKeys = [...recKeys, ...others].filter((k) => !mine.includes(k) && (!ALLOW || ALLOW.includes(k)))
+  const cardKeys = [...recKeys].filter((k) => !mine.includes(k) && (!ALLOW || ALLOW.includes(k)))
   const rightPanel = (
     <div className="space-y-6">
       <div>
@@ -505,13 +512,13 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
               </div>
 
               {page.id === 'home' && (
-                <Row label="Hero" on={focus === 'hero'} onClick={() => setAct('hero')}>
+                <Row label="Hero" on={focus === 'hero'} onClick={() => setAct('hero')} alts={heroList && heroList.length > 1 ? heroList.map((h, i) => ({ n: i + 1, on: h.key === heroActive, click: () => onHero?.(h.key) })) : undefined}>
                   {heroSrc ? <img src={heroSrc} alt="" className="block w-full" /> : <div className={slice + ' py-10 text-center'}>Hero</div>}
                 </Row>
               )}
 
               {vMain && mainKey && (
-                <Row label={BLOCKS[mainKey]?.label ?? page.label} on={focus === mainKey} onClick={() => setAct(mainKey)}>
+                <Row label={BLOCKS[mainKey]?.label ?? page.label} on={focus === mainKey} onClick={() => setAct(mainKey)} alts={secAlts?.[mainKey] && secAlts[mainKey].keys.length > 1 ? secAlts[mainKey].keys.map((kk, i) => ({ n: i + 1, on: kk === secAlts[mainKey].active, click: () => setDesigns({ ...designs, [secAlts[mainKey].field]: kk }) })) : undefined}>
                   <img src={thumbs[mainKey].src} alt="" data-galimg={mainKey === 'portfolio' ? baseOf(thumbs[mainKey].src) : undefined} className="block w-full" />
                 </Row>
               )}
@@ -524,6 +531,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                     label={BLOCKS[sec]?.label ?? 'Section'}
                     on={focus === sec}
                     onClick={() => setAct(sec)}
+                    alts={secAlts?.[sec] && secAlts[sec].keys.length > 1 ? secAlts[sec].keys.map((kk, i) => ({ n: i + 1, on: kk === secAlts[sec].active, click: () => setDesigns({ ...designs, [secAlts[sec].field]: kk }) })) : undefined}
                     controls={<>
                       <button type="button" disabled={idx === 0} onClick={() => nudge(idx, -1)} aria-label="Move up" className={ctl}>↑</button>
                       <button type="button" disabled={idx === mine.length - 1} onClick={() => nudge(idx, 1)} aria-label="Move down" className={ctl}>↓</button>
