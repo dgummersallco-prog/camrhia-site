@@ -525,42 +525,27 @@ export default function GalleryViewPage() {
       {fontHref && <link rel="stylesheet" href={fontHref} />}
       {elRules && <style>{elRules}</style>}
       <div style={{ background: coverPal.bg, color: coverPal.ink }}>{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
-        const notch = (x: string, y: string) => 'radial-gradient(circle 2.3cqw at ' + x + ' ' + y + ', transparent 96%, #000 100%)'
-        const mask = [notch('0', '50%'), notch('100%', '50%'), notch('62.6%', '0'), notch('62.6%', '100%')].join(',')
-        const noise = "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.28  0 0 0 0 0.1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
-        const stains = "<svg xmlns='http://www.w3.org/2000/svg' width='900' height='360'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='0.012' numOctaves='3' seed='11'/><feColorMatrix values='0 0 0 0 0.6  0 0 0 0 0.38  0 0 0 0 0.15  0 0 0 1.3 -0.38'/></filter><rect width='100%' height='100%' filter='url(#s)'/></svg>"
         const words = String(data.title).trim().split(/\s+/).filter(Boolean)
         const one = words.length <= 1
         const l1 = one ? '' : words.slice(0, -1).join(' ')
         const l2 = one ? (words[0] || '') : words[words.length - 1]
-        const tt: React.CSSProperties = { ...headStyle, fontWeight: 800, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: '#3A1F12', pointerEvents: 'auto' }
+        const tt: React.CSSProperties = { ...headStyle, fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: '#3A1F12', pointerEvents: 'auto' }
         const sub = brand?.name ? String(brand.name) : ''
+        const big1 = l1.length <= 8
+        const f1 = big1 ? 71 : Math.max(24, 270 / (0.62 * l1.length))
+        const f2 = big1 ? 100 : Math.min(100, f1 * 1.41)
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: 'radial-gradient(ellipse at 50% 50%, #F8E0C3 0%, #F4D9B9 62%, #EDCDA3 100%)' }}>
-            <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-              <filter id="tix-rough" x="-3%" y="-3%" width="106%" height="106%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="4" result="n" />
-                <feDisplacementMap in="SourceGraphic" in2="n" scale="10" xChannelSelector="R" yChannelSelector="G" />
-              </filter>
-            </svg>
-            <div className="absolute" style={{ left: '1.3cqw', top: '5cqw', width: '97.3cqw', height: '39.7cqw', filter: 'drop-shadow(0 0.7cqw 1.3cqw rgba(70,45,20,0.3))' }}>
-              <div className="absolute inset-0" style={{ WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect' }}>
-                <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 52% 48%, #FBE8CC 0%, #F8DEBF 55%, #EFC699 100%)', boxShadow: 'inset 0 0 2.4cqw rgba(176,108,48,0.7), inset 0 0 0.5cqw rgba(150,90,40,0.85)', filter: 'url(#tix-rough)' }} />
-                <div className="absolute inset-0" style={{ backgroundImage: 'url("data:image/svg+xml,' + encodeURIComponent(stains) + '")', backgroundSize: '100% 100%', opacity: 0.55, mixBlendMode: 'multiply' }} />
-                <div className="absolute inset-0" style={{ backgroundImage: 'url("data:image/svg+xml,' + encodeURIComponent(noise) + '")', opacity: 0.4, mixBlendMode: 'multiply' }} />
-                <div className="absolute" style={{ inset: '0.9cqw', border: '0.22cqw solid rgba(150,98,50,0.6)', borderRadius: '1cqw' }} />
-                <div className="absolute overflow-hidden" style={{ left: '1.8cqw', top: '1.5cqw', width: '56.9cqw', height: '36.3cqw', background: pal.line }}>
-                  <div className="absolute inset-0">{imgEl}</div>
-                </div>
-                <div className="absolute" style={{ left: '60.9cqw', top: '1.4cqw', bottom: '1.4cqw', borderLeft: '0.33cqw dashed #3A1F12' }} />
-              </div>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;800&display=swap" />
+            <div className="absolute overflow-hidden" style={{ left: '2.9cqw', top: '6.2cqw', width: '57.6cqw', height: '37cqw', background: pal.line }}>
+              <div className="absolute inset-0">{imgEl}</div>
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/gallery-cover/ticket-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
             <h1 className="sr-only">{data.title}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              <rect x="597" y="94" width="243" height="2" fill="#3A1F12" />
-              <rect x="597" y="344" width="235" height="2" fill="#3A1F12" />
-              {l1 && <text data-gk="title" x="716" y="181" textAnchor="middle" style={{ ...tt, fontSize: 71 }} textLength={Math.min(270, 33.6 * l1.length)} lengthAdjust="spacingAndGlyphs">{l1}</text>}
-              {l2 && <text data-gk="title" x="716" y={one ? 240 : 265} textAnchor="middle" style={{ ...tt, fontSize: 100 }} textLength={Math.min(250, 49.3 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
+              {l1 && <text data-gk="title" x="716" y="181" textAnchor="middle" style={{ ...tt, fontSize: f1 }} textLength={big1 ? Math.min(270, 33.6 * l1.length) : undefined} lengthAdjust="spacingAndGlyphs">{l1}</text>}
+              {l2 && <text data-gk="title" x="716" y={one ? 240 : big1 ? 265 : 181 + f2 * 0.84} textAnchor="middle" style={{ ...tt, fontSize: f2 }} textLength={Math.min(250, 0.49 * f2 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
               {sub && <text data-gk="brand" x="718" y="310" textAnchor="middle" style={{ ...tt, fontWeight: 500, fontSize: 14 }} textLength={Math.min(270, 15 * sub.length)} lengthAdjust="spacing">{sub.toUpperCase()}</text>}
             </svg>
           </div>
@@ -693,28 +678,16 @@ export default function GalleryViewPage() {
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#271407' }}>
             <h1 className="sr-only">{data.title}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
-              <defs>
-                <linearGradient id="strip-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2A1608" /><stop offset="1" stopColor="#1B0D04" /></linearGradient>
-                <filter id="strip-noise" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" /><feColorMatrix values="0 0 0 0 0.6  0 0 0 0 0.4  0 0 0 0 0.25  0 0 0 0.16 0" /></filter>
-                <linearGradient id="strip-hole" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#E8A870" /><stop offset="1" stopColor="#C98A52" /></linearGradient>
-              </defs>
-              <rect width="900" height="450" fill="url(#strip-bg)" />
-              <rect width="900" height="450" filter="url(#strip-noise)" />
-              <rect x="0" y="198" width="900" height="224" fill="#1E130B" />
-              <rect x="0" y="198" width="900" height="2" fill="#4A3020" />
-              <rect x="0" y="420" width="900" height="2" fill="#3A261A" />
-              {Array.from({ length: 32 }, (_, i) => (
-                <g key={i}>
-                  <rect x={8 + i * 28.5} y="208" width="12" height="13" rx="2.5" fill="url(#strip-hole)" />
-                  <rect x={8 + i * 28.5} y="397" width="12" height="13" rx="2.5" fill="url(#strip-hole)" />
-                </g>
-              ))}
               {frames.map((p, i) => (
-                <svg key={i} x={FX[i]} y="229" width={FW[i]} height="160" style={{ overflow: 'hidden' }}>
+                <svg key={i} x={FX[i] - 1} y="228" width={FW[i] + 2} height="162" style={{ overflow: 'hidden' }}>
                   <rect width="100%" height="100%" fill={pal.line} />
                   <image href={p.thumb || p.web || undefined} width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
                 </svg>
               ))}
+            </svg>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/gallery-cover/strip-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
               <text data-gk="title" x="450.5" y="116" textAnchor="middle" style={{ ...ts, color: '#FFF6EA', fontSize: 94 }} textLength={Math.min(427, 47.4 * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
               {sub && <text data-gk="brand" x="450" y="159.5" textAnchor="middle" style={{ ...ts, color: 'rgba(255,246,234,0.9)', textTransform: 'uppercase', fontSize: 11.5 }} textLength={Math.min(326, 17.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
             </svg>
