@@ -663,7 +663,7 @@ export default function GalleryViewPage() {
       ) : coverKind === 'stack' && cover?.web ? (() => {
         const others = data.photos.filter((p) => p.id !== cover.id && (p.thumb || p.web)).slice(0, 3)
         const pic = (i: number) => (others[i]?.thumb || others[i]?.web || cover.web || undefined)
-        const fs = Math.min(7.5, 53 / (0.38 * Math.max(String(data.title).length, 6)))
+        const fs = Math.min(6.4, 53 / (0.38 * Math.max(String(data.title).length, 6)))
         const print = (src: string | undefined, st: CSSProperties, ar: string) => (
           <div className="absolute" style={{ background: '#FBF9F4', padding: '1.5cqw 1.5cqw 4.6cqw', boxShadow: '0 1.2cqw 3cqw rgba(60,40,20,0.22)', ...st }}>
             <div style={{ aspectRatio: ar, overflow: 'hidden', background: pal.line }}>
@@ -677,9 +677,9 @@ export default function GalleryViewPage() {
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" />
             {print(pic(0), { left: '20cqw', top: '0.8cqw', width: '22.8cqw', transform: 'rotate(-6deg)', zIndex: 0 }, '1.1 / 1')}
             {print(pic(1), { left: '6cqw', top: '11cqw', width: '26cqw', transform: 'rotate(-9deg)', zIndex: 1 }, '1.1 / 1')}
-            {print(pic(2), { left: '69cqw', top: '10cqw', width: '25cqw', transform: 'rotate(8deg)', zIndex: 1 }, '1.1 / 1')}
-            {print(cover.web || undefined, { left: '33cqw', top: '5cqw', width: '38cqw', transform: 'rotate(-1.5deg)', zIndex: 2 }, '1.2 / 1')}
-            <div className="absolute inset-x-0 text-center" style={{ bottom: '2.2cqw', zIndex: 3 }}>
+            {print(pic(2), { left: '69cqw', top: '9cqw', width: '25cqw', transform: 'rotate(8deg)', zIndex: 1 }, '1.1 / 1')}
+            {print(cover.web || undefined, { left: '33cqw', top: '3cqw', width: '38cqw', transform: 'rotate(-1.5deg)', zIndex: 2 }, '1.2 / 1')}
+            <div className="absolute inset-x-0 text-center" style={{ bottom: '1.6cqw', zIndex: 3 }}>
               <h1 style={{ fontFamily: "'Pinyon Script', 'Snell Roundhand', cursive", color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', fontSize: 'max(20px, ' + fs + 'cqw)', lineHeight: 1.1, margin: 0 }}>{data.title}</h1>
               {brand?.name && <p style={{ color: pal.soft, textTransform: 'uppercase', letterSpacing: '0.4em', fontSize: 'max(8px, 1.15cqw)', margin: '0.6cqw 0 0' }}>{brand.name}</p>}
             </div>
