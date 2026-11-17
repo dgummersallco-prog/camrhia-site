@@ -257,7 +257,7 @@ export default function GalleryViewPage() {
       if (!h) {
         const t = e.target as HTMLElement | null
         const root = document.querySelector('.gal-root')
-        if (t && root && (t === root || t.tagName === 'MAIN' || t.parentElement === root || t.parentElement?.tagName === 'MAIN')) {
+        if (t && root && (t === root || t.tagName === 'MAIN' || t.parentElement === root || t.parentElement?.parentElement === root || t.parentElement?.tagName === 'MAIN')) {
           e.preventDefault()
           e.stopPropagation()
           window.parent?.postMessage({ type: 'camrhia-gallery-pick', key: 'bg', name: 'Background', size: 16, color: '#000000', bold: false }, '*')
@@ -337,7 +337,7 @@ export default function GalleryViewPage() {
   }
 
   if (!data) return null
-  const { look, cover: coverKind, pal, focal, layout, el } = resolveDesign(designPreview ?? data.design ?? null)
+  const { look, cover: coverKind, pal, coverPal, focal, layout, el } = resolveDesign(designPreview ?? data.design ?? null)
   const elRules = elCss(el, (k) => FONT_OPTIONS[k]?.family)
   const fontHref = (() => {
     const g = Array.from(new Set(Object.values(el).map((x) => FONT_OPTIONS[x?.font ?? '']?.gf).filter(Boolean) as string[]))
@@ -524,7 +524,7 @@ export default function GalleryViewPage() {
     <div className="gal-root min-h-screen" style={{ background: pal.bg, color: pal.ink }}>
       {fontHref && <link rel="stylesheet" href={fontHref} />}
       {elRules && <style>{elRules}</style>}
-      {coverKind === 'ticket' && cover?.web ? (() => {
+      <div style={{ background: coverPal.bg, color: coverPal.ink }}>{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
         const longest = Math.max(...String(data.title).split(/\s+/).map((w) => w.length), 4)
         const fs = Math.min(5.6, 27 / (0.72 * longest))
         const notch = (x: string, y: string) => 'radial-gradient(circle 2.3cqw at ' + x + ' ' + y + ', transparent 96%, #000 100%)'
@@ -780,7 +780,7 @@ export default function GalleryViewPage() {
             </div>
           </div>
         </div>
-      )}
+      )) })()}</div>
 
       <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 backdrop-blur" style={{ background: `${pal.bg}F2`, borderBottom: `1px solid ${pal.line}` }}>
         {!cover?.web ? (

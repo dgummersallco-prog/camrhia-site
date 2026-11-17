@@ -1,7 +1,7 @@
 export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean; dy?: number }
 export type GalleryDesign = {
   look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }
-  layout?: string; bg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
+  layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
 }
 
 export type LookSpec = {
@@ -135,9 +135,14 @@ export function resolveDesign(d?: GalleryDesign | null) {
     pal = { ...pal, bg: d.bg, ink: dark ? '#F4EEE8' : '#2A1F24', soft: dark ? '#A9A39D' : '#7B6E70', line: dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.12)' }
   }
   if (isHex(d?.accent)) pal = { ...pal, accent: d.accent, onAccent: lum(d.accent) < 0.6 ? '#FFFFFF' : '#1B1B1D' }
+  let coverPal: Palette = pal
+  if (isHex(d?.coverBg)) {
+    const dark = lum(d.coverBg) < 0.5
+    coverPal = { ...pal, bg: d.coverBg, ink: dark ? '#F4EEE8' : '#2A1F24', soft: dark ? '#A9A39D' : '#7B6E70', line: dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.12)' }
+  }
   const f = d?.focal
   const focal = f && Number.isFinite(f.x) && Number.isFinite(f.y) ? { x: Math.min(100, Math.max(0, f.x)), y: Math.min(100, Math.max(0, f.y)) } : { x: 50, y: 50 }
   const layout = LAYOUTS.some((l) => l.k === d?.layout) ? (d?.layout as string) : base.grid === 'masonry' ? 'masonry' : 'grid'
   const el: Record<string, ElStyle> = d?.el ?? {}
-  return { look, cover, pal, focal, layout, el }
+  return { look, cover, pal, coverPal, focal, layout, el }
 }

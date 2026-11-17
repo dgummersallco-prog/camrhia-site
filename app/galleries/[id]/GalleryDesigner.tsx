@@ -242,7 +242,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
 
         <p className={head + ' mt-8'}>Colors</p>
         <div className="mt-3 space-y-2">
-          {colorRow('Background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
+          {colorRow('Page background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
+          {colorRow('Opening photo background', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
           {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
         </div>
 
@@ -285,7 +286,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
               </div>
               {pick.key === 'bg' ? (
                 <div className="space-y-2">
-                  {colorRow('Background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
+                  {colorRow('Page background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
+          {colorRow('Opening photo background', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
                   {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
                 </div>
               ) : pick.key === 'photos' ? (
