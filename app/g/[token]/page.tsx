@@ -765,15 +765,17 @@ export default function GalleryViewPage() {
         const big = { position: 'absolute' as const, fontFamily: ff, fontWeight: 300, lineHeight: 1, color: 'rgba(255,255,255,0.58)', whiteSpace: 'nowrap' as const }
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.line }}>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&display=swap" />
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" />
             <div className="absolute inset-0">{imgEl}</div>
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28))' }} />
             {pair ? (
-              <div data-gk="initials" className="absolute inset-0" style={{ fontFamily: ff, fontWeight: 300, fontSize: '57cqw', lineHeight: 1, color: 'rgba(255,255,255,0.58)', pointerEvents: 'none' }}>
-                <span style={{ position: 'absolute', fontFamily: 'inherit', fontWeight: 'inherit', color: 'inherit', lineHeight: 1, whiteSpace: 'nowrap', left: '6.5cqw', top: '-6.4cqw', pointerEvents: 'auto' }}>{L}</span>
-                <span style={{ position: 'absolute', fontFamily: 'inherit', fontWeight: 'inherit', color: 'inherit', lineHeight: 1, whiteSpace: 'nowrap', fontStyle: 'italic', fontSize: '0.7em', left: '50%', transform: 'translateX(-50%)', top: '8.5cqw', pointerEvents: 'auto' }}>&amp;</span>
-                <span style={{ position: 'absolute', fontFamily: 'inherit', fontWeight: 'inherit', color: 'inherit', lineHeight: 1, whiteSpace: 'nowrap', right: '4.5cqw', top: '-6.4cqw', pointerEvents: 'auto' }}>{R}</span>
-              </div>
+              <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+                <g data-gk="initials" style={{ fontFamily: "'Libre Caslon Display', Georgia, serif", fontWeight: 400, fill: 'currentColor', color: 'rgba(255,255,255,0.58)' }}>
+                  <text transform="translate(175.5 363.3) scale(0.89 1)" textAnchor="middle" style={{ fontSize: 448.3, pointerEvents: 'auto' }}>{L}</text>
+                  <text x="461" y="348.1" textAnchor="middle" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: 310, pointerEvents: 'auto' }} textLength="206.8" lengthAdjust="spacingAndGlyphs">&amp;</text>
+                  <text transform="translate(701 365) scale(0.89 1)" textAnchor="middle" style={{ fontSize: 459.2, pointerEvents: 'auto' }}>{R}</text>
+                </g>
+              </svg>
             ) : (
               <div data-gk="initials" className="absolute inset-0 flex items-center justify-center" style={{ ...big, position: 'absolute', fontSize: '50cqw', paddingBottom: '4cqw' }}>{mono}</div>
             )}
