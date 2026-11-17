@@ -5,11 +5,18 @@ export type GalleryDesign = {
 }
 
 export const COVER_PRESETS: Record<string, Partial<GalleryDesign>> = {
-  arch: { coverBg: '#F7EBDE' },
-  bigtype: { coverBg: '#F6EDE1' },
-  circle: { coverBg: '#F9EEE5' },
-  diptych: { coverBg: '#F9F2EA' },
-  mosaic: { coverBg: '#F9EFE4' },
+  monogram: { el: { title: { text: 'Sofia & Daniel' }, brand: { text: 'September 20, 2026' } } },
+  ticket: { el: { title: { text: 'Wildcats 12U' }, brand: { text: 'Spring 2026 Season' } } },
+  bigtype: { coverBg: '#F6EDE1', el: { title: { text: 'Marcus Hall' }, brand: { text: 'Senior Season 2026' } } },
+  arch: { coverBg: '#F7EBDE', el: { title: { text: 'Jordan Ellis' }, brand: { text: 'Class of 2026' } } },
+  circle: { coverBg: '#F9EEE5', el: { title: { text: 'Dana Reyes' }, brand: { text: 'Brand Session 2026' } } },
+  diptych: { coverBg: '#F9F2EA', el: { title: { text: 'Maya & Theo' }, brand: { text: 'May 30, 2026' } } },
+  magazine: { el: { title: { text: 'Priya & James' }, brand: { text: 'October 4, 2026' } } },
+  cinema: { el: { title: { text: 'Emma & Luke' }, brand: { text: 'June 14, 2026' } } },
+  strip: { el: { title: { text: 'Baby Noah' }, brand: { text: 'Born March 12, 2026' } } },
+  postcard: { el: { title: { text: 'The Alvarez Family' }, brand: { text: 'July 12, 2026' } } },
+  mosaic: { coverBg: '#F9EFE4', el: { title: { text: 'Hannah & Paul' }, brand: { text: 'Due January 2027' } } },
+  stack: { el: { title: { text: 'The Whitfield Family' }, brand: { text: 'October 2026' } } },
 }
 
 export type LookSpec = {

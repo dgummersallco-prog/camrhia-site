@@ -42,6 +42,11 @@ function clearCoverEl<T>(el?: Record<string, T>): Record<string, T> {
   return out
 }
 
+function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign> {
+  const p = COVER_PRESETS[k] ?? {}
+  return { cover: k, ...p, el: { ...clearCoverEl(el), ...(p.el ?? {}) } }
+}
+
 export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, onClose, onSaved, onSend }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
   onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void
@@ -198,7 +203,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           </div>
           <div className="mt-2 flex flex-wrap gap-1">
             {gTour === null && <button type="button" className={gChip} onClick={() => { gSay(G_Q[0]); setGTour(0) }}>Walk me through it</button>}
-            {gTour === 0 && COVERS.map((c) => <button key={c.k} type="button" className={gChip} onClick={() => gPick(c.name, { cover: c.k, el: clearCoverEl(eff.el), ...(COVER_PRESETS[c.k] ?? {}) } as Partial<GalleryDesign>, 1)}>{c.name}</button>)}
+            {gTour === 0 && COVERS.map((c) => <button key={c.k} type="button" className={gChip} onClick={() => gPick(c.name, coverPatch(c.k, eff.el), 1)}>{c.name}</button>)}
             {gTour === 1 && LAYOUTS.map((l) => <button key={l.k} type="button" className={gChip} onClick={() => gPick(l.name, { layout: l.k, ...(LAYOUT_PRESETS[l.k] ?? {}) } as Partial<GalleryDesign>, 2)}>{l.name}</button>)}
             {gTour !== null && <button type="button" className="px-1 text-[11px] text-ink-soft underline" onClick={() => { setGTour(null); gSay('Okay, I am here whenever you want a change.') }}>Skip</button>}
           </div>
@@ -212,7 +217,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <p className={head + ' mt-2'}>Opening photo</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {COVERS.map((c) => (
-            <button key={c.k} type="button" onClick={() => change({ cover: c.k, el: clearCoverEl(eff.el), ...(COVER_PRESETS[c.k] ?? {}) })} onMouseEnter={(e) => setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
+            <button key={c.k} type="button" onClick={() => change(coverPatch(c.k, eff.el))} onMouseEnter={(e) => setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
               <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>
               <span className="mt-1 block text-[11px] text-ink">{c.name}</span>
             </button>
@@ -324,6 +329,11 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                       </div>
                     )}
                   </div>
+                  {(pick.key === 'title' || pick.key === 'title2') && (
+                    <label className="block text-xs text-ink-soft">Cover text
+                      <input type="text" maxLength={60} value={eff.el?.title?.text ?? ''} placeholder="Gallery title" onChange={(e) => setEl('title', { text: e.target.value })} className="mt-1 w-full rounded border border-black/10 px-2 py-1.5 text-sm text-ink" />
+                    </label>
+                  )}
                   {pick.key === 'initials' && (
                     <label className="block text-xs text-ink-soft">Initials (first two letters are used)
                       <input type="text" maxLength={4} value={cur?.text ?? ''} placeholder="Auto from title" onChange={(e) => setEl(pick.key, { text: e.target.value })} className="mt-1 w-full rounded border border-black/10 bg-white px-2 py-1.5 text-sm text-ink" />
