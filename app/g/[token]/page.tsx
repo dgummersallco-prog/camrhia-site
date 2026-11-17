@@ -224,7 +224,7 @@ export default function GalleryViewPage() {
   // Preview only: hover names and click-to-edit for the gallery lines.
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
-    const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials' }
+    const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials', title2: 'Gallery title line 2' }
     const box = document.createElement('div')
     box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:1.5px dashed #d9a21b;border-radius:3px;display:none'
     const tag = document.createElement('div')
@@ -337,7 +337,7 @@ export default function GalleryViewPage() {
   }
 
   if (!data) return null
-  const { look, cover: coverKind, pal, coverPal, focal, layout, el } = resolveDesign(designPreview ?? data.design ?? null)
+  const { look, cover: coverKind, pal, coverPal, focal, zoom, layout, el } = resolveDesign(designPreview ?? data.design ?? null)
   const elRules = elCss(el, (k) => FONT_OPTIONS[k]?.family)
   const fontHref = (() => {
     const g = Array.from(new Set(Object.values(el).map((x) => FONT_OPTIONS[x?.font ?? '']?.gf).filter(Boolean) as string[]))
@@ -379,8 +379,9 @@ export default function GalleryViewPage() {
 
   const imgEl = cover?.web ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={cover.web} alt="" className="h-full w-full object-cover" style={{ objectPosition: pos }} />
+    <img src={cover.web} alt="" className="h-full w-full object-cover" style={{ objectPosition: pos, transform: zoom > 1 ? `scale(${zoom})` : undefined, transformOrigin: pos }} />
   ) : null
+  const coverSub = String((el as Record<string, { text?: string }> | undefined)?.brand?.text ?? '').trim() || (brand?.name ? String(brand.name) : '')
   const brandLine = brand?.name ? (
     <p data-gk="brand" className="mb-3 font-mono text-xs uppercase tracking-widest" style={{ color: pal.soft }}>{brand.name}</p>
   ) : null
@@ -530,7 +531,7 @@ export default function GalleryViewPage() {
         const l1 = one ? '' : words.slice(0, -1).join(' ')
         const l2 = one ? (words[0] || '') : words[words.length - 1]
         const tt: React.CSSProperties = { ...headStyle, fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: '#3A1F12', pointerEvents: 'auto' }
-        const sub = brand?.name ? String(brand.name) : ''
+        const sub = coverSub ? String(coverSub) : ''
         const big1 = l1.length <= 8
         const f1 = big1 ? 71 : Math.max(24, 270 / (0.62 * l1.length))
         const f2 = big1 ? 100 : Math.min(100, f1 * 1.41)
@@ -545,7 +546,7 @@ export default function GalleryViewPage() {
             <h1 className="sr-only">{data.title}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
               {l1 && <text data-gk="title" x="716" y="181" textAnchor="middle" style={{ ...tt, fontSize: f1 }} textLength={big1 ? Math.min(270, 33.6 * l1.length) : undefined} lengthAdjust="spacingAndGlyphs">{l1}</text>}
-              {l2 && <text data-gk="title" x="716" y={one ? 240 : big1 ? 265 : 181 + f2 * 0.84} textAnchor="middle" style={{ ...tt, fontSize: f2 }} textLength={Math.min(250, 0.49 * f2 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
+              {l2 && <text data-gk="title2" x="716" y={one ? 240 : big1 ? 265 : 181 + f2 * 0.84} textAnchor="middle" style={{ ...tt, fontSize: f2 }} textLength={Math.min(250, 0.49 * f2 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
               {sub && <text data-gk="brand" x="718" y="310" textAnchor="middle" style={{ ...tt, fontWeight: 500, fontSize: 14 }} textLength={Math.min(270, 15 * sub.length)} lengthAdjust="spacing">{sub.toUpperCase()}</text>}
             </svg>
           </div>
@@ -558,7 +559,7 @@ export default function GalleryViewPage() {
           <h1 className="sr-only">{data.title}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             <text data-gk="title" x="450.5" y="404" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 83, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(407, 40.7 * Math.max(String(data.title).length, 1))} lengthAdjust="spacingAndGlyphs">{data.title}</text>
-            {brand?.name && <text data-gk="brand" x="450" y="434" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 11.5, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(288, 16 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+            {coverSub && <text data-gk="brand" x="450" y="434" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 11.5, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(288, 16 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
           </svg>
         </div>
       ) : coverKind === 'mosaic' && cover?.web ? (() => {
@@ -573,7 +574,7 @@ export default function GalleryViewPage() {
         const l1 = parts.length >= 2 ? parts[0] : words.length > 1 ? words.slice(0, -1).join(' ') : raw
         const l2 = parts.length >= 2 ? '& ' + parts[parts.length - 1] : words.length > 1 ? words[words.length - 1] : ''
         const ts: CSSProperties = { ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }
-        const sub = brand?.name ? String(brand.name).toUpperCase() : ''
+        const sub = coverSub ? String(coverSub).toUpperCase() : ''
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
             <h1 className="sr-only">{data.title}</h1>
@@ -598,51 +599,27 @@ export default function GalleryViewPage() {
         const one = words.length <= 1
         const l1 = one ? (words[0] || '') : words.slice(0, -1).join(' ')
         const l2 = one ? '' : words[words.length - 1]
-        const ink = '#3A2A22'
-        const sc: CSSProperties = { fontFamily: "'Mrs Saint Delafield', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: ink, pointerEvents: 'auto' }
-        const sub = brand?.name ? String(brand.name).toUpperCase() : ''
-        const noise = "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' seed='5'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.33  0 0 0 0 0.15  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>"
-        const wave = (y: number) => 'M644 ' + y + ' q9 -5 18 0 t18 0 t18 0 t18 0'
+        const sc: CSSProperties = { fontFamily: "'Mrs Saint Delafield', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#3A2A22', pointerEvents: 'auto' }
+        const pm: CSSProperties = { ...sc, fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, color: '#2A2018' }
+        const sub = coverSub ? String(coverSub).toUpperCase() : ''
+        const ci = sub.indexOf(',')
+        const sw = sub.split(' ')
+        const half = Math.ceil(sw.length / 2)
+        const pmL: string[] = !sub ? [] : ci > 0 ? [sub.slice(0, ci + 1).trim(), sub.slice(ci + 1).trim()] : sw.length > 1 ? [sw.slice(0, half).join(' '), sw.slice(half).join(' ')] : [sub]
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: 'radial-gradient(ellipse at 50% 50%, #F0D8BC 0%, #EBD1B5 70%, #E2C3A0 100%)' }}>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&display=swap" />
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#E8D5BA' }}>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Playfair+Display:wght@500&display=swap" />
+            <div className="absolute overflow-hidden" style={{ left: '6.92cqw', top: '5.16cqw', width: '46.67cqw', height: '40.67cqw', transform: 'rotate(-3deg)', background: pal.line }}>
+              <div className="absolute inset-0">{imgEl}</div>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/gallery-cover/postcard-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
             <h1 className="sr-only">{data.title}</h1>
-            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
-              <defs>
-                <filter id="pc-shadow" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="6" stdDeviation="7" floodColor="#46280F" floodOpacity="0.32" /></filter>
-                <filter id="pc-rough" x="-2%" y="-2%" width="104%" height="104%"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="9" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" /></filter>
-                <linearGradient id="pc-paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F3DFC1" /><stop offset="0.5" stopColor="#F4E1C6" /><stop offset="1" stopColor="#EBCFA8" /></linearGradient>
-                <clipPath id="pc-photo"><rect x="18.5" y="16.8" width="416.5" height="357" /></clipPath>
-                <linearGradient id="pc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#D5DDD0" /><stop offset="1" stopColor="#E9E6D2" /></linearGradient>
-              </defs>
-              <g transform="rotate(-3 456.5 222)">
-                <g transform="translate(45 25)">
-                  <g filter="url(#pc-shadow)">
-                    <rect width="823" height="394" rx="12" fill="url(#pc-paper)" stroke="#D3B07C" strokeWidth="3" filter="url(#pc-rough)" />
-                  </g>
-                  <rect x="2" y="2" width="819" height="390" rx="11" fill="none" stroke="rgba(170,115,55,0.35)" strokeWidth="9" filter="url(#pc-rough)" />
-                  <image href={'data:image/svg+xml,' + encodeURIComponent(noise)} width="823" height="394" opacity="0.35" style={{ mixBlendMode: 'multiply' }} />
-                  <rect x="14" y="12" width="424.5" height="365" fill="#F7EBD6" />
-                  <rect x="18.5" y="16.8" width="416.5" height="357" fill={pal.line} />
-                  <image href={cover.web || undefined} x="18.5" y="16.8" width="416.5" height="357" preserveAspectRatio="xMidYMid slice" clipPath="url(#pc-photo)" />
-                  <rect x="18.5" y="16.8" width="416.5" height="357" fill="none" stroke="rgba(120,80,40,0.45)" strokeWidth="1.5" />
-                  <line x1="450" y1="37" x2="450" y2="369" stroke={ink} strokeWidth="1.5" />
-                  <circle cx="591.8" cy="71.3" r="50" fill="none" stroke={ink} strokeWidth="2.6" opacity="0.85" />
-                  <circle cx="591.8" cy="71.3" r="43.5" fill="none" stroke={ink} strokeWidth="1.2" opacity="0.8" />
-                  {sub && <text data-gk="brand" x="591.8" y="77" textAnchor="middle" style={{ fontFamily: 'Georgia, serif', fill: 'currentColor', color: ink, fontSize: 15, pointerEvents: 'auto' }} textLength={Math.min(70, 9.5 * sub.length)} lengthAdjust="spacing">{sub}</text>}
-                  {[40, 56, 72, 87].map((y) => <path key={y} d={wave(y)} fill="none" stroke={ink} strokeWidth="1.7" opacity="0.8" />)}
-                  <rect x="703.5" y="11.7" width="100" height="118" fill="#F6E7CC" stroke="#D8B88A" strokeWidth="3.5" strokeDasharray="3 3" />
-                  <rect x="711" y="19" width="85" height="103" fill="url(#pc-sky)" />
-                  <path d="M711 92 L738 48 L752 66 L764 52 L796 92 Z" fill="#9AA6AB" />
-                  <path d="M738 48 L730 62 L744 58 Z" fill="#F2F2EE" />
-                  <path d="M711 92 L796 92 L796 122 L711 122 Z" fill="#7D915B" />
-                  <path d="M774 40 l7 24 h-14 z M774 58 l9 30 h-18 z M774 82 l11 34 h-22 z" fill="#2F4A33" />
-                  <path d="M722 82 l5 18 h-10 z M722 96 l6 20 h-12 z" fill="#3E5A3A" />
-                  {[278, 317, 354].map((y) => <line key={y} x1="486" y1={y} x2="791" y2={y} stroke="#A8957C" strokeWidth="1.2" opacity="0.75" />)}
-                  <text data-gk="title" x="638" y="226" textAnchor="middle" style={{ ...sc, fontSize: 88 }} textLength={Math.min(335, 30.5 * Math.max(l1.length, 1))} lengthAdjust="spacingAndGlyphs">{l1}</text>
-                  {l2 && <text data-gk="title" x="649" y="306" textAnchor="middle" style={{ ...sc, fontSize: 88 }} textLength={Math.min(213, 35.5 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
-                </g>
-              </g>
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+              {pmL[0] && <text data-gk="brand" x="631" y={pmL[1] ? 84 : 99} textAnchor="middle" style={{ ...pm, fontSize: 17 }} textLength={Math.min(80, 10 * pmL[0].length)} lengthAdjust="spacing">{pmL[0]}</text>}
+              {pmL[1] && <text data-gk="brand" x="631" y="105" textAnchor="middle" style={{ ...pm, fontSize: 17 }} textLength={Math.min(80, 10.8 * pmL[1].length)} lengthAdjust="spacing">{pmL[1]}</text>}
+              {l1 && <text data-gk="title" x="682" y="238" textAnchor="middle" transform="rotate(-4 682 238)" style={{ ...sc, fontSize: 125 }} textLength={Math.min(340, 30.5 * l1.length)} lengthAdjust="spacingAndGlyphs">{l1}</text>}
+              {l2 && <text data-gk="title2" x="705" y="318" textAnchor="middle" transform="rotate(-4 705 318)" style={{ ...sc, fontSize: 125 }} textLength={Math.min(330, 36 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
             </svg>
           </div>
         )
@@ -651,7 +628,7 @@ export default function GalleryViewPage() {
         const n = Math.max(t.length, 1)
         const len = Math.min(868, 78.9 * n)
         const ts: CSSProperties = { ...headStyle, fontWeight: 300, fontStyle: 'normal', letterSpacing: 0, textTransform: 'uppercase' }
-        const sub = brand?.name ? String(brand.name).toUpperCase() : ''
+        const sub = coverSub ? String(coverSub).toUpperCase() : ''
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
             <div className="absolute overflow-hidden" style={{ left: '5.9cqw', top: '4.55cqw', width: '88.1cqw', height: '37.8cqw', background: pal.line }}>
@@ -671,11 +648,13 @@ export default function GalleryViewPage() {
         const frames = Array.from({ length: 5 }, (_, i) => pool[i % pool.length])
         const FX = [8, 180, 352, 555, 727]
         const FW = [163, 163, 192, 161, 165]
-        const ts: CSSProperties = { ...headStyle, fontWeight: 400, fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', pointerEvents: 'auto' }
+        const ts: CSSProperties = { ...headStyle, fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', pointerEvents: 'auto' }
         const title = String(data.title)
-        const sub = brand?.name ? String(brand.name).toUpperCase() : ''
+        const tf = Math.min(94, (94 * 10) / Math.max(title.length, 10))
+        const sub = coverSub ? String(coverSub).toUpperCase() : ''
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#271407' }}>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&display=swap" />
             <h1 className="sr-only">{data.title}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
               {frames.map((p, i) => (
@@ -688,7 +667,7 @@ export default function GalleryViewPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/gallery-cover/strip-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              <text data-gk="title" x="450.5" y="116" textAnchor="middle" style={{ ...ts, color: '#FFF6EA', fontSize: 94 }} textLength={Math.min(427, 47.4 * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
+              <text data-gk="title" x="450.5" y="116" textAnchor="middle" style={{ ...ts, color: '#FFF6EA', fontSize: tf }} textLength={Math.min(433, 0.51 * tf * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
               {sub && <text data-gk="brand" x="450" y="159.5" textAnchor="middle" style={{ ...ts, color: 'rgba(255,246,234,0.9)', textTransform: 'uppercase', fontSize: 11.5 }} textLength={Math.min(326, 17.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
             </svg>
           </div>
@@ -701,7 +680,7 @@ export default function GalleryViewPage() {
           <h1 className="sr-only">{data.title}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             <text data-gk="title" x="654.5" y="229" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 87, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(409, 34.1 * Math.max(String(data.title).length, 1))} lengthAdjust="spacingAndGlyphs">{data.title}</text>
-            {brand?.name && <text data-gk="brand" x="660.5" y="275" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 17, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(275, 21.2 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+            {coverSub && <text data-gk="brand" x="660.5" y="275" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 17, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(275, 21.2 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
           </svg>
         </div>
       ) : coverKind === 'stack' && cover?.web ? (() => {
@@ -725,7 +704,7 @@ export default function GalleryViewPage() {
             {print(cover.web || undefined, { left: '34.2cqw', top: '3.4cqw', width: '35.5cqw', transform: 'rotate(3deg)', zIndex: 2 }, '1.18 / 1')}
             <div className="absolute inset-x-0 text-center" style={{ bottom: '1.6cqw', zIndex: 3 }}>
               <h1 style={{ fontFamily: "'Pinyon Script', 'Snell Roundhand', cursive", color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', fontSize: 'max(20px, ' + fs + 'cqw)', lineHeight: 1.1, margin: 0 }}>{data.title}</h1>
-              {brand?.name && <p style={{ color: pal.soft, textTransform: 'uppercase', letterSpacing: '0.4em', fontSize: 'max(8px, 1.15cqw)', margin: '0.6cqw 0 0' }}>{brand.name}</p>}
+              {coverSub && <p style={{ color: pal.soft, textTransform: 'uppercase', letterSpacing: '0.4em', fontSize: 'max(8px, 1.15cqw)', margin: '0.6cqw 0 0' }}>{coverSub}</p>}
             </div>
           </div>
         )
@@ -746,7 +725,7 @@ export default function GalleryViewPage() {
               {lines.map((l, i) => (
                 <text key={i} data-gk="title" x="450" y={202 + (i - (lines.length - 1) / 2) * 51} textAnchor="middle" style={{ ...ts, fontSize: 38 }} textLength={l === '&' ? 25 : Math.min(104, 20.5 * l.length)} lengthAdjust="spacingAndGlyphs">{l}</text>
               ))}
-              {brand?.name && <text data-gk="brand" x="450" y="292" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontWeight: 500, fontSize: 9 }} textLength={Math.min(104, 7.25 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+              {coverSub && <text data-gk="brand" x="450" y="292" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontWeight: 500, fontSize: 9 }} textLength={Math.min(104, 7.25 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
             </svg>
           </div>
         )
@@ -757,7 +736,7 @@ export default function GalleryViewPage() {
           <h1 className="sr-only">{data.title}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             <text data-gk="title" x="451.5" y="103" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 136, fill: 'currentColor', color: '#FCF4E6', pointerEvents: 'auto' }} textLength={Math.min(811, 62.4 * Math.max(String(data.title).length, 1))} lengthAdjust="spacingAndGlyphs">{data.title}</text>
-            {brand?.name && <text data-gk="brand" x="44" y="133" textAnchor="start" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 13, fill: 'currentColor', color: '#FCF4E6', pointerEvents: 'auto' }} textLength={Math.min(160, 10.7 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+            {coverSub && <text data-gk="brand" x="44" y="133" textAnchor="start" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 13, fill: 'currentColor', color: '#FCF4E6', pointerEvents: 'auto' }} textLength={Math.min(160, 10.7 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
             <text x="857" y="133" textAnchor="end" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 13, fill: '#FCF4E6' }} textLength={14.6 * (String(data.photos.length).length + 7)} lengthAdjust="spacing">{data.photos.length + ' PHOTOS'}</text>
           </svg>
         </div>
@@ -777,17 +756,17 @@ export default function GalleryViewPage() {
             <div className="absolute inset-0">{imgEl}</div>
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28))' }} />
             {pair ? (
-              <>
-                <div data-gk="initials" style={{ ...big, fontSize: '57cqw', left: '6.5cqw', top: '-6.4cqw' }}>{L}</div>
-                <div style={{ ...big, fontSize: '40cqw', fontStyle: 'italic', left: '50%', transform: 'translateX(-50%)', top: '8.5cqw' }}>&amp;</div>
-                <div data-gk="initials" style={{ ...big, fontSize: '57cqw', right: '4.5cqw', top: '-6.4cqw' }}>{R}</div>
-              </>
+              <div data-gk="initials" className="absolute inset-0" style={{ fontFamily: ff, fontWeight: 300, fontSize: '57cqw', lineHeight: 1, color: 'rgba(255,255,255,0.58)', pointerEvents: 'none' }}>
+                <span style={{ position: 'absolute', fontFamily: 'inherit', fontWeight: 'inherit', color: 'inherit', lineHeight: 1, whiteSpace: 'nowrap', left: '6.5cqw', top: '-6.4cqw', pointerEvents: 'auto' }}>{L}</span>
+                <span style={{ position: 'absolute', fontFamily: 'inherit', fontWeight: 'inherit', color: 'inherit', lineHeight: 1, whiteSpace: 'nowrap', fontStyle: 'italic', fontSize: '0.7em', left: '50%', transform: 'translateX(-50%)', top: '8.5cqw', pointerEvents: 'auto' }}>&amp;</span>
+                <span style={{ position: 'absolute', fontFamily: 'inherit', fontWeight: 'inherit', color: 'inherit', lineHeight: 1, whiteSpace: 'nowrap', right: '4.5cqw', top: '-6.4cqw', pointerEvents: 'auto' }}>{R}</span>
+              </div>
             ) : (
               <div data-gk="initials" className="absolute inset-0 flex items-center justify-center" style={{ ...big, position: 'absolute', fontSize: '50cqw', paddingBottom: '4cqw' }}>{mono}</div>
             )}
             <div className="absolute inset-x-0 text-center text-white" style={{ top: '41.6cqw' }}>
               <h1 style={{ fontFamily: ff, color: '#fff', fontWeight: 500, textTransform: 'none', fontStyle: 'normal', letterSpacing: '0.16em', fontSize: 'max(14px, 3.5cqw)', lineHeight: 1.1, margin: 0 }}>{data.title}</h1>
-              {brand?.name && <p style={{ fontFamily: ff, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.4em', fontSize: 'max(7px, 1.3cqw)', margin: '1.3cqw 0 0' }}>{brand.name}</p>}
+              {coverSub && <p style={{ fontFamily: ff, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.4em', fontSize: 'max(7px, 1.3cqw)', margin: '1.3cqw 0 0' }}>{coverSub}</p>}
             </div>
           </div>
         )
@@ -799,7 +778,7 @@ export default function GalleryViewPage() {
           <h1 className="sr-only">{data.title}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             <text data-gk="title" x="450" y="417" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 21.5, fill: 'currentColor', color: '#F1E6D2', pointerEvents: 'auto' }} textLength={Math.min(304, 27.6 * Math.max(String(data.title).length, 1))} lengthAdjust="spacing">{String(data.title).toUpperCase()}</text>
-            {brand?.name && <text data-gk="brand" x="450" y="438" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 10, fill: 'currentColor', color: 'rgba(241,230,210,0.8)', pointerEvents: 'auto' }} textLength={Math.min(152, 11.7 * String(brand.name).length)} lengthAdjust="spacing">{String(brand.name).toUpperCase()}</text>}
+            {coverSub && <text data-gk="brand" x="450" y="438" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 10, fill: 'currentColor', color: 'rgba(241,230,210,0.8)', pointerEvents: 'auto' }} textLength={Math.min(152, 11.7 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
           </svg>
         </div>
 ) : coverKind === 'text' || !cover?.web ? (
@@ -838,7 +817,7 @@ export default function GalleryViewPage() {
           {imgEl}
           <div className={'absolute inset-0 flex p-6 sm:p-10 ' + (coverKind === 'center' ? 'items-center justify-center bg-black/35 text-center' : 'items-end bg-gradient-to-t from-black/65 via-black/10 to-transparent')}>
             <div className="text-white">
-              {brand?.name && <p className="mb-2 font-mono text-xs uppercase tracking-widest text-white/80">{brand.name}</p>}
+              {coverSub && <p className="mb-2 font-mono text-xs uppercase tracking-widest text-white/80">{coverSub}</p>}
               <h1 className={`${headCls} text-4xl sm:text-5xl`} style={headStyle}>{data.title}</h1>
             </div>
           </div>

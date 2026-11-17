@@ -1,6 +1,6 @@
 export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean; dy?: number; text?: string }
 export type GalleryDesign = {
-  look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }
+  look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; zoom?: number
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
 }
 
@@ -87,7 +87,7 @@ export const LAYOUT_PRESETS: Record<string, { bg: string; accent: string; gap: n
 
 export const EL_NAMES: Record<string, string> = {
   title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button',
-  favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials',
+  favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials', title2: 'Gallery title line 2',
 }
 const EL_SEL: Record<string, string> = {
   title: '.gal-root h1,.gal-root [data-gk="title"]',
@@ -99,6 +99,7 @@ const EL_SEL: Record<string, string> = {
   moment: '.gal-root [data-gk="moment"]',
   footer: '.gal-root [data-gk="footer"]',
   initials: '.gal-root [data-gk="initials"]',
+  title2: '.gal-root [data-gk="title2"]',
 }
 const HEX = /^#[0-9a-f]{6}$/i
 
@@ -145,5 +146,6 @@ export function resolveDesign(d?: GalleryDesign | null) {
   const focal = f && Number.isFinite(f.x) && Number.isFinite(f.y) ? { x: Math.min(100, Math.max(0, f.x)), y: Math.min(100, Math.max(0, f.y)) } : { x: 50, y: 50 }
   const layout = LAYOUTS.some((l) => l.k === d?.layout) ? (d?.layout as string) : base.grid === 'masonry' ? 'masonry' : 'grid'
   const el: Record<string, ElStyle> = d?.el ?? {}
-  return { look, cover, pal, coverPal, focal, layout, el }
+  const zoom = Math.min(3, Math.max(1, Number(d?.zoom) || 1))
+  return { look, cover, pal, coverPal, focal, zoom, layout, el }
 }

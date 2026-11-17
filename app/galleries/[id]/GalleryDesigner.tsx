@@ -216,6 +216,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         {coverUrl && (
           <div className="mt-4">
             <p className="mb-2 text-sm font-medium text-ink">Focal point <span className="font-normal text-ink-soft">(click the part to keep in frame)</span></p>
+            <label className="mb-2 block text-xs text-ink-soft">Zoom ({(eff.zoom ?? 1).toFixed(1)}x)
+              <input type="range" min={1} max={3} step={0.1} value={eff.zoom ?? 1} onChange={(e) => change({ zoom: Number(e.target.value) })} className="mt-1 w-full" />
+            </label>
             <div
               className="relative cursor-crosshair overflow-hidden rounded-xl border border-line"
               onClick={(e) => {
@@ -318,6 +321,11 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                   {pick.key === 'initials' && (
                     <label className="block text-xs text-ink-soft">Initials (first two letters are used)
                       <input type="text" maxLength={4} value={cur?.text ?? ''} placeholder="Auto from title" onChange={(e) => setEl(pick.key, { text: e.target.value })} className="mt-1 w-full rounded border border-black/10 bg-white px-2 py-1.5 text-sm text-ink" />
+                    </label>
+                  )}
+                  {pick.key === 'brand' && (
+                    <label className="block text-xs text-ink-soft">Cover subtitle (date, season, etc.)
+                      <input type="text" maxLength={40} value={cur?.text ?? ''} placeholder="Studio name" onChange={(e) => setEl(pick.key, { text: e.target.value })} className="mt-1 w-full rounded border border-black/10 px-2 py-1.5 text-sm text-ink" />
                     </label>
                   )}
                   <label className="block text-xs text-ink-soft">Size ({cur?.size ?? pick.size}px)
