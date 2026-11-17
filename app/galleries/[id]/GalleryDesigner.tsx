@@ -4,7 +4,7 @@ import CamriTyping from '@/app/components/CamriTyping'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
-import { COVERS, LAYOUTS, LAYOUT_PRESETS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign } from '@/lib/galleryDesign'
+import { COVERS, LAYOUTS, LAYOUT_PRESETS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign, COVER_PRESETS } from '@/lib/galleryDesign'
 
 const THUMBS: Record<string, number[][]> = {
   masonry: [[2, 2, 16, 14], [2, 18, 16, 20], [22, 2, 16, 22], [22, 26, 16, 12], [42, 2, 16, 12], [42, 16, 16, 22]],
@@ -34,6 +34,12 @@ const toHex = (c: string) => {
   const m = c.match(/\d+/g)
   if (!m || m.length < 3) return '#000000'
   return '#' + m.slice(0, 3).map((n) => Number(n).toString(16).padStart(2, '0')).join('')
+}
+
+function clearCoverEl<T>(el?: Record<string, T>): Record<string, T> {
+  const out: Record<string, T> = {}
+  for (const [k, v] of Object.entries(el ?? {})) if (!['title', 'title2', 'brand', 'initials', 'titlein'].includes(k)) out[k] = v
+  return out
 }
 
 export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, onClose, onSaved, onSend }: {
@@ -192,7 +198,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           </div>
           <div className="mt-2 flex flex-wrap gap-1">
             {gTour === null && <button type="button" className={gChip} onClick={() => { gSay(G_Q[0]); setGTour(0) }}>Walk me through it</button>}
-            {gTour === 0 && COVERS.map((c) => <button key={c.k} type="button" className={gChip} onClick={() => gPick(c.name, { cover: c.k } as Partial<GalleryDesign>, 1)}>{c.name}</button>)}
+            {gTour === 0 && COVERS.map((c) => <button key={c.k} type="button" className={gChip} onClick={() => gPick(c.name, { cover: c.k, el: clearCoverEl(eff.el), ...(COVER_PRESETS[c.k] ?? {}) } as Partial<GalleryDesign>, 1)}>{c.name}</button>)}
             {gTour === 1 && LAYOUTS.map((l) => <button key={l.k} type="button" className={gChip} onClick={() => gPick(l.name, { layout: l.k, ...(LAYOUT_PRESETS[l.k] ?? {}) } as Partial<GalleryDesign>, 2)}>{l.name}</button>)}
             {gTour !== null && <button type="button" className="px-1 text-[11px] text-ink-soft underline" onClick={() => { setGTour(null); gSay('Okay, I am here whenever you want a change.') }}>Skip</button>}
           </div>
@@ -206,7 +212,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <p className={head + ' mt-2'}>Opening photo</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {COVERS.map((c) => (
-            <button key={c.k} type="button" onClick={() => change({ cover: c.k })} onMouseEnter={(e) => setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
+            <button key={c.k} type="button" onClick={() => change({ cover: c.k, el: clearCoverEl(eff.el), ...(COVER_PRESETS[c.k] ?? {}) })} onMouseEnter={(e) => setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
               <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>
               <span className="mt-1 block text-[11px] text-ink">{c.name}</span>
             </button>

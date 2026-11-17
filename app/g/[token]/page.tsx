@@ -641,7 +641,7 @@ export default function GalleryViewPage() {
               <defs><clipPath id="bt-photo"><rect x="53" y="41" width="793" height="340" /></clipPath></defs>
               {sub && <text data-gk="brand" x="840" y="22.5" textAnchor="end" style={{ ...ts, fontWeight: 400, fontSize: 9, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(202, 11.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
               <text data-gk="title" x="454" y="434" textAnchor="middle" style={{ ...ts, fontSize: tsz, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text>
-              <text data-gk="title" x="454" y="434" textAnchor="middle" clipPath="url(#bt-photo)" style={{ ...ts, fontSize: tsz, fill: inCol, pointerEvents: 'auto' }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text>
+              <g clipPath="url(#bt-photo)"><text data-gk="title" x="454" y="434" textAnchor="middle" style={{ ...ts, fontSize: tsz, fill: inCol, pointerEvents: 'auto' }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text></g>
             </svg>
           </div>
         )

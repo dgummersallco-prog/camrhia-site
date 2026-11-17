@@ -4,6 +4,14 @@ export type GalleryDesign = {
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
 }
 
+export const COVER_PRESETS: Record<string, Partial<GalleryDesign>> = {
+  arch: { coverBg: '#F7EBDE' },
+  bigtype: { coverBg: '#F6EDE1' },
+  circle: { coverBg: '#F9EEE5' },
+  diptych: { coverBg: '#F9F2EA' },
+  mosaic: { coverBg: '#F9EFE4' },
+}
+
 export type LookSpec = {
   name: string; blurb: string; font: string; upper: boolean; italic?: boolean; weight: number
   track: string; radius: number; gap: number; grid: 'masonry' | 'uniform'; cover: string; colors: string
