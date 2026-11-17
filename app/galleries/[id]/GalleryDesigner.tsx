@@ -4,7 +4,7 @@ import CamriTyping from '@/app/components/CamriTyping'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
-import { COVERS, LAYOUTS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign } from '@/lib/galleryDesign'
+import { COVERS, LAYOUTS, LAYOUT_PRESETS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign } from '@/lib/galleryDesign'
 
 const THUMBS: Record<string, number[][]> = {
   masonry: [[2, 2, 16, 14], [2, 18, 16, 20], [22, 2, 16, 22], [22, 26, 16, 12], [42, 2, 16, 12], [42, 16, 16, 22]],
@@ -19,6 +19,7 @@ const THUMBS: Record<string, number[][]> = {
   stagger: [[2, 2, 27, 16], [2, 20, 27, 18], [31, 8, 27, 16], [31, 26, 27, 12]],
   filmstrip: [[0, 8, 14, 24], [16, 8, 26, 24], [44, 8, 16, 24]],
 }
+const HAS_PNG = new Set(['masonry', 'grid', 'rows', 'feature', 'wide', 'mosaic', 'polaroid', 'story', 'stagger'])
 function LayoutThumb({ k }: { k: string }) {
   return (
     <svg viewBox="0 0 60 40" className="block w-full" role="img" aria-label={k}>
@@ -179,7 +180,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           <div className="mt-2 flex flex-wrap gap-1">
             {gTour === null && <button type="button" className={gChip} onClick={() => { gSay(G_Q[0]); setGTour(0) }}>Walk me through it</button>}
             {gTour === 0 && COVERS.map((c) => <button key={c.k} type="button" className={gChip} onClick={() => gPick(c.name, { cover: c.k } as Partial<GalleryDesign>, 1)}>{c.name}</button>)}
-            {gTour === 1 && LAYOUTS.map((l) => <button key={l.k} type="button" className={gChip} onClick={() => gPick(l.name, { layout: l.k } as Partial<GalleryDesign>, 2)}>{l.name}</button>)}
+            {gTour === 1 && LAYOUTS.map((l) => <button key={l.k} type="button" className={gChip} onClick={() => gPick(l.name, { layout: l.k, ...(LAYOUT_PRESETS[l.k] ?? {}) } as Partial<GalleryDesign>, 2)}>{l.name}</button>)}
             {gTour !== null && <button type="button" className="px-1 text-[11px] text-ink-soft underline" onClick={() => { setGTour(null); gSay('Okay, I am here whenever you want a change.') }}>Skip</button>}
           </div>
           {gUndo && <button type="button" onClick={() => { const u = gUndo; setGUndo(null); change({ cover: u.cover, look: u.look, colors: u.colors, focal: u.focal, layout: u.layout } as Partial<GalleryDesign>) }} className="mt-1.5 text-[11px] text-twilight underline">Undo Camri&apos;s last change</button>}
@@ -219,8 +220,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <p className={head + ' mt-8'}>Photo layout</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {LAYOUTS.map((l) => (
-            <button key={l.k} type="button" onClick={() => change({ layout: l.k })} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.layout === l.k ? ring : 'border-line')}>
-              <div className="overflow-hidden rounded border border-black/5"><LayoutThumb k={l.k} /></div>
+            <button key={l.k} type="button" onClick={() => change({ layout: l.k, ...(LAYOUT_PRESETS[l.k] ?? {}) })} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.layout === l.k ? ring : 'border-line')}>
+              <div className="overflow-hidden rounded border border-black/5">{HAS_PNG.has(l.k) ? (/* eslint-disable-next-line @next/next/no-img-element */ <img src={'/gallery-layout/' + l.k + '.png'} alt="" className="block aspect-[3/2] w-full object-cover object-top" />) : <LayoutThumb k={l.k} />}</div>
               <span className="mt-1 block text-[11px] text-ink">{l.name}</span>
             </button>
           ))}

@@ -453,7 +453,7 @@ export default function GalleryViewPage() {
             {list.map((p, i) => (
               <Fragment key={p.id}>
                 {momentHead(p, i)}
-                <div data-gk="photos" className="group relative w-[44%] max-w-[300px] sm:w-[260px]" style={{ background: '#fff', padding: '10px 10px 34px', boxShadow: '0 6px 18px rgba(0,0,0,.18)', transform: `rotate(${[-2, 1.5, -1, 2][i % 4]}deg)`, borderRadius: Math.min(look.radius, 4) }}>
+                <div data-gk="photos" className="group relative w-[44%] md:w-[30%] lg:w-[22.5%]" style={{ background: '#fff', padding: '10px 10px 34px', boxShadow: '0 6px 18px rgba(0,0,0,.18)', transform: `rotate(${[-2, 1.5, -1, 2][i % 4]}deg)`, borderRadius: Math.min(look.radius, 4) }}>
                   <div className="relative" style={{ aspectRatio: '4 / 5', background: pal.line }}>
                     {p.thumb && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -467,13 +467,13 @@ export default function GalleryViewPage() {
           </div>
         )
       case 'story':
-        return <div className="mx-auto flex max-w-3xl flex-col" style={{ gap: Math.max(look.gap, 16) * 2 }}>{list.map((p, i) => tile(p, i))}</div>
+        return <div className="mx-auto flex max-w-[920px] flex-col" style={{ gap: look.gap }}>{list.map((p, i) => tile(p, i))}</div>
       case 'stagger':
         return (
           <div className="grid grid-cols-2" style={{ gap: look.gap }}>
             {[0, 1].map((c) => (
-              <div key={c} className="flex flex-col" style={{ gap: look.gap, paddingTop: c ? 'clamp(24px, 8vw, 96px)' : 0 }}>
-                {list.map((p, i) => (i % 2 === c ? tile(p, i, { head: false }) : null))}
+              <div key={c} className="flex flex-col" style={{ gap: look.gap }}>
+                {list.map((p, i) => (i % 2 === c ? tile(p, i, { head: false, ratio: (c ? [1, 0.8, 1.5, 1, 1.33] : [1.5, 1, 0.8, 1.33, 1])[Math.floor(i / 2) % 5] }) : null))}
               </div>
             ))}
           </div>

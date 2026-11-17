@@ -71,6 +71,18 @@ export const LAYOUTS = [
   { k: 'filmstrip', name: 'Filmstrip' },
 ]
 
+export const LAYOUT_PRESETS: Record<string, { bg: string; accent: string; gap: number; radius: number }> = {
+  masonry: { bg: '#F8F0E8', accent: '#A8553A', gap: 8, radius: 6 },
+  grid: { bg: '#FFFFFF', accent: '#000000', gap: 6, radius: 0 },
+  rows: { bg: '#1E1D1C', accent: '#C9AE7B', gap: 5, radius: 3 },
+  feature: { bg: '#F6E3E0', accent: '#9A5A5C', gap: 6, radius: 6 },
+  wide: { bg: '#EEF0E6', accent: '#2C4A22', gap: 6, radius: 0 },
+  mosaic: { bg: '#111111', accent: '#E8761E', gap: 0, radius: 0 },
+  polaroid: { bg: '#F1E6D9', accent: '#7A3B22', gap: 20, radius: 2 },
+  story: { bg: '#FAF6F1', accent: '#1E2A52', gap: 4, radius: 0 },
+  stagger: { bg: '#F6E5D6', accent: '#A8432B', gap: 10, radius: 12 },
+}
+
 export const EL_NAMES: Record<string, string> = {
   title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button',
   favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos',
