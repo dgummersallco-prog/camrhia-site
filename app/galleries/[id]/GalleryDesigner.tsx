@@ -19,7 +19,7 @@ const THUMBS: Record<string, number[][]> = {
   stagger: [[2, 2, 27, 16], [2, 20, 27, 18], [31, 8, 27, 16], [31, 26, 27, 12]],
   filmstrip: [[0, 8, 14, 24], [16, 8, 26, 24], [44, 8, 16, 24]],
 }
-const HAS_PNG = new Set(['masonry', 'grid', 'rows', 'feature', 'wide', 'mosaic', 'polaroid', 'story', 'stagger'])
+const HAS_PNG = new Set(['masonry', 'grid', 'rows', 'feature', 'wide', 'mosaic', 'polaroid', 'story', 'stagger', 'filmstrip', 'square'])
 function LayoutThumb({ k }: { k: string }) {
   return (
     <svg viewBox="0 0 60 40" className="block w-full" role="img" aria-label={k}>
@@ -29,7 +29,7 @@ function LayoutThumb({ k }: { k: string }) {
   )
 }
 
-const FONT_LIST = Object.entries(FONT_OPTIONS).map(([k, o]) => ({ k, label: o.label })).sort((a, b) => a.label.localeCompare(b.label))
+const FONT_LIST = Object.entries(FONT_OPTIONS).map(([k, o]) => ({ k, label: o.label, family: o.family })).sort((a, b) => a.label.localeCompare(b.label))
 const toHex = (c: string) => {
   const m = c.match(/\d+/g)
   if (!m || m.length < 3) return '#000000'
@@ -45,6 +45,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean } | null>(null)
+  const [zoom, setZoom] = useState<{ src: string; name: string; top: number } | null>(null)
+  const [fontOpen, setFontOpen] = useState(false)
   const frameRef = useRef<HTMLIFrameElement>(null)
   const latest = useRef<GalleryDesign>(initial ?? {})
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -138,6 +140,17 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     return () => window.removeEventListener('message', onMsg)
   }, [])
 
+  useEffect(() => {
+    if (!pick || document.getElementById('gal-font-preview')) return
+    const fams = Array.from(new Set(Object.values(FONT_OPTIONS).map((o) => o.gf).filter(Boolean).map((g) => String(g).replace(/^family=/, '').split(':')[0])))
+    const chars = Array.from(new Set(Object.values(FONT_OPTIONS).map((o) => o.label).join('').split(''))).join('')
+    const l = document.createElement('link')
+    l.id = 'gal-font-preview'
+    l.rel = 'stylesheet'
+    l.href = 'https://fonts.googleapis.com/css2?' + fams.map((f) => 'family=' + f).join('&') + '&text=' + encodeURIComponent(chars) + '&display=swap'
+    document.head.appendChild(l)
+  }, [pick])
+
   const ring = 'border-twilight ring-2 ring-twilight'
   const head = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
   const cur = pick ? d.el?.[pick.key] : undefined
@@ -193,7 +206,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <p className={head + ' mt-2'}>Opening photo</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {COVERS.map((c) => (
-            <button key={c.k} type="button" onClick={() => change({ cover: c.k })} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
+            <button key={c.k} type="button" onClick={() => change({ cover: c.k })} onMouseEnter={(e) => setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
               <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>
               <span className="mt-1 block text-[11px] text-ink">{c.name}</span>
             </button>
@@ -220,7 +233,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <p className={head + ' mt-8'}>Photo layout</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {LAYOUTS.map((l) => (
-            <button key={l.k} type="button" onClick={() => change({ layout: l.k, ...(LAYOUT_PRESETS[l.k] ?? {}) })} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.layout === l.k ? ring : 'border-line')}>
+            <button key={l.k} type="button" onClick={() => change({ layout: l.k, ...(LAYOUT_PRESETS[l.k] ?? {}) })} onMouseEnter={(e) => { if (HAS_PNG.has(l.k)) setZoom({ src: '/gallery-layout/' + l.k + '.png', name: l.name, top: e.currentTarget.getBoundingClientRect().top }) }} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.layout === l.k ? ring : 'border-line')}>
               <div className="overflow-hidden rounded border border-black/5">{HAS_PNG.has(l.k) ? (/* eslint-disable-next-line @next/next/no-img-element */ <img src={'/gallery-layout/' + l.k + '.png'} alt="" className="block aspect-[3/2] w-full object-cover object-top" />) : <LayoutThumb k={l.k} />}</div>
               <span className="mt-1 block text-[11px] text-ink">{l.name}</span>
             </button>
@@ -244,6 +257,13 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         </div>
         <p className="mt-4 text-xs text-ink-soft">Click any line in the preview to change its font, size and color.</p>
       </aside>
+      {zoom && (
+        <div className="pointer-events-none fixed z-[60] rounded-xl border border-line bg-white p-2 shadow-2xl" style={{ left: 300, top: Math.max(8, Math.min(zoom.top - 40, (typeof window !== 'undefined' ? window.innerHeight : 800) - 600)) }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={zoom.src} alt="" style={{ maxWidth: 560, maxHeight: '85vh' }} className="block h-auto w-auto rounded" />
+          <p className="mt-1 text-center text-xs text-ink-soft">{zoom.name}</p>
+        </div>
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col p-3">
         <div className="mb-3 flex items-center justify-end gap-3">
@@ -263,7 +283,12 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                 <p className="font-fraunces text-base font-semibold text-ink">{pick.name}</p>
                 <button type="button" onClick={() => setPick(null)} className="text-ink-soft hover:text-ink">✕</button>
               </div>
-              {pick.key === 'photos' ? (
+              {pick.key === 'bg' ? (
+                <div className="space-y-2">
+                  {colorRow('Background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
+                  {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
+                </div>
+              ) : pick.key === 'photos' ? (
                 <div className="space-y-3">
                   <label className="block text-xs text-ink-soft">Space between photos
                     <input type="range" min={0} max={48} value={eff.look.gap} onChange={(e) => change({ gap: Number(e.target.value) })} className="mt-1 w-full" />
@@ -275,12 +300,19 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <label className="block text-xs text-ink-soft">Font
-                    <select value={cur?.font ?? ''} onChange={(e) => setEl(pick.key, { font: e.target.value || undefined })} className="mt-1 w-full rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink">
-                      <option value="">Gallery default</option>
-                      {FONT_LIST.map((f) => <option key={f.k} value={f.k}>{f.label}</option>)}
-                    </select>
-                  </label>
+                  <div className="text-xs text-ink-soft">Font
+                    <button type="button" onClick={() => setFontOpen((o) => !o)} className="mt-1 flex w-full items-center justify-between rounded-lg border border-line bg-white px-2 py-1.5 text-left text-sm text-ink" style={{ fontFamily: cur?.font ? FONT_OPTIONS[cur.font]?.family : undefined }}>
+                      <span>{cur?.font ? FONT_OPTIONS[cur.font]?.label : 'Gallery default'}</span><span className="text-ink-soft">▾</span>
+                    </button>
+                    {fontOpen && (
+                      <div className="mt-1 max-h-56 overflow-y-auto rounded-lg border border-line bg-white">
+                        <button type="button" onClick={() => { setEl(pick.key, { font: undefined }); setFontOpen(false) }} className="block w-full px-2 py-1.5 text-left text-sm text-ink hover:bg-paper">Gallery default</button>
+                        {FONT_LIST.map((f) => (
+                          <button key={f.k} type="button" onClick={() => { setEl(pick.key, { font: f.k }); setFontOpen(false) }} className={'block w-full px-2 py-1.5 text-left text-base text-ink hover:bg-paper ' + (cur?.font === f.k ? 'bg-paper' : '')} style={{ fontFamily: f.family }}>{f.label}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <label className="block text-xs text-ink-soft">Size ({cur?.size ?? pick.size}px)
                     <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(pick.key, { size: Number(e.target.value) })} className="mt-1 w-full" />
                   </label>
@@ -291,6 +323,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                   <label className="flex items-center gap-2 text-xs text-ink-soft">
                     <input type="checkbox" checked={cur?.bold ?? pick.bold} onChange={(e) => setEl(pick.key, { bold: e.target.checked })} />
                     Bold
+                  </label>
+                  <label className="block text-xs text-ink-soft">Move up or down ({cur?.dy ?? 0}px)
+                    <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(pick.key, { dy: Number(e.target.value) })} className="mt-1 w-full" />
                   </label>
                   <button type="button" onClick={() => resetEl(pick.key)} className="text-[11px] text-twilight underline">Reset this line</button>
                 </div>

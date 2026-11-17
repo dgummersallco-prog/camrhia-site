@@ -254,7 +254,16 @@ export default function GalleryViewPage() {
     const hide = () => { box.style.display = 'none' }
     const click = (e: MouseEvent) => {
       const h = hit(e.target)
-      if (!h) return
+      if (!h) {
+        const t = e.target as HTMLElement | null
+        const root = document.querySelector('.gal-root')
+        if (t && root && (t === root || t.tagName === 'MAIN' || t.parentElement === root || t.parentElement?.tagName === 'MAIN')) {
+          e.preventDefault()
+          e.stopPropagation()
+          window.parent?.postMessage({ type: 'camrhia-gallery-pick', key: 'bg', name: 'Background', size: 16, color: '#000000', bold: false }, '*')
+        }
+        return
+      }
       e.preventDefault()
       e.stopPropagation()
       const cs = getComputedStyle(h.el)
@@ -270,6 +279,15 @@ export default function GalleryViewPage() {
       box.remove()
     }
   }, [])
+
+  // Tag the studio-name line wherever a cover prints it, so it can be edited like the rest.
+  useEffect(() => {
+    const bn = brand?.name?.trim().toLowerCase()
+    if (!bn || typeof document === 'undefined') return
+    document.querySelectorAll<HTMLElement>('.gal-root *').forEach((n) => {
+      if (n.children.length === 0 && !n.hasAttribute('data-gk') && (n.textContent ?? '').trim().toLowerCase() === bn) n.setAttribute('data-gk', 'brand')
+    })
+  })
 
   if (phase === 'loading') {
     return <div className="flex min-h-screen items-center justify-center bg-paper text-sm text-ink-soft">Loading gallery…</div>
@@ -433,7 +451,7 @@ export default function GalleryViewPage() {
       case 'grid':
         return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap }}>{list.map((p, i) => renderItem(p, i, true))}</div>
       case 'square':
-        return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap }}>{list.map((p, i) => tile(p, i, { wrap: 'aspect-square', fill: true }))}</div>
+        return <div className="mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap, maxWidth: 'min(100%, 1280px)' }}>{list.map((p, i) => tile(p, i, { wrap: 'aspect-square', fill: true }))}</div>
       case 'rows':
         return (
           <div className="flex flex-wrap" style={{ gap: look.gap }}>
@@ -478,12 +496,24 @@ export default function GalleryViewPage() {
             ))}
           </div>
         )
-      case 'filmstrip':
+      case 'filmstrip': {
+        const per = typeof window !== 'undefined' && window.innerWidth < 640 ? 2 : 5
+        const rowsArr: (typeof list)[] = []
+        for (let k = 0; k < list.length; k += per) rowsArr.push(list.slice(k, k + per))
         return (
-          <div className="flex overflow-x-auto pb-4" style={{ gap: look.gap, scrollSnapType: 'x mandatory' }}>
-            {list.map((p, i) => tile(p, i, { head: false, fill: true, style: { flex: '0 0 auto', height: '72vh', width: `calc(72vh * ${arOf(p)})`, maxWidth: '92vw', scrollSnapAlign: 'center' } }))}
+          <div className="flex flex-col" style={{ gap: look.gap }}>
+            {rowsArr.map((row, r) => (
+              <div key={r} className="flex" style={{ gap: look.gap }}>
+                {row.map((p, j) => {
+                  const ar = arOf(p)
+                  return tile(p, r * per + j, { ratio: ar, head: false, style: { flex: `${ar} 1 0%`, minWidth: 0 } })
+                })}
+                {row.length < per && <div style={{ flex: `${(per - row.length) * 0.67} 1 0%` }} />}
+              </div>
+            ))}
           </div>
         )
+      }
       default:
         return <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: look.gap }}>{list.map((p, i) => renderItem(p, i, false))}</div>
     }

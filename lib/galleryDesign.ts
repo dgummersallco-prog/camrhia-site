@@ -1,4 +1,4 @@
-export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean }
+export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean; dy?: number }
 export type GalleryDesign = {
   look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }
   layout?: string; bg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
@@ -81,6 +81,8 @@ export const LAYOUT_PRESETS: Record<string, { bg: string; accent: string; gap: n
   polaroid: { bg: '#F1E6D9', accent: '#7A3B22', gap: 20, radius: 2 },
   story: { bg: '#FAF6F1', accent: '#1E2A52', gap: 4, radius: 0 },
   stagger: { bg: '#F6E5D6', accent: '#A8432B', gap: 10, radius: 12 },
+  filmstrip: { bg: '#F7F0E8', accent: '#1B2A52', gap: 8, radius: 10 },
+  square: { bg: '#E5E7E8', accent: '#2A2A2A', gap: 10, radius: 4 },
 }
 
 export const EL_NAMES: Record<string, string> = {
@@ -109,6 +111,7 @@ export function elCss(el: Record<string, ElStyle>, famOf: (k: string) => string 
     if (typeof s.size === 'number' && Number.isFinite(s.size)) r.push(`font-size:${Math.min(160, Math.max(6, s.size))}px!important`)
     if (s.color && HEX.test(s.color)) r.push(`color:${s.color}!important`)
     if (typeof s.bold === 'boolean') r.push(`font-weight:${s.bold ? 700 : 400}!important`)
+    if (typeof s.dy === 'number' && Number.isFinite(s.dy) && s.dy !== 0) r.push(`translate:0 ${Math.min(300, Math.max(-300, s.dy))}px!important`)
     if (r.length) out += `${sel}{${r.join(';')}}`
   }
   return out
