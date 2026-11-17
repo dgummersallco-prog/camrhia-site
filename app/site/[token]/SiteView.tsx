@@ -29,10 +29,10 @@ function photoUrl(path: string | null | undefined): string | null {
 }
 
 // Shown only inside the designer preview, so every section is visible while building.
-const PH_SCENES: string[] = []
 const PH_AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#E6E3DE"/><circle cx="100" cy="80" r="34" fill="#BDB8B0"/><path d="M32 200c0-42 30-68 68-68s68 26 68 68z" fill="#BDB8B0"/></svg>')
 const PH_ABOUT = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000"><rect width="800" height="1000" fill="#EFECE7"/><g fill=\"none\" stroke=\"#BDB7AD\" stroke-width=\"14\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><circle cx="560" cy="430" r="55"/><path d="M170 700 L340 500 L450 630 L520 550 L630 700 Z"/></g></svg>')
 const PH_ABOUT_W = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><rect width="1600" height="900" fill="#EFECE7"/><g fill=\"none\" stroke=\"#BDB7AD\" stroke-width=\"14\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><circle cx="930" cy="330" r="60"/><path d="M600 610 L780 400 L890 530 L960 450 L1080 610 Z"/></g></svg>')
+const PH_SCENES: string[] = [PH_ABOUT, PH_ABOUT, PH_ABOUT, PH_ABOUT, PH_ABOUT, PH_ABOUT]
 const PH_GALLERIES = ['Wedding day', 'Engagement', 'Family'].map((title, gi) => ({
   id: 'ph' + gi,
   title,
@@ -1668,13 +1668,14 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
         {page === 'home' && tpl === 'magazine' && (
           <header data-name="Cover" id="top">
+            <style>{`#top #nav{border-bottom:0!important}#top .el-menu_brand{font-weight:800!important;letter-spacing:-0.02em}#top .el-menu_links{font-weight:700!important;letter-spacing:0.14em}`}</style>
             {renderNav(false, false)}
-            <div className="mx-auto max-w-6xl px-6 pt-14" style={{ textAlign: t.hero.align }}>
-              {subhead && <p className="cr-sub mb-5 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{subhead}</p>}
-              <h1 style={{ ...headStyle, fontSize: 'calc(var(--hl) * 1.5)', lineHeight: 0.98 }}>{headline}</h1>
+            <div className="mx-auto max-w-6xl px-6 pt-6" style={{ textAlign: (((r as any).site_settings?.hero?.align ?? 'left') as 'left' | 'center' | 'right') }}>
+              {String((r as any).site_subhead ?? '').trim() && <p className="cr-sub mb-3 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{String((r as any).site_subhead).trim()}</p>}
+              <h1 style={{ ...headStyle, fontSize: 'calc(var(--hl) * 1.5)', lineHeight: 0.98, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-0.025em' }}>{headline}</h1>
               {heroPara(soft)}
             </div>
-            <div className="relative mt-10 w-full overflow-hidden" style={{ height: 'calc(var(--hero-h) * 0.8)' }}>
+            <div className="relative mt-6 w-full overflow-hidden" style={{ height: 'calc(var(--hero-h) * 0.8)' }}>
               {heroImg('absolute inset-0 h-full w-full')}
               <div className="absolute bottom-0 left-0 px-6 pb-6">{cta()}</div>
             </div>
