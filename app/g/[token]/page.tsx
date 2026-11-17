@@ -341,7 +341,222 @@ export default function GalleryViewPage() {
 
   return (
     <div className="min-h-screen" style={{ background: pal.bg, color: pal.ink }}>
-      {coverKind === 'text' || !cover?.web ? (
+      {coverKind === 'ticket' && cover?.web ? (() => {
+        const longest = Math.max(...String(data.title).split(/\s+/).map((w) => w.length), 4)
+        const fs = Math.min(5.6, 27 / (0.72 * longest))
+        const notch = (x: string, y: string) => 'radial-gradient(circle 2.3cqw at ' + x + ' ' + y + ', transparent 96%, #000 100%)'
+        const mask = [notch('0', '50%'), notch('100%', '50%'), notch('62.6%', '0'), notch('62.6%', '100%')].join(',')
+        return (
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#EFE3CB' }}>
+            <div className="absolute" style={{ left: '1.3cqw', top: '5cqw', width: '97.3cqw', height: '39.4cqw', filter: 'drop-shadow(0 0.8cqw 1.6cqw rgba(70,45,20,0.28))' }}>
+              <div className="absolute inset-0" style={{ background: '#E9D6AC', WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect' }}>
+                <div className="absolute" style={{ inset: '0.7cqw', border: '0.25cqw solid rgba(150,105,55,0.65)', borderRadius: '1cqw' }} />
+                <div className="absolute overflow-hidden" style={{ left: '1.8cqw', top: '1.5cqw', width: '56.9cqw', height: '36.3cqw', background: pal.line }}>
+                  <div className="absolute inset-0">{imgEl}</div>
+                </div>
+                <div className="absolute" style={{ left: '60.9cqw', top: '1.4cqw', bottom: '1.4cqw', borderLeft: '0.25cqw dashed #3A1F12' }} />
+                <div className="absolute" style={{ left: '62.6cqw', right: '2.2cqw', top: '5.4cqw', height: '0.2cqw', background: '#3A1F12' }} />
+                <div className="absolute flex items-center justify-center text-center" style={{ left: '62.6cqw', right: '2.2cqw', top: '7.5cqw', height: '17cqw' }}>
+                  <h1 className={headCls} style={{ ...headStyle, color: '#3A1F12', fontWeight: 800, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: '0.01em', lineHeight: 1.08, fontSize: 'max(16px, ' + fs + 'cqw)', margin: 0 }}>{data.title}</h1>
+                </div>
+                {brand?.name && <p className="absolute text-center" style={{ left: '62.6cqw', right: '2.2cqw', top: '27.6cqw', margin: 0, color: '#3A1F12', textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: 'max(7px, 1.4cqw)' }}>{brand.name}</p>}
+                <div className="absolute" style={{ left: '62.6cqw', right: '2.2cqw', top: '33.3cqw', height: '0.2cqw', background: '#3A1F12' }} />
+              </div>
+            </div>
+          </div>
+        )
+      })() : coverKind === 'circle' && cover?.web ? (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+          <div className="absolute overflow-hidden" style={{ left: '31.1cqw', top: '0.9cqw', width: '37.8cqw', height: '37.8cqw', borderRadius: '50%', border: '0.3cqw solid ' + pal.accent, background: pal.line }}>
+            <div className="absolute inset-0">{imgEl}</div>
+          </div>
+          <div className="absolute inset-x-0 text-center" style={{ top: '36cqw' }}>
+            <h1 className={headCls} style={{ ...headStyle, color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '-0.01em', lineHeight: 1.05, fontSize: 'max(22px, ' + Math.min(9.5, 46 / (0.46 * Math.max(String(data.title).length, 6))) + 'cqw)', margin: 0 }}>{data.title}</h1>
+            {brand?.name && <p style={{ color: pal.ink, textTransform: 'uppercase', letterSpacing: '0.42em', fontSize: 'max(8px, 1.25cqw)', margin: '1.4cqw 0 0' }}>{brand.name}</p>}
+          </div>
+        </div>
+      ) : coverKind === 'mosaic' && cover?.web ? (() => {
+        const pool = data.photos.filter((p) => p.id !== cover.id && (p.thumb || p.web))
+        const src = (i: number) => { const p = pool.length ? pool[i % pool.length] : cover; return p.thumb || p.web || cover.web || undefined }
+        const parts = String(data.title).split(/\s*(?:&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean)
+        const lines = parts.length >= 2 ? [parts[0], '& ' + parts[1]] : [String(data.title)]
+        const longest = Math.max(...lines.map((x) => x.length), 4)
+        const fs = Math.min(9.6, 30 / (0.5 * longest))
+        const cell = (s: string | undefined, st: CSSProperties) => (
+          <div style={{ position: 'relative', overflow: 'hidden', background: pal.line, ...st }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={s} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          </div>
+        )
+        return (
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+            <div className="absolute grid" style={{ left: '0.9cqw', top: '0.9cqw', width: '64cqw', height: '48.2cqw', gap: '0.7cqw', gridTemplateColumns: '1fr 1fr 0.95fr', gridTemplateRows: '1.3fr 1fr' }}>
+              <div style={{ position: 'relative', overflow: 'hidden', background: pal.line, gridRow: '1 / 3' }}><div className="absolute inset-0">{imgEl}</div></div>
+              {cell(src(0), {})}
+              {cell(src(1), {})}
+              {cell(src(2), {})}
+              {cell(src(3), {})}
+            </div>
+            <div className="absolute flex flex-col items-center justify-center text-center" style={{ left: '66cqw', right: '2cqw', top: 0, bottom: 0 }}>
+              <h1 className={headCls} style={{ ...headStyle, color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '-0.01em', lineHeight: 1.08, fontSize: 'max(20px, ' + fs + 'cqw)', margin: 0 }}>
+                {lines.map((l, i) => <span key={i} style={{ display: 'block' }}>{l}</span>)}
+              </h1>
+              {brand?.name && <p style={{ color: pal.ink, textTransform: 'uppercase', letterSpacing: '0.38em', fontSize: 'max(8px, 1.3cqw)', margin: '4.5cqw 0 0' }}>{brand.name}</p>}
+            </div>
+          </div>
+        )
+      })() : coverKind === 'postcard' && cover?.web ? (() => {
+        const fs = Math.min(8.4, 36 / (0.36 * Math.max(String(data.title).length, 8)))
+        return (
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#E4D3B6' }}>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" />
+            <div className="absolute" style={{ left: '4cqw', top: '1.6cqw', width: '92cqw', height: '46cqw', background: '#EFE2C8', border: '0.2cqw solid #D8C7A4', borderRadius: '0.8cqw', boxShadow: '0 1.4cqw 3.4cqw rgba(70,45,20,0.28)', transform: 'rotate(-1.6deg)' }}>
+              <div className="absolute overflow-hidden" style={{ left: '3.4cqw', top: '2.4cqw', width: '47cqw', height: '41cqw', background: pal.line }}>
+                <div className="absolute inset-0">{imgEl}</div>
+              </div>
+              <div className="absolute" style={{ left: '52cqw', top: '4cqw', bottom: '4cqw', width: '0.15cqw', background: '#5a4332' }} />
+              <div className="absolute" style={{ right: '2.6cqw', top: '2.2cqw', width: '11.4cqw', height: '13.6cqw', background: '#EBDDBE', padding: '0.7cqw', outline: '0.35cqw dotted #EFE2C8', boxShadow: '0 0.2cqw 0.6cqw rgba(60,40,20,0.3)' }}>
+                <svg viewBox="0 0 100 120" width="100%" height="100%"><rect width="100" height="120" fill="#CFD8D2" /><path d="M0 90 28 44l14 20 16-30 42 56z" fill="#8E9A95" /><path d="M60 100V60M60 28l-12 24h8l-10 20h28l-10-20h8z" fill="#2F4A3A" /><rect y="92" width="100" height="28" fill="#9BAA8F" /></svg>
+              </div>
+              <div className="absolute flex items-center justify-center text-center" style={{ left: '56.5cqw', top: '2.8cqw', width: '11.4cqw', height: '11.4cqw', borderRadius: '50%', border: '0.3cqw solid #4a3b30', color: '#4a3b30', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: 'max(6px, 1.1cqw)', lineHeight: 1.3, padding: '1cqw' }}>{brand?.name ?? ''}</div>
+              <svg className="absolute" style={{ left: '68.2cqw', top: '4.6cqw', width: '8cqw', height: '6cqw' }} viewBox="0 0 80 60" fill="none" stroke="#4a3b30" strokeWidth="1.6" strokeLinecap="round"><path d="M0 8c10-6 14 6 24 0s14 6 24 0 14 6 24 0" /><path d="M0 24c10-6 14 6 24 0s14 6 24 0 14 6 24 0" /><path d="M0 40c10-6 14 6 24 0s14 6 24 0 14 6 24 0" /></svg>
+              {[27, 33, 39].map((t) => <div key={t} className="absolute" style={{ left: '56cqw', right: '4cqw', top: t + 'cqw', height: '0.12cqw', background: '#9c8a74' }} />)}
+              <div className="absolute flex items-center justify-center text-center" style={{ left: '54cqw', right: '3cqw', top: '15cqw', height: '24cqw' }}>
+                <h1 style={{ fontFamily: "'Pinyon Script', 'Snell Roundhand', cursive", color: '#4A2C1C', fontWeight: 400, textTransform: 'none', fontStyle: 'normal', fontSize: 'max(18px, ' + fs + 'cqw)', lineHeight: 1.05, margin: 0 }}>{data.title}</h1>
+              </div>
+            </div>
+          </div>
+        )
+      })() : coverKind === 'bigtype' && cover?.web ? (() => {
+        const tstyle: CSSProperties = { ...headStyle, bottom: '-0.2cqw', fontWeight: 300, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: '0.01em', lineHeight: 0.9, whiteSpace: 'nowrap', margin: 0, fontSize: Math.min(15, 96 / (0.62 * Math.max(String(data.title).length, 6))) + 'cqw' }
+        return (
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+            {brand?.name && <p className="absolute text-right" style={{ right: '6cqw', top: '1.4cqw', margin: 0, color: pal.ink, textTransform: 'uppercase', letterSpacing: '0.38em', fontSize: 'max(8px, 1.3cqw)' }}>{brand.name}</p>}
+            <div className="absolute overflow-hidden" style={{ left: '6cqw', top: '4.7cqw', width: '88cqw', height: '37.5cqw', background: pal.line }}>
+              <div className="absolute inset-0">{imgEl}</div>
+            </div>
+            <h1 className={'absolute inset-x-0 text-center ' + headCls} style={{ ...tstyle, color: pal.ink }}>{data.title}</h1>
+            <div className="pointer-events-none absolute inset-0" style={{ clipPath: 'inset(4.7cqw 6cqw calc(100% - 42.2cqw) 6cqw)' }}>
+              <div aria-hidden="true" className={'absolute inset-x-0 text-center ' + headCls} style={{ ...tstyle, color: pal.bg }}>{data.title}</div>
+            </div>
+          </div>
+        )
+      })() : coverKind === 'strip' && cover?.web ? (() => {
+        const pool = [cover, ...data.photos.filter((p) => p.id !== cover.id)].filter((p) => p.thumb || p.web)
+        const frames = Array.from({ length: 5 }, (_, i) => pool[i % pool.length])
+        const holes = (
+          <div style={{ height: '1.5cqw', margin: '0 0.8cqw', background: 'repeating-linear-gradient(90deg, #D79A62 0 1.5cqw, transparent 1.5cqw 3.1cqw)', borderRadius: '0.3cqw', opacity: 0.9 }} />
+        )
+        return (
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#2B1B12' }}>
+            <div className="absolute inset-x-0 text-center" style={{ top: '4.5cqw', padding: '0 4cqw' }}>
+              <h1 className={headCls} style={{ ...headStyle, color: '#FBF4EA', fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '0', lineHeight: 1.05, fontSize: 'max(22px, ' + Math.min(11, 56 / (0.48 * Math.max(String(data.title).length, 6))) + 'cqw)', margin: 0 }}>{data.title}</h1>
+              {brand?.name && <p style={{ color: 'rgba(251,244,234,0.8)', textTransform: 'uppercase', letterSpacing: '0.42em', fontSize: 'max(8px, 1.5cqw)', margin: '2cqw 0 0' }}>{brand.name}</p>}
+            </div>
+            <div className="absolute inset-x-0" style={{ bottom: '3.9cqw', height: '24cqw', background: '#1B100B', borderTop: '0.2cqw solid #3a261a', borderBottom: '0.2cqw solid #3a261a', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1.3cqw 0' }}>
+              {holes}
+              <div className="flex" style={{ gap: '1.4cqw', padding: '0 0.8cqw' }}>
+                {frames.map((p, i) => (
+                  <div key={i} style={{ flex: 1, aspectRatio: '1.01 / 1', overflow: 'hidden', background: pal.line, borderRadius: '0.3cqw' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.thumb || p.web || undefined} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  </div>
+                ))}
+              </div>
+              {holes}
+            </div>
+          </div>
+        )
+      })() : coverKind === 'arch' && cover?.web ? (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+          <div className="absolute overflow-hidden" style={{ left: '4.2cqw', top: '1.7cqw', width: '40.5cqw', height: '48cqw', borderTopLeftRadius: '20.25cqw', borderTopRightRadius: '20.25cqw', background: pal.line }}>
+            <div className="absolute inset-0">{imgEl}</div>
+          </div>
+          <div className="absolute flex flex-col items-center justify-center text-center" style={{ left: '46cqw', right: '2cqw', top: 0, bottom: 0 }}>
+            <h1 className={headCls} style={{ ...headStyle, color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '-0.01em', lineHeight: 1.05, fontSize: 'max(22px, ' + Math.min(8.5, 45 / (0.45 * Math.max(String(data.title).length, 6))) + 'cqw)', margin: 0 }}>{data.title}</h1>
+            {brand?.name && <p style={{ color: pal.ink, textTransform: 'uppercase', letterSpacing: '0.42em', fontSize: 'max(8px, 1.5cqw)', margin: '2.4cqw 0 0' }}>{brand.name}</p>}
+          </div>
+        </div>
+      ) : coverKind === 'stack' && cover?.web ? (() => {
+        const others = data.photos.filter((p) => p.id !== cover.id && (p.thumb || p.web)).slice(0, 3)
+        const pic = (i: number) => (others[i]?.thumb || others[i]?.web || cover.web || undefined)
+        const fs = Math.min(7.5, 53 / (0.38 * Math.max(String(data.title).length, 6)))
+        const print = (src: string | undefined, st: CSSProperties, ar: string) => (
+          <div className="absolute" style={{ background: '#FBF9F4', padding: '1.5cqw 1.5cqw 4.6cqw', boxShadow: '0 1.2cqw 3cqw rgba(60,40,20,0.22)', ...st }}>
+            <div style={{ aspectRatio: ar, overflow: 'hidden', background: pal.line }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            </div>
+          </div>
+        )
+        return (
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" />
+            {print(pic(0), { left: '20cqw', top: '0.8cqw', width: '22.8cqw', transform: 'rotate(-6deg)', zIndex: 0 }, '1.1 / 1')}
+            {print(pic(1), { left: '6cqw', top: '11cqw', width: '26cqw', transform: 'rotate(-9deg)', zIndex: 1 }, '1.1 / 1')}
+            {print(pic(2), { left: '69cqw', top: '10cqw', width: '25cqw', transform: 'rotate(8deg)', zIndex: 1 }, '1.1 / 1')}
+            {print(cover.web || undefined, { left: '33cqw', top: '5cqw', width: '38cqw', transform: 'rotate(-1.5deg)', zIndex: 2 }, '1.2 / 1')}
+            <div className="absolute inset-x-0 text-center" style={{ bottom: '2.2cqw', zIndex: 3 }}>
+              <h1 style={{ fontFamily: "'Pinyon Script', 'Snell Roundhand', cursive", color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', fontSize: 'max(20px, ' + fs + 'cqw)', lineHeight: 1.1, margin: 0 }}>{data.title}</h1>
+              {brand?.name && <p style={{ color: pal.soft, textTransform: 'uppercase', letterSpacing: '0.4em', fontSize: 'max(8px, 1.15cqw)', margin: '0.6cqw 0 0' }}>{brand.name}</p>}
+            </div>
+          </div>
+        )
+      })() : coverKind === 'diptych' && cover?.web ? (() => {
+        const second = data.photos.find((p) => p.id !== cover.id && p.web)
+        const lines = String(data.title).split(/\s*(&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean).map((x) => (/^(and)$/i.test(x) ? '&' : x === '+' ? '&' : x))
+        const longest = Math.max(...lines.map((x) => x.length), 4)
+        const fs = Math.min(4.6, 11 / (longest * 0.5)) + 'cqw'
+        return (
+          <div className="grid w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', gridTemplateColumns: '1fr minmax(84px, 13%) 1fr', background: pal.bg }}>
+            <div className="relative overflow-hidden" style={{ background: pal.line }}><div className="absolute inset-0">{imgEl}</div></div>
+            <div className={'flex flex-col items-center justify-center text-center ' + headCls} style={{ ...headStyle, background: pal.bg, color: pal.ink, textTransform: 'none', fontStyle: 'normal', fontWeight: 400, letterSpacing: '0.01em', fontSize: 'max(15px, ' + fs + ')', lineHeight: 1.35, padding: '0 6px', gap: '0.4em' }}>
+              {lines.map((l, i) => <span key={i}>{l}</span>)}
+            </div>
+            <div className="relative overflow-hidden" style={{ background: pal.line }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={second?.web || cover.web || undefined} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: second ? '50% 50%' : '85% 50%' }} />
+            </div>
+          </div>
+        )
+      })() : coverKind === 'magazine' && cover?.web ? (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.line }}>
+          <div className="absolute inset-0">{imgEl}</div>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.38), rgba(0,0,0,0) 45%)' }} />
+          <div className="absolute inset-x-0 top-0" style={{ padding: '0.4cqw 4.5cqw 0' }}>
+            <h1 className={headCls} style={{ ...headStyle, color: '#FBF2E4', fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '-0.01em', lineHeight: 1, textAlign: 'center', whiteSpace: 'nowrap', fontSize: Math.min(18, 220 / Math.max(String(data.title).length, 6)) + 'cqw', margin: 0, textShadow: '0 1px 18px rgba(0,0,0,0.25)' }}>{data.title}</h1>
+            <div className="flex items-center justify-between" style={{ color: '#FBF2E4', textTransform: 'uppercase', letterSpacing: '0.32em', fontSize: 'clamp(8px, 1.4cqw, 16px)', marginTop: '1.2cqw' }}>
+              <span>{brand?.name ?? ''}</span>
+              <span>{data.photos.length} photos</span>
+            </div>
+          </div>
+        </div>
+      ) : coverKind === 'monogram' && cover?.web ? (() => {
+        const parts = String(data.title).split(/\s*(?:&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean)
+        const mono = (parts.length >= 2 ? parts[0][0] + ' & ' + parts[1][0] : (parts[0] || '').split(/\s+/).slice(0, 2).map((w) => w[0]).join(' ')).toUpperCase()
+        return (
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.line }}>
+            <div className="absolute inset-0">{imgEl}</div>
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.4))' }} />
+            <div className={'absolute inset-0 flex items-center justify-center ' + headCls} style={{ ...headStyle, fontWeight: 300, fontStyle: 'normal', textTransform: 'none', letterSpacing: '-0.02em', color: 'rgba(255,255,255,0.55)', fontSize: '50cqw', lineHeight: 1, whiteSpace: 'nowrap', paddingBottom: '4cqw' }}>{mono}</div>
+            <div className="absolute inset-x-0 bottom-0 text-center text-white" style={{ padding: '0 16px clamp(14px, 3vw, 52px)' }}>
+              <h1 className={headCls} style={{ ...headStyle, color: '#fff', fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: '0.1em', fontSize: 'clamp(1.1rem, 2.7vw, 2.7rem)', margin: 0 }}>{data.title}</h1>
+              {brand?.name && <p style={{ color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.32em', fontSize: 'clamp(8px, 1vw, 14px)', margin: 'clamp(4px, 0.8vw, 12px) 0 0' }}>{brand.name}</p>}
+            </div>
+          </div>
+        )
+      })() : coverKind === 'cinema' && cover?.web ? (
+        <div style={{ background: '#000' }}>
+          <div style={{ height: 'clamp(14px, 3vw, 56px)' }} />
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2.57 / 1' }}>
+            <div className="absolute inset-0">{imgEl}</div>
+          </div>
+          <div className="text-center" style={{ padding: 'clamp(14px, 2.4vw, 44px) 16px clamp(16px, 2.8vw, 52px)' }}>
+            <h1 style={{ ...headStyle, color: '#F1E6D2', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.32em', fontSize: 'clamp(0.95rem, 2.3vw, 2.3rem)', margin: 0 }}>{data.title}</h1>
+            {brand?.name && <p style={{ color: 'rgba(241,230,210,0.7)', textTransform: 'uppercase', letterSpacing: '0.3em', fontSize: 'clamp(8px, 1vw, 14px)', margin: 'clamp(6px, 1vw, 16px) 0 0' }}>{brand.name}</p>}
+          </div>
+        </div>
+      ) : coverKind === 'text' || !cover?.web ? (
         <div className="px-6 py-20 text-center">
           {brandLine}
           {titleEl('text-4xl sm:text-5xl')}

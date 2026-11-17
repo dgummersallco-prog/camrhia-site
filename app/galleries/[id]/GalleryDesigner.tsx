@@ -170,7 +170,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <div className="mt-3 grid grid-cols-3 gap-2">
           {COVERS.map((c) => (
             <button key={c.k} type="button" onClick={() => change({ cover: c.k })} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
-              <div className="overflow-hidden rounded border border-black/5"><CoverMock k={c.k} /></div>
+              <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>
               <span className="mt-1 block text-[11px] text-ink">{c.name}</span>
             </button>
           ))}

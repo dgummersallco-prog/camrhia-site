@@ -9,15 +9,15 @@ const SERIF = "Georgia, 'Times New Roman', serif"
 const SANS = "'Helvetica Neue', Arial, sans-serif"
 
 export const LOOKS: Record<string, LookSpec> = {
-  classic: { name: 'Heirloom', blurb: 'Warm serif, soft corners.', font: 'fraunces', upper: false, weight: 600, track: '0', radius: 8, gap: 12, grid: 'masonry', cover: 'bottom', colors: 'ivory' },
-  fine: { name: 'Linen', blurb: 'Thin, spaced capitals.', font: SERIF, upper: true, weight: 400, track: '0.18em', radius: 0, gap: 20, grid: 'uniform', cover: 'center', colors: 'white' },
-  minimal: { name: 'Plain', blurb: 'Clean and quiet, tight grid.', font: SANS, upper: false, weight: 300, track: '0', radius: 0, gap: 4, grid: 'uniform', cover: 'below', colors: 'white' },
-  airy: { name: 'Daylight', blurb: 'Light and open, lots of space.', font: 'fraunces', upper: false, weight: 300, track: '0', radius: 2, gap: 24, grid: 'masonry', cover: 'frame', colors: 'ivory' },
-  spotlight: { name: 'After dark', blurb: 'Dark and dramatic.', font: SANS, upper: true, weight: 600, track: '0.12em', radius: 10, gap: 10, grid: 'masonry', cover: 'center', colors: 'charcoal' },
-  editorial: { name: 'Press', blurb: 'Bold magazine type.', font: 'fraunces', upper: true, weight: 700, track: '0.04em', radius: 0, gap: 8, grid: 'masonry', cover: 'split', colors: 'sand' },
-  expressive: { name: 'Loud', blurb: 'Big, rounded and loud.', font: "'Arial Black', Helvetica, sans-serif", upper: true, weight: 800, track: '0.02em', radius: 22, gap: 10, grid: 'masonry', cover: 'bottom', colors: 'blush' },
-  folk: { name: 'Handmade', blurb: 'Handmade, italic serif.', font: SERIF, upper: false, italic: true, weight: 400, track: '0', radius: 16, gap: 16, grid: 'masonry', cover: 'frame', colors: 'sage' },
-  soft: { name: 'Petal', blurb: 'Gentle and rounded.', font: 'fraunces', upper: false, weight: 400, track: '0', radius: 28, gap: 14, grid: 'masonry', cover: 'center', colors: 'mist' },
+  classic: { name: 'Heirloom', blurb: 'Warm serif, soft corners.', font: 'fraunces', upper: false, weight: 600, track: '0', radius: 8, gap: 12, grid: 'masonry', cover: 'cinema', colors: 'ivory' },
+  fine: { name: 'Linen', blurb: 'Thin, spaced capitals.', font: SERIF, upper: true, weight: 400, track: '0.18em', radius: 0, gap: 20, grid: 'uniform', cover: 'monogram', colors: 'white' },
+  minimal: { name: 'Plain', blurb: 'Clean and quiet, tight grid.', font: SANS, upper: false, weight: 300, track: '0', radius: 0, gap: 4, grid: 'uniform', cover: 'bigtype', colors: 'white' },
+  airy: { name: 'Daylight', blurb: 'Light and open, lots of space.', font: 'fraunces', upper: false, weight: 300, track: '0', radius: 2, gap: 24, grid: 'masonry', cover: 'arch', colors: 'ivory' },
+  spotlight: { name: 'After dark', blurb: 'Dark and dramatic.', font: SANS, upper: true, weight: 600, track: '0.12em', radius: 10, gap: 10, grid: 'masonry', cover: 'magazine', colors: 'charcoal' },
+  editorial: { name: 'Press', blurb: 'Bold magazine type.', font: 'fraunces', upper: true, weight: 700, track: '0.04em', radius: 0, gap: 8, grid: 'masonry', cover: 'diptych', colors: 'sand' },
+  expressive: { name: 'Loud', blurb: 'Big, rounded and loud.', font: "'Arial Black', Helvetica, sans-serif", upper: true, weight: 800, track: '0.02em', radius: 22, gap: 10, grid: 'masonry', cover: 'stack', colors: 'blush' },
+  folk: { name: 'Handmade', blurb: 'Handmade, italic serif.', font: SERIF, upper: false, italic: true, weight: 400, track: '0', radius: 16, gap: 16, grid: 'masonry', cover: 'postcard', colors: 'sage' },
+  soft: { name: 'Petal', blurb: 'Gentle and rounded.', font: 'fraunces', upper: false, weight: 400, track: '0', radius: 28, gap: 14, grid: 'masonry', cover: 'circle', colors: 'mist' },
 }
 export const LOOK_KEYS = ['classic', 'fine', 'minimal', 'airy', 'spotlight', 'editorial', 'expressive', 'folk', 'soft']
 
@@ -38,17 +38,24 @@ export const PALETTES: Palette[] = [
 ]
 
 export const COVERS = [
-  { k: 'bottom', name: 'Caption' },
-  { k: 'center', name: 'Centered' },
-  { k: 'split', name: 'Side by side' },
-  { k: 'frame', name: 'Matted' },
-  { k: 'below', name: 'Below' },
-  { k: 'text', name: 'Words only' },
+  { k: 'cinema', name: 'Cinema' },
+  { k: 'monogram', name: 'Monogram' },
+  { k: 'magazine', name: 'Magazine' },
+  { k: 'diptych', name: 'Diptych' },
+  { k: 'stack', name: 'Stack' },
+  { k: 'arch', name: 'Arch' },
+  { k: 'strip', name: 'Film strip' },
+  { k: 'bigtype', name: 'Big type' },
+  { k: 'postcard', name: 'Postcard' },
+  { k: 'mosaic', name: 'Mosaic' },
+  { k: 'circle', name: 'Circle' },
+  { k: 'ticket', name: 'Ticket' },
 ]
+const LEGACY_COVER: Record<string, string> = { bottom: 'cinema', center: 'monogram', split: 'diptych', frame: 'arch', below: 'bigtype', text: 'cinema' }
 
 export function resolveDesign(d?: GalleryDesign | null) {
   const look = LOOKS[d?.look ?? ''] ?? LOOKS.classic
-  const cv = d?.cover
+  const cv = LEGACY_COVER[d?.cover ?? ''] ?? d?.cover
   const cover = cv && COVERS.some((c) => c.k === cv) ? cv : look.cover
   const pal = PALETTES.find((p) => p.key === d?.colors) ?? PALETTES.find((p) => p.key === look.colors) ?? PALETTES[0]
   const f = d?.focal
