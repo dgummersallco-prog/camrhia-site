@@ -1666,21 +1666,61 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </div>
           </header>
         )}
-        {page === 'home' && tpl === 'magazine' && (
-          <header data-name="Cover" id="top">
-            <style>{`#top #nav{border-bottom:0!important}#top .el-menu_brand{font-weight:800!important;letter-spacing:-0.02em}#top .el-menu_links{font-weight:700!important;letter-spacing:0.14em}`}</style>
-            {renderNav(false, false)}
-            <div className="mx-auto max-w-6xl px-6 pt-6" style={{ textAlign: (((r as any).site_settings?.hero?.align ?? 'left') as 'left' | 'center' | 'right') }}>
-              {String((r as any).site_subhead ?? '').trim() && <p className="cr-sub mb-3 text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{String((r as any).site_subhead).trim()}</p>}
-              <h1 style={{ ...headStyle, fontSize: 'calc(var(--hl) * 1.5)', lineHeight: 0.98, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-0.025em' }}>{headline}</h1>
-              {heroPara(soft)}
+        {page === 'home' && tpl === 'magazine' && (() => {
+          const PF = "'Poppins', 'Helvetica Neue', Arial, sans-serif"
+          const brandTxt = String(t.menu.brand ?? '').trim() || String((r as any).studio_name ?? '').trim() || 'Marcus Cole'
+          const hl = String((r as any).site_headline ?? '').trim() || 'Authentic moments. Timeless photography.'
+          const hlLines = hl.replace(/([.!?])\s+/g, '$1\n').split('\n')
+          const rawCta = String((t.hero as any).heroCtaText ?? '').trim()
+          const ctaLabel = rawCta && rawCta.toLowerCase() !== 'check availability' ? rawCta : 'Book a session'
+          const mtn = (bgc: string, fgc: string) => (
+            <div className="absolute inset-0" style={{ background: bgc }}>
+              <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
+                <circle cx="300" cy="58" r="16" fill={fgc} opacity="0.55" />
+                <path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill={fgc} opacity="0.8" />
+              </svg>
             </div>
-            <div className="relative mt-6 w-full overflow-hidden" style={{ height: 'calc(var(--hero-h) * 0.8)' }}>
-              {heroImg('absolute inset-0 h-full w-full')}
-              <div className="absolute bottom-0 left-0 px-6 pb-6">{cta()}</div>
-            </div>
-          </header>
-        )}
+          )
+          const pics = (mosaicSrcs.length > 0 ? mosaicSrcs : shownHero).slice(0, 3)
+          return (
+            <>
+              <header data-name="Cover" id="top" style={{ fontFamily: PF, background: '#fff', color: '#000' }}>
+                <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" />
+                <div data-name="Menu bar" id="nav" className="flex w-full items-center justify-between px-8 py-5">
+                  <a href={hrefs.home} data-name="Brand name" className="el-menu_brand" style={{ fontFamily: PF, fontWeight: 800, fontSize: 26, letterSpacing: '-0.02em', color: '#000' }}>{brandTxt}</a>
+                  <ul className="hidden gap-7 md:flex">
+                    {navItems.map((n) => (
+                      <li key={n.key}>
+                        <a href={n.href} className="el-menu_links uppercase" style={{ fontFamily: PF, fontWeight: 700, fontSize: 12, letterSpacing: '0.04em', color: t.menu.linkColor ?? '#000' }}>{n.label}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="w-full px-8 pb-6 pt-2">
+                  <h1 data-name="Headline" style={{ fontFamily: PF, fontWeight: 800, textTransform: 'uppercase', fontSize: 'clamp(1.9rem, 4.6vw, 4.2rem)', lineHeight: 1.02, letterSpacing: '-0.02em', textAlign: (((r as any).site_settings?.hero?.align ?? 'left') as 'left' | 'center' | 'right') }}>
+                    {hlLines.map((l, k) => <span key={k} className="block">{l}</span>)}
+                  </h1>
+                </div>
+                <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2.9 / 1', minHeight: 240 }}>
+                  {shownHero.length === 0 ? <div data-name="Cover image" className="absolute inset-0">{mtn('#d8d3cb', '#a9a299')}</div> : heroImg('absolute inset-0 h-full w-full')}
+                  <a data-name="Button" id="hero-btn" href={availHref} className="absolute bottom-6 left-6 uppercase" style={{ background: '#000', color: '#fff', fontFamily: PF, fontWeight: 700, fontSize: 11, letterSpacing: '0.16em', padding: '14px 26px' }}>{ctaLabel}</a>
+                </div>
+              </header>
+              <section data-name="Featured work" id="featured" style={{ background: '#000', color: '#fff', fontFamily: PF }}>
+                <div className="w-full px-8 pb-8 pt-7">
+                  <h2 data-name="Featured work title" className="uppercase" style={{ fontFamily: PF, fontWeight: 700, fontSize: 'clamp(1rem, 1.6vw, 1.5rem)', letterSpacing: '0.18em', marginBottom: 16 }}>Featured work</h2>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[0, 1, 2].map((k) => (
+                      <div key={k} data-name={'Featured photo ' + (k + 1)} className="relative overflow-hidden" style={{ aspectRatio: '1.25 / 1', background: '#222' }}>
+                        {pics[k] ? <img src={pics[k]} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#2b2b2b', '#4a4a4a')}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            </>
+          )
+        })()}
         {page === 'home' && tpl === 'peony' && (
           <>
             <header data-name="Cover" id="top" className="relative flex flex-col overflow-hidden" style={{ minHeight: 'var(--hero-h)' }}>
