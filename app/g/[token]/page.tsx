@@ -626,7 +626,9 @@ export default function GalleryViewPage() {
       })() : coverKind === 'bigtype' && cover?.web ? (() => {
         const t = String(data.title).toUpperCase()
         const n = Math.max(t.length, 1)
-        const len = Math.min(868, 78.9 * n)
+        const tsz = Number((el as Record<string, { size?: number }> | undefined)?.title?.size) || 144
+        const len = Math.min(880, 78.9 * n * (tsz / 144))
+        const inCol = (el as Record<string, { color?: string }> | undefined)?.titlein?.color || pal.bg
         const ts: CSSProperties = { ...headStyle, fontWeight: 300, fontStyle: 'normal', letterSpacing: 0, textTransform: 'uppercase' }
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
         return (
@@ -638,8 +640,8 @@ export default function GalleryViewPage() {
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
               <defs><clipPath id="bt-photo"><rect x="53" y="41" width="793" height="340" /></clipPath></defs>
               {sub && <text data-gk="brand" x="840" y="22.5" textAnchor="end" style={{ ...ts, fontWeight: 400, fontSize: 9, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(202, 11.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
-              <text data-gk="title" x="454" y="434" textAnchor="middle" style={{ ...ts, fontSize: 144, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text>
-              <text x="454" y="434" textAnchor="middle" clipPath="url(#bt-photo)" style={{ ...ts, fontSize: 144, fill: pal.bg }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text>
+              <text data-gk="title" x="454" y="434" textAnchor="middle" style={{ ...ts, fontSize: tsz, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text>
+              <text data-gk="title" x="454" y="434" textAnchor="middle" clipPath="url(#bt-photo)" style={{ ...ts, fontSize: tsz, fill: inCol, pointerEvents: 'auto' }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text>
             </svg>
           </div>
         )
@@ -686,26 +688,35 @@ export default function GalleryViewPage() {
       ) : coverKind === 'stack' && cover?.web ? (() => {
         const others = data.photos.filter((p) => p.id !== cover.id && (p.thumb || p.web)).slice(0, 3)
         const pic = (i: number) => (others[i]?.thumb || others[i]?.web || cover.web || undefined)
-        const fs = Math.min(6.4, 53 / (0.38 * Math.max(String(data.title).length, 6)))
-        const print = (src: string | undefined, st: CSSProperties, ar: string) => (
-          <div className="absolute" style={{ background: '#FBF9F4', padding: '1.35cqw 1.35cqw 4.7cqw', boxShadow: '0 1.2cqw 3cqw rgba(60,40,20,0.22)', ...st }}>
-            <div style={{ aspectRatio: ar, overflow: 'hidden', background: pal.line }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </div>
-          </div>
-        )
+        const slots = [
+          { cx: 168.5, cy: 191, w: 183.5, h: 171.7, a: -10.8, src: pic(0) },
+          { cx: 295, cy: 110.5, w: 189.8, h: 161.7, a: -10.6, src: pic(1) },
+          { cx: 719.8, cy: 196, w: 200.3, h: 175.8, a: 13.7, src: pic(2) },
+        ]
+        const title = String(data.title)
+        const sub = coverSub ? String(coverSub).toUpperCase() : ''
+        const sc: CSSProperties = { fontFamily: "'Mrs Saint Delafield', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#5A3A28', pointerEvents: 'auto' }
+        const ss: CSSProperties = { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: 0, fill: 'currentColor', color: '#6B4F3C', pointerEvents: 'auto' }
+        const box = (cx: number, cy: number, w: number, h: number, a: number): CSSProperties => ({ left: ((cx - w / 2) / 9) + 'cqw', top: ((cy - h / 2) / 9) + 'cqw', width: (w / 9) + 'cqw', height: (h / 9) + 'cqw', transform: 'rotate(' + a + 'deg)' })
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" />
-            {print(pic(0), { left: '18.5cqw', top: '3.7cqw', width: '23cqw', transform: 'rotate(-6deg)', zIndex: 0 }, '1.1 / 1')}
-            {print(pic(1), { left: '7.9cqw', top: '10.4cqw', width: '22.3cqw', transform: 'rotate(-11deg)', zIndex: 1 }, '1.1 / 1')}
-            {print(pic(2), { left: '68.5cqw', top: '11.4cqw', width: '22.3cqw', transform: 'rotate(14deg)', zIndex: 1 }, '1.09 / 1')}
-            {print(cover.web || undefined, { left: '34.2cqw', top: '3.4cqw', width: '35.5cqw', transform: 'rotate(3deg)', zIndex: 2 }, '1.18 / 1')}
-            <div className="absolute inset-x-0 text-center" style={{ bottom: '1.6cqw', zIndex: 3 }}>
-              <h1 style={{ fontFamily: "'Pinyon Script', 'Snell Roundhand', cursive", color: pal.ink, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', fontSize: 'max(20px, ' + fs + 'cqw)', lineHeight: 1.1, margin: 0 }}>{data.title}</h1>
-              {coverSub && <p style={{ color: pal.soft, textTransform: 'uppercase', letterSpacing: '0.4em', fontSize: 'max(8px, 1.15cqw)', margin: '0.6cqw 0 0' }}>{coverSub}</p>}
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#F3E4CB' }}>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Playfair+Display:wght@500&display=swap" />
+            {slots.map((sl, k) => (
+              <div key={k} className="absolute overflow-hidden" style={{ ...box(sl.cx, sl.cy, sl.w, sl.h, sl.a), background: pal.line }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={sl.src} alt="" className="h-full w-full object-cover" />
+              </div>
+            ))}
+            <div className="absolute overflow-hidden" style={{ ...box(473, 169.7, 292.7, 250.8, 3.96), background: pal.line }}>
+              <div className="absolute inset-0">{imgEl}</div>
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/gallery-cover/stack-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
+            <h1 className="sr-only">{data.title}</h1>
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
+              <text data-gk="title" x="451" y="400" textAnchor="middle" style={{ ...sc, fontSize: 112 }} textLength={Math.min(483, 24.15 * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
+              {sub && <text data-gk="brand" x="448" y="430" textAnchor="middle" style={{ ...ss, fontSize: 14 }} textLength={Math.min(230, 19.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+            </svg>
           </div>
         )
       })() : coverKind === 'diptych' && cover?.web ? (() => {

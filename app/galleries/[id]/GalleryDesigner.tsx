@@ -323,6 +323,12 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                       <input type="text" maxLength={4} value={cur?.text ?? ''} placeholder="Auto from title" onChange={(e) => setEl(pick.key, { text: e.target.value })} className="mt-1 w-full rounded border border-black/10 bg-white px-2 py-1.5 text-sm text-ink" />
                     </label>
                   )}
+                  {pick.key === 'title' && eff.cover === 'bigtype' && (
+                    <label className="flex items-center gap-2 text-xs text-ink-soft">
+                      <input type="color" value={eff.el?.titlein?.color ?? '#FFFFFF'} onChange={(e) => setEl('titlein', { color: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-black/10" />
+                      Color over the photo (the color above is below the photo)
+                    </label>
+                  )}
                   {pick.key === 'brand' && (
                     <label className="block text-xs text-ink-soft">Cover subtitle (date, season, etc.)
                       <input type="text" maxLength={40} value={cur?.text ?? ''} placeholder="Studio name" onChange={(e) => setEl(pick.key, { text: e.target.value })} className="mt-1 w-full rounded border border-black/10 px-2 py-1.5 text-sm text-ink" />
