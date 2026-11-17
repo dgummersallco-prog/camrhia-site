@@ -600,7 +600,7 @@ export default function GalleryViewPage() {
         const one = words.length <= 1
         const l1 = one ? (words[0] || '') : words.slice(0, -1).join(' ')
         const l2 = one ? '' : words[words.length - 1]
-        const sc: CSSProperties = { fontFamily: "'Mrs Saint Delafield', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#3A2A22', pointerEvents: 'auto' }
+        const sc: CSSProperties = { fontFamily: "'Allura', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#3A2A22', pointerEvents: 'auto' }
         const pm: CSSProperties = { ...sc, fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, color: '#2A2018' }
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
         const ci = sub.indexOf(',')
@@ -609,7 +609,7 @@ export default function GalleryViewPage() {
         const pmL: string[] = !sub ? [] : ci > 0 ? [sub.slice(0, ci + 1).trim(), sub.slice(ci + 1).trim()] : sw.length > 1 ? [sw.slice(0, half).join(' '), sw.slice(half).join(' ')] : [sub]
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#E8D5BA' }}>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Playfair+Display:wght@500&display=swap" />
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Allura&family=Playfair+Display:wght@500&display=swap" />
             <div className="absolute overflow-hidden" style={{ left: '6.92cqw', top: '5.16cqw', width: '46.67cqw', height: '40.67cqw', transform: 'rotate(-3deg)', background: pal.line }}>
               <div className="absolute inset-0">{imgEl}</div>
             </div>
@@ -696,12 +696,12 @@ export default function GalleryViewPage() {
         ]
         const title = String(coverTitle)
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
-        const sc: CSSProperties = { fontFamily: "'Mrs Saint Delafield', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#5A3A28', pointerEvents: 'auto' }
+        const sc: CSSProperties = { fontFamily: "'Allura', 'Homemade Apple', cursive", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', color: '#5A3A28', pointerEvents: 'auto' }
         const ss: CSSProperties = { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: 0, fill: 'currentColor', color: '#6B4F3C', pointerEvents: 'auto' }
         const box = (cx: number, cy: number, w: number, h: number, a: number): CSSProperties => ({ left: ((cx - w / 2) / 9) + 'cqw', top: ((cy - h / 2) / 9) + 'cqw', width: (w / 9) + 'cqw', height: (h / 9) + 'cqw', transform: 'rotate(' + a + 'deg)' })
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#F3E4CB' }}>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Playfair+Display:wght@500&display=swap" />
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Allura&family=Playfair+Display:wght@500&display=swap" />
             {slots.map((sl, k) => (
               <div key={k} className="absolute overflow-hidden" style={{ ...box(sl.cx, sl.cy, sl.w, sl.h, sl.a), background: pal.line }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
