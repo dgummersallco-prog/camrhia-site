@@ -33,7 +33,7 @@ type MiniOpt = { id: string; title: string; description: string | null; location
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image', 'og_site', 'og_art', 'og_name_size', 'og_title_size', 'og_sub_size']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image', 'og_site', 'og_art', 'og_name_size', 'og_title_size', 'og_sub_size', 'og_wide']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -635,6 +635,7 @@ export default function SpecialsPage() {
   }
   const ogInput = useRef<HTMLInputElement>(null)
   const [artPrompt, setArtPrompt] = useState('')
+  const [ogTab, setOgTab] = useState<'bar' | 'pic'>('bar')
   async function makeOgArt() {
     const sb = supabase
     if (!sb || !form || !artPrompt.trim()) return
@@ -688,11 +689,12 @@ export default function SpecialsPage() {
     const nSize = Number(form.text.og_name_size) || 30
     const sSize = Number(form.text.og_sub_size) || 34
     const userT = Number(form.text.og_title_size) || 0
+    const maxW = form.text.og_wide === '1' ? 1050 : 580
     let tSize = userT || 96
     let tLines: string[] = []
-    for (; tSize >= 20; tSize -= 4) { ctx.font = `${tSize}px ${headF}`; tLines = wrap(title, 1050); if (userT || tLines.length <= 3) break }
+    for (; tSize >= 20; tSize -= 4) { ctx.font = `${tSize}px ${headF}`; tLines = wrap(title, maxW); if (userT || tLines.length <= 3) break }
     ctx.font = `${sSize}px ${subF}`
-    const sLines = sub ? wrap(sub, 1000).slice(0, 3) : []
+    const sLines = sub ? wrap(sub, maxW).slice(0, 4) : []
     const gap = 24
     const blockH = (name ? nSize * 1.3 + gap : 0) + tLines.length * tSize * 1.1 + (sLines.length ? gap + sLines.length * sSize * 1.3 : 0)
     let y = (H - blockH) / 2
@@ -1309,6 +1311,8 @@ export default function SpecialsPage() {
 
                     <MiniCard title="Link preview" summary={form.text.og_title || form.text.hero_headline}>
                       <p className="text-xs text-ink-soft">What shows when this link is texted or shared.</p>
+                      <Chips value={ogTab} options={[{ id: 'bar', label: 'The bar underneath' }, { id: 'pic', label: 'The picture' }]} onChange={setOgTab} />
+                      {ogTab === 'bar' && (<>
                       <label className="block">
                         <Label>Title</Label>
                         <input placeholder={form.text.hero_headline || 'Title'} value={form.text.og_title} onChange={(e) => setText('og_title', e.target.value)} className={inputCls} />
@@ -1322,6 +1326,8 @@ export default function SpecialsPage() {
                         <input placeholder={form.text.brand_name || 'Studio name'} value={form.text.og_site} onChange={(e) => setText('og_site', e.target.value)} className={inputCls} />
                         <span className="mt-1 block text-xs text-ink-soft">Some apps show your web address here instead.</span>
                       </label>
+                      </>)}
+                      {ogTab === 'pic' && (<>
                       <div className="flex flex-wrap gap-4">
                         <div>
                           <Label>Studio name size</Label>
@@ -1336,7 +1342,11 @@ export default function SpecialsPage() {
                           <SizeField value={Number(form.text.og_sub_size) || 34} min={14} max={80} onChange={(n) => setText('og_sub_size', String(n))} />
                         </div>
                       </div>
-                      <p className="text-xs text-ink-soft">Sizes apply when you tap Make from my design.</p>
+                      <label className="flex items-center gap-2 text-sm text-ink">
+                        <input type="checkbox" checked={form.text.og_wide !== '1'} onChange={(e) => setText('og_wide', e.target.checked ? '' : '1')} className="accent-twilight" />
+                        Keep the words in the middle (Instagram cuts off the sides)
+                      </label>
+                      <p className="text-xs text-ink-soft">These are the sizes of the words drawn inside the picture itself (the picture is 1200 wide), not the bar underneath. Tap Make from my design to redraw it after changing them.</p>
                       <div>
                         <Label>Have Camri paint a background</Label>
                         <input placeholder="Describe it, like soft candlelit pine branches" value={artPrompt} onChange={(e) => setArtPrompt(e.target.value)} className={inputCls} />
@@ -1353,6 +1363,7 @@ export default function SpecialsPage() {
                           {form.text.og_image && <button type="button" onClick={() => setText('og_image', '')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink-soft transition hover:border-twilight">Remove</button>}
                         </div>
                       </div>
+                      </>)}
                     </MiniCard>
                   </div>
                 </StepCard>
@@ -1380,8 +1391,8 @@ export default function SpecialsPage() {
                   <p className="mb-1 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Link preview</p>
                   <style>{`#og-preview [contenteditable]{cursor:text;outline:none}#og-preview [contenteditable]:hover{outline:1px dashed #A9545F;outline-offset:2px}#og-preview [contenteditable]:focus{outline:1px solid #A9545F;outline-offset:2px}#og-preview [data-ph]:empty::before{content:attr(data-ph);opacity:.4;pointer-events:none}`}</style>
                   <div id="og-preview" className="overflow-hidden rounded-2xl border border-line bg-card">
-                    {form.text.og_image ? <img src={form.text.og_image} alt="" className="aspect-[1200/630] w-full object-cover" /> : <div className="flex aspect-[1200/630] w-full items-center justify-center bg-line/40 text-xs text-ink-soft">No picture yet</div>}
-                    <div className="px-3 py-2">
+                    {form.text.og_image ? <img src={form.text.og_image} alt="" onClick={() => setOgTab('pic')} className="aspect-[1200/630] w-full cursor-pointer object-cover" /> : <div onClick={() => setOgTab('pic')} className="flex aspect-[1200/630] w-full cursor-pointer items-center justify-center bg-line/40 text-xs text-ink-soft">No picture yet</div>}
+                    <div className="px-3 py-2" onClick={() => setOgTab('bar')}>
                       <Editable tag="p" single value={form.text.og_title} onChange={(v) => setText('og_title', v)} placeholder={form.text.hero_headline || 'Title'} className="text-sm font-semibold text-ink" />
                       <Editable tag="p" value={form.text.og_desc} onChange={(v) => setText('og_desc', v)} placeholder={form.text.hero_sub || 'Description'} className="text-xs text-ink-soft" />
                       <Editable tag="p" single value={form.text.og_site} onChange={(v) => setText('og_site', v)} placeholder={form.text.brand_name || 'camrhia.com'} className="mt-0.5 text-xs text-ink-soft/60" />
