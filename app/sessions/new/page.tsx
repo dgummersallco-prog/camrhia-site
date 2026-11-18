@@ -40,7 +40,20 @@ export default function NewSessionPage() {
   const [pkgId, setPkgId] = useState('')
   const [booked, setBooked] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [leadId, setLeadId] = useState('')
+  const [cPhone, setCPhone] = useState('')
+  const [cEmail, setCEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search)
+    if (q.get('lead')) {
+      setLeadId(q.get('lead') ?? '')
+      setNames(q.get('name') ?? '')
+      setCPhone(q.get('phone') ?? '')
+      setCEmail(q.get('email') ?? '')
+    }
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -104,6 +117,14 @@ export default function NewSessionPage() {
     const { data, error: e } = await sb.from('weddings').insert(payload).select('id').single()
     setBusy(false)
     if (e || !data) { setError(e?.message ?? 'Something went wrong. Please try again.'); return }
+    if (leadId) {
+      const nm = names.trim()
+      if (cPhone.trim() || cEmail.trim()) {
+        await sb.from('client_contacts').insert({ owner_id: uid, client_key: nm.toLowerCase(), name: nm, role: 'Client', phone: cPhone.trim() || null, email: cEmail.trim() || null })
+      }
+      await sb.from('funnel_leads').update({ handled_at: new Date().toISOString() }).eq('id', leadId)
+      window.dispatchEvent(new Event('camrhia-leads'))
+    }
     router.push(`/sessions/${(data as { id: string }).id}`)
   }
 
@@ -119,6 +140,12 @@ export default function NewSessionPage() {
             <label className={lab}>Session name</label>
             <input className={input} value={names} onChange={(e) => setNames(e.target.value)} placeholder="e.g. Emma & Jack, or The Miller Family" />
           </div>
+          {leadId && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><label className={lab}>Phone</label><input className={input} value={cPhone} onChange={(e) => setCPhone(e.target.value)} /></div>
+              <div><label className={lab}>Email</label><input className={input} value={cEmail} onChange={(e) => setCEmail(e.target.value)} /></div>
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className={lab}>Session type</label>

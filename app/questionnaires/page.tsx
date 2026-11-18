@@ -30,6 +30,7 @@ export default function QuestionnairesPage() {
       const counts: Record<string, number> = {}
       ;((qs.data ?? []) as { session_type: string }[]).forEach((q) => { counts[q.session_type] = (counts[q.session_type] ?? 0) + 1 })
       setTypes(visible.map((t) => ({ ...t, count: counts[t.key] ?? 0 })))
+      if (visible.length > 0 && window.innerWidth >= 1024) router.replace('/questionnaires/' + visible[0].key)
     }
     load()
   }, [router])

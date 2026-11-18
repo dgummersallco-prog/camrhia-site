@@ -269,7 +269,7 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
         {it.tab === 'messages' && unread > 0 && (
           <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[#A5646A]">{unread > 9 ? '9+' : unread}</span>
         )}
-        {it.tab === 'specials' && newLeads > 0 && (
+        {it.tab === 'clients' && newLeads > 0 && (
           <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[#A5646A]">{newLeads > 9 ? '9+' : newLeads}</span>
         )}
       </Link>

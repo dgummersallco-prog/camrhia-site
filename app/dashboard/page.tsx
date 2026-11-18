@@ -264,7 +264,7 @@ export default function DashboardPage() {
     notifId: n.id,
   })
   const attention: Item[] = [
-    ...(newLeads > 0 ? [{ key: 'leads', text: `${newLeads} new special sign-up${newLeads === 1 ? '' : 's'}. Reach out while they are interested.`, href: '/specials#signups', cta: 'See sign-ups' }] : []),
+    ...(newLeads > 0 ? [{ key: 'leads', text: `${newLeads} new special sign-up${newLeads === 1 ? '' : 's'}. Reach out while they are interested.`, href: '/clients?tab=leads', cta: 'See leads' }] : []),
     ...(unreadMsgs > 0 ? [{ key: 'msgs', text: `${unreadMsgs} unread conversation${unreadMsgs === 1 ? '' : 's'}`, href: '/messages', cta: 'Open messages' }] : []),
     ...notifs.filter(isPriorityNotif).map(notifItem),
     ...unsigned.map((u) => {

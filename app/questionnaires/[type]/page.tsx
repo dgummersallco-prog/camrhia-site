@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { DEFAULTS_BY_TYPE } from '@/lib/questionnaireDefaults'
+import TypeRail from '../TypeRail'
 
 type Q = { id: string; section: string; prompt: string; hint: string | null; sort_order: number }
 type Draft = { id: string | null; section: string; prompt: string; hint: string }
@@ -237,10 +238,12 @@ export default function QuestionnaireEditorPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="questionnaires" />
-      <main className="relative mx-auto mb-10 mt-24 max-w-3xl rounded-3xl bg-[#FBF7F2]/85 px-8 py-10 shadow-[0_8px_40px_rgba(60,40,30,0.10)] backdrop-blur-md">
+      <div className="mx-auto mb-10 mt-24 flex max-w-6xl items-start gap-6 px-6">
+      <TypeRail active={type} />
+      <main className="relative min-w-0 flex-1 rounded-3xl bg-[#FBF7F2]/85 px-8 py-10 shadow-[0_8px_40px_rgba(60,40,30,0.10)] backdrop-blur-md">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[69px] right-8 h-[100px] w-auto" />
-        <Link href="/questionnaires" className="text-sm text-ink-soft hover:text-ink">← All questionnaires</Link>
+        <Link href="/questionnaires" className="text-sm text-ink-soft hover:text-ink lg:hidden">← All questionnaires</Link>
         <div className="mb-4 mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Work</p>
@@ -335,6 +338,7 @@ export default function QuestionnaireEditorPage() {
           </>
         )}
       </main>
+      </div>
     </div>
   )
 }

@@ -154,7 +154,7 @@ export default function PackagesEditor() {
     setDraft({ id: null, name: '', price: '', covers: '', detail: '', session_type: tk ?? types.find((x) => x.key === 'wedding')?.key ?? types[0]?.key ?? 'wedding', delivery_days: '', show_public: true })
   }
   function startEdit(p: Pkg) {
-    setDraft({ id: p.id, name: p.name, price: p.price ?? '', covers: p.covers ?? '', detail: p.detail ?? '', session_type: p.session_type, delivery_days: p.delivery_days ? String(p.delivery_days) : '', show_public: p.show_public })
+    setDraft({ id: p.id, name: p.name, price: p.price ?? '', covers: '', detail: [p.covers, p.detail].filter((x) => x && x.trim()).join('\n'), session_type: p.session_type, delivery_days: p.delivery_days ? String(p.delivery_days) : '', show_public: p.show_public })
   }
 
   async function saveDraft() {
@@ -166,7 +166,7 @@ export default function PackagesEditor() {
     const fields = {
       name: draft.name.trim(),
       price: draft.price.trim() || null,
-      covers: draft.covers.trim() || null,
+      covers: null,
       detail: draft.detail.trim() || null,
       session_type: draft.session_type,
       delivery_days: Number.isFinite(days) && days > 0 ? days : null,
@@ -248,19 +248,14 @@ export default function PackagesEditor() {
               <label className={lab}>Package name</label>
               <input className={input} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Signature collection" />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className={lab}>Price</label>
-                <input className={input} value={draft.price} onChange={(e) => setDraft({ ...draft, price: e.target.value })} placeholder="$3,500" />
-              </div>
-              <div>
-                <label className={lab}>Coverage</label>
-                <input className={input} value={draft.covers} onChange={(e) => setDraft({ ...draft, covers: e.target.value })} placeholder="8 hours of coverage" />
-              </div>
+            <div className="max-w-xs">
+              <label className={lab}>Price</label>
+              <input className={input} value={draft.price} onChange={(e) => setDraft({ ...draft, price: e.target.value })} placeholder="$3,500" />
             </div>
             <div>
               <label className={lab}>What is included</label>
-              <textarea rows={5} className={input} value={draft.detail} onChange={(e) => setDraft({ ...draft, detail: e.target.value })} placeholder="Online gallery, 500+ edited images, second shooter…" />
+              <textarea rows={8} className={input} value={draft.detail} onChange={(e) => setDraft({ ...draft, detail: e.target.value })} placeholder={'8 hours of coverage\nSecond photographer\n500+ edited images\nPrivate online gallery'} />
+              <p className="mt-1 text-xs text-ink-soft">Put each item on its own line, including the hours of coverage.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>

@@ -231,27 +231,17 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
             <p className="line-clamp-2 shrink-0 break-words text-center font-fraunces text-xl font-bold leading-[1.15] text-ink">{c.name}</p>
             <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2" onClick={stop}>
               <div className={box + ' shrink-0'}>
-                <p className={LABEL}>Phone</p>
-                {phone ? (
+                {phone || email ? (
                   <>
-                    <p className="mt-0.5 break-all text-sm font-semibold text-ink">{phone}</p>
-                    <div className="mt-2 flex gap-1.5">
-                      <a href={`tel:${phone}`} className={pill}>Call</a>
-                      <a href={`sms:${phone}`} className={pill}>Text</a>
+                    {phone && <p className="break-all text-sm font-semibold text-ink">{phone}</p>}
+                    {email && <p className={(phone ? 'mt-1 ' : '') + 'break-all text-xs text-ink-soft'}>{email}</p>}
+                    <div className="mt-2.5 flex flex-wrap gap-1.5">
+                      {phone && <a href={`tel:${phone}`} className={pill}>Call</a>}
+                      {phone && <a href={`sms:${phone}`} className={pill}>Text</a>}
+                      {email && <a href={`mailto:${email}`} className={pill}>Email</a>}
                     </div>
                   </>
-                ) : <p className="mt-0.5 text-sm text-ink-soft/70">No phone yet</p>}
-              </div>
-              <div className={box + ' shrink-0'}>
-                <p className={LABEL}>Email</p>
-                {email ? (
-                  <>
-                    <p className="mt-0.5 break-all text-sm font-semibold text-ink">{email}</p>
-                    <div className="mt-2 flex gap-1.5">
-                      <a href={`mailto:${email}`} className={pill}>Email</a>
-                    </div>
-                  </>
-                ) : <p className="mt-0.5 text-sm text-ink-soft/70">No email yet</p>}
+                ) : <p className="text-sm text-ink-soft/70">No phone or email yet</p>}
               </div>
             </div>
             <div className="mt-3 shrink-0" onClick={stop}>
@@ -326,7 +316,8 @@ function LeadsView() {
               ? <span className="shrink-0 rounded-full bg-line px-2.5 py-1 text-[11px] font-semibold text-ink-soft">Handled</span>
               : <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ROSE }}>New</span>}
           </div>
-          <p className="mt-1 text-xs text-ink-soft">{names[l.funnel_id] ?? 'Special'} · {new Date(l.created_at).toLocaleDateString()}</p>
+          <p className="mt-2 inline-flex max-w-full items-center gap-1.5 self-start rounded-full bg-[#8C6B3F]/10 px-2.5 py-1 text-xs font-semibold text-[#8C6B3F]"><span aria-hidden>&#9733;</span><span className="truncate">{names[l.funnel_id] ?? 'Special'}</span></p>
+          <p className="mt-1.5 text-xs text-ink-soft">Signed up {new Date(l.created_at).toLocaleDateString()}</p>
           {l.phone && (
             <div className="mt-3">
               <p className="break-all text-sm font-semibold text-ink">{l.phone}</p>
@@ -341,7 +332,8 @@ function LeadsView() {
             <div className="mt-1.5 flex gap-1.5"><a href={'mailto:' + l.email} className={pill}>Email</a></div>
           </div>
           {l.note && <p className="mt-3 break-words text-xs text-ink">{l.note}</p>}
-          <button type="button" onClick={() => mark(l, !l.handled_at)} className="mt-4 rounded-2xl border border-white/90 bg-white/55 px-3 py-2 text-center text-sm font-semibold text-ink transition hover:bg-white/75">{l.handled_at ? 'Mark as new' : 'Mark as handled'}</button>
+          <Link href={'/sessions/new?lead=' + l.id + '&name=' + encodeURIComponent(l.name) + '&phone=' + encodeURIComponent(l.phone ?? '') + '&email=' + encodeURIComponent(l.email)} className="mt-4 block rounded-2xl px-3 py-2 text-center text-sm font-semibold text-white transition hover:opacity-90" style={{ background: '#8C6B3F' }}>Create session</Link>
+          <button type="button" onClick={() => mark(l, !l.handled_at)} className="mt-2 text-center text-xs font-medium text-ink-soft transition hover:text-ink">{l.handled_at ? 'Mark as new' : 'Mark as handled'}</button>
         </div>
       ))}
     </div>
@@ -360,6 +352,9 @@ export default function ClientsPage() {
   const [view, setView] = useState<'cards' | 'list'>('cards')
   const [mode, setMode] = useState<'clients' | 'leads'>('clients')
   const [leadsNew, setLeadsNew] = useState(0)
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'leads') setMode('leads')
+  }, [])
   const [open, setOpen] = useState<string | null>(null)
   const [fams, setFams] = useState<Fam[]>([])
   const [cts, setCts] = useState<Ct[]>([])
@@ -537,8 +532,8 @@ export default function ClientsPage() {
       <main className={'mx-auto px-6 py-10 ' + (view === 'cards' ? 'max-w-7xl' : 'max-w-4xl')}>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-fraunces text-4xl font-bold text-ink">Clients</h1>
-            {!loading && mode === 'clients' && <p className="mt-1 text-sm text-ink-soft">{clients.length} {clients.length === 1 ? 'client' : 'clients'}</p>}
+            <h1 className="font-fraunces text-4xl font-bold text-ink">{mode === 'leads' ? 'Leads' : 'Clients'}</h1>
+            <p className="mt-1 h-5 text-sm text-ink-soft">{mode === 'leads' ? leadsNew + ' new ' + (leadsNew === 1 ? 'lead' : 'leads') : !loading ? clients.length + ' ' + (clients.length === 1 ? 'client' : 'clients') : ''}</p>
             <div className="mt-3 flex w-fit overflow-hidden rounded-xl border border-white/70 bg-white/60 text-sm">
               {(['clients', 'leads'] as const).map((m) => (
                 <button key={m} type="button" onClick={() => setMode(m)} className={'px-4 py-2 font-medium transition ' + (mode === m ? 'bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] text-white' : 'text-ink-soft hover:text-ink')}>
