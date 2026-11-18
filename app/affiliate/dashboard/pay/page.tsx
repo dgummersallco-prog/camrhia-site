@@ -193,12 +193,16 @@ function monthlyEarn(n: number, price: number, customRate: number | null) {
 const WEB_FEE = 0
 
 const TIERS = [
-  { key: 'solo', name: 'Solo', price: 8.99, apple: true, soon: false, blurb: 'Booking, payments and a shared space with every client.' },
+  { key: 'solo', name: 'Solo', price: 8.99, apple: true, soon: false, blurb: 'The app: schedule and sessions together, with questionnaires, contracts and payments, and a shared space with every client. Free for clients.' },
   { key: 'studio', name: 'Studio', price: 15.99, apple: true, soon: false, blurb: 'Everything in Solo, plus team management.' },
-  { key: 'web', name: 'Website', price: 36, apple: false, soon: true, blurb: 'The app, plus their own website, gallery delivery and specials.' },
-  { key: 'all', name: 'All-in', price: 59, apple: false, soon: true, blurb: 'Everything above, plus The Editing Room for their photos.' },
+  { key: 'web', name: 'Website', price: 33, apple: false, soon: true, blurb: 'Everything in the app, plus a full website build, specials and mini-session ads, and gallery delivery.' },
+  { key: 'cull', name: 'AI Culling', price: 11, apple: false, soon: true, blurb: 'The Editing Room picks the keepers from every shoot.' },
+  { key: 'retouch', name: 'AI Retouch', price: 22, apple: false, soon: true, blurb: 'AI culling and AI editing for their photos. Culling is included.' },
 ]
-type Tier = (typeof TIERS)[number]
+// Website plus AI Retouch, all under one dashboard linked to the app.
+const ALL_IN = { key: 'all', name: 'All-in', price: 33 + 22, apple: false, soon: true, blurb: '' }
+type Tier = (typeof TIERS)[number] | typeof ALL_IN
+const TABLE: Tier[] = [TIERS[0], TIERS[1], TIERS[2], ALL_IN]
 const tierBase = (t: Tier) => r2(t.price * (1 - (t.apple ? APPLE_RATE : WEB_FEE)))
 
 function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
@@ -206,7 +210,7 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
   const rate = custom ? Number(a.commission_rate) : 0.3
   const earn = (t: Tier) => r2(tierBase(t) * rate)
   const first = earn(TIERS[0])
-  const top = earn(TIERS[3])
+  const top = earn(ALL_IN)
   const grow = first > 0 ? Math.round((top / first) * 10) / 10 : 0
   return (
     <div className="space-y-6">
@@ -219,14 +223,14 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
       </section>
 
       <section>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {TIERS.map((t) => (
             <div key={t.key} className="flex flex-col rounded-2xl border border-line bg-card p-5">
               <div className="flex items-center justify-between">
                 <h3 className="font-fraunces text-lg font-semibold text-ink">{t.name}</h3>
                 {t.soon ? <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-ink-soft">Launching soon</span> : null}
               </div>
-              <p className="mt-1 text-sm text-ink-soft">{usd(t.price)} / month</p>
+              <p className="mt-1 text-sm text-ink-soft">{usd(t.price)} / month{t.key === 'cull' || t.key === 'retouch' ? ' add-on' : ''}</p>
               <p className="mt-4 text-xs uppercase tracking-widest text-ink-soft">You earn</p>
               <p className="font-fraunces text-3xl font-semibold text-ink">{usd(earn(t))}</p>
               <p className="text-xs text-ink-soft">every month they stay</p>
@@ -235,7 +239,7 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
           ))}
         </div>
         <p className="mt-4 text-sm text-ink-soft">
-          One photographer, growing: they start on Solo and pay you {usd(first)} a month. Move them to All-in and it is {usd(top)} a month{grow > 0 ? `, about ${grow}x` : ''}, and it stays yours.
+          One photographer, growing: they start on Solo and pay you {usd(first)} a month. Move them to All-in (Website plus AI Retouch, {usd(ALL_IN.price)} a month) and it is {usd(top)} a month{grow > 0 ? `, about ${grow}x` : ''}, and it stays yours.
         </p>
       </section>
 
@@ -249,7 +253,7 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
             <thead>
               <tr>
                 <th className={th}>Active photographers</th>
-                {TIERS.map((t) => (
+                {TABLE.map((t) => (
                   <th key={t.key} className={th}>On {t.name} / month</th>
                 ))}
               </tr>
@@ -258,7 +262,7 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
               {[10, 20, 50, 100, 500].map((n) => (
                 <tr key={n}>
                   <td className={td + ' text-ink font-medium'}>{n}</td>
-                  {TIERS.map((t) => (
+                  {TABLE.map((t) => (
                     <td key={t.key} className={td + ' text-ink font-semibold'}>{usd(r2(earn(t) * n))}</td>
                   ))}
                 </tr>
@@ -272,7 +276,7 @@ function AffiliateBreakdown({ a }: { a: ShellAffiliate }) {
       </section>
 
       <section className="rounded-2xl border border-line bg-card p-6 text-sm text-ink-soft space-y-2">
-        <p>Your rate is {pct(rate)}{custom ? ' (set just for you)' : ''}. Solo and Studio are bought in the App Store, so Apple&apos;s {pct(APPLE_RATE)} comes off first and your rate applies to what is left. Website and All-in are bought on camrhia.com, with no Apple fee.</p>
+        <p>Your rate is {pct(rate)}{custom ? ' (set just for you)' : ''}. Solo and Studio are bought in the App Store, so Apple&apos;s {pct(APPLE_RATE)} comes off first and your rate applies to what is left. Website, the editing add-ons and All-in are bought on camrhia.com, with no Apple fee.</p>
         <p>Yearly plans pay the same percentage once a year. Commissions are paid on each real charge. The 14-day free trial earns nothing; the first payment after it does.</p>
         <p>You are an independent partner and responsible for your own taxes.</p>
       </section>
