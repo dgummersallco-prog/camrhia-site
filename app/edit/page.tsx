@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import SceneSidebar from '@/app/components/SceneSidebar'
 import ImportStart from './ImportStart'
 import ShootRoom from './ShootRoom'
+import TeachStyle from './TeachStyle'
 import { QUESTIONS, STYLE_LOOK, type Signature } from '@/lib/brief'
 
 type Row = { id: string; title: string; status: string; created_at: string; gallery_photos: { count: number }[] }
@@ -92,6 +93,7 @@ export default function EditingRoom() {
   const [renameVal, setRenameVal] = useState('')
   const [adding, setAdding] = useState<string | null>(null)
   const [shootId, setShootId] = useState<string | null>(null)
+  const [teachFor, setTeachFor] = useState<string | null>(null)
 
   useEffect(() => {
     const sb = supabase
@@ -247,9 +249,9 @@ export default function EditingRoom() {
         groups={[
           { items: [{ href: '/dashboard', label: '← Back to dashboard' }] },
           { label: 'The Editing Room', items: [
-            { href: '/edit', label: 'Edit a shoot', onClick: () => setTab('edit') },
+            { href: '/edit', label: 'Shoots', onClick: () => setTab('edit') },
             { href: '/edit?tab=styles', label: 'My styles', onClick: () => setTab('styles') },
-            { href: '/edit?tab=brain', label: 'Camri', onClick: () => setTab('brain') },
+            { href: '/edit?tab=brain', label: 'What Camri learned', onClick: () => setTab('brain') },
           ] },
         ]}
         activeHref={tab === 'edit' ? '/edit' : tab === 'styles' ? '/edit?tab=styles' : '/edit?tab=brain'}
@@ -269,9 +271,15 @@ export default function EditingRoom() {
 
         {tab === 'styles' && (
           <div className="mt-8">
-            <p className="max-w-xl text-ink-soft">Your signature styles. Pick one at the start of a shoot and the editing room starts from your look.</p>
+            <p className="max-w-xl text-ink-soft">Teach Camri your look with photos you have already edited. Pick a style at the start of a shoot and the editing room starts from it.</p>
 
-            <div className="mt-8 rounded-2xl border border-white/70 bg-white/60 p-6">
+            <div className="mt-8">
+              {userId && <TeachStyle userId={userId} onCreated={(sg) => setSigs((prev) => [...(prev ?? []), sg])} />}
+            </div>
+
+            <details className="mt-6">
+              <summary className="cursor-pointer text-sm text-ink-soft">Or set one up by hand</summary>
+            <div className="mt-4 rounded-2xl border border-white/70 bg-white/60 p-6">
               <p className="font-fraunces text-xl text-ink">Create a style</p>
               <input
                 value={name}
@@ -301,6 +309,7 @@ export default function EditingRoom() {
                 {creating ? 'Saving…' : 'Save style'}
               </button>
             </div>
+            </details>
 
             {sigs === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
             {sigs && sigs.length === 0 && (
@@ -327,11 +336,21 @@ export default function EditingRoom() {
                     ) : (
                       <p className="font-fraunces text-xl text-ink">{s.name}</p>
                     )}
-                    <p className="mt-2 text-sm text-ink-soft">{bits.length ? bits.join(' · ') : 'Your custom tweaks'}</p>
-                    <div className="mt-5 flex gap-2">
+                    <p className="mt-2 text-sm text-ink-soft">{typeof a.about === 'string' && a.about ? a.about : bits.length ? bits.join(' · ') : 'Your custom tweaks'}</p>
+                    {(a.learned as { fp?: { n?: number } } | undefined)?.fp?.n ? <p className="mt-1 text-xs text-ink-soft">Learned from {(a.learned as { fp: { n: number } }).fp.n} photos</p> : null}
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <button className={quiet} onClick={() => setTeachFor(teachFor === s.id ? null : s.id)}>Teach more</button>
                       <button className={quiet} onClick={() => { setRenaming(s.id); setRenameVal(s.name) }}>Rename</button>
                       <button className={quiet} onClick={() => removeStyle(s)}>Delete</button>
                     </div>
+                    {teachFor === s.id && userId && (
+                      <TeachStyle
+                        userId={userId}
+                        target={s}
+                        onUpdated={(u) => setSigs((prev) => (prev ?? []).map((x) => (x.id === u.id ? u : x)))}
+                        onClose={() => setTeachFor(null)}
+                      />
+                    )}
                   </div>
                 )
               })}
