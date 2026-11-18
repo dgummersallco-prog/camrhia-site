@@ -6,6 +6,7 @@ import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjus
 import { briefAdjust, type Brief } from '@/lib/brief'
 import type { Crop } from '@/lib/crop'
 import ColorMixer from '@/app/edit/ColorMixer'
+import CamiPanel from '@/app/edit/CamiPanel'
 import { camiRead, camiFix, camiBaselines, camiPickBW, camiBWAdjust, camiLearn, camiDelta, camiFlag, type CamiReading, type Baseline, type CamiBias, type FeedbackRow } from '@/lib/cami'
 
 const BUCKET = 'galleries'
@@ -21,7 +22,15 @@ type Row = {
   review_adj: Adjust | null
   reviewed: boolean
   crop: Crop | null
+  enhanced: boolean
+  pre_web_path: string | null
+  pre_thumb_path: string | null
 }
+
+// Where to read the untouched picture from. Photos that were never developed start from their own files.
+const srcOf = (r: Row) => (r.enhanced ? r.pre_full_path ?? r.orig_path : r.full_path ?? r.orig_path)
+// The first time a photo is saved here it becomes a developed photo, the same as the batch develop does.
+const firstPatch = (r: Row) => (r.enhanced ? {} : { enhanced: true, pre_web_path: r.web_path, pre_thumb_path: r.thumb_path, pre_full_path: r.full_path ?? null })
 
 const TOOLS: { key: keyof Adjust; label: string; scale: number }[] = [
   { key: 'exposure', label: 'Exposure', scale: 1 },
@@ -137,6 +146,7 @@ export default function ReviewStep({
   getSceneMap,
   baseTweak,
   onSaveStyle,
+  onApplyRest,
   onBack,
   onDone,
 }: {
@@ -150,6 +160,7 @@ export default function ReviewStep({
   getSceneMap?: () => Promise<Record<string, string>>
   baseTweak: Adjust
   onSaveStyle?: (name: string, tweak: Adjust) => Promise<void>
+  onApplyRest?: (adj: Adjust) => Promise<void>
   onBack: () => void
   onDone: () => void
 }) {
@@ -188,6 +199,8 @@ export default function ReviewStep({
   const [styleName, setStyleName] = useState('')
   const [styleBusy, setStyleBusy] = useState(false)
   const [styleSaved, setStyleSaved] = useState<string | null>(null)
+  const [restAsk, setRestAsk] = useState(false)
+  const [restBusy, setRestBusy] = useState(false)
   const movedRef = useRef(false)
   const autoRef = useRef(false)
   const dirtyRef = useRef(0)
@@ -342,7 +355,7 @@ export default function ReviewStep({
         if (Object.keys(fix.adjust).length > 0) {
           const before = shoot.studyAdj[r.id] ?? {}
           const mine = cleanAdj(addAdj(before, fix.adjust))
-          const srcPath = r.pre_full_path ?? r.orig_path
+          const srcPath = srcOf(r)
           const dl = await sb.storage.from(BUCKET).download(srcPath)
           if (dl.error || !dl.data) throw new Error('download')
           const lg = light[r.id]
@@ -360,6 +373,7 @@ export default function ReviewStep({
           const bad = ups.find((u) => u.error)
           if (bad?.error) throw bad.error
           const patch = {
+            ...firstPatch(r),
             review_adj: Object.keys(mine).length > 0 ? mine : null,
             full_path: np.full,
             web_path: np.web,
@@ -419,9 +433,9 @@ export default function ReviewStep({
       for (let from = 0; ; from += 1000) {
         const { data } = await sb
           .from('gallery_photos')
-          .select('id, filename, orig_path, full_path, pre_full_path, web_path, thumb_path, review_adj, reviewed, crop')
+          .select('id, filename, orig_path, full_path, pre_full_path, web_path, thumb_path, review_adj, reviewed, crop, enhanced, pre_web_path, pre_thumb_path')
           .eq('gallery_id', galleryId)
-          .eq('enhanced', true)
+          .or('cull_label.is.null,cull_label.neq.reject')
           .range(from, from + 999)
         const batch = (data ?? []) as Row[]
         all.push(...batch)
@@ -542,7 +556,7 @@ export default function ReviewStep({
     ;(async () => {
       const sb = supabase
       if (!sb) return
-      const srcPath = row.pre_full_path ?? row.orig_path
+      const srcPath = srcOf(row)
       const dl = await sb.storage.from(BUCKET).download(srcPath)
       if (cancelled) return
       if (dl.error || !dl.data) { setErr('Could not load this photo.'); return }
@@ -666,7 +680,7 @@ export default function ReviewStep({
       const mine = cleanAdj(manual)
       const adjSame = JSON.stringify(mine) === JSON.stringify(cleanAdj(row.review_adj ?? {}))
       const cropSame = JSON.stringify(crop ?? null) === JSON.stringify(row.crop ?? null)
-      const same = adjSame && cropSame
+      const same = row.enhanced && adjSame && cropSame
       if (same && row.reviewed) {
         setBusy(false)
         finishSave(mark)
@@ -676,7 +690,7 @@ export default function ReviewStep({
       const oldPaths: string[] = []
       let newPaths: { full: string; web: string; thumb: string } | null = null
       if (!same) {
-        const out = await enhancePhoto(src.blob, row.pre_full_path ?? row.orig_path, { id: lookId, strength, adjust: total, skin: base.skin, crop: crop ?? undefined })
+        const out = await enhancePhoto(src.blob, srcOf(row), { id: lookId, strength, adjust: total, skin: base.skin, crop: crop ?? undefined })
         const dir = row.orig_path.slice(0, row.orig_path.lastIndexOf('/'))
         const v = Date.now().toString(36)
         newPaths = { full: `${dir}/enh-full-${v}.jpg`, web: `${dir}/enh-web-${v}.jpg`, thumb: `${dir}/enh-thumb-${v}.jpg` }
@@ -692,6 +706,7 @@ export default function ReviewStep({
         }
         patch = {
           ...patch,
+          ...firstPatch(row),
           review_adj: Object.keys(mine).length > 0 ? mine : null,
           full_path: newPaths.full,
           web_path: newPaths.web,
@@ -722,6 +737,7 @@ export default function ReviewStep({
       }
       const updated: Row = {
         ...row,
+        ...(newPaths ? firstPatch(row) : {}),
         reviewed: true,
         review_adj: Object.keys(mine).length > 0 ? mine : null,
         crop: crop ?? null,
@@ -763,6 +779,17 @@ export default function ReviewStep({
     }
     setAfterUrl(null)
     setIdx(n)
+  }
+
+  async function applyRest() {
+    if (!onApplyRest || !row || busy || restBusy) return
+    setRestBusy(true)
+    let ok = true
+    if (srcRef.current?.id === row.id && (dirtyRef.current > 0 || !row.enhanced || !row.reviewed)) ok = await apply()
+    if (!ok) { setRestBusy(false); return }
+    await onApplyRest(cleanAdj(manual))
+    setRestBusy(false)
+    setRestAsk(false)
   }
 
   async function flush() {
@@ -866,6 +893,8 @@ export default function ReviewStep({
     })
 
   const showing = hold ? 'before' : mode
+  const hasAdj = !manual.raw && Object.keys(cleanAdj(manual)).length > 0
+  const restCount = rows.filter((r) => !r.enhanced && r.id !== row?.id).length
   const reviewed = rows.filter((r) => r.reviewed).length
   const isBw = (manual.bw ?? 0) > 0
   const saveLabel = busy ? 'Saving…' : dirty > 0 ? 'Saving soon…' : row?.reviewed ? 'Saved ✓' : ''
@@ -920,19 +949,19 @@ export default function ReviewStep({
     setStyleBusy(false)
   }
 
-  const frameImg = 'max-h-[70vh] w-full object-contain lg:h-full lg:max-h-full'
+  const frameImg = 'max-h-[80vh] w-full object-contain lg:h-full lg:max-h-full'
 
   return (
     <section className="mt-6">
       <p className="max-w-2xl text-white/55">
-        Change anything and it saves on its own. Use the arrows to move between photos.
+        Change anything and it saves on its own. Use the arrows on the sides of the photo to move between photos.
       </p>
 
       {loading ? (
         <p className="mt-10 text-white/50">Loading your photos…</p>
       ) : rows.length === 0 || !row ? (
         <div className="mt-10">
-          <p className="text-white/60">Nothing has been developed yet.</p>
+          <p className="text-white/60">There are no photos to edit yet.</p>
           <button className={`${quiet} mt-6`} onClick={onBack}>Back</button>
         </div>
       ) : (
@@ -943,7 +972,7 @@ export default function ReviewStep({
             {!checked && <span className="text-xs text-white/40">Checking your photos…</span>}
           </div>
 
-          <div ref={wrapRef} className="mt-4 grid scroll-mt-4 gap-4 lg:h-[calc(100vh-2rem)] lg:grid-cols-[17rem_minmax(0,1fr)_17rem] xl:grid-cols-[20rem_minmax(0,1fr)_20rem]">
+          <div ref={wrapRef} className="mt-4 grid scroll-mt-4 gap-4 lg:h-[calc(100vh-1rem)] lg:grid-cols-[15rem_minmax(0,1fr)_18rem] xl:grid-cols-[16rem_minmax(0,1fr)_19rem]">
             {/* LEFT: light and color */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
               <Panel title="Light">{tools(LIGHT)}</Panel>
@@ -960,7 +989,7 @@ export default function ReviewStep({
             {/* CENTER: the photo */}
             <div className="flex min-h-0 flex-col">
               <div
-                className={`relative flex min-h-[320px] flex-1 select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40 ${picking ? 'cursor-crosshair' : ''}`}
+                className={`relative flex min-h-[420px] flex-1 select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40 ${picking ? 'cursor-crosshair' : ''}`}
                 onClick={pickBalance}
                 onPointerDown={() => { if (!picking && !zoom100) setHold(true) }}
                 onPointerUp={() => setHold(false)}
@@ -988,6 +1017,24 @@ export default function ReviewStep({
                   {showing === 'before' ? 'Before' : showing === 'split' ? 'Before · After' : 'After'}
                 </span>
                 {saveLabel && <span className="absolute right-3 top-3 rounded-full bg-black/60 px-3 py-1 text-xs text-white/70">{saveLabel}</span>}
+                <button
+                  aria-label="Previous photo"
+                  disabled={busy || nextVisible(-1) === idx}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); void go(nextVisible(-1)) }}
+                  className="group absolute inset-y-0 left-0 z-10 flex w-16 items-center justify-start pl-2 disabled:pointer-events-none disabled:opacity-0"
+                >
+                  <span className="rounded-full bg-black/55 px-3.5 py-5 text-2xl leading-none text-white/85 transition group-hover:bg-black/80">&lsaquo;</span>
+                </button>
+                <button
+                  aria-label="Next photo"
+                  disabled={busy || nextVisible(1) === idx}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); void go(nextVisible(1), true) }}
+                  className="group absolute inset-y-0 right-0 z-10 flex w-16 items-center justify-end pr-2 disabled:pointer-events-none disabled:opacity-0"
+                >
+                  <span className="rounded-full bg-black/55 px-3.5 py-5 text-2xl leading-none text-white/85 transition group-hover:bg-black/80">&rsaquo;</span>
+                </button>
               </div>
 
               <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2">
@@ -1009,7 +1056,7 @@ export default function ReviewStep({
                       key={r.id}
                       id={`rv-${r.id}`}
                       onClick={() => void go(i)}
-                      className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-white/5 ${i === idx ? 'ring-2 ring-[var(--color-twilight)]' : ''}`}
+                      className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-white/5 ${i === idx ? 'ring-2 ring-[var(--color-twilight)]' : ''}`}
                     >
                       {src && (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -1023,14 +1070,41 @@ export default function ReviewStep({
               </div>
 
               <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2">
-                <button className={quiet} disabled={busy || nextVisible(-1) === idx} onClick={() => void go(nextVisible(-1))}>‹ Back a photo</button>
-                <button className={primary} disabled={busy || nextVisible(1) === idx} onClick={() => void go(nextVisible(1), true)}>Next photo ›</button>
+                {onApplyRest && hasAdj && restCount > 0 && (
+                  restAsk ? (
+                    <span className="flex flex-wrap items-center gap-2 text-sm text-white/70">
+                      Use these edits on the other {restCount} {restCount === 1 ? 'photo' : 'photos'}?
+                      <button className={primary} disabled={busy || restBusy} onClick={() => void applyRest()}>{restBusy ? 'Starting…' : 'Yes, apply to the rest'}</button>
+                      <button className={quiet} disabled={restBusy} onClick={() => setRestAsk(false)}>Cancel</button>
+                    </span>
+                  ) : (
+                    <button className={primary} disabled={busy} onClick={() => setRestAsk(true)}>Apply these edits to the rest of the shoot</button>
+                  )
+                )}
                 <button className={`${quiet} ml-auto`} disabled={busy} onClick={async () => { await flush(); onDone() }}>Done editing</button>
               </div>
             </div>
 
             {/* RIGHT: crop, detail, color mix, your style */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
+              <CamiPanel value={manual} onChange={editManual} previewUrl={afterUrl} lookName={lookId} strength={strength} brief={brief} light={light[row.id] || brief.light || ''} photoId={row.id}>
+              <div className="mt-3 border-t border-white/10 pt-3">
+                <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
+                  {camiBusy ? (camiProgress > 0 ? 'Camri is studying this shoot… ' + camiProgress + '/' + rows.length : 'Camri is looking…') : 'Use Camri to scan & fix'}
+                </button>
+                <button className={tab(false) + ' mt-2'} disabled={camiBusy || !!sceneBusy} onClick={camiScanScene}>
+                  {sceneBusy ? 'Camri is fixing this scene… ' + sceneBusy.done + '/' + sceneBusy.total : 'Scan the whole scene'}
+                </button>
+                {sceneBusy && <button className="mt-2 block text-xs text-white/60 underline" onClick={() => { sceneStop.current = true }}>Stop</button>}
+                {camiNote && camiNote.id === row.id && (
+                  <div className="mt-2 space-y-1 text-xs text-white/60">
+                    {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
+                    {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Camri thinks this could be black &amp; white. Try it</button>}
+                    {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Camri</button>}
+                  </div>
+                )}
+              </div>
+              </CamiPanel>
               <Panel title="Crop & straighten">
                 <Slide
                   label="Straighten"
@@ -1071,22 +1145,6 @@ export default function ReviewStep({
               <div className="py-3">
                 <button className={tab(false)} onClick={() => { editManual({ raw: 1 }); editCrop(null) }}>Reset this photo</button>
                 {manual.raw ? <button className="ml-3 text-xs text-white/55 underline" onClick={() => editManual({})}>Back to the shoot&apos;s look</button> : null}
-              </div>
-              <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
-                  {camiBusy ? (camiProgress > 0 ? 'Camri is studying this shoot… ' + camiProgress + '/' + rows.length : 'Camri is looking…') : 'Use Camri to scan & fix'}
-                </button>
-                <button className={tab(false) + ' mt-2'} disabled={camiBusy || !!sceneBusy} onClick={camiScanScene}>
-                  {sceneBusy ? 'Camri is fixing this scene… ' + sceneBusy.done + '/' + sceneBusy.total : 'Scan the whole scene'}
-                </button>
-                {sceneBusy && <button className="mt-2 block text-xs text-white/60 underline" onClick={() => { sceneStop.current = true }}>Stop</button>}
-                {camiNote && camiNote.id === row.id && (
-                  <div className="mt-2 space-y-1 text-xs text-white/60">
-                    {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
-                    {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Camri thinks this could be black &amp; white. Try it</button>}
-                    {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Camri</button>}
-                  </div>
-                )}
               </div>
               <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                 <p className="text-xs uppercase tracking-[0.18em] text-white/50">Your style</p>

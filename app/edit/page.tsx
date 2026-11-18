@@ -8,6 +8,7 @@ import SceneSidebar from '@/app/components/SceneSidebar'
 import ImportStart from './ImportStart'
 import ShootRoom from './ShootRoom'
 import TeachStyle from './TeachStyle'
+import StyleNotes, { type StyleUse } from './StyleNotes'
 import { QUESTIONS, type Signature } from '@/lib/brief'
 
 type Row = { id: string; title: string; status: string; created_at: string; gallery_photos: { count: number }[] }
@@ -176,6 +177,32 @@ export default function EditingRoom() {
     return { checked: all.checked, fixed: all.fixed, shoots, habits, scores, situations }
   }, [latest])
 
+  const styleUse = useMemo(() => {
+    const out: Record<string, StyleUse> = {}
+    if (!corr) return out
+    const shootSets = new Map<string, Set<string>>()
+    for (const c of latest ?? []) {
+      if (!c.signature_id) continue
+      const o = out[c.signature_id] ?? (out[c.signature_id] = { shoots: 0, checked: 0, fixed: 0 })
+      o.checked++
+      if (hasFix(c)) o.fixed++
+      const set = shootSets.get(c.signature_id) ?? new Set<string>()
+      set.add(c.gallery_id)
+      shootSets.set(c.signature_id, set)
+    }
+    for (const [id, set] of shootSets) out[id].shoots = set.size
+    return out
+  }, [corr, latest])
+
+  const glance = useMemo(() => {
+    const list = rows ?? []
+    const photos = list.reduce((n, r) => n + (r.gallery_photos?.[0]?.count ?? 0), 0)
+    let culled = 0
+    let edited = 0
+    for (const v of Object.values(stages ?? {})) { culled += v.culled; edited += v.edited }
+    return { shoots: list.length, photos, culled, edited, sent: list.filter((r) => r.status === 'published').length }
+  }, [rows, stages])
+
   const suggestions = useMemo(() => {
     if (!latest || !sigs) return []
     const out: { sig: Signature; fixed: number; useful: { key: string; n: number; phrase: string }[]; usual: Record<string, number> }[] = []
@@ -244,14 +271,14 @@ export default function EditingRoom() {
           { label: 'The Editing Room', items: [
             { href: '/edit', label: 'Shoots', onClick: () => setTab('edit') },
             { href: '/edit?tab=styles', label: 'My styles', onClick: () => setTab('styles') },
-            { href: '/edit?tab=brain', label: 'What Camri learned', onClick: () => setTab('brain') },
+            { href: '/edit?tab=brain', label: 'Camri\'s notes', onClick: () => setTab('brain') },
           ] },
         ]}
         activeHref={tab === 'edit' ? '/edit' : tab === 'styles' ? '/edit?tab=styles' : '/edit?tab=brain'}
         homeHref="/edit"
         onSignOut={async () => { if (supabase) await supabase.auth.signOut(); window.location.href = '/login' }}
       />
-      <div className={`mx-auto px-6 py-10 ${shootId ? 'max-w-7xl' : 'max-w-5xl'}`}>
+      <div className={`mx-auto px-6 py-10 ${shootId ? 'max-w-none' : 'max-w-5xl'}`}>
         {!shootId && <h1 className="mt-2 font-fraunces text-4xl text-ink">The editing room</h1>}
 
         {error && <p className="mt-6 text-sm text-red-700">{error}</p>}
@@ -320,7 +347,36 @@ export default function EditingRoom() {
 
         {tab === 'brain' && (
           <div className="mt-8">
-            <p className="max-w-xl text-ink-soft">What Camri has noticed from the fixes you make while you review photos.</p>
+            <div className="flex items-center gap-5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/camri/15_thinking_peek.png" alt="" className="h-28 w-auto shrink-0" />
+              <div>
+                <p className="font-fraunces text-3xl text-ink">Camri&apos;s notes</p>
+                <p className="mt-1 max-w-xl text-ink-soft">Everything I know about you and your work, in one place. It grows every time you teach me a style or fix a photo.</p>
+              </div>
+            </div>
+
+            <p className="mt-10 font-fraunces text-xl text-ink">Your styles</p>
+            <StyleNotes sigs={sigs} use={styleUse} onTeach={() => setTab('styles')} />
+
+            <p className="mt-10 font-fraunces text-xl text-ink">Your work so far</p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {[
+                { n: glance.shoots, t: glance.shoots === 1 ? 'shoot' : 'shoots' },
+                { n: glance.photos, t: 'photos' },
+                { n: glance.culled, t: 'photos culled' },
+                { n: glance.edited, t: 'photos edited' },
+                { n: glance.sent, t: glance.sent === 1 ? 'gallery sent' : 'galleries sent' },
+              ].map((x) => (
+                <div key={x.t} className="rounded-2xl border border-white/70 bg-white/60 p-5">
+                  <p className="font-fraunces text-3xl text-ink">{x.n}</p>
+                  <p className="mt-1 text-sm text-ink-soft">{x.t}</p>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-12 font-fraunces text-xl text-ink">What I have noticed from your fixes</p>
+            <p className="mt-2 max-w-xl text-ink-soft">The changes you make while you review photos. I use them to get closer to your taste.</p>
 
             {brain === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
             {brain && brain.checked === 0 && (

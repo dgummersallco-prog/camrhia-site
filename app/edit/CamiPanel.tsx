@@ -1,0 +1,186 @@
+'use client'
+
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { supabase } from '@/lib/supabase'
+import { TOOLS } from '@/lib/tools'
+import type { Adjust } from '@/lib/enhance'
+
+type Change = { key: keyof Adjust; ui: number; label: string }
+type Msg = { role: 'user' | 'cami'; text: string; changes?: Change[]; state?: 'open' | 'done' | 'no' }
+
+const STARTERS = ['How should I edit this photo?', 'How would a pro set this in this light?', 'What looks off in this one?']
+const YES = /^\s*(yes|yeah|yep|yup|sure|ok|okay|do it|apply|apply it|go ahead|please|sounds good)\b/i
+
+async function snap(url: string | null): Promise<string | null> {
+  if (!url) return null
+  try {
+    const img = new Image()
+    img.src = url
+    await img.decode()
+    const k = Math.min(1, 640 / Math.max(img.naturalWidth, img.naturalHeight))
+    const c = document.createElement('canvas')
+    c.width = Math.max(1, Math.round(img.naturalWidth * k))
+    c.height = Math.max(1, Math.round(img.naturalHeight * k))
+    c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height)
+    return c.toDataURL('image/jpeg', 0.72)
+  } catch {
+    return null
+  }
+}
+
+export default function CamiPanel({
+  value,
+  onChange,
+  previewUrl,
+  lookName,
+  strength,
+  brief,
+  light,
+  photoId,
+  children,
+}: {
+  value: Adjust
+  onChange: (next: Adjust) => void
+  previewUrl: string | null
+  lookName: string
+  strength: number
+  brief: unknown
+  light: string
+  photoId: string
+  children?: ReactNode
+}) {
+  const [msgs, setMsgs] = useState<Msg[]>([])
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [prev, setPrev] = useState<Adjust | null>(null)
+  const boxRef = useRef<HTMLDivElement | null>(null)
+
+  // A new photo means old suggestions no longer fit it
+  useEffect(() => {
+    setMsgs((ms) => ms.map((m) => (m.state === 'open' ? { ...m, state: 'no' } : m)))
+    setPrev(null)
+  }, [photoId])
+
+  useEffect(() => {
+    if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight
+  }, [msgs, busy])
+
+  function applyAt(i: number) {
+    const m = msgs[i]
+    if (!m?.changes || m.state !== 'open') return
+    const next: Adjust = { ...value }
+    for (const c of m.changes) {
+      const t = TOOLS.find((x) => x.key === c.key)
+      if (!t) continue
+      if (c.ui === 0) delete next[c.key]
+      else next[c.key] = (c.ui / 100) * t.scale
+    }
+    setPrev(value)
+    onChange(next)
+    setMsgs((ms) => ms.map((x, j) => (j === i ? { ...x, state: 'done' } : x)))
+  }
+
+  async function send(raw: string) {
+    const message = raw.trim()
+    if (!message || busy) return
+    const openAt = msgs.map((m) => m.state === 'open').lastIndexOf(true)
+    if (openAt >= 0 && YES.test(message) && message.length < 40) {
+      setMsgs((ms) => [...ms, { role: 'user', text: message }])
+      setText('')
+      applyAt(openAt)
+      return
+    }
+    const history = msgs.slice(-6).map((m) => ({ role: m.role, text: m.text }))
+    setMsgs((ms) => [...ms.map((m) => (m.state === 'open' ? { ...m, state: 'no' as const } : m)), { role: 'user', text: message }])
+    setText('')
+    setBusy(true)
+    try {
+      const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } }
+      const token = data.session?.access_token
+      const dials = TOOLS.map((t) => ({ key: t.key as string, label: t.label, ui: Math.round((((value[t.key] ?? 0) as number) / t.scale) * 100) }))
+      const image = await snap(previewUrl)
+      const res = await fetch('/api/ai/cami', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
+        body: JSON.stringify({ message, history, dials, look: lookName, strength, brief, light, image }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setMsgs((ms) => [...ms, { role: 'cami', text: j.error ?? 'Camri is unavailable right now.' }])
+      } else {
+        const set: Record<string, number> = j.set ?? {}
+        const changes: Change[] = []
+        for (const t of TOOLS) {
+          const v = set[t.key as string]
+          if (typeof v !== 'number' || !isFinite(v)) continue
+          changes.push({ key: t.key, ui: Math.max(-100, Math.min(100, Math.round(v))), label: t.label })
+        }
+        setMsgs((ms) => [...ms, { role: 'cami', text: j.reply ?? '', changes: changes.length ? changes : undefined, state: changes.length ? 'open' : undefined }])
+      }
+    } catch {
+      setMsgs((ms) => [...ms, { role: 'cami', text: 'Camri is unavailable right now.' }])
+    }
+    setBusy(false)
+  }
+
+  return (
+    <div className="mb-4 rounded-2xl border border-white/10 bg-black/30 p-3">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/camri/14_peeking_sliders.png" alt="Camri" className="mx-auto h-28 w-auto object-contain" />
+      <p className="mt-1 text-center text-sm font-medium text-white/85">Ask Camri</p>
+      <p className="mt-1 text-center text-xs text-white/50">I can see this photo and your sliders. Ask me how to edit it, or how a pro handles this kind of light, and I&rsquo;ll move the sliders when you say yes.</p>
+
+      {msgs.length > 0 && (
+        <div ref={boxRef} className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
+          {msgs.map((m, i) => (
+            <div key={i} className={m.role === 'user' ? 'text-right' : ''}>
+              <p className={`inline-block max-w-[92%] rounded-xl px-3 py-2 text-left text-xs leading-relaxed ${m.role === 'user' ? 'bg-white/10 text-white/85' : 'bg-white/[0.05] text-white/75'}`}>{m.text}</p>
+              {m.changes && (
+                <div className="mt-1.5 text-left">
+                  <div className="flex flex-wrap gap-1">
+                    {m.changes.map((c) => (
+                      <span key={c.key as string} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/70">{c.label} {c.ui > 0 ? '+' : ''}{c.ui}</span>
+                    ))}
+                  </div>
+                  {m.state === 'open' && (
+                    <div className="mt-1.5 flex gap-2">
+                      <button className="rounded-full bg-[var(--color-twilight)] px-3 py-1 text-xs font-medium text-white transition hover:opacity-90" onClick={() => applyAt(i)}>Yes, apply it</button>
+                      <button className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/60 transition hover:text-white" onClick={() => setMsgs((ms) => ms.map((x, j) => (j === i ? { ...x, state: 'no' } : x)))}>Not now</button>
+                    </div>
+                  )}
+                  {m.state === 'done' && <p className="mt-1 text-[11px] text-emerald-300">Applied. The sliders moved.</p>}
+                </div>
+              )}
+            </div>
+          ))}
+          {busy && <p className="text-xs text-white/45">Camri is looking at your photo&hellip;</p>}
+        </div>
+      )}
+
+      {msgs.length === 0 && (
+        <div className="mt-3 flex flex-col gap-1.5">
+          {STARTERS.map((s) => (
+            <button key={s} className="rounded-full border border-white/10 px-3 py-1.5 text-left text-xs text-white/65 transition hover:border-white/30 hover:text-white" disabled={busy} onClick={() => void send(s)}>{s}</button>
+          ))}
+        </div>
+      )}
+
+      <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); void send(text) }}>
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Ask Camri about this photo"
+          maxLength={500}
+          className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white outline-none placeholder:text-white/30 focus:border-white/30"
+        />
+        <button type="submit" disabled={busy || !text.trim()} className="rounded-full bg-[var(--color-twilight)] px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90 disabled:opacity-40">Ask</button>
+      </form>
+      {prev && (
+        <button className="mt-2 text-[11px] text-white/50 underline transition hover:text-white/80" onClick={() => { onChange(prev); setPrev(null) }}>
+          Undo Camri&rsquo;s change
+        </button>
+      )}
+      {children}
+    </div>
+  )
+}

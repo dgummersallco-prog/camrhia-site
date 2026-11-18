@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     }
     if (messages.length && messages[messages.length - 1].role === 'user') messages.pop()
 
-    const state = `Current look: ${String(body.look ?? 'none').slice(0, 40)} at ${Math.round(Number(body.strength ?? 1) * 100)}% strength.\nCurrent sliders: ${dials.map((d) => `${d.key} (${d.label}) = ${d.ui}`).join(', ')}.\nPhotographer's brief: ${JSON.stringify(body.brief ?? {}).slice(0, 600)}\n\nPhotographer says: ${message}`
+    const state = `Light in this photo: ${String(body.light ?? 'unknown').slice(0, 60)}.\nCurrent look: ${String(body.look ?? 'none').slice(0, 40)} at ${Math.round(Number(body.strength ?? 1) * 100)}% strength.\nCurrent sliders: ${dials.map((d) => `${d.key} (${d.label}) = ${d.ui}`).join(', ')}.\nPhotographer's brief: ${JSON.stringify(body.brief ?? {}).slice(0, 600)}\n\nPhotographer says: ${message}`
     const content: any[] = []
     if (typeof body.image === 'string' && body.image.length < 400_000) {
       content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: body.image.replace(/^data:image\/\w+;base64,/, '') } })
@@ -41,10 +41,10 @@ export async function POST(request: Request) {
     content.push({ type: 'text', text: state })
     messages.push({ role: 'user', content })
 
-    const system = `You are Camri, the friendly guide inside Camrhia's photo editing room. Many photographers talking to you are new to editing. Use plain, warm words, 2 to 4 short sentences, and explain any editing term you use. You can move these sliders: ${keys.join(', ')}. Each runs from -100 to 100 and 0 is neutral; small moves of 10 to 30 are usually enough. The photo shown (if any) is the current preview. Reply with ONLY JSON like {"reply":"your answer","set":{"temp":20,"shadows":15}}. "set" holds only the sliders you want to change, each as the new slider position. If they are only asking a question, use {} for "set".`
+    const system = `You are Camri, the friendly editing coach inside Camrhia's photo editing room. Many photographers talking to you are new to editing, so use plain, warm words and explain any editing term you use. Keep answers to 2 to 5 short sentences. You can see the photo (the current preview, with the look and the photographer's slider changes already applied) and you are told the lighting and the slider positions. When asked how to edit it, or how professionals handle this kind of light (golden hour, harsh midday sun, open shade, overcast, backlit, window light, flash, low light), look at the photo and say what a pro would do and why, in terms of the sliders. Sliders you can move: ${keys.join(', ')}. Each runs from -100 to 100 where 0 means no change from the current look. They are changes on top of the look, so moves of 5 to 30 are normal and more than 40 is rare. Never set a slider you do not need. Whenever you suggest slider moves, put them in "set" as the new slider position for each one, and end your reply by asking if they want you to apply them (for example: Want me to apply that?). The app moves nothing until they say yes. If they are only asking a question, or no slider move would help, use {} for "set" and do not ask about applying. Reply with ONLY JSON like {"reply":"your answer","set":{"temp":20,"shadows":15}}.`
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 400, system, messages })
+    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 600, system, messages })
 
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0

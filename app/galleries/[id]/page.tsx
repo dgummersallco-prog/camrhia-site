@@ -740,7 +740,11 @@ export default function GalleryManagePage() {
                 </p>
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
-                <button className={btnGhost} onClick={() => setDesignOpen((o) => !o)}>Style</button>
+                {photos.length > 0 && (
+                  <button className={gallery.design && Object.keys(gallery.design).length > 0 ? btnGhost : btn} onClick={() => setDesignOpen(true)}>
+                    {gallery.design && Object.keys(gallery.design).length > 0 ? 'Edit design' : 'Next: design your gallery'}
+                  </button>
+                )}
                 <button className={btnGhost} onClick={() => setShareOpen(true)}>Share</button>
                 <button className={btnGhost} onClick={() => setAccessOpen(true)}>Access</button>
                 <button
@@ -753,7 +757,7 @@ export default function GalleryManagePage() {
                     }
                   }}
                   disabled={!isPublished && photos.length === 0}
-                  className={isPublished ? btnGhost : btn}
+                  className={isPublished || !(gallery.design && Object.keys(gallery.design).length > 0) ? btnGhost : btn}
                 >
                   {isPublished ? 'Unpublish' : 'Publish gallery'}
                 </button>
@@ -876,15 +880,6 @@ export default function GalleryManagePage() {
                     )}
                   </div>
                 )}
-
-                <div className="mb-4 flex flex-wrap items-center gap-2">
-                  <button className={btnGhost} disabled={photos.length === 0 || cull.busy} onClick={() => setCullOpen((o) => !o)}>
-                    Cull{photos.some((p) => p.cull_label) ? ` · ${photos.filter((p) => p.cull_label === 'pick').length} picks` : ''}
-                  </button>
-                  <button className={btnGhost} disabled={photos.length === 0 || enh.busy} onClick={() => setEnhOpen((o) => !o)}>
-                    Enhance{photos.some((p) => p.enhanced) ? ` · ${photos.filter((p) => p.enhanced).length} of ${photos.length}` : ''}
-                  </button>
-                </div>
 
                 {cullOpen && (
                   <div className={`${card} mb-4`}>

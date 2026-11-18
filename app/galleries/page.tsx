@@ -384,21 +384,6 @@ export default function GalleriesPage() {
                   {f}
                 </button>
               ))}
-              {collections.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setColFilter(colFilter === c ? '' : c)}
-                  className={`rounded-full px-4 py-1.5 ${colFilter === c ? 'bg-brass text-white' : 'border border-line text-ink'}`}
-                >
-                  {c}
-                </button>
-              ))}
-              <button
-                onClick={() => { setSelecting((v) => !v); setSel(new Set()) }}
-                className={`rounded-full px-4 py-1.5 ${selecting ? 'bg-ink text-white' : 'border border-line text-ink'}`}
-              >
-                {selecting ? 'Done' : 'Select'}
-              </button>
             </div>
             <input
               value={q}
@@ -406,39 +391,6 @@ export default function GalleriesPage() {
               placeholder="Search galleries"
               className="w-full rounded-xl border border-line bg-white/60 px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none sm:w-64"
             />
-          </div>
-        )}
-
-        {selecting && (
-          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white/60 p-4 text-sm">
-            <span className="text-ink">{sel.size} selected</span>
-            <button onClick={() => setSel(new Set(visible.map((g) => g.id)))} className="text-xs text-twilight underline">
-              Select all shown
-            </button>
-            <input
-              list="collection-names"
-              value={colName}
-              onChange={(e) => setColName(e.target.value)}
-              placeholder="Collection, e.g. Fall 2026 Seniors"
-              className="min-w-[220px] flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-soft/50 focus:border-twilight focus:outline-none"
-            />
-            <datalist id="collection-names">
-              {collections.map((c) => <option key={c} value={c} />)}
-            </datalist>
-            <button
-              onClick={() => applyCollection(colName.trim())}
-              disabled={saving || sel.size === 0 || !colName.trim()}
-              className="rounded-xl bg-twilight px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {saving ? 'Saving…' : 'Add to collection'}
-            </button>
-            <button
-              onClick={() => applyCollection(null)}
-              disabled={saving || sel.size === 0}
-              className="rounded-xl border border-line px-4 py-2 text-sm text-ink disabled:opacity-50"
-            >
-              Remove from collection
-            </button>
           </div>
         )}
 

@@ -15,6 +15,8 @@ import { sendGalleryToClient } from '@/lib/sendGallery'
 import BriefScreen from '@/app/edit/BriefScreen'
 import ReviewStep from '@/app/edit/ReviewStep'
 import MomentsPanel from '@/app/edit/MomentsPanel'
+import GalleryDesigner from '@/app/galleries/[id]/GalleryDesigner'
+import type { GalleryDesign } from '@/lib/galleryDesign'
 import { camiRead, camiGuessLight, type CamiReading } from '@/lib/cami'
 import { SCENE_IDEAS, readHead, exifTime, orderPhotos, normalizeScenes, buildLightMap, countByScene, autoSplit, groupByScene, lightStats, lightingBreaks } from '@/lib/scenes'
 import { briefAdjust, STYLE_LOOK, QUESTIONS, type Brief, type SceneDef, type Signature } from '@/lib/brief'
@@ -40,7 +42,7 @@ type Photo = {
   pre_thumb_path: string | null
   pre_full_path: string | null
 }
-type G = { id: string; title: string; status: string; session_id: string | null; token: string; pin_hash: string | null; expires_at: string | null; audience: string }
+type G = { id: string; title: string; status: string; session_id: string | null; token: string; pin_hash: string | null; expires_at: string | null; audience: string; cover_photo_id: string | null; cover_path: string | null; design: Record<string, unknown> | null }
 type Sess = { id: string; names: string | null; couple_user_id: string | null; gallery_sent_at: string | null; gallery_url: string | null }
 
 const BUCKET = 'galleries'
@@ -48,7 +50,7 @@ const COLS =
   'id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, person_ids, enhanced, pre_web_path, pre_thumb_path, pre_full_path'
 const ACCEPT =
   'image/jpeg,image/png,image/webp,.heic,.heif,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.dng,.orf,.rw2,.raf,.pef,.3fr,.erf,.kdc,.mrw,.raw,.rwl,.iiq'
-const STEPS = ['Photos', 'Cull', 'Edit', 'Send']
+const STEPS = ['Photos', 'Cull', 'Edit', 'Gallery', 'Send']
 
 const panel = 'rounded-2xl border border-white/10 bg-[#151518] p-6'
 const btnPrimary = 'rounded-xl bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
@@ -65,6 +67,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   const [gallery, setGallery] = useState<G | null>(null)
   const [sess, setSess] = useState<Sess | null>(null)
   const [audience, setAudience] = useState<'picks' | 'picks_maybe' | 'all'>('all')
+  const [designOpen, setDesignOpen] = useState(false)
   const [pin, setPin] = useState('')
   const [sending, setSending] = useState(false)
   const [sendErr, setSendErr] = useState<string | null>(null)
@@ -111,6 +114,33 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     setSignatures((prev) => prev.filter((s) => s.id !== id))
   }
 
+  async function setCover(ph: Photo) {
+    const sb = supabase
+    if (!sb || !gallery) return
+    await sb.from('galleries').update({ cover_photo_id: ph.id }).eq('id', gallery.id)
+    let coverPath = gallery.cover_path
+    const src = ph.web_path ?? ph.thumb_path
+    if (src && userId) {
+      const dl = await sb.storage.from(BUCKET).download(src)
+      if (dl.data) {
+        const path = `${userId}/${gallery.id}-${Date.now()}.jpg`
+        const up = await sb.storage.from('gallery-covers').upload(path, dl.data, { contentType: 'image/jpeg', upsert: true })
+        if (!up.error) {
+          await sb.from('galleries').update({ cover_path: path }).eq('id', gallery.id)
+          if (gallery.cover_path && gallery.cover_path !== path) await sb.storage.from('gallery-covers').remove([gallery.cover_path])
+          coverPath = path
+        }
+      }
+    }
+    setGallery((g) => (g ? { ...g, cover_photo_id: ph.id, cover_path: coverPath } : g))
+  }
+
+  async function chooseAudience(k: 'picks' | 'picks_maybe' | 'all') {
+    setAudience(k)
+    const sb = supabase
+    if (sb && gallery) await sb.from('galleries').update({ audience: k }).eq('id', gallery.id)
+  }
+
   async function sendNow() {
     const sb = supabase
     if (!sb || !gallery) return
@@ -119,6 +149,10 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     if (gallery.pin_hash && !code) { setSendErr('Enter the PIN your client should use.'); return }
     if (code && code.length < 4) { setSendErr('Use a PIN of at least 4 characters.'); return }
     setSending(true)
+    if (!gallery.cover_path) {
+      const first = photos.find((p) => p.id === gallery.cover_photo_id) ?? photos.find((p) => p.cull_label === 'pick') ?? photos[0]
+      if (first) await setCover(first)
+    }
     const { data: upd, error: ue } = await sb.from('galleries').update({ audience, status: 'published' }).eq('id', gallery.id).select('expires_at').maybeSingle()
     if (ue) { setSending(false); setSendErr(ue.message); return }
     const expiresAt = (upd as { expires_at: string | null } | null)?.expires_at ?? gallery.expires_at
@@ -139,7 +173,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     }
     if (userId) await sb.from('edit_choices').insert({ owner_id: userId, gallery_id: gallery.id, kind: 'final', value: { look: lookId, strength, audience, brief }, signature_id: sigId })
     setSending(false)
-    setGallery({ ...gallery, status: 'published', audience, expires_at: expiresAt })
+    setGallery((g) => (g ? { ...g, status: 'published', audience, expires_at: expiresAt } : g))
     setSentDone(sess ? 'sent' : 'published')
   }
   const [photos, setPhotos] = useState<Photo[]>([])
@@ -147,7 +181,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   const [loaded, setLoaded] = useState(false)
   const [step, setStep] = useState(0)
   const [reached, setReached] = useState(0)
-  const [editTab, setEditTab] = useState<'shoot' | 'each'>('shoot')
+  const [editTab, setEditTab] = useState<'shoot' | 'each'>('each')
   const [msg, setMsg] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
 
@@ -426,7 +460,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     sb.auth.getSession().then(async ({ data }) => {
       if (!data.session) { router.replace('/login?next=/edit'); return }
       setUserId(data.session.user.id)
-      const { data: g } = await sb.from('galleries').select('id, title, status, session_id, token, pin_hash, expires_at, audience').eq('id', galleryId).maybeSingle()
+      const { data: g } = await sb.from('galleries').select('id, title, status, session_id, token, pin_hash, expires_at, audience, cover_photo_id, cover_path, design').eq('id', galleryId).maybeSingle()
       if (cancelled) return
       if (!g) { setMsg('Shoot not found.'); setLoaded(true); return }
       setGallery(g as G)
@@ -821,11 +855,11 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   // ---- Step 4: develop ----
   const todoDev = photos.filter((p) => !p.enhanced)
 
-  async function runDevelop() {
+  async function runDevelop(over?: { adj: Adjust; todo: Photo[] }) {
     const sb = supabase
     if (!sb || dev.busy) return
     const client = sb
-    const todo = photos.filter((p) => !p.enhanced)
+    const todo = over?.todo ?? photos.filter((p) => !p.enhanced)
     if (todo.length === 0) { setEditTab('each'); return }
     const lightMap = await lightByPhoto()
     if (userId) void client.from('edit_choices').insert({ owner_id: userId, gallery_id: galleryId, kind: 'edit', value: { look: lookId, strength, tweak }, signature_id: sigId })
@@ -844,7 +878,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
           if (dl.error || !dl.data) throw dl.error ?? new Error('Could not load the photo.')
           const lg = lightMap[p.id]
           const pa = lg ? briefAdjust({ ...brief, light: lg }) : { adjust, skin }
-          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: addAdj(pa.adjust, tweak), skin: pa.skin })
+          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: addAdj(addAdj(pa.adjust, tweak), over?.adj), skin: pa.skin })
           const dir = p.orig_path.slice(0, p.orig_path.lastIndexOf('/'))
           const eFull = `${dir}/enh-full.jpg`
           const eWeb = `${dir}/enh-web.jpg`
@@ -867,6 +901,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
               thumb_path: eThumb,
               full_path: eFull,
               enh_bytes: out.full.size + out.web.blob.size + out.thumb.blob.size,
+              ...(over && Object.keys(over.adj).length > 0 ? { review_adj: over.adj } : {}),
             })
             .eq('id', p.id)
           if (error) throw error
@@ -890,11 +925,23 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     else setEditTab('each')
   }
 
+  async function applyRest(adj: Adjust) {
+    const sb = supabase
+    if (!sb) return
+    const { data } = await sb.from('gallery_photos').select(COLS).eq('gallery_id', galleryId).eq('enhanced', false)
+    const todo = ((data ?? []) as Photo[]).filter((p) => p.cull_label !== 'reject')
+    await runDevelop({ adj, todo })
+  }
+
   if (!loaded) {
     return <div className={`min-h-[60vh] p-10 text-sm ${onBack ? 'text-ink-soft' : 'rounded-3xl bg-[#0c0c0e] text-white/40'}`}>{msg ?? 'Loading…'}</div>
   }
 
   const enhancedCount = photos.filter((p) => p.enhanced).length
+  const coverPhoto = photos.find((p) => p.id === gallery?.cover_photo_id) ?? photos.find((p) => p.cull_label === 'pick') ?? photos[0]
+  const shownCount = photos.filter((p) => (audience === 'all' ? true : audience === 'picks_maybe' ? p.cull_label !== 'reject' : p.cull_label !== 'reject' && p.cull_label !== 'maybe')).length
+  const notEdited = photos.filter((p) => !p.enhanced && p.cull_label !== 'reject').length
+  const audienceLabel = audience === 'picks' ? 'Keepers only' : audience === 'picks_maybe' ? 'Keepers and maybes' : 'Everything'
 
   if (!briefReady) {
     return (
@@ -1344,17 +1391,16 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
             {!dev.busy && (
               <div className="mt-5 flex gap-2">
                 <button
+                  className={`rounded-full border px-4 py-1.5 text-sm transition ${editTab === 'each' ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                  onClick={() => setEditTab('each')}
+                >
+                  One at a time
+                </button>
+                <button
                   className={`rounded-full border px-4 py-1.5 text-sm transition ${editTab === 'shoot' ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`}
                   onClick={() => setEditTab('shoot')}
                 >
                   Whole shoot
-                </button>
-                <button
-                  disabled={enhancedCount === 0}
-                  className={`rounded-full border px-4 py-1.5 text-sm transition disabled:opacity-40 ${editTab === 'each' ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`}
-                  onClick={() => setEditTab('each')}
-                >
-                  One at a time
                 </button>
               </div>
             )}
@@ -1453,7 +1499,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
             </div>
 
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <button className={btnPrimary} onClick={runDevelop}>Edit all {todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'}</button>
+                  <button className={btnPrimary} onClick={() => runDevelop()}>Edit all {todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'}</button>
                   <button className={btnQuiet} onClick={() => goTo(3)}>Skip</button>
                   <button className={btnQuiet} onClick={() => goTo(1)}>Back</button>
                 </div>
@@ -1499,6 +1545,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                 userId={userId}
                 signatureId={sigId}
                 onSaveStyle={async (name, tw) => { await saveSignature(name, { ...brief, look: lookId, tweak: tw }) }}
+                onApplyRest={applyRest}
                 lookId={lookId}
                 strength={strength}
                 brief={brief}
@@ -1512,20 +1559,85 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
           </section>
         )}
 
-        {/* STEP 6: SEND */}
+        {/* STEP 5: GALLERY */}
         {step === 3 && (
           <section className="mt-10">
-            <h1 className="font-fraunces text-4xl text-white">Ready to send</h1>
-            <p className="mt-3 max-w-2xl text-white/55">
-              {photos.length} {photos.length === 1 ? 'photo' : 'photos'}, {enhancedCount} developed. Choose what your client sees, then send it.
-            </p>
-            <div className="mt-8 grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-10">
-              {photos.slice(0, 30).map((p) => (
-                <div key={p.id} className="aspect-square overflow-hidden rounded-lg bg-white/5">{img(p)}</div>
-              ))}
+            <h1 className="font-fraunces text-4xl text-white">Design your gallery</h1>
+            <p className="mt-3 max-w-2xl text-white/55">Pick the cover photo, choose how it looks, and decide what your client sees. Nothing is sent yet.</p>
+
+            <div className={`${panel} mt-8`}>
+              <p className="text-sm text-white/80">1. Cover photo</p>
+              <p className="mt-1 text-xs text-white/45">Tap the photo that should open the gallery.</p>
+              <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-10">
+                {photos.filter((p) => p.cull_label !== 'reject').slice(0, 60).map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => void setCover(p)}
+                    className={`relative aspect-square overflow-hidden rounded-lg bg-white/5 ${coverPhoto?.id === p.id ? 'ring-2 ring-[var(--color-twilight)]' : 'opacity-80 hover:opacity-100'}`}
+                  >
+                    {img(p)}
+                    {coverPhoto?.id === p.id && <span className="absolute left-1 top-1 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Cover</span>}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {!sentDone && <MomentsPanel galleryId={galleryId} />}
+            <div className={`${panel} mt-6`}>
+              <p className="text-sm text-white/80">2. Cover style and layout</p>
+              <p className="mt-1 text-xs text-white/45">Choose a cover design, a photo layout, fonts and colors. You can preview it on desktop and phone.</p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button className={btnPrimary} onClick={() => setDesignOpen(true)}>{gallery?.design && Object.keys(gallery.design).length > 0 ? 'Change the design' : 'Design the gallery'}</button>
+                {gallery?.design && Object.keys(gallery.design).length > 0 && <span className="text-sm text-emerald-300">Design saved ✓</span>}
+              </div>
+            </div>
+
+            <MomentsPanel galleryId={galleryId} />
+
+            <div className={`${panel} mt-6`}>
+              <p className="text-sm text-white/80">3. What your client sees</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {([
+                  ['picks', 'Keepers only', photos.filter((p) => p.cull_label !== 'reject' && p.cull_label !== 'maybe').length],
+                  ['picks_maybe', 'Keepers and maybes', photos.filter((p) => p.cull_label !== 'reject').length],
+                  ['all', 'Everything', photos.length],
+                ] as const).map(([key, label, count]) => (
+                  <button
+                    key={key}
+                    onClick={() => void chooseAudience(key)}
+                    className={`rounded-xl border p-4 text-left transition ${audience === key ? 'border-twilight shadow-[0_0_24px_-6px_var(--color-twilight)]' : 'border-white/10 hover:border-white/30'}`}
+                  >
+                    <p className="text-white">{label}</p>
+                    <p className="mt-1 text-sm text-white/50">{count} {count === 1 ? 'photo' : 'photos'}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-white/40">Hidden photos stay in your gallery. You can change this any time.</p>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button className={btnPrimary} onClick={() => goTo(4)}>Continue to send</button>
+              <button className={btnQuiet} onClick={() => { goTo(2); setEditTab('each') }}>Back</button>
+            </div>
+
+            {designOpen && gallery && (
+              <GalleryDesigner
+                galleryId={gallery.id}
+                token={gallery.token}
+                title={gallery.title}
+                initial={(gallery.design ?? null) as unknown as GalleryDesign | null}
+                coverUrl={coverPhoto?.thumb_path ? thumbs[coverPhoto.thumb_path] : undefined}
+                onClose={() => setDesignOpen(false)}
+                onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as unknown as Record<string, unknown> } : g))}
+              />
+            )}
+          </section>
+        )}
+
+        {/* STEP 6: SEND */}
+        {step === 4 && (
+          <section className="mt-10">
+            <h1 className="font-fraunces text-4xl text-white">Ready to send</h1>
+            <p className="mt-3 max-w-2xl text-white/55">One last look, then it goes to your client.</p>
 
             {sentDone ? (
               <div className={`${panel} mt-10`}>
@@ -1542,25 +1654,22 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
               </div>
             ) : (
               <>
-                <div className={`${panel} mt-10`}>
-                  <p className="text-sm text-white/80">What your client sees</p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    {([
-                      ['picks', 'Picks only', photos.filter((p) => p.cull_label !== 'reject' && p.cull_label !== 'maybe').length],
-                      ['picks_maybe', 'Picks and maybes', photos.filter((p) => p.cull_label !== 'reject').length],
-                      ['all', 'Everything', photos.length],
-                    ] as const).map(([key, label, count]) => (
-                      <button
-                        key={key}
-                        onClick={() => setAudience(key)}
-                        className={`rounded-xl border p-4 text-left transition ${audience === key ? 'border-twilight shadow-[0_0_24px_-6px_var(--color-twilight)]' : 'border-white/10 hover:border-white/30'}`}
-                      >
-                        <p className="text-white">{label}</p>
-                        <p className="mt-1 text-sm text-white/50">{count} {count === 1 ? 'photo' : 'photos'}</p>
-                      </button>
-                    ))}
+                <div className={`${panel} mt-8`}>
+                  <div className="flex flex-wrap items-center gap-5">
+                    {coverPhoto && <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-white/5">{img(coverPhoto)}</div>}
+                    <div className="min-w-0">
+                      <p className="font-fraunces text-xl text-white">{gallery?.title}</p>
+                      <p className="mt-1 text-sm text-white/60">{shownCount} {shownCount === 1 ? 'photo' : 'photos'} shown to your client · {audienceLabel}</p>
+                      <button className="mt-1 text-xs text-white/50 underline transition hover:text-white" onClick={() => goTo(3)}>Change the cover, design or photos</button>
+                    </div>
                   </div>
-                  <p className="mt-3 text-xs text-white/40">Hidden photos stay in your gallery. You can change this any time.</p>
+
+                  {notEdited > 0 && (
+                    <p className="mt-5 text-sm text-amber-300">
+                      {notEdited} {notEdited === 1 ? 'photo is' : 'photos are'} not edited yet.{' '}
+                      <button className="underline" onClick={() => { goTo(2); setEditTab('each') }}>Edit {notEdited === 1 ? 'it' : 'them'} first</button>
+                    </p>
+                  )}
 
                   {gallery?.pin_hash && (
                     <div className="mt-6">
@@ -1586,8 +1695,8 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                   <button className={btnPrimary} disabled={sending} onClick={sendNow}>
                     {sending ? 'Sending…' : sess ? 'Publish and send to client' : 'Publish'}
                   </button>
-                  <button className={btnQuiet} onClick={() => router.push(`/galleries/${galleryId}`)}>Review in gallery first</button>
-                  <button className={btnQuiet} onClick={() => { goTo(2); setEditTab('each') }}>Back</button>
+                  <button className={btnQuiet} onClick={() => window.open(`/galleries/${galleryId}`, '_blank')}>Preview the gallery</button>
+                  <button className={btnQuiet} onClick={() => goTo(3)}>Back</button>
                 </div>
               </>
             )}
