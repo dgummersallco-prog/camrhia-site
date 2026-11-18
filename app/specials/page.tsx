@@ -270,7 +270,7 @@ function scrollPreviewTo(key: string) {
     const c = el.querySelector('#claim') as HTMLElement | null
     if (c) el.scrollTo({ top: c.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - 40, behavior: 'smooth' })
   } else {
-    el.scrollTo({ top: 0, behavior: 'smooth' })
+    el.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
   }
 }
 

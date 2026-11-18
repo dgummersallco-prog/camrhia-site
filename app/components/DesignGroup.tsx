@@ -22,6 +22,11 @@ export default function DesignGroup({
     e.preventDefault()
     const el = e.currentTarget.parentElement as HTMLDetailsElement
     if (el.open) { el.open = false; onClose?.(); return }
+    // Hold the page height while cards swap, so the browser never has to clamp the
+    // scroll position (that clamp was the jump when a card sits near the page bottom).
+    const doc = document.documentElement
+    const held = Math.max(doc.scrollHeight, parseFloat(document.body.style.minHeight) || 0)
+    document.body.style.minHeight = held + 'px'
     const before = el.getBoundingClientRect().top
     const root = el.closest('[data-accordion]') ?? el.parentElement
     root?.querySelectorAll('details[data-group]').forEach((d) => { if (d !== el) (d as HTMLDetailsElement).open = false })
