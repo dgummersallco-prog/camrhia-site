@@ -1,15 +1,16 @@
 import type { Metadata } from "next"
 import { Nav, Footer, AppStoreButton } from "@/app/components/SiteChrome"
 import Wordmark from "@/app/components/Wordmark"
+import CamriAsk from "@/app/components/CamriAsk"
 
 export const metadata: Metadata = {
   title: "Camrhia | Become the photographer everyone is looking for.",
   description:
-    "Stop juggling seven tools. Camrhia gives photographers a website of their own, a place to get found, booking, contracts, payments and gallery delivery. Free for 14 days.",
+    "Stop juggling seven tools. Camrhia gives photographers a website built with Camri, plus booking, contracts, payments and gallery delivery. Free for 14 days.",
   openGraph: {
     title: "Camrhia | Become the photographer everyone is looking for.",
     description:
-      "A website builder, bookings, contracts, payments and gallery delivery. Everything your clients need, in one app.",
+      "A website built with Camri, bookings, contracts, payments and gallery delivery. Everything your clients need, in one app.",
     type: "website",
   },
 }
@@ -33,7 +34,7 @@ const OLD_STACK = [
 
 const NEW_STACK = [
   "Your own website at your own web address",
-  "A marketplace where clients find you",
+  "Camri, your assistant for the business side",
   "Bookings, contracts and payments",
   "Client messaging and your calendar",
   "Galleries and client favorites",
@@ -41,7 +42,7 @@ const NEW_STACK = [
 ]
 
 const STEPS = [
-  ["Make it yours", "Add your photos and packages. Your website goes live when you save."],
+  ["Build your site with Camri", "Add your photos and packages and Camri sets it up with you. Your website goes live when you save."],
   ["Share one link", "Clients inquire, book and pay from it."],
   ["Run it from your phone", "Sessions, contracts, payments and delivery in one place."],
 ]
@@ -124,36 +125,100 @@ export default function Home() {
         {/* HERO */}
         <section className="mx-auto max-w-6xl px-6 pt-14 pb-24 sm:pt-20 sm:pb-28 grid md:grid-cols-2 gap-14 md:gap-16 items-center">
           <div>
-            <p className="text-base font-medium text-brass">Your camera could be your whole career</p>
+            <p className="text-base font-medium text-brass">Meet Camri, your business assistant</p>
             <h1 className="mt-4 font-fraunces text-[3rem] md:text-7xl font-medium text-ink leading-[1.05]">
               Stop paying for five tools.
             </h1>
             <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-xl">
-              Camrhia replaces your website, contracts, payments, client messaging, gallery
-              delivery and photo editing. One app. One price.
+              Camrhia gives you a website built with Camri, plus contracts, payments, client messaging,
+              gallery delivery and photo editing. One login. One price.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-4">
-              <AppStoreButton />
-              <span className="text-sm text-ink-soft">14 days free. Cancel anytime.</span>
+              <a href="/upgrade/showcase" className="inline-flex items-center justify-center rounded-full bg-twilight px-8 py-4 text-base font-semibold text-white transition hover:opacity-90">Build my website with Camri</a>
+              <AppStoreButton label="Get the app" />
             </div>
+            <p className="mt-3 text-sm text-ink-soft">14 days free. Cancel anytime.</p>
           </div>
-
           <Panel tone="bg-brass/15">
             <div className="absolute left-[6%] top-[9%] w-[54%] z-10 -rotate-[2deg]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/screens/live-portfolio.png" alt="A photographer's live portfolio website on Camrhia" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.15s" }} />
+              <img src="/shots/sessions.png" alt="The Camrhia dashboard with Camri" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.15s" }} />
             </div>
             <div className="absolute right-[5%] top-[22%] w-[46%] rotate-[4deg]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/screens/portfolio.png" alt="Customizing a portfolio in the Camrhia app" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.35s" }} />
+              <img src="/shots/payments.png" alt="Payments in the Camrhia app" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.35s" }} />
             </div>
           </Panel>
+        </section>
+
+        {/* CAMRI */}
+        <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32">
+          <Story
+            flip
+            title="Camri runs the business side with you."
+            body="Ask Camri about your sessions, payments and clients. She sees what needs attention, helps you set up your website, and guides every edit."
+            points={[
+              "Ask what is next on your calendar or who still owes you",
+              "Camri sets up your website with you, step by step",
+              "Camri Retouch edits in your style and explains every change",
+            ]}
+            panel={
+              <Panel tone="bg-brass/15">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/sessions.png" alt="Camri on the Camrhia dashboard" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[7%] w-[62%]`} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/camri/14_peeking_sliders.png" alt="Camri" loading="lazy" className="absolute bottom-[3%] right-[4%] w-[30%]" />
+              </Panel>
+            }
+          />
+        </section>
+
+        {/* DESKTOP */}
+        <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32">
+          <div className="max-w-2xl">
+            <p className="text-base font-medium text-brass">On your phone and on your computer</p>
+            <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Your whole studio, on a big screen too.</h2>
+            <p className="mt-5 text-lg text-ink-soft leading-relaxed">Sessions, clients, contracts, money, your website and your galleries all live in one place you can open anywhere.</p>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/shots/home.png" alt="The Camrhia home screen" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/shots/sessions-web.png" alt="Sessions in Camrhia, with every step tracked" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+          </div>
+        </section>
+
+        {/* SPECIALS */}
+        <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32">
+          <div className="max-w-2xl">
+            <p className="text-base font-medium text-brass">Specials</p>
+            <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Fill your calendar with a Special.</h2>
+            <p className="mt-5 text-lg text-ink-soft leading-relaxed">Run a mini session, a holiday offer or a limited-time deal. Build it as its own live website page, or make a Quick Special in a few taps.</p>
+          </div>
+          <div className="mt-12 grid items-center gap-10 md:grid-cols-2">
+            <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/shots/specials.png" alt="Designing a Special in Camrhia" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">A live website for every Special</p>
+              <p className="mt-2 text-ink-soft leading-relaxed">Share one link. Clients see your offer, pick a time and inquire without leaving the page.</p>
+            </div>
+            <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/shots/quickspecials.png" alt="Quick Specials designs in Camrhia" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Quick Specials</p>
+              <p className="mt-2 text-ink-soft leading-relaxed">Pick a design, add your details and share. Ready to post in minutes.</p>
+            </div>
+          </div>
         </section>
 
         {/* SOUND FAMILIAR */}
         <section className="bg-paper-deep border-y border-line">
           <div className="mx-auto max-w-3xl px-6 py-20 sm:py-24">
+            <div className="flex items-center gap-6">
             <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Talent is not what is holding you back</h2>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/camri/04_thinking.png" alt="" className="hidden h-32 w-auto shrink-0 sm:block" />
+            </div>
             <ul className="mt-9 space-y-4">
               {PAINS.map((p) => (
                 <li key={p} className="flex gap-3 text-lg text-ink">
@@ -186,7 +251,7 @@ export default function Home() {
         <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <Story
             title="A website that sells for you."
-            body="Build your site on your phone with a live preview. Pick a look, add your photos, and it goes live at your own web address. Clients tap your link and inquire without leaving the page."
+            body="Camri builds it with you. Pick a look, arrange your sections, add your photos, and it goes live at your own web address. Clients inquire and book without leaving the page."
             points={[
               "Fonts, colors, layouts and photos are all yours",
               "The website is included in your price",
@@ -194,30 +259,10 @@ export default function Home() {
             panel={
               <Panel tone="bg-twilight/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/screens/portfolio.png" alt="Customizing a portfolio in the Camrhia app" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/screens/live-portfolio.png" alt="The live portfolio website" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
+                <img src="/shots/explore.png" alt="Arranging a website with Camri" loading="lazy" className="absolute left-[4%] right-[4%] top-1/2 -translate-y-1/2 w-[92%] rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]" />
               </Panel>
             }
           />
-        </section>
-
-        {/* GET FOUND */}
-        <section className="border-y border-line bg-paper-deep">
-          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-            <Story
-              flip
-              title="Get found by clients ready to book."
-              body="Clients browse photographers near them right in the app. It is free for them."
-              points={[]}
-              panel={
-                <Panel tone="bg-brass/20">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/screens/marketplace.png" alt="Clients browsing photographer studios in the Camrhia app" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[9%] w-[64%]`} />
-                </Panel>
-              }
-            />
-          </div>
         </section>
 
         {/* MESSAGES + CALENDAR */}
@@ -229,12 +274,28 @@ export default function Home() {
             panel={
               <Panel tone="bg-sage/15">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/screens/messages.png" alt="Client messages in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
+                <img src="/shots/messages.png" alt="Client messages in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/screens/calendar.png" alt="The Camrhia calendar" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
+                <img src="/shots/calendar.png" alt="The Camrhia calendar" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
               </Panel>
             }
           />
+          <div className="mt-24 sm:mt-32">
+            <Story
+              flip
+              title="Know who has paid, and what is next."
+              body="See what you have collected, what is coming, and who is overdue. Every session shows its time, package, contract and questionnaire in one place."
+              points={[]}
+              panel={
+                <Panel tone="bg-brass/15">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/shots/payments.png" alt="Payments in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/shots/session.png" alt="A session in Camrhia" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
+                </Panel>
+              }
+            />
+          </div>
         </section>
 
         {/* CLIENT EXPERIENCE */}
@@ -264,6 +325,8 @@ export default function Home() {
         {/* DELIVERY */}
         <section className="bg-gradient-to-br from-[#8C6B3F] to-[#A6824F] text-white">
           <div className="mx-auto max-w-3xl px-6 py-24 sm:py-28 text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/camri/05_celebrating.png" alt="" className="mx-auto mb-6 h-32 w-auto" />
             <h2 className="font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">
               Delivery day, without the scramble.
             </h2>
@@ -348,7 +411,8 @@ export default function Home() {
             <p className="mt-3 text-center text-ink-soft">Subscribe on camrhia.com. Cancel anytime.</p>
             <div className="mt-10 grid md:grid-cols-3 gap-6">
               <div className="flex flex-col rounded-3xl bg-card border-2 border-twilight p-8">
-                <p className="font-fraunces text-2xl font-semibold text-ink">Camrhia Showcase</p>
+                <div className="flex items-center justify-between gap-3"><p className="font-fraunces text-2xl font-semibold text-ink">Camrhia Showcase</p>{/* eslint-disable-next-line @next/next/no-img-element */}
+<img src="/camri/03_working_laptop.png" alt="" className="h-14 w-auto" /></div>
                 <p className="mt-1 text-sm text-ink-soft">Your website, ad specials, and gallery delivery.</p>
                 <p className="mt-6 font-fraunces text-5xl text-ink">$33<span className="text-base text-ink-soft"> /month</span></p>
                 <p className="mt-1 text-sm text-ink-soft">or $330 /year</p>
@@ -361,7 +425,8 @@ export default function Home() {
                 <a href="/upgrade/showcase" className="mt-8 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
               </div>
               <div className="flex flex-col rounded-3xl bg-card border border-line p-8">
-                <p className="font-fraunces text-2xl font-semibold text-ink">Camri Retouch</p>
+                <div className="flex items-center justify-between gap-3"><p className="font-fraunces text-2xl font-semibold text-ink">Camri Retouch</p>{/* eslint-disable-next-line @next/next/no-img-element */}
+<img src="/camri/10_holding_sliders.png" alt="" className="h-14 w-auto" /></div>
                 <p className="mt-1 text-sm text-ink-soft">AI editing with Camri beside you.</p>
                 <p className="mt-6 font-fraunces text-5xl text-ink">$22<span className="text-base text-ink-soft"> /month</span></p>
                 <p className="mt-1 text-sm text-ink-soft">or $220 /year</p>
@@ -374,7 +439,8 @@ export default function Home() {
                 <a href="/upgrade/retouch" className="mt-8 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
               </div>
               <div className="flex flex-col rounded-3xl bg-card border border-line p-8">
-                <p className="font-fraunces text-2xl font-semibold text-ink">Camri Cull</p>
+                <div className="flex items-center justify-between gap-3"><p className="font-fraunces text-2xl font-semibold text-ink">Camri Cull</p>{/* eslint-disable-next-line @next/next/no-img-element */}
+<img src="/camri/09_holding_photo.png" alt="" className="h-14 w-auto" /></div>
                 <p className="mt-1 text-sm text-ink-soft">Your best shots, picked for you.</p>
                 <p className="mt-6 font-fraunces text-5xl text-ink">$11<span className="text-base text-ink-soft"> /month</span></p>
                 <p className="mt-1 text-sm text-ink-soft">or $110 /year</p>
@@ -431,6 +497,8 @@ export default function Home() {
         {/* FOUNDER NOTE + FINAL CTA */}
         <section className="bg-paper-deep border-t border-line">
           <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/camri/12_open_arms.png" alt="Camri" className="mx-auto mb-4 h-32 w-auto" />
             <Wordmark className="text-5xl" />
             <p className="mt-8 text-lg text-ink leading-relaxed">
               I built Camrhia so photographers can run their business with less stress. Try it for 14 days. If it
@@ -443,6 +511,7 @@ export default function Home() {
         </section>
       </main>
       <Footer />
+      <CamriAsk />
     </>
   )
 }
