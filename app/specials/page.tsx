@@ -12,6 +12,7 @@ import { DashboardHeader } from '@/app/components/DashboardHeader'
 import DesignGroup from '@/app/components/DesignGroup'
 import { useEntitlements } from '@/lib/useEntitlements'
 import { type FreeBox } from '@/app/go/[slug]/FreeCanvas'
+import Editable from '@/app/components/Editable'
 import SpecialView, { DECOR_EMOJI, DEFAULT_THEME, readTheme, themeToContent, type Decor, type FormStyle, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
@@ -32,7 +33,7 @@ type MiniOpt = { id: string; title: string; description: string | null; location
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image', 'og_site']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -633,14 +634,63 @@ export default function SpecialsPage() {
     }
   }
   const ogInput = useRef<HTMLInputElement>(null)
-  async function uploadOg(file: File) {
+  async function makeOgFromDesign() {
+    if (!form) return
+    const t = form.theme
+    const W = 1200, H = 630
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H
+    const ctx = cv.getContext('2d')
+    if (!ctx) return
+    const fam = (k: string, d: string) => FONT_OPTIONS[k]?.family ?? d
+    const nameF = fam(t.nameFont, 'sans-serif'), headF = fam(t.headFont, 'serif'), subF = fam(t.subFont, 'sans-serif')
+    try { await Promise.all([`28px ${nameF}`, `80px ${headF}`, `34px ${subF}`].map((f) => document.fonts.load(f))) } catch {}
+    ctx.fillStyle = t.bgColor; ctx.fillRect(0, 0, W, H)
+    if (t.bgImage) {
+      try {
+        const img = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = t.bgImage })
+        const r = Math.max(W / img.width, H / img.height)
+        ctx.drawImage(img, (W - img.width * r) / 2, (H - img.height * r) / 2, img.width * r, img.height * r)
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, W, H)
+      } catch {}
+    }
+    const wrap = (text: string, maxW: number) => {
+      const out: string[] = []; let line = ''
+      for (const w of text.split(/\s+/).filter(Boolean)) {
+        const test = line ? line + ' ' + w : w
+        if (ctx.measureText(test).width > maxW && line) { out.push(line); line = w } else line = test
+      }
+      if (line) out.push(line)
+      return out
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
+    const title = (form.text.hero_headline || '').trim()
+    const sub = (form.text.hero_sub || '').trim().split(/\n/)[0]
+    const name = (form.text.brand_name || '').trim()
+    let tSize = 96
+    let tLines: string[] = []
+    for (; tSize >= 44; tSize -= 4) { ctx.font = `${tSize}px ${headF}`; tLines = wrap(title, 1000); if (tLines.length <= 3) break }
+    ctx.font = `34px ${subF}`
+    const sLines = sub ? wrap(sub, 900).slice(0, 2) : []
+    const gap = 24
+    const blockH = (name ? 40 + gap : 0) + tLines.length * tSize * 1.1 + (sLines.length ? gap + sLines.length * 44 : 0)
+    let y = (H - blockH) / 2
+    if (name) { ctx.font = `30px ${nameF}`; ctx.fillStyle = t.nameColor || t.textColor; ctx.fillText(name.toUpperCase(), W / 2, y + 30); y += 40 + gap }
+    ctx.font = `${tSize}px ${headF}`; ctx.fillStyle = t.titleColor
+    tLines.forEach((l, i) => ctx.fillText(l, W / 2, y + tSize * (0.9 + i * 1.1)))
+    y += tLines.length * tSize * 1.1
+    if (sLines.length) { y += gap; ctx.font = `34px ${subF}`; ctx.fillStyle = t.subColor; sLines.forEach((l, i) => ctx.fillText(l, W / 2, y + 34 + i * 44)) }
+    const blob = await new Promise<Blob | null>((res) => cv.toBlob(res, 'image/jpeg', 0.9))
+    if (!blob) { setMessage('Could not make the picture.'); return }
+    await uploadOg(blob)
+  }
+  async function uploadOg(file: Blob) {
     const sb = supabase
     if (!sb || !form || !userId) return
     setUploading(true)
     try {
-      const v = await makeVersions(file)
+      const body = file instanceof File ? (await makeVersions(file)).web.blob : file
       const path = `${userId}/special_og_${Date.now()}.jpg`
-      const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+      const up = await sb.storage.from('portfolio').upload(path, body, { contentType: 'image/jpeg', upsert: true })
       if (up.error) throw up.error
       const old = form.text.og_image
       setText('og_image', STORAGE_BASE + path)
@@ -1245,11 +1295,17 @@ export default function SpecialsPage() {
                         <Label>Description</Label>
                         <textarea rows={3} placeholder={form.text.hero_sub || 'Description'} value={form.text.og_desc} onChange={(e) => setText('og_desc', e.target.value)} className={inputCls} />
                       </label>
+                      <label className="block">
+                        <Label>Small line underneath</Label>
+                        <input placeholder={form.text.brand_name || 'Studio name'} value={form.text.og_site} onChange={(e) => setText('og_site', e.target.value)} className={inputCls} />
+                        <span className="mt-1 block text-xs text-ink-soft">Some apps show your web address here instead.</span>
+                      </label>
                       <div>
                         <Label>Picture</Label>
                         <input ref={ogInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadOg(f); e.target.value = '' }} />
                         {form.text.og_image && <img src={form.text.og_image} alt="" className="mb-2 h-24 w-auto rounded-lg border border-line object-cover" />}
                         <div className="flex gap-2">
+                          <button type="button" disabled={uploading} onClick={makeOgFromDesign} className="rounded-full bg-twilight px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{uploading ? 'Working...' : 'Make from my design'}</button>
                           <button type="button" disabled={uploading} onClick={() => ogInput.current?.click()} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{uploading ? 'Uploading...' : form.text.og_image ? 'Change picture' : 'Choose a picture'}</button>
                           {form.text.og_image && <button type="button" onClick={() => setText('og_image', '')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink-soft transition hover:border-twilight">Remove</button>}
                         </div>
@@ -1276,6 +1332,19 @@ export default function SpecialsPage() {
                 <style>{`#special-preview [data-edit]{cursor:pointer}#special-preview [data-edit]:hover{outline:1px dashed #A9545F;outline-offset:3px}#special-preview [contenteditable]{cursor:text;outline:none}#special-preview [contenteditable]:focus{outline:1px solid #A9545F;outline-offset:3px}#special-preview [data-ph]:empty::before{content:attr(data-ph);opacity:.4;pointer-events:none}`}</style>
                 <div id="special-preview" onClick={(e) => { const t = (e.target as HTMLElement).closest('[data-edit]') as HTMLElement | null; if (t?.dataset.edit) openEditor(t.dataset.edit) }} className="mx-auto h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[2rem] border-4 border-ink/80" style={{ background: form.theme.bgColor }}>
                   <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label, minis)} edit={{ selected: selFree, onSelect: setSelFree, onMove: (i, x, y) => setFree(i, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }), onWidth: (i, w) => setFree(i, { w: Math.round(w * 10) / 10 }), onText }} />
+                </div>
+                <div className="mx-auto mt-5 w-[390px] max-w-full">
+                  <p className="mb-1 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Link preview</p>
+                  <p className="mb-2 text-xs text-ink-soft">This is the little card people see when you text or share your link, before they tap it. Tap the words to type on it, or use Design, Link preview for the picture.</p>
+                  <style>{`#og-preview [contenteditable]{cursor:text;outline:none}#og-preview [contenteditable]:hover{outline:1px dashed #A9545F;outline-offset:2px}#og-preview [contenteditable]:focus{outline:1px solid #A9545F;outline-offset:2px}#og-preview [data-ph]:empty::before{content:attr(data-ph);opacity:.4;pointer-events:none}`}</style>
+                  <div id="og-preview" className="overflow-hidden rounded-2xl border border-line bg-card">
+                    {form.text.og_image ? <img src={form.text.og_image} alt="" className="aspect-[1200/630] w-full object-cover" /> : <div className="flex aspect-[1200/630] w-full items-center justify-center bg-line/40 text-xs text-ink-soft">No picture yet</div>}
+                    <div className="px-3 py-2">
+                      <Editable tag="p" single value={form.text.og_title} onChange={(v) => setText('og_title', v)} placeholder={form.text.hero_headline || 'Title'} className="text-sm font-semibold text-ink" />
+                      <Editable tag="p" value={form.text.og_desc} onChange={(v) => setText('og_desc', v)} placeholder={form.text.hero_sub || 'Description'} className="text-xs text-ink-soft" />
+                      <Editable tag="p" single value={form.text.og_site} onChange={(v) => setText('og_site', v)} placeholder={form.text.brand_name || 'camrhia.com'} className="mt-0.5 text-xs text-ink-soft/60" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title,
       description: description || undefined,
       type: 'website',
-      siteName: t('brand_name') || undefined,
+      siteName: t('og_site') || t('brand_name') || undefined,
       images: image ? [{ url: image }] : undefined,
     },
     twitter: {
