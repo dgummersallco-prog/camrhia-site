@@ -408,7 +408,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     explore: 'Your menu already links your pages, so only add this if you want a visual shortcut.',
   }
   const RECS: Record<string, string[]> = {
-    home: ['galsec', 'testimonials', 'pricesec', 'faq', 'social', 'contact'],
+    home: ['explore', 'galsec', 'testimonials', 'pricesec', 'faq', 'social', 'contact'],
     galleries: ['testimonials', 'contact'],
     about: ['testimonials', 'contact'],
     book: ['faq'],
@@ -419,7 +419,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     about: 'People often read About right before they book. Add a few reviews and a booking button.',
     book: 'Booking is your calendar. A short FAQ right under it answers the last questions before someone inquires.',
   }
-  const okRec = (k: string) => !!BLOCKS[k] && k !== 'portfolio' && !(k === 'about' && designs.about_mode !== 'section') && !(k === 'galsec' && designs.galleries_mode === 'page') && (!['galsec', 'pricesec', 'investment'].includes(k) || !!thumbs[k] || !!where(k))
+  const okRec = (k: string) => !!BLOCKS[k] && k !== 'portfolio' && !(k === 'about' && designs.about_mode !== 'section') && !(k === 'galsec' && designs.galleries_mode === 'page') && (!['galsec', 'pricesec', 'investment', 'explore'].includes(k) || !!thumbs[k] || !!where(k))
   const recKeys = (RECS[page.id] ?? (page.extra ? ['faq', 'testimonials', 'contact'] : [])).filter(okRec)
   const others = sections.filter((k) => okRec(k) && !recKeys.includes(k) && !mine.includes(k))
   function addAll() {

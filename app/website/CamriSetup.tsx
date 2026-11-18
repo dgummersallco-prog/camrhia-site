@@ -156,6 +156,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     s.about = []
     s.galleries = []
     s.extra = s.extra.map((e) => ({ ...e, sections: [] }))
+    if (designs.nav && designs.nav_mode !== 'none') s.home = ['explore']
     setStruct(s)
     setStep(3)
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -165,7 +166,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     const nd = { ...designs, ...camriPick(layouts[0], styles) }
     const base: Struct = { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] }
     const s = withModes(base, nd)
-    s.home = []
+    s.home = nd.nav && nd.nav_mode !== 'none' ? ['explore'] : []
     setDesigns(nd)
     setStruct(s)
     setStep(3)
