@@ -195,12 +195,12 @@ const WEB_FEE = 0
 const TIERS = [
   { key: 'solo', name: 'Solo', price: 8.99, apple: true, soon: false, blurb: 'The app: schedule and sessions together, with questionnaires, contracts and payments, and a shared space with every client. Free for clients.' },
   { key: 'studio', name: 'Studio', price: 15.99, apple: true, soon: false, blurb: 'Everything in Solo, plus team management.' },
-  { key: 'web', name: 'Website', price: 33, apple: false, soon: true, blurb: 'Everything in the app, plus a full website build, specials and mini-session ads, and gallery delivery.' },
-  { key: 'cull', name: 'AI Culling', price: 11, apple: false, soon: true, blurb: 'The Editing Room picks the keepers from every shoot.' },
-  { key: 'retouch', name: 'AI Retouch', price: 22, apple: false, soon: true, blurb: 'AI culling and AI editing for their photos. Culling is included.' },
+  { key: 'web', name: 'Website', price: 33, apple: false, soon: false, blurb: 'Everything in the app, plus a full website build, specials and mini-session ads, and gallery delivery.' },
+  { key: 'cull', name: 'AI Culling', price: 11, apple: false, soon: false, blurb: 'The Editing Room picks the keepers from every shoot.' },
+  { key: 'retouch', name: 'AI Retouch', price: 22, apple: false, soon: false, blurb: 'AI culling and AI editing for their photos. Culling is included.' },
 ]
 // Website plus AI Retouch, all under one dashboard linked to the app.
-const ALL_IN = { key: 'all', name: 'All-in', price: 33 + 22, apple: false, soon: true, blurb: '' }
+const ALL_IN = { key: 'all', name: 'All-in', price: 33 + 22, apple: false, soon: false, blurb: '' }
 type Tier = (typeof TIERS)[number] | typeof ALL_IN
 const TABLE: Tier[] = [TIERS[0], TIERS[1], TIERS[2], ALL_IN]
 const tierBase = (t: Tier) => r2(t.price * (1 - (t.apple ? APPLE_RATE : WEB_FEE)))

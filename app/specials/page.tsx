@@ -13,7 +13,7 @@ import DesignGroup from '@/app/components/DesignGroup'
 import { useEntitlements } from '@/lib/useEntitlements'
 import FreeCanvas, { type FreeBox } from '@/app/go/[slug]/FreeCanvas'
 import Editable from '@/app/components/Editable'
-import SpecialView, { DECOR_EMOJI, DEFAULT_THEME, readTheme, themeToContent, type Decor, type FormStyle, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
+import SpecialView, { bgCss, DECOR_EMOJI, DEFAULT_THEME, readTheme, themeToContent, type Decor, type FormStyle, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 const ALL_FONTS_HREF =
@@ -303,6 +303,36 @@ function SizeField({ value, min, max, onChange }: { value: number; min: number; 
   )
 }
 
+// A number you can type or nudge with the arrows. No slider.
+function SizeBox({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
+  const [txt, setTxt] = useState(String(value))
+  useEffect(() => setTxt(String(value)), [value])
+  return (
+    <div className="mt-1 flex items-center gap-2">
+      <input
+        type="number"
+        value={txt}
+        min={min}
+        max={max}
+        onChange={(e) => { setTxt(e.target.value); const n = Number(e.target.value); if (Number.isFinite(n) && n >= min && n <= max) onChange(n) }}
+        onBlur={() => setTxt(String(value))}
+        className="w-20 rounded-xl border border-line bg-card px-3 py-2 text-ink outline-none focus:border-twilight"
+      />
+      <span className="text-sm text-ink-soft">px</span>
+    </div>
+  )
+}
+
+// A slider with a plain readout. No number box.
+function PadSlider({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
+  return (
+    <div className="mt-1 flex items-center gap-3">
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-twilight" />
+      <span className="w-16 text-right text-sm text-ink-soft">{value} px</span>
+    </div>
+  )
+}
+
 function Label({ children }: { children: React.ReactNode }) {
   return <span className="text-sm font-medium text-ink">{children}</span>
 }
@@ -453,23 +483,22 @@ async function ogRender(d: OgDesign): Promise<Blob | null> {
   return await new Promise<Blob | null>((res) => cv.toBlob(res, 'image/jpeg', 0.92))
 }
 
-function OgDesigner({ text, theme, setText, busy, pickPic, camri, saveBlob, chooseFinished, setMessage }: {
+function OgDesigner({ text, theme, setText, busy, pickPic, camri, chooseFinished, setMessage, sel, setSel }: {
   text: Record<string, string>
   theme: SpecialTheme
   setText: (k: string, v: string) => void
   busy: boolean
   pickPic: (file: File) => Promise<string>
   camri: (prompt: string) => Promise<string>
-  saveBlob: (b: Blob) => Promise<void>
   chooseFinished: () => void
   setMessage: (m: string) => void
+  sel: number | null
+  setSel: (n: number | null) => void
 }) {
   const parsed = ogParse(text.og_design)
   const d = parsed ?? ogSeed(text, theme)
-  const [sel, setSel] = useState<number | null>(0)
   const [prompt, setPrompt] = useState('')
   const [working, setWorking] = useState(false)
-  const [crop, setCrop] = useState(true)
   const fileRef = useRef<HTMLInputElement>(null)
   const replaceRef = useRef<number | 'bg' | null>(null)
   const put = (n: OgDesign) => setText('og_design', JSON.stringify(n))
@@ -494,46 +523,11 @@ function OgDesigner({ text, theme, setText, busy, pickPic, camri, saveBlob, choo
     else add('image', url)
   })
   const makeWithCamri = () => run(async () => { const url = await camri(prompt.trim()); put({ ...d, bgImage: url }) })
-  const save = () => run(async () => {
-    if (!parsed) put(d)
-    const blob = await ogRender(d)
-    if (!blob) throw new Error('Could not make the picture.')
-    await saveBlob(blob)
-  })
   const off = busy || working
 
   return (
     <div className="space-y-4">
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
-      <div>
-        <div className="relative mx-auto w-full max-w-[560px] overflow-hidden rounded-xl border border-line" style={{ aspectRatio: OG_W + ' / ' + OG_H, background: d.bg }}>
-          {d.bgImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={d.bgImage} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
-          ) : null}
-          <FreeCanvas
-            boxes={d.free}
-            edit={{
-              selected: curEl >= 0 ? curEl : null,
-              onSelect: setSel,
-              onMove: (i, x, y) => setFreeAt(i, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }),
-              onWidth: (i, w) => setFreeAt(i, { w: Math.round(w * 10) / 10 }),
-              onText: (key, v) => { const i = Number(key.replace('free-', '')); if (Number.isFinite(i)) setFreeAt(i, { text: v }) },
-            }}
-          />
-          {crop && (
-            <>
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-30 bg-black/40" style={{ width: '23.75%' }} />
-              <div className="pointer-events-none absolute inset-y-0 right-0 z-30 bg-black/40" style={{ width: '23.75%' }} />
-            </>
-          )}
-        </div>
-        <label className="mt-2 flex items-center gap-2 text-xs text-ink-soft">
-          <input type="checkbox" checked={crop} onChange={(e) => setCrop(e.target.checked)} className="accent-twilight" />
-          Dim the sides Instagram cuts off. Keep your words in the bright middle.
-        </label>
-      </div>
-
       <div className="space-y-3 rounded-xl border border-line bg-paper p-4">
         <p className="text-sm font-medium text-ink">Background</p>
         <div className="max-w-xs">
@@ -552,7 +546,7 @@ function OgDesigner({ text, theme, setText, busy, pickPic, camri, saveBlob, choo
 
       <div className="space-y-3 rounded-xl border border-line bg-paper p-4">
         <p className="text-sm font-medium text-ink">Words, icons and pictures</p>
-        <p className="text-xs text-ink-soft">Drag them right on the picture above. Select one to get its move handle and width dot, or type its words straight onto the picture.</p>
+        <p className="text-xs text-ink-soft">Drag them right on the Link preview beside you. Select one to get its move handle, width dot and tilt, or type its words straight onto the picture.</p>
         {d.free.length > 0 && (
           <Chips value={String(curEl)} options={d.free.map((b, i) => ({ id: String(i), label: `${i + 1} ${b.kind === 'text' ? 'Text' : b.kind === 'icon' ? 'Icon' : 'Picture'}` }))} onChange={(v) => setSel(Number(v))} />
         )}
@@ -645,12 +639,11 @@ function OgDesigner({ text, theme, setText, busy, pickPic, camri, saveBlob, choo
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" disabled={off} onClick={save} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{off ? 'Working...' : 'Save as my link picture'}</button>
         <button type="button" onClick={() => { if (window.confirm('Start over from your special design? This replaces the picture design.')) put(ogSeed(text, theme)) }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">Start over from my design</button>
         <button type="button" disabled={off} onClick={chooseFinished} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">Upload a finished picture instead</button>
         {text.og_image && <button type="button" onClick={() => setText('og_image', '')} className="text-xs text-ink-soft underline hover:text-red-700">Remove saved picture</button>}
       </div>
-      <p className="text-xs text-ink-soft">Nothing changes in the link preview until you tap Save as my link picture.</p>
+      <p className="text-xs text-ink-soft">Your link picture is made when you tap Save at the bottom.</p>
     </div>
   )
 }
@@ -931,6 +924,19 @@ export default function SpecialsPage() {
   }
   const ogInput = useRef<HTMLInputElement>(null)
   const [ogTab, setOgTab] = useState<'bar' | 'pic'>('bar')
+  const [ogSel, setOgSel] = useState<number | null>(0)
+  const [ogCrop, setOgCrop] = useState(true)
+  const ogDirty = useRef(false)
+  const setOgText = (k: string, v: string) => {
+    if (k === 'og_design') ogDirty.current = true
+    if (k === 'og_image') ogDirty.current = false
+    setText(k, v)
+  }
+  const ogD = form ? (ogParse(form.text.og_design) ?? ogSeed(form.text, form.theme)) : null
+  const ogSetAt = (i: number, patch: Partial<FreeBox>) => {
+    if (!form || !ogD) return
+    setOgText('og_design', JSON.stringify({ ...ogD, free: ogD.free.map((b, j) => (j === i ? { ...b, ...patch } : b)) }))
+  }
   async function ogUploadPic(file: File): Promise<string> {
     const sb = supabase
     if (!sb || !userId) throw new Error('Please sign in again.')
@@ -960,6 +966,7 @@ export default function SpecialsPage() {
       const up = await sb.storage.from('portfolio').upload(path, body, { contentType: 'image/jpeg', upsert: true })
       if (up.error) throw up.error
       const old = form.text.og_image
+      ogDirty.current = false
       setText('og_image', STORAGE_BASE + path)
       if (old && old.startsWith(STORAGE_BASE + userId + '/special_og_')) await sb.storage.from('portfolio').remove([old.slice(STORAGE_BASE.length)])
     } catch (e) {
@@ -991,6 +998,19 @@ export default function SpecialsPage() {
       Object.entries(form.text).forEach(([k, v]) => { if (v.trim()) content[k] = v.trim() })
       content.photos = form.photos
       Object.assign(content, themeToContent(form.theme))
+      if (ogDirty.current) {
+        const od = ogParse(form.text.og_design)
+        if (od) {
+          const blob = await ogRender(od)
+          if (!blob) throw new Error('Could not make the link picture.')
+          const path = `${userId}/special_og_${Date.now()}.jpg`
+          const up = await sb.storage.from('portfolio').upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+          if (up.error) throw up.error
+          const oldOg = form.text.og_image
+          content.og_image = STORAGE_BASE + path
+          if (oldOg && oldOg.startsWith(STORAGE_BASE + userId + '/special_og_')) await sb.storage.from('portfolio').remove([oldOg.slice(STORAGE_BASE.length)])
+        }
+      }
       const row = {
         name: form.text.hero_headline.trim() || 'Special',
         style: 'special',
@@ -1015,6 +1035,7 @@ export default function SpecialsPage() {
         }
         if (!saved) throw new Error('Could not create the page. Try again.')
       }
+      ogDirty.current = false
       setForm(toForm(saved))
       flash('Saved')
       await load(userId)
@@ -1194,6 +1215,21 @@ export default function SpecialsPage() {
                       <div className="max-w-xs">
                         <ColorField label="Background color" value={form.theme.bgColor} onChange={(v) => setTheme({ bgColor: v })} />
                       </div>
+                      <div>
+                        <Label>Fade to a second color</Label>
+                        <Chips value={form.theme.bgColor2 ? 'on' : 'off'} options={[{ id: 'off', label: 'Off' }, { id: 'on', label: 'On' }]} onChange={(v) => setTheme({ bgColor2: v === 'on' ? form.theme.bgColor2 || form.theme.accent : '' })} />
+                      </div>
+                      {form.theme.bgColor2 && (
+                        <>
+                          <div className="max-w-xs">
+                            <ColorField label="Second color" value={form.theme.bgColor2} onChange={(v) => setTheme({ bgColor2: v })} />
+                          </div>
+                          <div>
+                            <Label>Fade direction</Label>
+                            <Chips value={form.theme.bgDir} options={[{ id: 'down', label: 'Top to bottom' }, { id: 'up', label: 'Bottom to top' }, { id: 'diag', label: 'Diagonal' }, { id: 'radial', label: 'Glow from the top' }]} onChange={(v) => setTheme({ bgDir: v })} />
+                          </div>
+                        </>
+                      )}
                     </MiniCard>
 
                     <MiniCard title="Studio name" summary={form.text.brand_name}>
@@ -1202,16 +1238,18 @@ export default function SpecialsPage() {
                         <input placeholder="Your studio name" value={form.text.brand_name} onChange={(e) => setText('brand_name', e.target.value)} className={inputCls} />
                       </label>
                       <FontPicker label="Font" value={form.theme.nameFont} onChange={(k) => setTheme({ nameFont: k })} />
-                      <div>
-                        <Label>Size</Label>
-                        <SizeField value={form.theme.nameSizePx} min={8} max={60} onChange={(n) => setTheme({ nameSizePx: n })} />
+                      <div className="flex items-end gap-4">
+                        <div className="min-w-0 max-w-xs flex-1">
+                          <ColorField label="Color" value={form.theme.nameColor || form.theme.textColor} onChange={(v) => setTheme({ nameColor: v })} />
+                        </div>
+                        <div>
+                          <Label>Size</Label>
+                          <SizeBox value={form.theme.nameSizePx} min={8} max={60} onChange={(n) => setTheme({ nameSizePx: n })} />
+                        </div>
                       </div>
-                      <div className="max-w-xs">
-                        <ColorField label="Color" value={form.theme.nameColor || form.theme.textColor} onChange={(v) => setTheme({ nameColor: v })} />
-                      </div>
                       <div>
-                        <Label>Space above (minus moves it up)</Label>
-                        <SizeField value={form.theme.nameTop} min={-300} max={400} onChange={(n) => setTheme({ nameTop: n })} />
+                        <Label>Padding</Label>
+                        <PadSlider value={form.theme.nameTop} min={-300} max={400} onChange={(n) => setTheme({ nameTop: n })} />
                       </div>
                     </MiniCard>
 
@@ -1221,22 +1259,29 @@ export default function SpecialsPage() {
                         <input placeholder="Holiday mini sessions" value={form.text.hero_headline} onChange={(e) => setText('hero_headline', e.target.value)} className={inputCls} />
                       </label>
                       <FontPicker label="Font" value={form.theme.headFont} onChange={(k) => setTheme({ headFont: k })} />
-                      <div>
-                        <Label>Size</Label>
-                        <SizeField value={form.theme.titleSizePx} min={12} max={160} onChange={(n) => setTheme({ titleSizePx: n })} />
+                      <div className="flex items-end gap-4">
+                        <div className="min-w-0 max-w-xs flex-1">
+                          <ColorField label="Color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
+                        </div>
+                        <div>
+                          <Label>Size</Label>
+                          <SizeBox value={form.theme.titleSizePx} min={12} max={160} onChange={(n) => setTheme({ titleSizePx: n })} />
+                        </div>
                       </div>
-                      <div className="max-w-xs">
-                        <ColorField label="Color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
-                      </div>
                       <div>
-                        <Label>Space above (minus moves it up)</Label>
-                        <SizeField value={form.theme.titleTop} min={-300} max={400} onChange={(n) => setTheme({ titleTop: n })} />
+                        <Label>Padding</Label>
+                        <PadSlider value={form.theme.titleTop} min={-300} max={400} onChange={(n) => setTheme({ titleTop: n })} />
                       </div>
                     </MiniCard>
 
                     <MiniCard title="Paragraph" summary={form.text.hero_sub}>
                       <p className="text-sm text-ink-soft">Type right on the preview, or here. Pick a line to change its look, and add as many lines as you want.</p>
-                      <Chips value={String(curLine)} options={[{ id: '-1', label: 'Main' }, ...form.theme.blocks.map((_, i) => ({ id: String(i), label: `Line ${i + 1}` }))]} onChange={(v) => setSelLine(Number(v))} />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Chips value={String(curLine)} options={[{ id: '-1', label: 'Main' }, ...form.theme.blocks.map((_, i) => ({ id: String(i), label: `Line ${i + 1}` }))]} onChange={(v) => setSelLine(Number(v))} />
+                        {form.theme.blocks.length < 40 && (
+                          <button type="button" onClick={() => { addBlock(); setSelLine(form.theme.blocks.length) }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add a line</button>
+                        )}
+                      </div>
                       {curLine < 0 ? (
                         <div className="space-y-4">
                           <label className="block">
@@ -1244,16 +1289,18 @@ export default function SpecialsPage() {
                             <textarea rows={3} placeholder="Family portraits by the lake, 20 minutes each" value={form.text.hero_sub} onChange={(e) => setText('hero_sub', e.target.value)} className={inputCls} />
                           </label>
                           <FontPicker label="Font" value={form.theme.subFont} onChange={(k) => setTheme({ subFont: k })} />
-                          <div>
-                            <Label>Size</Label>
-                            <SizeField value={form.theme.subSizePx} min={8} max={80} onChange={(n) => setTheme({ subSizePx: n })} />
+                          <div className="flex items-end gap-4">
+                            <div className="min-w-0 max-w-xs flex-1">
+                              <ColorField label="Color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
+                            </div>
+                            <div>
+                              <Label>Size</Label>
+                              <SizeBox value={form.theme.subSizePx} min={8} max={80} onChange={(n) => setTheme({ subSizePx: n })} />
+                            </div>
                           </div>
-                          <div className="max-w-xs">
-                            <ColorField label="Color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
-                          </div>
                           <div>
-                            <Label>Space above (minus moves it up)</Label>
-                            <SizeField value={form.theme.subTop} min={-300} max={400} onChange={(n) => setTheme({ subTop: n })} />
+                            <Label>Padding</Label>
+                            <PadSlider value={form.theme.subTop} min={-300} max={400} onChange={(n) => setTheme({ subTop: n })} />
                           </div>
                         </div>
                       ) : (() => {
@@ -1266,16 +1313,18 @@ export default function SpecialsPage() {
                               <textarea rows={2} value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} className={inputCls} />
                             </label>
                             <FontPicker label="Font" value={b.font} onChange={(k) => setBlock(i, { font: k })} />
-                            <div>
-                              <Label>Size</Label>
-                              <SizeField value={b.size} min={8} max={160} onChange={(n) => setBlock(i, { size: n })} />
+                            <div className="flex items-end gap-4">
+                              <div className="min-w-0 max-w-xs flex-1">
+                                <ColorField label="Color" value={b.color} onChange={(v) => setBlock(i, { color: v })} />
+                              </div>
+                              <div>
+                                <Label>Size</Label>
+                                <SizeBox value={b.size} min={8} max={160} onChange={(n) => setBlock(i, { size: n })} />
+                              </div>
                             </div>
-                            <div className="max-w-xs">
-                              <ColorField label="Color" value={b.color} onChange={(v) => setBlock(i, { color: v })} />
-                            </div>
                             <div>
-                              <Label>Space above (minus moves it up)</Label>
-                              <SizeField value={b.top} min={-300} max={400} onChange={(n) => setBlock(i, { top: n })} />
+                              <Label>Padding</Label>
+                              <PadSlider value={b.top} min={-300} max={400} onChange={(n) => setBlock(i, { top: n })} />
                             </div>
                             <div>
                               <Label>Align</Label>
@@ -1289,13 +1338,10 @@ export default function SpecialsPage() {
                           </div>
                         )
                       })()}
-                      {form.theme.blocks.length < 40 && (
-                        <button type="button" onClick={() => { addBlock(); setSelLine(form.theme.blocks.length) }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add a line</button>
-                      )}
                     </MiniCard>
 
                     <MiniCard title="Elements" summary={form.theme.free.length ? `${form.theme.free.length} added` : 'None'}>
-                      <p className="text-sm text-ink-soft">Free form. Add text, an icon or a picture, then drag it anywhere in the preview. Select one to get its move handle (top) and width dot (corner). Elements float over the page and do not push anything down.</p>
+                      <p className="text-sm text-ink-soft">Free form. Add text, an icon or a picture, then drag it anywhere in the preview. Select one to get its move handle (top), tilt handle (bottom) and width dot (corner). Elements float over the page and do not push anything down.</p>
                       <input ref={elInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadElement(f); e.target.value = '' }} />
                       {form.theme.free.length > 0 && (
                         <Chips value={String(curEl)} options={form.theme.free.map((b, i) => ({ id: String(i), label: `${i + 1} ${b.kind === 'text' ? 'Text' : b.kind === 'icon' ? 'Icon' : 'Picture'}` }))} onChange={(v) => setSelFree(Number(v))} />
@@ -1334,14 +1380,14 @@ export default function SpecialsPage() {
                               <button type="button" disabled={uploading} onClick={() => { elReplace.current = i; elInput.current?.click() }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{uploading ? 'Uploading...' : b.src ? 'Change picture' : 'Choose a picture'}</button>
                             )}
                             {b.kind !== 'image' && (
-                              <div>
-                                <Label>Size</Label>
-                                <SizeField value={b.size} min={6} max={300} onChange={(n) => setFree(i, { size: n })} />
-                              </div>
-                            )}
-                            {b.kind !== 'image' && (
-                              <div className="max-w-xs">
-                                <ColorField label="Color" value={b.color} onChange={(v) => setFree(i, { color: v })} />
+                              <div className="flex items-end gap-4">
+                                <div className="min-w-0 max-w-xs flex-1">
+                                  <ColorField label="Color" value={b.color} onChange={(v) => setFree(i, { color: v })} />
+                                </div>
+                                <div>
+                                  <Label>Size</Label>
+                                  <SizeBox value={b.size} min={6} max={300} onChange={(n) => setFree(i, { size: n })} />
+                                </div>
                               </div>
                             )}
                             {b.kind === 'text' && (
@@ -1362,18 +1408,6 @@ export default function SpecialsPage() {
                                 <SizeField value={Math.round(b.w)} min={5} max={100} onChange={(n) => setFree(i, { w: n })} />
                               </div>
                             )}
-                            <div>
-                              <Label>Left to right position</Label>
-                              <SizeField value={Math.round(b.x)} min={-20} max={100} onChange={(n) => setFree(i, { x: n })} />
-                            </div>
-                            <div>
-                              <Label>Up and down position</Label>
-                              <SizeField value={Math.round(b.y)} min={-20} max={900} onChange={(n) => setFree(i, { y: n })} />
-                            </div>
-                            <div>
-                              <Label>Tilt</Label>
-                              <SizeField value={Math.round(b.rot)} min={-90} max={90} onChange={(n) => setFree(i, { rot: n })} />
-                            </div>
                           </div>
                         )
                       })()}
@@ -1573,7 +1607,7 @@ export default function SpecialsPage() {
                       {ogTab === 'pic' && (
                         <>
                           <input ref={ogInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadOg(f); e.target.value = '' }} />
-                          <OgDesigner text={form.text} theme={form.theme} setText={setText} busy={uploading} pickPic={ogUploadPic} camri={ogCamri} saveBlob={uploadOg} chooseFinished={() => ogInput.current?.click()} setMessage={setMessage} />
+                          <OgDesigner text={form.text} theme={form.theme} setText={setOgText} busy={uploading} pickPic={ogUploadPic} camri={ogCamri} chooseFinished={() => ogInput.current?.click()} setMessage={setMessage} sel={ogSel} setSel={setOgSel} />
                         </>
                       )}
                     </MiniCard>
@@ -1596,20 +1630,50 @@ export default function SpecialsPage() {
               <div className="lg:sticky lg:top-6 lg:self-start">
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Live preview</p>
                 <style>{`#special-preview [data-edit]{cursor:pointer}#special-preview [data-edit]:hover{outline:1px dashed #A9545F;outline-offset:3px}#special-preview [contenteditable]{cursor:text;outline:none}#special-preview [contenteditable]:focus{outline:1px solid #A9545F;outline-offset:3px}#special-preview [data-ph]:empty::before{content:attr(data-ph);opacity:.4;pointer-events:none}`}</style>
-                <div id="special-preview" onClick={(e) => { const t = (e.target as HTMLElement).closest('[data-edit]') as HTMLElement | null; if (t?.dataset.edit) openEditor(t.dataset.edit) }} className="mx-auto h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[2rem] border-4 border-ink/80" style={{ background: form.theme.bgColor }}>
-                  <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label, minis)} edit={{ selected: selFree, onSelect: setSelFree, onMove: (i, x, y) => setFree(i, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }), onWidth: (i, w) => setFree(i, { w: Math.round(w * 10) / 10 }), onText }} />
+                <div id="special-preview" onClick={(e) => { const t = (e.target as HTMLElement).closest('[data-edit]') as HTMLElement | null; if (t?.dataset.edit) openEditor(t.dataset.edit) }} className="mx-auto h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[2rem] border-4 border-ink/80" style={{ background: bgCss(form.theme) }}>
+                  <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label, minis)} edit={{ selected: selFree, onSelect: setSelFree, onMove: (i, x, y) => setFree(i, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }), onWidth: (i, w) => setFree(i, { w: Math.round(w * 10) / 10 }), onRotate: (i, r) => setFree(i, { rot: r }), onText }} />
                 </div>
                 <div className="mx-auto mt-5 w-[390px] max-w-full">
                   <p className="mb-1 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Link preview</p>
                   <style>{`#og-preview [contenteditable]{cursor:text;outline:none}#og-preview [contenteditable]:hover{outline:1px dashed #A9545F;outline-offset:2px}#og-preview [contenteditable]:focus{outline:1px solid #A9545F;outline-offset:2px}#og-preview [data-ph]:empty::before{content:attr(data-ph);opacity:.4;pointer-events:none}`}</style>
                   <div id="og-preview" className="overflow-hidden rounded-2xl border border-line bg-card">
-                    {form.text.og_image ? <img src={form.text.og_image} alt="" onClick={() => setOgTab('pic')} className="aspect-[1200/630] w-full cursor-pointer object-cover" /> : <div onClick={() => setOgTab('pic')} className="flex aspect-[1200/630] w-full cursor-pointer items-center justify-center bg-line/40 text-xs text-ink-soft">No picture yet</div>}
+                    {ogTab === 'pic' && ogD ? (() => {
+                      const cur = ogSel !== null && ogSel < ogD.free.length ? ogSel : ogD.free.length ? 0 : -1
+                      return (
+                        <div className="relative w-full overflow-hidden" style={{ aspectRatio: OG_W + ' / ' + OG_H, background: ogD.bg }}>
+                          {ogD.bgImage ? <img src={ogD.bgImage} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover" /> : null}
+                          <FreeCanvas
+                            boxes={ogD.free}
+                            edit={{
+                              selected: cur >= 0 ? cur : null,
+                              onSelect: setOgSel,
+                              onMove: (i, x, y) => ogSetAt(i, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }),
+                              onWidth: (i, w) => ogSetAt(i, { w: Math.round(w * 10) / 10 }),
+                              onRotate: (i, r) => ogSetAt(i, { rot: r }),
+                              onText: (key, v) => { const i = Number(key.replace('free-', '')); if (Number.isFinite(i)) ogSetAt(i, { text: v }) },
+                            }}
+                          />
+                          {ogCrop && (
+                            <>
+                              <div className="pointer-events-none absolute inset-y-0 left-0 z-30 bg-black/40" style={{ width: '23.75%' }} />
+                              <div className="pointer-events-none absolute inset-y-0 right-0 z-30 bg-black/40" style={{ width: '23.75%' }} />
+                            </>
+                          )}
+                        </div>
+                      )
+                    })() : form.text.og_image ? <img src={form.text.og_image} alt="" onClick={() => setOgTab('pic')} className="aspect-[1200/630] w-full cursor-pointer object-cover" /> : <div onClick={() => setOgTab('pic')} className="flex aspect-[1200/630] w-full cursor-pointer items-center justify-center bg-line/40 text-xs text-ink-soft">No picture yet</div>}
                     <div className="px-3 py-2" onClick={() => setOgTab('bar')}>
                       <Editable tag="p" single value={form.text.og_title} onChange={(v) => setText('og_title', v)} placeholder={form.text.hero_headline || 'Title'} className="text-sm font-semibold text-ink" />
                       <Editable tag="p" value={form.text.og_desc} onChange={(v) => setText('og_desc', v)} placeholder={form.text.hero_sub || 'Description'} className="text-xs text-ink-soft" />
                       <Editable tag="p" single value={form.text.og_site} onChange={(v) => setText('og_site', v)} placeholder={form.text.brand_name || 'camrhia.com'} className="mt-0.5 text-xs text-ink-soft/60" />
                     </div>
                   </div>
+                  {ogTab === 'pic' && (
+                    <label className="mt-2 flex items-center gap-2 text-xs text-ink-soft">
+                      <input type="checkbox" checked={ogCrop} onChange={(e) => setOgCrop(e.target.checked)} className="accent-twilight" />
+                      Dim the sides Instagram cuts off. Keep your words in the bright middle.
+                    </label>
+                  )}
                   <p className="mt-2 text-xs text-ink-soft">This is the little card people see when you text or share your link, before they tap it. Tap the words to type on it, or use Design, Link preview for the picture.</p>
                 </div>
               </div>

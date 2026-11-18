@@ -84,10 +84,20 @@ export const DEFAULT_FORM: FormStyle = {
   top: 0, pad: 24,
 }
 
+// The page background: one color, or a fade to a second color.
+export function bgCss(t: { bgColor: string; bgColor2: string; bgDir: string }): string {
+  if (!t.bgColor2) return t.bgColor
+  if (t.bgDir === 'radial') return `radial-gradient(circle at 50% 30%, ${t.bgColor}, ${t.bgColor2})`
+  const deg = t.bgDir === 'up' ? 0 : t.bgDir === 'diag' ? 160 : 180
+  return `linear-gradient(${deg}deg, ${t.bgColor}, ${t.bgColor2})`
+}
+
 export type SpecialTheme = {
   bgImage: string
   overlay: number
   bgColor: string
+  bgColor2: string
+  bgDir: 'down' | 'up' | 'diag' | 'radial'
   decor: Decor
   headFont: string
   titleColor: string
@@ -124,6 +134,8 @@ export const DEFAULT_THEME: SpecialTheme = {
   bgImage: '',
   overlay: 45,
   bgColor: '#FAF7F2',
+  bgColor2: '',
+  bgDir: 'down',
   decor: 'none',
   headFont: 'cormorant',
   titleColor: '#2A1F24',
@@ -199,6 +211,8 @@ export function readTheme(c: Record<string, unknown>): SpecialTheme {
     bgImage: typeof c.bg_image === 'string' ? c.bg_image : '',
     overlay: num(c.overlay, 0, 80, D.overlay),
     bgColor: hexOr(c.bg_color, D.bgColor),
+    bgColor2: hexOr(c.bg_color2, ''),
+    bgDir: (['down', 'up', 'diag', 'radial'] as const).find((d) => d === c.bg_dir) ?? D.bgDir,
     decor: pick(c.decor, DECORS, D.decor),
     headFont: fontOr(c.head_font, D.headFont),
     titleColor: hexOr(c.title_color, D.titleColor),
@@ -278,6 +292,8 @@ export function themeToContent(t: SpecialTheme): Record<string, unknown> {
     bg_image: t.bgImage,
     overlay: t.overlay,
     bg_color: t.bgColor,
+    bg_color2: t.bgColor2,
+    bg_dir: t.bgDir,
     decor: t.decor,
     head_font: t.headFont,
     title_color: t.titleColor,
@@ -350,7 +366,7 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
     )
 
   return (
-    <div {...ed('background')} style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="relative min-h-full overflow-hidden">
+    <div {...ed('background')} style={{ background: bgCss(t), color: t.textColor, fontFamily: bodyFam }} className="relative min-h-full overflow-hidden">
       {pattern ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: pattern, backgroundSize: '260px 260px', opacity: 0.18 }} /> : null}
       {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
 

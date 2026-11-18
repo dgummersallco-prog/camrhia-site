@@ -29,11 +29,29 @@ export default function DesignGroup({
     document.body.style.minHeight = held + 'px'
     const before = el.getBoundingClientRect().top
     const root = el.closest('[data-accordion]') ?? el.parentElement
-    root?.querySelectorAll('details[data-group]').forEach((d) => { if (d !== el) (d as HTMLDetailsElement).open = false })
+    root?.querySelectorAll('details[data-group]').forEach((d) => {
+      if (d === el) return
+      // Cards above this one stay as they are: closing a tall card above shrinks the page
+      // under your cursor and the screen jumps. Cards below can close without moving anything.
+      if (stay && el.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_PRECEDING) return
+      ;(d as HTMLDetailsElement).open = false
+    })
     el.open = true
     if (stay) {
-      const after = el.getBoundingClientRect().top
-      if (after !== before) window.scrollBy({ top: after - before, behavior: 'instant' as ScrollBehavior })
+      // Keep the card exactly where it was on screen, and keep doing so for a moment
+      // while fonts and pictures inside it finish loading and the layout settles.
+      let stop = false
+      const cancel = () => { stop = true }
+      window.addEventListener('wheel', cancel, { once: true, passive: true })
+      window.addEventListener('touchmove', cancel, { once: true, passive: true })
+      const t0 = performance.now()
+      const hold = () => {
+        const after = el.getBoundingClientRect().top
+        if (Math.abs(after - before) > 0.5) window.scrollBy({ top: after - before, behavior: 'instant' as ScrollBehavior })
+        if (!stop && performance.now() - t0 < 600) requestAnimationFrame(hold)
+        else { window.removeEventListener('wheel', cancel); window.removeEventListener('touchmove', cancel) }
+      }
+      hold()
     }
     const body = el.querySelector(':scope > div') as HTMLElement | null
     body?.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' })

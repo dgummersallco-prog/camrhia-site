@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
-import SpecialView, { readTheme } from './SpecialView'
+import SpecialView, { bgCss, readTheme } from './SpecialView'
 
 export const dynamic = 'force-dynamic'
 
@@ -220,7 +220,7 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
     const mini = miniId ? await getMini(miniId) : null
     bare = true
     body = (
-      <div className="min-h-screen" style={{ background: theme.bgColor }}>
+      <div className="min-h-screen" style={{ background: bgCss(theme) }}>
         <SpecialView
           funnelId={page.id}
           theme={theme}

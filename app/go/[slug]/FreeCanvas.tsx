@@ -28,6 +28,7 @@ export type FreeEdit = {
   onMove: (i: number, x: number, y: number) => void
   onWidth: (i: number, w: number) => void
   onText?: (key: string, v: string) => void
+  onRotate?: (i: number, rot: number) => void
 }
 
 const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
@@ -38,9 +39,9 @@ export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: F
   const ref = useRef<HTMLDivElement>(null)
   const els = useRef<(HTMLDivElement | null)[]>([])
   const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] })
-  const drag = useRef<{ i: number; sx: number; sy: number; ox: number; oy: number; ow: number; mode: 'move' | 'size'; moved: boolean } | null>(null)
+  const drag = useRef<{ i: number; sx: number; sy: number; ox: number; oy: number; ow: number; mode: 'move' | 'size' | 'rotate'; moved: boolean } | null>(null)
 
-  const down = (e: React.PointerEvent<HTMLElement>, i: number, mode: 'move' | 'size') => {
+  const down = (e: React.PointerEvent<HTMLElement>, i: number, mode: 'move' | 'size' | 'rotate') => {
     if (!edit) return
     e.stopPropagation()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
@@ -51,6 +52,19 @@ export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: F
   const move = (e: React.PointerEvent<HTMLElement>) => {
     const d = drag.current
     if (!d || !edit || !ref.current) return
+    if (d.mode === 'rotate') {
+      const el = els.current[d.i]
+      if (!el) return
+      const b0 = el.getBoundingClientRect()
+      let a = (Math.atan2(e.clientY - (b0.top + b0.height / 2), e.clientX - (b0.left + b0.width / 2)) * 180) / Math.PI - 90
+      if (a > 180) a -= 360
+      if (a < -180) a += 360
+      // Snaps to straight, and to 45 and 90 degrees, when you get close. Hold Alt to turn freely.
+      if (!e.altKey) for (const s of [0, 45, -45, 90, -90]) if (Math.abs(a - s) < 4) a = s
+      d.moved = true
+      edit.onRotate?.(d.i, Math.round(a))
+      return
+    }
     const r = ref.current.getBoundingClientRect()
     const dx = ((e.clientX - d.sx) / r.width) * 100
     const dy = ((e.clientY - d.sy) / r.width) * 100
@@ -159,6 +173,13 @@ export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: F
                     onPointerUp={up}
                     style={{ position: 'absolute', left: '50%', top: -26, marginLeft: -11, width: 22, height: 22, borderRadius: 11, background: '#A9545F', color: '#fff', fontSize: 13, lineHeight: '22px', textAlign: 'center', cursor: 'move', touchAction: 'none', userSelect: 'none', fontFamily: 'sans-serif' }}
                   >✥</span>
+                  <span
+                    title="Drag to tilt"
+                    onPointerDown={(e) => down(e, i, 'rotate')}
+                    onPointerMove={move}
+                    onPointerUp={up}
+                    style={{ position: 'absolute', left: '50%', bottom: -32, marginLeft: -11, width: 22, height: 22, borderRadius: 11, background: '#A9545F', color: '#fff', fontSize: 14, lineHeight: '22px', textAlign: 'center', cursor: 'grab', touchAction: 'none', userSelect: 'none', fontFamily: 'sans-serif' }}
+                  >↻</span>
                   {b.kind !== 'icon' ? (
                     <span
                       onPointerDown={(e) => down(e, i, 'size')}
