@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { findPeople, type Person } from '@/lib/people'
+import { buildZip } from '@/lib/zipStore'
+import { useEntitlements } from '@/lib/useEntitlements'
 import { enhancePhoto, renderPreview, LOOKS, type Adjust } from '@/lib/enhance'
 import { addAdj, cleanAdj } from '@/lib/tools'
 import EditPanel from '@/app/edit/EditPanel'
@@ -162,7 +164,10 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   const [lookId, setLookId] = useState('natural')
   const [strength, setStrength] = useState(0.8)
 
-  const [cullView, setCullView] = useState<'cuts' | 'picks' | 'maybe' | 'dupes' | 'people'>('cuts')
+  const [cullView, setCullView] = useState<'all' | 'cuts' | 'picks' | 'maybe' | 'dupes' | 'people'>('all')
+  const ent = useEntitlements()
+  const [withMaybes, setWithMaybes] = useState(false)
+  const [saving, setSaving] = useState<{ busy: boolean; done: number; total: number; note: string }>({ busy: false, done: 0, total: 0, note: '' })
   const [people, setPeople] = useState<Person[]>([])
   const [personSel, setPersonSel] = useState<string | null>(null)
   useEffect(() => {
@@ -588,13 +593,15 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     const sb = supabase
     if (!sb) return
     const reason = label === 'reject' ? 'Cut by you' : null
-    setPhotos((prev) => prev.map((x) => (x.id === p.id ? { ...x, cull_label: label, cull_reason: reason } : x)))
-    void sb.from('gallery_photos').update({ cull_label: label, cull_reason: reason }).eq('id', p.id)
+    const leave = !!p.cull_group && p.cull_label !== label
+    const patch = leave ? { cull_label: label, cull_reason: reason, cull_group: null } : { cull_label: label, cull_reason: reason }
+    setPhotos((prev) => prev.map((x) => (x.id === p.id ? { ...x, ...patch } : x)))
+    void sb.from('gallery_photos').update(patch).eq('id', p.id)
   }
 
   useEffect(() => {
     if (step !== 1 || cull.busy) return
-    const list = cullView === 'picks' ? pickList : cullView === 'maybe' ? maybeList : cullView === 'cuts' ? cuts : []
+    const list = cullView === 'all' ? photos : cullView === 'picks' ? pickList : cullView === 'maybe' ? maybeList : cullView === 'cuts' ? cuts : []
     function onKey(e: KeyboardEvent) {
       const t = e.target as HTMLElement | null
       if (t && ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName)) return
@@ -621,6 +628,68 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, cull.busy, cullView, cur, photos, rescued])
+
+  async function saveKeepers() {
+    const sb = supabase
+    if (!sb || saving.busy) return
+    const list = photos.filter((x) => x.cull_label === 'pick' || (withMaybes && x.cull_label === 'maybe'))
+    if (list.length === 0) { setMsg('There are no keepers to save yet.'); return }
+    type DirH = { getDirectoryHandle: (n: string, o?: { create: boolean }) => Promise<DirH>; getFileHandle: (n: string, o?: { create: boolean }) => Promise<{ createWritable: () => Promise<{ write: (b: Blob) => Promise<void>; close: () => Promise<void> }> }> }
+    const w = window as unknown as { showDirectoryPicker?: (o?: { mode: string }) => Promise<DirH> }
+    let dir: DirH | null = null
+    if (w.showDirectoryPicker) {
+      try {
+        const root = await w.showDirectoryPicker({ mode: 'readwrite' })
+        dir = await root.getDirectoryHandle('Camrhia keepers', { create: true })
+      } catch { return }
+    }
+    setSaving({ busy: true, done: 0, total: list.length, note: '' })
+    const title = String((gallery as { title?: string } | null)?.title ?? 'shoot').replace(/[^\w-]+/g, '-')
+    const used = new Set<string>()
+    const zipFiles: { name: string; data: Blob }[] = []
+    let done = 0
+    try {
+      for (let i = 0; i < list.length; i += 10) {
+        const chunk = list.slice(i, i + 10)
+        const { data: signed } = await sb.storage.from(BUCKET).createSignedUrls(chunk.map((x) => x.orig_path), 600)
+        const urls = new Map((signed ?? []).map((r) => [r.path, r.signedUrl]))
+        for (const x of chunk) {
+          const u = urls.get(x.orig_path)
+          if (!u) continue
+          const res = await fetch(u)
+          if (!res.ok) continue
+          const blob = await res.blob()
+          let name = x.filename || x.orig_path.split('/').pop() || `photo-${done + 1}.jpg`
+          if (used.has(name.toLowerCase())) name = `${done + 1}-${name}`
+          used.add(name.toLowerCase())
+          if (dir) {
+            const fh = await dir.getFileHandle(name, { create: true })
+            const wr = await fh.createWritable()
+            await wr.write(blob)
+            await wr.close()
+          } else {
+            zipFiles.push({ name, data: blob })
+          }
+          done += 1
+          setSaving({ busy: true, done, total: list.length, note: '' })
+        }
+      }
+      let note = `Saved ${done} photo${done === 1 ? '' : 's'} to a folder called "Camrhia keepers".`
+      if (!dir) {
+        const zip = await buildZip(zipFiles)
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(zip)
+        a.download = `${title}-keepers.zip`
+        a.click()
+        URL.revokeObjectURL(a.href)
+        note = `Saved ${done} photo${done === 1 ? '' : 's'} as a zip in your Downloads.`
+      }
+      setSaving({ busy: false, done, total: list.length, note })
+    } catch (e) {
+      setSaving({ busy: false, done, total: list.length, note: '' })
+      setMsg(e instanceof Error ? e.message : 'Could not save your keepers. Please try again.')
+    }
+  }
 
   function exportList(kind: 'txt' | 'csv') {
     const title = String((gallery as { title?: string } | null)?.title ?? 'shoot').replace(/[^\w-]+/g, '-')
@@ -962,7 +1031,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                 <div className="mt-6 grid grid-cols-4 gap-2 sm:grid-cols-7">
                   {[
                     { n: '1', t: 'Sharpness', d: 'Finds soft and blurry shots.' },
-                    { n: '2', t: 'Exposure and color', d: 'Finds dark or blown-out frames and color that looks off.' },
+                    { n: '2', t: 'Exposure', d: 'Finds dark or blown-out frames and color that looks off.' },
                     { n: '3', t: 'Black frames', d: 'Finds lens cap and pocket shots.' },
                     { n: '4', t: 'Faces and eyes', d: 'Finds every face and checks for closed eyes and soft focus.' },
                     { n: '5', t: 'Smiles and edges', d: 'Reads smiles and finds faces cut off at the edge.' },
@@ -1005,7 +1074,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
               const ev = p === 'eyes' ? pct : p === 'sharp' ? 0 : 1
               const cols: { key: string; label: string; state: St; value: number }[] = [
                 { key: 'sharp', label: 'Sharpness', state: sharpState, value: sv },
-                { key: 'expo', label: 'Exposure and color', state: sharpState, value: sv },
+                { key: 'expo', label: 'Exposure', state: sharpState, value: sv },
                 { key: 'black', label: 'Black frames', state: sharpState, value: sv },
                 ...(cullEyes ? [
                   { key: 'eyes', label: 'Faces and eyes', state: facesState, value: ev },
@@ -1041,6 +1110,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
             {labeled && !cull.busy && (
               <>
                 <div className="mt-6 flex flex-wrap gap-3 text-sm">
+                  <button className={chipCls('all')} onClick={() => setCullView('all')}><b className="text-white">{photos.length}</b> all</button>
                   <button className={chipCls('picks')} onClick={() => setCullView('picks')}><b className="text-white">{picks}</b> keepers</button>
                   <button className={chipCls('maybe')} onClick={() => setCullView('maybe')}><b className="text-white">{maybes}</b> maybe</button>
                   <button className={chipCls('cuts')} onClick={() => setCullView('cuts')}><b className="text-white">{cuts.length}</b> suggested cuts</button>
@@ -1075,7 +1145,35 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
 
                 <p className="mt-4 text-xs text-white/40">Keys: ← → move · P keeper · M maybe · X cut · Space keeps or un-keeps a suggested cut</p>
 
-                {cullView === 'picks' || cullView === 'maybe' ? (
+                {cullView === 'all' ? (
+                  <div className="mt-8">
+                    <p className="max-w-2xl text-white/55">Every photo in this shoot with what we think of it. Use the buttons under a photo to change your mind.</p>
+                    <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+                      {photos.map((p, i) => {
+                        const isDup = p.cull_label === 'reject' && !!p.cull_group
+                        const tag = isDup ? 'Duplicate' : p.cull_label === 'pick' ? 'Keeper' : p.cull_label === 'maybe' ? 'Maybe' : p.cull_label === 'reject' ? 'Cut' : 'Unchecked'
+                        const tagCls = isDup ? 'bg-black/70 text-white' : p.cull_label === 'pick' ? 'bg-emerald-600 text-white' : p.cull_label === 'maybe' ? 'bg-amber-500 text-white' : p.cull_label === 'reject' ? 'bg-red-600 text-white' : 'bg-black/70 text-white'
+                        const btn = (label: 'pick' | 'maybe' | 'reject', text: string, on: boolean) => (
+                          <button key={label} onClick={() => setLabelFor(p, label)} className={`flex-1 rounded-lg border px-2 py-1 text-[11px] transition ${on ? 'border-white/60 bg-white/15 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`}>{text}</button>
+                        )
+                        return (
+                          <div key={p.id}>
+                            <div onMouseDown={() => setCur(i)} className={`relative aspect-square overflow-hidden rounded-xl bg-white/5${i === cur ? ' outline outline-2 outline-white' : ''}${p.cull_label === 'reject' ? ' opacity-60' : ''}`}>
+                              {img(p)}
+                              <span className={`absolute left-1.5 top-1.5 rounded-full px-2 py-0.5 text-[10px] ${tagCls}`}>{tag}</span>
+                              {p.cull_reason && p.cull_label !== 'pick' && <span className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1 text-[10px] text-white/80">{p.cull_reason}</span>}
+                            </div>
+                            <div className="mt-2 flex gap-1.5">
+                              {btn('pick', 'Keep', p.cull_label === 'pick')}
+                              {btn('maybe', 'Maybe', p.cull_label === 'maybe')}
+                              {btn('reject', 'Cut', p.cull_label === 'reject')}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : cullView === 'picks' || cullView === 'maybe' ? (
                   <div className="mt-8">
                     <p className="max-w-2xl text-white/55">
                       {cullView === 'picks' ? 'These look good to us.' : 'These are close calls. They stay in your gallery.'}
@@ -1209,13 +1307,30 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                     ) : (
                       <button className={btnPrimary} onClick={() => setConfirmCut(true)}>Cut {toCut.length} photo{toCut.length === 1 ? '' : 's'}</button>
                     )
-                  ) : (
-                    <button className={btnPrimary} onClick={() => goTo(2)}>Continue</button>
+                  ) : ent.retouch ? (
+                    <button className={btnPrimary} onClick={() => goTo(2)}>Continue to Edit</button>
+                  ) : !ent.loading ? (
+                    <button className={btnPrimary} disabled={saving.busy} onClick={saveKeepers}>{saving.busy ? `Saving ${saving.done} of ${saving.total}…` : 'Save my keepers'}</button>
+                  ) : null}
+                  {toCut.length > 0 && !confirmCut && ent.retouch && <button className={btnQuiet} onClick={() => goTo(2)}>Skip, keep everything</button>}
+                  {ent.retouch && toCut.length === 0 && (
+                    <button className={btnQuiet} disabled={saving.busy} onClick={saveKeepers}>{saving.busy ? `Saving ${saving.done} of ${saving.total}…` : 'Save keepers to a folder'}</button>
                   )}
-                  {toCut.length > 0 && !confirmCut && <button className={btnQuiet} onClick={() => goTo(2)}>Skip, keep everything</button>}
                   <button className={btnQuiet} disabled={working} onClick={runCull}>Run again</button>
-                  <button className={btnQuiet} onClick={() => exportList('txt')}>Keepers list (.txt)</button>
-                  <button className={btnQuiet} onClick={() => exportList('csv')}>Full list (.csv)</button>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/55">
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input type="checkbox" checked={withMaybes} onChange={(e) => setWithMaybes(e.target.checked)} />
+                    Include maybes when saving
+                  </label>
+                  {saving.note && <span className="text-white/80">{saving.note}</span>}
+                  <details className="text-white/45">
+                    <summary className="cursor-pointer">More</summary>
+                    <div className="mt-2 flex gap-4">
+                      <button className="underline" onClick={() => exportList('txt')}>Keepers as a text list</button>
+                      <button className="underline" onClick={() => exportList('csv')}>Everything as a spreadsheet</button>
+                    </div>
+                  </details>
                 </div>
               </>
             )}
