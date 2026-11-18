@@ -1,6 +1,7 @@
 import LeadForm from './LeadForm'
 import Slideshow from './Slideshow'
 import SlotPicker from './SlotPicker'
+import FreeCanvas, { type FreeBox, type FreeEdit } from './FreeCanvas'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 
 export type MiniInfo = { id: string; title: string; price: number; duration_min: number | null; location: string | null; tz: string; photos_included?: number | null; slots: { id: string; starts_at: string }[]; taken_slots?: { id: string; starts_at: string }[] }
@@ -59,7 +60,7 @@ function patternUrl(decor: string): string | null {
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
-export type TextBlock = { text: string; font: string; color: string; size: number; align: 'left' | 'center'; place: 'title' | 'subtitle' | 'claim' }
+export type TextBlock = { text: string; font: string; color: string; size: number; align: 'left' | 'center' | 'right'; place: 'title' | 'subtitle' | 'claim'; spacing: number; upper: boolean }
 
 export type SpecialTheme = {
   bgImage: string
@@ -87,6 +88,8 @@ export type SpecialTheme = {
   cardText: string
   cardRadius: number
   blocks: TextBlock[]
+  free: FreeBox[]
+  canvasH: number
 }
 
 export const DEFAULT_THEME: SpecialTheme = {
@@ -115,6 +118,8 @@ export const DEFAULT_THEME: SpecialTheme = {
   cardText: '#2A1F24',
   cardRadius: 16,
   blocks: [],
+  free: [],
+  canvasH: 125,
 }
 
 const hexOr = (v: unknown, d: string) => (/^#[0-9a-fA-F]{3,8}$/.test(String(v ?? '')) ? String(v) : d)
@@ -155,20 +160,44 @@ export function readTheme(c: Record<string, unknown>): SpecialTheme {
     cardBg: hexOr(c.card_bg, D.cardBg),
     cardText: hexOr(c.card_text, D.cardText),
     cardRadius: num(c.card_radius, 0, 60, D.cardRadius),
-    blocks: [],
+    blocks: readBlocks(c.blocks),
+    free: readFree(c.free_boxes),
+    canvasH: num(c.canvas_h, 30, 300, D.canvasH),
   }
+}
+
+function readFree(v: unknown): FreeBox[] {
+  if (!Array.isArray(v)) return []
+  return v.slice(0, 60).map((x) => {
+    const o = (x ?? {}) as Record<string, unknown>
+    return {
+      text: String(o.text ?? ''),
+      font: fontOr(o.font, 'montserrat'),
+      color: hexOr(o.color, '#2A1F24'),
+      size: num(o.size, 6, 300, 18),
+      align: pick(o.align, ['left', 'center', 'right'] as const, 'center'),
+      spacing: num(o.spacing, 0, 60, 0),
+      upper: o.upper === true,
+      x: num(o.x, -20, 100, 10),
+      y: num(o.y, -10, 105, 10),
+      w: num(o.w, 5, 100, 80),
+      rot: num(o.rot, -90, 90, 0),
+    }
+  })
 }
 
 function readBlocks(v: unknown): TextBlock[] {
   if (!Array.isArray(v)) return []
-  return v.slice(0, 10).map((x) => {
+  return v.slice(0, 40).map((x) => {
     const o = (x ?? {}) as Record<string, unknown>
     return {
       text: String(o.text ?? ''),
       font: fontOr(o.font, 'montserrat'),
       color: hexOr(o.color, '#2A1F24'),
       size: num(o.size, 8, 160, 18),
-      align: pick(o.align, ['left', 'center'] as const, 'center'),
+      align: pick(o.align, ['left', 'center', 'right'] as const, 'center'),
+      spacing: num(o.spacing, 0, 60, 0),
+      upper: o.upper === true,
       place: pick(o.place, ['title', 'subtitle', 'claim'] as const, 'claim'),
     }
   })
@@ -201,15 +230,17 @@ export function themeToContent(t: SpecialTheme): Record<string, unknown> {
     card_text: t.cardText,
     card_radius: t.cardRadius,
     blocks: t.blocks,
+    free_boxes: t.free,
+    canvas_h: t.canvasH,
   }
 }
 
-export default function SpecialView({ d, theme, funnelId, preview }: { d: SpecialData; theme: SpecialTheme; funnelId: string; preview?: boolean }) {
+export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: SpecialData; theme: SpecialTheme; funnelId: string; preview?: boolean; edit?: FreeEdit }) {
   const t = theme
   const headFam = FONT_OPTIONS[t.headFont]?.family ?? 'serif'
   const subFam = FONT_OPTIONS[t.subFont]?.family ?? 'sans-serif'
   const bodyFam = FONT_OPTIONS[t.bodyFont]?.family ?? 'sans-serif'
-  const keys = Array.from(new Set([t.headFont, t.subFont, t.bodyFont, t.nameFont, ...t.blocks.map((b) => b.font)])).filter((k) => FONT_OPTIONS[k])
+  const keys = Array.from(new Set([t.headFont, t.subFont, t.bodyFont, t.nameFont, ...t.blocks.map((b) => b.font), ...t.free.map((b) => b.font)])).filter((k) => FONT_OPTIONS[k])
   const fontHref = keys.length
     ? 'https://fonts.googleapis.com/css2?' + keys.map((k) => 'family=' + FONT_OPTIONS[k].gf.split(':')[0]).join('&') + '&display=swap'
     : null
@@ -230,15 +261,18 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
   ) : (
     <SlotPicker mini={m} preview={preview} label={d.label} btnStyle={btnStyle} />
   )
+  const ed = (k: string) => (preview ? { 'data-edit': k } : {})
   const renderBlocks = (place: 'title' | 'subtitle' | 'claim') =>
-    t.blocks.filter((b) => b.place === place && b.text.trim()).map((b, i) => (
-      <p key={i} className="mt-5 whitespace-pre-line leading-snug" style={{ fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: 'center' }}>{b.text}</p>
+    t.blocks.map((b, i) => ({ b, i })).filter(({ b }) => b.place === place && b.text.trim()).map(({ b, i }) => (
+      <p key={i} {...ed('line-' + i)} className="mt-5 whitespace-pre-line leading-snug" style={{ fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: b.align, letterSpacing: b.spacing ? b.spacing / 100 + 'em' : undefined, textTransform: b.upper ? 'uppercase' : undefined }}>{b.text}</p>
     ))
 
   return (
-    <div style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="relative min-h-full overflow-hidden">
+    <div {...ed('background')} style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="relative min-h-full overflow-hidden">
       {pattern ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: pattern, backgroundSize: '260px 260px', opacity: 0.18 }} /> : null}
       {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
+
+      {t.free.length > 0 ? <div className="relative"><FreeCanvas boxes={t.free} heightPct={t.canvasH} edit={preview ? edit : undefined} /></div> : null}
 
       <div
         className="relative overflow-hidden"
@@ -246,28 +280,29 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
       >
         {t.bgImage ? <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${t.overlay / 100})` }} /> : null}
         <div className={`relative mx-auto flex max-w-xl flex-col justify-center px-6 py-16 ${t.bgImage ? 'min-h-[520px]' : emoji ? 'min-h-[440px]' : ''}`}>
-          {d.brand ? <p className="uppercase" style={{ fontFamily: FONT_OPTIONS[t.nameFont]?.family ?? 'sans-serif', letterSpacing: '0.2em', color: t.nameColor || heroText, fontSize: t.nameSizePx, textAlign: titleAlign }}>{d.brand}</p> : null}
+          {d.brand ? <p {...ed('brand')} className="uppercase" style={{ fontFamily: FONT_OPTIONS[t.nameFont]?.family ?? 'sans-serif', letterSpacing: '0.2em', color: t.nameColor || heroText, fontSize: t.nameSizePx, textAlign: titleAlign }}>{d.brand}</p> : null}
           <h1
+            {...ed('title')}
             className="mt-4 leading-tight"
             style={{ ...heading, color: t.titleColor, fontSize: t.titleSizePx, textAlign: titleAlign }}
           >
-            {d.headline || 'Your offer title'}
+            {d.headline || (t.free.length ? '' : 'Your offer title')}
           </h1>
           {renderBlocks('title')}
           {d.sub ? (
-            <p className="mt-5 leading-relaxed" style={{ fontFamily: subFam, color: t.subColor, fontSize: t.subSizePx, textAlign: 'center' }}>{d.sub}</p>
+            <p {...ed('sub')} className="mt-5 whitespace-pre-line leading-relaxed" style={{ fontFamily: subFam, color: t.subColor, fontSize: t.subSizePx, textAlign: 'center' }}>{d.sub}</p>
           ) : null}
           {renderBlocks('subtitle')}
           {d.price ? <p className="mt-5 text-2xl" style={{ ...heading, color: t.bgImage ? '#FFFFFF' : t.accent, textAlign: titleAlign }}>{d.price}</p> : null}
           {d.whenWhere ? <p className="mt-2 opacity-80" style={{ color: heroText, textAlign: titleAlign }}>{d.whenWhere}</p> : null}
           {photos.length > 0 ? (
-            <div style={{ width: '100%', maxWidth: 300, margin: '32px auto 0' }}>
+            <div {...ed('photos')} style={{ width: '100%', maxWidth: 300, margin: '32px auto 0' }}>
               <Slideshow photos={photos} />
             </div>
           ) : null}
           <div className="mt-8" style={{ display: 'flex', justifyContent: 'center' }}>
             {preview ? (
-              <span className="inline-block px-8 py-4 text-base font-medium" style={btnStyle}>{d.label}</span>
+              <span {...ed('button')} className="inline-block px-8 py-4 text-base font-medium" style={btnStyle}>{d.label}</span>
             ) : (
               <a href="#claim" className="inline-block px-8 py-4 text-base font-medium transition hover:opacity-90" style={btnStyle}>{d.label}</a>
             )}
@@ -277,14 +312,14 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
 
       <div className="relative mx-auto max-w-xl px-6 pb-16">
         {d.details ? (
-          <section className="mt-12">
+          <section {...ed('summary')} className="mt-12">
             <h2 className="text-2xl" style={heading}>{d.detailsTitle || 'What is included'}</h2>
             <p className="mt-3 whitespace-pre-line leading-relaxed opacity-80">{d.details}</p>
           </section>
         ) : null}
 
         {d.terms ? (
-          <section className="mt-12">
+          <section {...ed('summary')} className="mt-12">
             <h2 className="text-2xl" style={heading}>{d.termsTitle || 'Good to know'}</h2>
             <p className="mt-3 whitespace-pre-line leading-relaxed opacity-80">{d.terms}</p>
           </section>
@@ -293,7 +328,7 @@ export default function SpecialView({ d, theme, funnelId, preview }: { d: Specia
         {renderBlocks('claim')}
 
         <div id="claim">
-          <section className="mt-12 p-6" style={{ background: t.cardBg, color: t.cardText, borderRadius: t.cardRadius }}>
+          <section {...ed('claim')} className="mt-12 p-6" style={{ background: t.cardBg, color: t.cardText, borderRadius: t.cardRadius }}>
             <h2 className="text-2xl" style={heading}>{d.formTitle || 'Claim your spot'}</h2>
             <div className="mt-3">
               {d.spots ? <p className="mb-4 font-medium">{d.spots}</p> : null}

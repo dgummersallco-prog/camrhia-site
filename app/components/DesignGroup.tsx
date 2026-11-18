@@ -16,32 +16,37 @@ export default function DesignGroup({
   children: React.ReactNode
 }) {
   const fancy = !!(hint || left || right)
+  // Open/close in one synchronous pass so the page never paints a half-moved layout.
+  const toggle = (e: React.MouseEvent<HTMLElement>) => {
+    if (e.defaultPrevented) return
+    e.preventDefault()
+    const el = e.currentTarget.parentElement as HTMLDetailsElement
+    if (el.open) { el.open = false; onClose?.(); return }
+    const before = el.getBoundingClientRect().top
+    const root = el.closest('[data-accordion]') ?? el.parentElement
+    root?.querySelectorAll('details[data-group]').forEach((d) => { if (d !== el) (d as HTMLDetailsElement).open = false })
+    el.open = true
+    if (stay) {
+      const after = el.getBoundingClientRect().top
+      if (after !== before) window.scrollBy({ top: after - before, behavior: 'instant' as ScrollBehavior })
+    }
+    const body = el.querySelector(':scope > div') as HTMLElement | null
+    body?.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' })
+    if (!stay) requestAnimationFrame(() => {
+      const y = el.getBoundingClientRect().top + window.scrollY - 16
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' })
+    })
+    onOpen?.()
+  }
   return (
     <details
       data-group
-      onToggle={(e) => {
-        const el = e.currentTarget as HTMLDetailsElement
-        if (!el.open) { onClose?.(); return }
-        const before = el.getBoundingClientRect().top
-        const root = el.closest('[data-accordion]') ?? el.parentElement
-        root?.querySelectorAll('details[data-group]').forEach((d) => { if (d !== el) (d as HTMLDetailsElement).open = false })
-        if (stay) {
-          const after = el.getBoundingClientRect().top
-          if (after !== before) window.scrollBy({ top: after - before, behavior: 'instant' as ScrollBehavior })
-        }
-        const body = el.querySelector(':scope > div') as HTMLElement | null
-        body?.animate?.([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'ease-out' })
-        if (!stay) requestAnimationFrame(() => {
-          const y = el.getBoundingClientRect().top + window.scrollY - 16
-          window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' })
-        })
-        onOpen?.()
-      }}
+      data-title={title}
       className="group rounded-2xl border border-line bg-card p-5"
       style={{ overflowAnchor: 'none' }}
     >
       {fancy ? (
-        <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+        <summary onClick={toggle} className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
           {left ? <span onClick={(e) => e.preventDefault()}>{left}</span> : null}
           <span className="flex-1">
             <span className={`block font-fraunces text-lg font-semibold ${dim ? 'text-ink-soft' : 'text-ink'}`}>{title}</span>
@@ -51,7 +56,7 @@ export default function DesignGroup({
           <span className="text-lg text-ink-soft transition-transform group-open:rotate-90">›</span>
         </summary>
       ) : (
-        <summary className="cursor-pointer font-fraunces text-lg font-semibold text-ink">{title}</summary>
+        <summary onClick={toggle} className="cursor-pointer font-fraunces text-lg font-semibold text-ink">{title}</summary>
       )}
       <div className="mt-4 space-y-4">{children}</div>
     </details>

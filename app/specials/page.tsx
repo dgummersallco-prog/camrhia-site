@@ -10,6 +10,7 @@ import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import DesignGroup from '@/app/components/DesignGroup'
 import { useEntitlements } from '@/lib/useEntitlements'
+import { type FreeBox } from '@/app/go/[slug]/FreeCanvas'
 import SpecialView, { DECOR_EMOJI, DEFAULT_THEME, readTheme, themeToContent, type Decor, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
@@ -48,6 +49,8 @@ const DECOR_OPTIONS: { id: Decor; label: string }[] = [
 const TITLE_SIZES = [{ id: '32', label: 'S' }, { id: '40', label: 'M' }, { id: '48', label: 'L' }, { id: '60', label: 'XL' }, { id: '72', label: '2XL' }]
 const SUB_SIZES = [{ id: '14', label: 'S' }, { id: '16', label: 'M' }, { id: '18', label: 'L' }, { id: '22', label: 'XL' }, { id: '26', label: '2XL' }]
 const ALIGNS: { id: 'left' | 'center'; label: string }[] = [{ id: 'left', label: 'Left' }, { id: 'center', label: 'Center' }]
+const LINE_ALIGNS: { id: TextBlock['align']; label: string }[] = [{ id: 'left', label: 'Left' }, { id: 'center', label: 'Center' }, { id: 'right', label: 'Right' }]
+const LINE_SPACING = [{ id: '0', label: 'Normal' }, { id: '10', label: 'Wide' }, { id: '25', label: 'Wider' }, { id: '40', label: 'Widest' }]
 
 const PLACES: { id: TextBlock['place']; label: string }[] = [
   { id: 'title', label: 'With the title' },
@@ -261,7 +264,7 @@ function StepCard({ n, title, children }: { n: number; title: string; children: 
 
 function scrollPreviewTo(key: string) {
   const el = document.getElementById('special-preview')
-  if (!el) return
+  if (!el || document.body.dataset.pvClick) return
   if (key === 'claim') {
     const c = el.querySelector('#claim') as HTMLElement | null
     if (c) el.scrollTo({ top: c.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - 40, behavior: 'smooth' })
@@ -598,9 +601,48 @@ export default function SpecialsPage() {
   const setBlock = (i: number, patch: Partial<TextBlock>) =>
     setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)) } } : f))
   const addBlock = () =>
-    setForm((f) => (f && f.theme.blocks.length < 10 ? { ...f, theme: { ...f.theme, blocks: [...f.theme.blocks, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 20, align: 'center' as const, place: 'subtitle' as const }] } } : f))
+    setForm((f) => (f && f.theme.blocks.length < 40 ? { ...f, theme: { ...f.theme, blocks: [...f.theme.blocks, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 18, align: 'center' as const, place: 'subtitle' as const, spacing: 0, upper: false }] } } : f))
   const removeBlock = (i: number) =>
     setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.filter((_, j) => j !== i) } } : f))
+  const openEditor = (key: string) => {
+    const map: Record<string, string> = { brand: 'Studio name', title: 'Title', sub: 'Paragraph', background: 'Background', photos: 'Photos', button: 'Button', summary: 'Summary', claim: 'Sign-up form' }
+    if (key.startsWith('free-')) {
+      const n = Number(key.slice(5))
+      setSelFree(n)
+      const d0 = document.querySelector('details[data-group][data-title="Text boxes"]') as HTMLDetailsElement | null
+      if (d0 && !d0.open) {
+        document.body.dataset.pvClick = '1'
+        ;(d0.querySelector(':scope > summary') as HTMLElement | null)?.click()
+        delete document.body.dataset.pvClick
+      }
+      requestAnimationFrame(() => (d0?.querySelector(`[data-free="${n}"] textarea`) as HTMLTextAreaElement | null)?.focus({ preventScroll: true }))
+      return
+    }
+    const lineNo = key.startsWith('line-') ? Number(key.slice(5)) : -1
+    const name = lineNo >= 0 ? 'Lines' : map[key]
+    if (!name) return
+    const det = document.querySelector(`details[data-group][data-title="${name}"]`) as HTMLDetailsElement | null
+    if (!det) return
+    if (!det.open) {
+      document.body.dataset.pvClick = '1'
+      ;(det.querySelector(':scope > summary') as HTMLElement | null)?.click()
+      delete document.body.dataset.pvClick
+    }
+    requestAnimationFrame(() => {
+      const target = lineNo >= 0 ? (det.querySelector(`[data-line="${lineNo}"]`) as HTMLElement | null) : det
+      target?.scrollIntoView({ behavior: 'smooth', block: lineNo >= 0 ? 'center' : 'start' })
+      if (lineNo >= 0) (target?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus({ preventScroll: true })
+    })
+  }
+  const [selFree, setSelFree] = useState<number | null>(null)
+  const setFree = (i: number, patch: Partial<FreeBox>) =>
+    setForm((f) => (f ? { ...f, theme: { ...f.theme, free: f.theme.free.map((b, j) => (j === i ? { ...b, ...patch } : b)) } } : f))
+  const addFree = () => {
+    setForm((f) => (f && f.theme.free.length < 60 ? { ...f, theme: { ...f.theme, free: [...f.theme.free, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 18, align: 'center' as const, spacing: 0, upper: false, x: 10, y: Math.min(90, 8 + f.theme.free.length * 9), w: 80, rot: 0 }] } } : f))
+    setSelFree(form ? form.theme.free.length : 0)
+  }
+  const removeFree = (i: number) => { setForm((f) => (f ? { ...f, theme: { ...f.theme, free: f.theme.free.filter((_, j) => j !== i) } } : f)); setSelFree(null) }
+  const dupFree = (i: number) => setForm((f) => (f && f.theme.free.length < 60 ? { ...f, theme: { ...f.theme, free: [...f.theme.free, { ...f.theme.free[i], y: Math.min(100, f.theme.free[i].y + 6) }] } } : f))
   const setText = (k: string, v: string) => setForm((f) => (f ? { ...f, text: { ...f.text, [k]: v } } : f))
 
   async function save() {
@@ -836,32 +878,131 @@ export default function SpecialsPage() {
                       </div>
                     </MiniCard>
 
-                    <MiniCard title="Title and subtitle" summary={form.text.hero_headline}>
+                    <MiniCard title="Title" summary={form.text.hero_headline}>
                       <label className="block">
-                        <Label>Main title</Label>
+                        <Label>Words</Label>
                         <input placeholder="Holiday mini sessions" value={form.text.hero_headline} onChange={(e) => setText('hero_headline', e.target.value)} className={inputCls} />
                       </label>
-                      <FontPicker label="Title font" value={form.theme.headFont} onChange={(k) => setTheme({ headFont: k })} />
+                      <FontPicker label="Font" value={form.theme.headFont} onChange={(k) => setTheme({ headFont: k })} />
                       <div>
-                        <Label>Title size</Label>
+                        <Label>Size</Label>
                         <SizeField value={form.theme.titleSizePx} min={12} max={160} onChange={(n) => setTheme({ titleSizePx: n })} />
                       </div>
                       <div className="max-w-xs">
-                        <ColorField label="Title color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
+                        <ColorField label="Color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
                       </div>
-                      <div className="border-t border-line" />
+                    </MiniCard>
+
+                    <MiniCard title="Paragraph" summary={form.text.hero_sub}>
                       <label className="block">
-                        <Label>Subtitle</Label>
-                        <textarea rows={2} placeholder="Family portraits by the lake, 20 minutes each" value={form.text.hero_sub} onChange={(e) => setText('hero_sub', e.target.value)} className={inputCls} />
+                        <Label>Words</Label>
+                        <textarea rows={3} placeholder="Family portraits by the lake, 20 minutes each" value={form.text.hero_sub} onChange={(e) => setText('hero_sub', e.target.value)} className={inputCls} />
                       </label>
-                      <FontPicker label="Subtitle font" value={form.theme.subFont} onChange={(k) => setTheme({ subFont: k })} />
+                      <FontPicker label="Font" value={form.theme.subFont} onChange={(k) => setTheme({ subFont: k })} />
                       <div>
-                        <Label>Subtitle size</Label>
+                        <Label>Size</Label>
                         <SizeField value={form.theme.subSizePx} min={8} max={80} onChange={(n) => setTheme({ subSizePx: n })} />
                       </div>
                       <div className="max-w-xs">
-                        <ColorField label="Subtitle color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
+                        <ColorField label="Color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
                       </div>
+                    </MiniCard>
+
+                    <MiniCard title="Lines" summary={form.theme.blocks.length ? `${form.theme.blocks.length} added` : 'None'}>
+                      <p className="text-sm text-ink-soft">Add as many lines as you want. Each one gets its own words, font, size and color. Click a line in the preview to jump to it.</p>
+                      {form.theme.blocks.map((b, i) => (
+                        <div key={i} data-line={i} className="space-y-4 rounded-xl border border-line bg-paper p-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-ink">Line {i + 1}</span>
+                            <button type="button" onClick={() => removeBlock(i)} className="text-xs text-ink-soft underline hover:text-red-700">Remove</button>
+                          </div>
+                          <label className="block">
+                            <Label>Words</Label>
+                            <textarea rows={2} value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} className={inputCls} />
+                          </label>
+                          <FontPicker label="Font" value={b.font} onChange={(k) => setBlock(i, { font: k })} />
+                          <div>
+                            <Label>Size</Label>
+                            <SizeField value={b.size} min={8} max={160} onChange={(n) => setBlock(i, { size: n })} />
+                          </div>
+                          <div className="max-w-xs">
+                            <ColorField label="Color" value={b.color} onChange={(v) => setBlock(i, { color: v })} />
+                          </div>
+                          <div>
+                            <Label>Align</Label>
+                            <Chips value={b.align} options={LINE_ALIGNS} onChange={(v) => setBlock(i, { align: v })} />
+                          </div>
+                          <div>
+                            <Label>Letter spacing</Label>
+                            <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setBlock(i, { spacing: Number(v) })} />
+                          </div>
+                          <div>
+                            <Label>Capitals</Label>
+                            <Chips value={b.upper ? 'on' : 'off'} options={[{ id: 'off', label: 'As typed' }, { id: 'on', label: 'ALL CAPS' }]} onChange={(v) => setBlock(i, { upper: v === 'on' })} />
+                          </div>
+                          <div>
+                            <Label>Where</Label>
+                            <Chips value={b.place} options={PLACES} onChange={(v) => setBlock(i, { place: v })} />
+                          </div>
+                        </div>
+                      ))}
+                      {form.theme.blocks.length < 40 && (
+                        <button type="button" onClick={addBlock} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add a line</button>
+                      )}
+                    </MiniCard>
+
+                    <MiniCard title="Text boxes" summary={form.theme.free.length ? `${form.theme.free.length} added` : 'None'}>
+                      <p className="text-sm text-ink-soft">Free form. Add a box, then drag it anywhere in the preview. Drag the dot on its corner to make it wider. Boxes appear at the top of the page.</p>
+                      <div>
+                        <Label>Area height</Label>
+                        <SizeField value={form.theme.canvasH} min={30} max={300} onChange={(n) => setTheme({ canvasH: n })} />
+                      </div>
+                      {form.theme.free.map((b, i) => (
+                        <div key={i} data-free={i} className={`space-y-4 rounded-xl border bg-paper p-4 ${selFree === i ? 'border-twilight' : 'border-line'}`} onFocusCapture={() => setSelFree(i)}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-ink">Box {i + 1}</span>
+                            <span className="flex gap-3">
+                              <button type="button" onClick={() => dupFree(i)} className="text-xs text-ink-soft underline hover:text-ink">Copy</button>
+                              <button type="button" onClick={() => removeFree(i)} className="text-xs text-ink-soft underline hover:text-red-700">Remove</button>
+                            </span>
+                          </div>
+                          <label className="block">
+                            <Label>Words</Label>
+                            <textarea rows={2} value={b.text} onChange={(e) => setFree(i, { text: e.target.value })} className={inputCls} />
+                          </label>
+                          <FontPicker label="Font" value={b.font} onChange={(k) => setFree(i, { font: k })} />
+                          <div>
+                            <Label>Size</Label>
+                            <SizeField value={b.size} min={6} max={300} onChange={(n) => setFree(i, { size: n })} />
+                          </div>
+                          <div className="max-w-xs">
+                            <ColorField label="Color" value={b.color} onChange={(v) => setFree(i, { color: v })} />
+                          </div>
+                          <div>
+                            <Label>Align</Label>
+                            <Chips value={b.align} options={LINE_ALIGNS} onChange={(v) => setFree(i, { align: v })} />
+                          </div>
+                          <div>
+                            <Label>Letter spacing</Label>
+                            <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setFree(i, { spacing: Number(v) })} />
+                          </div>
+                          <div>
+                            <Label>Capitals</Label>
+                            <Chips value={b.upper ? 'on' : 'off'} options={[{ id: 'off', label: 'As typed' }, { id: 'on', label: 'ALL CAPS' }]} onChange={(v) => setFree(i, { upper: v === 'on' })} />
+                          </div>
+                          <div>
+                            <Label>Width</Label>
+                            <SizeField value={Math.round(b.w)} min={5} max={100} onChange={(n) => setFree(i, { w: n })} />
+                          </div>
+                          <div>
+                            <Label>Tilt</Label>
+                            <SizeField value={Math.round(b.rot)} min={-90} max={90} onChange={(n) => setFree(i, { rot: n })} />
+                          </div>
+                        </div>
+                      ))}
+                      {form.theme.free.length < 60 && (
+                        <button type="button" onClick={addFree} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add a text box</button>
+                      )}
                     </MiniCard>
 
                     <MiniCard title="Session settings">
@@ -1000,8 +1141,9 @@ export default function SpecialsPage() {
 
               <div className="lg:sticky lg:top-6 lg:self-start">
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Live preview</p>
-                <div id="special-preview" className="mx-auto h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[2rem] border-4 border-ink/80" style={{ background: form.theme.bgColor }}>
-                  <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label, minis)} />
+                <style>{`#special-preview [data-edit]{cursor:pointer}#special-preview [data-edit]:hover{outline:1px dashed #A9545F;outline-offset:3px}`}</style>
+                <div id="special-preview" onClick={(e) => { const t = (e.target as HTMLElement).closest('[data-edit]') as HTMLElement | null; if (t?.dataset.edit) openEditor(t.dataset.edit) }} className="mx-auto h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[2rem] border-4 border-ink/80" style={{ background: form.theme.bgColor }}>
+                  <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label, minis)} edit={{ selected: selFree, onSelect: setSelFree, onMove: (i, x, y) => setFree(i, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }), onWidth: (i, w) => setFree(i, { w: Math.round(w * 10) / 10 }) }} />
                 </div>
               </div>
             </div>

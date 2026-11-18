@@ -43,8 +43,10 @@ const MORE: [string, FontCat][] = [
   ['Parisienne', 'script'], ['Sacramento', 'script'], ['Alex Brush', 'script'], ['Playball', 'script'],
   ['Tangerine', 'script'], ['Italianno', 'script'], ['Satisfy', 'script'], ['Mrs Saint Delafield', 'script'],
   ['La Belle Aurore', 'script'], ['Cookie', 'script'],
+  ['Monsieur La Doulaise', 'script'], ['Ballet', 'script'], ['Petit Formal Script', 'script'], ['Imperial Script', 'script'],
   ['Bebas Neue', 'display'], ['Oswald', 'display'], ['Anton', 'display'], ['Limelight', 'display'],
   ['Julius Sans One', 'display'], ['Federo', 'display'], ['Barlow Condensed', 'display'],
+  ['Space Mono', 'display'], ['DM Mono', 'display'], ['IBM Plex Mono', 'display'], ['Courier Prime', 'display'], ['JetBrains Mono', 'display'],
 ]
 
 const W: Record<string, string> = {
