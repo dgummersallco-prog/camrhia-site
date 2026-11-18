@@ -2,6 +2,7 @@ import LeadForm from './LeadForm'
 import Slideshow from './Slideshow'
 import SlotPicker from './SlotPicker'
 import { createElement } from 'react'
+import Fit from './Fit'
 import FreeCanvas, { type FreeBox, type FreeEdit } from './FreeCanvas'
 import Editable from '@/app/components/Editable'
 import { ICONS } from '@/lib/specialIcons'
@@ -353,14 +354,15 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
       {pattern ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: pattern, backgroundSize: '260px 260px', opacity: 0.18 }} /> : null}
       {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
 
+      {t.bgImage ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: `url(${t.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }} /> : null}
+      {t.bgImage ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: `rgba(0,0,0,${t.overlay / 100})` }} /> : null}
+
+      <Fit>
+      <div className="relative">
       {t.free.length > 0 ? <FreeCanvas boxes={t.free} edit={preview ? edit : undefined} /> : null}
 
-      <div
-        className="relative overflow-hidden"
-        style={t.bgImage ? { backgroundImage: `url(${t.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-      >
-        {t.bgImage ? <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${t.overlay / 100})` }} /> : null}
-        <div className={`relative mx-auto flex max-w-xl flex-col justify-center px-6 py-16 ${t.bgImage ? 'min-h-[520px]' : emoji ? 'min-h-[440px]' : ''}`}>
+      <div className="relative overflow-hidden">
+        <div className={`relative mx-auto flex flex-col justify-center px-6 py-16 ${t.bgImage ? 'min-h-[520px]' : emoji ? 'min-h-[440px]' : ''}`}>
           {d.brand || live ? tx({ k: 'brand', tag: 'p', value: d.brand, ph: 'Studio name', className: 'uppercase', single: true, style: { fontFamily: FONT_OPTIONS[t.nameFont]?.family ?? 'sans-serif', letterSpacing: '0.2em', color: t.nameColor || heroText, fontSize: t.nameSizePx, textAlign: titleAlign, marginTop: t.nameTop || undefined } }) : null}
           {tx({ k: 'title', tag: 'h1', value: d.headline, ph: 'Your offer title', fallback: t.free.length ? '' : 'Your offer title', single: true, className: 'mt-4 leading-tight', style: { ...heading, color: t.titleColor, fontSize: t.titleSizePx, textAlign: titleAlign, marginTop: 16 + t.titleTop } })}
           {renderBlocks('title')}
@@ -376,7 +378,7 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
         </div>
       </div>
 
-      <div className="relative mx-auto max-w-xl px-6 pb-16">
+      <div className="relative px-6 pb-16">
         {d.details ? (
           <section {...ed('summary')} className="mt-12">
             <h2 className="text-2xl" style={heading}>{d.detailsTitle || 'What is included'}</h2>
@@ -403,6 +405,8 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
           </section>
         </div>
       </div>
+      </div>
+      </Fit>
     </div>
   )
 }
