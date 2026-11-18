@@ -399,7 +399,7 @@ export default function GalleryViewPage() {
             alt={p.filename ?? ''}
             loading="lazy"
             onClick={() => setOpenIndex(i)}
-            className={uniform ? 'aspect-[7/8] w-full cursor-zoom-in object-cover' : 'w-full cursor-zoom-in'}
+            className={uniform ? 'aspect-[5/6] w-full cursor-zoom-in object-cover' : 'w-full cursor-zoom-in'}
             style={!uniform && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : undefined}
           />
         )}
@@ -457,7 +457,7 @@ export default function GalleryViewPage() {
         return <div className="mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap, maxWidth: 'min(100%, 1280px)' }}>{list.map((p, i) => tile(p, i, { ratio: 1.14 }))}</div>
       case 'rows': {
         const per = typeof window !== 'undefined' && window.innerWidth < 640 ? 2 : 4
-        const cl = (p: (typeof list)[number]) => Math.min(1.3, Math.max(0.7, arOf(p)))
+        const cl = (p: (typeof list)[number]) => Math.min(1.0, Math.max(0.7, arOf(p)))
         const rowsArr: (typeof list)[] = []
         for (let k = 0; k < list.length; k += per) rowsArr.push(list.slice(k, k + per))
         return (
@@ -502,25 +502,38 @@ export default function GalleryViewPage() {
           </div>
         )
       }
-      case 'polaroid':
+      case 'polaroid': {
+        const WIN = [[3.808,1.526,22.361,16.881,-2.64],[27.202,1.934,22.052,17.205,4.4],[51.401,1.835,21.892,16.707,-4.76],[74.403,1.589,22.195,16.876,2.86],[2.749,23.177,22.688,16.88,2.39],[27.27,23.037,20.827,16.559,-2.1],[49.974,23.689,22.082,16.953,1.85],[73.954,22.884,22.799,16.871,-4.18],[3.285,44.205,22.016,14.927,3.98],[27.279,43.691,21.362,15.463,-2.86],[50.368,44.393,21.881,14.694,1.22],[75.206,42.466,21.4,16.398,-2.01],[3.517,63.052,20.825,15.373,-2.49],[26.657,61.997,21.57,15.976,1.77],[51.147,63.044,22.715,15.643,-1.55],[75.567,62.849,20.937,15.291,1.85],[3.017,82.375,20.283,14.145,-3.81],[26.601,81.618,21.427,14.682,-2.05],[51.237,82.592,22.141,14.147,3.07],[75.539,82.235,21.264,14.285,-2.12]]
+        const ENDS = [25.2, 46.6, 67.4, 86.6, 100]
+        const chunks: (typeof list)[] = []
+        for (let k = 0; k < list.length; k += 20) chunks.push(list.slice(k, k + 20))
         return (
-          <div className="flex flex-wrap justify-center" style={{ gap: 'clamp(4px, 1cqw, 16px)', containerType: 'inline-size' }}>
-            {list.map((p, i) => (
-              <Fragment key={p.id}>
-                {momentHead(p, i)}
-                <div data-gk="photos" className="group relative w-[46%] md:w-[23.5%]" style={{ background: '#fff', padding: 'clamp(6px, 1.05cqw, 20px) clamp(6px, 1.05cqw, 20px) clamp(24px, 4.8cqw, 80px)', boxShadow: '0 6px 18px rgba(0,0,0,.18)', transform: `rotate(${[-2, 1.5, -1, 2][i % 4]}deg)`, borderRadius: Math.min(look.radius, 4) }}>
-                  <div className="relative" style={{ aspectRatio: '10 / 13', background: pal.line }}>
-                    {p.thumb && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.thumb} alt={p.filename ?? ''} loading="lazy" onClick={() => setOpenIndex(i)} className="absolute inset-0 h-full w-full cursor-zoom-in object-cover" />
-                    )}
-                  </div>
-                  {heartBtn(p)}
+          <div className="mx-auto w-full max-w-[1100px]">
+            {chunks.map((chunk, ci) => {
+              const rowsUsed = Math.ceil(chunk.length / 4)
+              const end = ENDS[rowsUsed - 1]
+              return (
+                <div key={ci} className="relative w-full overflow-hidden" style={{ aspectRatio: `569 / ${(933 * end) / 100}` }}>
+                  {WIN.slice(0, rowsUsed * 4).map((w, wi) => {
+                    const p = chunk[wi]
+                    return (
+                      <div key={wi} data-gk={p ? 'photos' : undefined} className="group absolute z-10 overflow-hidden" style={{ left: `${w[0]}%`, top: `${(w[1] / end) * 100}%`, width: `${w[2]}%`, height: `${(w[3] / end) * 100}%`, transform: `rotate(${w[4]}deg)`, background: pal.line }}>
+                        {p && p.thumb && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.thumb} alt={p.filename ?? ''} loading="lazy" onClick={() => setOpenIndex(ci * 20 + wi)} className="absolute inset-0 h-full w-full cursor-zoom-in object-cover" />
+                        )}
+                        {p && heartBtn(p)}
+                      </div>
+                    )
+                  })}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/gallery-layout/polaroid-art.png" alt="" aria-hidden className="pointer-events-none absolute left-0 top-0 z-20 w-full select-none" style={{ height: `${(100 / end) * 100}%` }} />
                 </div>
-              </Fragment>
-            ))}
+              )
+            })}
           </div>
         )
+      }
       case 'story':
         return <div className="mx-auto flex max-w-[920px] flex-col" style={{ gap: look.gap }}>{list.map((p, i) => tile(p, i, { ratio: 2.3 }))}</div>
       case 'stagger':
@@ -552,7 +565,7 @@ export default function GalleryViewPage() {
         )
       }
       default:
-        return <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: look.gap }}>{list.map((p, i) => renderItem(p, i, false))}</div>
+        return <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: look.gap }}>{list.map((p, i) => tile(p, i, { ratio: Math.min(1.2, Math.max(0.75, arOf(p))), wrap: 'break-inside-avoid', style: { marginBottom: look.gap } }))}</div>
     }
   })()
   const pill = (on: boolean): CSSProperties => (on ? { background: pal.accent, color: pal.onAccent, border: '1px solid transparent' } : { border: `1px solid ${pal.line}`, color: pal.ink })
