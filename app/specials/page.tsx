@@ -30,7 +30,7 @@ type Funnel = {
   published: boolean
 }
 type MiniOpt = { id: string; title: string; description: string | null; location: string | null; price: number; duration_min: number | null; tz: string; photos_included?: number | null; slots: { id: string; starts_at: string }[] }
-type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
+type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string; handled_at?: string | null }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
 const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image', 'og_site', 'og_art', 'og_name_size', 'og_title_size', 'og_sub_size', 'og_wide', 'og_design']
@@ -1043,6 +1043,16 @@ export default function SpecialsPage() {
     }
   }
 
+  async function markLead(l: Lead, handled: boolean) {
+    const sb = supabase
+    if (!sb) return
+    const stamp = handled ? new Date().toISOString() : null
+    const { error } = await sb.from('funnel_leads').update({ handled_at: stamp }).eq('id', l.id)
+    if (error) { setMessage(error.message); return }
+    setLeads((ls) => ls.map((x) => (x.id === l.id ? { ...x, handled_at: stamp } : x)))
+    window.dispatchEvent(new Event('camrhia-leads'))
+  }
+
   const ownUpload = (u: string) => !!userId && u.startsWith(STORAGE_BASE + userId + '/special_')
 
   async function uploadBackground(file: File) {
@@ -1709,14 +1719,20 @@ export default function SpecialsPage() {
         )}
 
         {leads.length > 0 && (
-          <section className="mb-8 rounded-2xl border border-line bg-card p-8">
+          <section id="signups" className="mb-8 rounded-2xl border border-line bg-card p-8">
             <p className="font-mono text-xs uppercase tracking-widest text-ink-soft/60">Sign-ups</p>
             <ul className="mt-3 divide-y divide-line">
               {leads.map((l) => (
                 <li key={l.id} className="py-4 text-sm">
-                  <p className="font-medium text-ink">{l.name} <span className="font-normal text-ink-soft">· {items.find((i) => i.id === l.funnel_id)?.name ?? 'Special'} · {new Date(l.created_at).toLocaleDateString()}</span></p>
-                  <p className="text-ink-soft">{l.email}{l.phone ? ` · ${l.phone}` : ''}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium text-ink">{l.name} <span className="font-normal text-ink-soft">· {items.find((i) => i.id === l.funnel_id)?.name ?? 'Special'} · {new Date(l.created_at).toLocaleDateString()}</span></p>
+                    {l.handled_at
+                      ? <span className="rounded-full bg-line px-3 py-1 text-xs font-medium text-ink-soft">Handled</span>
+                      : <span className="rounded-full bg-twilight/15 px-3 py-1 text-xs font-medium text-twilight">New</span>}
+                  </div>
+                  <p className="mt-1 text-ink-soft"><a href={'mailto:' + l.email} className="underline">{l.email}</a>{l.phone ? <> · <a href={'tel:' + l.phone} className="underline">{l.phone}</a></> : null}</p>
                   {l.note ? <p className="mt-1 text-ink">{l.note}</p> : null}
+                  <button type="button" onClick={() => markLead(l, !l.handled_at)} className="mt-2 rounded-full border border-line px-3 py-1 text-xs text-ink transition hover:border-twilight">{l.handled_at ? 'Mark as new' : 'Mark as handled'}</button>
                 </li>
               ))}
             </ul>

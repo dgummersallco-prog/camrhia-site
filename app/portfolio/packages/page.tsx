@@ -60,7 +60,7 @@ function Row({ pkg, onEdit, onDelete, onToggle }: { pkg: Pkg; onEdit: () => void
   }
   const lines = (pkg.detail ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
   return (
-    <li ref={setNodeRef} style={style} className="flex flex-col rounded-2xl border border-line p-5 shadow-sm">
+    <li ref={setNodeRef} style={style} className="flex flex-col rounded-2xl border border-line p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <button type="button" {...attributes} {...listeners} aria-label="Drag to reorder" className="cursor-grab touch-none text-lg leading-none text-ink-soft">⋮⋮</button>
         <div className="flex items-center gap-2">
@@ -68,18 +68,18 @@ function Row({ pkg, onEdit, onDelete, onToggle }: { pkg: Pkg; onEdit: () => void
           <Switch on={pkg.show_public} onChange={onToggle} label="Show on my website" />
         </div>
       </div>
-      <p className="mt-4 font-fraunces text-xl font-semibold leading-tight text-ink">{pkg.name}</p>
-      {pkg.price && <p className="mt-1 font-fraunces text-3xl font-semibold text-twilight">{pkg.price}</p>}
-      {pkg.covers && <p className="mt-1 text-xs uppercase tracking-[0.12em] text-ink-soft">{pkg.covers}</p>}
+      <p className="mt-3 font-fraunces text-lg font-semibold leading-tight text-ink">{pkg.name}</p>
+      {pkg.price && <p className="mt-1 font-fraunces text-2xl font-semibold text-twilight">{pkg.price}</p>}
+      {pkg.covers && <p className="mt-1 line-clamp-3 text-[11px] uppercase tracking-[0.08em] text-ink-soft">{pkg.covers}</p>}
       {lines.length > 0 && (
-        <ul className="mt-4 space-y-1.5 text-sm text-ink">
-          {lines.slice(0, 4).map((l, i) => (
+        <ul className="mt-3 space-y-1 text-xs text-ink">
+          {lines.slice(0, 3).map((l, i) => (
             <li key={i} className="flex gap-2"><span className="text-twilight">✦</span><span className="min-w-0 break-words">{l}</span></li>
           ))}
-          {lines.length > 4 && <li className="text-xs text-ink-soft">+ {lines.length - 4} more</li>}
+          {lines.length > 3 && <li className="text-xs text-ink-soft">+ {lines.length - 3} more</li>}
         </ul>
       )}
-      <div className="mt-auto flex items-center justify-between gap-3 pt-5">
+      <div className="mt-auto flex items-center justify-between gap-3 pt-4">
         <span className="text-xs text-ink-soft">{pkg.delivery_days ? `Gallery in ${pkg.delivery_days} days` : ''}</span>
         <span className="flex gap-4">
           <button type="button" onClick={onEdit} className="text-sm text-twilight hover:underline">Edit</button>
@@ -229,7 +229,7 @@ export default function PackagesEditor() {
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="packages" />
       <SubTabs group="packages" active="packages" />
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-6 py-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Work</p>
@@ -295,7 +295,7 @@ export default function PackagesEditor() {
             {groups.map((g) => (
               <section key={g.key}>
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2 className="font-fraunces text-2xl font-semibold text-ink">{typeLabel(g.key)} <span className="ml-1 rounded-full bg-blush-wash px-2.5 py-0.5 align-middle text-xs font-medium text-twilight">{g.items.length}</span></h2>
+                  <h2 className="font-fraunces text-2xl font-semibold text-ink">{typeLabel(g.key)} <span className="ml-2 rounded-full bg-blush-wash px-3 py-1 align-middle font-sans text-sm font-semibold text-twilight">{g.items.length}</span></h2>
                   <button type="button" className="text-sm text-twilight hover:underline" onClick={() => startNew(g.key)}>+ Add package</button>
                 </div>
                 {g.items.length === 0 ? (
@@ -303,7 +303,7 @@ export default function PackagesEditor() {
                 ) : (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEndGroup(g.items, e)}>
                     <SortableContext items={g.items.map((x) => x.id)} strategy={rectSortingStrategy}>
-                      <ul className="grid gap-4 sm:grid-cols-2">
+                      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {g.items.map((p) => (
                           <Row key={p.id} pkg={p} onEdit={() => startEdit(p)} onDelete={() => remove(p)} onToggle={(v) => toggle(p, v)} />
                         ))}

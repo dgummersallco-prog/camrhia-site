@@ -173,10 +173,6 @@ function NotesBlock({ items, onAdd, onToggle, onDelete }: { items: Note[]; onAdd
       </div>
       <div className="mt-2 space-y-2">
         <textarea className={FIELD} rows={2} placeholder="e.g. Son is 17, will need seniors next year" value={body} onChange={(e) => setBody(e.target.value)} />
-        <div>
-          <p className="mb-0.5 text-[11px] text-ink-soft">Remind me on (optional)</p>
-          <input type="date" className={FIELD} value={date} onChange={(e) => setDate(e.target.value)} />
-        </div>
         <button type="button" onClick={save} className="rounded-lg bg-twilight px-3 py-1.5 text-xs font-medium text-white">Add note</button>
       </div>
     </div>
@@ -187,8 +183,6 @@ function ClientDetails({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts
   return (
     <div className="space-y-5">
       <NotesBlock items={notes} onAdd={(v) => api.addNote(c.key, v)} onToggle={api.toggleNote} onDelete={api.delNote} />
-      <ContactsBlock items={cts} onAdd={(v) => api.addCt(c.key, v)} onDelete={api.delCt} />
-      <FamilyBlock items={fam} onAdd={(f) => api.addFam(c.key, f)} onDelete={api.delFam} />
       <div>
         <p className={LABEL}>Sessions</p>
         <div className="mt-2 space-y-2">
@@ -218,10 +212,10 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
   const due = notes.some((n) => isDue(n, limit))
   const phone = cts.find((p) => p.phone)?.phone ?? c.phone
   const email = cts.find((p) => p.email)?.email ?? c.email
-  const box = 'rounded-2xl border border-white/80 bg-white/50 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]'
+  const box = 'rounded-2xl border border-white/80 bg-white/50 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]'
 
   return (
-    <div className="w-full" style={{ perspective: '1200px', aspectRatio: '4 / 5' }}>
+    <div className="w-full" style={{ perspective: '1200px', aspectRatio: '3 / 4' }}>
       <div
         role="button"
         tabIndex={0}
@@ -233,20 +227,20 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
         {/* FRONT */}
         <div className={face} style={{ ...faceStyle, ...GLASS }}>
           {due && <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ROSE }}>Reminder</span>}
-          <div className="flex h-full flex-col px-5 pb-4 pt-6">
-            <p className="line-clamp-2 shrink-0 break-words text-center font-fraunces text-2xl font-bold leading-[1.15] text-ink">{c.name}</p>
-            <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3" onClick={stop}>
+          <div className="flex h-full flex-col px-4 pb-3 pt-5">
+            <p className="line-clamp-2 shrink-0 break-words text-center font-fraunces text-xl font-bold leading-[1.15] text-ink">{c.name}</p>
+            <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2" onClick={stop}>
               <div className={box + ' shrink-0'}>
                 <p className={LABEL}>Phone</p>
                 {phone ? (
                   <>
-                    <p className="mt-0.5 break-all text-base font-semibold text-ink">{phone}</p>
+                    <p className="mt-0.5 break-all text-sm font-semibold text-ink">{phone}</p>
                     <div className="mt-2 flex gap-1.5">
                       <a href={`tel:${phone}`} className={pill}>Call</a>
                       <a href={`sms:${phone}`} className={pill}>Text</a>
                     </div>
                   </>
-                ) : <p className="mt-0.5 text-base text-ink-soft/70">No phone yet</p>}
+                ) : <p className="mt-0.5 text-sm text-ink-soft/70">No phone yet</p>}
               </div>
               <div className={box + ' shrink-0'}>
                 <p className={LABEL}>Email</p>
@@ -257,11 +251,11 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
                       <a href={`mailto:${email}`} className={pill}>Email</a>
                     </div>
                   </>
-                ) : <p className="mt-0.5 text-base text-ink-soft/70">No email yet</p>}
+                ) : <p className="mt-0.5 text-sm text-ink-soft/70">No email yet</p>}
               </div>
             </div>
             <div className="mt-3 shrink-0" onClick={stop}>
-              <Link href="/messages" className="block rounded-2xl border border-white/90 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_-12px_rgba(90,50,60,0.5)] transition hover:bg-white/75">Message on Camrhia</Link>
+              <Link href="/messages" className="block rounded-2xl border border-white/90 bg-white/55 px-3 py-2 text-center text-sm font-semibold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_-12px_rgba(90,50,60,0.5)] transition hover:bg-white/75">Message on Camrhia</Link>
             </div>
             <p className="mt-2 shrink-0 text-center text-xs font-medium text-ink-soft">Flip for notes</p>
           </div>
@@ -269,7 +263,7 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
 
         {/* BACK */}
         <div className={face} style={{ ...faceStyle, ...GLASS_BACK, transform: 'rotateY(180deg)' }}>
-          <div className="flex h-full flex-col p-5">
+          <div className="flex h-full flex-col p-4">
             <p className="truncate font-fraunces text-lg font-semibold text-ink">{c.name}</p>
             {c.fromWeb && <p className="mt-1 text-xs text-ink-soft">Came in through your website</p>}
             <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1" onClick={stop}>
@@ -279,6 +273,77 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+type LeadRow = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string; handled_at: string | null }
+
+function LeadsView() {
+  const [rows, setRows] = useState<LeadRow[] | null>(null)
+  const [names, setNames] = useState<Record<string, string>>({})
+  useEffect(() => {
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data: sess } = await sb.auth.getSession()
+      if (!sess.session) return
+      const { data: fp } = await sb.from('funnel_pages').select('id, name').eq('owner_id', sess.session.user.id)
+      const pages = (fp ?? []) as { id: string; name: string }[]
+      const nm: Record<string, string> = {}
+      pages.forEach((x) => { nm[x.id] = x.name })
+      setNames(nm)
+      if (!pages.length) { setRows([]); return }
+      const { data } = await sb.from('funnel_leads').select('id, funnel_id, name, email, phone, note, created_at, handled_at').in('funnel_id', pages.map((x) => x.id)).order('created_at', { ascending: false })
+      setRows((data ?? []) as LeadRow[])
+    }
+    run().catch(() => setRows([]))
+  }, [])
+  async function mark(l: LeadRow, handled: boolean) {
+    const sb = supabase
+    if (!sb) return
+    const stamp = handled ? new Date().toISOString() : null
+    const { error } = await sb.from('funnel_leads').update({ handled_at: stamp }).eq('id', l.id)
+    if (error) return
+    setRows((rs) => (rs ?? []).map((x) => (x.id === l.id ? { ...x, handled_at: stamp } : x)))
+    window.dispatchEvent(new Event('camrhia-leads'))
+  }
+  const pill = 'rounded-full border border-white/80 bg-white/70 px-3 py-1 text-xs font-medium text-ink transition hover:border-ink'
+  if (rows === null) return <p className="mt-8 text-sm text-ink-soft">Loading...</p>
+  if (rows.length === 0) return (
+    <section className="mt-8 rounded-2xl border border-line bg-card p-8 text-center">
+      <p className="font-fraunces text-lg font-semibold text-ink">No leads yet</p>
+      <p className="mt-2 text-sm text-ink-soft">When someone signs up on one of your specials, they show up here.</p>
+    </section>
+  )
+  return (
+    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {rows.map((l) => (
+        <div key={l.id} className="flex flex-col rounded-2xl border border-white/70 bg-white/60 p-4 shadow-lg backdrop-blur-xl">
+          <div className="flex items-start justify-between gap-2">
+            <p className="min-w-0 break-words font-fraunces text-xl font-bold leading-tight text-ink">{l.name}</p>
+            {l.handled_at
+              ? <span className="shrink-0 rounded-full bg-line px-2.5 py-1 text-[11px] font-semibold text-ink-soft">Handled</span>
+              : <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ROSE }}>New</span>}
+          </div>
+          <p className="mt-1 text-xs text-ink-soft">{names[l.funnel_id] ?? 'Special'} · {new Date(l.created_at).toLocaleDateString()}</p>
+          {l.phone && (
+            <div className="mt-3">
+              <p className="break-all text-sm font-semibold text-ink">{l.phone}</p>
+              <div className="mt-1.5 flex gap-1.5">
+                <a href={'tel:' + l.phone} className={pill}>Call</a>
+                <a href={'sms:' + l.phone} className={pill}>Text</a>
+              </div>
+            </div>
+          )}
+          <div className="mt-3">
+            <p className="break-all text-sm font-semibold text-ink">{l.email}</p>
+            <div className="mt-1.5 flex gap-1.5"><a href={'mailto:' + l.email} className={pill}>Email</a></div>
+          </div>
+          {l.note && <p className="mt-3 break-words text-xs text-ink">{l.note}</p>}
+          <button type="button" onClick={() => mark(l, !l.handled_at)} className="mt-4 rounded-2xl border border-white/90 bg-white/55 px-3 py-2 text-center text-sm font-semibold text-ink transition hover:bg-white/75">{l.handled_at ? 'Mark as new' : 'Mark as handled'}</button>
+        </div>
+      ))}
     </div>
   )
 }
@@ -293,11 +358,31 @@ export default function ClientsPage() {
   const [q, setQ] = useState('')
   const [sort, setSort] = useState<'recent' | 'name'>('recent')
   const [view, setView] = useState<'cards' | 'list'>('cards')
+  const [mode, setMode] = useState<'clients' | 'leads'>('clients')
+  const [leadsNew, setLeadsNew] = useState(0)
   const [open, setOpen] = useState<string | null>(null)
   const [fams, setFams] = useState<Fam[]>([])
   const [cts, setCts] = useState<Ct[]>([])
   const [notes, setNotes] = useState<Note[]>([])
   const [uid, setUid] = useState<string | null>(null)
+
+  useEffect(() => {
+    let off = false
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const { data: fp } = await sb.from('funnel_pages').select('id').eq('owner_id', data.session.user.id)
+      const ids = ((fp ?? []) as { id: string }[]).map((x) => x.id)
+      if (!ids.length) { if (!off) setLeadsNew(0); return }
+      const { data: ls } = await sb.from('funnel_leads').select('id').in('funnel_id', ids).is('handled_at', null)
+      if (!off) setLeadsNew(((ls ?? []) as unknown[]).length)
+    }
+    run().catch(() => {})
+    window.addEventListener('camrhia-leads', run)
+    return () => { off = true; window.removeEventListener('camrhia-leads', run) }
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -449,18 +534,25 @@ export default function ClientsPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="clients" />
-      <main className={'mx-auto px-6 py-10 ' + (view === 'cards' ? 'max-w-6xl' : 'max-w-4xl')}>
+      <main className={'mx-auto px-6 py-10 ' + (view === 'cards' ? 'max-w-7xl' : 'max-w-4xl')}>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-fraunces text-4xl font-bold text-ink">Clients</h1>
-            {!loading && <p className="mt-1 text-sm text-ink-soft">{clients.length} {clients.length === 1 ? 'client' : 'clients'}</p>}
+            {!loading && mode === 'clients' && <p className="mt-1 text-sm text-ink-soft">{clients.length} {clients.length === 1 ? 'client' : 'clients'}</p>}
+            <div className="mt-3 flex w-fit overflow-hidden rounded-xl border border-white/70 bg-white/60 text-sm">
+              {(['clients', 'leads'] as const).map((m) => (
+                <button key={m} type="button" onClick={() => setMode(m)} className={'px-4 py-2 font-medium transition ' + (mode === m ? 'bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] text-white' : 'text-ink-soft hover:text-ink')}>
+                  {m === 'clients' ? 'Clients' : 'Leads'}{m === 'leads' && leadsNew > 0 ? ' (' + leadsNew + ')' : ''}
+                </button>
+              ))}
+            </div>
           </div>
           <Link href="/sessions/new" className="rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New session</Link>
         </div>
 
         {error && <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
-        {reminders.length > 0 && (
+        {mode === 'clients' && reminders.length > 0 && (
           <section className="mt-6 rounded-2xl border border-white/70 bg-white/60 p-4 backdrop-blur-xl">
             <p className={LABEL}>Reminders</p>
             <div className="mt-2 space-y-1.5">
@@ -474,7 +566,7 @@ export default function ClientsPage() {
           </section>
         )}
 
-        {loading ? (
+        {mode === 'leads' ? <LeadsView /> : loading ? (
           <p className="mt-8 text-sm text-ink-soft">Loading…</p>
         ) : clients.length === 0 ? (
           <section className="mt-8 rounded-2xl border border-line bg-card p-8 text-center">
@@ -501,7 +593,7 @@ export default function ClientsPage() {
             {shown.length === 0 && <p className="mt-5 text-sm text-ink-soft">No clients match that search.</p>}
 
             {view === 'cards' ? (
-              <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {shown.map((c) => <ClientCard key={c.key} c={c} fam={famBy[c.key] ?? []} cts={ctBy[c.key] ?? []} notes={noteBy[c.key] ?? []} api={api} />)}
               </div>
             ) : (

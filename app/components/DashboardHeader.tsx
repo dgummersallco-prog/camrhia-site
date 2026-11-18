@@ -88,6 +88,7 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [unread, setUnread] = useState(0)
+  const [newLeads, setNewLeads] = useState(0)
   const [blocked, setBlocked] = useState(false)
   const [showTeam, setShowTeam] = useState(false)
   const [isAffiliate, setIsAffiliate] = useState(false)
@@ -153,6 +154,25 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
     return () => { off = true; clearInterval(t); window.removeEventListener('camrhia-unread', run) }
   }, [])
 
+
+  useEffect(() => {
+    let off = false
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const { data: fp } = await sb.from('funnel_pages').select('id').eq('owner_id', data.session.user.id)
+      const ids = ((fp ?? []) as { id: string }[]).map((x) => x.id)
+      if (!ids.length) { if (!off) setNewLeads(0); return }
+      const { data: ls } = await sb.from('funnel_leads').select('id').in('funnel_id', ids).is('handled_at', null)
+      if (!off) setNewLeads(((ls ?? []) as unknown[]).length)
+    }
+    run().catch(() => {})
+    const t = setInterval(() => { run().catch(() => {}) }, 30000)
+    window.addEventListener('camrhia-leads', run)
+    return () => { off = true; clearInterval(t); window.removeEventListener('camrhia-leads', run) }
+  }, [])
   useEffect(() => {
     const root = document.documentElement
     const apply = (c: string) => {
@@ -248,6 +268,9 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
         {it.label}
         {it.tab === 'messages' && unread > 0 && (
           <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[#A5646A]">{unread > 9 ? '9+' : unread}</span>
+        )}
+        {it.tab === 'specials' && newLeads > 0 && (
+          <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[#A5646A]">{newLeads > 9 ? '9+' : newLeads}</span>
         )}
       </Link>
     )

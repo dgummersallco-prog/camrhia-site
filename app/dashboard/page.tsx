@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const [limitBytes, setLimitBytes] = useState(0)
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [unreadMsgs, setUnreadMsgs] = useState(0)
+  const [newLeads, setNewLeads] = useState(0)
   const [unsigned, setUnsigned] = useState<Unsigned[]>([])
   const [payRows, setPayRows] = useState<PayRow[]>([])
   const [inq, setInq] = useState({ waiting: 0, total: 0, booked: 0 })
@@ -67,6 +68,25 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', down)
   }, [bellOpen])
 
+
+  useEffect(() => {
+    let off = false
+    async function run() {
+      const sb = supabase
+      if (!sb) return
+      const { data } = await sb.auth.getSession()
+      if (!data.session) return
+      const { data: fp } = await sb.from('funnel_pages').select('id').eq('owner_id', data.session.user.id)
+      const ids = ((fp ?? []) as { id: string }[]).map((x) => x.id)
+      if (!ids.length) { if (!off) setNewLeads(0); return }
+      const { data: ls } = await sb.from('funnel_leads').select('id').in('funnel_id', ids).is('handled_at', null)
+      if (!off) setNewLeads(((ls ?? []) as unknown[]).length)
+    }
+    run().catch(() => {})
+    const t = setInterval(() => { run().catch(() => {}) }, 30000)
+    window.addEventListener('camrhia-leads', run)
+    return () => { off = true; clearInterval(t); window.removeEventListener('camrhia-leads', run) }
+  }, [])
   useEffect(() => {
     async function load() {
       const sb = supabase
@@ -244,6 +264,7 @@ export default function DashboardPage() {
     notifId: n.id,
   })
   const attention: Item[] = [
+    ...(newLeads > 0 ? [{ key: 'leads', text: `${newLeads} new special sign-up${newLeads === 1 ? '' : 's'}. Reach out while they are interested.`, href: '/specials#signups', cta: 'See sign-ups' }] : []),
     ...(unreadMsgs > 0 ? [{ key: 'msgs', text: `${unreadMsgs} unread conversation${unreadMsgs === 1 ? '' : 's'}`, href: '/messages', cta: 'Open messages' }] : []),
     ...notifs.filter(isPriorityNotif).map(notifItem),
     ...unsigned.map((u) => {
