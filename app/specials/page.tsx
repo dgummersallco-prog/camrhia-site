@@ -32,7 +32,7 @@ type MiniOpt = { id: string; title: string; description: string | null; location
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -632,6 +632,25 @@ export default function SpecialsPage() {
       setUploading(false)
     }
   }
+  const ogInput = useRef<HTMLInputElement>(null)
+  async function uploadOg(file: File) {
+    const sb = supabase
+    if (!sb || !form || !userId) return
+    setUploading(true)
+    try {
+      const v = await makeVersions(file)
+      const path = `${userId}/special_og_${Date.now()}.jpg`
+      const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+      if (up.error) throw up.error
+      const old = form.text.og_image
+      setText('og_image', STORAGE_BASE + path)
+      if (old && old.startsWith(STORAGE_BASE + userId + '/special_og_')) await sb.storage.from('portfolio').remove([old.slice(STORAGE_BASE.length)])
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Could not upload that picture.')
+    } finally {
+      setUploading(false)
+    }
+  }
   const removeFree = (i: number) => { setForm((f) => (f ? { ...f, theme: { ...f.theme, free: f.theme.free.filter((_, j) => j !== i) } } : f)); setSelFree(null) }
   const dupFree = (i: number) => setForm((f) => (f && f.theme.free.length < 60 ? { ...f, theme: { ...f.theme, free: [...f.theme.free, { ...f.theme.free[i], y: Math.min(100, f.theme.free[i].y + 6) }] } } : f))
   const setText = (k: string, v: string) => setForm((f) => (f ? { ...f, text: { ...f.text, [k]: v } } : f))
@@ -1214,6 +1233,27 @@ export default function SpecialsPage() {
                           </div>
                         </div>
                       )}
+                    </MiniCard>
+
+                    <MiniCard title="Link preview" summary={form.text.og_title || form.text.hero_headline}>
+                      <p className="text-xs text-ink-soft">What shows when this link is texted or shared.</p>
+                      <label className="block">
+                        <Label>Title</Label>
+                        <input placeholder={form.text.hero_headline || 'Title'} value={form.text.og_title} onChange={(e) => setText('og_title', e.target.value)} className={inputCls} />
+                      </label>
+                      <label className="block">
+                        <Label>Description</Label>
+                        <textarea rows={3} placeholder={form.text.hero_sub || 'Description'} value={form.text.og_desc} onChange={(e) => setText('og_desc', e.target.value)} className={inputCls} />
+                      </label>
+                      <div>
+                        <Label>Picture</Label>
+                        <input ref={ogInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadOg(f); e.target.value = '' }} />
+                        {form.text.og_image && <img src={form.text.og_image} alt="" className="mb-2 h-24 w-auto rounded-lg border border-line object-cover" />}
+                        <div className="flex gap-2">
+                          <button type="button" disabled={uploading} onClick={() => ogInput.current?.click()} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{uploading ? 'Uploading...' : form.text.og_image ? 'Change picture' : 'Choose a picture'}</button>
+                          {form.text.og_image && <button type="button" onClick={() => setText('og_image', '')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink-soft transition hover:border-twilight">Remove</button>}
+                        </div>
+                      </div>
                     </MiniCard>
                   </div>
                 </StepCard>

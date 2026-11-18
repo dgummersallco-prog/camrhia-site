@@ -47,9 +47,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const page = await getPage(slug)
   const c = (page?.content ?? {}) as Content
+  const t = (k: string) => (typeof c[k] === 'string' ? (c[k] as string).trim() : '')
+  const title = t('og_title') || t('hero_headline') || page?.name || 'Camrhia'
+  const description = t('og_desc') || t('hero_sub')
+  const image = t('og_image')
   return {
-    title: (c.hero_headline as string) || page?.name || 'Camrhia',
+    title,
+    description: description || undefined,
     robots: { index: false, follow: false },
+    openGraph: {
+      title,
+      description: description || undefined,
+      type: 'website',
+      siteName: t('brand_name') || undefined,
+      images: image ? [{ url: image }] : undefined,
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title,
+      description: description || undefined,
+      images: image ? [image] : undefined,
+    },
   }
 }
 
