@@ -82,7 +82,7 @@ export default function LeadForm({
         type="submit"
         disabled={sending || disabled}
         className="w-full px-8 py-4 text-base font-medium transition hover:opacity-90 disabled:opacity-60"
-        style={{ background: accent || '#A9545F', color: btnText || '#FFFFFF', borderRadius: radius || '999px', ...btnExtra }}
+        style={{ background: accent || '#A9545F', color: btnText || '#FFFFFF', borderRadius: radius || '999px', opacity: sending ? 0.6 : 1, ...btnExtra }}
       >
         {sending ? 'Sending…' : label}
       </button>

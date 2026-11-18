@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { ICONS } from '@/lib/specialIcons'
 import Editable from '@/app/components/Editable'
@@ -36,6 +36,8 @@ const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
 // spot on every screen. Sizes scale with the width of the area.
 export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: FreeEdit }) {
   const ref = useRef<HTMLDivElement>(null)
+  const els = useRef<(HTMLDivElement | null)[]>([])
+  const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] })
   const drag = useRef<{ i: number; sx: number; sy: number; ox: number; oy: number; ow: number; mode: 'move' | 'size'; moved: boolean } | null>(null)
 
   const down = (e: React.PointerEvent<HTMLElement>, i: number, mode: 'move' | 'size') => {
@@ -54,10 +56,42 @@ export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: F
     const dy = ((e.clientY - d.sy) / r.width) * 100
     if (Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 3) d.moved = true
     if (!d.moved) return
-    if (d.mode === 'move') edit.onMove(d.i, clamp(d.ox + dx, -20, 100), clamp(d.oy + dy, -20, 900))
-    else edit.onWidth(d.i, clamp(d.ow + dx, 5, 100))
+    if (d.mode === 'size') { edit.onWidth(d.i, clamp(d.ow + dx, 5, 100)); return }
+    let nx = clamp(d.ox + dx, -20, 100)
+    let ny = clamp(d.oy + dy, -20, 900)
+    const g: { v: number[]; h: number[] } = { v: [], h: [] }
+    const me = els.current[d.i]
+    if (me && !e.altKey) {
+      // Lines show (and the element snaps) when it lines up with the page center or another element.
+      const pct = (r0: DOMRect) => ({ l: ((r0.left - r.left) / r.width) * 100, t: ((r0.top - r.top) / r.width) * 100, w: (r0.width / r.width) * 100, h: (r0.height / r.width) * 100 })
+      const m = pct(me.getBoundingClientRect())
+      const offX = m.l - boxes[d.i].x
+      const offY = m.t - boxes[d.i].y
+      const tx: number[] = [50]
+      const ty: number[] = []
+      els.current.forEach((el, j) => {
+        if (!el || j === d.i) return
+        const o = pct(el.getBoundingClientRect())
+        tx.push(o.l, o.l + o.w / 2, o.l + o.w)
+        ty.push(o.t, o.t + o.h / 2, o.t + o.h)
+      })
+      const near = (feats: number[], targets: number[]) => {
+        let best: { diff: number; at: number } | null = null
+        for (const f of feats) for (const t of targets) {
+          const diff = t - f
+          if (Math.abs(diff) <= 1.2 && (!best || Math.abs(diff) < Math.abs(best.diff))) best = { diff, at: t }
+        }
+        return best
+      }
+      const bx = near([nx + offX, nx + offX + m.w / 2, nx + offX + m.w], tx)
+      if (bx) { nx += bx.diff; g.v.push(bx.at) }
+      const by = near([ny + offY, ny + offY + m.h / 2, ny + offY + m.h], ty)
+      if (by) { ny += by.diff; g.h.push(by.at) }
+    }
+    setGuides(g)
+    edit.onMove(d.i, nx, ny)
   }
-  const up = () => { setTimeout(() => { drag.current = null }, 0) }
+  const up = () => { setGuides({ v: [], h: [] }); setTimeout(() => { drag.current = null }, 0) }
 
   return (
     <div ref={ref} className="pointer-events-none absolute inset-0 z-20" style={{ containerType: 'inline-size' }}>
@@ -70,6 +104,7 @@ export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: F
           return (
             <div
               key={i}
+              ref={(el) => { els.current[i] = el }}
               {...(edit ? { 'data-edit': 'free-' + i } : {})}
               onPointerDownCapture={edit && text ? () => edit.onSelect(i) : undefined}
               onPointerDown={edit && !text ? (e) => down(e, i, 'move') : undefined}
@@ -137,6 +172,12 @@ export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: F
             </div>
           )
         })}
+        {guides.v.map((x) => (
+          <div key={'v' + x} style={{ position: 'absolute', left: x + '%', top: 0, bottom: 0, width: 1, background: '#E0457B', opacity: 0.8, pointerEvents: 'none' }} />
+        ))}
+        {guides.h.map((y) => (
+          <div key={'h' + y} style={{ position: 'absolute', top: y + 'cqw', left: 0, right: 0, height: 1, background: '#E0457B', opacity: 0.8, pointerEvents: 'none' }} />
+        ))}
       </div>
     </div>
   )
