@@ -638,7 +638,7 @@ export default function SpecialsPage() {
   const setFree = (i: number, patch: Partial<FreeBox>) =>
     setForm((f) => (f ? { ...f, theme: { ...f.theme, free: f.theme.free.map((b, j) => (j === i ? { ...b, ...patch } : b)) } } : f))
   const addFree = () => {
-    setForm((f) => (f && f.theme.free.length < 60 ? { ...f, theme: { ...f.theme, free: [...f.theme.free, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 18, align: 'center' as const, spacing: 0, upper: false, x: 10, y: Math.min(90, 8 + f.theme.free.length * 9), w: 80, rot: 0 }] } } : f))
+    setForm((f) => (f && f.theme.free.length < 60 ? { ...f, theme: { ...f.theme, free: [...f.theme.free, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 18, align: 'center' as const, spacing: 0, upper: false, x: 10, y: 20 + f.theme.free.length * 10, w: 80, rot: 0 }] } } : f))
     setSelFree(form ? form.theme.free.length : 0)
   }
   const removeFree = (i: number) => { setForm((f) => (f ? { ...f, theme: { ...f.theme, free: f.theme.free.filter((_, j) => j !== i) } } : f)); setSelFree(null) }
@@ -952,11 +952,7 @@ export default function SpecialsPage() {
                     </MiniCard>
 
                     <MiniCard title="Text boxes" summary={form.theme.free.length ? `${form.theme.free.length} added` : 'None'}>
-                      <p className="text-sm text-ink-soft">Free form. Add a box, then drag it anywhere in the preview. Drag the dot on its corner to make it wider. Boxes appear at the top of the page.</p>
-                      <div>
-                        <Label>Area height</Label>
-                        <SizeField value={form.theme.canvasH} min={30} max={300} onChange={(n) => setTheme({ canvasH: n })} />
-                      </div>
+                      <p className="text-sm text-ink-soft">Free form. Add a box, then drag it anywhere in the preview, even on top of other text. Drag the dot on its corner to make it wider. Boxes float over the page and do not push anything down.</p>
                       {form.theme.free.map((b, i) => (
                         <div key={i} data-free={i} className={`space-y-4 rounded-xl border bg-paper p-4 ${selFree === i ? 'border-twilight' : 'border-line'}`} onFocusCapture={() => setSelFree(i)}>
                           <div className="flex items-center justify-between">

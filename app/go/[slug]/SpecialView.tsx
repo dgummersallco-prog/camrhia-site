@@ -179,7 +179,7 @@ function readFree(v: unknown): FreeBox[] {
       spacing: num(o.spacing, 0, 60, 0),
       upper: o.upper === true,
       x: num(o.x, -20, 100, 10),
-      y: num(o.y, -10, 105, 10),
+      y: num(o.y, -20, 900, 10),
       w: num(o.w, 5, 100, 80),
       rot: num(o.rot, -90, 90, 0),
     }
@@ -272,7 +272,7 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
       {pattern ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: pattern, backgroundSize: '260px 260px', opacity: 0.18 }} /> : null}
       {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
 
-      {t.free.length > 0 ? <div className="relative"><FreeCanvas boxes={t.free} heightPct={t.canvasH} edit={preview ? edit : undefined} /></div> : null}
+      {t.free.length > 0 ? <FreeCanvas boxes={t.free} edit={preview ? edit : undefined} /> : null}
 
       <div
         className="relative overflow-hidden"
