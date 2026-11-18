@@ -267,7 +267,8 @@ export default function GalleryViewPage() {
       e.preventDefault()
       e.stopPropagation()
       const cs = getComputedStyle(h.el)
-      window.parent?.postMessage({ type: 'camrhia-gallery-pick', key: h.k, name: NAMES[h.k], size: Math.round(parseFloat(cs.fontSize)), color: cs.color, bold: parseInt(cs.fontWeight, 10) >= 600 }, '*')
+      const rr = h.el.getBoundingClientRect()
+      window.parent?.postMessage({ type: 'camrhia-gallery-pick', key: h.k, top: rr.top, bottom: rr.bottom, name: NAMES[h.k], size: Math.round(parseFloat(cs.fontSize)), color: cs.color, bold: parseInt(cs.fontWeight, 10) >= 600 }, '*')
     }
     document.addEventListener('mouseover', over, true)
     document.addEventListener('scroll', hide, true)
@@ -398,7 +399,7 @@ export default function GalleryViewPage() {
             alt={p.filename ?? ''}
             loading="lazy"
             onClick={() => setOpenIndex(i)}
-            className={uniform ? 'aspect-[3/4] w-full cursor-zoom-in object-cover' : 'w-full cursor-zoom-in'}
+            className={uniform ? 'aspect-[7/8] w-full cursor-zoom-in object-cover' : 'w-full cursor-zoom-in'}
             style={!uniform && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : undefined}
           />
         )}
@@ -453,28 +454,62 @@ export default function GalleryViewPage() {
       case 'grid':
         return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap }}>{list.map((p, i) => renderItem(p, i, true))}</div>
       case 'square':
-        return <div className="mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap, maxWidth: 'min(100%, 1280px)' }}>{list.map((p, i) => tile(p, i, { wrap: 'aspect-square', fill: true }))}</div>
-      case 'rows':
+        return <div className="mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style={{ gap: look.gap, maxWidth: 'min(100%, 1280px)' }}>{list.map((p, i) => tile(p, i, { ratio: 1.14 }))}</div>
+      case 'rows': {
+        const per = typeof window !== 'undefined' && window.innerWidth < 640 ? 2 : 4
+        const cl = (p: (typeof list)[number]) => Math.min(1.3, Math.max(0.7, arOf(p)))
+        const rowsArr: (typeof list)[] = []
+        for (let k = 0; k < list.length; k += per) rowsArr.push(list.slice(k, k + per))
         return (
-          <div className="flex flex-wrap" style={{ gap: look.gap }}>
-            {list.map((p, i) => tile(p, i, { ratio: arOf(p), style: { width: `${arOf(p) * 220}px`, flexGrow: arOf(p) * 100, maxWidth: '100%' } }))}
-            <div style={{ flexGrow: 100000 }} />
+          <div className="flex flex-col" style={{ gap: look.gap }}>
+            {rowsArr.map((row, r) => (
+              <div key={r} className="flex" style={{ gap: look.gap }}>
+                {row.map((p, j) => tile(p, r * per + j, { ratio: cl(p), head: false, style: { flex: `${cl(p)} 1 0%`, minWidth: 0 } }))}
+                {row.length < per && <div style={{ flex: `${(per - row.length) * 0.9} 1 0%` }} />}
+              </div>
+            ))}
           </div>
         )
-      case 'feature':
-        return <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: look.gap, gridAutoFlow: 'dense' }}>{list.map((p, i) => tile(p, i, { fill: true, wrap: i % 7 === 0 ? 'col-span-2 row-span-2' : 'aspect-square' }))}</div>
+      }
+      case 'feature': {
+        const FEAT = ['col-span-2 row-span-2 aspect-square md:aspect-auto', 'aspect-square md:aspect-auto', 'aspect-square md:aspect-auto', 'aspect-square md:aspect-auto', 'aspect-square md:aspect-auto', 'col-span-2 aspect-[2/1] md:aspect-auto', 'col-span-2 aspect-[2/1] md:aspect-auto', 'row-span-2 aspect-[1/2] md:aspect-auto', 'row-span-2 aspect-[1/2] md:aspect-auto']
+        return (
+          <div style={{ containerType: 'inline-size' }}>
+            <div className="grid grid-cols-2 md:grid-cols-4 md:auto-rows-[calc((100cqw_-_3*var(--g))/4)]" style={{ gap: look.gap, gridAutoFlow: 'dense', ['--g' as string]: `${look.gap}px` }}>
+              {list.map((p, i) => tile(p, i, { fill: true, wrap: FEAT[i % 9] }))}
+            </div>
+          </div>
+        )
+      }
       case 'wide':
-        return <div className="columns-1 sm:columns-2" style={{ columnGap: look.gap }}>{list.map((p, i) => renderItem(p, i, false))}</div>
-      case 'mosaic':
-        return <div className="grid grid-cols-2 md:grid-cols-6" style={{ gap: look.gap }}>{list.map((p, i) => tile(p, i, { fill: true, wrap: MOSAIC[i % 6] }))}</div>
+        return <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: look.gap }}>{list.map((p, i) => tile(p, i, { ratio: 1.7 }))}</div>
+      case 'mosaic': {
+        const PAT = [2, 3, 3, 2, 3, 1, 2, 3]
+        const HT = [24.3, 23.2, 18.5, 20.4, 20.4, 18.6, 18.6, 18.8]
+        const rowsArr: { items: (typeof list); start: number; h: number }[] = []
+        for (let k = 0, r = 0; k < list.length; r++) {
+          const n = PAT[r % PAT.length]
+          rowsArr.push({ items: list.slice(k, k + n), start: k, h: HT[r % HT.length] })
+          k += n
+        }
+        return (
+          <div className="flex flex-col" style={{ gap: 2, containerType: 'inline-size' }}>
+            {rowsArr.map((row, ri) => (
+              <div key={ri} className="flex" style={{ gap: 2, height: `${row.h}cqw` }}>
+                {row.items.map((p, j) => tile(p, row.start + j, { fill: true, head: false, wrap: 'min-w-0 flex-1', style: { borderRadius: 2 } }))}
+              </div>
+            ))}
+          </div>
+        )
+      }
       case 'polaroid':
         return (
-          <div className="flex flex-wrap justify-center" style={{ gap: Math.max(look.gap, 24) }}>
+          <div className="flex flex-wrap justify-center" style={{ gap: 'clamp(4px, 1cqw, 16px)', containerType: 'inline-size' }}>
             {list.map((p, i) => (
               <Fragment key={p.id}>
                 {momentHead(p, i)}
-                <div data-gk="photos" className="group relative w-[44%] md:w-[30%] lg:w-[22.5%]" style={{ background: '#fff', padding: '10px 10px 34px', boxShadow: '0 6px 18px rgba(0,0,0,.18)', transform: `rotate(${[-2, 1.5, -1, 2][i % 4]}deg)`, borderRadius: Math.min(look.radius, 4) }}>
-                  <div className="relative" style={{ aspectRatio: '4 / 5', background: pal.line }}>
+                <div data-gk="photos" className="group relative w-[46%] md:w-[23.5%]" style={{ background: '#fff', padding: 'clamp(6px, 1.05cqw, 20px) clamp(6px, 1.05cqw, 20px) clamp(24px, 4.8cqw, 80px)', boxShadow: '0 6px 18px rgba(0,0,0,.18)', transform: `rotate(${[-2, 1.5, -1, 2][i % 4]}deg)`, borderRadius: Math.min(look.radius, 4) }}>
+                  <div className="relative" style={{ aspectRatio: '10 / 13', background: pal.line }}>
                     {p.thumb && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.thumb} alt={p.filename ?? ''} loading="lazy" onClick={() => setOpenIndex(i)} className="absolute inset-0 h-full w-full cursor-zoom-in object-cover" />
@@ -487,13 +522,13 @@ export default function GalleryViewPage() {
           </div>
         )
       case 'story':
-        return <div className="mx-auto flex max-w-[920px] flex-col" style={{ gap: look.gap }}>{list.map((p, i) => tile(p, i))}</div>
+        return <div className="mx-auto flex max-w-[920px] flex-col" style={{ gap: look.gap }}>{list.map((p, i) => tile(p, i, { ratio: 2.3 }))}</div>
       case 'stagger':
         return (
           <div className="grid grid-cols-2" style={{ gap: look.gap }}>
             {[0, 1].map((c) => (
               <div key={c} className="flex flex-col" style={{ gap: look.gap }}>
-                {list.map((p, i) => (i % 2 === c ? tile(p, i, { head: false, ratio: (c ? [1, 0.8, 1.5, 1, 1.33] : [1.5, 1, 0.8, 1.33, 1])[Math.floor(i / 2) % 5] }) : null))}
+                {list.map((p, i) => (i % 2 === c ? tile(p, i, { head: false, ratio: (c ? [1.67, 1.62, 1.77, 1.89, 2.33] : [1.82, 2.5, 1.29, 1.91, 1.77])[Math.floor(i / 2) % 5] }) : null))}
               </div>
             ))}
           </div>
@@ -508,7 +543,7 @@ export default function GalleryViewPage() {
               <div key={r} className="flex" style={{ gap: look.gap }}>
                 {row.map((p, j) => {
                   const ar = arOf(p)
-                  return tile(p, r * per + j, { ratio: ar, head: false, style: { flex: `${ar} 1 0%`, minWidth: 0 } })
+                  return tile(p, r * per + j, { ratio: 0.4, head: false, style: { flex: '1 1 0%', minWidth: 0 } })
                 })}
                 {row.length < per && <div style={{ flex: `${(per - row.length) * 0.67} 1 0%` }} />}
               </div>

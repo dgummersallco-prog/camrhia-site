@@ -55,6 +55,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [popPos, setPopPos] = useState<{ top?: number; bottom?: number; maxHeight: number } | null>(null)
+  const boxRef = useRef<HTMLDivElement>(null)
   const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean } | null>(null)
   const [zoom, setZoom] = useState<{ src: string; name: string; top: number } | null>(null)
   const [fontOpen, setFontOpen] = useState(false)
@@ -145,7 +147,19 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       const m = e.data
       if (!m || e.source !== frameRef.current?.contentWindow) return
       if (m.type === 'camrhia-gallery-ready') postDesign(latest.current)
-      if (m.type === 'camrhia-gallery-pick') setPick({ key: String(m.key), name: String(m.name), size: Number(m.size) || 16, color: toHex(String(m.color)), bold: !!m.bold })
+      if (m.type === 'camrhia-gallery-pick') {
+        setPick({ key: String(m.key), name: String(m.name), size: Number(m.size) || 16, color: toHex(String(m.color)), bold: !!m.bold })
+        const H = boxRef.current?.clientHeight ?? 0
+        const t = Number(m.top)
+        const b = Number(m.bottom)
+        if (H && Number.isFinite(t) && Number.isFinite(b)) {
+          const below = H - (b + 10) - 8
+          const above = t - 10 - 8
+          if (below >= above && below >= 160) setPopPos({ top: b + 10, maxHeight: below })
+          else if (above >= 160) setPopPos({ bottom: H - t + 10, maxHeight: above })
+          else setPopPos(null)
+        } else setPopPos(null)
+      }
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
@@ -290,10 +304,10 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           {onSend && <button type="button" onClick={closeAndSend} className="rounded-xl bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90">Done and send</button>}
           <button type="button" onClick={close} className={onSend ? 'rounded-xl border border-line bg-white px-5 py-2 text-sm font-medium text-ink transition hover:opacity-90' : 'rounded-xl bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90'}>Done</button>
         </div>
-        <div className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+        <div ref={boxRef} className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
           <iframe ref={frameRef} src={`/g/${token}?preview=1`} title="Gallery preview" style={{ width: device === 'phone' ? 390 : '100%', height: '100%', border: 0, background: '#fff' }} />
           {pick && (
-            <div className="absolute right-3 top-3 z-20 max-h-[92%] w-64 overflow-y-auto rounded-xl border border-line bg-white p-3 shadow-lg">
+            <div className="absolute right-3 z-20 w-64 overflow-y-auto rounded-xl border border-line bg-white p-3 shadow-lg" style={popPos ?? { top: 12, maxHeight: '92%' }}>
               <div className="mb-2 flex items-center justify-between">
                 <p className="font-fraunces text-base font-semibold text-ink">{pick.name}</p>
                 <button type="button" onClick={() => setPick(null)} className="text-ink-soft hover:text-ink">✕</button>
