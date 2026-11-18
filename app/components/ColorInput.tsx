@@ -41,22 +41,11 @@ export function useRecentColors() {
   return { list, remember }
 }
 
-export default function ColorInput({ label, value, onChange, swatches = DEFAULT_SWATCHES }: { label: string; value: string; onChange: (v: string) => void; swatches?: string[] }) {
-  const [open, setOpen] = useState(false)
-  const boxRef = useRef<HTMLDivElement>(null)
-  const valRef = useRef(value)
-  valRef.current = value
-  const { list, remember } = useRecentColors()
+// A hex box you can type in. Always keeps the # and applies as soon as it is 6 digits.
+function HexBox({ value, onChange, onCommit, className }: { value: string; onChange: (v: string) => void; onCommit: (v: string) => void; className: string }) {
   const shown = (value || '').toUpperCase()
   const [txt, setTxt] = useState(shown || '#')
   useEffect(() => setTxt(shown || '#'), [shown])
-  useEffect(() => {
-    if (!open) return
-    const down = (e: PointerEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener('pointerdown', down)
-    return () => document.removeEventListener('pointerdown', down)
-  }, [open])
-
   const type = (raw: string) => {
     const digits = raw.replace(/[^0-9a-fA-F]/g, '').slice(0, 6).toUpperCase()
     setTxt('#' + digits)
@@ -64,44 +53,58 @@ export default function ColorInput({ label, value, onChange, swatches = DEFAULT_
   }
   const commit = () => {
     const n = normalizeHex(txt)
-    if (n) { setTxt(n); onChange(n); remember(n) } else setTxt(shown || '#')
+    if (n) { setTxt(n); onChange(n); onCommit(n) } else setTxt(shown || '#')
   }
+  return (
+    <input
+      value={txt}
+      maxLength={8}
+      spellCheck={false}
+      onChange={(e) => type(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); (e.target as HTMLInputElement).blur() } }}
+      className={className}
+    />
+  )
+}
+
+export default function ColorInput({ label, value, onChange, swatches = DEFAULT_SWATCHES }: { label: string; value: string; onChange: (v: string) => void; swatches?: string[] }) {
+  const [open, setOpen] = useState(false)
+  const boxRef = useRef<HTMLDivElement>(null)
+  const valRef = useRef(value)
+  valRef.current = value
+  const { list, remember } = useRecentColors()
+  const shown = (value || '').toUpperCase()
+  useEffect(() => {
+    if (!open) return
+    const down = (e: PointerEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('pointerdown', down)
+    return () => document.removeEventListener('pointerdown', down)
+  }, [open])
+
   const pick = (c: string) => { onChange(c); remember(c) }
+  // Recent colors first, then the usual swatches, no repeats.
+  const circles = Array.from(new Set([...list, ...swatches.map((s) => s.toUpperCase())]))
 
   return (
     <div ref={boxRef}>
       <span className="text-sm font-medium text-ink">{label}</span>
       <div className="mt-1 flex w-full items-center gap-2 rounded-xl border border-line bg-card px-3 py-2">
         <button type="button" onClick={() => setOpen(!open)} aria-label="Open color picker" className="h-5 w-5 shrink-0 rounded border border-line" style={{ background: value || 'transparent' }} />
-        <input
-          value={txt}
-          maxLength={8}
-          spellCheck={false}
-          onChange={(e) => type(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); (e.target as HTMLInputElement).blur() } }}
-          className="min-w-0 flex-1 bg-transparent font-mono text-xs uppercase text-ink outline-none"
-        />
+        <HexBox value={value} onChange={onChange} onCommit={remember} className="min-w-0 flex-1 bg-transparent font-mono text-xs uppercase text-ink outline-none" />
         <button type="button" onClick={() => setOpen(!open)} aria-label="Toggle color picker" className="px-1 text-ink-soft">{open ? '▴' : '▾'}</button>
       </div>
-      {list.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="mr-1 text-[11px] uppercase tracking-wider text-ink-soft">Recent</span>
-          {list.map((c) => (
-            <button key={c} type="button" title={c} onClick={() => pick(c)} className="h-6 w-6 rounded-full border border-line" style={{ background: c, boxShadow: shown === c ? '0 0 0 2px #fff, 0 0 0 4px #2A1F24' : undefined }} />
-          ))}
-        </div>
-      )}
       {open && (
         <div className="mt-2 rounded-xl border border-line bg-card p-3">
           <div className="mb-3 flex flex-wrap gap-2">
-            {swatches.map((h) => (
-              <button key={h} type="button" onClick={() => pick(h)} className="h-7 w-7 rounded-full border border-line" style={{ background: h, boxShadow: shown === h.toUpperCase() ? '0 0 0 2px #fff, 0 0 0 4px #2A1F24' : undefined }} />
+            {circles.map((h) => (
+              <button key={h} type="button" title={h} onClick={() => pick(h)} className="h-7 w-7 rounded-full border border-line" style={{ background: h, boxShadow: shown === h ? '0 0 0 2px #fff, 0 0 0 4px #2A1F24' : undefined }} />
             ))}
           </div>
           <div onPointerUp={() => remember(valRef.current)}>
             <HexColorPicker color={value || '#FFFFFF'} onChange={onChange} style={{ width: '100%', height: 160 }} />
           </div>
+          <HexBox value={value} onChange={onChange} onCommit={remember} className="mt-3 w-full rounded-lg border border-line bg-paper px-3 py-2 font-mono text-sm uppercase text-ink outline-none focus:border-twilight" />
           <button type="button" onClick={() => { remember(valRef.current); setOpen(false) }} className="mt-2 text-xs font-medium text-twilight">Done</button>
         </div>
       )}

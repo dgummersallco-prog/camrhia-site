@@ -325,13 +325,6 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
               <Slideshow photos={photos} />
             </div>
           ) : null}
-          <div className="mt-8" style={{ display: 'flex', justifyContent: 'center', marginTop: 32 + t.btnTop }}>
-            {preview ? (
-              <span {...ed('button')} className="inline-block px-8 py-4 text-base font-medium" style={btnStyle}>{d.label}</span>
-            ) : (
-              <a href="#claim" className="inline-block px-8 py-4 text-base font-medium transition hover:opacity-90" style={btnStyle}>{d.label}</a>
-            )}
-          </div>
         </div>
       </div>
 

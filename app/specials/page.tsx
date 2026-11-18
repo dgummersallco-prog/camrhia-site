@@ -580,7 +580,7 @@ export default function SpecialsPage() {
     { setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.filter((_, j) => j !== i) } } : f)); setSelLine(-1) }
   const [selLine, setSelLine] = useState(-1)
   const openEditor = (key: string) => {
-    const map: Record<string, string> = { brand: 'Studio name', title: 'Title', sub: 'Paragraph', background: 'Background', photos: 'Photos', button: 'Button', summary: 'Summary', claim: 'Sign-up form' }
+    const map: Record<string, string> = { brand: 'Studio name', title: 'Title', sub: 'Paragraph', background: 'Background', button: 'Sign-up form', claim: 'Sign-up form' }
     let name = map[key]
     if (key.startsWith('free-')) { setSelFree(Number(key.slice(5))); name = 'Elements' }
     else if (key.startsWith('line-')) { setSelLine(Number(key.slice(5))); name = 'Paragraph' }
@@ -1106,74 +1106,6 @@ export default function SpecialsPage() {
                       )}
                     </MiniCard>
 
-                    <MiniCard title="Photos" summary={form.photos.length ? `${form.photos.length} added` : 'None'}>
-                      <p className="text-sm text-ink-soft">Add up to 8. One photo stays still. Two or more fade into each other.</p>
-                      <div>
-                        <Label>Space above (minus moves it up)</Label>
-                        <SizeField value={form.theme.photosTop} min={-300} max={400} onChange={(n) => setTheme({ photosTop: n })} />
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        {form.photos.map((u) => (
-                          <div key={u} className="relative">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={u} alt="" className="h-24 w-20 rounded-xl object-cover" />
-                            <button type="button" onClick={() => removePhoto(u)} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-white">×</button>
-                          </div>
-                        ))}
-                      </div>
-                      {form.photos.length < 8 && (
-                        <button type="button" disabled={uploading} onClick={() => photoInput.current?.click()} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight disabled:opacity-50">
-                          {uploading ? 'Uploading…' : '+ Add photos'}
-                        </button>
-                      )}
-                      <input ref={photoInput} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) uploadPhotos(e.target.files); e.target.value = '' }} />
-                    </MiniCard>
-
-                    <MiniCard title="Button" summary={form.cta_label}>
-                      <label className="block">
-                        <Label>Words</Label>
-                        <input value={form.cta_label} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} className={inputCls} />
-                      </label>
-                      <div className="max-w-xs">
-                        <ColorField label="Button color" value={form.theme.accent} onChange={(v) => setTheme({ accent: v })} />
-                      </div>
-                      <div className="max-w-xs">
-                        <ColorField label="Button text color" value={form.theme.btnText} onChange={(v) => setTheme({ btnText: v })} />
-                      </div>
-                      <div>
-                        <Label>Text size</Label>
-                        <SizeField value={form.theme.btnSizePx} min={10} max={40} onChange={(n) => setTheme({ btnSizePx: n })} />
-                      </div>
-                      <div>
-                        <Label>Space above (minus moves it up)</Label>
-                        <SizeField value={form.theme.btnTop} min={-300} max={400} onChange={(n) => setTheme({ btnTop: n })} />
-                      </div>
-                      <div>
-                        <Label>Shape</Label>
-                        <Chips value={form.theme.shape} options={[{ id: 'square', label: 'Square' }, { id: 'rounded', label: 'Rounded' }, { id: 'pill', label: 'Pill' }]} onChange={(v) => setTheme({ shape: v })} />
-                      </div>
-                    </MiniCard>
-
-                    <MiniCard title="Summary" summary={form.text.details_body || form.text.terms ? 'Added' : 'None'}>
-                      <label className="block">
-                        <Label>First title</Label>
-                        <input placeholder="What is included" value={form.text.details_title} onChange={(e) => setText('details_title', e.target.value)} className={inputCls} />
-                      </label>
-                      <label className="block">
-                        <Label>First paragraph</Label>
-                        <textarea rows={4} value={form.text.details_body} onChange={(e) => setText('details_body', e.target.value)} className={inputCls} />
-                      </label>
-                      <div className="border-t border-line" />
-                      <label className="block">
-                        <Label>Second title</Label>
-                        <input placeholder="Good to know" value={form.text.terms_title} onChange={(e) => setText('terms_title', e.target.value)} className={inputCls} />
-                      </label>
-                      <label className="block">
-                        <Label>Second paragraph</Label>
-                        <textarea rows={4} value={form.text.terms} onChange={(e) => setText('terms', e.target.value)} className={inputCls} />
-                      </label>
-                    </MiniCard>
-
                     <MiniCard title="Sign-up form" summary={form.text.form_title || 'Sign up'}>
                       <label className="block">
                         <Label>Title words</Label>
@@ -1188,6 +1120,12 @@ export default function SpecialsPage() {
                       <div>
                         <Label>Corner roundness</Label>
                         <SizeField value={form.theme.cardRadius} min={0} max={60} onChange={(n) => setTheme({ cardRadius: n })} />
+                      </div>
+                      <div className="max-w-xs">
+                        <ColorField label="Button color" value={form.theme.accent} onChange={(v) => setTheme({ accent: v })} />
+                      </div>
+                      <div className="max-w-xs">
+                        <ColorField label="Button text color" value={form.theme.btnText} onChange={(v) => setTheme({ btnText: v })} />
                       </div>
                     </MiniCard>
                   </div>
