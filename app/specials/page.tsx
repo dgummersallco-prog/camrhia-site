@@ -283,6 +283,16 @@ function MiniCard({ title, children }: { title: string; summary?: string; childr
   )
 }
 
+function NudgeBtns({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
+  const cls = 'flex h-8 w-8 items-center justify-center rounded-full border border-line bg-card text-base leading-none text-[#8C6B3F] transition hover:border-[#8C6B3F] disabled:opacity-30'
+  return (
+    <div className="flex items-center gap-1">
+      <button type="button" aria-label="Smaller" disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))} className={cls}>-</button>
+      <button type="button" aria-label="Bigger" disabled={value >= max} onClick={() => onChange(Math.min(max, value + 1))} className={cls}>+</button>
+    </div>
+  )
+}
+
 function SizeField({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
   const [txt, setTxt] = useState(String(value))
   useEffect(() => setTxt(String(value)), [value])
@@ -295,10 +305,11 @@ function SizeField({ value, min, max, onChange }: { value: number; min: number; 
         max={max}
         onChange={(e) => { setTxt(e.target.value); const n = Number(e.target.value); if (Number.isFinite(n) && n >= min && n <= max) onChange(n) }}
         onBlur={() => setTxt(String(value))}
-        className="w-20 rounded-xl border border-line bg-card px-3 py-2 text-ink outline-none focus:border-twilight"
+        className="w-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none rounded-xl border border-line bg-card px-3 py-2 text-center text-ink outline-none focus:border-twilight"
       />
+      <NudgeBtns value={value} min={min} max={max} onChange={onChange} />
       <span className="text-sm text-ink-soft">px</span>
-      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-twilight" />
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-[#8C6B3F]" />
     </div>
   )
 }
@@ -316,8 +327,9 @@ function SizeBox({ value, min, max, onChange }: { value: number; min: number; ma
         max={max}
         onChange={(e) => { setTxt(e.target.value); const n = Number(e.target.value); if (Number.isFinite(n) && n >= min && n <= max) onChange(n) }}
         onBlur={() => setTxt(String(value))}
-        className="w-20 rounded-xl border border-line bg-card px-3 py-2 text-ink outline-none focus:border-twilight"
+        className="w-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none rounded-xl border border-line bg-card px-3 py-2 text-center text-ink outline-none focus:border-twilight"
       />
+      <NudgeBtns value={value} min={min} max={max} onChange={onChange} />
       <span className="text-sm text-ink-soft">px</span>
     </div>
   )
@@ -327,8 +339,17 @@ function SizeBox({ value, min, max, onChange }: { value: number; min: number; ma
 function PadSlider({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
   return (
     <div className="mt-1 flex items-center gap-3">
-      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-twilight" />
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-[#8C6B3F]" />
       <span className="w-16 text-right text-sm text-ink-soft">{value} px</span>
+    </div>
+  )
+}
+
+function PctSlider({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
+  return (
+    <div className="mt-1 flex items-center gap-3">
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-[#8C6B3F]" />
+      <span className="w-16 text-right text-sm text-ink-soft">{value}%</span>
     </div>
   )
 }
@@ -584,50 +605,22 @@ function OgDesigner({ text, theme, setText, busy, pickPic, camri, chooseFinished
                 <button type="button" disabled={off} onClick={() => { replaceRef.current = i; fileRef.current?.click() }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{b.src ? 'Change picture' : 'Choose a picture'}</button>
               )}
               {b.kind !== 'image' && (
-                <div>
-                  <Label>Size</Label>
-                  <SizeField value={b.size} min={4} max={200} onChange={(n) => setFreeAt(i, { size: n })} />
-                </div>
-              )}
-              {b.kind !== 'image' && (
-                <div className="max-w-xs">
-                  <ColorField label="Color" value={b.color} onChange={(v) => setFreeAt(i, { color: v })} />
+                <div className="flex items-end gap-4">
+                  <div className="min-w-0 max-w-xs flex-1">
+                    <ColorField label="Color" value={b.color} onChange={(v) => setFreeAt(i, { color: v })} />
+                  </div>
+                  <div>
+                    <Label>Size</Label>
+                    <SizeBox value={b.size} min={4} max={200} onChange={(n) => setFreeAt(i, { size: n })} />
+                  </div>
                 </div>
               )}
               {b.kind === 'text' && (
-                <>
-                  <div>
-                    <Label>Align</Label>
-                    <Chips value={b.align} options={LINE_ALIGNS} onChange={(v) => setFreeAt(i, { align: v })} />
-                  </div>
-                  <div>
-                    <Label>Letter spacing</Label>
-                    <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setFreeAt(i, { spacing: Number(v) })} />
-                  </div>
-                  <label className="flex items-center gap-2 text-sm text-ink">
-                    <input type="checkbox" checked={b.upper} onChange={(e) => setFreeAt(i, { upper: e.target.checked })} className="accent-twilight" />
-                    ALL CAPITALS
-                  </label>
-                </>
-              )}
-              {b.kind !== 'icon' && (
                 <div>
-                  <Label>Width</Label>
-                  <SizeField value={Math.round(b.w)} min={5} max={100} onChange={(n) => setFreeAt(i, { w: n })} />
+                  <Label>Letter spacing</Label>
+                  <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setFreeAt(i, { spacing: Number(v) })} />
                 </div>
               )}
-              <div>
-                <Label>Left to right position</Label>
-                <SizeField value={Math.round(b.x)} min={-20} max={100} onChange={(n) => setFreeAt(i, { x: n })} />
-              </div>
-              <div>
-                <Label>Up and down position</Label>
-                <SizeField value={Math.round(b.y)} min={-20} max={80} onChange={(n) => setFreeAt(i, { y: n })} />
-              </div>
-              <div>
-                <Label>Tilt</Label>
-                <SizeField value={Math.round(b.rot)} min={-90} max={90} onChange={(n) => setFreeAt(i, { rot: n })} />
-              </div>
             </div>
           )
         })()}
@@ -1058,7 +1051,7 @@ export default function SpecialsPage() {
       const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
       if (up.error) throw up.error
       const old = form.theme.bgImage
-      setTheme({ bgImage: STORAGE_BASE + path, titleColor: '#FFFFFF', subColor: '#FFFFFF' })
+      setTheme({ bgImage: STORAGE_BASE + path, overlay: 0, titleColor: '#FFFFFF', subColor: '#FFFFFF' })
       if (ownUpload(old)) await sb.storage.from('portfolio').remove([old.slice(STORAGE_BASE.length)])
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Could not upload that photo.')
@@ -1206,28 +1199,36 @@ export default function SpecialsPage() {
                         </button>
                         <input ref={bgInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBackground(f); e.target.value = '' }} />
                       </div>
-                      {form.theme.bgImage && (
-                        <div>
-                          <Label>Darken the photo</Label>
-                          <Chips value={String(form.theme.overlay)} options={[{ id: '0', label: 'None' }, { id: '25', label: 'Light' }, { id: '45', label: 'Medium' }, { id: '65', label: 'Dark' }]} onChange={(v) => setTheme({ overlay: Number(v) })} />
-                        </div>
-                      )}
-                      <div className="max-w-xs">
-                        <ColorField label="Background color" value={form.theme.bgColor} onChange={(v) => setTheme({ bgColor: v })} />
-                      </div>
-                      <div>
-                        <Label>Fade to a second color</Label>
-                        <Chips value={form.theme.bgColor2 ? 'on' : 'off'} options={[{ id: 'off', label: 'Off' }, { id: 'on', label: 'On' }]} onChange={(v) => setTheme({ bgColor2: v === 'on' ? form.theme.bgColor2 || form.theme.accent : '' })} />
-                      </div>
-                      {form.theme.bgColor2 && (
+                      {form.theme.bgImage ? (
                         <>
                           <div className="max-w-xs">
-                            <ColorField label="Second color" value={form.theme.bgColor2} onChange={(v) => setTheme({ bgColor2: v })} />
+                            <ColorField label="Tint color" value={form.theme.overlayColor} onChange={(v) => setTheme({ overlayColor: v })} />
                           </div>
                           <div>
-                            <Label>Fade direction</Label>
-                            <Chips value={form.theme.bgDir} options={[{ id: 'down', label: 'Top to bottom' }, { id: 'up', label: 'Bottom to top' }, { id: 'diag', label: 'Diagonal' }, { id: 'radial', label: 'Glow from the top' }]} onChange={(v) => setTheme({ bgDir: v })} />
+                            <Label>Tint amount</Label>
+                            <PctSlider value={form.theme.overlay} min={0} max={80} onChange={(n) => setTheme({ overlay: n })} />
                           </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="max-w-xs">
+                            <ColorField label="Background color" value={form.theme.bgColor} onChange={(v) => setTheme({ bgColor: v })} />
+                          </div>
+                          <div>
+                            <Label>Gradient</Label>
+                            <Chips value={form.theme.bgColor2 ? 'on' : 'off'} options={[{ id: 'off', label: 'Off' }, { id: 'on', label: 'On' }]} onChange={(v) => setTheme({ bgColor2: v === 'on' ? form.theme.bgColor2 || form.theme.accent : '' })} />
+                          </div>
+                          {form.theme.bgColor2 && (
+                            <>
+                              <div className="max-w-xs">
+                                <ColorField label="Second color" value={form.theme.bgColor2} onChange={(v) => setTheme({ bgColor2: v })} />
+                              </div>
+                              <div>
+                                <Label>Gradient direction</Label>
+                                <Chips value={form.theme.bgDir} options={[{ id: 'down', label: 'Top to bottom' }, { id: 'up', label: 'Bottom to top' }, { id: 'diag', label: 'Diagonal' }, { id: 'radial', label: 'Glow from the top' }]} onChange={(v) => setTheme({ bgDir: v })} />
+                              </div>
+                            </>
+                          )}
                         </>
                       )}
                     </MiniCard>
@@ -1275,11 +1276,11 @@ export default function SpecialsPage() {
                     </MiniCard>
 
                     <MiniCard title="Paragraph" summary={form.text.hero_sub}>
-                      <p className="text-sm text-ink-soft">Type right on the preview, or here. Pick a line to change its look, and add as many lines as you want.</p>
+                      <p className="text-sm text-ink-soft">Type right on the preview, or here. Pick a paragraph to change its look, and add as many as you want.</p>
                       <div className="flex flex-wrap items-center gap-2">
-                        <Chips value={String(curLine)} options={[{ id: '-1', label: 'Main' }, ...form.theme.blocks.map((_, i) => ({ id: String(i), label: `Line ${i + 1}` }))]} onChange={(v) => setSelLine(Number(v))} />
+                        <Chips value={String(curLine)} options={[{ id: '-1', label: 'Paragraph 1' }, ...form.theme.blocks.map((_, i) => ({ id: String(i), label: `Paragraph ${i + 2}` }))]} onChange={(v) => setSelLine(Number(v))} />
                         {form.theme.blocks.length < 40 && (
-                          <button type="button" onClick={() => { addBlock(); setSelLine(form.theme.blocks.length) }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add a line</button>
+                          <button type="button" onClick={() => { addBlock(); setSelLine(form.theme.blocks.length) }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add a paragraph</button>
                         )}
                       </div>
                       {curLine < 0 ? (

@@ -95,6 +95,7 @@ export function bgCss(t: { bgColor: string; bgColor2: string; bgDir: string }): 
 export type SpecialTheme = {
   bgImage: string
   overlay: number
+  overlayColor: string
   bgColor: string
   bgColor2: string
   bgDir: 'down' | 'up' | 'diag' | 'radial'
@@ -132,7 +133,8 @@ export type SpecialTheme = {
 
 export const DEFAULT_THEME: SpecialTheme = {
   bgImage: '',
-  overlay: 45,
+  overlay: 0,
+  overlayColor: '#000000',
   bgColor: '#FAF7F2',
   bgColor2: '',
   bgDir: 'down',
@@ -210,6 +212,7 @@ export function readTheme(c: Record<string, unknown>): SpecialTheme {
   return {
     bgImage: typeof c.bg_image === 'string' ? c.bg_image : '',
     overlay: num(c.overlay, 0, 80, D.overlay),
+    overlayColor: hexOr(c.overlay_color, D.overlayColor),
     bgColor: hexOr(c.bg_color, D.bgColor),
     bgColor2: hexOr(c.bg_color2, ''),
     bgDir: (['down', 'up', 'diag', 'radial'] as const).find((d) => d === c.bg_dir) ?? D.bgDir,
@@ -291,6 +294,7 @@ export function themeToContent(t: SpecialTheme): Record<string, unknown> {
   return {
     bg_image: t.bgImage,
     overlay: t.overlay,
+    overlay_color: t.overlayColor,
     bg_color: t.bgColor,
     bg_color2: t.bgColor2,
     bg_dir: t.bgDir,
@@ -371,7 +375,7 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
       {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
 
       {t.bgImage ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: `url(${t.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }} /> : null}
-      {t.bgImage ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: `rgba(0,0,0,${t.overlay / 100})` }} /> : null}
+      {t.bgImage ? <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: `color-mix(in srgb, ${t.overlayColor} ${t.overlay}%, transparent)` }} /> : null}
 
       <Fit>
       <div className="relative">
