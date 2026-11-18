@@ -234,23 +234,24 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-10 sm:mt-14 rounded-[2rem] bg-brass/10 p-4 sm:p-6">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/specials.jpg" alt="Designing your own special in Camrhia" loading="lazy" className={`${SHOT} mx-auto max-w-4xl`} />
-            </div>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                "Its own sign-up page and link",
-                "Quick Specials made in minutes",
-                "Share anywhere",
-                "Your website stays untouched",
-              ].map((p) => (
-                <div key={p} className="rounded-3xl border border-line bg-card p-6">
-                  <span className="block h-1 w-8 rounded-full bg-brass" aria-hidden />
-                  <p className="mt-4 font-fraunces text-2xl font-semibold text-ink leading-snug">{p}</p>
-                </div>
-              ))}
+            <div className="mt-10 grid items-center gap-8 md:grid-cols-2 md:gap-14">
+              <div className="rounded-[2rem] bg-brass/10 p-4 sm:p-6">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/specials.jpg" alt="Designing your own special in Camrhia" loading="lazy" className={`${SHOT} mx-auto max-w-sm`} />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[
+                  "Its own sign-up page and link",
+                  "Quick Specials made in minutes",
+                  "Share anywhere",
+                  "Your website stays untouched",
+                ].map((p) => (
+                  <div key={p} className="rounded-3xl border border-line bg-card p-6">
+                    <span className="block h-1 w-8 rounded-full bg-brass" aria-hidden />
+                    <p className="mt-4 font-fraunces text-2xl font-semibold text-ink leading-snug">{p}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>

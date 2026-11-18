@@ -124,7 +124,7 @@ export default function CamiPanel({
   }
 
   return (
-    <div className="mb-4 rounded-2xl border border-white/10 bg-black/30 p-3">
+    <div className="mb-4 rounded-2xl border border-white/10 bg-[#7a5c45]/45 p-3">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/camri/14_peeking_sliders.png" alt="Camri" className="mx-auto h-28 w-auto object-contain" />
       <p className="mt-1 text-center text-sm font-medium text-white/85">Ask Camri</p>

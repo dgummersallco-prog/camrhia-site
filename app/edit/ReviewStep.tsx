@@ -1146,7 +1146,7 @@ export default function ReviewStep({
                 <button className={tab(false)} onClick={() => { editManual({ raw: 1 }); editCrop(null) }}>Reset this photo</button>
                 {manual.raw ? <button className="ml-3 text-xs text-white/55 underline" onClick={() => editManual({})}>Back to the shoot&apos;s look</button> : null}
               </div>
-              <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+              <div className="rounded-xl border border-white/10 bg-[#7a5c45]/45 p-3">
                 <p className="text-xs uppercase tracking-[0.18em] text-white/50">Your style</p>
                 <p className="mt-2 text-xs text-white/55">Every fix you make is saved, so Camrhia can learn how you edit.</p>
                 <p className="mt-2 text-sm text-white/80">{reviewed} checked · {style.fixed} changed</p>
