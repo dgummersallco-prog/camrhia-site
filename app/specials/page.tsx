@@ -11,7 +11,7 @@ import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import DesignGroup from '@/app/components/DesignGroup'
 import { useEntitlements } from '@/lib/useEntitlements'
-import { type FreeBox } from '@/app/go/[slug]/FreeCanvas'
+import FreeCanvas, { type FreeBox } from '@/app/go/[slug]/FreeCanvas'
 import Editable from '@/app/components/Editable'
 import SpecialView, { DECOR_EMOJI, DEFAULT_THEME, readTheme, themeToContent, type Decor, type FormStyle, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
 
@@ -33,7 +33,7 @@ type MiniOpt = { id: string; title: string; description: string | null; location
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image', 'og_site', 'og_art', 'og_name_size', 'og_title_size', 'og_sub_size', 'og_wide']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image', 'og_site', 'og_art', 'og_name_size', 'og_title_size', 'og_sub_size', 'og_wide', 'og_design']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -359,6 +359,302 @@ function FontPicker({ label, value, onChange }: { label: string; value: string; 
   )
 }
 
+
+// ---- Link picture designer: a small design area, 1200 x 630, with its own background and elements ----
+type OgDesign = { bg: string; bgImage: string; free: FreeBox[] }
+const OG_W = 1200
+const OG_H = 630
+
+function ogSeed(text: Record<string, string>, th: SpecialTheme): OgDesign {
+  const mk = (t: string, font: string, color: string, size: number, y: number, upper: boolean): FreeBox => ({
+    kind: 'text', icon: 'heart', src: '', text: t, font, color, size, align: 'center', spacing: upper ? 10 : 0, upper, x: 10, y, w: 80, rot: 0,
+  })
+  const free: FreeBox[] = []
+  if (text.brand_name) free.push(mk(text.brand_name, th.nameFont || th.subFont, th.nameColor || th.textColor, 9, 12, true))
+  if (text.hero_headline) free.push(mk(text.hero_headline, th.headFont, th.titleColor, 31, 20, false))
+  if (text.hero_sub) free.push(mk(text.hero_sub.split('\n')[0], th.subFont, th.subColor, 11, 40, false))
+  return { bg: th.bgColor, bgImage: th.bgImage || '', free }
+}
+
+function ogParse(raw: string | undefined): OgDesign | null {
+  if (!raw) return null
+  try {
+    const j = JSON.parse(raw)
+    if (j && typeof j.bg === 'string' && Array.isArray(j.free)) return { bg: j.bg, bgImage: typeof j.bgImage === 'string' ? j.bgImage : '', free: j.free as FreeBox[] }
+  } catch { /* fall through */ }
+  return null
+}
+
+async function ogRender(d: OgDesign): Promise<Blob | null> {
+  const cv = document.createElement('canvas')
+  cv.width = OG_W; cv.height = OG_H
+  const ctx = cv.getContext('2d') as CanvasRenderingContext2D & { letterSpacing?: string }
+  if (!ctx) return null
+  const load = (src: string) => new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = src })
+  ctx.fillStyle = d.bg; ctx.fillRect(0, 0, OG_W, OG_H)
+  if (d.bgImage) {
+    try {
+      const img = await load(d.bgImage)
+      const r = Math.max(OG_W / img.width, OG_H / img.height)
+      ctx.drawImage(img, (OG_W - img.width * r) / 2, (OG_H - img.height * r) / 2, img.width * r, img.height * r)
+    } catch { /* skip a picture that will not load */ }
+  }
+  for (const b of d.free) {
+    const left = (b.x / 100) * OG_W
+    const top = (b.y / 100) * OG_W
+    ctx.save()
+    if (b.kind === 'text') {
+      if (!b.text.trim()) { ctx.restore(); continue }
+      const fs = (b.size / 3.9 / 100) * OG_W
+      const fam = FONT_OPTIONS[b.font]?.family ?? 'sans-serif'
+      try { await document.fonts.load(`${fs}px ${fam}`) } catch { /* ignore */ }
+      ctx.font = `${fs}px ${fam}`
+      if ('letterSpacing' in ctx) ctx.letterSpacing = b.spacing ? (b.spacing / 100) * fs + 'px' : '0px'
+      const w = (b.w / 100) * OG_W
+      const src = b.upper ? b.text.toUpperCase() : b.text
+      const lines: string[] = []
+      for (const para of src.split('\n')) {
+        let line = ''
+        for (const word of para.split(/\s+/).filter(Boolean)) {
+          const test = line ? line + ' ' + word : word
+          if (ctx.measureText(test).width > w && line) { lines.push(line); line = word } else line = test
+        }
+        lines.push(line)
+      }
+      const lh = fs * 1.2
+      const h = lines.length * lh
+      ctx.translate(left + w / 2, top + h / 2)
+      ctx.rotate((b.rot * Math.PI) / 180)
+      ctx.fillStyle = b.color
+      ctx.textBaseline = 'middle'
+      ctx.textAlign = b.align
+      const ax = b.align === 'left' ? -w / 2 : b.align === 'right' ? w / 2 : 0
+      lines.forEach((l, i) => ctx.fillText(l, ax, -h / 2 + (i + 0.5) * lh))
+    } else if (b.kind === 'icon') {
+      const px = (b.size / 3.9 / 100) * OG_W
+      ctx.translate(left + px / 2, top + px / 2)
+      ctx.rotate((b.rot * Math.PI) / 180)
+      ctx.translate(-px / 2, -px / 2)
+      ctx.scale(px / 24, px / 24)
+      ctx.strokeStyle = b.color; ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+      ctx.stroke(new Path2D((ICONS[b.icon] ?? ICONS.heart).d))
+    } else if (b.src) {
+      try {
+        const img = await load(b.src)
+        const w = (b.w / 100) * OG_W
+        const h = (w * img.height) / img.width
+        ctx.translate(left + w / 2, top + h / 2)
+        ctx.rotate((b.rot * Math.PI) / 180)
+        ctx.drawImage(img, -w / 2, -h / 2, w, h)
+      } catch { /* skip */ }
+    }
+    ctx.restore()
+  }
+  return await new Promise<Blob | null>((res) => cv.toBlob(res, 'image/jpeg', 0.92))
+}
+
+function OgDesigner({ text, theme, setText, busy, pickPic, camri, saveBlob, chooseFinished, setMessage }: {
+  text: Record<string, string>
+  theme: SpecialTheme
+  setText: (k: string, v: string) => void
+  busy: boolean
+  pickPic: (file: File) => Promise<string>
+  camri: (prompt: string) => Promise<string>
+  saveBlob: (b: Blob) => Promise<void>
+  chooseFinished: () => void
+  setMessage: (m: string) => void
+}) {
+  const parsed = ogParse(text.og_design)
+  const d = parsed ?? ogSeed(text, theme)
+  const [sel, setSel] = useState<number | null>(0)
+  const [prompt, setPrompt] = useState('')
+  const [working, setWorking] = useState(false)
+  const [crop, setCrop] = useState(true)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const replaceRef = useRef<number | 'bg' | null>(null)
+  const put = (n: OgDesign) => setText('og_design', JSON.stringify(n))
+  const setFreeAt = (i: number, patch: Partial<FreeBox>) => put({ ...d, free: d.free.map((b, j) => (j === i ? { ...b, ...patch } : b)) })
+  const add = (kind: FreeBox['kind'], src = '') => {
+    if (d.free.length >= 40) return
+    const box: FreeBox = { kind, icon: 'heart', src, text: '', font: theme.subFont, color: theme.titleColor, size: kind === 'icon' ? 24 : kind === 'text' ? 12 : 20, align: 'center', spacing: 0, upper: false, x: kind === 'text' ? 10 : kind === 'icon' ? 46 : 30, y: 20, w: kind === 'image' ? 40 : 80, rot: 0 }
+    put({ ...d, free: [...d.free, box] })
+    setSel(d.free.length)
+  }
+  const curEl = sel !== null && sel < d.free.length ? sel : d.free.length ? 0 : -1
+  const run = async (fn: () => Promise<void>) => {
+    setWorking(true)
+    try { await fn() } catch (e) { setMessage(e instanceof Error ? e.message : 'That did not work.') } finally { setWorking(false) }
+  }
+  const onFile = (f: File) => run(async () => {
+    const url = await pickPic(f)
+    const t = replaceRef.current
+    replaceRef.current = null
+    if (t === 'bg') put({ ...d, bgImage: url })
+    else if (t !== null) setFreeAt(t, { src: url })
+    else add('image', url)
+  })
+  const makeWithCamri = () => run(async () => { const url = await camri(prompt.trim()); put({ ...d, bgImage: url }) })
+  const save = () => run(async () => {
+    if (!parsed) put(d)
+    const blob = await ogRender(d)
+    if (!blob) throw new Error('Could not make the picture.')
+    await saveBlob(blob)
+  })
+  const off = busy || working
+
+  return (
+    <div className="space-y-4">
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
+      <div>
+        <div className="relative mx-auto w-full max-w-[560px] overflow-hidden rounded-xl border border-line" style={{ aspectRatio: OG_W + ' / ' + OG_H, background: d.bg }}>
+          {d.bgImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={d.bgImage} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+          ) : null}
+          <FreeCanvas
+            boxes={d.free}
+            edit={{
+              selected: curEl >= 0 ? curEl : null,
+              onSelect: setSel,
+              onMove: (i, x, y) => setFreeAt(i, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }),
+              onWidth: (i, w) => setFreeAt(i, { w: Math.round(w * 10) / 10 }),
+              onText: (key, v) => { const i = Number(key.replace('free-', '')); if (Number.isFinite(i)) setFreeAt(i, { text: v }) },
+            }}
+          />
+          {crop && (
+            <>
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-30 bg-black/40" style={{ width: '23.75%' }} />
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-30 bg-black/40" style={{ width: '23.75%' }} />
+            </>
+          )}
+        </div>
+        <label className="mt-2 flex items-center gap-2 text-xs text-ink-soft">
+          <input type="checkbox" checked={crop} onChange={(e) => setCrop(e.target.checked)} className="accent-twilight" />
+          Dim the sides Instagram cuts off. Keep your words in the bright middle.
+        </label>
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-line bg-paper p-4">
+        <p className="text-sm font-medium text-ink">Background</p>
+        <div className="max-w-xs">
+          <ColorField label="Color" value={d.bg} onChange={(v) => put({ ...d, bg: v })} />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" disabled={off} onClick={() => { replaceRef.current = 'bg'; fileRef.current?.click() }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{d.bgImage ? 'Change background picture' : 'Add a background picture'}</button>
+          {d.bgImage && <button type="button" onClick={() => put({ ...d, bgImage: '' })} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink-soft transition hover:border-twilight">Remove picture</button>}
+        </div>
+        <div>
+          <Label>Or have Camri paint one</Label>
+          <input placeholder="Describe it, like soft candlelit pine branches" value={prompt} onChange={(e) => setPrompt(e.target.value)} className={inputCls} />
+          <button type="button" disabled={off || !prompt.trim()} onClick={makeWithCamri} className="mt-2 rounded-full bg-twilight px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{working ? 'Working... this can take a minute' : 'Make with Camri'}</button>
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-line bg-paper p-4">
+        <p className="text-sm font-medium text-ink">Words, icons and pictures</p>
+        <p className="text-xs text-ink-soft">Drag them right on the picture above. Select one to get its move handle and width dot, or type its words straight onto the picture.</p>
+        {d.free.length > 0 && (
+          <Chips value={String(curEl)} options={d.free.map((b, i) => ({ id: String(i), label: `${i + 1} ${b.kind === 'text' ? 'Text' : b.kind === 'icon' ? 'Icon' : 'Picture'}` }))} onChange={(v) => setSel(Number(v))} />
+        )}
+        {curEl >= 0 && (() => {
+          const b = d.free[curEl]
+          const i = curEl
+          return (
+            <div key={i} className="space-y-4 rounded-xl border border-twilight bg-card p-4">
+              <div className="flex items-center justify-end gap-3">
+                <button type="button" onClick={() => { put({ ...d, free: [...d.free, { ...b, y: b.y + 4 }] }); setSel(d.free.length) }} className="text-xs text-ink-soft underline hover:text-ink">Copy</button>
+                <button type="button" onClick={() => { put({ ...d, free: d.free.filter((_, j) => j !== i) }); setSel(null) }} className="text-xs text-ink-soft underline hover:text-red-700">Remove</button>
+              </div>
+              {b.kind === 'text' && (
+                <>
+                  <label className="block">
+                    <Label>Words</Label>
+                    <textarea rows={2} value={b.text} onChange={(e) => setFreeAt(i, { text: e.target.value })} className={inputCls} />
+                  </label>
+                  <FontPicker label="Font" value={b.font} onChange={(k) => setFreeAt(i, { font: k })} />
+                </>
+              )}
+              {b.kind === 'icon' && (
+                <div>
+                  <Label>Icon</Label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {Object.entries(ICONS).map(([k, ic]) => (
+                      <button key={k} type="button" title={ic.label} onClick={() => setFreeAt(i, { icon: k })} className={`rounded-lg border p-2 ${b.icon === k ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line bg-card text-ink-soft hover:border-twilight'}`}>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d={ic.d} /></svg>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {b.kind === 'image' && (
+                <button type="button" disabled={off} onClick={() => { replaceRef.current = i; fileRef.current?.click() }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{b.src ? 'Change picture' : 'Choose a picture'}</button>
+              )}
+              {b.kind !== 'image' && (
+                <div>
+                  <Label>Size</Label>
+                  <SizeField value={b.size} min={4} max={200} onChange={(n) => setFreeAt(i, { size: n })} />
+                </div>
+              )}
+              {b.kind !== 'image' && (
+                <div className="max-w-xs">
+                  <ColorField label="Color" value={b.color} onChange={(v) => setFreeAt(i, { color: v })} />
+                </div>
+              )}
+              {b.kind === 'text' && (
+                <>
+                  <div>
+                    <Label>Align</Label>
+                    <Chips value={b.align} options={LINE_ALIGNS} onChange={(v) => setFreeAt(i, { align: v })} />
+                  </div>
+                  <div>
+                    <Label>Letter spacing</Label>
+                    <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setFreeAt(i, { spacing: Number(v) })} />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-ink">
+                    <input type="checkbox" checked={b.upper} onChange={(e) => setFreeAt(i, { upper: e.target.checked })} className="accent-twilight" />
+                    ALL CAPITALS
+                  </label>
+                </>
+              )}
+              {b.kind !== 'icon' && (
+                <div>
+                  <Label>Width</Label>
+                  <SizeField value={Math.round(b.w)} min={5} max={100} onChange={(n) => setFreeAt(i, { w: n })} />
+                </div>
+              )}
+              <div>
+                <Label>Left to right position</Label>
+                <SizeField value={Math.round(b.x)} min={-20} max={100} onChange={(n) => setFreeAt(i, { x: n })} />
+              </div>
+              <div>
+                <Label>Up and down position</Label>
+                <SizeField value={Math.round(b.y)} min={-20} max={80} onChange={(n) => setFreeAt(i, { y: n })} />
+              </div>
+              <div>
+                <Label>Tilt</Label>
+                <SizeField value={Math.round(b.rot)} min={-90} max={90} onChange={(n) => setFreeAt(i, { rot: n })} />
+              </div>
+            </div>
+          )
+        })()}
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => add('text')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Text</button>
+          <button type="button" onClick={() => add('icon')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Icon</button>
+          <button type="button" disabled={off} onClick={() => { replaceRef.current = null; fileRef.current?.click() }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Picture</button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" disabled={off} onClick={save} className="rounded-full bg-twilight px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{off ? 'Working...' : 'Save as my link picture'}</button>
+        <button type="button" onClick={() => { if (window.confirm('Start over from your special design? This replaces the picture design.')) put(ogSeed(text, theme)) }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">Start over from my design</button>
+        <button type="button" disabled={off} onClick={chooseFinished} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">Upload a finished picture instead</button>
+        {text.og_image && <button type="button" onClick={() => setText('og_image', '')} className="text-xs text-ink-soft underline hover:text-red-700">Remove saved picture</button>}
+      </div>
+      <p className="text-xs text-ink-soft">Nothing changes in the link preview until you tap Save as my link picture.</p>
+    </div>
+  )
+}
+
 export default function SpecialsPage() {
   const ent = useEntitlements()
   const router = useRouter()
@@ -634,78 +930,25 @@ export default function SpecialsPage() {
     }
   }
   const ogInput = useRef<HTMLInputElement>(null)
-  const [artPrompt, setArtPrompt] = useState('')
   const [ogTab, setOgTab] = useState<'bar' | 'pic'>('bar')
-  async function makeOgArt() {
+  async function ogUploadPic(file: File): Promise<string> {
     const sb = supabase
-    if (!sb || !form || !artPrompt.trim()) return
-    setUploading(true)
-    try {
-      const sess = (await sb.auth.getSession()).data.session
-      const r = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: 'texture', prompt: artPrompt.trim(), shape: 'wide' }) })
-      const j = await r.json().catch(() => ({}))
-      if (!r.ok || !j.url) throw new Error(j.error || 'Camri could not make that picture.')
-      setText('og_art', j.url)
-      await makeOgFromDesign(j.url)
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Camri could not make that picture.')
-    } finally {
-      setUploading(false)
-    }
+    if (!sb || !userId) throw new Error('Please sign in again.')
+    const png = file.type === 'image/png' && file.size < 6_000_000
+    const v = png ? null : await makeVersions(file)
+    const path = `${userId}/special_ogel_${Date.now()}_${rand()}.${png ? 'png' : 'jpg'}`
+    const up = await sb.storage.from('portfolio').upload(path, png ? file : v!.web.blob, { contentType: png ? 'image/png' : 'image/jpeg', upsert: true })
+    if (up.error) throw up.error
+    return STORAGE_BASE + path
   }
-  async function makeOgFromDesign(artUrl?: string) {
-    if (!form) return
-    const t = form.theme
-    const W = 1200, H = 630
-    const cv = document.createElement('canvas'); cv.width = W; cv.height = H
-    const ctx = cv.getContext('2d')
-    if (!ctx) return
-    const fam = (k: string, d: string) => FONT_OPTIONS[k]?.family ?? d
-    const nameF = fam(t.nameFont, 'sans-serif'), headF = fam(t.headFont, 'serif'), subF = fam(t.subFont, 'sans-serif')
-    try { await Promise.all([`28px ${nameF}`, `80px ${headF}`, `34px ${subF}`].map((f) => document.fonts.load(f))) } catch {}
-    ctx.fillStyle = t.bgColor; ctx.fillRect(0, 0, W, H)
-    const bgSrc = artUrl || form.text.og_art || t.bgImage
-    if (bgSrc) {
-      try {
-        const img = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = bgSrc })
-        const r = Math.max(W / img.width, H / img.height)
-        ctx.drawImage(img, (W - img.width * r) / 2, (H - img.height * r) / 2, img.width * r, img.height * r)
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, W, H)
-      } catch {}
-    }
-    const wrap = (text: string, maxW: number) => {
-      const out: string[] = []; let line = ''
-      for (const w of text.split(/\s+/).filter(Boolean)) {
-        const test = line ? line + ' ' + w : w
-        if (ctx.measureText(test).width > maxW && line) { out.push(line); line = w } else line = test
-      }
-      if (line) out.push(line)
-      return out
-    }
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
-    const title = (form.text.hero_headline || '').trim()
-    const sub = (form.text.hero_sub || '').trim().split(/\n/)[0]
-    const name = (form.text.brand_name || '').trim()
-    const nSize = Number(form.text.og_name_size) || 30
-    const sSize = Number(form.text.og_sub_size) || 34
-    const userT = Number(form.text.og_title_size) || 0
-    const maxW = form.text.og_wide === '1' ? 1050 : 580
-    let tSize = userT || 96
-    let tLines: string[] = []
-    for (; tSize >= 20; tSize -= 4) { ctx.font = `${tSize}px ${headF}`; tLines = wrap(title, maxW); if (userT || tLines.length <= 3) break }
-    ctx.font = `${sSize}px ${subF}`
-    const sLines = sub ? wrap(sub, maxW).slice(0, 4) : []
-    const gap = 24
-    const blockH = (name ? nSize * 1.3 + gap : 0) + tLines.length * tSize * 1.1 + (sLines.length ? gap + sLines.length * sSize * 1.3 : 0)
-    let y = (H - blockH) / 2
-    if (name) { ctx.font = `${nSize}px ${nameF}`; ctx.fillStyle = t.nameColor || t.textColor; ctx.fillText(name.toUpperCase(), W / 2, y + nSize); y += nSize * 1.3 + gap }
-    ctx.font = `${tSize}px ${headF}`; ctx.fillStyle = t.titleColor
-    tLines.forEach((l, i) => ctx.fillText(l, W / 2, y + tSize * (0.9 + i * 1.1)))
-    y += tLines.length * tSize * 1.1
-    if (sLines.length) { y += gap; ctx.font = `${sSize}px ${subF}`; ctx.fillStyle = t.subColor; sLines.forEach((l, i) => ctx.fillText(l, W / 2, y + sSize + i * sSize * 1.3)) }
-    const blob = await new Promise<Blob | null>((res) => cv.toBlob(res, 'image/jpeg', 0.9))
-    if (!blob) { setMessage('Could not make the picture.'); return }
-    await uploadOg(blob)
+  async function ogCamri(prompt: string): Promise<string> {
+    const sb = supabase
+    if (!sb) throw new Error('Please sign in again.')
+    const sess = (await sb.auth.getSession()).data.session
+    const r = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: 'texture', prompt, shape: 'wide' }) })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok || !j.url) throw new Error(j.error || 'Camri could not make that picture.')
+    return j.url as string
   }
   async function uploadOg(file: Blob) {
     const sb = supabase
@@ -1327,43 +1570,12 @@ export default function SpecialsPage() {
                         <span className="mt-1 block text-xs text-ink-soft">Some apps show your web address here instead.</span>
                       </label>
                       </>)}
-                      {ogTab === 'pic' && (<>
-                      <div className="flex flex-wrap gap-4">
-                        <div>
-                          <Label>Studio name size</Label>
-                          <SizeField value={Number(form.text.og_name_size) || 30} min={14} max={80} onChange={(n) => setText('og_name_size', String(n))} />
-                        </div>
-                        <div>
-                          <Label>Title size</Label>
-                          <SizeField value={Number(form.text.og_title_size) || 96} min={24} max={200} onChange={(n) => setText('og_title_size', String(n))} />
-                        </div>
-                        <div>
-                          <Label>Paragraph size</Label>
-                          <SizeField value={Number(form.text.og_sub_size) || 34} min={14} max={80} onChange={(n) => setText('og_sub_size', String(n))} />
-                        </div>
-                      </div>
-                      <label className="flex items-center gap-2 text-sm text-ink">
-                        <input type="checkbox" checked={form.text.og_wide !== '1'} onChange={(e) => setText('og_wide', e.target.checked ? '' : '1')} className="accent-twilight" />
-                        Keep the words in the middle (Instagram cuts off the sides)
-                      </label>
-                      <p className="text-xs text-ink-soft">These are the sizes of the words drawn inside the picture itself (the picture is 1200 wide), not the bar underneath. Tap Make from my design to redraw it after changing them.</p>
-                      <div>
-                        <Label>Have Camri paint a background</Label>
-                        <input placeholder="Describe it, like soft candlelit pine branches" value={artPrompt} onChange={(e) => setArtPrompt(e.target.value)} className={inputCls} />
-                        <button type="button" disabled={uploading || !artPrompt.trim()} onClick={makeOgArt} className="mt-2 rounded-full bg-twilight px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{uploading ? 'Working... this can take a minute' : 'Make with Camri'}</button>
-                        {form.text.og_art && <button type="button" onClick={() => setText('og_art', '')} className="ml-2 rounded-full border border-line bg-card px-4 py-2 text-sm text-ink-soft transition hover:border-twilight">Remove background</button>}
-                      </div>
-                      <div>
-                        <Label>Picture</Label>
-                        <input ref={ogInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadOg(f); e.target.value = '' }} />
-                        {form.text.og_image && <img src={form.text.og_image} alt="" className="mb-2 h-24 w-auto rounded-lg border border-line object-cover" />}
-                        <div className="flex gap-2">
-                          <button type="button" disabled={uploading} onClick={() => makeOgFromDesign()} className="rounded-full bg-twilight px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{uploading ? 'Working...' : 'Make from my design'}</button>
-                          <button type="button" disabled={uploading} onClick={() => ogInput.current?.click()} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{uploading ? 'Uploading...' : form.text.og_image ? 'Change picture' : 'Choose a picture'}</button>
-                          {form.text.og_image && <button type="button" onClick={() => setText('og_image', '')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink-soft transition hover:border-twilight">Remove</button>}
-                        </div>
-                      </div>
-                      </>)}
+                      {ogTab === 'pic' && (
+                        <>
+                          <input ref={ogInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadOg(f); e.target.value = '' }} />
+                          <OgDesigner text={form.text} theme={form.theme} setText={setText} busy={uploading} pickPic={ogUploadPic} camri={ogCamri} saveBlob={uploadOg} chooseFinished={() => ogInput.current?.click()} setMessage={setMessage} />
+                        </>
+                      )}
                     </MiniCard>
                   </div>
                 </StepCard>
