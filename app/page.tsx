@@ -142,43 +142,13 @@ export default function Home() {
 
         {/* PAIN */}
         <section className="border-y border-line bg-paper-deep">
-          <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-            <h2 className="mx-auto max-w-3xl text-center font-fraunces text-4xl md:text-5xl font-medium text-ink leading-[1.08]">
+          <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16 text-center">
+            <h2 className="font-fraunces text-4xl md:text-5xl font-medium text-ink leading-[1.08]">
               3 or 4 systems. Endless texts. Evenings gone.
             </h2>
-            <div className="mt-10 grid gap-5 md:grid-cols-3">
-              {[
-                ["Clients lost in your inbox", "Inquiries, questions and photos scattered across email, DMs and texts."],
-                ["Chasing contracts and payments", "Waiting on signatures and reminding people who still owe you."],
-                ["Hours lost to culling and editing", "Scrolling through hundreds of near-identical photos long after the shoot."],
-              ].map(([t, d]) => (
-                <div key={t} className="rounded-3xl border border-line bg-card p-6">
-                  <p className="font-fraunces text-xl font-semibold text-ink">{t}</p>
-                  <p className="mt-2 text-ink-soft leading-relaxed">{d}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mx-auto mt-10 max-w-2xl text-center font-fraunces text-2xl text-twilight">
+            <p className="mt-5 font-fraunces text-2xl text-twilight leading-snug">
               Camrhia puts it all in one place, and Camri handles the busywork.
             </p>
-          </div>
-        </section>
-
-        {/* HOW IT WORKS */}
-        <section id="how" className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-          <h2 className="text-center font-fraunces text-4xl md:text-5xl font-medium text-ink leading-[1.08]">Up and running in an afternoon</h2>
-          <div className="mt-10 grid gap-8 md:grid-cols-3">
-            {[
-              ["Start free", "Just your name and email. No card. Everything is on for 14 days."],
-              ["Camri sets it up with you", "Your sessions, your website and your editing style, step by step."],
-              ["Keep what you need", "On day 14, choose the parts you want to keep."],
-            ].map(([t, d], i) => (
-              <div key={t} className="text-center">
-                <p className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brass/15 font-fraunces text-2xl font-semibold text-brass">{i + 1}</p>
-                <p className="mt-4 font-fraunces text-2xl font-semibold text-ink">{t}</p>
-                <p className="mt-2 text-ink-soft leading-relaxed">{d}</p>
-              </div>
-            ))}
           </div>
         </section>
 
@@ -257,12 +227,8 @@ export default function Home() {
               body="Run a mini session or a holiday offer on its own quick sign-up page. Your beautiful website stays exactly as it is, and clients book in a tap."
               items={["Its own sign-up page and link", "Quick Specials made in minutes", "Share anywhere", "Your website stays untouched"]}
               media={
-                <div className="space-y-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/shots/specials.jpg" alt="Designing a Special in Camrhia" loading="lazy" className={SHOT} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/shots/quickspecials.jpg" alt="Quick Specials designs in Camrhia" loading="lazy" className={SHOT} />
-                </div>
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/shots/quickspecials.jpg" alt="Ready-made Quick Specials designs in Camrhia" loading="lazy" className={SHOT} />
               }
             />
           </div>
