@@ -14,6 +14,8 @@ const HOST = 'camrhia.com'
 
 export default function DomainsPage() {
   const [dom, setDom] = useState<Dom | null>(null)
+  const [free, setFree] = useState<string | null | undefined>(undefined)
+  const [freeEdit, setFreeEdit] = useState('')
   const [rows, setRows] = useState<Row[] | null>(null)
   const [edit, setEdit] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState<string | null>(null)
@@ -30,6 +32,8 @@ export default function DomainsPage() {
     const res = await fetch('/api/domain/status', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: '{}' })
     const j = await res.json().catch(() => ({}))
     setDom(res.ok ? (j as Dom) : { domain: null })
+    const { data: pr } = await sb.from('profiles').select('slug').eq('id', uid).maybeSingle()
+    setFree((pr as { slug?: string | null } | null)?.slug ?? null)
     const { data } = await sb.from('funnel_pages').select('id, slug, name, published').eq('owner_id', uid).eq('style', 'special').order('created_at', { ascending: false })
     setRows((data ?? []) as Row[])
   }, [])
@@ -52,6 +56,18 @@ export default function DomainsPage() {
     setMsg('Saved')
   }
 
+  async function claimFree() {
+    const sb = supabase
+    const v = clean(freeEdit).replace(/^-+|-+$/g, '')
+    if (!sb) return
+    if (v.length < 3) { setMsg('Your address needs at least 3 letters or numbers.'); return }
+    setBusy('free'); setMsg(null)
+    const { data, error } = await sb.rpc('claim_profile_slug', { p_slug: v })
+    setBusy(null)
+    if (error) { setMsg(error.message); return }
+    setFree(String(data)); setFreeEdit(''); setMsg('Saved')
+  }
+
   function copy(slug: string) {
     navigator.clipboard?.writeText('https://' + HOST + '/go/' + slug)
     setCopied(slug)
@@ -67,9 +83,33 @@ export default function DomainsPage() {
         <p className="mt-2 text-sm text-ink-soft">Your website address and every special link, all in one place.</p>
 
         <section className={card + ' mt-8'}>
-          <p className="font-fraunces text-xl font-semibold text-ink">Your website address</p>
+          <p className="font-fraunces text-xl font-semibold text-ink">Your free address</p>
+          <p className="mt-1 text-sm text-ink-soft">Included with your plan. No domain to buy.</p>
+          {free === undefined && <p className="mt-3 text-sm text-ink-soft">Loading...</p>}
+          {free && (
+            <>
+              <p className="mt-3 rounded-xl bg-paper px-4 py-3 text-ink"><span className="text-ink-soft">camrhia.com/</span><span className="font-medium">{free}</span></p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" className={ghost} onClick={() => { navigator.clipboard?.writeText('https://' + HOST + '/' + free); setCopied('free'); setTimeout(() => setCopied(null), 1500) }}>{copied === 'free' ? 'Copied' : 'Copy link'}</button>
+                <a className={ghost} href={'/' + free} target="_blank" rel="noreferrer">Open</a>
+              </div>
+            </>
+          )}
+          {free === null && <p className="mt-3 text-sm text-ink-soft">Pick the name clients will see in your link.</p>}
+          {free !== undefined && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-ink-soft">camrhia.com/</span>
+              <input className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink focus:border-twilight focus:outline-none" placeholder={free ?? 'yourstudio'} value={freeEdit} onChange={(e) => setFreeEdit(clean(e.target.value))} />
+              <button type="button" className={ghost} disabled={busy === 'free' || !freeEdit} onClick={claimFree}>{busy === 'free' ? 'Saving...' : free ? 'Change' : 'Save'}</button>
+            </div>
+          )}
+          {msg && <p className="mt-3 text-sm text-ink-soft">{msg}</p>}
+        </section>
+
+        <section className={card + ' mt-6'}>
+          <p className="font-fraunces text-xl font-semibold text-ink">Your own domain</p>
           {!dom && <p className="mt-2 text-sm text-ink-soft">Loading...</p>}
-          {dom && !dom.domain && <p className="mt-2 text-sm text-ink-soft">No domain connected yet. Connect your own, like yourstudio.com, so clients find you under your name.</p>}
+          {dom && !dom.domain && <p className="mt-2 text-sm text-ink-soft">No domain connected. This is optional. If you already own one, like yourstudio.com, connect it here.</p>}
           {dom?.domain && (
             <div className="mt-2 flex items-center gap-2">
               <span className={'h-2.5 w-2.5 rounded-full ' + (dom.status === 'active' ? 'bg-emerald-600' : 'bg-amber-500')} />

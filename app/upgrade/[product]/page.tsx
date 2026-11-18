@@ -127,7 +127,7 @@ export default function UpgradePage() {
             </ul>
           </div>
 
-          <div className="h-fit rounded-3xl border border-line bg-card p-8 shadow-sm">
+          <div className="h-fit rounded-3xl border border-line bg-card p-5 shadow-sm sm:p-8">
             <div className="flex rounded-full bg-paper-deep p-1">
               {(['month', 'year'] as const).map((i) => (
                 <button
@@ -149,7 +149,7 @@ export default function UpgradePage() {
             {signedIn === false && (
               <div className="mt-6 space-y-3">
                 <p className="font-mono text-xs uppercase tracking-widest text-brass">Create your account</p>
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <input value={first} onChange={(e) => setFirst(e.target.value)} placeholder="First name" autoComplete="given-name" className={field} />
                   <input value={last} onChange={(e) => setLast(e.target.value)} placeholder="Last name" autoComplete="family-name" className={field} />
                 </div>

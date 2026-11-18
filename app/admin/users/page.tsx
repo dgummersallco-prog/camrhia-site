@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin'
 import { BRAND_NAME } from '@/lib/brand'
 
+type Recent = { email: string; name: string; createdAt: string; status: string | null; trialEndsAt: string | null }
+
 type UserResult = {
   userId: string
   email: string
@@ -28,6 +30,7 @@ export default function AdminUsersPage() {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [actionMsg, setActionMsg] = useState<string | null>(null)
+  const [recent, setRecent] = useState<{ today: number; last7: number; total: number; list: Recent[] } | null>(null)
 
   useEffect(() => {
     async function init() {
@@ -46,6 +49,14 @@ export default function AdminUsersPage() {
     })
     return () => subscription.unsubscribe()
   }, [router])
+
+  useEffect(() => {
+    if (!token) return
+    fetch('/api/admin/user-access', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action: 'recent' }) })
+      .then((r) => r.json())
+      .then((j) => { if (j && Array.isArray(j.list)) setRecent(j) })
+      .catch(() => {})
+  }, [token])
 
   async function handleSignOut() {
     if (!supabase) return
@@ -108,6 +119,31 @@ export default function AdminUsersPage() {
             Search by email to find a user and comp their account.
           </p>
         </div>
+
+        <section className="mb-8 rounded-2xl border border-line bg-card p-5">
+          <p className="font-fraunces text-lg font-semibold text-ink">New photographer accounts</p>
+          {!recent ? (
+            <p className="mt-2 text-sm text-ink-soft">Loading...</p>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-ink-soft">{recent.today} in the last 24 hours, {recent.last7} in the last 7 days, {recent.total} total</p>
+              <div className="mt-3 divide-y divide-line">
+                {recent.list.length === 0 && <p className="py-2 text-sm text-ink-soft">No photographer accounts yet.</p>}
+                {recent.list.map((r) => (
+                  <div key={r.email + r.createdAt} className="flex items-center justify-between gap-3 py-2.5">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-ink">{r.name || r.email}</p>
+                      <p className="truncate text-xs text-ink-soft">{r.name ? r.email + ' - ' : ''}{new Date(r.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[r.status ?? ''] ?? (r.trialEndsAt && new Date(r.trialEndsAt) > new Date() ? STATUS_STYLES.trial : 'bg-ink-soft/10 text-ink-soft')}`}>
+                      {r.status ?? (r.trialEndsAt && new Date(r.trialEndsAt) > new Date() ? 'trial' : 'no plan')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
 
         {/* Search form */}
         <form onSubmit={handleSearch} className="flex items-stretch gap-2 mb-6">

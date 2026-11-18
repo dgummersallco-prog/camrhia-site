@@ -4,7 +4,7 @@ export type CullLabel = 'pick' | 'maybe' | 'reject'
 export type CullInput = { id: string; url: string; webUrl?: string }
 export type CullResult = { id: string; score: number; label: CullLabel; group: string | null; reason: string | null }
 
-type Analysis = { sharp: number; hash: boolean[]; mean: number; clipHi: number } | null
+type Analysis = { sharp: number; hash: boolean[]; mean: number; clipHi: number; rb: number } | null
 
 // How sharp the sharpest part of the picture is. Uses the 90th-percentile block, so a sharp
 // subject with a soft background still scores well.
@@ -72,7 +72,7 @@ function hamming(a: boolean[], b: boolean[]): number {
 }
 
 // Average brightness and how much of the picture is blown out to pure white.
-function lumaStats(bmp: ImageBitmap): { mean: number; clipHi: number } {
+function lumaStats(bmp: ImageBitmap): { mean: number; clipHi: number; rb: number } {
   const c = document.createElement('canvas')
   c.width = 64
   c.height = 64
@@ -82,13 +82,17 @@ function lumaStats(bmp: ImageBitmap): { mean: number; clipHi: number } {
   const d = ctx.getImageData(0, 0, 64, 64).data
   let sum = 0
   let hi = 0
+  let rs = 0
+  let bs = 0
   const n = d.length / 4
   for (let i = 0; i < d.length; i += 4) {
     const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
     sum += l
+    rs += d[i]
+    bs += d[i + 2]
     if (l >= 250) hi++
   }
-  return { mean: sum / n, clipHi: hi / n }
+  return { mean: sum / n, clipHi: hi / n, rb: Math.log((rs / n + 8) / (bs / n + 8)) }
 }
 
 async function analyse(url: string): Promise<Analysis> {
@@ -172,11 +176,15 @@ export async function cullPhotos(
   const closedN = reports.map((r) => (r ? r.closed : 0))
   const faceN = reports.map((r) => (r ? r.count : 0))
   const closed = closedN.map((n) => n > 0)
+  const smiles = reports.map((r) => (r ? r.smile : 0))
+  const edges = reports.map((r) => !!r && r.edge)
   const faceVals = reports.map((r) => (r ? r.faceSharp : null))
 
   const valid = analyses.filter((a): a is NonNullable<Analysis> => !!a)
   const med = median(valid.map((a) => a.sharp)) > 0 ? median(valid.map((a) => a.sharp)) : 1
   const medMean = median(valid.map((a) => a.mean))
+  const medRB = median(valid.map((a) => a.rb))
+  const madRB = median(valid.map((a) => Math.abs(a.rb - medRB)))
   const medFace = median(faceVals.filter((v): v is number => v !== null))
   const single = (s: number): CullLabel => {
     const rel = s / med
@@ -198,8 +206,11 @@ export async function cullPhotos(
       else if (rel < 0.25) { l = 'reject'; why = 'Face is soft' }
       else if (rel < 0.5 && l === 'pick') { l = 'maybe'; why = 'Face slightly soft' }
     }
-    if (l === 'pick' && a.clipHi > 0.2) { l = 'maybe'; why = 'Blown out' }
+    if (a.mean < 8 && a.clipHi === 0) { l = 'reject'; why = 'Black frame (lens cap or pocket shot)' }
+    else if (l === 'pick' && a.clipHi > 0.2) { l = 'maybe'; why = 'Blown out' }
     else if (l === 'pick' && medMean > 0 && a.mean < 40 && a.mean < medMean * 0.5) { l = 'maybe'; why = 'Very dark' }
+    else if (l === 'pick' && Math.abs(a.rb - medRB) > Math.max(0.4, 5 * madRB)) { l = 'maybe'; why = 'Color looks off' }
+    else if (l === 'pick' && edges[i]) { l = 'maybe'; why = 'Face cut off at the edge' }
     labels[i] = l
     reasons[i] = why
   })
@@ -248,13 +259,14 @@ export async function cullPhotos(
   groups.forEach((members, k) => {
     const open = members.filter((i) => !closed[i])
     const pool = open.length ? open : members
+    const rank = (i: number) => (scores[i] / med) * (1 + 0.6 * smiles[i])
     let best = pool[0]
-    for (const i of pool) if (scores[i] > scores[best]) best = i
+    for (const i of pool) if (rank(i) > rank(best)) best = i
     for (const i of members) {
       groupId[i] = `g${k}`
       if (i !== best) {
         labels[i] = 'reject'
-        reasons[i] = closed[i] ? 'Eyes closed' : 'Near-duplicate of a better frame'
+        reasons[i] = closed[i] ? 'Eyes closed' : smiles[best] - smiles[i] >= 0.25 ? 'Another frame has a better smile' : 'Near-duplicate of a better frame'
       }
     }
   })

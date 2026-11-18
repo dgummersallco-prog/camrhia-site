@@ -67,6 +67,28 @@ export async function POST(request: Request) {
   }
 
   // ── Grant or revoke comped access ─────────────────────────────────────────
+  if (action === 'recent') {
+    const { data: { users }, error: listError } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+    if (listError) return Response.json({ error: listError.message }, { status: 500 })
+    const sorted = [...users].sort((a, b) => ((a.created_at ?? '') < (b.created_at ?? '') ? 1 : -1))
+    const ids = sorted.slice(0, 150).map((u) => u.id)
+    const { data: profs } = await supabase.from('profiles').select('id, account_type, display_name, subscription_status, trial_ends_at').in('id', ids)
+    const pm = new Map<string, any>(((profs ?? []) as any[]).map((p) => [p.id, p]))
+    const list = sorted.slice(0, 150)
+      .filter((u) => pm.get(u.id)?.account_type === 'photographer')
+      .slice(0, 40)
+      .map((u) => {
+        const p = pm.get(u.id)
+        return { email: u.email ?? '', name: p?.display_name ?? '', createdAt: u.created_at ?? '', status: p?.subscription_status ?? null, trialEndsAt: p?.trial_ends_at ?? null }
+      })
+    const day = Date.now() - 86400000
+    const week = Date.now() - 7 * 86400000
+    const all = sorted.filter((u) => pm.get(u.id)?.account_type === 'photographer')
+    const today = all.filter((u) => new Date(u.created_at ?? 0).getTime() > day).length
+    const last7 = all.filter((u) => new Date(u.created_at ?? 0).getTime() > week).length
+    return Response.json({ today, last7, total: all.length, list })
+  }
+
   if (action === 'grant' || action === 'revoke') {
     if (!userId) {
       return Response.json({ error: 'userId is required' }, { status: 400 })

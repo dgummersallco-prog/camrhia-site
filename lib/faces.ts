@@ -48,7 +48,7 @@ export async function eyesClosed(bmp: ImageBitmap): Promise<boolean | null> {
   return closed
 }
 
-export type FaceReport = { count: number; closed: number; faceSharp: number | null }
+export type FaceReport = { count: number; closed: number; faceSharp: number | null; smile: number; edge: boolean }
 
 // Faces found, how many have closed eyes, and how sharp the biggest face is (null if no face is big enough).
 export async function faceReport(bmp: ImageBitmap): Promise<FaceReport | null> {
@@ -64,12 +64,16 @@ export async function faceReport(bmp: ImageBitmap): Promise<FaceReport | null> {
   const res = lm.detect(canvas)
   const shapes = res.faceBlendshapes ?? []
   const marks = res.faceLandmarks ?? []
-  if (shapes.length === 0) return { count: 0, closed: 0, faceSharp: null }
+  if (shapes.length === 0) return { count: 0, closed: 0, faceSharp: null, smile: 0, edge: false }
   let closed = 0
+  let smileSum = 0
   for (const f of shapes) {
     const get = (n: string) => f.categories.find((c) => c.categoryName === n)?.score ?? 0
     if ((get('eyeBlinkLeft') + get('eyeBlinkRight')) / 2 >= 0.6) closed++
+    smileSum += (get('mouthSmileLeft') + get('mouthSmileRight')) / 2
   }
+  const smile = smileSum / shapes.length
+  let edge = false
   let bestW = 0
   let box: { x0: number; y0: number; x1: number; y1: number } | null = null
   for (const pts of marks) {
@@ -80,6 +84,7 @@ export async function faceReport(bmp: ImageBitmap): Promise<FaceReport | null> {
       if (p.y < y0) y0 = p.y
       if (p.y > y1) y1 = p.y
     }
+    if (x1 - x0 >= 0.1 && (x0 <= 0.004 || x1 >= 0.996 || y0 <= 0.004 || y1 >= 0.996)) edge = true
     if (x1 - x0 > bestW) { bestW = x1 - x0; box = { x0, y0, x1, y1 } }
   }
   let faceSharp: number | null = null
@@ -119,5 +124,5 @@ export async function faceReport(bmp: ImageBitmap): Promise<FaceReport | null> {
       }
     }
   }
-  return { count: shapes.length, closed, faceSharp }
+  return { count: shapes.length, closed, faceSharp, smile, edge }
 }

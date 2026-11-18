@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { cullPhotos, type CullLabel } from '@/lib/cull'
+import { findPeople, type Person } from '@/lib/people'
 import { enhancePhoto, renderPreview, LOOKS, type Adjust } from '@/lib/enhance'
 import { addAdj, cleanAdj } from '@/lib/tools'
 import EditPanel from '@/app/edit/EditPanel'
@@ -31,6 +32,7 @@ type Photo = {
   cull_score: number | null
   cull_group: string | null
   cull_reason: string | null
+  person_ids: string[] | null
   enhanced: boolean | null
   pre_web_path: string | null
   pre_thumb_path: string | null
@@ -41,7 +43,7 @@ type Sess = { id: string; names: string | null; couple_user_id: string | null; g
 
 const BUCKET = 'galleries'
 const COLS =
-  'id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, enhanced, pre_web_path, pre_thumb_path, pre_full_path'
+  'id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, person_ids, enhanced, pre_web_path, pre_thumb_path, pre_full_path'
 const ACCEPT =
   'image/jpeg,image/png,image/webp,.heic,.heif,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.dng,.orf,.rw2,.raf,.pef,.3fr,.erf,.kdc,.mrw,.raw,.rwl,.iiq'
 const STEPS = ['Photos', 'Cull', 'Edit', 'Send']
@@ -150,7 +152,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   const [up, setUp] = useState({ busy: false, done: 0, total: 0, note: null as string | null })
   const [cullTarget, setCullTarget] = useState('')
   const [cullEyes, setCullEyes] = useState(true)
-  const [cull, setCull] = useState<{ busy: boolean; done: number; total: number; phase: 'sharp' | 'eyes' | 'dupes' }>({ busy: false, done: 0, total: 0, phase: 'sharp' })
+  const [cull, setCull] = useState<{ busy: boolean; done: number; total: number; phase: 'sharp' | 'eyes' | 'dupes' | 'people' }>({ busy: false, done: 0, total: 0, phase: 'sharp' })
   const [rescued, setRescued] = useState<Set<string>>(new Set())
   const [confirmCut, setConfirmCut] = useState(false)
   const [choice, setChoice] = useState<Record<string, string>>({})
@@ -160,7 +162,42 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   const [lookId, setLookId] = useState('natural')
   const [strength, setStrength] = useState(0.8)
 
-  const [cullView, setCullView] = useState<'cuts' | 'picks' | 'maybe' | 'dupes'>('cuts')
+  const [cullView, setCullView] = useState<'cuts' | 'picks' | 'maybe' | 'dupes' | 'people'>('cuts')
+  const [people, setPeople] = useState<Person[]>([])
+  const [personSel, setPersonSel] = useState<string | null>(null)
+  useEffect(() => {
+    const sb = supabase
+    if (!sb) return
+    void sb.from('galleries').select('people').eq('id', galleryId).maybeSingle().then(({ data }) => {
+      const v = (data as { people?: Person[] | null } | null)?.people
+      if (Array.isArray(v)) setPeople(v)
+    })
+  }, [galleryId])
+  const selPerson = people.find((x) => x.id === personSel) ?? null
+  const selPhotos = selPerson ? photos.filter((p) => p.person_ids?.includes(selPerson.id) && p.cull_label !== 'reject') : []
+  function renamePerson(id: string, name: string) { setPeople((ps) => ps.map((x) => (x.id === id ? { ...x, name } : x))) }
+  async function savePeople() {
+    const sb = supabase
+    if (sb) await sb.from('galleries').update({ people }).eq('id', galleryId)
+  }
+  async function mergePerson(from: string, to: string | null) {
+    const sb = supabase
+    if (!sb) return
+    const next = photos.map((p) => {
+      if (!p.person_ids?.includes(from)) return p
+      const ids = p.person_ids.map((x) => (x === from ? to : x)).filter((x): x is string => !!x)
+      return { ...p, person_ids: Array.from(new Set(ids)) }
+    })
+    const changed = next.filter((p, i) => p !== photos[i])
+    const np = people.filter((x) => x.id !== from)
+    setPhotos(next)
+    setPeople(np)
+    setPersonSel(to)
+    await sb.from('galleries').update({ people: np }).eq('id', galleryId)
+    for (let i = 0; i < changed.length; i += 10) {
+      await Promise.all(changed.slice(i, i + 10).map((p) => sb.from('gallery_photos').update({ person_ids: p.person_ids }).eq('id', p.id)))
+    }
+  }
   const chipCls = (v: string) => `rounded-full border px-4 py-1.5 text-sm transition ${cullView === v ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/80 hover:border-white/30'}`
   const pickList = photos.filter((p) => p.cull_label === 'pick')
   const maybeList = photos.filter((p) => p.cull_label === 'maybe')
@@ -501,6 +538,18 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
         const bad = rs.find((x) => x.error)
         if (bad?.error) throw bad.error
       }
+      try {
+        setCull({ busy: true, done: 0, total: items.length, phase: 'people' })
+        const pr = await findPeople(items, (done, total) => setCull({ busy: true, done, total, phase: 'people' }))
+        if (pr) {
+          for (let i = 0; i < items.length; i += 10) {
+            await Promise.all(items.slice(i, i + 10).map((it, k) => sb.from('gallery_photos').update({ person_ids: pr.photoPeople[i + k] }).eq('id', it.id)))
+          }
+          await sb.from('galleries').update({ people: pr.people }).eq('id', galleryId)
+          setPeople(pr.people)
+          setPersonSel(null)
+        }
+      } catch { /* people are a bonus; the cull itself is already saved */ }
       setRescued(new Set())
       await loadPhotos()
     } catch (e) {
@@ -902,22 +951,31 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
 
             {!labeled && !cull.busy && (
               <div className={`${panel} mt-8`}>
-                <p className="text-white/70">We look through every photo for soft shots and closed eyes, and group near-identical frames. Nothing is removed until you say so.</p>
-                <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
-                  <span className="text-white/70">Keep about</span>
-                  <input
-                    value={cullTarget}
-                    onChange={(e) => setCullTarget(e.target.value.replace(/\D/g, ''))}
-                    placeholder="all"
-                    inputMode="numeric"
-                    className="w-24 rounded-xl border border-white/15 bg-transparent px-3 py-2 text-white placeholder:text-white/30 focus:border-twilight focus:outline-none"
-                  />
-                  <span className="text-white/45">photos (optional)</span>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-lg text-white">Ready to cull</p>
+                    <p className="mt-2 text-white/70">Here is what happens. Nothing is removed until you say so.</p>
+                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/camri/09_holding_photo.png" alt="" className="h-24 w-auto shrink-0 sm:h-28" />
                 </div>
-                <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-white/70">
-                  <input type="checkbox" checked={cullEyes} onChange={(e) => setCullEyes(e.target.checked)} className="h-4 w-4" />
-                  Also check faces for closed eyes and soft focus (slower)
-                </label>
+                <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  {[
+                    { n: '1', t: 'Sharpness', d: 'Finds soft and blurry shots.' },
+                    { n: '2', t: 'Exposure and color', d: 'Finds dark or blown-out frames and color that looks off.' },
+                    { n: '3', t: 'Black frames', d: 'Finds lens cap and pocket shots.' },
+                    { n: '4', t: 'Faces and eyes', d: 'Finds every face and checks for closed eyes and soft focus.' },
+                    { n: '5', t: 'Smiles and edges', d: 'Reads smiles and finds faces cut off at the edge.' },
+                    { n: '6', t: 'Duplicates', d: 'Groups near-identical frames and keeps the sharpest one with the best smile.' },
+                    { n: '7', t: 'People', d: 'Recognizes the same faces across the shoot so you can find everyone.' },
+                  ].map((x) => (
+                    <div key={x.n} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                      <p className="font-fraunces text-4xl text-white/60">{x.n}</p>
+                      <p className="mt-3 text-xs uppercase tracking-[0.18em] text-white">{x.t}</p>
+                      <p className="mt-2 text-sm text-white/55">{x.d}</p>
+                    </div>
+                  ))}
+                </div>
                 <div className="mt-8">
                   <button className={btnPrimary} onClick={runCull}>Start</button>
                 </div>
@@ -939,22 +997,35 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
               } else if (p === 'eyes') {
                 dupVal = Math.min(1, pct / DUP_SHARE)
                 dupState = dupVal >= 1 ? 'done' : 'active'
-              } else if (p === 'dupes') {
+              } else if (p === 'dupes' || p === 'people') {
                 dupState = 'done'
                 dupVal = 1
               }
+              const sv = p === 'sharp' ? pct : 1
+              const ev = p === 'eyes' ? pct : p === 'sharp' ? 0 : 1
               const cols: { key: string; label: string; state: St; value: number }[] = [
-                { key: 'sharp', label: 'Checking sharpness', state: sharpState, value: p === 'sharp' ? pct : 1 },
-                ...(cullEyes ? [{ key: 'eyes', label: 'Checking faces', state: facesState, value: p === 'eyes' ? pct : p === 'sharp' ? 0 : 1 }] : []),
-                { key: 'dupes', label: 'Finding duplicates', state: dupState, value: dupVal },
+                { key: 'sharp', label: 'Sharpness', state: sharpState, value: sv },
+                { key: 'expo', label: 'Exposure and color', state: sharpState, value: sv },
+                { key: 'black', label: 'Black frames', state: sharpState, value: sv },
+                ...(cullEyes ? [
+                  { key: 'eyes', label: 'Faces and eyes', state: facesState, value: ev },
+                  { key: 'smile', label: 'Smiles and edges', state: facesState, value: ev },
+                ] : []),
+                { key: 'dupes', label: 'Duplicates', state: dupState, value: dupVal },
+                { key: 'people', label: 'People', state: (p === 'people' ? 'active' : 'wait') as St, value: p === 'people' ? pct : 0 },
               ]
               return (
                 <div className={`${panel} mt-8`}>
-                  <div className={`grid gap-8 ${cols.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+                  <div className="mb-6 flex items-center gap-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/camri/03_working_laptop.png" alt="" className="h-24 w-auto shrink-0 sm:h-28" />
+                    <p className="text-white/70">Camri is going through your photos.</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
                     {cols.map((c) => (
                       <div key={c.key} className={c.state === 'wait' ? 'opacity-40' : ''}>
                         <p className={`text-xs uppercase tracking-[0.18em] ${c.state === 'active' ? 'animate-pulse text-white' : 'text-white/45'}`}>{c.label}</p>
-                        <p className={`mt-3 font-fraunces text-5xl ${c.state === 'active' ? 'animate-pulse text-white' : 'text-white/60'}`}>
+                        <p className={`mt-3 font-fraunces text-4xl ${c.state === 'active' ? 'animate-pulse text-white' : 'text-white/60'}`}>
                           {c.state === 'wait' ? '—' : c.state === 'done' ? '✓' : <>{Math.round(c.value * cull.total)}<span className="text-white/25"> / {cull.total}</span></>}
                         </p>
                         <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
@@ -974,6 +1045,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                   <button className={chipCls('maybe')} onClick={() => setCullView('maybe')}><b className="text-white">{maybes}</b> maybe</button>
                   <button className={chipCls('cuts')} onClick={() => setCullView('cuts')}><b className="text-white">{cuts.length}</b> suggested cuts</button>
                   <button className={chipCls('dupes')} onClick={() => setCullView('dupes')}><b className="text-white">{groupList.length}</b> duplicate groups</button>
+                  {people.length > 0 && <button className={chipCls('people')} onClick={() => setCullView('people')}><b className="text-white">{people.length}</b> people</button>}
                 </div>
 
                 {aiOn && (
@@ -1016,6 +1088,44 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                         </div>
                       ))}
                     </div>
+                  </div>
+                ) : cullView === 'people' ? (
+                  <div className="mt-8">
+                    <p className="max-w-2xl text-white/55">Everyone we found across this shoot. Tap a person to see their photos, rename them, or join two that are the same person.</p>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      {people.map((pe) => {
+                        const n = photos.filter((p) => p.person_ids?.includes(pe.id)).length
+                        return (
+                          <button key={pe.id} onClick={() => setPersonSel(pe.id)} className={`flex items-center gap-3 rounded-2xl border px-3 py-2 text-left transition ${personSel === pe.id ? 'border-twilight bg-white/10' : 'border-white/10 hover:border-white/30'}`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={pe.face} alt="" className="h-12 w-12 rounded-full object-cover" />
+                            <span>
+                              <span className="block text-sm text-white">{pe.name}</span>
+                              <span className="block text-xs text-white/50">{n} {n === 1 ? 'photo' : 'photos'}</span>
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {selPerson && (
+                      <div className={`${panel} mt-6`}>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <input value={selPerson.name} onChange={(e) => renamePerson(selPerson.id, e.target.value)} onBlur={() => void savePeople()} placeholder="Name" className="w-56 rounded-xl border border-white/15 bg-transparent px-3 py-2 text-white focus:border-twilight focus:outline-none" />
+                          {people.length > 1 && (
+                            <select value="" onChange={(e) => { if (e.target.value) void mergePerson(selPerson.id, e.target.value) }} className="rounded-xl border border-white/15 bg-transparent px-3 py-2 text-sm text-white/80">
+                              <option value="" className="text-black">Same person as...</option>
+                              {people.filter((x) => x.id !== selPerson.id).map((x) => <option key={x.id} value={x.id} className="text-black">{x.name}</option>)}
+                            </select>
+                          )}
+                          <button className={btnQuiet} onClick={() => void mergePerson(selPerson.id, null)}>Not a person</button>
+                        </div>
+                        <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+                          {selPhotos.map((p) => (
+                            <div key={p.id} className="relative aspect-square overflow-hidden rounded-lg bg-white/5">{img(p)}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : cullView === 'dupes' ? (
                   <div className="mt-8">

@@ -891,12 +891,12 @@ export default function GalleryManagePage() {
                     <p className="font-fraunces text-lg text-ink">Cull this gallery</p>
                     <p className="mt-1 text-xs text-ink-soft">Finds soft shots and groups near-identical frames, keeping the sharpest of each. Nothing is deleted, and you can change any label afterwards.</p>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <span className="text-sm text-ink">Keep about</span>
+                      <span className="text-sm text-ink">How many photos do you want to end up with?</span>
                       <div className="w-24">
-                        <input value={cullTarget} onChange={(e) => setCullTarget(e.target.value.replace(/\D/g, ''))} placeholder="all" inputMode="numeric" className={input} />
+                        <input value={cullTarget} onChange={(e) => setCullTarget(e.target.value.replace(/\D/g, ''))} placeholder="any" inputMode="numeric" className={input} />
                       </div>
-                      <span className="text-sm text-ink-soft">photos (optional)</span>
                     </div>
+                    <p className="mt-1 text-xs text-ink-soft">Optional. Leave it empty and we only flag soft shots and closed eyes. Type a number and we also mark the extras as over your target, keeping your best. Nothing is deleted.</p>
                     <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-ink">
                       <input type="checkbox" checked={cullEyes} onChange={(e) => setCullEyes(e.target.checked)} className="h-4 w-4" />
                       Also check for closed eyes (slower)
