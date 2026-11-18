@@ -177,7 +177,7 @@ export default function CamriHelper() {
       )}
 
       {open && (
-        <div className="fixed bottom-5 right-5 z-50 flex max-h-[min(640px,calc(100vh-40px))] w-[380px] max-w-[calc(100vw-40px)] flex-col overflow-hidden rounded-3xl border border-white/60 bg-[#FBF7F2]/95 text-[#3a2f2a] shadow-2xl backdrop-blur-xl">
+        <div className="fixed bottom-5 right-5 z-50 flex h-[clamp(360px,calc(100vh_-_480px),640px)] w-[380px] max-w-[calc(100vw-40px)] flex-col overflow-hidden rounded-3xl border border-white/60 bg-[#FBF7F2]/95 text-[#3a2f2a] shadow-2xl backdrop-blur-xl">
           <div className="flex items-center gap-3 border-b border-black/5 px-4 py-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {imgOk && <img src={`${P}13_face_avatar.png`} alt="" className="h-9 w-9 object-contain" />}
@@ -199,7 +199,7 @@ export default function CamriHelper() {
             <button aria-label="Close" onClick={() => setOpen(false)} className="rounded-full px-2 py-1 text-lg leading-none text-[#3a2f2a]/50 transition hover:text-[#3a2f2a]">×</button>
           </div>
 
-          <div ref={boxRef} className="min-h-[220px] flex-1 space-y-3 overflow-y-auto px-4 py-3">
+          <div ref={boxRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {msgs.length === 0 && (
               <div className="flex flex-col items-center text-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

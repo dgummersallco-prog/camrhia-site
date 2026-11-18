@@ -48,7 +48,7 @@ const STEPS = [
 ]
 
 const FAQ = [
-  ["Do I need a credit card to try it?", "Start free for 14 days. If it is not for you, you walk away."],
+  ["Do I need a credit card to try it?", "For Showcase and Retouch, yes. You add a card to start, you are not charged for 14 days, and you can cancel anytime in Settings before then and pay nothing. The Camrhia app is free for its first 14 days through the App Store."],
   ["I already have a website. Why Camrhia?", "Keep it if you love it. Camrhia replaces the tools behind it: booking, contracts, payments, messaging and delivery."],
   ["Is it hard to set up?", "If you can post to Instagram, you can set this up. Most are live in an afternoon."],
   ["Can I cancel anytime?", "Yes. Cancel anytime in your Apple ID subscriptions."],
@@ -318,6 +318,37 @@ export default function Home() {
                   <p className="mt-2 leading-relaxed text-ink-soft">{d}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* EDITING ROOM */}
+        <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <div className="max-w-2xl">
+            <p className="text-base font-medium text-brass">The Editing Room</p>
+            <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">From shoot to gallery, with Camri beside you.</h2>
+            <p className="mt-5 text-lg text-ink-soft leading-relaxed">Cull, edit and deliver in one place. Camri does the slow parts and you make the final calls.</p>
+          </div>
+          <div className="mt-12 grid gap-10 md:grid-cols-2">
+            <div className="rounded-3xl border border-line bg-card p-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/shots/edit-cull.png" alt="Camri ready to cull a shoot" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/shots/edit-cull2.png" alt="Camri going through the photos" loading="lazy" className="mt-4 w-full rounded-2xl ring-1 ring-black/10" />
+              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Camri finds the keepers</p>
+              <p className="mt-2 text-ink-soft leading-relaxed">She checks sharpness, exposure, black frames, faces and eyes, smiles, duplicates and people. Nothing is removed until you say so.</p>
+            </div>
+            <div className="rounded-3xl border border-line bg-card p-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/shots/edit-camri.png" alt="Asking Camri how to edit a photo" loading="lazy" className="mx-auto w-full max-w-xs rounded-2xl ring-1 ring-black/10" />
+              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Edit with a pro beside you</p>
+              <p className="mt-2 text-ink-soft leading-relaxed">Ask how a pro would handle the light in this photo. Camri moves the sliders when you say yes, and you can undo any change.</p>
+            </div>
+            <div className="rounded-3xl border border-line bg-card p-6 md:col-span-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/shots/edit-gallery.png" alt="Styling a gallery with Camri" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Style the gallery your clients open</p>
+              <p className="mt-2 max-w-2xl text-ink-soft leading-relaxed">Pick an opening photo and a photo layout, or ask Camri to restyle it. Then deliver it in one tap.</p>
             </div>
           </div>
         </section>

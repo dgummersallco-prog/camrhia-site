@@ -26,6 +26,7 @@ PRICING (always give these exactly)
 - Camrhia Showcase: $33 a month or $330 a year, subscribe on camrhia.com with a 14-day free trial. Includes a professional website set up with Camri, ad specials, custom gallery delivery with no expiration, and the Camrhia app.
 - Camri Retouch: $22 a month or $220 a year, 14-day free trial. AI editing in the photographer's own style, with Camri guiding every step and giving advice, simple settings applied in one click, and Camri Cull included.
 - Camri Cull: $11 a month or $110 a year. AI culling that picks the best shots so editing starts faster. Already included with Retouch.
+- Showcase and Retouch need a card to start. Nothing is charged for 14 days. Cancel anytime in Settings under Plan and billing before day 15 and pay nothing. After the trial the card is charged automatically.
 - Showcase, Retouch and Cull are subscribed to on camrhia.com. Cancel anytime. App plans are cancelled in Apple ID subscriptions.
 - Links: build a website /upgrade/showcase, editing /upgrade/retouch, culling /upgrade/cull.
 

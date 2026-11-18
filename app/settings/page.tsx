@@ -41,6 +41,21 @@ export default function SettingsPage() {
   const [autoReview, setAutoReview] = useState(true)
   const [autoMsg, setAutoMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [autoBusy, setAutoBusy] = useState(false)
+  const [billBusy, setBillBusy] = useState(false)
+  const [billMsg, setBillMsg] = useState('')
+  async function openBilling() {
+    if (!supabase) return
+    setBillBusy(true)
+    setBillMsg('')
+    try {
+      const { data } = await supabase.auth.getSession()
+      const res = await fetch('/api/billing/portal', { method: 'POST', headers: { Authorization: 'Bearer ' + (data.session?.access_token ?? '') } })
+      const j = await res.json().catch(() => ({}))
+      if (j.url) { window.location.href = j.url; return }
+      setBillMsg(j.error === 'none' ? 'No website plan found on this account. If you subscribed in the iPhone app, cancel in iPhone Settings, tap your name, then Subscriptions.' : (j.error || 'Could not open billing. Please try again.'))
+    } catch { setBillMsg('Could not open billing. Please try again.') }
+    setBillBusy(false)
+  }
 
   useEffect(() => {
     async function load() {
@@ -114,6 +129,12 @@ export default function SettingsPage() {
                 <label className="mb-1.5 block text-xs font-medium text-ink">Email</label>
                 <input className={input + ' bg-blush-wash/40'} value={email} readOnly />
               </div>
+            </Card>
+
+            <Card title="Plan and billing" hint="Change your card, see invoices, or cancel anytime.">
+              <button type="button" onClick={openBilling} disabled={billBusy} className={btnGhost}>{billBusy ? 'Opening…' : 'Manage or cancel my plan'}</button>
+              {billMsg && <p className="mt-3 text-sm text-ink-soft">{billMsg}</p>}
+              <p className="mt-3 text-xs text-ink-soft">Plans bought in the iPhone app are cancelled in iPhone Settings, under your name, then Subscriptions.</p>
             </Card>
 
             <Card title="Dashboard background" hint="Pick a look, or upload your own photo to sit behind your dashboard.">

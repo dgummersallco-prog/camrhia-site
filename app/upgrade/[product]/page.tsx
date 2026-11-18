@@ -144,7 +144,7 @@ export default function UpgradePage() {
             <p className="mt-6 font-fraunces text-5xl text-ink">
               ${price}<span className="text-base text-ink-soft"> /{interval === 'month' ? 'month' : 'year'}</span>
             </p>
-            {c.trial && <p className="mt-1 text-sm text-ink-soft">14 days free. Cancel anytime.</p>}
+            {c.trial && <p className="mt-1 text-sm text-ink-soft">14 days free. Add your card to start. You are not charged until day 15, and you can cancel anytime in Settings before then.</p>}
 
             {signedIn === false && (
               <div className="mt-6 space-y-3">
