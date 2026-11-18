@@ -221,16 +221,37 @@ export default function Home() {
             />
           </div>
           <div className="mt-14 sm:mt-20">
-            <Split
-              flip
-              title="Need to fill your calendar this month?"
-              body="Run a mini session or a holiday offer on its own quick sign-up page. Your beautiful website stays exactly as it is, and clients book in a tap."
-              items={["Its own sign-up page and link", "Quick Specials made in minutes", "Share anywhere", "Your website stays untouched"]}
-              media={
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src="/shots/quickspecials.jpg" alt="Ready-made Quick Specials designs in Camrhia" loading="lazy" className={SHOT} />
-              }
-            />
+            <div className="grid items-center gap-8 md:grid-cols-2 md:gap-14">
+              <div>
+                <h3 className="font-fraunces text-3xl sm:text-4xl font-semibold text-ink leading-[1.1]">Need to fill your calendar this month?</h3>
+                <p className="mt-4 text-lg text-ink-soft leading-relaxed">
+                  Run a mini session or a holiday offer on its own quick sign-up page. Your beautiful website stays exactly as it is, and clients book in a tap.
+                </p>
+              </div>
+              <div className="rounded-[2rem] bg-brass/10 p-4 sm:p-6">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/quickspecials.jpg" alt="Ready-made Quick Specials designs in Camrhia" loading="lazy" className={`${SHOT} mx-auto max-w-sm`} />
+              </div>
+            </div>
+
+            <div className="mt-10 sm:mt-14 rounded-[2rem] bg-brass/10 p-4 sm:p-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/shots/specials.jpg" alt="Designing your own special in Camrhia" loading="lazy" className={`${SHOT} mx-auto max-w-4xl`} />
+            </div>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                "Its own sign-up page and link",
+                "Quick Specials made in minutes",
+                "Share anywhere",
+                "Your website stays untouched",
+              ].map((p) => (
+                <div key={p} className="rounded-3xl border border-line bg-card p-6">
+                  <span className="block h-1 w-8 rounded-full bg-brass" aria-hidden />
+                  <p className="mt-4 font-fraunces text-2xl font-semibold text-ink leading-snug">{p}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
