@@ -142,11 +142,11 @@ export default function Home() {
           <Panel tone="bg-brass/15">
             <div className="absolute left-[6%] top-[9%] w-[54%] z-10 -rotate-[2deg]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/sessions.png" alt="The Camrhia dashboard with Camri" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.15s" }} />
+              <img src="/shots/sessions.jpg" alt="The Camrhia dashboard with Camri" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.15s" }} />
             </div>
             <div className="absolute right-[5%] top-[22%] w-[46%] rotate-[4deg]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/payments.png" alt="Payments in the Camrhia app" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.35s" }} />
+              <img src="/shots/payments.jpg" alt="Payments in the Camrhia app" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.35s" }} />
             </div>
           </Panel>
         </section>
@@ -165,7 +165,7 @@ export default function Home() {
             panel={
               <Panel tone="bg-brass/15">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/sessions.png" alt="Camri on the Camrhia dashboard" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[7%] w-[62%]`} />
+                <img src="/shots/sessions.jpg" alt="Camri on the Camrhia dashboard" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[7%] w-[62%]`} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/camri/14_peeking_sliders.png" alt="Camri" loading="lazy" className="absolute bottom-[3%] right-[4%] w-[30%]" />
               </Panel>
@@ -182,9 +182,9 @@ export default function Home() {
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/shots/home.png" alt="The Camrhia home screen" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+            <img src="/shots/home.jpg" alt="The Camrhia home screen" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/shots/sessions-web.png" alt="Sessions in Camrhia, with every step tracked" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+            <img src="/shots/sessions-web.jpg" alt="Sessions in Camrhia, with every step tracked" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
           </div>
         </section>
 
@@ -198,13 +198,13 @@ export default function Home() {
           <div className="mt-12 grid items-center gap-10 md:grid-cols-2">
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/specials.png" alt="Designing a Special in Camrhia" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+              <img src="/shots/specials.jpg" alt="Designing a Special in Camrhia" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
               <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">A live website for every Special</p>
               <p className="mt-2 text-ink-soft leading-relaxed">Share one link. Clients see your offer, pick a time and inquire without leaving the page.</p>
             </div>
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/quickspecials.png" alt="Quick Specials designs in Camrhia" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+              <img src="/shots/quickspecials.jpg" alt="Quick Specials designs in Camrhia" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
               <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Quick Specials</p>
               <p className="mt-2 text-ink-soft leading-relaxed">Pick a design, add your details and share. Ready to post in minutes.</p>
             </div>
@@ -259,7 +259,7 @@ export default function Home() {
             panel={
               <Panel tone="bg-twilight/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/explore.png" alt="Arranging a website with Camri" loading="lazy" className="absolute left-[4%] right-[4%] top-1/2 -translate-y-1/2 w-[92%] rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]" />
+                <img src="/shots/explore.jpg" alt="Arranging a website with Camri" loading="lazy" className="absolute left-[4%] right-[4%] top-1/2 -translate-y-1/2 w-[92%] rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]" />
               </Panel>
             }
           />
@@ -274,9 +274,9 @@ export default function Home() {
             panel={
               <Panel tone="bg-sage/15">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/messages.png" alt="Client messages in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
+                <img src="/shots/messages.jpg" alt="Client messages in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/calendar.png" alt="The Camrhia calendar" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
+                <img src="/shots/calendar.jpg" alt="The Camrhia calendar" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
               </Panel>
             }
           />
@@ -289,9 +289,9 @@ export default function Home() {
               panel={
                 <Panel tone="bg-brass/15">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/shots/payments.png" alt="Payments in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
+                  <img src="/shots/payments.jpg" alt="Payments in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/shots/session.png" alt="A session in Camrhia" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
+                  <img src="/shots/session.jpg" alt="A session in Camrhia" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
                 </Panel>
               }
             />
@@ -332,21 +332,21 @@ export default function Home() {
           <div className="mt-12 grid gap-10 md:grid-cols-2">
             <div className="rounded-3xl border border-line bg-card p-6">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/edit-cull.png" alt="Camri ready to cull a shoot" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10" />
+              <img src="/shots/edit-cull.jpg" alt="Camri ready to cull a shoot" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/edit-cull2.png" alt="Camri going through the photos" loading="lazy" className="mt-4 w-full rounded-2xl ring-1 ring-black/10" />
+              <img src="/shots/edit-cull2.jpg" alt="Camri going through the photos" loading="lazy" className="mt-4 w-full rounded-2xl ring-1 ring-black/10" />
               <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Camri finds the keepers</p>
               <p className="mt-2 text-ink-soft leading-relaxed">She checks sharpness, exposure, black frames, faces and eyes, smiles, duplicates and people. Nothing is removed until you say so.</p>
             </div>
             <div className="rounded-3xl border border-line bg-card p-6">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/edit-camri.png" alt="Asking Camri how to edit a photo" loading="lazy" className="mx-auto w-full max-w-xs rounded-2xl ring-1 ring-black/10" />
+              <img src="/shots/edit-camri.jpg" alt="Asking Camri how to edit a photo" loading="lazy" className="mx-auto w-full max-w-xs rounded-2xl ring-1 ring-black/10" />
               <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Edit with a pro beside you</p>
               <p className="mt-2 text-ink-soft leading-relaxed">Ask how a pro would handle the light in this photo. Camri moves the sliders when you say yes, and you can undo any change.</p>
             </div>
             <div className="rounded-3xl border border-line bg-card p-6 md:col-span-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/edit-gallery.png" alt="Styling a gallery with Camri" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+              <img src="/shots/edit-gallery.jpg" alt="Styling a gallery with Camri" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
               <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Style the gallery your clients open</p>
               <p className="mt-2 max-w-2xl text-ink-soft leading-relaxed">Pick an opening photo and a photo layout, or ask Camri to restyle it. Then deliver it in one tap.</p>
             </div>
