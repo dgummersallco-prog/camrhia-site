@@ -8,7 +8,7 @@ import SceneSidebar from '@/app/components/SceneSidebar'
 import ImportStart from './ImportStart'
 import ShootRoom from './ShootRoom'
 import TeachStyle from './TeachStyle'
-import { QUESTIONS, STYLE_LOOK, type Signature } from '@/lib/brief'
+import { QUESTIONS, type Signature } from '@/lib/brief'
 
 type Row = { id: string; title: string; status: string; created_at: string; gallery_photos: { count: number }[] }
 type Tab = 'edit' | 'styles' | 'brain'
@@ -86,14 +86,29 @@ export default function EditingRoom() {
   const [userId, setUserId] = useState<string | null>(null)
   const [sigs, setSigs] = useState<Signature[] | null>(null)
   const [corr, setCorr] = useState<Correction[] | null>(null)
-  const [name, setName] = useState('')
-  const [form, setForm] = useState<Record<string, string>>({})
-  const [creating, setCreating] = useState(false)
   const [renaming, setRenaming] = useState<string | null>(null)
   const [renameVal, setRenameVal] = useState('')
   const [adding, setAdding] = useState<string | null>(null)
   const [shootId, setShootId] = useState<string | null>(null)
   const [teachFor, setTeachFor] = useState<string | null>(null)
+  const [stages, setStages] = useState<Record<string, { culled: number; edited: number }> | null>(null)
+
+  async function loadStages(ids: string[]) {
+    const sb = supabase
+    if (!sb || ids.length === 0) { setStages({}); return }
+    const out: Record<string, { culled: number; edited: number }> = {}
+    for (let from = 0; from < 20000; from += 1000) {
+      const { data, error: e } = await sb.from('gallery_photos').select('gallery_id, cull_label, enhanced').in('gallery_id', ids).range(from, from + 999)
+      if (e) return
+      for (const r of (data ?? []) as { gallery_id: string; cull_label: string | null; enhanced: boolean | null }[]) {
+        const o = out[r.gallery_id] ?? (out[r.gallery_id] = { culled: 0, edited: 0 })
+        if (r.cull_label) o.culled++
+        if (r.enhanced) o.edited++
+      }
+      if (!data || data.length < 1000) break
+    }
+    setStages(out)
+  }
 
   useEffect(() => {
     const sb = supabase
@@ -107,7 +122,7 @@ export default function EditingRoom() {
         sb.from('edit_signatures').select('id, name, answers, strength').eq('owner_id', uid).order('created_at', { ascending: true }),
         sb.from('edit_corrections').select('photo_id, gallery_id, light, signature_id, created_at, manual:final->manual').eq('owner_id', uid).order('created_at', { ascending: false }).limit(5000),
       ])
-      if (g.error) { setError(g.error.message); setRows([]) } else setRows((g.data ?? []) as unknown as Row[])
+      if (g.error) { setError(g.error.message); setRows([]) } else { setRows((g.data ?? []) as unknown as Row[]); void loadStages(((g.data ?? []) as unknown as Row[]).map((x) => x.id)) }
       setSigs(((sg.data ?? []) as Signature[]).map((s) => ({ ...s, strength: Number(s.strength) })))
       setCorr((co.data ?? []) as unknown as Correction[])
     })
@@ -194,28 +209,6 @@ export default function EditingRoom() {
     setSigs((prev) => (prev ?? []).map((s) => (s.id === sig.id ? { ...s, answers: answers as unknown as Signature['answers'] } : s)))
   }
 
-  async function createStyle() {
-    const sb = supabase
-    const n = name.trim()
-    if (!sb || !userId || !n || !form.style || creating) return
-    setCreating(true)
-    const answers: Record<string, string> = {}
-    for (const f of FIELDS) if (form[f.key]) answers[f.key] = form[f.key]
-    const look = STYLE_LOOK[form.style]
-    if (look) answers.look = look
-    const { data: row } = await sb
-      .from('edit_signatures')
-      .insert({ owner_id: userId, name: n, answers, strength: 0.8 })
-      .select('id, name, answers, strength')
-      .maybeSingle()
-    setCreating(false)
-    if (row) {
-      setSigs((prev) => [...(prev ?? []), { ...(row as Signature), strength: Number((row as Signature).strength) }])
-      setName('')
-      setForm({})
-    }
-  }
-
   async function saveRename(id: string) {
     const sb = supabase
     const n = renameVal.trim()
@@ -238,7 +231,7 @@ export default function EditingRoom() {
     const sb = supabase
     if (!sb || !userId) return
     const g = await sb.from('galleries').select('id, title, status, created_at, gallery_photos(count)').eq('owner_id', userId).order('created_at', { ascending: false })
-    if (!g.error) setRows((g.data ?? []) as unknown as Row[])
+    if (!g.error) { setRows((g.data ?? []) as unknown as Row[]); void loadStages(((g.data ?? []) as unknown as Row[]).map((x) => x.id)) }
   }
 
   const titleOf = (gid: string) => rows?.find((r) => r.id === gid)?.title ?? 'A shoot'
@@ -265,7 +258,7 @@ export default function EditingRoom() {
 
         {tab === 'edit' && (
           <>
-            {shootId ? <div className="room-light mt-2"><ShootRoom galleryId={shootId} onBack={backToStart} /></div> : <ImportStart rows={rows} userId={userId} onOpen={setShootId} />}
+            {shootId ? <div className="room-light mt-2"><ShootRoom galleryId={shootId} onBack={backToStart} /></div> : <ImportStart rows={rows} stages={stages} userId={userId} onOpen={setShootId} />}
           </>
         )}
 
@@ -277,39 +270,6 @@ export default function EditingRoom() {
               {userId && <TeachStyle userId={userId} onCreated={(sg) => setSigs((prev) => [...(prev ?? []), sg])} />}
             </div>
 
-            <details className="mt-6">
-              <summary className="cursor-pointer text-sm text-ink-soft">Or set one up by hand</summary>
-            <div className="mt-4 rounded-2xl border border-white/70 bg-white/60 p-6">
-              <p className="font-fraunces text-xl text-ink">Create a style</p>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Name it, like Senior girls or Team Flames"
-                className="mt-4 w-full rounded-lg border border-white/70 bg-white/70 px-3 py-2 text-sm text-ink outline-none focus:border-twilight"
-              />
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {FIELDS.map((f) => {
-                  const q = QUESTIONS.find((x) => x.key === f.key)
-                  return (
-                    <label key={f.key} className="block text-xs text-ink-soft">
-                      {f.label}
-                      <select
-                        value={form[f.key] ?? ''}
-                        onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                        className="mt-1 w-full rounded-lg border border-white/70 bg-white/70 px-3 py-2 text-sm text-ink outline-none focus:border-twilight"
-                      >
-                        <option value="">{f.key === 'style' ? 'Choose…' : 'Any'}</option>
-                        {q?.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
-                    </label>
-                  )
-                })}
-              </div>
-              <button className={`${primary} mt-5`} disabled={!name.trim() || !form.style || creating} onClick={createStyle}>
-                {creating ? 'Saving…' : 'Save style'}
-              </button>
-            </div>
-            </details>
 
             {sigs === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
             {sigs && sigs.length === 0 && (

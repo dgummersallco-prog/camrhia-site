@@ -1,4 +1,4 @@
-import type { Adjust } from '@/lib/enhance'
+import { LOOKS, type Adjust } from '@/lib/enhance'
 
 // Camri learns a look from finished photos. Everything runs in the browser; only the numbers are saved, never the photos.
 export type Fingerprint = {
@@ -100,8 +100,9 @@ export function mergeFingerprints(a: Fingerprint, b: Fingerprint): Fingerprint {
   return out
 }
 
-export function deriveStyle(fp: Fingerprint): Derived {
-  const bw = fp.bw > 0.8
+export function deriveStyle(fp: Fingerprint, lookId?: string): Derived {
+  const base = lookId ? LOOKS.find((l) => l.id === lookId) : undefined
+  const bw = fp.bw > 0.8 || lookId === 'bw'
   const t: Adjust = {
     exposure: clamp((fp.L - 0.42) * 1.6, -0.35, 0.35),
     contrast: clamp((fp.S - (bw ? 0.26 : 0.21)) * 2, -0.3, 0.3),
@@ -113,6 +114,12 @@ export function deriveStyle(fp: Fingerprint): Derived {
     t.saturation = clamp((fp.sat - 0.3) * 1.3, -0.3, 0.3)
     t.temp = clamp(fp.warm - 0.06, -0.22, 0.22)
     t.tint = clamp(fp.tint, -0.1, 0.1)
+  }
+  // The chosen style already brings its own look, so the photos only fine-tune what is left over.
+  if (base && lookId !== 'bw') {
+    for (const k of ['exposure', 'contrast', 'highlights', 'shadows', 'temp', 'tint', 'saturation', 'fade'] as const) {
+      t[k] = (t[k] ?? 0) - 0.8 * base.params[k]
+    }
   }
   const tweak: Adjust = {}
   for (const k of Object.keys(t) as (keyof Adjust)[]) {
@@ -129,5 +136,5 @@ export function deriveStyle(fp: Fingerprint): Derived {
     if (fp.warm > 0.12) bits.push('warm tones')
     else if (fp.warm < -0.01) bits.push('cool tones')
   }
-  return { look: bw ? 'bw' : 'natural', tweak, about: bits.join(' · ') }
+  return { look: bw ? 'bw' : base ? base.id : 'natural', tweak, about: bits.join(' · ') }
 }

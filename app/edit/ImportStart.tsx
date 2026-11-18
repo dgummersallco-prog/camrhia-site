@@ -33,7 +33,27 @@ async function filesFromDrop(dt: DataTransfer): Promise<File[]> {
 const primary = 'rounded-full bg-[var(--color-twilight)] px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
 const quiet = 'rounded-full border border-white/15 px-5 py-2.5 text-sm text-ink-soft transition hover:border-white/35 hover:text-ink disabled:opacity-40'
 
-export default function ImportStart({ rows, userId, onOpen }: { rows: Row[] | null; userId: string | null; onOpen: (id: string) => void }) {
+type Stage = 'add' | 'cull' | 'edit' | 'send' | 'sent'
+const STAGE_LABEL: Record<Stage, string> = { add: 'No photos yet', cull: 'Needs cull', edit: 'Needs edit', send: 'Ready to send', sent: 'Sent' }
+const FILTERS: { key: 'all' | Stage; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'cull', label: 'Needs cull' },
+  { key: 'edit', label: 'Needs edit' },
+  { key: 'send', label: 'Ready to send' },
+  { key: 'sent', label: 'Sent' },
+]
+
+function stageOf(r: Row, st: { culled: number; edited: number } | undefined): Stage {
+  const count = r.gallery_photos?.[0]?.count ?? 0
+  if (count === 0) return 'add'
+  if (r.status === 'published') return 'sent'
+  if (st && st.edited >= count) return 'send'
+  if (st && st.culled > 0) return 'edit'
+  return 'cull'
+}
+
+export default function ImportStart({ rows, stages, userId, onOpen }: { rows: Row[] | null; stages: Record<string, { culled: number; edited: number }> | null; userId: string | null; onOpen: (id: string) => void }) {
+  const [filter, setFilter] = useState<'all' | Stage>('all')
   const [dragging, setDragging] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -79,13 +99,26 @@ export default function ImportStart({ rows, userId, onOpen }: { rows: Row[] | nu
       {rows && rows.length > 0 && (
         <>
           <p className="mt-12 font-fraunces text-xl text-ink">Pick up where you left off</p>
+          {stages && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {FILTERS.map((f) => {
+                const n = f.key === 'all' ? rows.length : rows.filter((r) => stageOf(r, stages[r.id]) === f.key).length
+                return (
+                  <button key={f.key} onClick={() => setFilter(f.key)} className={`rounded-full border px-4 py-1.5 text-sm transition ${filter === f.key ? 'border-twilight bg-white text-ink' : 'border-white/70 bg-white/40 text-ink-soft hover:border-twilight'}`}>
+                    {f.label} <span className="text-ink-soft">{n}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {rows.map((r) => {
+            {rows.filter((r) => !stages || filter === 'all' || stageOf(r, stages[r.id]) === filter).map((r) => {
               const count = r.gallery_photos?.[0]?.count ?? 0
+              const label = stages ? STAGE_LABEL[stageOf(r, stages[r.id])] : r.status === 'published' ? 'Sent' : ''
               return (
                 <button key={r.id} onClick={() => onOpen(r.id)} className="group rounded-2xl border border-white/70 bg-white/60 p-6 text-left transition hover:border-twilight">
                   <p className="font-fraunces text-xl text-ink">{r.title}</p>
-                  <p className="mt-2 text-sm text-ink-soft">{count} {count === 1 ? 'photo' : 'photos'} · {r.status === 'published' ? 'Published' : 'Draft'}</p>
+                  <p className="mt-2 text-sm text-ink-soft">{count} {count === 1 ? 'photo' : 'photos'}{label ? ` · ${label}` : ''}</p>
                   <p className="mt-6 text-sm text-twilight transition group-hover:translate-x-1">{count === 0 ? 'Start' : 'Open'} →</p>
                 </button>
               )

@@ -3,12 +3,19 @@
 import { useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { analyzeFiles, deriveStyle, mergeFingerprints, type Fingerprint } from '@/lib/styleLearn'
-import type { Signature } from '@/lib/brief'
+import { QUESTIONS, STYLE_LOOK, type Signature } from '@/lib/brief'
 
 const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
 const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-ink-soft transition hover:border-white/35 hover:text-ink disabled:opacity-40'
 
 type Learned = { fp?: Fingerprint; base?: Record<string, number> }
+const FIELDS = [
+  { key: 'style', label: 'Style' },
+  { key: 'setting', label: 'Where' },
+  { key: 'light', label: 'Light' },
+  { key: 'mood', label: 'Mood' },
+  { key: 'skin', label: 'Skin tones' },
+]
 
 export default function TeachStyle({
   userId,
@@ -29,11 +36,13 @@ export default function TeachStyle({
   const [fp, setFp] = useState<Fingerprint | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [over, setOver] = useState(false)
+  const [form, setForm] = useState<Record<string, string>>({})
   const input = useRef<HTMLInputElement>(null)
 
   const old = (target?.answers as unknown as { learned?: Learned } | undefined)?.learned
   const merged = fp && old?.fp ? mergeFingerprints(old.fp, fp) : fp
-  const derived = merged ? deriveStyle(merged) : null
+  const lookPick = form.style ? STYLE_LOOK[form.style] : undefined
+  const derived = merged ? deriveStyle(merged, target ? undefined : lookPick) : null
 
   async function take(list: FileList | File[] | null) {
     const files = Array.from(list ?? [])
@@ -72,7 +81,9 @@ export default function TeachStyle({
     } else {
       const n = name.trim()
       if (!n) { setPhase('ready'); return }
-      const answers = { look: derived.look, tweak: derived.tweak, skin: 'yes', about: derived.about, learned: { fp: merged } }
+      const picked: Record<string, string> = {}
+      for (const f of FIELDS) if (form[f.key]) picked[f.key] = form[f.key]
+      const answers = { skin: 'yes', ...picked, look: derived.look, tweak: derived.tweak, about: derived.about, learned: { fp: merged } }
       const { data: row, error: e } = await sb.from('edit_signatures').insert({ owner_id: userId, name: n, answers, strength: 0.8 }).select('id, name, answers, strength').maybeSingle()
       if (e || !row) { setError(e?.message ?? 'Could not save this style.'); setPhase('ready'); return }
       onCreated?.({ ...(row as Signature), strength: Number((row as Signature).strength) })
@@ -80,6 +91,7 @@ export default function TeachStyle({
     setPhase('saved')
     setFp(null)
     setName('')
+    setForm({})
   }
 
   const camri = phase === 'analyzing' ? '/camri/03_working_laptop.png' : phase === 'ready' || phase === 'saved' ? '/camri/05_celebrating.png' : '/camri/10_holding_sliders.png'
@@ -121,6 +133,30 @@ export default function TeachStyle({
           )}
 
           {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
+
+          {!target && (phase === 'idle' || phase === 'ready') && (
+            <div className="mt-5">
+              <p className="text-sm text-ink">Tell Camri about these photos <span className="text-ink-soft">(optional, it helps her get it right)</span></p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {FIELDS.map((f) => {
+                  const q = QUESTIONS.find((x) => x.key === f.key)
+                  return (
+                    <label key={f.key} className="block text-xs text-ink-soft">
+                      {f.label}
+                      <select
+                        value={form[f.key] ?? ''}
+                        onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-white/70 bg-white/70 px-3 py-2 text-sm text-ink outline-none focus:border-twilight"
+                      >
+                        <option value="">{f.key === 'style' ? 'Let Camri decide' : 'Any'}</option>
+                        {q?.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {(phase === 'ready' || phase === 'saving') && derived && (
             <div className="mt-4">
