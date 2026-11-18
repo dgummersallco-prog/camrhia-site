@@ -104,7 +104,7 @@ export default function DashboardPage() {
         sb.from('gallery_favorites').select('id, gallery_id, photo_id, created_at').order('created_at', { ascending: false }).limit(8),
         sb.from('portfolio_photos').select('id', { count: 'exact', head: true }),
         sb.from('gallery_favorites').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
-        sb.from('weddings').select('id, names, wedding_date, session_type, gallery_due_date, gallery_url, balance, paid_in_full').eq('owner_id', uid),
+        sb.from('weddings').select('id, names, wedding_date, session_type, gallery_due_date, gallery_url, balance, paid_in_full').eq('owner_id', uid).is('canceled_at', null),
         sb.rpc('storage_usage'),
       ])
 
