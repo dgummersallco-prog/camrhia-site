@@ -6,12 +6,6 @@ export const metadata: Metadata = {
   description: "Start with the booking and payments app. Add a website, ad pages, gallery delivery and the Editing Room when you are ready.",
 }
 
-function Soon() {
-  return (
-    <span className="inline-block rounded-full border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-soft">Coming soon</span>
-  )
-}
-
 export default function Pricing() {
   return (
     <>
@@ -53,8 +47,7 @@ export default function Pricing() {
             <div className="mx-auto mt-12 max-w-xl rounded-3xl bg-card border border-line p-8">
               <p className="font-fraunces text-2xl font-semibold text-ink">Website, ad pages and gallery delivery</p>
               <p className="mt-1 text-sm text-ink-soft">Everything in Solo, plus your website, ad pages for your specials, and gallery delivery to your clients.</p>
-              <p className="mt-6 font-fraunces text-5xl text-ink">$36<span className="text-base text-ink-soft"> /month</span></p>
-              <div className="mt-5"><Soon /></div>
+              <p className="mt-6 font-fraunces text-5xl text-ink">$33<span className="text-base text-ink-soft"> /month</span></p>
             </div>
           </div>
         </section>
@@ -70,14 +63,12 @@ export default function Pricing() {
                 <p className="font-fraunces text-2xl font-semibold text-ink">Culling</p>
                 <p className="mt-1 text-sm text-ink-soft">Catches closed eyes and soft focus, groups near-identical shots and picks the best from each. You make the final call.</p>
                 <p className="mt-6 font-fraunces text-5xl text-ink">$11<span className="text-base text-ink-soft"> /month</span></p>
-                <div className="mt-5"><Soon /></div>
-              </div>
+                </div>
               <div className="rounded-3xl bg-card border border-line p-8">
                 <p className="font-fraunces text-2xl font-semibold text-ink">Full editing</p>
                 <p className="mt-1 text-sm text-ink-soft">Cull, edit and get your photos ready to send.</p>
                 <p className="mt-6 font-fraunces text-5xl text-ink">$22<span className="text-base text-ink-soft"> /month</span></p>
-                <div className="mt-5"><Soon /></div>
-              </div>
+                </div>
             </div>
             <p className="mt-10 text-center text-ink-soft">Pick what you need. Each one works on its own.</p>
           </div>
@@ -88,8 +79,7 @@ export default function Pricing() {
             <div className="mx-auto max-w-xl rounded-3xl border-2 border-twilight bg-card p-8 text-center">
               <p className="font-fraunces text-2xl font-semibold text-ink">All-in</p>
               <p className="mt-1 text-sm text-ink-soft">Everything in one plan. The app, your website, ad pages, gallery delivery and the Editing Room.</p>
-              <p className="mt-6 font-fraunces text-5xl text-ink">$59<span className="text-base text-ink-soft"> /month</span></p>
-              <div className="mt-5"><Soon /></div>
+              <p className="mt-6 font-fraunces text-5xl text-ink">$55<span className="text-base text-ink-soft"> /month</span></p>
             </div>
           </div>
         </section>

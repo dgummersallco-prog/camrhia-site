@@ -11,9 +11,10 @@ import { APP_STORE_URL } from '@/lib/appStore'
 import { DASH_BG_KEY, applyDashBg } from '@/lib/dashBg'
 import DashScenes from '@/app/components/DashScenes'
 
-type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'edit' | 'insights' | 'minis' | 'help' | 'packages' | 'questionnaires' | 'specials'
+type Tab = 'dashboard' | 'messages' | 'sessions' | 'contracts' | 'payments' | 'calendar' | 'storage' | 'galleries' | 'portfolio' | 'website' | 'reminders' | 'billing' | 'settings' | 'team' | 'clients' | 'edit' | 'insights' | 'minis' | 'help' | 'packages' | 'questionnaires' | 'specials' | 'domains'
 
 const ICONS: Record<string, string> = {
+  domains: 'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7 M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7',
   specials: 'M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z',
   dashboard: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
   messages: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
@@ -61,6 +62,7 @@ const ITEMS: { tab: Tab | 'affiliate'; href: string; label: string }[] = [
   { tab: 'messages', href: '/messages', label: 'Messages' },
   { tab: 'calendar', href: '/calendar', label: 'Calendar' },
   { tab: 'website', href: '/website', label: 'Your website' },
+  { tab: 'domains', href: '/domains', label: 'Domains' },
   { tab: 'specials', href: '/specials', label: 'Specials' },
   { tab: 'billing', href: '/billing', label: 'Billing' },
   { tab: 'settings', href: '/settings', label: 'Settings' },
@@ -255,7 +257,7 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
     { label: null, tabs: ['dashboard', 'galleries', 'edit'] },
     { label: 'Clients', tabs: ['clients', 'messages', 'sessions', 'calendar'] },
     { label: 'Work', tabs: ['packages', 'questionnaires', 'contracts', 'payments', 'team'] },
-    { label: 'Your brand', tabs: ['website', 'specials'] },
+    { label: 'Your brand', tabs: ['website', 'domains', 'specials'] },
     { label: 'Account', tabs: ['settings', 'help'] },
   ]
   const groupedNav = GROUPS.map((g, gi) => (

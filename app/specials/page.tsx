@@ -1013,18 +1013,22 @@ export default function SpecialsPage() {
         published: ent.showcase ? form.published : false,
         updated_at: new Date().toISOString(),
       }
+      const wantSlug = form.slug.replace(/^-+|-+$/g, '')
+      if (wantSlug.length < 3) throw new Error('Your link needs at least 3 letters or numbers.')
       let saved: Funnel | null = null
       if (form.id) {
-        const { data, error } = await sb.from('funnel_pages').update(row).eq('id', form.id).select().single()
+        const { data, error } = await sb.from('funnel_pages').update({ ...row, slug: wantSlug }).eq('id', form.id).select().single()
+        if (error && error.code === '23505') throw new Error('That link name is taken. Try another one.')
         if (error) throw error
         saved = data as Funnel
       } else {
-        let slug = form.slug
+        let slug = wantSlug
         for (let i = 0; i < 3 && !saved; i++) {
           const { data, error } = await sb.from('funnel_pages').insert({ ...row, slug, owner_id: userId }).select().single()
           if (error && error.code !== '23505') throw error
           if (data) saved = data as Funnel
-          else slug = makeSlug()
+          else if (slug.startsWith('special-')) slug = makeSlug()
+          else throw new Error('That link name is taken. Try another one.')
         }
         if (!saved) throw new Error('Could not create the page. Try again.')
       }
@@ -1166,7 +1170,11 @@ export default function SpecialsPage() {
               </StepCard>
               <StepCard n={2} title="Send your ad to this address">
                 <p className="text-sm leading-relaxed text-ink-soft">Use this link as the button on your post. It sends people to this special, not your main site.</p>
-                <p className="mt-3 break-all rounded-xl bg-paper px-4 py-3 text-sm font-medium text-ink">{linkFor(form.slug)}</p>
+                <div className="mt-3 flex items-center overflow-hidden rounded-xl bg-paper px-4 py-3 text-sm font-medium text-ink">
+                  <span className="shrink-0 text-ink-soft">{linkFor('').replace(/^https?:\/\//, '')}</span>
+                  <input value={form.slug} onChange={(e) => { const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-{2,}/g, '-').slice(0, 40); setForm((f) => (f ? { ...f, slug: v } : f)) }} aria-label="Link name" className="min-w-0 flex-1 bg-transparent outline-none" />
+                </div>
+                <p className="mt-2 text-xs text-ink-soft">Tap the end of the link to rename it, like holiday-minis. Save to keep it. Anyone with your old link will need the new one.</p>
                 <button type="button" onClick={() => { navigator.clipboard.writeText(linkFor(form.slug)); flash('Link copied') }} className="mt-3 rounded-full border border-line px-4 py-2 text-sm text-ink transition hover:border-twilight">Copy link</button>
                 {!form.id && <p className="mt-2 text-xs text-ink-soft">The link starts working once you save and publish in step 4.</p>}
               </StepCard>
