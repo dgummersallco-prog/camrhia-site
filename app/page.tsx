@@ -117,7 +117,7 @@ export default function Home() {
               </div>
               <p className="mt-3 text-sm text-ink-soft">No card needed. Everything is on for 14 days.</p>
             </div>
-            <div className="rise rounded-[2rem] bg-brass/10 p-4 sm:p-6">
+            <div className="rise">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/shots/home.jpg" alt="The Camrhia home screen" className={SHOT} />
             </div>
@@ -228,18 +228,16 @@ export default function Home() {
                   Run a mini session or a holiday offer on its own quick sign-up page. Your beautiful website stays exactly as it is, and clients book in a tap.
                 </p>
               </div>
-              <div className="rounded-[2rem] bg-brass/10 p-4 sm:p-6">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/quickspecials.jpg" alt="Ready-made Quick Specials designs in Camrhia" loading="lazy" className={`${SHOT} mx-auto max-w-sm`} />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/shots/quickspecials.jpg" alt="Ready-made Quick Specials designs in Camrhia" loading="lazy" className={`${SHOT} w-full`} />
             </div>
 
-            <div className="mt-10 grid items-center gap-8 md:grid-cols-2 md:gap-14">
-              <div className="rounded-[2rem] bg-brass/10 p-4 sm:p-6">
+            <div className="mt-10 grid gap-8 md:grid-cols-2 md:gap-14">
+              <div className="flex items-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/specials.jpg" alt="Designing your own special in Camrhia" loading="lazy" className={`${SHOT} mx-auto max-w-sm`} />
+                <img src="/shots/specials.jpg" alt="Designing your own special in Camrhia" loading="lazy" className={`${SHOT} w-full`} />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 sm:grid-rows-2">
                 {[
                   "Its own sign-up page and link",
                   "Quick Specials made in minutes",
@@ -304,6 +302,7 @@ export default function Home() {
             </div>
             <div className="mt-14 sm:mt-20">
               <Split
+                tone="bg-transparent !p-0 sm:!p-0"
                 flip
                 title="Deliver a gallery your clients brag about."
                 body="Choose a cover photo and a style, or ask Camri to restyle it. Clients open it, heart their favorites and download everything in one tap."
