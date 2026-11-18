@@ -65,6 +65,24 @@ function patternUrl(decor: string): string | null {
 
 export type TextBlock = { text: string; font: string; color: string; size: number; align: 'left' | 'center' | 'right'; place: 'title' | 'subtitle' | 'claim'; spacing: number; upper: boolean; top: number }
 
+export type FormStyle = {
+  titleOn: boolean; titleFont: string; titleSize: number; titleColor: string; titleAlign: 'left' | 'center' | 'right'
+  labelFont: string; labelSize: number; labelColor: string
+  boxBg: string; boxText: string; btnFont: string
+  showPhone: boolean; showNote: boolean
+  labName: string; labEmail: string; labPhone: string; labNote: string
+  top: number; pad: number
+}
+
+export const DEFAULT_FORM: FormStyle = {
+  titleOn: true, titleFont: '', titleSize: 24, titleColor: '', titleAlign: 'left',
+  labelFont: '', labelSize: 14, labelColor: '',
+  boxBg: '', boxText: '', btnFont: '',
+  showPhone: true, showNote: true,
+  labName: '', labEmail: '', labPhone: '', labNote: '',
+  top: 0, pad: 24,
+}
+
 export type SpecialTheme = {
   bgImage: string
   overlay: number
@@ -98,6 +116,7 @@ export type SpecialTheme = {
   subTop: number
   photosTop: number
   btnTop: number
+  form: FormStyle
 }
 
 export const DEFAULT_THEME: SpecialTheme = {
@@ -133,6 +152,7 @@ export const DEFAULT_THEME: SpecialTheme = {
   subTop: 0,
   photosTop: 0,
   btnTop: 0,
+  form: DEFAULT_FORM,
 }
 
 const hexOr = (v: unknown, d: string) => (/^#[0-9a-fA-F]{3,8}$/.test(String(v ?? '')) ? String(v) : d)
@@ -145,6 +165,32 @@ function num(v: unknown, min: number, max: number, d: number): number {
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : d
 }
 const fontOr = (v: unknown, d: string) => (typeof v === 'string' && FONT_OPTIONS[v] ? v : d)
+
+function readForm(v: unknown): FormStyle {
+  const o = (v ?? {}) as Record<string, unknown>
+  const D = DEFAULT_FORM
+  const fo = (x: unknown) => (typeof x === 'string' && FONT_OPTIONS[x] ? x : '')
+  const hx = (x: unknown) => (/^#[0-9a-fA-F]{3,8}$/.test(String(x ?? '')) ? String(x) : '')
+  const tt = (x: unknown) => String(x ?? '').slice(0, 80)
+  return {
+    titleOn: o.titleOn !== false,
+    titleFont: fo(o.titleFont),
+    titleSize: num(o.titleSize, 10, 80, D.titleSize),
+    titleColor: hx(o.titleColor),
+    titleAlign: pick(o.titleAlign, ['left', 'center', 'right'] as const, D.titleAlign),
+    labelFont: fo(o.labelFont),
+    labelSize: num(o.labelSize, 8, 30, D.labelSize),
+    labelColor: hx(o.labelColor),
+    boxBg: hx(o.boxBg),
+    boxText: hx(o.boxText),
+    btnFont: fo(o.btnFont),
+    showPhone: o.showPhone !== false,
+    showNote: o.showNote !== false,
+    labName: tt(o.labName), labEmail: tt(o.labEmail), labPhone: tt(o.labPhone), labNote: tt(o.labNote),
+    top: num(o.top, -300, 400, 0),
+    pad: num(o.pad, 0, 80, D.pad),
+  }
+}
 
 export function readTheme(c: Record<string, unknown>): SpecialTheme {
   const D = DEFAULT_THEME
@@ -181,6 +227,7 @@ export function readTheme(c: Record<string, unknown>): SpecialTheme {
     subTop: num(c.sub_top, -300, 400, 0),
     photosTop: num(c.photos_top, -300, 400, 0),
     btnTop: num(c.btn_top, -300, 400, 0),
+    form: readForm(c.form_style),
   }
 }
 
@@ -259,6 +306,7 @@ export function themeToContent(t: SpecialTheme): Record<string, unknown> {
     sub_top: t.subTop,
     photos_top: t.photosTop,
     btn_top: t.btnTop,
+    form_style: t.form,
   }
 }
 
@@ -267,13 +315,13 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
   const headFam = FONT_OPTIONS[t.headFont]?.family ?? 'serif'
   const subFam = FONT_OPTIONS[t.subFont]?.family ?? 'sans-serif'
   const bodyFam = FONT_OPTIONS[t.bodyFont]?.family ?? 'sans-serif'
-  const keys = Array.from(new Set([t.headFont, t.subFont, t.bodyFont, t.nameFont, ...t.blocks.map((b) => b.font), ...t.free.map((b) => b.font)])).filter((k) => FONT_OPTIONS[k])
+  const keys = Array.from(new Set([t.headFont, t.subFont, t.bodyFont, t.nameFont, t.form.titleFont, t.form.labelFont, t.form.btnFont, ...t.blocks.map((b) => b.font), ...t.free.map((b) => b.font)])).filter((k) => FONT_OPTIONS[k])
   const fontHref = keys.length
     ? 'https://fonts.googleapis.com/css2?' + keys.map((k) => 'family=' + FONT_OPTIONS[k].gf.split(':')[0]).join('&') + '&display=swap'
     : null
   const photos = d.photos.filter(Boolean).slice(0, 8)
   const radius = t.shape === 'square' ? '0px' : t.shape === 'rounded' ? '12px' : '999px'
-  const btnStyle = { background: t.accent, color: t.btnText, borderRadius: radius, fontSize: t.btnSizePx }
+  const btnStyle = { background: t.accent, color: t.btnText, borderRadius: radius, fontSize: t.btnSizePx, ...(t.form.btnFont ? { fontFamily: FONT_OPTIONS[t.form.btnFont]?.family } : {}) }
   const heading = { fontFamily: headFam, fontWeight: 500 as const }
   const heroText = t.bgImage ? '#FFFFFF' : t.textColor
   const emoji = DECOR_EMOJI[t.decor]
@@ -346,11 +394,11 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
         {renderBlocks('claim')}
 
         <div id="claim">
-          <section {...ed('claim')} className="mt-12 p-6" style={{ background: t.cardBg, color: t.cardText, borderRadius: t.cardRadius }}>
-            <h2 className="text-2xl" style={heading}>{d.formTitle || 'Claim your spot'}</h2>
+          <section {...ed('claim')} style={{ background: t.cardBg, color: t.cardText, borderRadius: t.cardRadius, marginTop: 48 + t.form.top, padding: t.form.pad }}>
+            {t.form.titleOn ? <h2 style={{ ...heading, fontSize: t.form.titleSize, textAlign: t.form.titleAlign, ...(t.form.titleFont ? { fontFamily: FONT_OPTIONS[t.form.titleFont]?.family } : {}), ...(t.form.titleColor ? { color: t.form.titleColor } : {}) }}>{d.formTitle || 'Claim your spot'}</h2> : null}
             <div className="mt-3">
               {d.spots ? <p className="mb-4 font-medium">{d.spots}</p> : null}
-              {d.miniId ? miniBlock : <LeadForm funnelId={funnelId} label={d.label} thanks={d.thanks} disabled={preview} accent={t.accent} btnText={t.btnText} radius={radius} textColor={t.cardText} />}
+              {d.miniId ? miniBlock : <LeadForm funnelId={funnelId} label={d.label} thanks={d.thanks} disabled={preview} accent={t.accent} btnText={t.btnText} radius={radius} textColor={t.form.labelColor || t.cardText} labels={{ name: t.form.labName, email: t.form.labEmail, phone: t.form.labPhone, note: t.form.labNote }} showPhone={t.form.showPhone} showNote={t.form.showNote} labelStyle={{ fontSize: t.form.labelSize, ...(t.form.labelFont ? { fontFamily: FONT_OPTIONS[t.form.labelFont]?.family } : {}) }} boxStyle={{ ...(t.form.boxBg ? { background: t.form.boxBg } : {}), ...(t.form.boxText ? { color: t.form.boxText } : {}) }} btnExtra={{ fontSize: t.btnSizePx, ...(t.form.btnFont ? { fontFamily: FONT_OPTIONS[t.form.btnFont]?.family } : {}) }} />}
             </div>
           </section>
         </div>

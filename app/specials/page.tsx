@@ -12,7 +12,7 @@ import { DashboardHeader } from '@/app/components/DashboardHeader'
 import DesignGroup from '@/app/components/DesignGroup'
 import { useEntitlements } from '@/lib/useEntitlements'
 import { type FreeBox } from '@/app/go/[slug]/FreeCanvas'
-import SpecialView, { DECOR_EMOJI, DEFAULT_THEME, readTheme, themeToContent, type Decor, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
+import SpecialView, { DECOR_EMOJI, DEFAULT_THEME, readTheme, themeToContent, type Decor, type FormStyle, type SpecialData, type SpecialTheme, type TextBlock } from '@/app/go/[slug]/SpecialView'
 
 const STORAGE_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 const ALL_FONTS_HREF =
@@ -32,7 +32,7 @@ type MiniOpt = { id: string; title: string; description: string | null; location
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -231,7 +231,7 @@ function toData(text: Record<string, string>, photos: string[], label: string, m
     formTitle: text.form_title ?? '',
     detailsTitle: text.details_title ?? '',
     termsTitle: text.terms_title ?? '',
-    miniId: text.mini_id || undefined,
+    miniId: text.mini_off === '1' ? undefined : text.mini_id || undefined,
     mini: m ? { id: m.id, title: m.title, price: m.price, duration_min: m.duration_min, location: m.location, tz: m.tz, slots: m.slots } : null,
   }
 }
@@ -579,6 +579,7 @@ export default function SpecialsPage() {
   const removeBlock = (i: number) =>
     { setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.filter((_, j) => j !== i) } } : f)); setSelLine(-1) }
   const [selLine, setSelLine] = useState(-1)
+  const [selForm, setSelForm] = useState('box')
   const openEditor = (key: string) => {
     const map: Record<string, string> = { brand: 'Studio name', title: 'Title', sub: 'Paragraph', background: 'Background', button: 'Sign-up form', claim: 'Sign-up form' }
     let name = map[key]
@@ -641,6 +642,7 @@ export default function SpecialsPage() {
     else if (key.startsWith('line-')) setBlock(Number(key.slice(5)), { text: v })
     else if (key.startsWith('free-')) setFree(Number(key.slice(5)), { text: v })
   }
+  const setFS = (patch: Partial<FormStyle>) => setForm((f) => (f ? { ...f, theme: { ...f.theme, form: { ...f.theme.form, ...patch } } } : f))
   const curLine = form && selLine < form.theme.blocks.length ? selLine : -1
   const curEl = form && form.theme.free.length ? Math.min(selFree ?? 0, form.theme.free.length - 1) : -1
 
@@ -947,14 +949,6 @@ export default function SpecialsPage() {
                               <Label>Letter spacing</Label>
                               <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setBlock(i, { spacing: Number(v) })} />
                             </div>
-                            <div>
-                              <Label>Capitals</Label>
-                              <Chips value={b.upper ? 'on' : 'off'} options={[{ id: 'off', label: 'As typed' }, { id: 'on', label: 'ALL CAPS' }]} onChange={(v) => setBlock(i, { upper: v === 'on' })} />
-                            </div>
-                            <div>
-                              <Label>Where</Label>
-                              <Chips value={b.place} options={PLACES} onChange={(v) => setBlock(i, { place: v })} />
-                            </div>
                             <button type="button" onClick={() => removeBlock(i)} className="text-xs text-ink-soft underline hover:text-red-700">Remove this line</button>
                           </div>
                         )
@@ -1024,10 +1018,6 @@ export default function SpecialsPage() {
                                   <Label>Letter spacing</Label>
                                   <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setFree(i, { spacing: Number(v) })} />
                                 </div>
-                                <div>
-                                  <Label>Capitals</Label>
-                                  <Chips value={b.upper ? 'on' : 'off'} options={[{ id: 'off', label: 'As typed' }, { id: 'on', label: 'ALL CAPS' }]} onChange={(v) => setFree(i, { upper: v === 'on' })} />
-                                </div>
                               </>
                             )}
                             {b.kind !== 'icon' && (
@@ -1061,6 +1051,14 @@ export default function SpecialsPage() {
                     </MiniCard>
 
                     <MiniCard title="Session settings">
+                      <div>
+                        <Label>What is this special?</Label>
+                        <Chips value={form.text.mini_off === '1' ? 'off' : 'on'} options={[{ id: 'on', label: 'Mini session: people pick a time' }, { id: 'off', label: 'Just a special: sign-up only' }]} onChange={(v) => setText('mini_off', v === 'off' ? '1' : '')} />
+                      </div>
+                      {form.text.mini_off === '1' ? (
+                        <p className="text-sm text-ink-soft">People fill out the sign-up form and you follow up with them. No times to pick and no payment. Switch back any time and your times are still here.</p>
+                      ) : (
+                        <>
                       {linkedMini ? (
                         <>
                           <p className="text-sm text-ink">
@@ -1100,29 +1098,122 @@ export default function SpecialsPage() {
                           <button type="button" disabled={ssBusy} onClick={buildSlots} className="rounded-full px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#A9545F' }}>{ssBusy ? 'Building…' : 'Build my time slots'}</button>
                         </>
                       )}
+                        </>
+                      )}
                     </MiniCard>
 
                     <MiniCard title="Sign-up form" summary={form.text.form_title || 'Sign up'}>
-                      <label className="block">
-                        <Label>Title words</Label>
-                        <input placeholder="Claim your spot" value={form.text.form_title} onChange={(e) => setText('form_title', e.target.value)} className={inputCls} />
-                      </label>
-                      <div className="max-w-xs">
-                        <ColorField label="Box color" value={form.theme.cardBg} onChange={(v) => setTheme({ cardBg: v })} />
-                      </div>
-                      <div className="max-w-xs">
-                        <ColorField label="Text color" value={form.theme.cardText} onChange={(v) => setTheme({ cardText: v })} />
-                      </div>
-                      <div>
-                        <Label>Corner roundness</Label>
-                        <SizeField value={form.theme.cardRadius} min={0} max={60} onChange={(n) => setTheme({ cardRadius: n })} />
-                      </div>
-                      <div className="max-w-xs">
-                        <ColorField label="Button color" value={form.theme.accent} onChange={(v) => setTheme({ accent: v })} />
-                      </div>
-                      <div className="max-w-xs">
-                        <ColorField label="Button text color" value={form.theme.btnText} onChange={(v) => setTheme({ btnText: v })} />
-                      </div>
+                      <Chips value={selForm} options={[{ id: 'box', label: 'Box' }, { id: 'title', label: 'Title' }, { id: 'labels', label: 'Labels' }, { id: 'fields', label: 'Fields' }, { id: 'button', label: 'Button' }]} onChange={setSelForm} />
+                      {selForm === 'box' && (
+                        <div className="space-y-4">
+                          <div className="max-w-xs">
+                            <ColorField label="Box color" value={form.theme.cardBg} onChange={(v) => setTheme({ cardBg: v })} />
+                          </div>
+                          <div className="max-w-xs">
+                            <ColorField label="Text color" value={form.theme.cardText} onChange={(v) => setTheme({ cardText: v })} />
+                          </div>
+                          <div>
+                            <Label>Corner roundness</Label>
+                            <SizeField value={form.theme.cardRadius} min={0} max={60} onChange={(n) => setTheme({ cardRadius: n })} />
+                          </div>
+                          <div>
+                            <Label>Space above the box (minus moves it up)</Label>
+                            <SizeField value={form.theme.form.top} min={-300} max={400} onChange={(n) => setFS({ top: n })} />
+                          </div>
+                          <div>
+                            <Label>Padding inside the box</Label>
+                            <SizeField value={form.theme.form.pad} min={0} max={80} onChange={(n) => setFS({ pad: n })} />
+                          </div>
+                        </div>
+                      )}
+                      {selForm === 'title' && (
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Show the title</Label>
+                            <Chips value={form.theme.form.titleOn ? 'on' : 'off'} options={[{ id: 'on', label: 'On' }, { id: 'off', label: 'Off' }]} onChange={(v) => setFS({ titleOn: v === 'on' })} />
+                          </div>
+                          <label className="block">
+                            <Label>Words</Label>
+                            <input placeholder="Claim your spot" value={form.text.form_title} onChange={(e) => setText('form_title', e.target.value)} className={inputCls} />
+                          </label>
+                          <FontPicker label="Font" value={form.theme.form.titleFont || form.theme.headFont} onChange={(k) => setFS({ titleFont: k })} />
+                          <div>
+                            <Label>Size</Label>
+                            <SizeField value={form.theme.form.titleSize} min={10} max={80} onChange={(n) => setFS({ titleSize: n })} />
+                          </div>
+                          <div className="max-w-xs">
+                            <ColorField label="Color" value={form.theme.form.titleColor || form.theme.cardText} onChange={(v) => setFS({ titleColor: v })} />
+                          </div>
+                          <div>
+                            <Label>Align</Label>
+                            <Chips value={form.theme.form.titleAlign} options={LINE_ALIGNS} onChange={(v) => setFS({ titleAlign: v })} />
+                          </div>
+                        </div>
+                      )}
+                      {selForm === 'labels' && (
+                        <div className="space-y-4">
+                          <p className="text-sm text-ink-soft">The small words above each box (Your name, Email and so on).</p>
+                          <FontPicker label="Font" value={form.theme.form.labelFont || form.theme.bodyFont} onChange={(k) => setFS({ labelFont: k })} />
+                          <div>
+                            <Label>Size</Label>
+                            <SizeField value={form.theme.form.labelSize} min={8} max={30} onChange={(n) => setFS({ labelSize: n })} />
+                          </div>
+                          <div className="max-w-xs">
+                            <ColorField label="Color" value={form.theme.form.labelColor || form.theme.cardText} onChange={(v) => setFS({ labelColor: v })} />
+                          </div>
+                        </div>
+                      )}
+                      {selForm === 'fields' && (
+                        <div className="space-y-4">
+                          <div className="max-w-xs">
+                            <ColorField label="Typing box color" value={form.theme.form.boxBg || '#FAF7F2'} onChange={(v) => setFS({ boxBg: v })} />
+                          </div>
+                          <div className="max-w-xs">
+                            <ColorField label="Typing box text color" value={form.theme.form.boxText || '#2A1F24'} onChange={(v) => setFS({ boxText: v })} />
+                          </div>
+                          <label className="block">
+                            <Label>Name box words</Label>
+                            <input placeholder="Your name" value={form.theme.form.labName} onChange={(e) => setFS({ labName: e.target.value })} className={inputCls} />
+                          </label>
+                          <label className="block">
+                            <Label>Email box words</Label>
+                            <input placeholder="Email" value={form.theme.form.labEmail} onChange={(e) => setFS({ labEmail: e.target.value })} className={inputCls} />
+                          </label>
+                          <div>
+                            <Label>Phone box</Label>
+                            <Chips value={form.theme.form.showPhone ? 'on' : 'off'} options={[{ id: 'on', label: 'On' }, { id: 'off', label: 'Off' }]} onChange={(v) => setFS({ showPhone: v === 'on' })} />
+                            {form.theme.form.showPhone && <input placeholder="Phone (optional)" value={form.theme.form.labPhone} onChange={(e) => setFS({ labPhone: e.target.value })} className={inputCls} />}
+                          </div>
+                          <div>
+                            <Label>Note box</Label>
+                            <Chips value={form.theme.form.showNote ? 'on' : 'off'} options={[{ id: 'on', label: 'On' }, { id: 'off', label: 'Off' }]} onChange={(v) => setFS({ showNote: v === 'on' })} />
+                            {form.theme.form.showNote && <input placeholder="Anything you want us to know (optional)" value={form.theme.form.labNote} onChange={(e) => setFS({ labNote: e.target.value })} className={inputCls} />}
+                          </div>
+                        </div>
+                      )}
+                      {selForm === 'button' && (
+                        <div className="space-y-4">
+                          <label className="block">
+                            <Label>Words</Label>
+                            <input value={form.cta_label} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} className={inputCls} />
+                          </label>
+                          <FontPicker label="Font" value={form.theme.form.btnFont || form.theme.bodyFont} onChange={(k) => setFS({ btnFont: k })} />
+                          <div>
+                            <Label>Text size</Label>
+                            <SizeField value={form.theme.btnSizePx} min={10} max={40} onChange={(n) => setTheme({ btnSizePx: n })} />
+                          </div>
+                          <div className="max-w-xs">
+                            <ColorField label="Button color" value={form.theme.accent} onChange={(v) => setTheme({ accent: v })} />
+                          </div>
+                          <div className="max-w-xs">
+                            <ColorField label="Button text color" value={form.theme.btnText} onChange={(v) => setTheme({ btnText: v })} />
+                          </div>
+                          <div>
+                            <Label>Shape</Label>
+                            <Chips value={form.theme.shape} options={[{ id: 'square', label: 'Square' }, { id: 'rounded', label: 'Rounded' }, { id: 'pill', label: 'Pill' }]} onChange={(v) => setTheme({ shape: v })} />
+                          </div>
+                        </div>
+                      )}
                     </MiniCard>
                   </div>
                 </StepCard>

@@ -198,7 +198,7 @@ export default async function FunnelPage({ params }: { params: Promise<{ slug: s
   } else if (style === 'special') {
     const photos = Array.isArray(c.photos) ? (c.photos as string[]).filter(Boolean).slice(0, 8) : []
     const theme = readTheme(c)
-    const miniId = s('mini_id')
+    const miniId = s('mini_off') === '1' ? '' : s('mini_id')
     const mini = miniId ? await getMini(miniId) : null
     bare = true
     body = (
