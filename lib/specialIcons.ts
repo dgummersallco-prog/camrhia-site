@@ -1,0 +1,20 @@
+// Simple line icons for the Specials editor. Each is drawn on a 24 x 24 grid.
+export const ICONS: Record<string, { label: string; d: string }> = {
+  heart: { label: 'Heart', d: 'M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z' },
+  star: { label: 'Star', d: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z' },
+  sparkle: { label: 'Sparkle', d: 'M12 2c.8 5.2 4.8 9.2 10 10-5.2.8-9.2 4.8-10 10-.8-5.2-4.8-9.2-10-10 5.2-.8 9.2-4.8 10-10z' },
+  camera: { label: 'Camera', d: 'M4 8h3l2-3h6l2 3h3v11H4z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
+  calendar: { label: 'Calendar', d: 'M4 6h16v14H4z M4 10h16 M8 3v4 M16 3v4' },
+  clock: { label: 'Clock', d: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2' },
+  pin: { label: 'Location', d: 'M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z' },
+  gift: { label: 'Gift', d: 'M4 11h16v9H4z M3 7h18v4H3z M12 7v13 M12 7c-2-4-6-3-5 0 M12 7c2-4 6-3 5 0' },
+  tree: { label: 'Tree', d: 'M12 3l5 7h-3l4 6H6l4-6H7z M12 16v5' },
+  snowflake: { label: 'Snowflake', d: 'M12 2v20 M3.3 7l17.4 10 M3.3 17l17.4-10 M9 4l3 2 3-2 M9 20l3-2 3 2' },
+  flower: { label: 'Flower', d: 'M12 10c-2-2-2-6 0-7 2 1 2 5 0 7z M12 14c2 2 2 6 0 7-2-1-2-5 0-7z M10 12c-2 2-6 2-7 0 1-2 5-2 7 0z M14 12c2-2 6-2 7 0-1 2-5 2-7 0z' },
+  sun: { label: 'Sun', d: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2' },
+  arrow: { label: 'Arrow', d: 'M4 12h16 M14 6l6 6-6 6' },
+  check: { label: 'Check', d: 'M5 12l5 5 9-10' },
+  phone: { label: 'Phone', d: 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z' },
+  mail: { label: 'Mail', d: 'M3 5h18v14H3z M3 6l9 7 9-7' },
+  line: { label: 'Divider line', d: 'M2 12h20' },
+}

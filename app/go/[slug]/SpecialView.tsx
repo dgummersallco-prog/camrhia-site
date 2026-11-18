@@ -1,7 +1,10 @@
 import LeadForm from './LeadForm'
 import Slideshow from './Slideshow'
 import SlotPicker from './SlotPicker'
+import { createElement } from 'react'
 import FreeCanvas, { type FreeBox, type FreeEdit } from './FreeCanvas'
+import Editable from '@/app/components/Editable'
+import { ICONS } from '@/lib/specialIcons'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 
 export type MiniInfo = { id: string; title: string; price: number; duration_min: number | null; location: string | null; tz: string; photos_included?: number | null; slots: { id: string; starts_at: string }[]; taken_slots?: { id: string; starts_at: string }[] }
@@ -60,7 +63,7 @@ function patternUrl(decor: string): string | null {
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
-export type TextBlock = { text: string; font: string; color: string; size: number; align: 'left' | 'center' | 'right'; place: 'title' | 'subtitle' | 'claim'; spacing: number; upper: boolean }
+export type TextBlock = { text: string; font: string; color: string; size: number; align: 'left' | 'center' | 'right'; place: 'title' | 'subtitle' | 'claim'; spacing: number; upper: boolean; top: number }
 
 export type SpecialTheme = {
   bgImage: string
@@ -90,6 +93,11 @@ export type SpecialTheme = {
   blocks: TextBlock[]
   free: FreeBox[]
   canvasH: number
+  nameTop: number
+  titleTop: number
+  subTop: number
+  photosTop: number
+  btnTop: number
 }
 
 export const DEFAULT_THEME: SpecialTheme = {
@@ -120,6 +128,11 @@ export const DEFAULT_THEME: SpecialTheme = {
   blocks: [],
   free: [],
   canvasH: 125,
+  nameTop: 0,
+  titleTop: 0,
+  subTop: 0,
+  photosTop: 0,
+  btnTop: 0,
 }
 
 const hexOr = (v: unknown, d: string) => (/^#[0-9a-fA-F]{3,8}$/.test(String(v ?? '')) ? String(v) : d)
@@ -163,6 +176,11 @@ export function readTheme(c: Record<string, unknown>): SpecialTheme {
     blocks: readBlocks(c.blocks),
     free: readFree(c.free_boxes),
     canvasH: num(c.canvas_h, 30, 300, D.canvasH),
+    nameTop: num(c.name_top, -300, 400, 0),
+    titleTop: num(c.title_top, -300, 400, 0),
+    subTop: num(c.sub_top, -300, 400, 0),
+    photosTop: num(c.photos_top, -300, 400, 0),
+    btnTop: num(c.btn_top, -300, 400, 0),
   }
 }
 
@@ -171,6 +189,9 @@ function readFree(v: unknown): FreeBox[] {
   return v.slice(0, 60).map((x) => {
     const o = (x ?? {}) as Record<string, unknown>
     return {
+      kind: pick(o.kind, ['text', 'icon', 'image'] as const, 'text'),
+      icon: typeof o.icon === 'string' && ICONS[o.icon] ? o.icon : 'heart',
+      src: typeof o.src === 'string' && /^https?:\/\//.test(o.src) ? o.src : '',
       text: String(o.text ?? ''),
       font: fontOr(o.font, 'montserrat'),
       color: hexOr(o.color, '#2A1F24'),
@@ -198,6 +219,7 @@ function readBlocks(v: unknown): TextBlock[] {
       align: pick(o.align, ['left', 'center', 'right'] as const, 'center'),
       spacing: num(o.spacing, 0, 60, 0),
       upper: o.upper === true,
+      top: num(o.top, -300, 400, 0),
       place: pick(o.place, ['title', 'subtitle', 'claim'] as const, 'claim'),
     }
   })
@@ -232,6 +254,11 @@ export function themeToContent(t: SpecialTheme): Record<string, unknown> {
     blocks: t.blocks,
     free_boxes: t.free,
     canvas_h: t.canvasH,
+    name_top: t.nameTop,
+    title_top: t.titleTop,
+    sub_top: t.subTop,
+    photos_top: t.photosTop,
+    btn_top: t.btnTop,
   }
 }
 
@@ -262,10 +289,16 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
     <SlotPicker mini={m} preview={preview} label={d.label} btnStyle={btnStyle} />
   )
   const ed = (k: string) => (preview ? { 'data-edit': k } : {})
+  const live = preview && edit?.onText ? edit.onText : null
+  // Called as a plain function (not <Tx/>) so typing never remounts the text.
+  const tx = (o: { k: string; tag: 'p' | 'h1'; value: string; ph: string; fallback?: string; className?: string; style?: React.CSSProperties; single?: boolean }) =>
+    live
+      ? <Editable key={o.k} tag={o.tag} attrs={{ 'data-edit': o.k }} value={o.value} placeholder={o.ph} single={o.single} className={o.className} style={{ ...o.style, whiteSpace: 'pre-wrap' }} onChange={(v) => live(o.k, v)} />
+      : createElement(o.tag, { key: o.k, ...ed(o.k), className: o.className, style: o.style }, o.value || o.fallback || '')
   const renderBlocks = (place: 'title' | 'subtitle' | 'claim') =>
-    t.blocks.map((b, i) => ({ b, i })).filter(({ b }) => b.place === place && b.text.trim()).map(({ b, i }) => (
-      <p key={i} {...ed('line-' + i)} className="mt-5 whitespace-pre-line leading-snug" style={{ fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: b.align, letterSpacing: b.spacing ? b.spacing / 100 + 'em' : undefined, textTransform: b.upper ? 'uppercase' : undefined }}>{b.text}</p>
-    ))
+    t.blocks.map((b, i) => ({ b, i })).filter(({ b }) => b.place === place && (live || b.text.trim())).map(({ b, i }) =>
+      tx({ k: 'line-' + i, tag: 'p', value: b.text, ph: 'New line', className: 'mt-5 whitespace-pre-line leading-snug', style: { fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif', color: b.color, fontSize: b.size, textAlign: b.align, letterSpacing: b.spacing ? b.spacing / 100 + 'em' : undefined, textTransform: b.upper ? 'uppercase' : undefined, marginTop: 20 + b.top } })
+    )
 
   return (
     <div {...ed('background')} style={{ background: t.bgColor, color: t.textColor, fontFamily: bodyFam }} className="relative min-h-full overflow-hidden">
@@ -280,27 +313,19 @@ export default function SpecialView({ d, theme, funnelId, preview, edit }: { d: 
       >
         {t.bgImage ? <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${t.overlay / 100})` }} /> : null}
         <div className={`relative mx-auto flex max-w-xl flex-col justify-center px-6 py-16 ${t.bgImage ? 'min-h-[520px]' : emoji ? 'min-h-[440px]' : ''}`}>
-          {d.brand ? <p {...ed('brand')} className="uppercase" style={{ fontFamily: FONT_OPTIONS[t.nameFont]?.family ?? 'sans-serif', letterSpacing: '0.2em', color: t.nameColor || heroText, fontSize: t.nameSizePx, textAlign: titleAlign }}>{d.brand}</p> : null}
-          <h1
-            {...ed('title')}
-            className="mt-4 leading-tight"
-            style={{ ...heading, color: t.titleColor, fontSize: t.titleSizePx, textAlign: titleAlign }}
-          >
-            {d.headline || (t.free.length ? '' : 'Your offer title')}
-          </h1>
+          {d.brand || live ? tx({ k: 'brand', tag: 'p', value: d.brand, ph: 'Studio name', className: 'uppercase', single: true, style: { fontFamily: FONT_OPTIONS[t.nameFont]?.family ?? 'sans-serif', letterSpacing: '0.2em', color: t.nameColor || heroText, fontSize: t.nameSizePx, textAlign: titleAlign, marginTop: t.nameTop || undefined } }) : null}
+          {tx({ k: 'title', tag: 'h1', value: d.headline, ph: 'Your offer title', fallback: t.free.length ? '' : 'Your offer title', single: true, className: 'mt-4 leading-tight', style: { ...heading, color: t.titleColor, fontSize: t.titleSizePx, textAlign: titleAlign, marginTop: 16 + t.titleTop } })}
           {renderBlocks('title')}
-          {d.sub ? (
-            <p {...ed('sub')} className="mt-5 whitespace-pre-line leading-relaxed" style={{ fontFamily: subFam, color: t.subColor, fontSize: t.subSizePx, textAlign: 'center' }}>{d.sub}</p>
-          ) : null}
+          {d.sub || live ? tx({ k: 'sub', tag: 'p', value: d.sub, ph: 'Write your paragraph', className: 'mt-5 whitespace-pre-line leading-relaxed', style: { fontFamily: subFam, color: t.subColor, fontSize: t.subSizePx, textAlign: 'center', marginTop: 20 + t.subTop } }) : null}
           {renderBlocks('subtitle')}
           {d.price ? <p className="mt-5 text-2xl" style={{ ...heading, color: t.bgImage ? '#FFFFFF' : t.accent, textAlign: titleAlign }}>{d.price}</p> : null}
           {d.whenWhere ? <p className="mt-2 opacity-80" style={{ color: heroText, textAlign: titleAlign }}>{d.whenWhere}</p> : null}
           {photos.length > 0 ? (
-            <div {...ed('photos')} style={{ width: '100%', maxWidth: 300, margin: '32px auto 0' }}>
+            <div {...ed('photos')} style={{ width: '100%', maxWidth: 300, margin: `${32 + t.photosTop}px auto 0` }}>
               <Slideshow photos={photos} />
             </div>
           ) : null}
-          <div className="mt-8" style={{ display: 'flex', justifyContent: 'center' }}>
+          <div className="mt-8" style={{ display: 'flex', justifyContent: 'center', marginTop: 32 + t.btnTop }}>
             {preview ? (
               <span {...ed('button')} className="inline-block px-8 py-4 text-base font-medium" style={btnStyle}>{d.label}</span>
             ) : (

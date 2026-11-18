@@ -2,8 +2,13 @@
 
 import { useRef } from 'react'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
+import { ICONS } from '@/lib/specialIcons'
+import Editable from '@/app/components/Editable'
 
 export type FreeBox = {
+  kind: 'text' | 'icon' | 'image'
+  icon: string
+  src: string
   text: string
   font: string
   color: string
@@ -22,12 +27,13 @@ export type FreeEdit = {
   onSelect: (i: number) => void
   onMove: (i: number, x: number, y: number) => void
   onWidth: (i: number, w: number) => void
+  onText?: (key: string, v: string) => void
 }
 
 const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
 
-// A free-form area: text boxes sit at a percent position, so they land in the same
-// spot on every screen. Font sizes scale with the width of the area.
+// A free-form area: elements sit at a percent position, so they land in the same
+// spot on every screen. Sizes scale with the width of the area.
 export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: FreeEdit }) {
   const ref = useRef<HTMLDivElement>(null)
   const drag = useRef<{ i: number; sx: number; sy: number; ox: number; oy: number; ow: number; mode: 'move' | 'size'; moved: boolean } | null>(null)
@@ -58,21 +64,24 @@ export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: F
       <div className="relative h-full w-full">
         {boxes.map((b, i) => {
           const sel = edit?.selected === i
-          if (!b.text.trim() && !edit) return null
+          const text = b.kind === 'text'
+          if (!edit && ((text && !b.text.trim()) || (b.kind === 'image' && !b.src))) return null
+          const live = !!edit?.onText
           return (
             <div
               key={i}
               {...(edit ? { 'data-edit': 'free-' + i } : {})}
-              onPointerDown={edit ? (e) => down(e, i, 'move') : undefined}
-              onPointerMove={edit ? move : undefined}
-              onPointerUp={edit ? up : undefined}
-              onPointerCancel={edit ? up : undefined}
-              onClickCapture={edit ? (e) => { if (drag.current?.moved) { e.stopPropagation(); e.preventDefault() } } : undefined}
+              onPointerDownCapture={edit && text ? () => edit.onSelect(i) : undefined}
+              onPointerDown={edit && !text ? (e) => down(e, i, 'move') : undefined}
+              onPointerMove={edit && !text ? move : undefined}
+              onPointerUp={edit && !text ? up : undefined}
+              onPointerCancel={edit && !text ? up : undefined}
+              onClickCapture={edit && !text ? (e) => { if (drag.current?.moved) { e.stopPropagation(); e.preventDefault() } } : undefined}
               style={{
                 position: 'absolute',
                 left: b.x + '%',
                 top: b.y + 'cqw',
-                width: b.w + '%',
+                width: b.kind === 'icon' ? b.size / 3.9 + 'cqw' : b.w + '%',
                 transform: `rotate(${b.rot}deg)`,
                 fontFamily: FONT_OPTIONS[b.font]?.family ?? 'sans-serif',
                 color: b.color,
@@ -80,24 +89,50 @@ export default function FreeCanvas({ boxes, edit }: { boxes: FreeBox[]; edit?: F
                 textAlign: b.align,
                 letterSpacing: b.spacing ? b.spacing / 100 + 'em' : undefined,
                 textTransform: b.upper ? 'uppercase' : undefined,
-                whiteSpace: 'pre-line',
+                whiteSpace: 'pre-wrap',
                 lineHeight: 1.2,
-                touchAction: edit ? 'none' : undefined,
+                touchAction: edit && !text ? 'none' : undefined,
                 pointerEvents: edit ? 'auto' : 'none',
-                cursor: edit ? 'move' : undefined,
+                cursor: edit ? (text ? 'text' : 'move') : undefined,
                 outline: sel ? '1px dashed #A9545F' : undefined,
                 outlineOffset: 3,
-                userSelect: 'none',
+                userSelect: edit && !text ? 'none' : undefined,
               }}
             >
-              {b.text.trim() ? b.text : <span style={{ opacity: 0.4 }}>New text</span>}
+              {text ? (
+                live ? (
+                  <Editable tag="div" value={b.text} placeholder="New text" onChange={(v) => edit!.onText!('free-' + i, v)} style={{ outline: 'none', minHeight: '1em' }} />
+                ) : (
+                  b.text
+                )
+              ) : b.kind === 'icon' ? (
+                <svg viewBox="0 0 24 24" width="100%" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                  <path d={(ICONS[b.icon] ?? ICONS.heart).d} />
+                </svg>
+              ) : b.src ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={b.src} alt="" draggable={false} style={{ width: '100%', display: 'block' }} />
+              ) : (
+                <div style={{ aspectRatio: '4 / 3', border: '1px dashed currentColor', opacity: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>Add a picture</div>
+              )}
               {edit && sel ? (
-                <span
-                  onPointerDown={(e) => down(e, i, 'size')}
-                  onPointerMove={move}
-                  onPointerUp={up}
-                  style={{ position: 'absolute', right: -6, bottom: -6, width: 12, height: 12, borderRadius: 3, background: '#A9545F', cursor: 'ew-resize', touchAction: 'none' }}
-                />
+                <>
+                  <span
+                    title="Drag to move"
+                    onPointerDown={(e) => down(e, i, 'move')}
+                    onPointerMove={move}
+                    onPointerUp={up}
+                    style={{ position: 'absolute', left: '50%', top: -26, marginLeft: -11, width: 22, height: 22, borderRadius: 11, background: '#A9545F', color: '#fff', fontSize: 13, lineHeight: '22px', textAlign: 'center', cursor: 'move', touchAction: 'none', userSelect: 'none', fontFamily: 'sans-serif' }}
+                  >✥</span>
+                  {b.kind !== 'icon' ? (
+                    <span
+                      onPointerDown={(e) => down(e, i, 'size')}
+                      onPointerMove={move}
+                      onPointerUp={up}
+                      style={{ position: 'absolute', right: -6, bottom: -6, width: 12, height: 12, borderRadius: 3, background: '#A9545F', cursor: 'ew-resize', touchAction: 'none' }}
+                    />
+                  ) : null}
+                </>
               ) : null}
             </div>
           )

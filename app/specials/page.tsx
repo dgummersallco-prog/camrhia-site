@@ -3,7 +3,8 @@
 import CamriTyping from '@/app/components/CamriTyping'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { HexColorPicker } from 'react-colorful'
+import { ICONS } from '@/lib/specialIcons'
+import ColorInput from '@/app/components/ColorInput'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
@@ -316,66 +317,39 @@ function Chips<T extends string>({ value, options, onChange }: { value: T; optio
 }
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  const [open, setOpen] = useState(false)
-  const boxRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (!open) return
-    const down = (e: PointerEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener('pointerdown', down)
-    return () => document.removeEventListener('pointerdown', down)
-  }, [open])
-  const [txt, setTxt] = useState(value)
-  useEffect(() => setTxt(value), [value])
-  return (
-    <div ref={boxRef}>
-      <Label>{label}</Label>
-      <button type="button" onClick={() => setOpen(!open)} className="mt-1 flex w-full items-center gap-2 rounded-xl border border-line bg-card px-3 py-2">
-        <span className="h-5 w-5 rounded border border-line" style={{ background: value }} />
-        <span className="font-mono text-xs uppercase text-ink">{value}</span>
-      </button>
-      {open && (
-        <div className="mt-2 rounded-xl border border-line bg-card p-3">
-          <div className="mb-3 flex flex-wrap gap-2">
-            {SWATCHES.map((h) => (
-              <button key={h} type="button" onClick={() => onChange(h)} className="h-7 w-7 rounded-full border border-line" style={{ background: h, boxShadow: value.toLowerCase() === h.toLowerCase() ? '0 0 0 2px #fff, 0 0 0 4px #2A1F24' : undefined }} />
-            ))}
-          </div>
-          <HexColorPicker color={value} onChange={onChange} style={{ width: '100%', height: 160 }} />
-          <input
-            value={txt}
-            maxLength={7}
-            onChange={(e) => { setTxt(e.target.value); if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value) }}
-            className={inputCls + ' mt-3 font-mono uppercase'}
-          />
-          <button type="button" onClick={() => setOpen(false)} className="mt-2 text-xs font-medium text-twilight">Done</button>
-        </div>
-      )}
-    </div>
-  )
+  return <ColorInput label={label} value={value} onChange={onChange} swatches={SWATCHES} />
 }
 
 function FontPicker({ label, value, onChange }: { label: string; value: string; onChange: (k: string) => void }) {
   const [open, setOpen] = useState(false)
   const [cat, setCat] = useState('all')
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const h = (e: MouseEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
   const cats = Array.from(new Set(Object.values(FONT_OPTIONS).map((f) => f.cat)))
   const list = Object.entries(FONT_OPTIONS).filter(([, f]) => cat === 'all' || f.cat === cat)
   const cur = FONT_OPTIONS[value]
   return (
-    <div>
+    <div ref={box}>
       <Label>{label}</Label>
       <button type="button" onClick={() => setOpen(!open)} className="mt-1 block w-full rounded-xl border border-line bg-card px-3 py-2 text-left text-lg text-ink" style={{ fontFamily: cur?.family }}>
         {cur?.label ?? 'Pick a font'}
       </button>
       {open && (
         <div className="mt-2 rounded-xl border border-line bg-card p-3">
-          <div className="mb-2 flex flex-wrap gap-2">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
             {['all', ...cats].map((c) => (
               <button key={c} type="button" onClick={() => setCat(c)} className={`rounded-full border px-3 py-1 text-xs capitalize ${cat === c ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line text-ink-soft'}`}>{c}</button>
             ))}
+            <button type="button" onClick={() => setOpen(false)} className="ml-auto rounded-full bg-twilight px-4 py-1 text-xs font-medium text-white">Done</button>
           </div>
           <div className="max-h-64 overflow-y-auto">
             {list.map(([k, f]) => (
-              <button key={k} type="button" onClick={() => { onChange(k); setOpen(false) }} className={`block w-full rounded-lg px-3 py-2 text-left text-xl hover:bg-paper ${k === value ? 'bg-paper' : ''}`} style={{ fontFamily: f.family }}>{f.label}</button>
+              <button key={k} type="button" onClick={() => onChange(k)} className={`block w-full rounded-lg px-3 py-2 text-left text-xl hover:bg-paper ${k === value ? 'bg-paper' : ''}`} style={{ fontFamily: f.family }}>{f.label}</button>
             ))}
           </div>
         </div>
@@ -601,49 +575,74 @@ export default function SpecialsPage() {
   const setBlock = (i: number, patch: Partial<TextBlock>) =>
     setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)) } } : f))
   const addBlock = () =>
-    setForm((f) => (f && f.theme.blocks.length < 40 ? { ...f, theme: { ...f.theme, blocks: [...f.theme.blocks, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 18, align: 'center' as const, place: 'subtitle' as const, spacing: 0, upper: false }] } } : f))
+    setForm((f) => (f && f.theme.blocks.length < 40 ? { ...f, theme: { ...f.theme, blocks: [...f.theme.blocks, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 18, align: 'center' as const, place: 'subtitle' as const, spacing: 0, upper: false, top: 0 }] } } : f))
   const removeBlock = (i: number) =>
-    setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.filter((_, j) => j !== i) } } : f))
+    { setForm((f) => (f ? { ...f, theme: { ...f.theme, blocks: f.theme.blocks.filter((_, j) => j !== i) } } : f)); setSelLine(-1) }
+  const [selLine, setSelLine] = useState(-1)
   const openEditor = (key: string) => {
     const map: Record<string, string> = { brand: 'Studio name', title: 'Title', sub: 'Paragraph', background: 'Background', photos: 'Photos', button: 'Button', summary: 'Summary', claim: 'Sign-up form' }
-    if (key.startsWith('free-')) {
-      const n = Number(key.slice(5))
-      setSelFree(n)
-      const d0 = document.querySelector('details[data-group][data-title="Text boxes"]') as HTMLDetailsElement | null
-      if (d0 && !d0.open) {
-        document.body.dataset.pvClick = '1'
-        ;(d0.querySelector(':scope > summary') as HTMLElement | null)?.click()
-        delete document.body.dataset.pvClick
-      }
-      requestAnimationFrame(() => (d0?.querySelector(`[data-free="${n}"] textarea`) as HTMLTextAreaElement | null)?.focus({ preventScroll: true }))
-      return
-    }
-    const lineNo = key.startsWith('line-') ? Number(key.slice(5)) : -1
-    const name = lineNo >= 0 ? 'Lines' : map[key]
+    let name = map[key]
+    if (key.startsWith('free-')) { setSelFree(Number(key.slice(5))); name = 'Elements' }
+    else if (key.startsWith('line-')) { setSelLine(Number(key.slice(5))); name = 'Paragraph' }
+    else if (key === 'sub') setSelLine(-1)
     if (!name) return
     const det = document.querySelector(`details[data-group][data-title="${name}"]`) as HTMLDetailsElement | null
-    if (!det) return
-    if (!det.open) {
+    if (det && !det.open) {
       document.body.dataset.pvClick = '1'
       ;(det.querySelector(':scope > summary') as HTMLElement | null)?.click()
       delete document.body.dataset.pvClick
     }
-    requestAnimationFrame(() => {
-      const target = lineNo >= 0 ? (det.querySelector(`[data-line="${lineNo}"]`) as HTMLElement | null) : det
-      target?.scrollIntoView({ behavior: 'smooth', block: lineNo >= 0 ? 'center' : 'start' })
-      if (lineNo >= 0) (target?.querySelector('textarea') as HTMLTextAreaElement | null)?.focus({ preventScroll: true })
-    })
   }
   const [selFree, setSelFree] = useState<number | null>(null)
   const setFree = (i: number, patch: Partial<FreeBox>) =>
     setForm((f) => (f ? { ...f, theme: { ...f.theme, free: f.theme.free.map((b, j) => (j === i ? { ...b, ...patch } : b)) } } : f))
-  const addFree = () => {
-    setForm((f) => (f && f.theme.free.length < 60 ? { ...f, theme: { ...f.theme, free: [...f.theme.free, { text: '', font: f.theme.subFont, color: f.theme.textColor, size: 18, align: 'center' as const, spacing: 0, upper: false, x: 10, y: 20 + f.theme.free.length * 10, w: 80, rot: 0 }] } } : f))
-    setSelFree(form ? form.theme.free.length : 0)
+  const addFree = (kind: FreeBox['kind'], src = '') => {
+    const n = form ? form.theme.free.length : 0
+    setForm((f) => {
+      if (!f || f.theme.free.length >= 60) return f
+      const box: FreeBox = {
+        kind, icon: 'heart', src, text: '', font: f.theme.subFont, color: f.theme.textColor,
+        size: kind === 'icon' ? 48 : 18, align: 'center', spacing: 0, upper: false,
+        x: kind === 'text' ? 10 : kind === 'icon' ? 44 : 30, y: 20 + f.theme.free.length * 10, w: kind === 'image' ? 40 : 80, rot: 0,
+      }
+      return { ...f, theme: { ...f.theme, free: [...f.theme.free, box] } }
+    })
+    setSelFree(n)
+  }
+  const elInput = useRef<HTMLInputElement>(null)
+  const elReplace = useRef<number | null>(null)
+  async function uploadElement(file: File) {
+    const sb = supabase
+    if (!sb || !form || !userId) return
+    setUploading(true)
+    try {
+      const png = file.type === 'image/png' && file.size < 6_000_000
+      const v = png ? null : await makeVersions(file)
+      const path = `${userId}/special_el_${Date.now()}_${rand()}.${png ? 'png' : 'jpg'}`
+      const up = await sb.storage.from('portfolio').upload(path, png ? file : v!.web.blob, { contentType: png ? 'image/png' : 'image/jpeg', upsert: true })
+      if (up.error) throw up.error
+      const url = STORAGE_BASE + path
+      if (elReplace.current !== null) setFree(elReplace.current, { src: url })
+      else addFree('image', url)
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Could not upload that picture.')
+    } finally {
+      elReplace.current = null
+      setUploading(false)
+    }
   }
   const removeFree = (i: number) => { setForm((f) => (f ? { ...f, theme: { ...f.theme, free: f.theme.free.filter((_, j) => j !== i) } } : f)); setSelFree(null) }
   const dupFree = (i: number) => setForm((f) => (f && f.theme.free.length < 60 ? { ...f, theme: { ...f.theme, free: [...f.theme.free, { ...f.theme.free[i], y: Math.min(100, f.theme.free[i].y + 6) }] } } : f))
   const setText = (k: string, v: string) => setForm((f) => (f ? { ...f, text: { ...f.text, [k]: v } } : f))
+  const onText = (key: string, v: string) => {
+    if (key === 'brand') setText('brand_name', v)
+    else if (key === 'title') setText('hero_headline', v)
+    else if (key === 'sub') setText('hero_sub', v)
+    else if (key.startsWith('line-')) setBlock(Number(key.slice(5)), { text: v })
+    else if (key.startsWith('free-')) setFree(Number(key.slice(5)), { text: v })
+  }
+  const curLine = form && selLine < form.theme.blocks.length ? selLine : -1
+  const curEl = form && form.theme.free.length ? Math.min(selFree ?? 0, form.theme.free.length - 1) : -1
 
   async function save() {
     const sb = supabase
@@ -876,6 +875,10 @@ export default function SpecialsPage() {
                       <div className="max-w-xs">
                         <ColorField label="Color" value={form.theme.nameColor || form.theme.textColor} onChange={(v) => setTheme({ nameColor: v })} />
                       </div>
+                      <div>
+                        <Label>Space above (minus moves it up)</Label>
+                        <SizeField value={form.theme.nameTop} min={-300} max={400} onChange={(n) => setTheme({ nameTop: n })} />
+                      </div>
                     </MiniCard>
 
                     <MiniCard title="Title" summary={form.text.hero_headline}>
@@ -891,113 +894,173 @@ export default function SpecialsPage() {
                       <div className="max-w-xs">
                         <ColorField label="Color" value={form.theme.titleColor} onChange={(v) => setTheme({ titleColor: v })} />
                       </div>
+                      <div>
+                        <Label>Space above (minus moves it up)</Label>
+                        <SizeField value={form.theme.titleTop} min={-300} max={400} onChange={(n) => setTheme({ titleTop: n })} />
+                      </div>
                     </MiniCard>
 
                     <MiniCard title="Paragraph" summary={form.text.hero_sub}>
-                      <label className="block">
-                        <Label>Words</Label>
-                        <textarea rows={3} placeholder="Family portraits by the lake, 20 minutes each" value={form.text.hero_sub} onChange={(e) => setText('hero_sub', e.target.value)} className={inputCls} />
-                      </label>
-                      <FontPicker label="Font" value={form.theme.subFont} onChange={(k) => setTheme({ subFont: k })} />
-                      <div>
-                        <Label>Size</Label>
-                        <SizeField value={form.theme.subSizePx} min={8} max={80} onChange={(n) => setTheme({ subSizePx: n })} />
-                      </div>
-                      <div className="max-w-xs">
-                        <ColorField label="Color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
-                      </div>
-                    </MiniCard>
-
-                    <MiniCard title="Lines" summary={form.theme.blocks.length ? `${form.theme.blocks.length} added` : 'None'}>
-                      <p className="text-sm text-ink-soft">Add as many lines as you want. Each one gets its own words, font, size and color. Click a line in the preview to jump to it.</p>
-                      {form.theme.blocks.map((b, i) => (
-                        <div key={i} data-line={i} className="space-y-4 rounded-xl border border-line bg-paper p-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-ink">Line {i + 1}</span>
-                            <button type="button" onClick={() => removeBlock(i)} className="text-xs text-ink-soft underline hover:text-red-700">Remove</button>
-                          </div>
+                      <p className="text-sm text-ink-soft">Type right on the preview, or here. Pick a line to change its look, and add as many lines as you want.</p>
+                      <Chips value={String(curLine)} options={[{ id: '-1', label: 'Main' }, ...form.theme.blocks.map((_, i) => ({ id: String(i), label: `Line ${i + 1}` }))]} onChange={(v) => setSelLine(Number(v))} />
+                      {curLine < 0 ? (
+                        <div className="space-y-4">
                           <label className="block">
                             <Label>Words</Label>
-                            <textarea rows={2} value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} className={inputCls} />
+                            <textarea rows={3} placeholder="Family portraits by the lake, 20 minutes each" value={form.text.hero_sub} onChange={(e) => setText('hero_sub', e.target.value)} className={inputCls} />
                           </label>
-                          <FontPicker label="Font" value={b.font} onChange={(k) => setBlock(i, { font: k })} />
+                          <FontPicker label="Font" value={form.theme.subFont} onChange={(k) => setTheme({ subFont: k })} />
                           <div>
                             <Label>Size</Label>
-                            <SizeField value={b.size} min={8} max={160} onChange={(n) => setBlock(i, { size: n })} />
+                            <SizeField value={form.theme.subSizePx} min={8} max={80} onChange={(n) => setTheme({ subSizePx: n })} />
                           </div>
                           <div className="max-w-xs">
-                            <ColorField label="Color" value={b.color} onChange={(v) => setBlock(i, { color: v })} />
+                            <ColorField label="Color" value={form.theme.subColor} onChange={(v) => setTheme({ subColor: v })} />
                           </div>
                           <div>
-                            <Label>Align</Label>
-                            <Chips value={b.align} options={LINE_ALIGNS} onChange={(v) => setBlock(i, { align: v })} />
-                          </div>
-                          <div>
-                            <Label>Letter spacing</Label>
-                            <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setBlock(i, { spacing: Number(v) })} />
-                          </div>
-                          <div>
-                            <Label>Capitals</Label>
-                            <Chips value={b.upper ? 'on' : 'off'} options={[{ id: 'off', label: 'As typed' }, { id: 'on', label: 'ALL CAPS' }]} onChange={(v) => setBlock(i, { upper: v === 'on' })} />
-                          </div>
-                          <div>
-                            <Label>Where</Label>
-                            <Chips value={b.place} options={PLACES} onChange={(v) => setBlock(i, { place: v })} />
+                            <Label>Space above (minus moves it up)</Label>
+                            <SizeField value={form.theme.subTop} min={-300} max={400} onChange={(n) => setTheme({ subTop: n })} />
                           </div>
                         </div>
-                      ))}
+                      ) : (() => {
+                        const b = form.theme.blocks[curLine]
+                        const i = curLine
+                        return (
+                          <div className="space-y-4">
+                            <label className="block">
+                              <Label>Words</Label>
+                              <textarea rows={2} value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} className={inputCls} />
+                            </label>
+                            <FontPicker label="Font" value={b.font} onChange={(k) => setBlock(i, { font: k })} />
+                            <div>
+                              <Label>Size</Label>
+                              <SizeField value={b.size} min={8} max={160} onChange={(n) => setBlock(i, { size: n })} />
+                            </div>
+                            <div className="max-w-xs">
+                              <ColorField label="Color" value={b.color} onChange={(v) => setBlock(i, { color: v })} />
+                            </div>
+                            <div>
+                              <Label>Space above (minus moves it up)</Label>
+                              <SizeField value={b.top} min={-300} max={400} onChange={(n) => setBlock(i, { top: n })} />
+                            </div>
+                            <div>
+                              <Label>Align</Label>
+                              <Chips value={b.align} options={LINE_ALIGNS} onChange={(v) => setBlock(i, { align: v })} />
+                            </div>
+                            <div>
+                              <Label>Letter spacing</Label>
+                              <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setBlock(i, { spacing: Number(v) })} />
+                            </div>
+                            <div>
+                              <Label>Capitals</Label>
+                              <Chips value={b.upper ? 'on' : 'off'} options={[{ id: 'off', label: 'As typed' }, { id: 'on', label: 'ALL CAPS' }]} onChange={(v) => setBlock(i, { upper: v === 'on' })} />
+                            </div>
+                            <div>
+                              <Label>Where</Label>
+                              <Chips value={b.place} options={PLACES} onChange={(v) => setBlock(i, { place: v })} />
+                            </div>
+                            <button type="button" onClick={() => removeBlock(i)} className="text-xs text-ink-soft underline hover:text-red-700">Remove this line</button>
+                          </div>
+                        )
+                      })()}
                       {form.theme.blocks.length < 40 && (
-                        <button type="button" onClick={addBlock} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add a line</button>
+                        <button type="button" onClick={() => { addBlock(); setSelLine(form.theme.blocks.length) }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add a line</button>
                       )}
                     </MiniCard>
 
-                    <MiniCard title="Text boxes" summary={form.theme.free.length ? `${form.theme.free.length} added` : 'None'}>
-                      <p className="text-sm text-ink-soft">Free form. Add a box, then drag it anywhere in the preview, even on top of other text. Drag the dot on its corner to make it wider. Boxes float over the page and do not push anything down.</p>
-                      {form.theme.free.map((b, i) => (
-                        <div key={i} data-free={i} className={`space-y-4 rounded-xl border bg-paper p-4 ${selFree === i ? 'border-twilight' : 'border-line'}`} onFocusCapture={() => setSelFree(i)}>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-ink">Box {i + 1}</span>
-                            <span className="flex gap-3">
+                    <MiniCard title="Elements" summary={form.theme.free.length ? `${form.theme.free.length} added` : 'None'}>
+                      <p className="text-sm text-ink-soft">Free form. Add text, an icon or a picture, then drag it anywhere in the preview. Select one to get its move handle (top) and width dot (corner). Elements float over the page and do not push anything down.</p>
+                      <input ref={elInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadElement(f); e.target.value = '' }} />
+                      {form.theme.free.length > 0 && (
+                        <Chips value={String(curEl)} options={form.theme.free.map((b, i) => ({ id: String(i), label: `${i + 1} ${b.kind === 'text' ? 'Text' : b.kind === 'icon' ? 'Icon' : 'Picture'}` }))} onChange={(v) => setSelFree(Number(v))} />
+                      )}
+                      {curEl >= 0 && (() => {
+                        const b = form.theme.free[curEl]
+                        const i = curEl
+                        return (
+                          <div key={i} className="space-y-4 rounded-xl border border-twilight bg-paper p-4">
+                            <div className="flex items-center justify-end gap-3">
                               <button type="button" onClick={() => dupFree(i)} className="text-xs text-ink-soft underline hover:text-ink">Copy</button>
                               <button type="button" onClick={() => removeFree(i)} className="text-xs text-ink-soft underline hover:text-red-700">Remove</button>
-                            </span>
+                            </div>
+                            {b.kind === 'text' && (
+                              <>
+                                <label className="block">
+                                  <Label>Words</Label>
+                                  <textarea rows={2} value={b.text} onChange={(e) => setFree(i, { text: e.target.value })} className={inputCls} />
+                                </label>
+                                <FontPicker label="Font" value={b.font} onChange={(k) => setFree(i, { font: k })} />
+                              </>
+                            )}
+                            {b.kind === 'icon' && (
+                              <div>
+                                <Label>Icon</Label>
+                                <div className="mt-1 flex flex-wrap gap-2">
+                                  {Object.entries(ICONS).map(([k, ic]) => (
+                                    <button key={k} type="button" title={ic.label} onClick={() => setFree(i, { icon: k })} className={`rounded-lg border p-2 ${b.icon === k ? 'border-twilight bg-twilight/10 text-twilight' : 'border-line bg-card text-ink-soft hover:border-twilight'}`}>
+                                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d={ic.d} /></svg>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {b.kind === 'image' && (
+                              <button type="button" disabled={uploading} onClick={() => { elReplace.current = i; elInput.current?.click() }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{uploading ? 'Uploading...' : b.src ? 'Change picture' : 'Choose a picture'}</button>
+                            )}
+                            {b.kind !== 'image' && (
+                              <div>
+                                <Label>Size</Label>
+                                <SizeField value={b.size} min={6} max={300} onChange={(n) => setFree(i, { size: n })} />
+                              </div>
+                            )}
+                            {b.kind !== 'image' && (
+                              <div className="max-w-xs">
+                                <ColorField label="Color" value={b.color} onChange={(v) => setFree(i, { color: v })} />
+                              </div>
+                            )}
+                            {b.kind === 'text' && (
+                              <>
+                                <div>
+                                  <Label>Align</Label>
+                                  <Chips value={b.align} options={LINE_ALIGNS} onChange={(v) => setFree(i, { align: v })} />
+                                </div>
+                                <div>
+                                  <Label>Letter spacing</Label>
+                                  <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setFree(i, { spacing: Number(v) })} />
+                                </div>
+                                <div>
+                                  <Label>Capitals</Label>
+                                  <Chips value={b.upper ? 'on' : 'off'} options={[{ id: 'off', label: 'As typed' }, { id: 'on', label: 'ALL CAPS' }]} onChange={(v) => setFree(i, { upper: v === 'on' })} />
+                                </div>
+                              </>
+                            )}
+                            {b.kind !== 'icon' && (
+                              <div>
+                                <Label>Width</Label>
+                                <SizeField value={Math.round(b.w)} min={5} max={100} onChange={(n) => setFree(i, { w: n })} />
+                              </div>
+                            )}
+                            <div>
+                              <Label>Left to right position</Label>
+                              <SizeField value={Math.round(b.x)} min={-20} max={100} onChange={(n) => setFree(i, { x: n })} />
+                            </div>
+                            <div>
+                              <Label>Up and down position</Label>
+                              <SizeField value={Math.round(b.y)} min={-20} max={900} onChange={(n) => setFree(i, { y: n })} />
+                            </div>
+                            <div>
+                              <Label>Tilt</Label>
+                              <SizeField value={Math.round(b.rot)} min={-90} max={90} onChange={(n) => setFree(i, { rot: n })} />
+                            </div>
                           </div>
-                          <label className="block">
-                            <Label>Words</Label>
-                            <textarea rows={2} value={b.text} onChange={(e) => setFree(i, { text: e.target.value })} className={inputCls} />
-                          </label>
-                          <FontPicker label="Font" value={b.font} onChange={(k) => setFree(i, { font: k })} />
-                          <div>
-                            <Label>Size</Label>
-                            <SizeField value={b.size} min={6} max={300} onChange={(n) => setFree(i, { size: n })} />
-                          </div>
-                          <div className="max-w-xs">
-                            <ColorField label="Color" value={b.color} onChange={(v) => setFree(i, { color: v })} />
-                          </div>
-                          <div>
-                            <Label>Align</Label>
-                            <Chips value={b.align} options={LINE_ALIGNS} onChange={(v) => setFree(i, { align: v })} />
-                          </div>
-                          <div>
-                            <Label>Letter spacing</Label>
-                            <Chips value={String(b.spacing)} options={LINE_SPACING} onChange={(v) => setFree(i, { spacing: Number(v) })} />
-                          </div>
-                          <div>
-                            <Label>Capitals</Label>
-                            <Chips value={b.upper ? 'on' : 'off'} options={[{ id: 'off', label: 'As typed' }, { id: 'on', label: 'ALL CAPS' }]} onChange={(v) => setFree(i, { upper: v === 'on' })} />
-                          </div>
-                          <div>
-                            <Label>Width</Label>
-                            <SizeField value={Math.round(b.w)} min={5} max={100} onChange={(n) => setFree(i, { w: n })} />
-                          </div>
-                          <div>
-                            <Label>Tilt</Label>
-                            <SizeField value={Math.round(b.rot)} min={-90} max={90} onChange={(n) => setFree(i, { rot: n })} />
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      })()}
                       {form.theme.free.length < 60 && (
-                        <button type="button" onClick={addFree} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Add a text box</button>
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" onClick={() => addFree('text')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Text</button>
+                          <button type="button" onClick={() => addFree('icon')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Icon</button>
+                          <button type="button" disabled={uploading} onClick={() => { elReplace.current = null; elInput.current?.click() }} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">+ Picture</button>
+                        </div>
                       )}
                     </MiniCard>
 
@@ -1045,6 +1108,10 @@ export default function SpecialsPage() {
 
                     <MiniCard title="Photos" summary={form.photos.length ? `${form.photos.length} added` : 'None'}>
                       <p className="text-sm text-ink-soft">Add up to 8. One photo stays still. Two or more fade into each other.</p>
+                      <div>
+                        <Label>Space above (minus moves it up)</Label>
+                        <SizeField value={form.theme.photosTop} min={-300} max={400} onChange={(n) => setTheme({ photosTop: n })} />
+                      </div>
                       <div className="flex flex-wrap gap-3">
                         {form.photos.map((u) => (
                           <div key={u} className="relative">
@@ -1076,6 +1143,10 @@ export default function SpecialsPage() {
                       <div>
                         <Label>Text size</Label>
                         <SizeField value={form.theme.btnSizePx} min={10} max={40} onChange={(n) => setTheme({ btnSizePx: n })} />
+                      </div>
+                      <div>
+                        <Label>Space above (minus moves it up)</Label>
+                        <SizeField value={form.theme.btnTop} min={-300} max={400} onChange={(n) => setTheme({ btnTop: n })} />
                       </div>
                       <div>
                         <Label>Shape</Label>
@@ -1137,9 +1208,9 @@ export default function SpecialsPage() {
 
               <div className="lg:sticky lg:top-6 lg:self-start">
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Live preview</p>
-                <style>{`#special-preview [data-edit]{cursor:pointer}#special-preview [data-edit]:hover{outline:1px dashed #A9545F;outline-offset:3px}`}</style>
+                <style>{`#special-preview [data-edit]{cursor:pointer}#special-preview [data-edit]:hover{outline:1px dashed #A9545F;outline-offset:3px}#special-preview [contenteditable]{cursor:text;outline:none}#special-preview [contenteditable]:focus{outline:1px solid #A9545F;outline-offset:3px}#special-preview [data-ph]:empty::before{content:attr(data-ph);opacity:.4;pointer-events:none}`}</style>
                 <div id="special-preview" onClick={(e) => { const t = (e.target as HTMLElement).closest('[data-edit]') as HTMLElement | null; if (t?.dataset.edit) openEditor(t.dataset.edit) }} className="mx-auto h-[720px] w-[390px] max-w-full overflow-y-auto rounded-[2rem] border-4 border-ink/80" style={{ background: form.theme.bgColor }}>
-                  <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label, minis)} edit={{ selected: selFree, onSelect: setSelFree, onMove: (i, x, y) => setFree(i, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }), onWidth: (i, w) => setFree(i, { w: Math.round(w * 10) / 10 }) }} />
+                  <SpecialView preview funnelId={form.id || 'preview'} theme={form.theme} d={toData(form.text, form.photos, form.cta_label, minis)} edit={{ selected: selFree, onSelect: setSelFree, onMove: (i, x, y) => setFree(i, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }), onWidth: (i, w) => setFree(i, { w: Math.round(w * 10) / 10 }), onText }} />
                 </div>
               </div>
             </div>
