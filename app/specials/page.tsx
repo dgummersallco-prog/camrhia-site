@@ -33,7 +33,7 @@ type MiniOpt = { id: string; title: string; description: string | null; location
 type Lead = { id: string; funnel_id: string; name: string; email: string; phone: string | null; note: string | null; created_at: string }
 type Form = { id: string; slug: string; published: boolean; cta_label: string; text: Record<string, string>; photos: string[]; theme: SpecialTheme }
 
-const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image', 'og_site']
+const TEXT_KEYS = ['hero_headline', 'brand_name', 'hero_sub', 'price_line', 'when_where', 'details_body', 'spots_note', 'terms', 'thanks_message', 'form_title', 'details_title', 'terms_title', 'package_id', 'mini_id', 'mini_off', 'og_title', 'og_desc', 'og_image', 'og_site', 'og_art', 'og_name_size', 'og_title_size', 'og_sub_size']
 
 const SWATCHES = ['#FAF7F2', '#FFFFFF', '#2A1F24', '#111111', '#A9545F', '#B08D57', '#1F3A2E', '#2F6DB5', '#F3E3CF', '#FBEFF1']
 
@@ -634,7 +634,25 @@ export default function SpecialsPage() {
     }
   }
   const ogInput = useRef<HTMLInputElement>(null)
-  async function makeOgFromDesign() {
+  const [artPrompt, setArtPrompt] = useState('')
+  async function makeOgArt() {
+    const sb = supabase
+    if (!sb || !form || !artPrompt.trim()) return
+    setUploading(true)
+    try {
+      const sess = (await sb.auth.getSession()).data.session
+      const r = await fetch('/api/ai/camri-image', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ name: 'texture', prompt: artPrompt.trim(), shape: 'wide' }) })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok || !j.url) throw new Error(j.error || 'Camri could not make that picture.')
+      setText('og_art', j.url)
+      await makeOgFromDesign(j.url)
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Camri could not make that picture.')
+    } finally {
+      setUploading(false)
+    }
+  }
+  async function makeOgFromDesign(artUrl?: string) {
     if (!form) return
     const t = form.theme
     const W = 1200, H = 630
@@ -645,9 +663,10 @@ export default function SpecialsPage() {
     const nameF = fam(t.nameFont, 'sans-serif'), headF = fam(t.headFont, 'serif'), subF = fam(t.subFont, 'sans-serif')
     try { await Promise.all([`28px ${nameF}`, `80px ${headF}`, `34px ${subF}`].map((f) => document.fonts.load(f))) } catch {}
     ctx.fillStyle = t.bgColor; ctx.fillRect(0, 0, W, H)
-    if (t.bgImage) {
+    const bgSrc = artUrl || form.text.og_art || t.bgImage
+    if (bgSrc) {
       try {
-        const img = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = t.bgImage })
+        const img = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = bgSrc })
         const r = Math.max(W / img.width, H / img.height)
         ctx.drawImage(img, (W - img.width * r) / 2, (H - img.height * r) / 2, img.width * r, img.height * r)
         ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, W, H)
@@ -666,19 +685,22 @@ export default function SpecialsPage() {
     const title = (form.text.hero_headline || '').trim()
     const sub = (form.text.hero_sub || '').trim().split(/\n/)[0]
     const name = (form.text.brand_name || '').trim()
-    let tSize = 96
+    const nSize = Number(form.text.og_name_size) || 30
+    const sSize = Number(form.text.og_sub_size) || 34
+    const userT = Number(form.text.og_title_size) || 0
+    let tSize = userT || 96
     let tLines: string[] = []
-    for (; tSize >= 44; tSize -= 4) { ctx.font = `${tSize}px ${headF}`; tLines = wrap(title, 1000); if (tLines.length <= 3) break }
-    ctx.font = `34px ${subF}`
-    const sLines = sub ? wrap(sub, 900).slice(0, 2) : []
+    for (; tSize >= 20; tSize -= 4) { ctx.font = `${tSize}px ${headF}`; tLines = wrap(title, 1050); if (userT || tLines.length <= 3) break }
+    ctx.font = `${sSize}px ${subF}`
+    const sLines = sub ? wrap(sub, 1000).slice(0, 3) : []
     const gap = 24
-    const blockH = (name ? 40 + gap : 0) + tLines.length * tSize * 1.1 + (sLines.length ? gap + sLines.length * 44 : 0)
+    const blockH = (name ? nSize * 1.3 + gap : 0) + tLines.length * tSize * 1.1 + (sLines.length ? gap + sLines.length * sSize * 1.3 : 0)
     let y = (H - blockH) / 2
-    if (name) { ctx.font = `30px ${nameF}`; ctx.fillStyle = t.nameColor || t.textColor; ctx.fillText(name.toUpperCase(), W / 2, y + 30); y += 40 + gap }
+    if (name) { ctx.font = `${nSize}px ${nameF}`; ctx.fillStyle = t.nameColor || t.textColor; ctx.fillText(name.toUpperCase(), W / 2, y + nSize); y += nSize * 1.3 + gap }
     ctx.font = `${tSize}px ${headF}`; ctx.fillStyle = t.titleColor
     tLines.forEach((l, i) => ctx.fillText(l, W / 2, y + tSize * (0.9 + i * 1.1)))
     y += tLines.length * tSize * 1.1
-    if (sLines.length) { y += gap; ctx.font = `34px ${subF}`; ctx.fillStyle = t.subColor; sLines.forEach((l, i) => ctx.fillText(l, W / 2, y + 34 + i * 44)) }
+    if (sLines.length) { y += gap; ctx.font = `${sSize}px ${subF}`; ctx.fillStyle = t.subColor; sLines.forEach((l, i) => ctx.fillText(l, W / 2, y + sSize + i * sSize * 1.3)) }
     const blob = await new Promise<Blob | null>((res) => cv.toBlob(res, 'image/jpeg', 0.9))
     if (!blob) { setMessage('Could not make the picture.'); return }
     await uploadOg(blob)
@@ -1300,12 +1322,33 @@ export default function SpecialsPage() {
                         <input placeholder={form.text.brand_name || 'Studio name'} value={form.text.og_site} onChange={(e) => setText('og_site', e.target.value)} className={inputCls} />
                         <span className="mt-1 block text-xs text-ink-soft">Some apps show your web address here instead.</span>
                       </label>
+                      <div className="flex flex-wrap gap-4">
+                        <div>
+                          <Label>Studio name size</Label>
+                          <SizeField value={Number(form.text.og_name_size) || 30} min={14} max={80} onChange={(n) => setText('og_name_size', String(n))} />
+                        </div>
+                        <div>
+                          <Label>Title size</Label>
+                          <SizeField value={Number(form.text.og_title_size) || 96} min={24} max={200} onChange={(n) => setText('og_title_size', String(n))} />
+                        </div>
+                        <div>
+                          <Label>Paragraph size</Label>
+                          <SizeField value={Number(form.text.og_sub_size) || 34} min={14} max={80} onChange={(n) => setText('og_sub_size', String(n))} />
+                        </div>
+                      </div>
+                      <p className="text-xs text-ink-soft">Sizes apply when you tap Make from my design.</p>
+                      <div>
+                        <Label>Have Camri paint a background</Label>
+                        <input placeholder="Describe it, like soft candlelit pine branches" value={artPrompt} onChange={(e) => setArtPrompt(e.target.value)} className={inputCls} />
+                        <button type="button" disabled={uploading || !artPrompt.trim()} onClick={makeOgArt} className="mt-2 rounded-full bg-twilight px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{uploading ? 'Working... this can take a minute' : 'Make with Camri'}</button>
+                        {form.text.og_art && <button type="button" onClick={() => setText('og_art', '')} className="ml-2 rounded-full border border-line bg-card px-4 py-2 text-sm text-ink-soft transition hover:border-twilight">Remove background</button>}
+                      </div>
                       <div>
                         <Label>Picture</Label>
                         <input ref={ogInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadOg(f); e.target.value = '' }} />
                         {form.text.og_image && <img src={form.text.og_image} alt="" className="mb-2 h-24 w-auto rounded-lg border border-line object-cover" />}
                         <div className="flex gap-2">
-                          <button type="button" disabled={uploading} onClick={makeOgFromDesign} className="rounded-full bg-twilight px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{uploading ? 'Working...' : 'Make from my design'}</button>
+                          <button type="button" disabled={uploading} onClick={() => makeOgFromDesign()} className="rounded-full bg-twilight px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">{uploading ? 'Working...' : 'Make from my design'}</button>
                           <button type="button" disabled={uploading} onClick={() => ogInput.current?.click()} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink transition hover:border-twilight">{uploading ? 'Uploading...' : form.text.og_image ? 'Change picture' : 'Choose a picture'}</button>
                           {form.text.og_image && <button type="button" onClick={() => setText('og_image', '')} className="rounded-full border border-line bg-card px-4 py-2 text-sm text-ink-soft transition hover:border-twilight">Remove</button>}
                         </div>
@@ -1335,7 +1378,6 @@ export default function SpecialsPage() {
                 </div>
                 <div className="mx-auto mt-5 w-[390px] max-w-full">
                   <p className="mb-1 font-mono text-xs uppercase tracking-widest text-ink-soft/60">Link preview</p>
-                  <p className="mb-2 text-xs text-ink-soft">This is the little card people see when you text or share your link, before they tap it. Tap the words to type on it, or use Design, Link preview for the picture.</p>
                   <style>{`#og-preview [contenteditable]{cursor:text;outline:none}#og-preview [contenteditable]:hover{outline:1px dashed #A9545F;outline-offset:2px}#og-preview [contenteditable]:focus{outline:1px solid #A9545F;outline-offset:2px}#og-preview [data-ph]:empty::before{content:attr(data-ph);opacity:.4;pointer-events:none}`}</style>
                   <div id="og-preview" className="overflow-hidden rounded-2xl border border-line bg-card">
                     {form.text.og_image ? <img src={form.text.og_image} alt="" className="aspect-[1200/630] w-full object-cover" /> : <div className="flex aspect-[1200/630] w-full items-center justify-center bg-line/40 text-xs text-ink-soft">No picture yet</div>}
@@ -1345,6 +1387,7 @@ export default function SpecialsPage() {
                       <Editable tag="p" single value={form.text.og_site} onChange={(v) => setText('og_site', v)} placeholder={form.text.brand_name || 'camrhia.com'} className="mt-0.5 text-xs text-ink-soft/60" />
                     </div>
                   </div>
+                  <p className="mt-2 text-xs text-ink-soft">This is the little card people see when you text or share your link, before they tap it. Tap the words to type on it, or use Design, Link preview for the picture.</p>
                 </div>
               </div>
             </div>
