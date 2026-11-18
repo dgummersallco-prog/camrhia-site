@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Wordmark from '@/app/components/Wordmark'
 import { fetchUnreadCount } from '@/lib/unreadMessages'
-import { APP_STORE_URL } from '@/lib/appStore'
 import { DASH_BG_KEY, applyDashBg } from '@/lib/dashBg'
 import DashScenes from '@/app/components/DashScenes'
 
@@ -90,6 +89,7 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
   const [unread, setUnread] = useState(0)
   const [newLeads, setNewLeads] = useState(0)
   const [blocked, setBlocked] = useState(false)
+  const [trialLeft, setTrialLeft] = useState<number | null>(null)
   const [showTeam, setShowTeam] = useState(false)
   const [isAffiliate, setIsAffiliate] = useState(false)
 
@@ -114,6 +114,9 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
       } else {
         const trialActive = !!p.trial_ends_at && new Date(p.trial_ends_at) > new Date()
         access = p.subscription_status === 'active' || p.subscription_status === 'comped' || trialActive
+        if (trialActive && p.subscription_status !== 'active' && p.subscription_status !== 'comped') {
+          setTrialLeft(Math.max(1, Math.ceil((new Date(p.trial_ends_at as string).getTime() - Date.now()) / 86400000)))
+        }
       }
       setBlocked(!access)
     }
@@ -337,16 +340,22 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
         )}
       </header>
 
+      {trialLeft !== null && !blocked && (
+        <a href="/keep" className="block bg-brass/15 px-4 py-2 text-center text-sm text-ink transition hover:bg-brass/25">
+          {trialLeft} {trialLeft === 1 ? 'day' : 'days'} left in your free trial. <span className="font-medium underline">Choose what to keep</span>
+        </a>
+      )}
+
       {blocked && active !== 'billing' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-paper px-6 py-10">
           <div className="w-full max-w-md text-center">
             <Wordmark className="text-4xl" />
-            <h1 className="mt-8 font-fraunces text-3xl font-semibold text-ink">Subscribe to keep going</h1>
+            <h1 className="mt-8 font-fraunces text-3xl font-semibold text-ink">Your free 14 days are up</h1>
             <p className="mt-3 text-sm text-ink-soft">
-              Your free trial or subscription is no longer active. Subscribe in the Camrhia app and everything here will be right where you left it.
+              Choose what you would like to keep and everything here will be right where you left it.
             </p>
             <p className="mt-2 text-xs text-ink-soft">On a studio team? Ask your studio owner to renew.</p>
-            <a href={APP_STORE_URL} className="mt-6 inline-block rounded-full bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90">Open the App Store</a>
+            <a href="/keep" className="mt-6 inline-block rounded-full bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90">Choose what to keep</a>
             <div className="mt-4">
               <button type="button" onClick={signOut} className="text-sm text-ink-soft underline hover:text-ink">Sign out</button>
             </div>

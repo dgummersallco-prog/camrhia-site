@@ -1,49 +1,37 @@
 import type { Metadata } from "next"
-import { Nav, Footer, AppStoreButton } from "@/app/components/SiteChrome"
+import { Nav, Footer } from "@/app/components/SiteChrome"
 import Wordmark from "@/app/components/Wordmark"
 import CamriAsk from "@/app/components/CamriAsk"
 
 export const metadata: Metadata = {
-  title: "Camrhia | Become the photographer everyone is looking for.",
+  title: "Camrhia | Everything a photographer needs, in one place.",
   description:
-    "Stop juggling seven tools. Camrhia gives photographers a website built with Camri, plus booking, contracts, payments and gallery delivery. Free for 14 days.",
+    "Run your business, put up a website and specials, and cull and edit with Camri. Start with everything free for 14 days, then keep what you need.",
   openGraph: {
-    title: "Camrhia | Become the photographer everyone is looking for.",
+    title: "Camrhia | Everything a photographer needs, in one place.",
     description:
-      "A website built with Camri, bookings, contracts, payments and gallery delivery. Everything your clients need, in one app.",
+      "Sessions, contracts, payments, a website, specials, gallery delivery and AI editing. Start with everything free for 14 days.",
     type: "website",
   },
 }
 
-const NAVY = "#8C6B3F"
 const PHONE =
   "rounded-[1.9rem] ring-1 ring-black/10 bg-card shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]"
-
-const PAINS = [
-  "Instagram is the only place anyone can find your work.",
-  "Clients wait for your reply and book someone else.",
-  "You spend more time on admin than behind your camera.",
-]
-
-const STEPS = [
-  ["Build your site with Camri", "Add your photos and packages and Camri sets it up with you. Your website goes live when you save."],
-  ["Share one link", "Clients inquire, book and pay from it."],
-  ["Run it from your phone", "Sessions, contracts, payments and delivery in one place."],
-]
+const SHOT =
+  "w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]"
+const BTN =
+  "inline-flex items-center justify-center rounded-full bg-twilight px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
+const BTN_LINE =
+  "inline-flex items-center justify-center rounded-full border border-twilight px-7 py-3.5 text-sm font-semibold text-twilight transition hover:opacity-90"
 
 const FAQ = [
-  ["Do I need a credit card to try it?", "For Showcase and Retouch, yes. You add a card to start, you are not charged for 14 days, and you can cancel anytime in Settings before then and pay nothing. The Camrhia app is free for its first 14 days through the App Store."],
-  ["I already have a website. Why Camrhia?", "Keep it if you love it. Camrhia replaces the tools behind it: booking, contracts, payments, messaging and delivery."],
+  ["Do I need a credit card to try it?", "No. Start your 14 days with just your name and email. Everything is on. When the 14 days are up, you choose what to keep and only pay for that."],
+  ["What happens when the 14 days are up?", "You choose what to keep: the business side, the website, specials and gallery delivery, the editing, or all of it. Keep everything and it is $55 a month."],
+  ["I already have a website. Why Camrhia?", "Keep it. Specials are their own live pages, so you never have to change the website you worked hard on. Camrhia runs the business behind it."],
+  ["I love Lightroom. Can I still use Camrhia?", "Yes. Use Camri Cull to find your best shots, then edit wherever you like."],
   ["Is it hard to set up?", "If you can post to Instagram, you can set this up. Most are live in an afternoon."],
-  ["Can I cancel anytime?", "Yes. Cancel anytime in your Apple ID subscriptions."],
+  ["Can I cancel anytime?", "Yes. Website and editing plans cancel in Settings. App plans cancel in your Apple ID subscriptions."],
   ["Is it only for weddings?", "No. Weddings, portraits, newborns, families and events."],
-]
-
-const CLIENT_PERKS = [
-  ["One place for everything", "Contract, payments, messages and photos in one simple app."],
-  ["Photos they love opening", "A PIN gallery with hearts and one-tap downloads."],
-  ["Always know what is next", "Reminders for session day and for each payment."],
-  ["Reviews and rebooking", "Camrhia asks for a review and brings past clients back."],
 ]
 
 function Check() {
@@ -75,8 +63,8 @@ function Story({
     <div className="grid md:grid-cols-2 gap-10 md:gap-20 items-center">
       <div className={flip ? "md:order-2" : ""}>{panel}</div>
       <div className={flip ? "md:order-1" : ""}>
-        <h3 className="font-fraunces text-3xl sm:text-[2.6rem] font-semibold text-ink leading-[1.1] mb-5">{title}</h3>
-        <p className="text-lg text-ink-soft leading-relaxed mb-6 max-w-md">{body}</p>
+        <h3 className="font-fraunces text-3xl sm:text-[2.4rem] font-semibold text-ink leading-[1.1] mb-4">{title}</h3>
+        <p className="text-lg text-ink-soft leading-relaxed mb-5 max-w-md">{body}</p>
         {points.length > 0 && (
           <ul className="space-y-3">
             {points.map((p) => (
@@ -89,6 +77,34 @@ function Story({
         )}
       </div>
     </div>
+  )
+}
+
+function OfferHead({
+  n, label, title, body, children,
+}: {
+  n: string
+  label: string
+  title: string
+  body: string
+  children?: React.ReactNode
+}) {
+  return (
+    <div className="max-w-2xl">
+      <p className="text-base font-medium text-brass">{n} &middot; {label}</p>
+      <h2 className="mt-3 font-fraunces text-4xl md:text-5xl font-medium text-ink leading-[1.08]">{title}</h2>
+      <p className="mt-5 text-lg text-ink-soft leading-relaxed">{body}</p>
+      {children}
+    </div>
+  )
+}
+
+function Price({ amount, note }: { amount: string; note: string }) {
+  return (
+    <p className="font-fraunces text-3xl text-ink">
+      {amount}
+      <span className="ml-1 text-base text-ink-soft">{note}</span>
+    </p>
   )
 }
 
@@ -107,318 +123,225 @@ export default function Home() {
       <Nav />
       <main>
         {/* HERO */}
-        <section className="mx-auto max-w-6xl px-6 pt-10 pb-12 sm:pt-14 sm:pb-16 grid md:grid-cols-2 gap-14 md:gap-16 items-center">
-          <div>
+        <section className="mx-auto max-w-6xl px-6 pt-10 pb-12 sm:pt-14 sm:pb-16">
+          <div className="mx-auto max-w-3xl text-center">
             <p className="text-base font-medium text-brass">Meet Camri, your business assistant</p>
             <h1 className="mt-4 font-fraunces text-[3rem] md:text-7xl font-medium text-ink leading-[1.05]">
-              Stop paying for five tools.
+              Everything a photographer needs, in one place.
             </h1>
-            <p className="mt-6 text-lg text-ink-soft leading-relaxed max-w-xl">
-              Camrhia gives you a website built with Camri, plus contracts, payments, client messaging,
-              gallery delivery and photo editing. One login. One price.
+            <p className="mt-6 text-lg text-ink-soft leading-relaxed">
+              Your business, your website and your editing, together in one login, with Camri helping on every part.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-4">
-              <a href="/upgrade/showcase" className="inline-flex items-center justify-center rounded-full bg-twilight px-8 py-4 text-base font-semibold text-white transition hover:opacity-90">Build my website with Camri</a>
-              <AppStoreButton label="Get the app" />
+            <div className="mt-8">
+              <a href="/try" className={BTN}>Try free for 14 days</a>
             </div>
-            <p className="mt-3 text-sm text-ink-soft">14 days free. Cancel anytime.</p>
+            <p className="mt-3 text-sm text-ink-soft">No card needed. Everything is on for 14 days.</p>
           </div>
-          <Panel tone="bg-brass/15">
-            <div className="absolute left-[6%] top-[9%] w-[54%] z-10 -rotate-[2deg]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/sessions.jpg" alt="The Camrhia dashboard with Camri" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.15s" }} />
-            </div>
-            <div className="absolute right-[5%] top-[22%] w-[46%] rotate-[4deg]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/payments.jpg" alt="Payments in the Camrhia app" className={`${PHONE} phone-rise block w-full`} style={{ animationDelay: "0.35s" }} />
-            </div>
-          </Panel>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/shots/home.jpg" alt="The Camrhia home screen" className={`${SHOT} phone-rise mt-12`} />
         </section>
 
-        {/* CAMRI */}
-        <section className="mx-auto max-w-6xl px-6 pb-12 sm:pb-16">
-          <Story
-            flip
-            title="Camri runs the business side with you."
-            body="Ask Camri about your sessions, payments and clients. She sees what needs attention, helps you set up your website, and guides every edit."
-            points={[
-              "Ask what is next on your calendar or who still owes you",
-              "Camri sets up your website with you, step by step",
-              "Camri Retouch edits in your style and explains every change",
-            ]}
-            panel={
-              <Panel tone="bg-brass/15">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/sessions.jpg" alt="Camri on the Camrhia dashboard" loading="lazy" className={`${PHONE} absolute left-1/2 -translate-x-1/2 top-[7%] w-[62%]`} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/camri/14_peeking_sliders.png" alt="Camri" loading="lazy" className="absolute bottom-[3%] right-[4%] w-[30%]" />
-              </Panel>
-            }
-          />
-        </section>
+        {/* 1. BUSINESS */}
+        <section id="business" className="border-y border-line bg-paper-deep">
+          <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
+            <div className="max-w-2xl">
+              <p className="text-base font-medium text-brass">Run an organized business</p>
+              <h2 className="mt-3 font-fraunces text-4xl md:text-5xl font-medium text-ink leading-[1.08]">Everything photography, in one place.</h2>
+              <p className="mt-5 text-lg text-ink-soft leading-relaxed">
+                The app and the desktop dashboard, working together. Every session you shoot lives here, from the first inquiry to the final gallery.
+              </p>
+            </div>
 
-        {/* DESKTOP */}
-        <section className="mx-auto max-w-6xl px-6 pb-12 sm:pb-16">
-          <div className="max-w-2xl">
-            <p className="text-base font-medium text-brass">On your phone and on your computer</p>
-            <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Your whole studio, on a big screen too.</h2>
-            <p className="mt-5 text-lg text-ink-soft leading-relaxed">Sessions, clients, contracts, money, your website and your galleries all live in one place you can open anywhere.</p>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            <ul className="mt-10 grid gap-x-10 gap-y-3 sm:grid-cols-2">
+              {[
+                "All your sessions and everything you shoot",
+                "Your packages and pricing",
+                "Your questionnaires",
+                "Your contracts",
+                "Payments, tracked for every session",
+                "A way to deliver your gallery link, even if you do not use Camrhia galleries",
+                "Your calendar, synced with Apple Calendar and Google Calendar",
+                "Camri, to answer who owes you and what is next",
+              ].map((p) => (
+                <li key={p} className="flex gap-3 text-ink leading-snug">
+                  <Check />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/shots/home.jpg" alt="The Camrhia home screen" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/shots/sessions-web.jpg" alt="Sessions in Camrhia, with every step tracked" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+            <img src="/shots/sessions-web.jpg" alt="Sessions in Camrhia, with every step tracked" loading="lazy" className={`${SHOT} mt-12`} />
+
+            <div className="mt-12 grid gap-8 md:grid-cols-2 md:items-center">
+              <div>
+                <h3 className="font-fraunces text-3xl sm:text-[2.4rem] font-semibold text-ink leading-[1.1]">A shared space with your client.</h3>
+                <p className="mt-4 text-lg text-ink-soft leading-relaxed">
+                  No more lost emails, dead-end DMs, or work texts mixed in with real life. Your client sees their session, signs, pays and messages you in one calm place.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/session.jpg" alt="A session in the Camrhia app" loading="lazy" className={PHONE} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/messages.jpg" alt="Client messages in the Camrhia app" loading="lazy" className={PHONE} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/payments.jpg" alt="Payments in the Camrhia app" loading="lazy" className={PHONE} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/calendar.jpg" alt="The Camrhia calendar" loading="lazy" className={PHONE} />
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* SPECIALS */}
-        <section className="mx-auto max-w-6xl px-6 pb-12 sm:pb-16">
-          <div className="max-w-2xl">
-            <p className="text-base font-medium text-brass">Specials</p>
-            <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Fill your calendar with a Special.</h2>
-            <p className="mt-5 text-lg text-ink-soft leading-relaxed">Run a mini session, a holiday offer or a limited-time deal. Build it as its own live website page, or make a Quick Special in a few taps.</p>
+        {/* 2. MARKETING */}
+        <section id="website" className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
+          <div className="max-w-3xl">
+            <p className="text-base font-medium text-brass">Marketing</p>
+            <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Marketing for photographers has never been easier.</h2>
+            <p className="mt-5 text-lg text-ink-soft leading-relaxed">
+              Build a beautiful website with Camri. Pick a look, arrange your sections, add your photos, and it goes live at your own web address.
+            </p>
           </div>
-          <div className="mt-12 grid items-center gap-10 md:grid-cols-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/shots/explore.jpg" alt="Building a website with Camri" loading="lazy" className={`${SHOT} mt-10`} />
+
+          <div className="mt-16 max-w-3xl">
+            <h3 className="font-fraunces text-3xl sm:text-[2.6rem] font-semibold text-ink leading-[1.1]">Love your site? Keep it, and still run specials.</h3>
+            <p className="mt-4 text-lg text-ink-soft leading-relaxed">
+              Each special is its own quick sign-up page with its own link. Run a mini session or a holiday offer without editing the website you worked so hard on.
+            </p>
+          </div>
+          <div className="mt-10 grid items-start gap-10 md:grid-cols-2">
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/specials.jpg" alt="Designing a Special in Camrhia" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
-              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">A live website for every Special</p>
+              <img src="/shots/specials.jpg" alt="Designing a Special in Camrhia" loading="lazy" className={SHOT} />
+              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">A live page for every special</p>
               <p className="mt-2 text-ink-soft leading-relaxed">Share one link. Clients see your offer, pick a time and inquire without leaving the page.</p>
             </div>
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/quickspecials.jpg" alt="Quick Specials designs in Camrhia" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
+              <img src="/shots/quickspecials.jpg" alt="Quick Specials designs in Camrhia" loading="lazy" className={SHOT} />
               <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Quick Specials</p>
               <p className="mt-2 text-ink-soft leading-relaxed">Pick a design, add your details and share. Ready to post in minutes.</p>
             </div>
           </div>
         </section>
 
-        {/* SOUND FAMILIAR */}
-        <section className="bg-paper-deep border-y border-line">
-          <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
-            <div className="flex items-center gap-6">
-            <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Talent is not what is holding you back</h2>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/camri/04_thinking.png" alt="" className="hidden h-32 w-auto shrink-0 sm:block" />
-            </div>
-            <ul className="mt-9 space-y-4">
-              {PAINS.map((p) => (
-                <li key={p} className="flex gap-3 text-lg text-ink">
-                  <span className="text-brass mt-1">&#10005;</span>
-                  <span>{p}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-10 font-fraunces text-2xl text-twilight">
-              What fills a calendar is being easy to find and easy to book. Camrhia fixes that.
-            </p>
-          </div>
-        </section>
-
-        {/* 3 STEPS */}
-        <section id="how" className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-          <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Live in three steps</h2>
-          <div className="mt-14 grid md:grid-cols-3 gap-12 md:gap-10">
-            {STEPS.map(([t, d], i) => (
-              <div key={t}>
-                <p className="font-fraunces text-7xl font-semibold leading-none mb-5" style={{ color: NAVY, opacity: 0.22 }}>{i + 1}</p>
-                <p className="font-fraunces text-2xl font-semibold text-ink">{t}</p>
-                <p className="mt-2 text-ink-soft leading-relaxed">{d}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* PORTFOLIO = WEBSITE */}
-        <section className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-          <Story
-            title="A website that sells for you."
-            body="Camri builds it with you. Pick a look, arrange your sections, add your photos, and it goes live at your own web address. Clients inquire and book without leaving the page."
-            points={[
-              "Fonts, colors, layouts and photos are all yours",
-              "The website is included in your price",
-            ]}
-            panel={
-              <Panel tone="bg-twilight/10">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/explore.jpg" alt="Arranging a website with Camri" loading="lazy" className="absolute left-[4%] right-[4%] top-1/2 -translate-y-1/2 w-[92%] rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.55)]" />
-              </Panel>
-            }
-          />
-        </section>
-
-        {/* MESSAGES + CALENDAR */}
-        <section className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-          <Story
-            title="Your whole business in one place."
-            body="Message clients and check your calendar inside the app. Work stays out of your personal texts."
-            points={[]}
-            panel={
-              <Panel tone="bg-sage/15">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/messages.jpg" alt="Client messages in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/shots/calendar.jpg" alt="The Camrhia calendar" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
-              </Panel>
-            }
-          />
-          <div className="mt-12 sm:mt-16">
-            <Story
-              flip
-              title="Know who has paid, and what is next."
-              body="See what you have collected, what is coming, and who is overdue. Every session shows its time, package, contract and questionnaire in one place."
-              points={[]}
-              panel={
-                <Panel tone="bg-brass/15">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/shots/payments.jpg" alt="Payments in Camrhia" loading="lazy" className={`${PHONE} absolute left-[7%] top-[17%] w-[47%]`} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/shots/session.jpg" alt="A session in Camrhia" loading="lazy" className={`${PHONE} absolute right-[7%] top-[5%] w-[47%] z-10`} />
-                </Panel>
-              }
-            />
-          </div>
-        </section>
-
-        {/* CLIENT EXPERIENCE */}
-        <section id="clients" className="border-y border-line bg-paper-deep">
+        {/* 3. EDITING ROOM TO GALLERY DELIVERY */}
+        <section id="editing" className="border-y border-line bg-paper-deep">
           <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-            <div className="max-w-2xl">
-              <p className="text-base font-medium text-brass">The part your clients will tell their friends about</p>
-              <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">
-                Be the photographer clients never have to chase.
-              </h2>
+            <div className="max-w-3xl">
+              <p className="text-base font-medium text-brass">The Editing Room</p>
+              <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">From shoot to gallery, with Camri beside you.</h2>
               <p className="mt-5 text-lg text-ink-soft leading-relaxed">
-                Every client gets one calm place for their session. Camrhia also brings them back for the next one.
+                Camri does the slow parts and you make the final calls. Cull, edit and deliver in one place.
+              </p>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/shots/edit-room.jpg" alt="The Camrhia Editing Room" loading="lazy" className={`${SHOT} mt-10`} />
+
+            <p className="mt-14 font-fraunces text-3xl font-semibold text-ink">Use as much as you want.</p>
+            <div className="mt-6 grid gap-8 md:grid-cols-2">
+              <div className="rounded-3xl border border-line bg-card p-6">
+                <p className="text-sm font-medium text-brass">Just cull</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/edit-cull.jpg" alt="Camri ready to cull a shoot" loading="lazy" className="mt-3 w-full rounded-2xl ring-1 ring-black/10" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/edit-cull2.jpg" alt="Camri going through the photos" loading="lazy" className="mt-4 w-full rounded-2xl ring-1 ring-black/10" />
+                <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Cull with AI</p>
+                <p className="mt-2 text-ink-soft leading-relaxed">Camri checks sharpness, exposure, eyes, smiles and duplicates, then finds your keepers. Love Lightroom? Cull here and edit there. Nothing is removed until you say so.</p>
+              </div>
+              <div className="rounded-3xl border border-line bg-card p-6">
+                <p className="text-sm font-medium text-brass">Cull and Retouch, the full Editing Room</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/shots/edit-camri.jpg" alt="Asking Camri how to edit a photo" loading="lazy" className="mx-auto mt-3 w-full max-w-xs rounded-2xl ring-1 ring-black/10" />
+                <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Edit with AI, and with Camri</p>
+                <p className="mt-2 text-ink-soft leading-relaxed">Edit in your own style. Ask how a pro would handle the light in a photo, and Camri moves the sliders when you say yes. Undo any change.</p>
+              </div>
+            </div>
+
+            <div className="mt-16 max-w-3xl">
+              <h3 className="font-fraunces text-3xl sm:text-[2.6rem] font-semibold text-ink leading-[1.1]">Then deliver a gallery that stands out.</h3>
+              <p className="mt-4 text-lg text-ink-soft leading-relaxed">
+                Choose a cover photo and a style, or ask Camri to restyle it. Clients open a PIN-protected gallery, heart their favorites and download everything in one tap.
+              </p>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/shots/edit-gallery.jpg" alt="Styling a gallery with a cover photo" loading="lazy" className={`${SHOT} mt-10`} />
+          </div>
+        </section>
+
+        {/* OFFER STACK */}
+        <section id="pricing" className="bg-gradient-to-br from-[#8C6B3F] to-[#A6824F] text-white">
+          <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
+            <div className="text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/camri/05_celebrating.png" alt="" className="mx-auto mb-4 h-28 w-auto" />
+              <h2 className="font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">Go all in, or keep what you want.</h2>
+              <p className="mx-auto mt-5 max-w-xl text-lg text-white/80 leading-relaxed">
+                Everything is on for your first 14 days. No card needed. On day 14 you choose what to keep.
               </p>
             </div>
 
-            <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {CLIENT_PERKS.map(([t, d]) => (
-                <div key={t} className="rounded-3xl border border-line bg-card p-7">
-                  <p className="font-fraunces text-xl font-semibold text-ink">{t}</p>
-                  <p className="mt-2 leading-relaxed text-ink-soft">{d}</p>
+            <div className="mt-10 rounded-3xl bg-card p-6 text-ink sm:p-8">
+              <div className="divide-y divide-line">
+                <div className="flex items-start justify-between gap-6 py-5">
+                  <div>
+                    <p className="font-fraunces text-2xl font-semibold">1. Run your business</p>
+                    <p className="mt-1 text-ink-soft">The app and the desktop dashboard. Sessions, packages, questionnaires, contracts, payments, gallery links and a shared space with every client.</p>
+                  </div>
+                  <p className="shrink-0 font-fraunces text-3xl">$8.99<span className="text-sm text-ink-soft"> /mo</span></p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* EDITING ROOM */}
-        <section className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-          <div className="max-w-2xl">
-            <p className="text-base font-medium text-brass">The Editing Room</p>
-            <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">From shoot to gallery, with Camri beside you.</h2>
-            <p className="mt-5 text-lg text-ink-soft leading-relaxed">Cull, edit and deliver in one place. Camri does the slow parts and you make the final calls.</p>
-          </div>
-          <div className="mt-12 grid gap-10 md:grid-cols-2">
-            <div className="rounded-3xl border border-line bg-card p-6">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/edit-cull.jpg" alt="Camri ready to cull a shoot" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/edit-cull2.jpg" alt="Camri going through the photos" loading="lazy" className="mt-4 w-full rounded-2xl ring-1 ring-black/10" />
-              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Camri finds the keepers</p>
-              <p className="mt-2 text-ink-soft leading-relaxed">She checks sharpness, exposure, black frames, faces and eyes, smiles, duplicates and people. Nothing is removed until you say so.</p>
-            </div>
-            <div className="rounded-3xl border border-line bg-card p-6">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/edit-camri.jpg" alt="Asking Camri how to edit a photo" loading="lazy" className="mx-auto w-full max-w-xs rounded-2xl ring-1 ring-black/10" />
-              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Edit with a pro beside you</p>
-              <p className="mt-2 text-ink-soft leading-relaxed">Ask how a pro would handle the light in this photo. Camri moves the sliders when you say yes, and you can undo any change.</p>
-            </div>
-            <div className="rounded-3xl border border-line bg-card p-6 md:col-span-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/shots/edit-gallery.jpg" alt="Styling a gallery with Camri" loading="lazy" className="w-full rounded-2xl ring-1 ring-black/10 shadow-[0_30px_60px_-25px_rgba(30,40,70,0.45)]" />
-              <p className="mt-5 font-fraunces text-2xl font-semibold text-ink">Style the gallery your clients open</p>
-              <p className="mt-2 max-w-2xl text-ink-soft leading-relaxed">Pick an opening photo and a photo layout, or ask Camri to restyle it. Then deliver it in one tap.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* DELIVERY */}
-        <section className="bg-gradient-to-br from-[#8C6B3F] to-[#A6824F] text-white">
-          <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16 text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/camri/05_celebrating.png" alt="" className="mx-auto mb-6 h-32 w-auto" />
-            <h2 className="font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">
-              Delivery day, without the scramble.
-            </h2>
-            <p className="mt-6 text-lg text-white/80 leading-relaxed">
-              Drag in your shoot and publish a PIN-protected gallery. Clients heart their favorites and download it all as one zip. No digging through email.
-            </p>
-          </div>
-        </section>
-
-        {/* PRICING */}
-        <section id="pricing" className="bg-paper-deep border-y border-line">
-          <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-            <h2 className="text-center font-fraunces text-4xl font-medium text-ink md:text-5xl">Simple pricing. Try it free first.</h2>
-            <p className="mx-auto mt-3 max-w-xl text-center text-ink-soft">Add a card to start Showcase or Retouch. Nothing is charged for 14 days, and you can cancel anytime in Settings.</p>
-            <div className="mt-10 grid gap-5 md:grid-cols-3">
-              <div className="flex flex-col rounded-3xl border-2 border-twilight bg-card p-7">
-                <p className="font-fraunces text-2xl font-semibold text-ink">Camrhia Showcase</p>
-                <p className="mt-1 text-sm text-ink-soft">Your website, specials and galleries.</p>
-                <p className="mt-5 font-fraunces text-5xl text-ink">$33<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="text-sm text-ink-soft">or $330 /year</p>
-                <ul className="mt-5 flex-1 space-y-2 text-sm text-ink">
-                  <li>A professional website, set up with Camri</li>
-                  <li>Ad specials that sell your sessions</li>
-                  <li>Gallery delivery with no expiration</li>
-                  <li>The Camrhia app included</li>
-                </ul>
-                <a href="/upgrade/showcase" className="mt-6 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
-              </div>
-              <div className="flex flex-col rounded-3xl border border-line bg-card p-7">
-                <p className="font-fraunces text-2xl font-semibold text-ink">Camri Retouch</p>
-                <p className="mt-1 text-sm text-ink-soft">AI editing with Camri beside you.</p>
-                <p className="mt-5 font-fraunces text-5xl text-ink">$22<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="text-sm text-ink-soft">or $220 /year</p>
-                <ul className="mt-5 flex-1 space-y-2 text-sm text-ink">
-                  <li>AI editing in your own style</li>
-                  <li>Camri guides every step</li>
-                  <li>Camri Cull included</li>
-                </ul>
-                <a href="/upgrade/retouch" className="mt-6 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
-              </div>
-              <div className="flex flex-col rounded-3xl border border-line bg-card p-7">
-                <p className="font-fraunces text-2xl font-semibold text-ink">Camri Cull</p>
-                <p className="mt-1 text-sm text-ink-soft">Your best shots, picked for you.</p>
-                <p className="mt-5 font-fraunces text-5xl text-ink">$11<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="text-sm text-ink-soft">or $110 /year</p>
-                <ul className="mt-5 flex-1 space-y-2 text-sm text-ink">
-                  <li>AI culling for every session</li>
-                  <li>Start editing faster</li>
-                  <li>Included with Camri Retouch</li>
-                </ul>
-                <a href="/upgrade/cull" className="mt-6 rounded-full border border-twilight px-6 py-3 text-center text-sm font-medium text-twilight transition hover:opacity-90">Get Camri Cull</a>
+                <div className="flex items-start justify-between gap-6 py-5">
+                  <div>
+                    <p className="font-fraunces text-2xl font-semibold">2. Website, specials and gallery delivery</p>
+                    <p className="mt-1 text-ink-soft">Your website built with Camri, specials on their own sign-up pages, and galleries with cover photos and styles.</p>
+                  </div>
+                  <p className="shrink-0 font-fraunces text-3xl">$33<span className="text-sm text-ink-soft"> /mo</span></p>
+                </div>
+                <div className="py-5">
+                  <p className="font-fraunces text-2xl font-semibold">3. The Editing Room</p>
+                  <div className="mt-3 space-y-3">
+                    <div className="flex items-start justify-between gap-6">
+                      <p className="text-ink-soft"><span className="font-semibold text-ink">Just cull.</span> Camri finds your keepers.</p>
+                      <p className="shrink-0 font-fraunces text-2xl">$11<span className="text-sm text-ink-soft"> /mo</span></p>
+                    </div>
+                    <div className="flex items-start justify-between gap-6">
+                      <p className="text-ink-soft"><span className="font-semibold text-ink">Cull and Retouch.</span> The full Editing Room, from cull to final edit.</p>
+                      <p className="shrink-0 font-fraunces text-2xl">$22<span className="text-sm text-ink-soft"> /mo</span></p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start justify-between gap-6 rounded-2xl bg-paper-deep px-5 py-5 -mx-1">
+                  <div>
+                    <p className="font-fraunces text-2xl font-semibold">All in</p>
+                    <p className="mt-1 text-ink-soft">Everything a photographer needs.</p>
+                  </div>
+                  <p className="shrink-0 font-fraunces text-4xl">$55<span className="text-sm text-ink-soft"> /mo</span></p>
+                </div>
               </div>
             </div>
-            <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-2xl border border-line bg-card px-6 py-5 sm:flex-row">
-              <p className="text-ink"><span className="font-fraunces text-xl font-semibold">Just want the app?</span> <span className="text-ink-soft">Solo $8.99 /month or Studio $15.99 /month. 14 days free on the App Store.</span></p>
-              <AppStoreButton label="Get the app" />
+
+            <div className="mt-8 flex flex-col items-center gap-3">
+              <a href="/try" className="inline-flex items-center justify-center rounded-full bg-white px-9 py-4 text-base font-semibold text-twilight transition hover:bg-white/90">Try free for 14 days</a>
+              <p className="text-sm text-white/70">No card needed. Cancel anytime.</p>
             </div>
           </div>
         </section>
 
         {/* AFFILIATE */}
-        <section className="bg-gradient-to-br from-[#8C6B3F] to-[#A6824F] text-white">
-          <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-8 px-6 py-16 md:flex-row md:items-center">
+        <section className="bg-paper-deep border-b border-line">
+          <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-8 px-6 py-12 md:flex-row md:items-center">
             <div className="max-w-xl">
               <p className="text-sm font-medium text-brass">Camrhia affiliate program</p>
-              <h2 className="mt-2 font-fraunces text-3xl font-semibold leading-[1.1] md:text-4xl">
+              <h2 className="mt-2 font-fraunces text-3xl font-semibold leading-[1.1] text-ink md:text-4xl">
                 Know photographers who would love this? Get paid to share it.
               </h2>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center md:flex-col md:items-stretch">
-              <a
-                href="/affiliate/signup"
-                className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-base font-semibold text-twilight transition-colors hover:bg-white/90"
-              >
-                Become an affiliate
-              </a>
-              <a href="/affiliate/login" className="text-center text-sm text-white/75 hover:text-white">
+              <a href="/affiliate/signup" className={BTN}>Become an affiliate</a>
+              <a href="/affiliate/login" className="text-center text-sm text-ink-soft hover:text-ink">
                 Already an affiliate? Log in
               </a>
             </div>
@@ -452,7 +375,7 @@ export default function Home() {
               gives you even one evening back, it was worth it.
             </p>
             <div className="mt-10">
-              <AppStoreButton label="Start your free 14 days" />
+              <a href="/try" className={BTN}>Start free for 14 days</a>
             </div>
           </div>
         </section>

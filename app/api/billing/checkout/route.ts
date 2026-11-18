@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
   // Reuse their Stripe customer if they already have one
   const [{ data: prof }, { data: ents }] = await Promise.all([
-    supabase.from('profiles').select('stripe_customer_id').eq('id', user.id).maybeSingle(),
+    supabase.from('profiles').select('stripe_customer_id, trial_ends_at').eq('id', user.id).maybeSingle(),
     supabase.from('entitlements').select('product, stripe_customer_id').eq('user_id', user.id),
   ])
   const customerId =
@@ -32,9 +32,9 @@ export async function POST(request: Request) {
     (ents ?? []).find((e) => e.stripe_customer_id)?.stripe_customer_id ||
     null
 
-  // Free trial only the first time they try this product
-  const hadBefore = (ents ?? []).some((e) => e.product === key)
-  const trialDays = hadBefore ? 0 : product.trialDays
+  // No second free trial. If their 14 days are still running, start billing when they end.
+  const trialEndMs = prof?.trial_ends_at ? new Date(prof.trial_ends_at as string).getTime() : 0
+  const trialEnd = trialEndMs > Date.now() + 49 * 3600 * 1000 ? Math.floor(trialEndMs / 1000) : 0
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
   const origin = request.headers.get('origin') || 'https://camrhia.com'
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     line_items: [{ price, quantity: 1 }],
     client_reference_id: user.id,
     ...(customerId ? { customer: customerId } : { customer_email: user.email ?? undefined }),
-    subscription_data: trialDays > 0 ? { trial_period_days: trialDays } : undefined,
+    subscription_data: trialEnd > 0 ? { trial_end: trialEnd } : undefined,
     allow_promotion_codes: true,
     success_url: `${origin}/dashboard?upgraded=${key}`,
     cancel_url: `${origin}/upgrade/${key}`,

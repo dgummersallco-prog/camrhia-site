@@ -27,6 +27,10 @@ export default function EditLayout({ children }: { children: ReactNode }) {
       } else {
         const trialActive = !!p.trial_ends_at && new Date(p.trial_ends_at) > new Date()
         access = p.subscription_status === 'active' || p.subscription_status === 'comped' || trialActive
+        if (!access) {
+          const { data: ents } = await sb.from('entitlements').select('status').eq('user_id', uid).in('product', ['retouch', 'cull'])
+          access = ((ents ?? []) as { status: string }[]).some((x) => x.status === 'active' || x.status === 'trialing')
+        }
       }
       setBlocked(!access)
     }
@@ -39,8 +43,9 @@ export default function EditLayout({ children }: { children: ReactNode }) {
         <div className="max-w-md rounded-2xl border border-white/70 bg-white/60 p-8 text-center">
           <h1 className="font-fraunces text-3xl text-ink">The editing room is locked</h1>
           <p className="mt-3 text-ink-soft">
-            Your free trial or subscription is no longer active. Subscribe in the Camrhia app and everything here will be right where you left it.
+            Your free 14 days are up. Choose Camri Cull or Retouch to keep editing, and everything here will be right where you left it.
           </p>
+          <a href="/keep" className="mt-6 inline-block rounded-full bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90">Choose what to keep</a>
         </div>
       </div>
     )
