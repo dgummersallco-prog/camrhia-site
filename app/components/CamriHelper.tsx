@@ -6,9 +6,10 @@ import { supabase } from '@/lib/supabase'
 import { usePathname } from 'next/navigation'
 
 type Msg = { role: 'user' | 'camri'; text: string }
+type Draft = { key: string; name: string; text: string }
 
 type Help = { tip?: string; chips: string[] }
-const DEFAULT_HELP: Help = { chips: ['Who still owes me money?', 'What is coming up this week?', 'Which contracts are unsigned?'] }
+const DEFAULT_HELP: Help = { chips: ['Who still owes me money?', 'What is coming up this week?', 'How many leads from my special?', 'Should I raise my prices?'] }
 const PAGE_HELP: [string, Help][] = [
   ['/galleries/', { tip: 'Tap Style this gallery and I will help with the cover and look.', chips: ['Which galleries are due soon?'] }],
   ['/galleries', { chips: ['Which galleries are due soon?', 'What sessions are coming up that will need a gallery?'] }],
@@ -49,6 +50,8 @@ export default function CamriHelper() {
   const [dirty, setDirty] = useState(false)
   const [asked, setAsked] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
+  const [draft, setDraft] = useState<Draft | null>(null)
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -113,6 +116,7 @@ export default function CamriHelper() {
     setAsked(true)
     setDirty(true)
     setBusy(true)
+    setDraft(null)
     try {
       const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } }
       const token = data.session?.access_token
@@ -123,10 +127,31 @@ export default function CamriHelper() {
       })
       const j = await res.json().catch(() => ({}))
       setMsgs((m) => [...m, { role: 'camri', text: res.ok ? (j.reply ?? '') : (j.error ?? 'Camri is unavailable right now.') }])
+      if (res.ok && j.action && j.action.type === 'send_message') setDraft({ key: j.action.key, name: j.action.name, text: j.action.text })
     } catch {
       setMsgs((m) => [...m, { role: 'camri', text: 'Camri is unavailable right now.' }])
     }
     setBusy(false)
+  }
+
+  async function sendDraft() {
+    if (!draft || !draft.text.trim() || sending) return
+    setSending(true)
+    try {
+      const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } }
+      const res = await fetch('/api/ai/camri/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session?.access_token ?? ''}` },
+        body: JSON.stringify({ key: draft.key, text: draft.text }),
+      })
+      const j = await res.json().catch(() => ({}))
+      setMsgs((m) => [...m, { role: 'camri', text: res.ok ? `Sent to ${draft.name}. You can see it in Messages.` : (j.error ?? 'That did not send. Try again.') }])
+      if (res.ok) setDraft(null)
+      setDirty(true)
+    } catch {
+      setMsgs((m) => [...m, { role: 'camri', text: 'That did not send. Try again.' }])
+    }
+    setSending(false)
   }
 
   return (
@@ -179,7 +204,7 @@ export default function CamriHelper() {
               <div className="flex flex-col items-center text-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {imgOk && <img src={`${P}01_waving.png`} alt="" className="h-28 w-auto select-none" />}
-                <p className="mt-2 text-[13px] leading-relaxed text-[#3a2f2a]/75">Hi! I can look at your sessions, payments and contracts. What would you like to know?</p>
+                <p className="mt-2 text-[13px] leading-relaxed text-[#3a2f2a]/75">Hi! I know your whole studio: sessions, packages and prices, contracts, leads, galleries, your schedule and messages. What would you like to know?</p>
                 {help.tip && <p className="mt-2 text-[12px] italic text-[#3a2f2a]/60">{help.tip}</p>}
                 <div className="mt-3 flex flex-wrap justify-center gap-2">
                   {help.chips.map((s) => (
@@ -210,6 +235,16 @@ export default function CamriHelper() {
                 </div>
               </div>
             )}
+            {draft && !busy && (
+              <div className="rounded-2xl border border-black/10 bg-white/80 p-3">
+                <p className="text-[11px] uppercase tracking-wider text-[#3a2f2a]/50">Draft to {draft.name}</p>
+                <textarea value={draft.text} onChange={(e) => setDraft({ ...draft, text: e.target.value })} rows={5} className="mt-2 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-[13px] leading-relaxed outline-none focus:border-black/30" />
+                <div className="mt-2 flex gap-2">
+                  <button type="button" onClick={sendDraft} disabled={sending || !draft.text.trim()} className="rounded-xl bg-twilight px-4 py-2 text-[13px] font-medium text-white disabled:opacity-40">{sending ? 'Sending...' : 'Send'}</button>
+                  <button type="button" onClick={() => setDraft(null)} className="rounded-xl border border-black/10 px-4 py-2 text-[13px] text-[#3a2f2a]/80">Cancel</button>
+                </div>
+              </div>
+            )}
             {busy && (
               <div className="flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -224,7 +259,7 @@ export default function CamriHelper() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Ask about your business"
-              maxLength={600}
+              maxLength={1200}
               className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white/80 px-3 py-2 text-[13px] outline-none focus:border-black/30"
             />
             <button type="submit" disabled={busy || !text.trim()} className="rounded-xl bg-twilight px-4 py-2 text-[13px] font-medium text-white disabled:opacity-40">Send</button>

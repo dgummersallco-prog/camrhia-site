@@ -155,7 +155,11 @@ function NotesBlock({ items, onAdd, onToggle, onDelete }: { items: Note[]; onAdd
   return (
     <div>
       <p className={LABEL}>Notes for future shoots</p>
-      <div className="mt-2 space-y-1.5">
+      <div className="mt-2 space-y-2">
+        <textarea className={FIELD} rows={2} placeholder="e.g. Son is 17, will need seniors next year" value={body} onChange={(e) => setBody(e.target.value)} />
+        <button type="button" onClick={save} className="rounded-lg bg-twilight px-3 py-1.5 text-xs font-medium text-white">Add note</button>
+      </div>
+      <div className="mt-3 space-y-1.5">
         {items.map((n) => (
           <div key={n.id} className="flex items-start gap-2 rounded-xl border border-white/80 bg-white/70 px-3 py-2">
             {n.remind_on && <input type="checkbox" checked={n.done} onChange={() => onToggle(n)} className="mt-0.5" aria-label="Done" />}
@@ -170,10 +174,6 @@ function NotesBlock({ items, onAdd, onToggle, onDelete }: { items: Note[]; onAdd
             <button type="button" aria-label="Delete note" onClick={() => { if (window.confirm('Delete this note?')) onDelete(n.id) }} className="text-ink-soft hover:text-red-600">×</button>
           </div>
         ))}
-      </div>
-      <div className="mt-2 space-y-2">
-        <textarea className={FIELD} rows={2} placeholder="e.g. Son is 17, will need seniors next year" value={body} onChange={(e) => setBody(e.target.value)} />
-        <button type="button" onClick={save} className="rounded-lg bg-twilight px-3 py-1.5 text-xs font-medium text-white">Add note</button>
       </div>
     </div>
   )
@@ -215,12 +215,12 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
   const box = 'rounded-2xl border border-white/80 bg-white/50 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]'
 
   return (
-    <div className="w-full" style={{ perspective: '1200px', aspectRatio: '3 / 4' }}>
+    <div className="w-full" style={{ perspective: '1200px', aspectRatio: '9 / 10' }}>
       <div
         role="button"
         tabIndex={0}
         onClick={() => setFlipped((f) => !f)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFlipped((f) => !f) } }}
+        onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFlipped((f) => !f) } }}
         className="relative h-full w-full cursor-pointer transition-transform duration-500"
         style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'none' }}
       >
