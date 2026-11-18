@@ -856,10 +856,6 @@ export default function SpecialsPage() {
                       <div className="max-w-xs">
                         <ColorField label="Background color" value={form.theme.bgColor} onChange={(v) => setTheme({ bgColor: v })} />
                       </div>
-                      <div>
-                        <Label>Decoration</Label>
-                        <Chips value={form.theme.decor} options={DECOR_OPTIONS} onChange={(v) => setTheme({ decor: v })} />
-                      </div>
                     </MiniCard>
 
                     <MiniCard title="Studio name" summary={form.text.brand_name}>
