@@ -957,9 +957,9 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                     <p className="mt-2 text-white/70">Here is what happens. Nothing is removed until you say so.</p>
                   </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/camri/09_holding_photo.png" alt="" className="h-24 w-auto shrink-0 sm:h-28" />
+                  <img src="/camri/10_holding_sliders.png" alt="" className="h-24 w-auto shrink-0 sm:h-28" />
                 </div>
-                <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <div className="mt-6 grid grid-cols-4 gap-2 sm:grid-cols-7">
                   {[
                     { n: '1', t: 'Sharpness', d: 'Finds soft and blurry shots.' },
                     { n: '2', t: 'Exposure and color', d: 'Finds dark or blown-out frames and color that looks off.' },
@@ -969,10 +969,10 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                     { n: '6', t: 'Duplicates', d: 'Groups near-identical frames and keeps the sharpest one with the best smile.' },
                     { n: '7', t: 'People', d: 'Recognizes the same faces across the shoot so you can find everyone.' },
                   ].map((x) => (
-                    <div key={x.n} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                      <p className="font-fraunces text-4xl text-white/60">{x.n}</p>
-                      <p className="mt-3 text-xs uppercase tracking-[0.18em] text-white">{x.t}</p>
-                      <p className="mt-2 text-sm text-white/55">{x.d}</p>
+                    <div key={x.n} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <p className="font-fraunces text-2xl text-white/60">{x.n}</p>
+                      <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-white">{x.t}</p>
+                      <p className="mt-1.5 text-[11px] leading-snug text-white/55">{x.d}</p>
                     </div>
                   ))}
                 </div>
@@ -1021,14 +1021,14 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                     <img src="/camri/03_working_laptop.png" alt="" className="h-24 w-auto shrink-0 sm:h-28" />
                     <p className="text-white/70">Camri is going through your photos.</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+                  <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
                     {cols.map((c) => (
                       <div key={c.key} className={c.state === 'wait' ? 'opacity-40' : ''}>
-                        <p className={`text-xs uppercase tracking-[0.18em] ${c.state === 'active' ? 'animate-pulse text-white' : 'text-white/45'}`}>{c.label}</p>
-                        <p className={`mt-3 font-fraunces text-4xl ${c.state === 'active' ? 'animate-pulse text-white' : 'text-white/60'}`}>
+                        <p className={`text-[10px] uppercase tracking-[0.12em] ${c.state === 'active' ? 'animate-pulse text-white' : 'text-white/45'}`}>{c.label}</p>
+                        <p className={`mt-2 font-fraunces text-2xl ${c.state === 'active' ? 'animate-pulse text-white' : 'text-white/60'}`}>
                           {c.state === 'wait' ? '—' : c.state === 'done' ? '✓' : <>{Math.round(c.value * cull.total)}<span className="text-white/25"> / {cull.total}</span></>}
                         </p>
-                        <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                           <div className={`h-full bg-twilight transition-all ${c.state === 'active' ? 'animate-pulse' : ''}`} style={{ width: `${Math.round(c.value * 100)}%` }} />
                         </div>
                       </div>
