@@ -25,22 +25,6 @@ const PAINS = [
   "You spend more time on admin than behind your camera.",
 ]
 
-const OLD_STACK = [
-  { name: "A website builder", example: "Squarespace", price: "$16 to $36" },
-  { name: "Booking, contracts and invoices", example: "HoneyBook", price: "$29 to $49" },
-  { name: "Gallery hosting", example: "Pixieset", price: "$10 to $20" },
-  { name: "AI culling and editing", example: "Aftershoot", price: "$40 to $55" },
-]
-
-const NEW_STACK = [
-  "Your own website at your own web address",
-  "Camri, your assistant for the business side",
-  "Bookings, contracts and payments",
-  "Client messaging and your calendar",
-  "Galleries and client favorites",
-  "Culling and editing built in",
-]
-
 const STEPS = [
   ["Build your site with Camri", "Add your photos and packages and Camri sets it up with you. Your website goes live when you save."],
   ["Share one link", "Clients inquire, book and pay from it."],
@@ -123,7 +107,7 @@ export default function Home() {
       <Nav />
       <main>
         {/* HERO */}
-        <section className="mx-auto max-w-6xl px-6 pt-14 pb-24 sm:pt-20 sm:pb-28 grid md:grid-cols-2 gap-14 md:gap-16 items-center">
+        <section className="mx-auto max-w-6xl px-6 pt-10 pb-12 sm:pt-14 sm:pb-16 grid md:grid-cols-2 gap-14 md:gap-16 items-center">
           <div>
             <p className="text-base font-medium text-brass">Meet Camri, your business assistant</p>
             <h1 className="mt-4 font-fraunces text-[3rem] md:text-7xl font-medium text-ink leading-[1.05]">
@@ -152,7 +136,7 @@ export default function Home() {
         </section>
 
         {/* CAMRI */}
-        <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32">
+        <section className="mx-auto max-w-6xl px-6 pb-12 sm:pb-16">
           <Story
             flip
             title="Camri runs the business side with you."
@@ -174,7 +158,7 @@ export default function Home() {
         </section>
 
         {/* DESKTOP */}
-        <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32">
+        <section className="mx-auto max-w-6xl px-6 pb-12 sm:pb-16">
           <div className="max-w-2xl">
             <p className="text-base font-medium text-brass">On your phone and on your computer</p>
             <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Your whole studio, on a big screen too.</h2>
@@ -189,7 +173,7 @@ export default function Home() {
         </section>
 
         {/* SPECIALS */}
-        <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32">
+        <section className="mx-auto max-w-6xl px-6 pb-12 sm:pb-16">
           <div className="max-w-2xl">
             <p className="text-base font-medium text-brass">Specials</p>
             <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Fill your calendar with a Special.</h2>
@@ -213,7 +197,7 @@ export default function Home() {
 
         {/* SOUND FAMILIAR */}
         <section className="bg-paper-deep border-y border-line">
-          <div className="mx-auto max-w-3xl px-6 py-20 sm:py-24">
+          <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
             <div className="flex items-center gap-6">
             <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Talent is not what is holding you back</h2>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -234,7 +218,7 @@ export default function Home() {
         </section>
 
         {/* 3 STEPS */}
-        <section id="how" className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+        <section id="how" className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
           <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">Live in three steps</h2>
           <div className="mt-14 grid md:grid-cols-3 gap-12 md:gap-10">
             {STEPS.map(([t, d], i) => (
@@ -248,7 +232,7 @@ export default function Home() {
         </section>
 
         {/* PORTFOLIO = WEBSITE */}
-        <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+        <section className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
           <Story
             title="A website that sells for you."
             body="Camri builds it with you. Pick a look, arrange your sections, add your photos, and it goes live at your own web address. Clients inquire and book without leaving the page."
@@ -266,7 +250,7 @@ export default function Home() {
         </section>
 
         {/* MESSAGES + CALENDAR */}
-        <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+        <section className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
           <Story
             title="Your whole business in one place."
             body="Message clients and check your calendar inside the app. Work stays out of your personal texts."
@@ -280,7 +264,7 @@ export default function Home() {
               </Panel>
             }
           />
-          <div className="mt-24 sm:mt-32">
+          <div className="mt-12 sm:mt-16">
             <Story
               flip
               title="Know who has paid, and what is next."
@@ -300,7 +284,7 @@ export default function Home() {
 
         {/* CLIENT EXPERIENCE */}
         <section id="clients" className="border-y border-line bg-paper-deep">
-          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
             <div className="max-w-2xl">
               <p className="text-base font-medium text-brass">The part your clients will tell their friends about</p>
               <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">
@@ -323,7 +307,7 @@ export default function Home() {
         </section>
 
         {/* EDITING ROOM */}
-        <section className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+        <section className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
           <div className="max-w-2xl">
             <p className="text-base font-medium text-brass">The Editing Room</p>
             <h2 className="mt-3 font-fraunces text-4xl md:text-6xl font-medium text-ink leading-[1.08]">From shoot to gallery, with Camri beside you.</h2>
@@ -355,7 +339,7 @@ export default function Home() {
 
         {/* DELIVERY */}
         <section className="bg-gradient-to-br from-[#8C6B3F] to-[#A6824F] text-white">
-          <div className="mx-auto max-w-3xl px-6 py-24 sm:py-28 text-center">
+          <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16 text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/camri/05_celebrating.png" alt="" className="mx-auto mb-6 h-32 w-auto" />
             <h2 className="font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">
@@ -367,121 +351,53 @@ export default function Home() {
           </div>
         </section>
 
-        {/* STACK */}
-        <section id="compare" className="bg-ink text-white">
-          <div className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
-            <h2 className="mx-auto max-w-3xl text-center font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">
-              Stop paying for a pile of tools.
-            </h2>
-            <div className="mt-14 grid md:grid-cols-2 gap-6">
-              <div className="rounded-3xl border border-white/15 p-8">
-                <p className="text-sm text-white/55">What you pay for now</p>
-                <ul className="mt-6 space-y-3">
-                  {OLD_STACK.map((t) => (
-                    <li key={t.name} className="text-white/70">
-                      <div className="flex items-baseline justify-between gap-4 text-lg">
-                        <span>{t.name}{t.example ? <span className="text-sm text-white/40"> ({t.example})</span> : null}</span>
-                        <span className="whitespace-nowrap text-white/90">{t.price}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6 flex items-baseline justify-between border-t border-white/15 pt-4">
-                  <span className="text-white/70">Total</span>
-                  <span className="font-fraunces text-2xl font-semibold">$95 to $160 a month</span>
-                </div>
-                <p className="mt-2 text-xs text-white/45">Typical published plan prices. Check each company for current pricing.</p>
-              </div>
-              <div className="rounded-3xl bg-card text-ink p-8 border-2 border-brass">
-                <p className="text-sm text-brass font-medium">With Camrhia</p>
-                <ul className="mt-6 space-y-3">
-                  {NEW_STACK.map((t) => (
-                    <li key={t} className="flex gap-3 text-lg">
-                      <span className="text-sage font-bold">&#10003;</span>
-                      <span>{t}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-8 font-fraunces text-2xl font-semibold">One app. One login.</p>
-                <p className="mt-1 text-sm text-ink-soft">Plans start at $8.99 a month. Your first 14 days are free.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* PRICING */}
         <section id="pricing" className="bg-paper-deep border-y border-line">
-          <div className="mx-auto max-w-5xl px-6 py-24">
-            <h2 className="font-fraunces text-4xl md:text-6xl font-medium text-ink text-center">
-              Simple pricing. Try it free first.
-            </h2>
-            <p className="mt-4 text-center text-ink-soft">
-              Start with the app, then add what your business needs. Showcase and Retouch include 14 free days.
-            </p>
-            <div className="mt-12 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              <div className="rounded-3xl bg-card border-2 border-twilight p-8">
-                <p className="font-fraunces text-2xl font-semibold text-ink">Solo</p>
-                <p className="mt-1 text-sm text-ink-soft">For the photographer running their own show.</p>
-                <p className="mt-6 font-fraunces text-5xl text-ink">$8.99<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="mt-1 text-sm text-ink-soft">or $89.99 /year</p>
-              </div>
-              <div className="rounded-3xl bg-card border border-line p-8">
-                <p className="font-fraunces text-2xl font-semibold text-ink">Studio</p>
-                <p className="mt-1 text-sm text-ink-soft">For studios with a team.</p>
-                <p className="mt-6 font-fraunces text-5xl text-ink">$15.99<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="mt-1 text-sm text-ink-soft">or $159.99 /year</p>
-              </div>
-            </div>
-            <div className="mt-10 text-center">
-              <AppStoreButton />
-            </div>
-
-            <h3 className="mt-20 font-fraunces text-3xl md:text-4xl font-medium text-ink text-center">
-              Then add what you need
-            </h3>
-            <p className="mt-3 text-center text-ink-soft">Subscribe on camrhia.com. Cancel anytime.</p>
-            <div className="mt-10 grid md:grid-cols-3 gap-6">
-              <div className="flex flex-col rounded-3xl bg-card border-2 border-twilight p-8">
-                <div className="flex items-center justify-between gap-3"><p className="font-fraunces text-2xl font-semibold text-ink">Camrhia Showcase</p>{/* eslint-disable-next-line @next/next/no-img-element */}
-<img src="/camri/03_working_laptop.png" alt="" className="h-14 w-auto" /></div>
-                <p className="mt-1 text-sm text-ink-soft">Your website, ad specials, and gallery delivery.</p>
-                <p className="mt-6 font-fraunces text-5xl text-ink">$33<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="mt-1 text-sm text-ink-soft">or $330 /year</p>
-                <ul className="mt-6 space-y-2 text-sm text-ink">
+          <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+            <h2 className="text-center font-fraunces text-4xl font-medium text-ink md:text-5xl">Simple pricing. Try it free first.</h2>
+            <p className="mx-auto mt-3 max-w-xl text-center text-ink-soft">Add a card to start Showcase or Retouch. Nothing is charged for 14 days, and you can cancel anytime in Settings.</p>
+            <div className="mt-10 grid gap-5 md:grid-cols-3">
+              <div className="flex flex-col rounded-3xl border-2 border-twilight bg-card p-7">
+                <p className="font-fraunces text-2xl font-semibold text-ink">Camrhia Showcase</p>
+                <p className="mt-1 text-sm text-ink-soft">Your website, specials and galleries.</p>
+                <p className="mt-5 font-fraunces text-5xl text-ink">$33<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="text-sm text-ink-soft">or $330 /year</p>
+                <ul className="mt-5 flex-1 space-y-2 text-sm text-ink">
                   <li>A professional website, set up with Camri</li>
                   <li>Ad specials that sell your sessions</li>
-                  <li>Custom gallery delivery with no expiration</li>
+                  <li>Gallery delivery with no expiration</li>
                   <li>The Camrhia app included</li>
                 </ul>
-                <a href="/upgrade/showcase" className="mt-8 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
+                <a href="/upgrade/showcase" className="mt-6 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
               </div>
-              <div className="flex flex-col rounded-3xl bg-card border border-line p-8">
-                <div className="flex items-center justify-between gap-3"><p className="font-fraunces text-2xl font-semibold text-ink">Camri Retouch</p>{/* eslint-disable-next-line @next/next/no-img-element */}
-<img src="/camri/10_holding_sliders.png" alt="" className="h-14 w-auto" /></div>
+              <div className="flex flex-col rounded-3xl border border-line bg-card p-7">
+                <p className="font-fraunces text-2xl font-semibold text-ink">Camri Retouch</p>
                 <p className="mt-1 text-sm text-ink-soft">AI editing with Camri beside you.</p>
-                <p className="mt-6 font-fraunces text-5xl text-ink">$22<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="mt-1 text-sm text-ink-soft">or $220 /year</p>
-                <ul className="mt-6 space-y-2 text-sm text-ink">
+                <p className="mt-5 font-fraunces text-5xl text-ink">$22<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="text-sm text-ink-soft">or $220 /year</p>
+                <ul className="mt-5 flex-1 space-y-2 text-sm text-ink">
                   <li>AI editing in your own style</li>
-                  <li>Camri guides every step and gives advice</li>
-                  <li>Simple settings applied in one click</li>
+                  <li>Camri guides every step</li>
                   <li>Camri Cull included</li>
                 </ul>
-                <a href="/upgrade/retouch" className="mt-8 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
+                <a href="/upgrade/retouch" className="mt-6 rounded-full bg-twilight px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90">Start 14-day free trial</a>
               </div>
-              <div className="flex flex-col rounded-3xl bg-card border border-line p-8">
-                <div className="flex items-center justify-between gap-3"><p className="font-fraunces text-2xl font-semibold text-ink">Camri Cull</p>{/* eslint-disable-next-line @next/next/no-img-element */}
-<img src="/camri/09_holding_photo.png" alt="" className="h-14 w-auto" /></div>
+              <div className="flex flex-col rounded-3xl border border-line bg-card p-7">
+                <p className="font-fraunces text-2xl font-semibold text-ink">Camri Cull</p>
                 <p className="mt-1 text-sm text-ink-soft">Your best shots, picked for you.</p>
-                <p className="mt-6 font-fraunces text-5xl text-ink">$11<span className="text-base text-ink-soft"> /month</span></p>
-                <p className="mt-1 text-sm text-ink-soft">or $110 /year</p>
-                <ul className="mt-6 space-y-2 text-sm text-ink">
+                <p className="mt-5 font-fraunces text-5xl text-ink">$11<span className="text-base text-ink-soft"> /month</span></p>
+                <p className="text-sm text-ink-soft">or $110 /year</p>
+                <ul className="mt-5 flex-1 space-y-2 text-sm text-ink">
                   <li>AI culling for every session</li>
                   <li>Start editing faster</li>
-                  <li>Already included with Camri Retouch</li>
+                  <li>Included with Camri Retouch</li>
                 </ul>
-                <a href="/upgrade/cull" className="mt-8 rounded-full border border-twilight px-6 py-3 text-center text-sm font-medium text-twilight transition hover:opacity-90">Get Camri Cull</a>
+                <a href="/upgrade/cull" className="mt-6 rounded-full border border-twilight px-6 py-3 text-center text-sm font-medium text-twilight transition hover:opacity-90">Get Camri Cull</a>
               </div>
+            </div>
+            <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-2xl border border-line bg-card px-6 py-5 sm:flex-row">
+              <p className="text-ink"><span className="font-fraunces text-xl font-semibold">Just want the app?</span> <span className="text-ink-soft">Solo $8.99 /month or Studio $15.99 /month. 14 days free on the App Store.</span></p>
+              <AppStoreButton label="Get the app" />
             </div>
           </div>
         </section>
@@ -510,7 +426,7 @@ export default function Home() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-6 py-24">
+        <section className="mx-auto max-w-3xl px-6 py-12">
           <h2 className="font-fraunces text-3xl md:text-4xl font-semibold text-ink text-center">Questions, answered</h2>
           <div className="mt-10 divide-y divide-line border-y border-line">
             {FAQ.map(([q, a]) => (
@@ -527,7 +443,7 @@ export default function Home() {
 
         {/* FOUNDER NOTE + FINAL CTA */}
         <section className="bg-paper-deep border-t border-line">
-          <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+          <div className="mx-auto max-w-2xl px-6 py-12 text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/camri/12_open_arms.png" alt="Camri" className="mx-auto mb-4 h-32 w-auto" />
             <Wordmark className="text-5xl" />
