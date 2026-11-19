@@ -114,6 +114,7 @@ export default function GalleryManagePage() {
   const [sessInfo, setSessInfo] = useState<string | null>(null)
   const [clientName, setClientName] = useState<string | null>(null)
   const [sessType, setSessType] = useState<string | null>(null)
+  const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [sessDate, setSessDate] = useState<string | null>(null)
   const [openedAt, setOpenedAt] = useState<string | null>(null)
   const [coupleUserId, setCoupleUserId] = useState<string | null>(null)
@@ -184,6 +185,9 @@ export default function GalleryManagePage() {
       const nm = wd?.names && wd.names.trim().toLowerCase() !== g.title.trim().toLowerCase() ? wd.names : null
       setClientName(wd?.names?.trim() || null)
       setSessType(label)
+      const { data: sn } = await sb.from('weddings').select('session_number').eq('id', g.session_id).maybeSingle()
+      const num = (sn as { session_number?: string | number | null } | null)?.session_number
+      setInviteCode(num ? String(num) : null)
       setSessDate(date)
       setOpenedAt(wd?.gallery_opened_at ?? null)
       setCoupleUserId(wd?.couple_user_id ?? null)
@@ -368,7 +372,8 @@ export default function GalleryManagePage() {
         setSentAt(new Date().toISOString())
         note = was ? 'Update sent to their Camrhia dashboard' : 'Sent to their Camrhia dashboard'
       }
-      const hi = `Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}${p ? `\nPIN: ${p}` : ''}`
+      const onCamrhia = !!(gallery.session_id && coupleUserId)
+      const hi = `Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}${p ? `\nPIN: ${p}` : ''}${onCamrhia ? '' : `\n\nNew to Camrhia? Create your free account to keep everything in one place: ${origin}${inviteCode ? `/s/${inviteCode}` : '/signup'}`}`
       const smsHref = phone ? `sms:${phone}?&body=${encodeURIComponent(hi)}` : null
       if (!email && !phone && !(gallery.session_id && coupleUserId)) { navigator.clipboard?.writeText(shareUrl); note = 'Published. Link copied' }
       flash(note)
@@ -873,13 +878,6 @@ export default function GalleryManagePage() {
                 </dl>
               )}
               <div className="mt-6 border-t border-line pt-5">
-                <label className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink">
-                  Allow downloads
-                  <input type="checkbox" checked={gallery.allow_downloads} onChange={(e) => saveSettings({ allow_downloads: e.target.checked })} className="h-5 w-5" />
-                </label>
-                <p className="mt-2 text-xs text-ink-soft">When off, clients can view and favorite but not download.</p>
-              </div>
-              <div className="mt-6 border-t border-line pt-5">
                 <p className="text-sm font-medium text-ink">Sort photos</p>
                 <div className="mt-2 flex gap-2">
                   <button type="button" onClick={() => sortPhotos('name')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">By filename</button>
@@ -936,6 +934,11 @@ export default function GalleryManagePage() {
                       Also goes to {clientName ?? 'your client'}&apos;s Camrhia dashboard
                     </div>
                   )}
+                  {!(gallery.session_id && coupleUserId) && (
+                    <div className="mb-3 rounded-xl bg-paper px-3 py-2 text-sm text-ink-soft">
+                      {clientName ?? 'Your client'} isn&apos;t on Camrhia yet. Your message will include a link to sign up.
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <input type="tel" value={sendPhone} onChange={(e) => setSendPhone(e.target.value)} placeholder="Phone number" className={input} />
                     <input type="email" value={sendEmail} onChange={(e) => setSendEmail(e.target.value)} placeholder="Email" className={input} />
@@ -979,8 +982,8 @@ export default function GalleryManagePage() {
 
             {gallery && (
               <div ref={barRef}>
-                <div className="mb-5">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>
-                <div className="mb-6 flex min-h-[52px] gap-3">
+                <div className="mb-8">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>
+                <div className="mb-6 flex min-h-[52px] justify-end gap-3">
                   <button className="rounded-xl border border-line bg-white/70 px-8 py-3.5 text-base text-ink transition hover:border-twilight" onClick={() => (designOpen || shareOpen ? goStep(designOpen ? 0 : 1) : router.push('/galleries'))}>Back</button>
                   {!shareOpen && photos.length > 0 && <button className="rounded-xl bg-twilight px-10 py-3.5 text-base font-medium text-white transition hover:opacity-90" onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
                 </div>

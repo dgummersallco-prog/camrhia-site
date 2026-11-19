@@ -278,7 +278,7 @@ export default function GalleryViewPage() {
       }
       x = Math.round(Math.min(100, Math.max(0, x)))
       y = Math.round(Math.min(100, Math.max(0, y)))
-      window.parent?.postMessage({ type: 'camrhia-gallery-focus', id: img.dataset.pid, cover: img.dataset.cover === '1', x, y }, '*')
+      window.parent?.postMessage({ type: 'camrhia-gallery-focus', id: img.dataset.pid, slot: img.dataset.slot, cover: img.dataset.cover === '1', x, y }, '*')
     }
     window.addEventListener('click', click, true)
     return () => { window.removeEventListener('click', click, true); st.remove() }
@@ -376,7 +376,7 @@ export default function GalleryViewPage() {
       if (Math.abs(ky) > 1) y = drag.py + (dy / ky) * 100
       x = Math.round(Math.min(100, Math.max(0, x)) * 10) / 10
       y = Math.round(Math.min(100, Math.max(0, y)) * 10) / 10
-      window.parent?.postMessage({ type: 'camrhia-gallery-focus', id: img.dataset.pid, cover: img.hasAttribute('data-cover'), x, y }, '*')
+      window.parent?.postMessage({ type: 'camrhia-gallery-focus', id: img.dataset.pid, slot: img.dataset.slot, cover: img.hasAttribute('data-cover'), x, y }, '*')
     }
     const up = () => {
       if (drag?.moved || tdrag?.moved) { suppress = true; setTimeout(() => { suppress = false }, 0) }
@@ -597,7 +597,7 @@ export default function GalleryViewPage() {
   const slotPh = (key: string, fb: (typeof data.photos)[number] | undefined) => (slots[key] ? data.photos.find((p) => p.id === slots[key]) : undefined) ?? fb
   const slotImg = (key: string, ph: (typeof data.photos)[number] | undefined, src: string | undefined, fallbackPos?: string) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt="" data-pid={ph?.id} data-slot={key} className="h-full w-full object-cover" style={{ objectPosition: (ph && fpos(ph.id)) || fallbackPos }} />
+    <img src={src} alt="" data-pid={ph?.id} data-slot={key} className="h-full w-full object-cover" style={{ objectPosition: fpos('slot:' + key) || fallbackPos }} />
   )
   const momentMeta = (data as unknown as { moments?: { id: string; name: string }[] }).moments ?? []
   const momentHead = (p: unknown, i: number) => {
