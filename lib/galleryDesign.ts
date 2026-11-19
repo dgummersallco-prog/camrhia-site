@@ -1,8 +1,10 @@
-export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean; dy?: number; text?: string }
+export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean; dx?: number; dy?: number; text?: string }
 export type GalleryDesign = {
-  look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; focals?: Record<string, { x: number; y: number }>; zoom?: number
+  look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; focals?: Record<string, { x: number; y: number }>; zoom?: number; slots?: Record<string, string>
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
 }
+
+export const COVER_SLOTS: Record<string, number> = { mosaic: 5, strip: 5, stack: 3, diptych: 1 }
 
 export const COVER_PRESETS: Record<string, Partial<GalleryDesign>> = {
   monogram: { el: { title: { text: 'Sofia & Daniel' }, brand: { text: 'September 20, 2026' } } },
@@ -126,7 +128,11 @@ export function elCss(el: Record<string, ElStyle>, famOf: (k: string) => string 
     if (typeof s.size === 'number' && Number.isFinite(s.size)) r.push(`font-size:${Math.min(160, Math.max(6, s.size))}px!important`)
     if (s.color && HEX.test(s.color)) r.push(`color:${s.color}!important`)
     if (typeof s.bold === 'boolean') r.push(`font-weight:${s.bold ? 700 : 400}!important`)
-    if (typeof s.dy === 'number' && Number.isFinite(s.dy) && s.dy !== 0) r.push(`translate:0 ${Math.min(300, Math.max(-300, s.dy))}px!important`)
+    {
+      const mx = typeof s.dx === 'number' && Number.isFinite(s.dx) ? Math.min(600, Math.max(-600, s.dx)) : 0
+      const my = typeof s.dy === 'number' && Number.isFinite(s.dy) ? Math.min(300, Math.max(-300, s.dy)) : 0
+      if (mx !== 0 || my !== 0) r.push(`translate:${mx}px ${my}px!important`)
+    }
     if (r.length) out += `${sel}{${r.join(';')}}`
   }
   return out
@@ -164,5 +170,7 @@ export function resolveDesign(d?: GalleryDesign | null) {
   for (const [k, v] of Object.entries(d?.focals ?? {})) {
     if (v && Number.isFinite(v.x) && Number.isFinite(v.y)) focals[k] = { x: Math.min(100, Math.max(0, v.x)), y: Math.min(100, Math.max(0, v.y)) }
   }
-  return { look, cover, pal, coverPal, focal, focals, zoom, layout, el }
+  const slots: Record<string, string> = {}
+  for (const [k, v] of Object.entries(d?.slots ?? {})) if (typeof v === 'string' && v) slots[k] = v
+  return { look, cover, pal, coverPal, focal, focals, zoom, layout, el, slots }
 }

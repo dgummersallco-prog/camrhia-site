@@ -24,7 +24,7 @@ const BTN =
 
 const FAQ = [
   ["Do I need a credit card to try it?", "No. Start your 14 days with just your name and email. Everything is on. When the 14 days are up, you choose what to keep and only pay for that."],
-  ["What happens when the 14 days are up?", "You choose what to keep: the business side, the website, specials and gallery delivery, the editing, or all of it. Keep everything and it is $55 a month."],
+  ["What happens when the 14 days are up?", "You choose what to keep: Camrhia Shared with gallery delivery, the website and specials, the editing, or all of it. Keep everything and it is $55 a month."],
   ["I already have a website. Why Camrhia?", "Keep it. Specials are their own live pages, so you never have to change the website you worked hard on. Camrhia runs the business behind it."],
   ["I love Lightroom. Can I still use Camrhia?", "Yes. Use Camri Cull to find your best shots, then edit wherever you like."],
   ["Is it hard to set up?", "If you can post to Instagram, you can set this up. Most are live in an afternoon."],
@@ -170,7 +170,7 @@ export default function Home() {
                   "Questionnaires",
                   "Contracts",
                   "Payments",
-                  "Gallery links",
+                  "Gallery delivery to your clients",
                   "Apple and Google calendar sync",
                   "Camri, who knows who owes you",
                 ]}
@@ -334,8 +334,8 @@ export default function Home() {
                 <p className="mt-1 text-sm text-ink-soft">One subscription instead of paying for several.</p>
                 <ul className="mt-6 space-y-3">
                   {[
-                    "The business side: app and desktop dashboard",
-                    "Website, specials and gallery delivery",
+                    "Camrhia Shared: app, dashboard and gallery delivery",
+                    "Website and specials",
                     "The full Editing Room: Cull and Retouch",
                     "Camri on every part",
                   ].map((p) => (
@@ -350,14 +350,14 @@ export default function Home() {
                 <div className="mt-5 divide-y divide-line">
                   <div className="flex items-start justify-between gap-4 py-4">
                     <div>
-                      <p className="font-semibold">The business side</p>
-                      <p className="text-sm text-ink-soft">Stop chasing, start shooting. App and desktop dashboard.</p>
+                      <p className="font-semibold">Camrhia Shared</p>
+                      <p className="text-sm text-ink-soft">Your shared space with every client. App, dashboard and gallery delivery.</p>
                     </div>
                     <p className="shrink-0 font-fraunces text-2xl">$8.99<span className="text-sm text-ink-soft"> /mo</span></p>
                   </div>
                   <div className="flex items-start justify-between gap-4 py-4">
                     <div>
-                      <p className="font-semibold">Website, specials and gallery delivery</p>
+                      <p className="font-semibold">Website and specials</p>
                       <p className="text-sm text-ink-soft">Get found and fill your calendar.</p>
                     </div>
                     <p className="shrink-0 font-fraunces text-2xl">$33<span className="text-sm text-ink-soft"> /mo</span></p>

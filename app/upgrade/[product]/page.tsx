@@ -8,11 +8,10 @@ import { supabase } from '@/lib/supabase'
 const COPY: Record<string, { title: string; blurb: string; includes: string[]; month: number; year: number; trial: boolean }> = {
   showcase: {
     title: 'Camrhia Showcase',
-    blurb: 'Launch your professional website, publish your ad specials, and deliver galleries your clients keep forever.',
+    blurb: 'Launch your professional website and publish your ad specials.',
     includes: [
       'Your website live on your own domain',
       'Ad specials published and ready to share',
-      'Custom, beautiful gallery delivery that never expires',
       'The Camrhia app included',
     ],
     month: 33,

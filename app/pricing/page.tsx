@@ -3,7 +3,7 @@ import { Nav, Footer, AppStoreButton } from "@/app/components/SiteChrome"
 
 export const metadata: Metadata = {
   title: "Pricing | Camrhia",
-  description: "Start with the booking and payments app. Add a website, ad pages, gallery delivery and the Editing Room when you are ready.",
+  description: "Start with the booking, payments and gallery delivery app. Add a website, ad pages and the Editing Room when you are ready.",
 }
 
 export default function Pricing() {
@@ -22,7 +22,7 @@ export default function Pricing() {
             <div className="mt-12 grid md:grid-cols-2 gap-6">
               <div className="rounded-3xl bg-card border-2 border-twilight p-8">
                 <p className="font-fraunces text-2xl font-semibold text-ink">Solo</p>
-                <p className="mt-1 text-sm text-ink-soft">Your booking, payments and management tool.</p>
+                <p className="mt-1 text-sm text-ink-soft">Your shared space with every client: booking, payments, management and gallery delivery.</p>
                 <p className="mt-6 font-fraunces text-5xl text-ink">$8.99<span className="text-base text-ink-soft"> /month</span></p>
                 <p className="mt-1 text-sm text-ink-soft">or $89.99 /year</p>
               </div>
@@ -45,8 +45,8 @@ export default function Pricing() {
               Then grow with a website.
             </h2>
             <div className="mx-auto mt-12 max-w-xl rounded-3xl bg-card border border-line p-8">
-              <p className="font-fraunces text-2xl font-semibold text-ink">Website, ad pages and gallery delivery</p>
-              <p className="mt-1 text-sm text-ink-soft">Everything in Solo, plus your website, ad pages for your specials, and gallery delivery to your clients.</p>
+              <p className="font-fraunces text-2xl font-semibold text-ink">Website and ad pages</p>
+              <p className="mt-1 text-sm text-ink-soft">Everything in Solo, plus your website and ad pages for your specials.</p>
               <p className="mt-6 font-fraunces text-5xl text-ink">$33<span className="text-base text-ink-soft"> /month</span></p>
             </div>
           </div>

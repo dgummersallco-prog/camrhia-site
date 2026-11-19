@@ -5,7 +5,7 @@ import ReviewCard from './ReviewCard'
 import { resolveDesign, type GalleryDesign, elCss } from '@/lib/galleryDesign'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useParams } from 'next/navigation'
 
@@ -48,6 +48,8 @@ export default function GalleryViewPage() {
   const [designPreview, setDesignPreview] = useState<GalleryDesign | null>(null)
   const [focusMode, setFocusMode] = useState(false)
   const [isPreview, setIsPreview] = useState(false)
+  const textRef = useRef<Record<string, string>>({})
+  const [coverOverride, setCoverOverride] = useState<string | null>(null)
   const [zip, setZip] = useState<{ busy: boolean; done: number; total: number; error: string | null }>({ busy: false, done: 0, total: 0, error: null })
 
   const load = useCallback(async (pinValue?: string) => {
@@ -217,7 +219,7 @@ export default function GalleryViewPage() {
   // Inside the designer's preview, show design changes live.
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
-    const onMsg = (e: MessageEvent) => { const m = e.data; if (m && m.type === 'camrhia-gallery-design') setDesignPreview((m.design ?? {}) as GalleryDesign) }
+    const onMsg = (e: MessageEvent) => { const m = e.data; if (m && m.type === 'camrhia-gallery-design') setDesignPreview((m.design ?? {}) as GalleryDesign); if (m && m.type === 'camrhia-gallery-cover' && m.id) setCoverOverride(String(m.id)) }
     window.addEventListener('message', onMsg)
     setIsPreview(true)
     window.parent?.postMessage({ type: 'camrhia-gallery-ready' }, '*')
@@ -270,9 +272,17 @@ export default function GalleryViewPage() {
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
     const st = document.createElement('style')
-    st.textContent = '.gal-root img[data-cover]{cursor:grab}'
+    st.textContent = '.gal-root img[data-cover],.gal-root img[data-slot],.gal-root img[data-pid]{cursor:grab}'
     document.head.appendChild(st)
     const coverImg = () => document.querySelector('img[data-cover]') as HTMLImageElement | null
+    const imgAt = (x: number, y: number) => {
+      const all = Array.from(document.querySelectorAll('img[data-cover], img[data-slot], img[data-pid]')) as HTMLImageElement[]
+      for (let i = all.length - 1; i >= 0; i--) {
+        const r = (all[i].parentElement ?? all[i]).getBoundingClientRect()
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return all[i]
+      }
+      return null
+    }
     const inside = (img: HTMLImageElement, x: number, y: number) => {
       const r = (img.parentElement ?? img).getBoundingClientRect()
       return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
@@ -287,7 +297,7 @@ export default function GalleryViewPage() {
       const py = parseFloat(op[1])
       return [Number.isFinite(px) ? px : 50, Number.isFinite(py) ? py : 50]
     }
-    let drag: { x: number; y: number; px: number; py: number; moved: boolean } | null = null
+    let drag: { x: number; y: number; px: number; py: number; moved: boolean; img: HTMLImageElement } | null = null
     let suppress = false
     let zl: number | null = null
     let zt = 0
@@ -299,18 +309,38 @@ export default function GalleryViewPage() {
       window.parent?.postMessage({ type: 'camrhia-gallery-zoom', zoom: v }, '*')
     }
     const baseZoom = (img: HTMLImageElement) => (zl !== null && Date.now() - zt < 400 ? zl : curZoom(img))
+    const MOVABLE = ['title', 'title2', 'brand', 'count', 'initials']
+    let tdrag: { key: string; x: number; y: number; k: number; moved: boolean } | null = null
     const down = (e: MouseEvent) => {
       if (e.button !== 0) return
-      const img = coverImg()
-      if (!img || !inside(img, e.clientX, e.clientY)) return
+      const tg = (e.target as Element | null)?.closest?.('[data-gk]') as Element | null
+      const gk = tg?.getAttribute('data-gk') ?? ''
+      if (tg && MOVABLE.includes(gk)) {
+        const svg = (tg as SVGElement).ownerSVGElement
+        const k = svg ? svg.getBoundingClientRect().width / (svg.viewBox.baseVal?.width || 900) || 1 : 1
+        tdrag = { key: gk, x: e.clientX, y: e.clientY, k, moved: false }
+        e.preventDefault()
+        return
+      }
+      const img = imgAt(e.clientX, e.clientY)
+      if (!img) return
       const [px, py] = curPos(img)
-      drag = { x: e.clientX, y: e.clientY, px, py, moved: false }
+      drag = { x: e.clientX, y: e.clientY, px, py, moved: false, img }
+      if (img.dataset.slot || img.hasAttribute('data-cover')) window.parent?.postMessage({ type: 'camrhia-gallery-slot', key: img.dataset.slot ?? 'main' }, '*')
       e.preventDefault()
     }
     const move = (e: MouseEvent) => {
+      if (tdrag) {
+        const tx = e.clientX - tdrag.x
+        const ty = e.clientY - tdrag.y
+        if (!tdrag.moved && Math.hypot(tx, ty) < 4) return
+        if (!tdrag.moved) window.parent?.postMessage({ type: 'camrhia-gallery-move', key: tdrag.key, phase: 'start' }, '*')
+        tdrag.moved = true
+        window.parent?.postMessage({ type: 'camrhia-gallery-move', key: tdrag.key, phase: 'move', dx: tx / tdrag.k, dy: ty / tdrag.k }, '*')
+        return
+      }
       if (!drag) return
-      const img = coverImg()
-      if (!img) return
+      const img = drag.img
       const dx = e.clientX - drag.x
       const dy = e.clientY - drag.y
       if (!drag.moved && Math.hypot(dx, dy) < 4) return
@@ -330,11 +360,12 @@ export default function GalleryViewPage() {
       if (Math.abs(ky) > 1) y = drag.py + (dy / ky) * 100
       x = Math.round(Math.min(100, Math.max(0, x)) * 10) / 10
       y = Math.round(Math.min(100, Math.max(0, y)) * 10) / 10
-      window.parent?.postMessage({ type: 'camrhia-gallery-focus', id: img.dataset.pid, cover: true, x, y }, '*')
+      window.parent?.postMessage({ type: 'camrhia-gallery-focus', id: img.dataset.pid, cover: img.hasAttribute('data-cover'), x, y }, '*')
     }
     const up = () => {
-      if (drag?.moved) { suppress = true; setTimeout(() => { suppress = false }, 0) }
+      if (drag?.moved || tdrag?.moved) { suppress = true; setTimeout(() => { suppress = false }, 0) }
       drag = null
+      tdrag = null
     }
     const click = (e: MouseEvent) => {
       if (!suppress) return
@@ -412,6 +443,36 @@ export default function GalleryViewPage() {
       tag.style.top = flip ? '100%' : 'auto'
     }
     const hide = () => { box.style.display = 'none' }
+    let editor: HTMLInputElement | null = null
+    const closeEditor = () => { if (editor) { editor.remove(); editor = null } }
+    const openEditor = (target: HTMLElement, k: string) => {
+      if (!['title', 'title2', 'brand', 'count', 'initials'].includes(k)) return
+      const key = k === 'title2' ? 'title' : k
+      const orig = textRef.current[key] ?? ''
+      closeEditor()
+      const r = target.getBoundingClientRect()
+      const w = Math.min(Math.max(r.width + 40, 240), window.innerWidth - 24)
+      const inp = document.createElement('input')
+      inp.type = 'text'
+      inp.maxLength = key === 'brand' ? 40 : key === 'initials' ? 4 : 60
+      inp.value = orig
+      inp.style.cssText = 'position:fixed;z-index:2147483646;height:42px;box-sizing:border-box;padding:0 12px;border:2px dashed #d9a21b;border-radius:10px;background:#fff;color:#1f1a14;font:500 17px system-ui,sans-serif;text-align:center;outline:none;box-shadow:0 6px 24px rgba(0,0,0,0.25)'
+      inp.style.width = w + 'px'
+      inp.style.left = Math.min(Math.max(12, r.left + r.width / 2 - w / 2), window.innerWidth - w - 12) + 'px'
+      inp.style.top = Math.min(Math.max(12, r.top + r.height / 2 - 21), window.innerHeight - 54) + 'px'
+      let finished = false
+      const send = (t: string) => window.parent?.postMessage({ type: 'camrhia-gallery-text', key, text: t }, '*')
+      inp.addEventListener('input', () => send(inp.value))
+      inp.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); finished = true; closeEditor() }
+        if (ev.key === 'Escape') { ev.preventDefault(); finished = true; send(orig); closeEditor() }
+      })
+      inp.addEventListener('blur', () => { if (!finished) { finished = true; closeEditor() } })
+      document.body.appendChild(inp)
+      editor = inp
+      inp.focus()
+      inp.select()
+    }
     const click = (e: MouseEvent) => {
       const sc = (e.target as HTMLElement | null)?.closest?.('[data-setcover]')
       if (sc) {
@@ -433,6 +494,7 @@ export default function GalleryViewPage() {
       }
       e.preventDefault()
       e.stopPropagation()
+      openEditor(h.el, h.k)
       const cs = getComputedStyle(h.el)
       const rr = h.el.getBoundingClientRect()
       window.parent?.postMessage({ type: 'camrhia-gallery-pick', key: h.k, top: rr.top, bottom: rr.bottom, name: NAMES[h.k], size: Math.round(parseFloat(cs.fontSize)), color: cs.color, bold: parseInt(cs.fontWeight, 10) >= 600 }, '*')
@@ -505,7 +567,7 @@ export default function GalleryViewPage() {
   }
 
   if (!data) return null
-  const { look, cover: coverKind, pal, coverPal, focal, focals, zoom, layout, el } = resolveDesign(designPreview ?? data.design ?? null)
+  const { look, cover: coverKind, pal, coverPal, focal, focals, zoom, layout, el, slots } = resolveDesign(designPreview ?? data.design ?? null)
   const elRules = elCss(el, (k) => FONT_OPTIONS[k]?.family)
   const fontHref = (() => {
     const g = Array.from(new Set(Object.values(el).map((x) => FONT_OPTIONS[x?.font ?? '']?.gf).filter(Boolean) as string[]))
@@ -515,7 +577,12 @@ export default function GalleryViewPage() {
   const fpos = (id: string) => (focals[id] ? `${focals[id].x}% ${focals[id].y}%` : undefined)
   const headCls = look.font === 'fraunces' ? 'font-fraunces' : ''
   const headStyle: CSSProperties = { ...(look.font === 'fraunces' ? {} : { fontFamily: look.font }), fontWeight: look.weight, letterSpacing: look.track, textTransform: look.upper ? 'uppercase' : 'none', fontStyle: look.italic ? 'italic' : 'normal' }
-  const cover = data.photos.find((p) => p.id === data.coverId) ?? data.photos[0]
+  const cover = data.photos.find((p) => p.id === (coverOverride ?? data.coverId)) ?? data.photos[0]
+  const slotPh = (key: string, fb: (typeof data.photos)[number] | undefined) => (slots[key] ? data.photos.find((p) => p.id === slots[key]) : undefined) ?? fb
+  const slotImg = (key: string, ph: (typeof data.photos)[number] | undefined, src: string | undefined, fallbackPos?: string) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" data-pid={ph?.id} data-slot={key} className="h-full w-full object-cover" style={{ objectPosition: (ph && fpos(ph.id)) || fallbackPos }} />
+  )
   const momentMeta = (data as unknown as { moments?: { id: string; name: string }[] }).moments ?? []
   const momentHead = (p: unknown, i: number) => {
     if (momentMeta.length === 0) return null
@@ -552,6 +619,8 @@ export default function GalleryViewPage() {
   ) : null
   const coverTitle = String((el as Record<string, { text?: string }> | undefined)?.title?.text ?? '').trim() || String(data.title)
   const coverSub = String((el as Record<string, { text?: string }> | undefined)?.brand?.text ?? '').trim() || (brand?.name ? String(brand.name) : '')
+  const countText = String((el as Record<string, { text?: string }> | undefined)?.count?.text ?? '').trim()
+  textRef.current = { title: coverTitle, brand: coverSub, count: countText || `${data.photos.length} photos`, initials: String((el as Record<string, { text?: string }> | undefined)?.initials?.text ?? '') }
   const brandLine = brand?.name ? (
     <p data-gk="brand" className="mb-3 font-mono text-xs uppercase tracking-widest" style={{ color: pal.soft }}>{brand.name}</p>
   ) : null
@@ -763,8 +832,11 @@ export default function GalleryViewPage() {
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#F6DCBD' }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;800&family=DM+Serif+Display&display=swap" />
-            <div className="absolute overflow-hidden" style={{ left: '2.9cqw', top: '6.2cqw', width: '57.6cqw', height: '37cqw', background: pal.line }}>
-              <div className="absolute inset-0">{imgEl}</div>
+            <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs><clipPath id="tkclip" clipPathUnits="objectBoundingBox"><path transform="scale(0.0011111 0.0022222)" d="M58 56 H545 V389 H58 L26 358 V278 A46 46 0 0 0 26 194 V92 Z" /></clipPath></defs></svg>
+            <div className="absolute inset-0" style={{ clipPath: 'url(#tkclip)' }}>
+              <div className="absolute overflow-hidden" style={{ left: '2.9cqw', top: '6.2cqw', width: '57.6cqw', height: '37cqw', background: pal.line }}>
+                <div className="absolute inset-0">{imgEl}</div>
+              </div>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/gallery-cover/ticket-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
@@ -803,16 +875,15 @@ export default function GalleryViewPage() {
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: pal.bg }}>
             <h1 className="sr-only">{coverTitle}</h1>
+            {tiles.map((t, i) => {
+              const ph = slotPh('s' + i, pool[i % pool.length])
+              return (
+                <div key={i} className="absolute overflow-hidden" style={{ left: (t.x / 9) + 'cqw', top: (t.y / 9) + 'cqw', width: (t.w / 9) + 'cqw', height: (t.h / 9) + 'cqw', background: pal.line }}>
+                  {slotImg('s' + i, ph, ph?.thumb || ph?.web || undefined)}
+                </div>
+              )
+            })}
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
-              {tiles.map((t, i) => {
-                const ph = pool[i % pool.length]
-                return (
-                  <svg key={i} x={t.x} y={t.y} width={t.w} height={t.h} style={{ overflow: 'hidden' }}>
-                    <rect width="100%" height="100%" fill={pal.line} />
-                    <image href={ph.thumb || ph.web || undefined} width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
-                  </svg>
-                )
-              })}
               <text data-gk="title" x="745" y="190.3" textAnchor="middle" style={{ ...ts, fontSize: 91.5, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(262, 43.68 * Math.max(l1.length, 1))} lengthAdjust="spacingAndGlyphs">{l1}</text>
               {l2 && <text data-gk="title" x="745.5" y="266.2" textAnchor="middle" style={{ ...ts, fontSize: 89.9, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(221, 36.84 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
               {sub && <text data-gk="brand" x="745.5" y="309.1" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontSize: 11.1, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(233, 14.56 * sub.length)} lengthAdjust="spacing">{sub}</text>}
@@ -872,7 +943,7 @@ export default function GalleryViewPage() {
         )
       })() : coverKind === 'strip' && cover?.web ? (() => {
         const pool = [cover, ...data.photos.filter((p) => p.id !== cover.id)].filter((p) => p.thumb || p.web)
-        const frames = Array.from({ length: 5 }, (_, i) => pool[i % pool.length])
+        const frames = Array.from({ length: 5 }, (_, i) => slotPh('s' + i, pool[i % pool.length]))
         const FX = [8, 180, 352, 555, 727]
         const FW = [163, 163, 192, 161, 165]
         const ts: CSSProperties = { ...headStyle, fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 400, fontStyle: 'normal', textTransform: 'none', letterSpacing: 0, fill: 'currentColor', pointerEvents: 'auto' }
@@ -883,14 +954,11 @@ export default function GalleryViewPage() {
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#271407' }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&display=swap" />
             <h1 className="sr-only">{coverTitle}</h1>
-            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
-              {frames.map((p, i) => (
-                <svg key={i} x={FX[i] - 1} y="228" width={FW[i] + 2} height="162" style={{ overflow: 'hidden' }}>
-                  <rect width="100%" height="100%" fill={pal.line} />
-                  <image href={p.thumb || p.web || undefined} width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
-                </svg>
-              ))}
-            </svg>
+            {frames.map((p, i) => (
+              <div key={i} className="absolute overflow-hidden" style={{ left: ((FX[i] - 1) / 9) + 'cqw', top: (228 / 9) + 'cqw', width: ((FW[i] + 2) / 9) + 'cqw', height: (162 / 9) + 'cqw', background: pal.line }}>
+                {slotImg('s' + i, p, p?.thumb || p?.web || undefined)}
+              </div>
+            ))}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/gallery-cover/strip-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
@@ -912,11 +980,12 @@ export default function GalleryViewPage() {
         </div>
       ) : coverKind === 'stack' && cover?.web ? (() => {
         const others = data.photos.filter((p) => p.id !== cover.id && (p.thumb || p.web)).slice(0, 3)
-        const pic = (i: number) => (others[i]?.thumb || others[i]?.web || cover.web || undefined)
+        const sph = (i: number) => slotPh('s' + i, others[i])
+        const pic = (i: number) => (sph(i)?.thumb || sph(i)?.web || cover.web || undefined)
         const slots = [
-          { cx: 168.5, cy: 191, w: 183.5, h: 171.7, a: -10.8, src: pic(0) },
-          { cx: 295, cy: 110.5, w: 189.8, h: 161.7, a: -10.6, src: pic(1) },
-          { cx: 719.8, cy: 196, w: 200.3, h: 175.8, a: 13.7, src: pic(2) },
+          { cx: 168.5, cy: 191, w: 183.5, h: 171.7, a: -10.8, src: pic(0), ph: sph(0) },
+          { cx: 295, cy: 110.5, w: 189.8, h: 161.7, a: -10.6, src: pic(1), ph: sph(1) },
+          { cx: 719.8, cy: 196, w: 200.3, h: 175.8, a: 13.7, src: pic(2), ph: sph(2) },
         ]
         const title = String(coverTitle)
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
@@ -928,8 +997,7 @@ export default function GalleryViewPage() {
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Qwigley&family=Playfair+Display:wght@500&display=swap" />
             {slots.map((sl, k) => (
               <div key={k} className="absolute overflow-hidden" style={{ ...box(sl.cx, sl.cy, sl.w + 12, sl.h + 12, sl.a), background: pal.line }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={sl.src} alt="" className="h-full w-full object-cover" />
+                {slotImg('s' + k, sl.ph, sl.src)}
               </div>
             ))}
             <div className="absolute overflow-hidden" style={{ ...box(473, 169.7, 304.7, 262.8, 3.96), background: pal.line }}>
@@ -945,7 +1013,7 @@ export default function GalleryViewPage() {
           </div>
         )
       })() : coverKind === 'diptych' && cover?.web ? (() => {
-        const second = data.photos.find((p) => p.id !== cover.id && p.web)
+        const second = slotPh('s0', data.photos.find((p) => p.id !== cover.id && p.web))
         const lines = String(coverTitle).split(/\s*(&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean).map((x) => (/^(and)$/i.test(x) ? '&' : x === '+' ? '&' : x))
         const ts: CSSProperties = { ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }
         return (
@@ -953,8 +1021,7 @@ export default function GalleryViewPage() {
             <div className="relative overflow-hidden" style={{ background: pal.line }}><div className="absolute inset-0">{imgEl}</div></div>
             <div style={{ background: pal.bg }} />
             <div className="relative overflow-hidden" style={{ background: pal.line }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={second?.web || cover.web || undefined} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: second ? '50% 50%' : '85% 50%' }} />
+              <div className="absolute inset-0">{slotImg('s0', second ?? cover, second?.web || cover.web || undefined, second ? '50% 50%' : '85% 50%')}</div>
             </div>
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
@@ -1067,7 +1134,7 @@ export default function GalleryViewPage() {
         {!cover?.web ? (
           <h2 data-gk="title" className={`${headCls} text-xl`} style={headStyle}>{coverTitle}</h2>
         ) : (
-          <span data-gk="count" className="text-sm" style={{ color: pal.soft }}>{data.photos.length} photos</span>
+          <span data-gk="count" className="text-sm" style={{ color: pal.soft }}>{countText || `${data.photos.length} photos`}</span>
         )}
         <div className="flex items-center gap-2 text-sm">
           {data.allowDownloads && list.length > 0 && (

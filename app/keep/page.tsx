@@ -40,16 +40,16 @@ export default function KeepPage() {
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
           <div className="flex flex-col rounded-3xl border border-line bg-card p-7">
-            <p className="font-fraunces text-2xl font-semibold text-ink">Run your business</p>
-            <p className="mt-1 text-sm text-ink-soft">The app and your dashboard: sessions, contracts, payments, messages and your calendar.</p>
+            <p className="font-fraunces text-2xl font-semibold text-ink">Camrhia Shared</p>
+            <p className="mt-1 text-sm text-ink-soft">Your shared space with every client: sessions, contracts, payments, messages, your calendar and gallery delivery.</p>
             <p className="mt-5 font-fraunces text-4xl text-ink">$8.99<span className="text-base text-ink-soft"> /month</span></p>
             <p className="text-sm text-ink-soft">Subscribe in the App Store</p>
             <a href={APP_STORE_URL} className={`${BTN_LINE} mt-6`}>Get the app</a>
           </div>
 
           <div className="flex flex-col rounded-3xl border-2 border-twilight bg-card p-7">
-            <p className="font-fraunces text-2xl font-semibold text-ink">Website, specials and galleries</p>
-            <p className="mt-1 text-sm text-ink-soft">Your website, live specials and gallery delivery. The app and dashboard are included.</p>
+            <p className="font-fraunces text-2xl font-semibold text-ink">Website and specials</p>
+            <p className="mt-1 text-sm text-ink-soft">Your website and live specials. Everything in Camrhia Shared is included.</p>
             <p className="mt-5 font-fraunces text-4xl text-ink">$33<span className="text-base text-ink-soft"> /month</span></p>
             <p className="text-sm text-ink-soft">or $330 /year</p>
             <Link href="/upgrade/showcase" className={`${BTN} mt-6`}>Keep Showcase</Link>

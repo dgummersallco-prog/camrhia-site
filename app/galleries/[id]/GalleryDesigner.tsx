@@ -4,7 +4,7 @@ import CamriTyping from '@/app/components/CamriTyping'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
-import { COVERS, LAYOUTS, LAYOUT_PRESETS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign, COVER_PRESETS } from '@/lib/galleryDesign'
+import { COVERS, LAYOUTS, LAYOUT_PRESETS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign, COVER_PRESETS, COVER_SLOTS } from '@/lib/galleryDesign'
 
 const THUMBS: Record<string, number[][]> = {
   masonry: [[2, 2, 16, 14], [2, 18, 16, 20], [22, 2, 16, 22], [22, 26, 16, 12], [42, 2, 16, 12], [42, 16, 16, 22]],
@@ -54,6 +54,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
+  const [slot, setSlot] = useState('main')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [popPos, setPopPos] = useState<{ top?: number; bottom?: number; maxHeight: number } | null>(null)
@@ -67,6 +68,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const latest = useRef<GalleryDesign>(initial ?? {})
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const eff = resolveDesign(d)
+  const nSlots = COVER_SLOTS[eff.cover] ?? 0
+  const slotKeys = nSlots ? [...(['mosaic', 'strip'].includes(eff.cover) ? [] : ['main']), ...Array.from({ length: nSlots }, (_, i) => 's' + i)] : []
+  const curSlot = slotKeys.includes(slot) ? slot : slotKeys[0] ?? 'main'
   const [gMsgs, setGMsgs] = useState<{ from: 'you' | 'cami'; text: string }[]>([])
   const [gInput, setGInput] = useState('')
   const [gBusy, setGBusy] = useState(false)
@@ -108,6 +112,20 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     }
   }
 
+  function pickCover(id: string) {
+    if (curSlot !== 'main') { change({ slots: { ...(latest.current.slots ?? {}), [curSlot]: id } }); return }
+    pickMain(id)
+  }
+  function pickMain(id: string) {
+    onPickCover?.(id)
+    change({ focal: undefined, zoom: undefined })
+    try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-cover', id }, '*') } catch { /* ignore */ }
+  }
+  const pickRef = useRef(pickMain)
+  pickRef.current = pickMain
+  const setElRef = useRef(setEl)
+  setElRef.current = setEl
+  const moveBase = useRef<{ key: string; dx: number; dy: number } | null>(null)
   function postFocus(on: boolean) {
     try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-focus-mode', on }, '*') } catch { /* ignore */ }
   }
@@ -167,7 +185,18 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           else change({ focals: { ...(latest.current.focals ?? {}), [String(m.id)]: { x, y } } })
         }
       }
-      if (m.type === 'camrhia-gallery-setcover' && onPickCover && m.id) onPickCover(String(m.id))
+      if (m.type === 'camrhia-gallery-slot' && typeof m.key === 'string') setSlot(String(m.key))
+      if (m.type === 'camrhia-gallery-setcover' && m.id) pickRef.current(String(m.id))
+      if (m.type === 'camrhia-gallery-text' && typeof m.key === 'string') setElRef.current(String(m.key), { text: String(m.text ?? '').slice(0, 60) })
+      if (m.type === 'camrhia-gallery-move' && typeof m.key === 'string') {
+        const key = String(m.key)
+        if (m.phase === 'start') {
+          const cur = latest.current.el?.[key]
+          moveBase.current = { key, dx: cur?.dx ?? 0, dy: cur?.dy ?? 0 }
+        } else if (moveBase.current && moveBase.current.key === key && Number.isFinite(Number(m.dx)) && Number.isFinite(Number(m.dy))) {
+          setElRef.current(key, { dx: Math.round(moveBase.current.dx + Number(m.dx)), dy: Math.round(moveBase.current.dy + Number(m.dy)) })
+        }
+      }
       if (m.type === 'camrhia-gallery-zoom') {
         const z = Number(m.zoom)
         if (Number.isFinite(z)) change({ zoom: z })
@@ -204,6 +233,13 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const ring = 'border-twilight ring-2 ring-twilight'
   const head = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
   const cur = pick ? d.el?.[pick.key] : undefined
+  const topColor = (label: string, value: string, isSet: boolean, onSet: (v: string) => void, onReset: () => void) => (
+    <label className="flex items-center gap-2 text-sm text-ink">
+      <input type="color" value={value} onChange={(e) => onSet(e.target.value)} className="h-8 w-8 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
+      <span>{label}</span>
+      {isSet && <button type="button" onClick={(e) => { e.preventDefault(); onReset() }} className="text-[11px] text-twilight underline">Reset</button>}
+    </label>
+  )
   const colorRow = (label: string, value: string, isSet: boolean, onSet: (v: string) => void, onReset: () => void) => (
     <div className="flex items-center gap-2 rounded-lg border border-line bg-white px-2.5 py-2">
       <input type="color" value={value} onChange={(e) => onSet(e.target.value)} className="h-8 w-8 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
@@ -222,24 +258,22 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <h2 className="font-fraunces text-2xl font-semibold text-ink">Style this gallery</h2>
         <p className="mb-6 truncate text-sm text-ink-soft">{title}</p>
         {err && <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
-        <div className="mt-24 mb-12">
-          <p className={head}>Colors</p>
-          <div className="mt-3 space-y-2">
-            {!['ticket', 'stack'].includes(eff.cover) && colorRow('Cover', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
-            {colorRow('Page background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
-            {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
-          </div>
-        </div>
-
 
 
         {photoChoices && photoChoices.length > 0 && onPickCover && (
           <>
-            <p className={head}>Cover photo</p>
+            <p className={head + ' mt-2'}>Cover photo</p>
             <p className="mt-1 text-xs text-ink-soft">Tap the photo that should open the gallery.</p>
+            {slotKeys.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {slotKeys.map((k) => (
+                  <button key={k} type="button" onClick={() => setSlot(k)} className={`rounded-full border px-3 py-1 text-xs font-medium transition ${curSlot === k ? 'border-twilight bg-twilight text-white' : 'border-line text-ink-soft hover:border-twilight'}`}>{k === 'main' ? 'Main' : 'Photo ' + (Number(k.slice(1)) + 1)}</button>
+                ))}
+              </div>
+            )}
             <div className="mt-3 grid max-h-56 grid-cols-4 gap-2 overflow-y-auto pr-0.5">
               {photoChoices.map((c) => (
-                <button key={c.id} type="button" onClick={() => onPickCover(c.id)} className={`aspect-square overflow-hidden rounded-lg border-2 transition ${coverPhotoId === c.id ? 'border-twilight ring-2 ring-twilight/40' : 'border-transparent hover:border-line'}`}>
+                <button key={c.id} type="button" onClick={() => pickCover(c.id)} className={`aspect-square overflow-hidden rounded-lg border-2 transition ${(curSlot === 'main' ? coverPhotoId : eff.slots[curSlot]) === c.id ? 'border-twilight ring-2 ring-twilight/40' : 'border-transparent hover:border-line'}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={c.url} alt="" className="h-full w-full object-cover" draggable={false} />
                 </button>
@@ -322,9 +356,14 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col p-3">
-        <div className="mb-4 flex items-center justify-end gap-3 px-1 pt-1">
-          {focusOn && <p className="mr-auto text-sm text-ink-soft">Click the part of any photo that should stay in frame.</p>}
+      <div className="flex min-w-0 flex-1 flex-col px-3 pb-3 pt-10">
+        <div className="mb-5 flex flex-wrap items-center justify-end gap-x-3 gap-y-3 px-1">
+          <div className="mr-auto flex flex-wrap items-center gap-x-5 gap-y-2">
+            {!['ticket', 'stack'].includes(eff.cover) && topColor('Cover', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
+            {topColor('Page', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
+            {topColor('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
+          </div>
+          {focusOn && <p className="text-sm text-ink-soft">Click the part of any photo that should stay in frame.</p>}
           <button type="button" onClick={toggleFocus} className={'rounded-xl border px-4 py-2 text-sm font-medium transition ' + (focusOn ? 'border-twilight bg-twilight text-white' : 'border-line bg-white text-ink hover:border-twilight')}>{focusOn ? 'Done setting focus' : 'Set focus'}</button>
           <div className="flex overflow-hidden rounded-xl border border-line bg-white text-sm">
             {(['desktop', 'phone'] as const).map((x) => (
