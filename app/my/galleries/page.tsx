@@ -79,7 +79,7 @@ export default function MyGalleriesPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <ClientHeader active="galleries" />
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <main className="mx-auto max-w-[1200px] px-6 py-10">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Galleries</p>
         <h1 className="font-fraunces text-3xl font-semibold text-ink md:text-4xl">Your photos</h1>
         {!ready ? (
@@ -106,36 +106,29 @@ export default function MyGalleriesPage() {
             {years.map(([year, list]) => (
               <section key={year} className="mt-10">
                 <h2 className="mb-4 font-fraunces text-2xl font-semibold text-ink">{year}</h2>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
                   {list.map(({ g, r }) => {
                     const studio = r.studio_name || r.display_name || 'Your photographer'
                     const meta = info[g.token]
                     const pin = g.has_pin ? mine[r.wedding_id]?.gallery_password : null
                     return (
-                      <div key={g.token} className="relative aspect-[9/16] overflow-hidden sm:aspect-[2/1] rounded-[28px] border border-line bg-gradient-to-br from-twilight to-blush shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                        {meta?.cover && <img src={meta.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20" />
-                        <a href={`/g/${g.token}`} className="absolute inset-0 z-10" aria-label={`Open ${g.title || 'gallery'}`} />
-                        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-5 text-white">
-                          <p className="font-fraunces text-2xl font-semibold leading-tight sm:text-3xl">{g.title || label(r.session_type)}</p>
-                          <p className="mt-1.5 text-sm text-white/85">by {studio}</p>
-                          {meta && <p className="mt-0.5 text-xs text-white/70">{meta.count} photo{meta.count === 1 ? '' : 's'}</p>}
+                      <div key={g.token}>
+                        <div className="relative aspect-[9/16] overflow-hidden rounded-[28px] border border-line bg-gradient-to-br from-twilight to-blush shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:aspect-[2/1]">
+                          {meta?.cover && <img src={meta.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                          <a href={`/g/${g.token}`} className="absolute inset-0 z-10" aria-label={`Open ${g.title || 'gallery'}`} />
                         </div>
-                        <a
-                          href="/my/messages"
-                          className="absolute left-5 top-4 z-30 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold text-ink"
-                        >
-                          Message photographer
-                        </a>
-                        {pin && (
-                          <button
-                            type="button"
-                            onClick={() => setPinFor(pinFor === g.token ? null : g.token)}
-                            className="absolute bottom-3 right-3 z-30 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-ink"
-                          >
-                            {pinFor === g.token ? `PIN ${pin}` : 'Show PIN'}
-                          </button>
-                        )}
+                        <div className="mt-3 px-1">
+                          <p className="font-fraunces text-xl font-semibold leading-tight text-ink">{g.title || label(r.session_type)}</p>
+                          <p className="mt-0.5 text-sm text-ink-soft">by {studio}{meta ? ` · ${meta.count} photo${meta.count === 1 ? '' : 's'}` : ''}</p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <a href="/my/messages" className="rounded-full border border-line bg-card px-3 py-1 text-xs font-semibold text-ink hover:border-twilight">Message photographer</a>
+                            {pin && (
+                              <button type="button" onClick={() => setPinFor(pinFor === g.token ? null : g.token)} className="rounded-full border border-line bg-card px-3 py-1 text-xs font-semibold text-ink hover:border-twilight">
+                                {pinFor === g.token ? `PIN ${pin}` : 'Show PIN'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     )
                   })}
