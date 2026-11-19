@@ -1,6 +1,7 @@
 'use client'
 
 import CamriTyping from '@/app/components/CamriTyping'
+import MicButton from '@/app/components/MicButton'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -52,6 +53,8 @@ export default function QuestionnaireEditorPage() {
   const [cInput, setCInput] = useState('')
   const [cBusy, setCBusy] = useState(false)
   const [cUndo, setCUndo] = useState<Q[] | null>(null)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -94,14 +97,20 @@ export default function QuestionnaireEditorPage() {
     bySection.get(q.section)!.push(q)
   })
 
-  function move(q: Q, dir: -1 | 1) {
+  function dropOn(target: Q) {
+    const from = dragId
+    setDragId(null)
+    setOverId(null)
+    if (!from || from === target.id) return
     setQuestions((prev) => {
-      const idx = prev.findIndex((x) => x.id === q.id)
-      let j = idx + dir
-      while (j >= 0 && j < prev.length && prev[j].section !== q.section) j += dir
-      if (j < 0 || j >= prev.length) return prev
-      const next = [...prev]
-      ;[next[idx], next[j]] = [next[j], next[idx]]
+      const a = prev.find((x) => x.id === from)
+      if (!a || a.section !== target.section) return prev
+      const without = prev.filter((x) => x.id !== from)
+      const ti = without.findIndex((x) => x.id === target.id)
+      const fi = prev.findIndex((x) => x.id === from)
+      const ci = prev.findIndex((x) => x.id === target.id)
+      const next = [...without]
+      next.splice(fi < ci ? ti + 1 : ti, 0, a)
       return next
     })
     setDirty(true)
@@ -241,8 +250,6 @@ export default function QuestionnaireEditorPage() {
       <div className="mx-auto mb-10 mt-24 flex max-w-6xl items-start gap-6 px-6">
       <TypeRail active={type} />
       <main className="relative min-w-0 flex-1 rounded-3xl bg-[#FBF7F2]/85 px-8 py-10 shadow-[0_8px_40px_rgba(60,40,30,0.10)] backdrop-blur-md">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[69px] right-8 h-[100px] w-auto" />
         <Link href="/questionnaires" className="text-sm text-ink-soft hover:text-ink lg:hidden">← All questionnaires</Link>
         <div className="mb-4 mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -280,6 +287,7 @@ export default function QuestionnaireEditorPage() {
           {cUndo && <button type="button" onClick={() => { setQuestions(cUndo); setCUndo(null); setDirty(true) }} className="mt-2 text-xs text-twilight underline">Undo Camri&apos;s changes</button>}
           <form onSubmit={(e) => { e.preventDefault(); askCamri(cInput) }} className="mt-3 flex gap-2">
             <input value={cInput} onChange={(e) => setCInput(e.target.value)} placeholder="Ask Camri to reword, add, remove or give advice" className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+            <MicButton disabled={cBusy} onText={setCInput} onDone={(t) => { if (t.trim()) askCamri(t) }} />
             <button type="submit" disabled={cBusy} className="rounded-xl bg-twilight px-4 py-2 text-sm font-medium text-white disabled:opacity-60">Send</button>
           </form>
         </div>
@@ -304,13 +312,28 @@ export default function QuestionnaireEditorPage() {
                     <span className="h-px flex-1 bg-line" />
                   </div>
                   <ul className="space-y-2">
-                    {list.map((q, i) => (
-                      <li key={q.id}>
+                    {list.map((q) => (
+                      <li
+                        key={q.id}
+                        onDragOver={(e) => { if (dragId && dragId !== q.id) { e.preventDefault(); setOverId(q.id) } }}
+                        onDrop={(e) => { e.preventDefault(); dropOn(q) }}
+                        className={`${dragId === q.id ? 'opacity-40' : ''} ${overId === q.id && dragId && dragId !== q.id ? 'rounded-2xl ring-2 ring-twilight/50' : ''}`}
+                      >
                         {draft?.id === q.id ? draftForm : (
                           <div className="flex items-start gap-3 rounded-2xl border border-[#E8DDD0] bg-white/90 px-4 py-3.5 shadow-sm transition hover:shadow-md">
-                            <div className="flex flex-col text-xs text-ink-soft">
-                              <button type="button" disabled={i === 0} onClick={() => move(q, -1)} aria-label="Move up" className="px-1 hover:text-ink disabled:opacity-30"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 7.5 6 4l3.5 3.5" /></svg></button>
-                              <button type="button" disabled={i === list.length - 1} onClick={() => move(q, 1)} aria-label="Move down" className="px-1 hover:text-ink disabled:opacity-30"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5" /></svg></button>
+                            <div
+                              draggable
+                              onDragStart={(e) => { setDragId(q.id); e.dataTransfer.effectAllowed = 'move'; const row = (e.currentTarget as HTMLElement).closest('li'); if (row) e.dataTransfer.setDragImage(row, 20, 20) }}
+                              onDragEnd={() => { setDragId(null); setOverId(null) }}
+                              aria-label="Drag to reorder"
+                              title="Drag to reorder"
+                              className="mt-0.5 cursor-grab select-none px-1 py-1 text-ink-soft hover:text-ink active:cursor-grabbing"
+                            >
+                              <svg width="12" height="18" viewBox="0 0 12 18" fill="currentColor" aria-hidden>
+                                <circle cx="3" cy="3" r="1.5" /><circle cx="9" cy="3" r="1.5" />
+                                <circle cx="3" cy="9" r="1.5" /><circle cx="9" cy="9" r="1.5" />
+                                <circle cx="3" cy="15" r="1.5" /><circle cx="9" cy="15" r="1.5" />
+                              </svg>
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm text-ink">{q.prompt}</p>
