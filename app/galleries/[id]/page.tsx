@@ -297,13 +297,7 @@ export default function GalleryManagePage() {
   useEffect(() => {
     if (!designOpen && !shareOpen) return
     const el = barRef.current
-    if (el) {
-      const r = el.getBoundingClientRect()
-      if (r.top < 0 || r.bottom > window.innerHeight * 0.6) window.scrollBy({ top: r.top - 80, behavior: 'instant' as ScrollBehavior })
-      setTopOff(el.getBoundingClientRect().bottom + 16)
-    }
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    if (el) setTopOff(el.getBoundingClientRect().bottom + 16)
   }, [designOpen, shareOpen])
 
   const stepsBar = (active: number, nav: { photos: () => void; style: () => void; publish: () => void }) => (
@@ -887,7 +881,7 @@ export default function GalleryManagePage() {
               />
             )}
 
-            <div>
+            <div className={designOpen || shareOpen ? 'hidden' : ''}>
               {/* Left: upload + photos */}
               <div className="min-w-0">
 
@@ -1088,8 +1082,8 @@ export default function GalleryManagePage() {
           </>
         )}
         {gallery && shareOpen && (
-          <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto bg-paper" style={{ top: topOff }}>
-            <div className="mx-auto max-w-6xl px-5 py-6">
+          <div>
+            <div>
               <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
                 <div className="space-y-5">
                   <div className={card}>

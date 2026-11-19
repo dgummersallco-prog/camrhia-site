@@ -60,6 +60,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [err, setErr] = useState<string | null>(null)
   const [popPos, setPopPos] = useState<{ top?: number; bottom?: number; maxHeight: number } | null>(null)
   const boxRef = useRef<HTMLDivElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
   const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean } | null>(null)
   const [zoom, setZoom] = useState<{ src: string; name: string; top: number } | null>(null)
   const [fontOpen, setFontOpen] = useState(false)
@@ -243,8 +244,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const head = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
   const cur = pick ? d.el?.[pick.key] : undefined
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 flex overflow-hidden bg-paper" style={{ top: topOffset ?? 0 }}>
-      <aside className="flex w-[320px] shrink-0 flex-col overflow-y-auto border-r border-line bg-white/50 px-5 pb-8 pt-6">
+    <div ref={rootRef} className="relative flex gap-4" style={{ height: `calc(100vh - ${topOffset ?? 0}px - 16px)` }}>
+      <aside className="flex w-[320px] shrink-0 flex-col overflow-y-auto rounded-2xl border border-line bg-white/50 px-5 pb-8 pt-6">
         <div className="mb-6 flex items-center justify-between">
           <button type="button" onClick={close} className="text-sm text-ink-soft hover:text-ink">✕ Close</button>
           <span className="text-xs text-ink-soft">{saving ? 'Saving…' : 'Saved'}</span>
@@ -343,14 +344,14 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         </div>
       </aside>
       {zoom && (
-        <div className="pointer-events-none fixed z-[60] rounded-xl border border-line bg-white p-2 shadow-2xl" style={{ left: 330, top: Math.max(8, Math.min(zoom.top - 40, (typeof window !== 'undefined' ? window.innerHeight : 800) - 600)) }}>
+        <div className="pointer-events-none fixed z-[60] rounded-xl border border-line bg-white p-2 shadow-2xl" style={{ left: 330 + (rootRef.current?.getBoundingClientRect().left ?? 0), top: Math.max(8, Math.min(zoom.top - 40, (typeof window !== 'undefined' ? window.innerHeight : 800) - 600)) }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={zoom.src} alt="" style={{ maxWidth: 560, maxHeight: '85vh' }} className="block h-auto w-auto rounded" />
           <p className="mt-1 text-center text-xs text-ink-soft">{zoom.name}</p>
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col px-3 pb-3 pt-5">
+      <div className="flex min-w-0 flex-1 flex-col pb-1">
         <div className="mb-5 flex flex-wrap items-center justify-end gap-x-3 gap-y-3 px-1">
           <div className="mr-auto flex flex-wrap items-center gap-x-5 gap-y-2">
             {!['ticket', 'stack'].includes(eff.cover) && <div className="w-40"><ColorInput float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}

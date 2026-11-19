@@ -392,7 +392,7 @@ export default function GalleriesPage() {
         {rows && rows.length > 0 && (
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2 text-sm">
-              {(['all', 'published', 'draft'] as const).map((f) => (
+              {(['draft', 'published', 'all'] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
