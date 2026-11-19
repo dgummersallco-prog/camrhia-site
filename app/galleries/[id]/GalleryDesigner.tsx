@@ -2,7 +2,7 @@
 
 import CamriTyping from '@/app/components/CamriTyping'
 import ColorInput from '@/app/components/ColorInput'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { COVERS, LAYOUTS, LAYOUT_PRESETS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign, COVER_PRESETS, COVER_SLOTS } from '@/lib/galleryDesign'
@@ -48,10 +48,10 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
   return { cover: k, ...p, el: { ...clearCoverEl(el), ...(p.el ?? {}) } }
 }
 
-export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, steps }: {
+export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
   photoChoices?: { id: string; url: string }[]; coverPhotoId?: string | null; onPickCover?: (id: string) => void
-  onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void; steps?: (nav: { photos: () => void; publish: () => void }) => ReactNode
+  onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void; topOffset?: number; flushRef?: { current: (() => void) | null }
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
@@ -173,6 +173,14 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     onClose()
   }
   function closeAndSend() { close(); onSend?.() }
+  useEffect(() => {
+    if (!flushRef) return
+    flushRef.current = () => {
+      if (timer.current) { clearTimeout(timer.current); timer.current = null; void save(latest.current) }
+      onSaved(latest.current)
+    }
+    return () => { flushRef.current = null }
+  })
 
   useEffect(() => {
     function onMsg(e: MessageEvent) {
@@ -235,7 +243,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const head = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
   const cur = pick ? d.el?.[pick.key] : undefined
   return (
-    <div className="fixed inset-0 z-50 flex overflow-hidden bg-paper">
+    <div className="fixed inset-x-0 bottom-0 z-50 flex overflow-hidden bg-paper" style={{ top: topOffset ?? 0 }}>
       <aside className="flex w-[320px] shrink-0 flex-col overflow-y-auto border-r border-line bg-white/50 px-5 pb-8 pt-6">
         <div className="mb-6 flex items-center justify-between">
           <button type="button" onClick={close} className="text-sm text-ink-soft hover:text-ink">✕ Close</button>
@@ -343,7 +351,6 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       )}
 
       <div className="flex min-w-0 flex-1 flex-col px-3 pb-3 pt-5">
-        {steps && <div className="mb-4">{steps({ photos: close, publish: closeAndSend })}</div>}
         <div className="mb-5 flex flex-wrap items-center justify-end gap-x-3 gap-y-3 px-1">
           <div className="mr-auto flex flex-wrap items-center gap-x-5 gap-y-2">
             {!['ticket', 'stack'].includes(eff.cover) && <div className="w-40"><ColorInput float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
@@ -355,6 +362,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
               <button key={x} type="button" onClick={() => setDevice(x)} className={'px-4 py-2 font-medium transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
             ))}
           </div>
+          <button type="button" onClick={close} className="rounded-xl border border-line bg-white px-5 py-2 text-sm font-medium text-ink transition hover:border-twilight">Back</button>
           <button type="button" onClick={onSend ? closeAndSend : close} className="rounded-xl bg-twilight px-6 py-2 text-sm font-medium text-white transition hover:opacity-90">Done</button>
         </div>
         <div ref={boxRef} className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">

@@ -130,6 +130,10 @@ export default function GalleryManagePage() {
   const [accessOpen, setAccessOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [slug, setSlug] = useState('')
+  const barRef = useRef<HTMLDivElement>(null)
+  const shortened = useRef<string | null>(null)
+  const designFlush = useRef<(() => void) | null>(null)
+  const [topOff, setTopOff] = useState(0)
   const [sendPhone, setSendPhone] = useState('')
   const [sendEmail, setSendEmail] = useState('')
   const [textLink, setTextLink] = useState<string | null>(null)
@@ -280,6 +284,28 @@ export default function GalleryManagePage() {
     return ok
   }
 
+  function goStep(n: number) {
+    designFlush.current?.()
+    if (n === 0) {
+      if (!designOpen && !shareOpen) fileInput.current?.click()
+      setDesignOpen(false); setShareOpen(false)
+    } else if (n === 1) { setShareOpen(false); setDesignOpen(true) }
+    else { setDesignOpen(false); setShareOpen(true) }
+  }
+
+  // The steps bar stays where it is. The style and publish screens open right below it.
+  useEffect(() => {
+    if (!designOpen && !shareOpen) return
+    const el = barRef.current
+    if (el) {
+      const r = el.getBoundingClientRect()
+      if (r.top < 0 || r.bottom > window.innerHeight * 0.6) window.scrollBy({ top: r.top - 80, behavior: 'instant' as ScrollBehavior })
+      setTopOff(el.getBoundingClientRect().bottom + 16)
+    }
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [designOpen, shareOpen])
+
   const stepsBar = (active: number, nav: { photos: () => void; style: () => void; publish: () => void }) => (
     <div className="grid gap-2 sm:grid-cols-3">
       {([
@@ -304,18 +330,17 @@ export default function GalleryManagePage() {
   // New galleries get a long random link. Swap it for a short readable one until it has been sent.
   useEffect(() => {
     const sb = supabase
-    if (!shareOpen || !sb || !gallery || sentAt || gallery.status === 'published' || gallery.token.length < 20) return
-    let cancelled = false
+    if (!shareOpen || !sb || !gallery || sentAt || gallery.status === 'published' || !/^[0-9a-f]{20,}$/.test(gallery.token) || shortened.current === gallery.id) return
+    shortened.current = gallery.id
     ;(async () => {
       const base = (gallery.title || 'gallery').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24).replace(/-+$/g, '') || 'gallery'
       for (let i = 0; i < 4; i++) {
         const t = `${base}-${Math.random().toString(36).slice(2, 6)}`
         const { error } = await sb.from('galleries').update({ token: t }).eq('id', gallery.id)
-        if (!error) { if (!cancelled) setGallery((g) => (g ? { ...g, token: t } : g)); return }
+        if (!error) { setGallery((g) => (g ? { ...g, token: t } : g)); return }
         if (error.code !== '23505') return
       }
     })()
-    return () => { cancelled = true }
   }, [shareOpen, gallery?.id, gallery?.token, gallery?.status, sentAt]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function publishAndSend() {
@@ -841,7 +866,7 @@ export default function GalleryManagePage() {
               </div>
             </div>
 
-            {gallery && <div className="mb-5">{stepsBar(0, { photos: () => fileInput.current?.click(), style: () => setDesignOpen(true), publish: () => setShareOpen(true) })}</div>}
+            {gallery && <div ref={barRef} className="mb-5">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>}
             {message && <p className="mb-4 text-sm text-twilight">{message}</p>}
 
             {designOpen && (
@@ -856,7 +881,8 @@ export default function GalleryManagePage() {
                 onPickCover={async (id) => { if (await saveSettings({ cover_photo_id: id })) await syncCover(id) }}
                 onClose={() => setDesignOpen(false)}
                 onSend={() => setShareOpen(true)}
-                steps={(nav) => stepsBar(1, { photos: nav.photos, style: () => {}, publish: nav.publish })}
+                topOffset={topOff}
+                flushRef={designFlush}
                 onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as Record<string, unknown> } : g))}
               />
             )}
@@ -1062,12 +1088,8 @@ export default function GalleryManagePage() {
           </>
         )}
         {gallery && shareOpen && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-paper">
+          <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto bg-paper" style={{ top: topOff }}>
             <div className="mx-auto max-w-6xl px-5 py-6">
-              <div className="mb-6 flex items-start gap-3">
-                <div className="min-w-0 flex-1">{stepsBar(2, { photos: () => { setShareOpen(false); setDesignOpen(false) }, style: () => { setShareOpen(false); setDesignOpen(true) }, publish: () => {} })}</div>
-                <button className="text-2xl leading-none text-ink-soft" onClick={() => setShareOpen(false)} aria-label="Close">×</button>
-              </div>
               <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
                 <div className="space-y-5">
                   <div className={card}>
@@ -1106,9 +1128,12 @@ export default function GalleryManagePage() {
                       <input type="tel" value={sendPhone} onChange={(e) => setSendPhone(e.target.value)} placeholder="Phone number" className={input} />
                       <input type="email" value={sendEmail} onChange={(e) => setSendEmail(e.target.value)} placeholder="Email" className={input} />
                     </div>
-                    <button className={`${btn} mt-4 w-full py-3`} disabled={finalBusy} onClick={publishAndSend}>
-                      {finalBusy ? 'Sending…' : sentAt ? 'Update and send' : 'Publish and send'}
-                    </button>
+                    <div className="mt-4 flex gap-2">
+                      <button className={btnGhost} onClick={() => goStep(1)}>Back</button>
+                      <button className={`${btn} flex-1 py-3`} disabled={finalBusy} onClick={publishAndSend}>
+                        {finalBusy ? 'Sending…' : sentAt ? 'Update and send' : 'Publish and send'}
+                      </button>
+                    </div>
                     {textLink && <a href={textLink} className={`${btnGhost} mt-2 block text-center`}>Now open the text</a>}
                   </div>
                   {message && <p className="text-sm text-twilight">{message}</p>}

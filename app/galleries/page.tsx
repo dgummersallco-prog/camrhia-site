@@ -58,6 +58,7 @@ export default function GalleriesPage() {
   const [colName, setColName] = useState('')
   const [saving, setSaving] = useState(false)
   const prefilled = useRef(false)
+  const startView = useRef(false)
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -69,6 +70,11 @@ export default function GalleriesPage() {
     if (e) { setError(e.message); return }
     const list = (data ?? []) as unknown as Row[]
     setRows(list)
+    if (!startView.current) {
+      startView.current = true
+      if (list.some((g) => g.status !== 'published')) setFilter('draft')
+      else if (list.length > 0) setShowNew(true)
+    }
     const { data: ses } = await sb
       .from('weddings')
       .select('id, names, wedding_date, gallery_url, gallery_sent_at, gallery_opened_at, gallery_downloaded_all_at, session_type')
@@ -223,6 +229,17 @@ export default function GalleriesPage() {
       if (!hay.includes(needle)) return false
     }
     return true
+  })
+  const dateOf = (g: Row) => {
+    const w = g.session_id ? sessById.get(g.session_id)?.wedding_date : null
+    return w ? new Date(`${w}T00:00:00`) : new Date(g.created_at)
+  }
+  const groups: [string, Row[]][] = []
+  ;[...visible].sort((a, b) => dateOf(b).getTime() - dateOf(a).getTime()).forEach((g) => {
+    const k = dateOf(g).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    const last = groups[groups.length - 1]
+    if (last && last[0] === k) last[1].push(g)
+    else groups.push([k, [g]])
   })
   const COVER_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/gallery-covers/`
   function sentState(g: Row): string | null {
@@ -404,9 +421,13 @@ export default function GalleriesPage() {
             <p className="mt-1 text-sm text-ink-soft">Create your first gallery to start delivering photos.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.length === 0 && <p className="col-span-full text-sm text-ink-soft">No galleries match.</p>}
-            {visible.map((g) => {
+          <div className="space-y-10">
+            {visible.length === 0 && <p className="text-sm text-ink-soft">No galleries match.</p>}
+            {groups.map(([label, list]) => (
+            <section key={label}>
+            <h2 className="mb-4 font-fraunces text-xl text-ink">{label}</h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((g) => {
               const count = g.gallery_photos?.[0]?.count ?? 0
               return (
                 <div
@@ -470,6 +491,9 @@ export default function GalleriesPage() {
                 </div>
               )
             })}
+            </div>
+            </section>
+            ))}
           </div>
         )}
       </main>
