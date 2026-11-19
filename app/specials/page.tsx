@@ -670,6 +670,7 @@ export default function SpecialsPage() {
   const [spBusy, setSpBusy] = useState(false)
   const [spUndo, setSpUndo] = useState<Form | null>(null)
   const [spTour, setSpTour] = useState<number | null>(null)
+  const [spOffer, setSpOffer] = useState<{ price?: number; minutes?: number; photos?: number; when?: string; place?: string; spots?: number }>({})
   const SP_Q = ["Let's design your special together. What's the occasion?", 'Now pick a color mood.', 'How should your buttons look?', 'Last one. Tell me about your offer in a sentence or two and I will write the headline and details.']
   const SP_PALS = [
     { name: 'Warm cream & rose', theme: { bgColor: '#FAF7F2', titleColor: '#2A1F24', subColor: '#6B5A5E', textColor: '#2A1F24', accent: '#A9545F', btnText: '#FFFFFF', cardBg: '#FFFFFF', cardText: '#2A1F24' } },
@@ -688,6 +689,25 @@ export default function SpecialsPage() {
     spSay(SP_Q[next])
     setSpTour(next)
   }
+  const applyOffer = (o: { price?: number; minutes?: number; photos?: number; when?: string; place?: string; spots?: number }) => {
+    setForm((f) => {
+      if (!f) return f
+      const text = { ...f.text }
+      const parts: string[] = []
+      if (o.price != null) parts.push('$' + o.price.toLocaleString(undefined, { maximumFractionDigits: 2 }))
+      if (o.minutes != null) parts.push(o.minutes + ' min')
+      if (o.photos != null) parts.push(o.photos + ' photos')
+      if (parts.length) text.price_line = parts.join(' · ')
+      const ww = [o.when, o.place].filter(Boolean).join(' · ')
+      if (ww) text.when_where = ww
+      if (o.spots != null) text.spots_note = 'Only ' + o.spots + (o.spots === 1 ? ' spot' : ' spots') + ' available'
+      return { ...f, text }
+    })
+    if (o.price != null) setSsPrice(String(o.price))
+    if (o.minutes != null) setSsMins(String(o.minutes))
+    if (o.photos != null) setSsPhotos(String(o.photos))
+    if (o.place) setSsWhere(o.place)
+  }
   async function spAsk(raw: string) {
     const t = raw.trim()
     if (!t || spBusy || !form) return
@@ -701,7 +721,7 @@ export default function SpecialsPage() {
       const sess = (await supabase?.auth.getSession())?.data.session
       const th = form.theme as unknown as Record<string, string>
       const fonts = Array.from(new Set(EXAMPLES.flatMap((e) => [e.theme.headFont, e.theme.subFont, e.theme.bodyFont]).filter(Boolean)))
-      const res = await fetch('/api/ai/camri-special', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: outgoing, history: spMsgs.slice(-8), presets: EXAMPLES.map((e) => e.name), decors: Object.keys(DECOR_EMOJI), fonts, current: { cta_label: form.cta_label, text: form.text, colors: { bg: th.bgColor, accent: th.accent, title: th.titleColor, text: th.textColor }, decor: th.decor, shape: th.shape } }) })
+      const res = await fetch('/api/ai/camri-special', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess?.access_token ?? ''}` }, body: JSON.stringify({ message: outgoing, history: spMsgs.slice(-8), presets: EXAMPLES.map((e) => e.name), decors: Object.keys(DECOR_EMOJI), fonts, current: { offer: spOffer, cta_label: form.cta_label, text: form.text, colors: { bg: th.bgColor, accent: th.accent, title: th.titleColor, text: th.textColor }, decor: th.decor, shape: th.shape } }) })
       const j = await res.json()
       if (!res.ok) throw new Error(j.error ?? 'Camri hit a snag.')
       const ch = j.changes ?? {}
@@ -710,6 +730,8 @@ export default function SpecialsPage() {
         setSpUndo(form)
         setForm((f) => f && ({ ...f, cta_label: ch.cta_label ?? f.cta_label, text: { ...f.text, ...(ch.text ?? {}) }, theme: { ...f.theme, ...(ch.theme ?? {}) } }))
       }
+      const merged = { ...spOffer, ...(ch.offer ?? {}) }
+      if (Object.keys(merged).length) { setSpOffer(merged); applyOffer(merged) }
       spSay(j.reply)
       if (last) spSay('Add your photos, check the preview, then save and publish in step 4.')
     } catch (e) {
@@ -848,9 +870,7 @@ export default function SpecialsPage() {
       text.spots_note = pick.slots.length + (pick.slots.length === 1 ? ' spot left' : ' spots left')
       if (pick.description) text.details_body = pick.description
     }
-    const rawPaths = Array.isArray(prof.cover_paths) && prof.cover_paths.length ? (prof.cover_paths as unknown[]) : prof.cover_path ? [prof.cover_path] : []
-    const photos = rawPaths.filter((x): x is string => typeof x === 'string' && !!x).slice(0, 3).map((x) => STORAGE_BASE + x)
-    setForm({ ...form, cta_label: ex.cta, text, photos, theme: { ...DEFAULT_THEME, ...ex.theme } })
+    setForm({ ...form, cta_label: ex.cta, text, theme: { ...DEFAULT_THEME, ...ex.theme } })
     const pk = PACKAGES[name]
     if (pk) { setSsPrice(pk.price); setSsMins(pk.mins); setSsPhotos(pk.photos) }
     scrollPreviewTo('top')
