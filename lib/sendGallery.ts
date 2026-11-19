@@ -20,17 +20,16 @@ export async function sendGalleryToClient(
       gallery_password: o.pin || null,
       gallery_expires_at: o.expiresAt ? localDate(o.expiresAt) : null,
       delivered: true,
-      gallery_delivered_at: now,
-      gallery_sent_at: now,
+      ...(o.alreadySent ? {} : { gallery_delivered_at: now, gallery_sent_at: now }),
     })
     .eq('id', o.weddingId)
   if (error) return error.message
-  if (o.coupleUserId && !o.alreadySent) {
+  if (o.coupleUserId) {
     await sb.from('notifications').insert({
       user_id: o.coupleUserId,
       type: 'gallery_ready',
-      title: 'Your gallery is ready',
-      body: 'Your photographer shared your gallery. Tap to view your photos.',
+      title: o.alreadySent ? 'Your gallery was updated' : 'Your gallery is ready',
+      body: o.alreadySent ? 'Your photographer updated your gallery. Tap to view your photos.' : 'Your photographer shared your gallery. Tap to view your photos.',
       wedding_id: o.weddingId,
     })
   }

@@ -115,7 +115,7 @@ export default function MyGalleriesPage() {
 
             {years.map(([year, list]) => (
               <section key={year} className="mt-10">
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {list.map(({ g, r }) => {
                     const studio = r.studio_name || r.display_name || 'Your photographer'
                     const meta = info[g.token]
@@ -123,8 +123,9 @@ export default function MyGalleriesPage() {
                     return (
                       <div key={g.token}>
                         <p className="mb-3 font-fraunces text-2xl font-semibold leading-tight text-ink">{g.title || label(r.session_type)}</p>
-                        <div className="relative aspect-[9/16] overflow-hidden rounded-[28px] border border-line bg-gradient-to-br from-twilight to-blush shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:aspect-[2/1]">
+                        <div className="relative aspect-[2/1] overflow-hidden rounded-[28px] border border-line bg-gradient-to-br from-twilight to-blush shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                           {meta?.cover && <img src={meta.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                          <iframe src={`/g/${g.token}?cover=1`} title="" loading="lazy" scrolling="no" tabIndex={-1} className="pointer-events-none absolute inset-0 h-full w-full border-0" />
                           <a href={`/g/${g.token}`} className="absolute inset-0 z-10" aria-label={`Open ${g.title || 'gallery'}`} />
                         </div>
                         <div className="mt-3 px-1">

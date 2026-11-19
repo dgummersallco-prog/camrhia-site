@@ -1035,17 +1035,17 @@ export default function GalleryManagePage() {
               {gallery.session_id && coupleUserId && (
                 <button
                   className={`${btn} mt-3 w-full`}
-                  disabled={!!sentAt}
                   onClick={async () => {
                     const sb = supabase
                     if (!sb || !gallery.session_id) return
+                    const was = !!sentAt
                     const err = await sendGalleryToClient(sb, { weddingId: gallery.session_id, coupleUserId, token: gallery.token, expiresAt: gallery.expires_at, pin: '', alreadySent: !!sentAt })
                     if (err) { flash(err); return }
                     setSentAt(new Date().toISOString())
-                    flash('Sent to their Camrhia app')
+                    flash(was ? 'Update sent to their Camrhia app' : 'Sent to their Camrhia app')
                   }}
                 >
-                  {sentAt ? 'Sent to their Camrhia app' : `Send to ${clientName ?? 'client'}'s Camrhia app`}
+                  {sentAt ? `Resend update to ${clientName ?? 'client'}'s Camrhia app` : `Send to ${clientName ?? 'client'}'s Camrhia app`}
                 </button>
               )}
               <div className="mt-3 grid grid-cols-2 gap-2">

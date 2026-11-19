@@ -92,7 +92,7 @@ export async function POST(req: Request) {
   }
 
   // First open by the client (not the photographer previewing while signed in).
-  if (g.session_id) {
+  if (g.session_id && !body.coverOnly) {
     try {
       let viewerId: string | null = null
       const jwt = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '')
@@ -136,6 +136,14 @@ export async function POST(req: Request) {
     }
     photos.push(...batch.filter((p: { cull_label: string | null }) => isVisible(p.cull_label, g.audience)))
     if (batch.length < 1000) break
+  }
+
+  if (body.coverOnly) {
+    const dz = (g.design ?? {}) as { slots?: Record<string, string> }
+    const keep = new Set<string>([...(g.cover_photo_id ? [g.cover_photo_id as string] : []), ...Object.values(dz.slots ?? {}).map((x) => String(x)), ...photos.slice(0, 8).map((p) => p.id)])
+    const kept = photos.filter((p) => keep.has(p.id))
+    photos.length = 0
+    photos.push(...kept)
   }
 
   const SIX_HOURS = 6 * 3600

@@ -63,7 +63,7 @@ export default function GalleryViewPage() {
       const res = await fetch('/api/gallery/open', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}) },
-        body: JSON.stringify({ token, pin: pinValue, access: pinValue ? undefined : stored, visitorId: visitorId(), preview: new URLSearchParams(window.location.search).get('preview') === '1' }),
+        body: JSON.stringify({ token, pin: pinValue, access: pinValue ? undefined : stored, visitorId: visitorId(), preview: new URLSearchParams(window.location.search).get('preview') === '1', coverOnly: new URLSearchParams(window.location.search).get('cover') === '1' }),
       })
       const j = await res.json().catch(() => ({}))
       if (j.brand) setBrand(j.brand as Brand)
@@ -89,6 +89,14 @@ export default function GalleryViewPage() {
   }, [token])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('cover') !== '1') return
+    const st = document.createElement('style')
+    st.textContent = 'html,body{overflow:hidden!important;background:transparent!important}.gal-root{min-height:0!important;background:transparent!important}.gal-root>*:not([data-cover-wrap]):not(link):not(style){display:none!important}'
+    document.head.appendChild(st)
+    return () => st.remove()
+  }, [])
 
   useEffect(() => {
     if (phase !== 'ready' || typeof window === 'undefined') return
@@ -827,7 +835,7 @@ export default function GalleryViewPage() {
       {fontHref && <link rel="stylesheet" href={fontHref} />}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Bodoni+Moda:wght@400&display=swap" />
       {elRules && <style>{elRules}</style>}
-      <div style={{ background: coverPal.bg, color: coverPal.ink }}>{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
+      <div data-cover-wrap style={{ background: coverPal.bg, color: coverPal.ink }}>{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
         const words = String(coverTitle).trim().split(/\s+/).filter(Boolean)
         const one = words.length <= 1
         const l1 = one ? '' : words.slice(0, -1).join(' ')
