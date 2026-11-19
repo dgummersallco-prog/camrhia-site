@@ -261,6 +261,8 @@ export default function EditingRoom() {
     if (!g.error) { setRows((g.data ?? []) as unknown as Row[]); void loadStages(((g.data ?? []) as unknown as Row[]).map((x) => x.id)) }
   }
 
+  const inProgress = (rows ?? []).filter((r) => (r.gallery_photos?.[0]?.count ?? 0) > 0 && r.status !== 'published').length
+
   const titleOf = (gid: string) => rows?.find((r) => r.id === gid)?.title ?? 'A shoot'
 
   return (
@@ -269,9 +271,10 @@ export default function EditingRoom() {
         groups={[
           { items: [{ href: '/dashboard', label: '← Back to dashboard' }] },
           { label: 'The Editing Room', items: [
-            { href: '/edit', label: 'Shoots', onClick: () => { setTab('edit'); if (shootId) void backToStart() } },
+            { href: '/edit', label: 'Shoots', badge: inProgress, onClick: () => { setTab('edit'); if (shootId) void backToStart() } },
+            { href: '/galleries', label: 'Galleries' },
             { href: '/edit?tab=styles', label: 'My styles', onClick: () => setTab('styles') },
-            { href: '/edit?tab=brain', label: 'Camri\'s notes', onClick: () => setTab('brain') },
+            { href: '/edit?tab=brain', label: 'My habits', onClick: () => setTab('brain') },
           ] },
         ]}
         activeHref={tab === 'edit' ? '/edit' : tab === 'styles' ? '/edit?tab=styles' : '/edit?tab=brain'}
@@ -351,32 +354,10 @@ export default function EditingRoom() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/camri/15_thinking_peek.png" alt="" className="h-28 w-auto shrink-0" />
               <div>
-                <p className="font-fraunces text-3xl text-ink">Camri&apos;s notes</p>
-                <p className="mt-1 max-w-xl text-ink-soft">Everything I know about you and your work, in one place. It grows every time you teach me a style or fix a photo.</p>
+                <p className="font-fraunces text-3xl text-ink">My habits</p>
+                <p className="mt-1 max-w-xl text-ink-soft">The fixes you keep making while you review photos. The more you fix, the closer I get to your taste.</p>
               </div>
             </div>
-
-            <p className="mt-10 font-fraunces text-xl text-ink">Your styles</p>
-            <StyleNotes sigs={sigs} use={styleUse} onTeach={() => setTab('styles')} />
-
-            <p className="mt-10 font-fraunces text-xl text-ink">Your work so far</p>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {[
-                { n: glance.shoots, t: glance.shoots === 1 ? 'shoot' : 'shoots' },
-                { n: glance.photos, t: 'photos' },
-                { n: glance.culled, t: 'photos culled' },
-                { n: glance.edited, t: 'photos edited' },
-                { n: glance.sent, t: glance.sent === 1 ? 'gallery sent' : 'galleries sent' },
-              ].map((x) => (
-                <div key={x.t} className="rounded-2xl border border-white/70 bg-white/60 p-5">
-                  <p className="font-fraunces text-3xl text-ink">{x.n}</p>
-                  <p className="mt-1 text-sm text-ink-soft">{x.t}</p>
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-12 font-fraunces text-xl text-ink">What I have noticed from your fixes</p>
-            <p className="mt-2 max-w-xl text-ink-soft">The changes you make while you review photos. I use them to get closer to your taste.</p>
 
             {brain === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
             {brain && brain.checked === 0 && (
@@ -386,34 +367,6 @@ export default function EditingRoom() {
             )}
             {brain && brain.checked > 0 && (
               <>
-                <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-white/70 bg-white/60 p-6">
-                    <p className="font-fraunces text-3xl text-ink">{brain.shoots}</p>
-                    <p className="mt-1 text-sm text-ink-soft">{brain.shoots === 1 ? 'shoot' : 'shoots'} reviewed</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/70 bg-white/60 p-6">
-                    <p className="font-fraunces text-3xl text-ink">{brain.checked}</p>
-                    <p className="mt-1 text-sm text-ink-soft">photos checked</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/70 bg-white/60 p-6">
-                    <p className="font-fraunces text-3xl text-ink">{brain.fixed}</p>
-                    <p className="mt-1 text-sm text-ink-soft">photos you fixed by hand</p>
-                  </div>
-                </div>
-
-                <p className="mt-10 font-fraunces text-xl text-ink">How Camri did on each shoot</p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {brain.scores.map((sc) => (
-                    <div key={sc.gid} className="rounded-2xl border border-white/70 bg-white/60 p-5">
-                      <p className="truncate text-ink">{titleOf(sc.gid)}</p>
-                      <p className="mt-1 text-sm text-ink-soft">Camri got {sc.pct}% right · {sc.checked} {sc.checked === 1 ? 'photo' : 'photos'} checked</p>
-                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/50">
-                        <div className="h-full rounded-full bg-[var(--color-twilight)]" style={{ width: `${sc.pct}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
                 <p className="mt-10 font-fraunces text-xl text-ink">Your habits by light</p>
                 {brain.situations.length === 0 ? (
                   <p className="mt-3 text-ink-soft">Not enough fixes yet to see a pattern for each kind of light. Keep reviewing and they show up here.</p>

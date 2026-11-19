@@ -50,7 +50,7 @@ const COLS =
   'id, filename, orig_path, web_path, thumb_path, full_path, size_bytes, sort_order, cull_label, cull_score, cull_group, cull_reason, person_ids, enhanced, pre_web_path, pre_thumb_path, pre_full_path'
 const ACCEPT =
   'image/jpeg,image/png,image/webp,.heic,.heif,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.dng,.orf,.rw2,.raf,.pef,.3fr,.erf,.kdc,.mrw,.raw,.rwl,.iiq'
-const STEPS = ['Photos', 'Cull', 'Edit', 'Gallery', 'Send']
+const STEPS = ['Photos', 'Cull', 'Edit', 'Finish']
 
 const panel = 'rounded-2xl border border-white/10 bg-[#151518] p-6'
 const btnPrimary = 'rounded-xl bg-twilight px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
@@ -722,6 +722,71 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     } catch (e) {
       setSaving({ busy: false, done, total: list.length, note: '' })
       setMsg(e instanceof Error ? e.message : 'Could not save your keepers. Please try again.')
+    }
+  }
+
+  async function saveEdited() {
+    const sb = supabase
+    if (!sb || saving.busy) return
+    const list = photos
+      .filter((x) => x.cull_label !== 'reject')
+      .map((x) => ({ x, path: x.full_path ?? x.web_path ?? x.orig_path }))
+      .filter((r) => !!r.path)
+    if (list.length === 0) { setMsg('There are no photos to save yet.'); return }
+    type DirH = { getDirectoryHandle: (n: string, o?: { create: boolean }) => Promise<DirH>; getFileHandle: (n: string, o?: { create: boolean }) => Promise<{ createWritable: () => Promise<{ write: (b: Blob) => Promise<void>; close: () => Promise<void> }> }> }
+    const w = window as unknown as { showDirectoryPicker?: (o?: { mode: string }) => Promise<DirH> }
+    let dir: DirH | null = null
+    if (w.showDirectoryPicker) {
+      try {
+        const root = await w.showDirectoryPicker({ mode: 'readwrite' })
+        dir = await root.getDirectoryHandle('Camrhia edited', { create: true })
+      } catch { return }
+    }
+    setSaving({ busy: true, done: 0, total: list.length, note: '' })
+    const title = String((gallery as { title?: string } | null)?.title ?? 'shoot').replace(/[^\w-]+/g, '-')
+    const used = new Set<string>()
+    const zipFiles: { name: string; data: Blob }[] = []
+    let done = 0
+    try {
+      for (let i = 0; i < list.length; i += 10) {
+        const chunk = list.slice(i, i + 10)
+        const { data: signed } = await sb.storage.from(BUCKET).createSignedUrls(chunk.map((r) => r.path as string), 600)
+        const urls = new Map((signed ?? []).map((r) => [r.path, r.signedUrl]))
+        for (const r of chunk) {
+          const u = urls.get(r.path as string)
+          if (!u) continue
+          const res = await fetch(u)
+          if (!res.ok) continue
+          const blob = await res.blob()
+          let name = r.x.filename || (r.path as string).split('/').pop() || `photo-${done + 1}.jpg`
+          if (used.has(name.toLowerCase())) name = `${done + 1}-${name}`
+          used.add(name.toLowerCase())
+          if (dir) {
+            const fh = await dir.getFileHandle(name, { create: true })
+            const wr = await fh.createWritable()
+            await wr.write(blob)
+            await wr.close()
+          } else {
+            zipFiles.push({ name, data: blob })
+          }
+          done += 1
+          setSaving({ busy: true, done, total: list.length, note: '' })
+        }
+      }
+      let note = `Saved ${done} edited photo${done === 1 ? '' : 's'} to a folder called "Camrhia edited".`
+      if (!dir) {
+        const zip = await buildZip(zipFiles)
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(zip)
+        a.download = `${title}-edited.zip`
+        a.click()
+        URL.revokeObjectURL(a.href)
+        note = `Saved ${done} edited photo${done === 1 ? '' : 's'} as a zip in your Downloads.`
+      }
+      setSaving({ busy: false, done, total: list.length, note })
+    } catch (e) {
+      setSaving({ busy: false, done, total: list.length, note: '' })
+      setMsg(e instanceof Error ? e.message : 'Could not save your photos. Please try again.')
     }
   }
 
@@ -1559,147 +1624,27 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
           </section>
         )}
 
-        {/* STEP 5: GALLERY */}
+        {/* STEP 4: FINISH */}
         {step === 3 && (
           <section className="mt-10">
-            <h1 className="font-fraunces text-4xl text-white">Design your gallery</h1>
-            <p className="mt-3 max-w-2xl text-white/55">Pick the cover photo, choose how it looks, and decide what your client sees. Nothing is sent yet.</p>
+            <h1 className="font-fraunces text-4xl text-white">All edited</h1>
+            <p className="mt-3 max-w-2xl text-white/55">Your photos are ready. Choose where they go next.</p>
 
-            <div className={`${panel} mt-8`}>
-              <p className="text-sm text-white/80">1. Cover photo</p>
-              <p className="mt-1 text-xs text-white/45">Tap the photo that should open the gallery.</p>
-              <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-10">
-                {photos.filter((p) => p.cull_label !== 'reject').slice(0, 60).map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => void setCover(p)}
-                    className={`relative aspect-square overflow-hidden rounded-lg bg-white/5 ${coverPhoto?.id === p.id ? 'ring-2 ring-[var(--color-twilight)]' : 'opacity-80 hover:opacity-100'}`}
-                  >
-                    {img(p)}
-                    {coverPhoto?.id === p.id && <span className="absolute left-1 top-1 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Cover</span>}
-                  </button>
-                ))}
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <div className={panel}>
+                <p className="font-fraunces text-2xl text-white">Save the edited photos</p>
+                <p className="mt-2 text-sm text-white/60">Download them to a folder on your computer, ready to deliver with your own gallery tool.</p>
+                <button className={`${btnQuiet} mt-6`} disabled={saving.busy} onClick={saveEdited}>
+                  {saving.busy ? `Saving ${saving.done} of ${saving.total}…` : 'Save edited photos'}
+                </button>
+                {saving.note && <p className="mt-3 text-sm text-white/80">{saving.note}</p>}
+              </div>
+              <div className={panel}>
+                <p className="font-fraunces text-2xl text-white">Add to a gallery</p>
+                <p className="mt-2 text-sm text-white/60">Design the gallery, set a PIN and send it to your client from your Galleries.</p>
+                <button className={`${btnPrimary} mt-6`} onClick={() => router.push(`/galleries/${galleryId}?design=1`)}>Add to gallery and design</button>
               </div>
             </div>
-
-            <div className={`${panel} mt-6`}>
-              <p className="text-sm text-white/80">2. Cover style and layout</p>
-              <p className="mt-1 text-xs text-white/45">Choose a cover design, a photo layout, fonts and colors. You can preview it on desktop and phone.</p>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button className={btnPrimary} onClick={() => setDesignOpen(true)}>{gallery?.design && Object.keys(gallery.design).length > 0 ? 'Change the design' : 'Design the gallery'}</button>
-                {gallery?.design && Object.keys(gallery.design).length > 0 && <span className="text-sm text-emerald-300">Design saved ✓</span>}
-              </div>
-            </div>
-
-            <MomentsPanel galleryId={galleryId} />
-
-            <div className={`${panel} mt-6`}>
-              <p className="text-sm text-white/80">3. What your client sees</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {([
-                  ['picks', 'Keepers only', photos.filter((p) => p.cull_label !== 'reject' && p.cull_label !== 'maybe').length],
-                  ['picks_maybe', 'Keepers and maybes', photos.filter((p) => p.cull_label !== 'reject').length],
-                  ['all', 'Everything', photos.length],
-                ] as const).map(([key, label, count]) => (
-                  <button
-                    key={key}
-                    onClick={() => void chooseAudience(key)}
-                    className={`rounded-xl border p-4 text-left transition ${audience === key ? 'border-twilight shadow-[0_0_24px_-6px_var(--color-twilight)]' : 'border-white/10 hover:border-white/30'}`}
-                  >
-                    <p className="text-white">{label}</p>
-                    <p className="mt-1 text-sm text-white/50">{count} {count === 1 ? 'photo' : 'photos'}</p>
-                  </button>
-                ))}
-              </div>
-              <p className="mt-3 text-xs text-white/40">Hidden photos stay in your gallery. You can change this any time.</p>
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <button className={btnPrimary} onClick={() => goTo(4)}>Continue to send</button>
-              <button className={btnQuiet} onClick={() => { goTo(2); setEditTab('each') }}>Back</button>
-            </div>
-
-            {designOpen && gallery && (
-              <GalleryDesigner
-                galleryId={gallery.id}
-                token={gallery.token}
-                title={gallery.title}
-                initial={(gallery.design ?? null) as unknown as GalleryDesign | null}
-                coverUrl={coverPhoto?.thumb_path ? thumbs[coverPhoto.thumb_path] : undefined}
-                onClose={() => setDesignOpen(false)}
-                onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as unknown as Record<string, unknown> } : g))}
-              />
-            )}
-          </section>
-        )}
-
-        {/* STEP 6: SEND */}
-        {step === 4 && (
-          <section className="mt-10">
-            <h1 className="font-fraunces text-4xl text-white">Ready to send</h1>
-            <p className="mt-3 max-w-2xl text-white/55">One last look, then it goes to your client.</p>
-
-            {sentDone ? (
-              <div className={`${panel} mt-10`}>
-                <p className="font-fraunces text-2xl text-white">{sentDone === 'sent' ? 'Sent' : 'Published'}</p>
-                <p className="mt-2 text-white/60">
-                  {sentDone === 'sent'
-                    ? `${sess?.names || 'Your client'} was notified in the Camrhia app and can open the gallery from their session.`
-                    : 'The gallery is live. Attach it to a session to send it to your client in the app.'}
-                </p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button className={btnPrimary} onClick={() => router.push(`/galleries/${galleryId}`)}>Open gallery</button>
-                  <button className={btnQuiet} onClick={() => (onBack ? onBack() : router.push('/edit'))}>Back to the editing room</button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className={`${panel} mt-8`}>
-                  <div className="flex flex-wrap items-center gap-5">
-                    {coverPhoto && <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-white/5">{img(coverPhoto)}</div>}
-                    <div className="min-w-0">
-                      <p className="font-fraunces text-xl text-white">{gallery?.title}</p>
-                      <p className="mt-1 text-sm text-white/60">{shownCount} {shownCount === 1 ? 'photo' : 'photos'} shown to your client · {audienceLabel}</p>
-                      <button className="mt-1 text-xs text-white/50 underline transition hover:text-white" onClick={() => goTo(3)}>Change the cover, design or photos</button>
-                    </div>
-                  </div>
-
-                  {notEdited > 0 && (
-                    <p className="mt-5 text-sm text-amber-300">
-                      {notEdited} {notEdited === 1 ? 'photo is' : 'photos are'} not edited yet.{' '}
-                      <button className="underline" onClick={() => { goTo(2); setEditTab('each') }}>Edit {notEdited === 1 ? 'it' : 'them'} first</button>
-                    </p>
-                  )}
-
-                  {gallery?.pin_hash && (
-                    <div className="mt-6">
-                      <p className="text-sm text-white/80">Gallery PIN</p>
-                      <input
-                        value={pin}
-                        onChange={(e) => setPin(e.target.value)}
-                        placeholder="The PIN your client will use"
-                        className="mt-2 w-full max-w-sm rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-white outline-none focus:border-white/30"
-                      />
-                    </div>
-                  )}
-
-                  <p className="mt-6 text-sm text-white/55">
-                    {sess
-                      ? `This will publish the gallery and send it to ${sess.names || 'your client'} in the app.`
-                      : 'This shoot is not attached to a session, so this will publish it without sending it to anyone.'}
-                  </p>
-                  {sendErr && <p className="mt-3 text-sm text-red-300">{sendErr}</p>}
-                </div>
-
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <button className={btnPrimary} disabled={sending} onClick={sendNow}>
-                    {sending ? 'Sending…' : sess ? 'Publish and send to client' : 'Publish'}
-                  </button>
-                  <button className={btnQuiet} onClick={() => window.open(`/galleries/${galleryId}`, '_blank')}>Preview the gallery</button>
-                  <button className={btnQuiet} onClick={() => goTo(3)}>Back</button>
-                </div>
-              </>
-            )}
           </section>
         )}
       </div>
