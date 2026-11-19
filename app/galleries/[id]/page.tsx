@@ -53,6 +53,42 @@ const CONCURRENCY = 5
 const MAX_BYTES = 250 * 1024 * 1024 // per-file limit (matches the Supabase storage limit)
 const isAccepted = (f: File) => isHeic(f) || isRaw(f) || /^image\/(jpeg|png|webp)$/.test(f.type)
 
+function exifTime(buf: ArrayBuffer): number | null {
+  try {
+    const v = new DataView(buf)
+    if (v.byteLength < 4 || v.getUint16(0) !== 0xffd8) return null
+    let o = 2
+    while (o + 4 < v.byteLength) {
+      if (v.getUint8(o) !== 0xff) return null
+      const m = v.getUint8(o + 1)
+      const len = v.getUint16(o + 2)
+      if (m === 0xe1 && v.getUint32(o + 4) === 0x45786966) {
+        const t = o + 10
+        const le = v.getUint16(t) === 0x4949
+        const u16 = (p: number) => v.getUint16(t + p, le)
+        const u32 = (p: number) => v.getUint32(t + p, le)
+        const find = (ifd: number, tag: number): number | null => {
+          const n = u16(ifd)
+          for (let i = 0; i < n; i++) { const e = ifd + 2 + i * 12; if (u16(e) === tag) return e }
+          return null
+        }
+        const ex = find(u32(4), 0x8769)
+        if (ex == null) return null
+        const exIfd = u32(ex + 8)
+        const dt = find(exIfd, 0x9003) ?? find(exIfd, 0x9004)
+        if (dt == null) return null
+        const off = u32(dt + 8)
+        let str = ''
+        for (let i = 0; i < 19; i++) str += String.fromCharCode(v.getUint8(t + off + i))
+        const mm = /^(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/.exec(str)
+        return mm ? new Date(+mm[1], +mm[2] - 1, +mm[3], +mm[4], +mm[5], +mm[6]).getTime() : null
+      }
+      o += 2 + len
+    }
+  } catch { /* not readable */ }
+  return null
+}
+
 function toDateInput(iso: string): string {
   const d = new Date(iso)
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -115,6 +151,8 @@ export default function GalleryManagePage() {
   const [clientName, setClientName] = useState<string | null>(null)
   const [sessType, setSessType] = useState<string | null>(null)
   const [inviteCode, setInviteCode] = useState<string | null>(null)
+  const [scan, setScan] = useState<{ done: number; total: number } | null>(null)
+  const [moments, setMoments] = useState<{ at: number; count: number }[] | null>(null)
   const [sessDate, setSessDate] = useState<string | null>(null)
   const [openedAt, setOpenedAt] = useState<string | null>(null)
   const [coupleUserId, setCoupleUserId] = useState<string | null>(null)
@@ -592,6 +630,65 @@ export default function GalleryManagePage() {
     }
   }
 
+  async function scanSort() {
+    const sb = supabase
+    if (!sb || photos.length < 2 || scan) return
+    const list = [...photos]
+    setScan({ done: 0, total: list.length })
+    setMoments(null)
+    const times = new Map<string, number>()
+    let idx = 0
+    let done = 0
+    const worker = async () => {
+      while (idx < list.length) {
+        const p = list[idx++]
+        try {
+          const { data } = await sb.storage.from(BUCKET).createSignedUrl(p.orig_path, 120)
+          if (data?.signedUrl) {
+            const r = await fetch(data.signedUrl, { headers: { Range: 'bytes=0-131071' } })
+            const rd = r.body?.getReader()
+            if (rd) {
+              const parts: Uint8Array[] = []
+              let n = 0
+              while (n < 131072) { const { value, done: fin } = await rd.read(); if (fin || !value) break; parts.push(value); n += value.length }
+              rd.cancel().catch(() => {})
+              const all = new Uint8Array(n)
+              let at = 0
+              for (const c of parts) { all.set(c, at); at += c.length }
+              const t = exifTime(all.buffer)
+              if (t) times.set(p.id, t)
+            }
+          }
+        } catch { /* skip this photo */ }
+        done++
+        setScan({ done, total: list.length })
+      }
+    }
+    await Promise.all(Array.from({ length: 6 }, worker))
+    setScan(null)
+    if (times.size === 0) { setMessage('No capture times found in these photos.'); return }
+    const byName = (x: Photo, y: Photo) => (x.filename ?? '').localeCompare(y.filename ?? '', undefined, { numeric: true, sensitivity: 'base' })
+    const timed = list.filter((p) => times.has(p.id)).sort((x, y) => (times.get(x.id)! - times.get(y.id)!) || byName(x, y))
+    const rest = list.filter((p) => !times.has(p.id)).sort(byName)
+    const arr = [...timed, ...rest]
+    const next = arr.map((p, i) => ({ ...p, sort_order: i }))
+    const before = new Map(photos.map((p) => [p.id, p.sort_order]))
+    const changed = next.filter((p) => before.get(p.id) !== p.sort_order)
+    setPhotos(next)
+    for (let i = 0; i < changed.length; i += 10) {
+      await Promise.all(changed.slice(i, i + 10).map((p) => sb.from('gallery_photos').update({ sort_order: p.sort_order }).eq('id', p.id)))
+    }
+    const ms: { at: number; count: number }[] = []
+    let last = 0
+    for (const p of timed) {
+      const t = times.get(p.id)!
+      if (!ms.length || t - last > 30 * 60 * 1000) ms.push({ at: t, count: 0 })
+      ms[ms.length - 1].count++
+      last = t
+    }
+    setMoments(ms)
+  }
+
   const shareUrl = gallery ? `${origin}/g/${gallery.token}` : ''
   async function toggleBefore() {
     const sb = supabase
@@ -883,6 +980,13 @@ export default function GalleryManagePage() {
                   <button type="button" onClick={() => sortPhotos('name')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">By filename</button>
                   <button type="button" onClick={() => sortPhotos('reverse')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">Reverse</button>
                 </div>
+                <button type="button" onClick={scanSort} disabled={!!scan} className="mt-3 w-full rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60">{scan ? `Scanning ${scan.done} of ${scan.total}` : 'Scan and sort by moments'}</button>
+                {moments && (
+                  <ul className="mt-3 space-y-1.5 text-xs text-ink-soft">
+                    <li className="font-medium text-ink">{moments.length} {moments.length === 1 ? 'moment' : 'moments'} found</li>
+                    {moments.map((m, i) => <li key={i}>{new Date(m.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} · {m.count} photos</li>)}
+                  </ul>
+                )}
               </div>
               <div className="mt-6 border-t border-line pt-5">
                 <p className="text-sm font-medium text-ink">Upload and storage</p>
@@ -982,11 +1086,11 @@ export default function GalleryManagePage() {
 
             {gallery && (
               <div ref={barRef}>
-                <div className="mb-8">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>
-                <div className="mb-6 flex min-h-[52px] justify-end gap-3">
+                <div className="mb-5 flex min-h-[52px] justify-end gap-3">
                   <button className="rounded-xl border border-line bg-white/70 px-8 py-3.5 text-base text-ink transition hover:border-twilight" onClick={() => (designOpen || shareOpen ? goStep(designOpen ? 0 : 1) : router.push('/galleries'))}>Back</button>
                   {!shareOpen && photos.length > 0 && <button className="rounded-xl bg-twilight px-10 py-3.5 text-base font-medium text-white transition hover:opacity-90" onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
                 </div>
+                <div className="mb-8">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>
               </div>
             )}
             {message && !shareOpen && <p className="mb-4 text-sm text-twilight">{message}</p>}
