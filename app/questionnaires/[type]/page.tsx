@@ -247,7 +247,7 @@ export default function QuestionnaireEditorPage() {
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="questionnaires" />
-      <div className="mx-auto mb-10 mt-24 flex max-w-6xl items-start gap-6 px-6">
+      <div className="mx-auto flex max-w-6xl items-start gap-6 px-6 py-10">
       <TypeRail active={type} />
       <main className="relative min-w-0 flex-1 rounded-3xl bg-[#FBF7F2]/85 px-8 py-10 shadow-[0_8px_40px_rgba(60,40,30,0.10)] backdrop-blur-md">
         <Link href="/questionnaires" className="text-sm text-ink-soft hover:text-ink lg:hidden">← All questionnaires</Link>
