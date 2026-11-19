@@ -3,12 +3,17 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
+import { supabase } from '@/lib/supabase'
+
+// Accounts that always get the website builder, even while it is locked for everyone else.
+const UNLOCKED_EMAILS = ['gummy@email.com']
 
 // Website builder is locked until launch. Open any /website page with ?preview=1 once to unlock it in your browser (?preview=0 locks it again).
 export default function WebsiteLayout({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<'checking' | 'open' | 'locked'>('checking')
 
   useEffect(() => {
+    let alive = true
     let open = false
     try {
       const q = new URLSearchParams(window.location.search).get('preview')
@@ -16,7 +21,14 @@ export default function WebsiteLayout({ children }: { children: React.ReactNode 
       if (q === '0') localStorage.removeItem('camrhia-website-preview')
       open = localStorage.getItem('camrhia-website-preview') === '1'
     } catch {}
-    setState(open ? 'open' : 'locked')
+    if (open) { setState('open'); return }
+    if (!supabase) { setState('locked'); return }
+    supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return
+      const email = data.session?.user?.email?.toLowerCase() ?? ''
+      setState(UNLOCKED_EMAILS.includes(email) ? 'open' : 'locked')
+    }).catch(() => { if (alive) setState('locked') })
+    return () => { alive = false }
   }, [])
 
   if (state === 'checking') return null
