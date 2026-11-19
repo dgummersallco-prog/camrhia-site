@@ -106,28 +106,27 @@ export default function MyGalleriesPage() {
             {years.map(([year, list]) => (
               <section key={year} className="mt-10">
                 <h2 className="mb-4 font-fraunces text-2xl font-semibold text-ink">{year}</h2>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {list.map(({ g, r }) => {
                     const studio = r.studio_name || r.display_name || 'Your photographer'
                     const meta = info[g.token]
                     const pin = g.has_pin ? mine[r.wedding_id]?.gallery_password : null
                     return (
-                      <div key={g.token} className="relative aspect-[9/16] overflow-hidden rounded-[28px] border border-line bg-gradient-to-br from-twilight to-blush shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                      <div key={g.token} className="relative aspect-[9/16] overflow-hidden sm:aspect-[2/1] rounded-[28px] border border-line bg-gradient-to-br from-twilight to-blush shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                         {meta?.cover && <img src={meta.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20" />
                         <a href={`/g/${g.token}`} className="absolute inset-0 z-10" aria-label={`Open ${g.title || 'gallery'}`} />
-                        {g.expires_at && (
-                          <span className="absolute right-3 top-3 z-20 rounded-full bg-black/45 px-2.5 py-1 text-[10px] text-white backdrop-blur">
-                            Until {new Date(g.expires_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                          </span>
-                        )}
-                        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-4 text-white">
-                          {g.title && <p className="font-mono text-[10px] uppercase tracking-widest text-white/80">{g.title}</p>}
-                          <p className="mt-1 font-fraunces text-lg font-semibold leading-tight">{label(r.session_type)}</p>
-                          <p className="mt-1 text-xs text-white/85">{fmt(r.wedding_date)}</p>
-                          <p className="text-xs text-white/85">{studio}</p>
-                          {meta && <p className="mt-1 text-xs text-white/70">{meta.count} photo{meta.count === 1 ? '' : 's'}</p>}
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-5 text-white">
+                          <p className="font-fraunces text-2xl font-semibold leading-tight sm:text-3xl">{g.title || label(r.session_type)}</p>
+                          <p className="mt-1.5 text-sm text-white/85">by {studio}</p>
+                          {meta && <p className="mt-0.5 text-xs text-white/70">{meta.count} photo{meta.count === 1 ? '' : 's'}</p>}
                         </div>
+                        <a
+                          href="/my/messages"
+                          className="absolute left-5 top-4 z-30 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold text-ink"
+                        >
+                          Message photographer
+                        </a>
                         {pin && (
                           <button
                             type="button"

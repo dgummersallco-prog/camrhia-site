@@ -36,6 +36,17 @@ export async function POST(req: Request) {
       if (jwt0) { const { data: u0 } = await sb.auth.getUser(jwt0); ownerPreview = u0.user?.id === g.owner_id }
     } catch { /* ignore */ }
   }
+  let clientOk = false
+  try {
+    const jwt1 = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '')
+    if (jwt1 && g.session_id) {
+      const { data: u1 } = await sb.auth.getUser(jwt1)
+      if (u1.user?.id) {
+        const { data: w1 } = await sb.from('weddings').select('id').eq('id', g.session_id).eq('couple_user_id', u1.user.id).not('gallery_sent_at', 'is', null).maybeSingle()
+        clientOk = !!w1
+      }
+    }
+  } catch { /* ignore */ }
   const live = isLive(g)
   if (live === 'missing' && !ownerPreview) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (live === 'expired' && !ownerPreview) return NextResponse.json({ error: 'Expired' }, { status: 410 })
@@ -50,7 +61,7 @@ export async function POST(req: Request) {
     accent: usableAccent(prof?.accent_color as string | null),
   }
 
-  if (g.pin_hash && !ownerPreview) {
+  if (g.pin_hash && !ownerPreview && !clientOk) {
     const hasAccess = verifyAccess(body.access) === g.id
     if (!hasAccess) {
       if (!pin) return NextResponse.json({ needsPin: true, title: g.title, brand }, { status: 401 })
