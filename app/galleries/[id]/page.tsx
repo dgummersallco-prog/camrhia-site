@@ -152,7 +152,9 @@ export default function GalleryManagePage() {
   const [sessType, setSessType] = useState<string | null>(null)
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [scan, setScan] = useState<{ done: number; total: number } | null>(null)
-  const [moments, setMoments] = useState<{ at: number; count: number }[] | null>(null)
+  const [scanned, setScanned] = useState<Set<string>>(new Set())
+  const [feats, setFeats] = useState<Record<string, { t?: number; lum: number; sat: number; hue: number; vec: number[] }> | null>(null)
+  const [groups, setGroups] = useState<{ label: string; ids: string[] }[] | null>(null)
   const [sessDate, setSessDate] = useState<string | null>(null)
   const [openedAt, setOpenedAt] = useState<string | null>(null)
   const [coupleUserId, setCoupleUserId] = useState<string | null>(null)
@@ -615,12 +617,9 @@ export default function GalleryManagePage() {
     }
   }
 
-  async function sortPhotos(mode: 'name' | 'reverse') {
+  async function saveOrder(arr: Photo[]) {
     const sb = supabase
-    if (!sb || photos.length < 2) return
-    const arr = [...photos]
-    if (mode === 'name') arr.sort((x, y) => (x.filename ?? '').localeCompare(y.filename ?? '', undefined, { numeric: true, sensitivity: 'base' }))
-    else arr.reverse()
+    if (!sb) return
     const next = arr.map((p, i) => ({ ...p, sort_order: i }))
     const before = new Map(photos.map((p) => [p.id, p.sort_order]))
     const changed = next.filter((p) => before.get(p.id) !== p.sort_order)
@@ -630,18 +629,49 @@ export default function GalleryManagePage() {
     }
   }
 
-  async function scanSort() {
+  async function scanPhotos() {
     const sb = supabase
     if (!sb || photos.length < 2 || scan) return
     const list = [...photos]
     setScan({ done: 0, total: list.length })
-    setMoments(null)
-    const times = new Map<string, number>()
+    setScanned(new Set())
+    setGroups(null)
+    const out: Record<string, { t?: number; lum: number; sat: number; hue: number; vec: number[] }> = {}
     let idx = 0
     let done = 0
     const worker = async () => {
       while (idx < list.length) {
         const p = list[idx++]
+        const f = { lum: 0.5, sat: 0, hue: 0, vec: new Array(192).fill(0.5) } as { t?: number; lum: number; sat: number; hue: number; vec: number[] }
+        try {
+          const url = p.thumb_path ? thumbs[p.thumb_path] : undefined
+          if (url) {
+            const im = await new Promise<HTMLImageElement>((res, rej) => { const el = new Image(); el.crossOrigin = 'anonymous'; el.onload = () => res(el); el.onerror = rej; el.src = url + (url.includes('?') ? '&' : '?') + 'scan=1' })
+            const cv = document.createElement('canvas')
+            cv.width = 8; cv.height = 8
+            const ctx = cv.getContext('2d', { willReadFrequently: true })
+            if (ctx) {
+              ctx.drawImage(im, 0, 0, 8, 8)
+              const d = ctx.getImageData(0, 0, 8, 8).data
+              let lum = 0, sat = 0, hs = 0, hc = 0
+              for (let i = 0; i < 64; i++) {
+                const r = d[i * 4] / 255, g = d[i * 4 + 1] / 255, b = d[i * 4 + 2] / 255
+                f.vec[i * 3] = r; f.vec[i * 3 + 1] = g; f.vec[i * 3 + 2] = b
+                const mx = Math.max(r, g, b), mn = Math.min(r, g, b), c = mx - mn
+                lum += (0.299 * r + 0.587 * g + 0.114 * b) / 64
+                sat += (mx ? c / mx : 0) / 64
+                if (c > 0.05) {
+                  let h = mx === r ? ((g - b) / c) % 6 : mx === g ? (b - r) / c + 2 : (r - g) / c + 4
+                  h *= 60
+                  hs += Math.sin((h * Math.PI) / 180) * c; hc += Math.cos((h * Math.PI) / 180) * c
+                }
+              }
+              f.lum = lum; f.sat = sat
+              f.hue = (Math.atan2(hs, hc) * 180) / Math.PI
+              if (f.hue < 0) f.hue += 360
+            }
+          }
+        } catch { /* leave defaults */ }
         try {
           const { data } = await sb.storage.from(BUCKET).createSignedUrl(p.orig_path, 120)
           if (data?.signedUrl) {
@@ -656,37 +686,70 @@ export default function GalleryManagePage() {
               let at = 0
               for (const c of parts) { all.set(c, at); at += c.length }
               const t = exifTime(all.buffer)
-              if (t) times.set(p.id, t)
+              if (t) f.t = t
             }
           }
-        } catch { /* skip this photo */ }
+        } catch { /* skip time */ }
+        out[p.id] = f
         done++
         setScan({ done, total: list.length })
+        setScanned((prev) => new Set(prev).add(p.id))
       }
     }
     await Promise.all(Array.from({ length: 6 }, worker))
+    setFeats(out)
     setScan(null)
-    if (times.size === 0) { setMessage('No capture times found in these photos.'); return }
+  }
+
+  async function groupBy(mode: 'scenes' | 'colors' | 'moments') {
+    if (!feats) return
     const byName = (x: Photo, y: Photo) => (x.filename ?? '').localeCompare(y.filename ?? '', undefined, { numeric: true, sensitivity: 'base' })
-    const timed = list.filter((p) => times.has(p.id)).sort((x, y) => (times.get(x.id)! - times.get(y.id)!) || byName(x, y))
-    const rest = list.filter((p) => !times.has(p.id)).sort(byName)
-    const arr = [...timed, ...rest]
-    const next = arr.map((p, i) => ({ ...p, sort_order: i }))
-    const before = new Map(photos.map((p) => [p.id, p.sort_order]))
-    const changed = next.filter((p) => before.get(p.id) !== p.sort_order)
-    setPhotos(next)
-    for (let i = 0; i < changed.length; i += 10) {
-      await Promise.all(changed.slice(i, i + 10).map((p) => sb.from('gallery_photos').update({ sort_order: p.sort_order }).eq('id', p.id)))
+    const list = [...photos].filter((p) => feats[p.id]).sort((x, y) => x.sort_order - y.sort_order)
+    let gs: { label: string; ids: string[] }[] = []
+    if (mode === 'moments') {
+      const timed = list.filter((p) => feats[p.id].t).sort((x, y) => (feats[x.id].t! - feats[y.id].t!) || byName(x, y))
+      let last = 0
+      for (const p of timed) {
+        const t = feats[p.id].t!
+        if (!gs.length || t - last > 30 * 60 * 1000) gs.push({ label: new Date(t).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }), ids: [] })
+        gs[gs.length - 1].ids.push(p.id)
+        last = t
+      }
+      const rest = list.filter((p) => !feats[p.id].t)
+      if (rest.length) gs.push({ label: 'No time found', ids: rest.map((p) => p.id) })
+    } else if (mode === 'colors') {
+      const names = ['Black and white', 'Dark', 'Bright', 'Warm', 'Green', 'Cool']
+      const bucket = (f: { lum: number; sat: number; hue: number }) => (f.sat < 0.08 ? 0 : f.lum < 0.25 ? 1 : f.lum > 0.75 ? 2 : f.hue < 70 || f.hue >= 300 ? 3 : f.hue < 170 ? 4 : 5)
+      const m: string[][] = names.map(() => [])
+      list.forEach((p) => m[bucket(feats[p.id])].push(p.id))
+      gs = names.map((label, i) => ({ label, ids: m[i] })).filter((g) => g.ids.length)
+    } else {
+      const k = Math.max(2, Math.min(8, Math.round(list.length / 15)))
+      const V = list.map((p) => feats[p.id].vec)
+      const dist = (a: number[], b: number[]) => { let s2 = 0; for (let i = 0; i < a.length; i++) { const d = a[i] - b[i]; s2 += d * d } return s2 }
+      const centers: number[][] = [V[0]]
+      while (centers.length < k) {
+        let best = 0, bd = -1
+        V.forEach((v, i) => { const dd = Math.min(...centers.map((c) => dist(v, c))); if (dd > bd) { bd = dd; best = i } })
+        centers.push(V[best])
+      }
+      let asg = new Array(V.length).fill(0)
+      for (let it = 0; it < 10; it++) {
+        asg = V.map((v) => { let bi = 0, bd = Infinity; centers.forEach((c, i) => { const dd = dist(v, c); if (dd < bd) { bd = dd; bi = i } }); return bi })
+        centers.forEach((_, ci) => {
+          const mem = V.filter((_v, i) => asg[i] === ci)
+          if (mem.length) centers[ci] = mem[0].map((_x, j) => mem.reduce((a2, v) => a2 + v[j], 0) / mem.length)
+        })
+      }
+      const order: number[] = []
+      asg.forEach((a2) => { if (!order.includes(a2)) order.push(a2) })
+      gs = order.map((ci, n) => ({ label: `Scene ${n + 1}`, ids: list.filter((_p, i) => asg[i] === ci).map((p) => p.id) }))
     }
-    const ms: { at: number; count: number }[] = []
-    let last = 0
-    for (const p of timed) {
-      const t = times.get(p.id)!
-      if (!ms.length || t - last > 30 * 60 * 1000) ms.push({ at: t, count: 0 })
-      ms[ms.length - 1].count++
-      last = t
-    }
-    setMoments(ms)
+    const byId = new Map(photos.map((p) => [p.id, p]))
+    const used = new Set(gs.flatMap((g) => g.ids))
+    const arr = [...gs.flatMap((g) => g.ids.map((id) => byId.get(id)!)), ...photos.filter((p) => !used.has(p.id))]
+    setGroups(gs)
+    await saveOrder(arr)
   }
 
   const shareUrl = gallery ? `${origin}/g/${gallery.token}` : ''
@@ -976,15 +1039,30 @@ export default function GalleryManagePage() {
               )}
               <div className="mt-6 border-t border-line pt-5">
                 <p className="text-sm font-medium text-ink">Sort photos</p>
-                <div className="mt-2 flex gap-2">
-                  <button type="button" onClick={() => sortPhotos('name')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">By filename</button>
-                  <button type="button" onClick={() => sortPhotos('reverse')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">Reverse</button>
-                </div>
-                <button type="button" onClick={scanSort} disabled={!!scan} className="mt-3 w-full rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60">{scan ? `Scanning ${scan.done} of ${scan.total}` : 'Scan and sort by moments'}</button>
-                {moments && (
-                  <ul className="mt-3 space-y-1.5 text-xs text-ink-soft">
-                    <li className="font-medium text-ink">{moments.length} {moments.length === 1 ? 'moment' : 'moments'} found</li>
-                    {moments.map((m, i) => <li key={i}>{new Date(m.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} · {m.count} photos</li>)}
+                <button type="button" onClick={scanPhotos} disabled={!!scan} className="mt-3 w-full rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60">{scan ? `Scanning ${scan.done} of ${scan.total}` : feats ? 'Scan again' : 'Scan photos'}</button>
+                {feats && !scan && (
+                  <div className="mt-3">
+                    <p className="text-xs text-ink-soft">Group by</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => groupBy('scenes')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">Scenes</button>
+                      <button type="button" onClick={() => groupBy('colors')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">Colors</button>
+                      {Object.values(feats).some((f) => f.t) && <button type="button" onClick={() => groupBy('moments')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">Moments</button>}
+                    </div>
+                  </div>
+                )}
+                {groups && (
+                  <ul className="mt-3 space-y-3">
+                    {groups.map((g, i) => (
+                      <li key={i}>
+                        <p className="text-xs"><span className="font-medium text-ink">{g.label}</span> <span className="text-ink-soft">· {g.ids.length} photos</span></p>
+                        <div className="mt-1.5 flex gap-1">
+                          {g.ids.slice(0, 5).map((id) => { const ph = photos.find((x) => x.id === id); const u = ph?.thumb_path ? thumbs[ph.thumb_path] : undefined; return u ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img key={id} src={u} alt="" className="h-9 w-9 rounded object-cover" />
+                          ) : null })}
+                        </div>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -1267,6 +1345,12 @@ export default function GalleryManagePage() {
                 </div>
 
 
+                {scan && (
+                  <div className="mb-3 rounded-xl border border-line bg-white/70 px-4 py-3">
+                    <p className="text-sm text-ink">Scanning your photos… {scan.done} of {scan.total}</p>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-twilight transition-all" style={{ width: `${(scan.done / scan.total) * 100}%` }} /></div>
+                  </div>
+                )}
                 {shown.length === 0 ? (
                   <p className="rounded-2xl border border-line bg-white/60 py-16 text-center text-sm text-ink-soft">
                     {filter === 'fav' ? 'No client favorites yet.' : filter !== 'all' ? `No ${filter} photos.` : 'No photos yet. Drop some above.'}
@@ -1281,7 +1365,7 @@ export default function GalleryManagePage() {
                         onDragStart={() => { dragId.current = p.id }}
                         onDragOver={(e) => { if (filter === 'all') e.preventDefault() }}
                         onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropOn(p.id) }}
-                        className={`group relative aspect-square cursor-pointer overflow-hidden rounded-xl bg-line ${selected.has(p.id) ? 'ring-4 ring-twilight' : ''}`}
+                        className={`group relative aspect-square cursor-pointer overflow-hidden rounded-xl bg-line transition-opacity duration-300 ${selected.has(p.id) ? 'ring-4 ring-twilight' : ''} ${scan && !scanned.has(p.id) ? 'opacity-30' : ''}`}
                       >
                         {p.thumb_path && thumbs[p.thumb_path] && (
                           // eslint-disable-next-line @next/next/no-img-element
