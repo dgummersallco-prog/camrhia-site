@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { usePathname } from 'next/navigation'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 type Msg = { role: 'user' | 'camri'; text: string }
 type Draft = { key: string; name: string; text: string }
 
@@ -37,12 +39,45 @@ function bold(t: string) {
 
 export default function CamriHelper() {
   const [open, setOpen] = useState(false)
+  const [dock, setDock] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [listening, setListening] = useState(false)
+  const [micOk, setMicOk] = useState(false)
+  const recRef = useRef<any>(null)
+  const sendRef = useRef<(m: string) => void>(() => {})
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [imgOk, setImgOk] = useState(true)
   const [hello, setHello] = useState(false)
   const boxRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const w = window as any
+    setMicOk(!!(w.SpeechRecognition || w.webkitSpeechRecognition))
+  }, [])
+  useEffect(() => {
+    if (open) return
+    const r = recRef.current
+    if (r) { r.onend = null; try { r.abort() } catch {} recRef.current = null }
+    setListening(false)
+  }, [open])
+  useEffect(() => {
+    if (!open) { setDock(null); return }
+    const measure = () => {
+      const el = document.getElementById('camri-dock')
+      if (!el || window.innerWidth < 1024) { setDock(null); return }
+      const r = el.getBoundingClientRect()
+      const top = Math.max(16, r.bottom + 16)
+      if (r.width < 260 || window.innerHeight - top - 20 < 300) { setDock(null); return }
+      setDock({ top, left: r.left, width: r.width })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
+  }, [open])
   const pathname = usePathname()
   const help = helpFor(pathname ?? '')
   const uidRef = useRef<string | null>(null)
@@ -134,6 +169,39 @@ export default function CamriHelper() {
     setBusy(false)
   }
 
+  sendRef.current = send
+
+  function toggleMic() {
+    if (listening) { recRef.current?.stop(); return }
+    const w = window as any
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition
+    if (!SR) return
+    const rec = new SR()
+    rec.lang = 'en-US'
+    rec.interimResults = true
+    rec.continuous = false
+    let finalText = ''
+    rec.onresult = (e: any) => {
+      let interim = ''
+      for (let k = e.resultIndex; k < e.results.length; k++) {
+        const t = e.results[k][0].transcript
+        if (e.results[k].isFinal) finalText += t
+        else interim += t
+      }
+      setText((finalText + interim).trim())
+    }
+    rec.onerror = () => setListening(false)
+    rec.onend = () => {
+      setListening(false)
+      recRef.current = null
+      const t = finalText.trim()
+      if (t) sendRef.current(t)
+    }
+    recRef.current = rec
+    setListening(true)
+    try { rec.start() } catch { setListening(false) }
+  }
+
   async function sendDraft() {
     if (!draft || !draft.text.trim() || sending) return
     setSending(true)
@@ -177,7 +245,10 @@ export default function CamriHelper() {
       )}
 
       {open && (
-        <div className="fixed bottom-5 right-5 z-50 flex h-[clamp(360px,calc(100vh_-_480px),640px)] w-[380px] max-w-[calc(100vw-40px)] flex-col overflow-hidden rounded-3xl border border-white/60 bg-[#FBF7F2]/95 text-[#3a2f2a] shadow-2xl backdrop-blur-xl">
+        <div
+          style={dock ? { top: dock.top, left: dock.left, width: dock.width, bottom: 20 } : undefined}
+          className={`fixed z-50 flex flex-col overflow-hidden rounded-3xl border border-white/60 bg-[#FBF7F2]/95 text-[#3a2f2a] shadow-2xl backdrop-blur-xl ${dock ? '' : 'bottom-5 right-5 h-[clamp(360px,calc(100vh_-_480px),640px)] w-[380px] max-w-[calc(100vw-40px)]'}`}
+        >
           <div className="flex items-center gap-3 border-b border-black/5 px-4 py-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {imgOk && <img src={`${P}13_face_avatar.png`} alt="" className="h-9 w-9 object-contain" />}
@@ -258,10 +329,24 @@ export default function CamriHelper() {
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Ask about your business"
+              placeholder={listening ? 'Listening...' : 'Ask about your business'}
               maxLength={1200}
               className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white/80 px-3 py-2 text-[13px] outline-none focus:border-black/30"
             />
+            {micOk && (
+              <button
+                type="button"
+                aria-label={listening ? 'Stop listening' : 'Talk to Camri'}
+                onClick={toggleMic}
+                disabled={busy}
+                className={`flex w-10 shrink-0 items-center justify-center rounded-xl border border-black/10 transition disabled:opacity-40 ${listening ? 'animate-pulse bg-twilight text-white' : 'bg-white/80 text-[#3a2f2a]/70 hover:border-black/25'}`}
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="9" y="3" width="6" height="11" rx="3" />
+                  <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+                </svg>
+              </button>
+            )}
             <button type="submit" disabled={busy || !text.trim()} className="rounded-xl bg-twilight px-4 py-2 text-[13px] font-medium text-white disabled:opacity-40">Send</button>
           </form>
         </div>

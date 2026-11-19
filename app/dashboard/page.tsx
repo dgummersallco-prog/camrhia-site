@@ -349,7 +349,7 @@ export default function DashboardPage() {
 
               </div>
               <div>
-                <section className={card}>
+                <section id="camri-dock" className={card}>
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <p className="font-fraunces text-2xl font-semibold text-ink">To do</p>
                     {attention.length > 3 && (

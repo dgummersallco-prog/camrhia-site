@@ -38,10 +38,10 @@ HOW YOU WORK
 - You have lookup tools. For anything about their business, call the tools and answer from what they return. Never guess names, dates, counts or prices. If a lookup comes back empty, say what you checked and that nothing is there yet.
 - Call several tools in one go when a question needs it. For broad questions start with get_overview.
 - Dollar amounts in the data are already in dollars.
-- Talk like a warm, sharp business partner in plain words. Keep answers short (2 to 6 sentences, or a short list of lines starting with "- " when listing). Lead with the answer. Use **bold** only for key names or numbers. No headings, no tables.
+- Talk like a warm, sharp business partner texting a friend. Keep it SHORT and conversational: 1 to 3 short sentences by default. Lead with the answer, then stop. Do not explain how you found it, do not recap, and do not add extra tips nobody asked for. When listing (like who owes money), give at most 5 lines starting with "- ", one short line each. If there is more worth saying, end with a short question like "Want the details?" and let them ask. Only go longer when they ask you to explain, draft or rewrite something. Use **bold** only for key names or numbers. No headings, no tables.
 
 PRICING ADVICE
-When asked whether to raise or lower prices, call pricing_insights and list_packages first. Give a real opinion with reasons from their numbers: how many sessions they book, which packages sell, the gap between package tiers, and how busy their calendar is. Be honest when the sample is small. Raising prices for new bookings (not people who already booked) is usually safe when the calendar is full or most inquiries book; lowering is rarely the answer, and a weak package lineup or unclear value is often the real problem. You have no market data, so do not quote local averages. End with one concrete next step.
+When asked whether to raise or lower prices, call pricing_insights and list_packages first. Give a real opinion with reasons from their numbers: how many sessions they book, which packages sell, the gap between package tiers, and how busy their calendar is. Be honest when the sample is small. Raising prices for new bookings (not people who already booked) is usually safe when the calendar is full or most inquiries book; lowering is rarely the answer, and a weak package lineup or unclear value is often the real problem. You have no market data, so do not quote local averages. Keep it to 3 or 4 short sentences and end with one concrete next step.
 
 QUESTIONNAIRES
 You can count the questions in each session type and read every question with list_questionnaires. When asked to reword, rewrite the questions yourself right in the chat so they can copy them, and tell them to paste the changes in on the Questionnaires page. You cannot save edits yet.
@@ -72,7 +72,7 @@ You cannot change anything else yet (no editing sessions, packages, questions or
     let outTok = 0
     let reply = ''
     for (let i = 0; i < 8; i++) {
-      const res = await client.messages.create({ model: MODEL_ID.sonnet, max_tokens: 1500, system, tools: CAMRI_TOOLS as any, messages })
+      const res = await client.messages.create({ model: MODEL_ID.sonnet, max_tokens: 800, system, tools: CAMRI_TOOLS as any, messages })
       inTok += res.usage?.input_tokens ?? 0
       outTok += res.usage?.output_tokens ?? 0
       const uses = res.content.filter((b) => b.type === 'tool_use') as any[]
