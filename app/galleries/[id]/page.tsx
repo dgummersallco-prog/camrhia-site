@@ -116,7 +116,6 @@ export default function GalleryManagePage() {
   const [openedAt, setOpenedAt] = useState<string | null>(null)
   const [coupleUserId, setCoupleUserId] = useState<string | null>(null)
   const [sentAt, setSentAt] = useState<string | null>(null)
-  const [publishedOpen, setPublishedOpen] = useState(false)
   const [dragging, setDragging] = useState(false)
   const [filter, setFilter] = useState<'all' | 'fav' | CullLabel>('all')
   const [cullOpen, setCullOpen] = useState(false)
@@ -130,6 +129,9 @@ export default function GalleryManagePage() {
   const [before, setBefore] = useState<{ id: string; url: string } | null>(null)
   const [accessOpen, setAccessOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [slug, setSlug] = useState('')
+  const [sendTo, setSendTo] = useState('')
+  const [finalBusy, setFinalBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
   const failedRef = useRef<File[]>([])
@@ -254,6 +256,53 @@ export default function GalleryManagePage() {
     setGallery({ ...gallery, ...patch })
     flash('Saved')
     return true
+  }
+
+  useEffect(() => { if (gallery?.token) setSlug(gallery.token) }, [gallery?.token])
+
+  async function saveSlug() {
+    const sb = supabase
+    if (!sb || !gallery) return
+    if (slug.length < 4) { setMessage('Use at least 4 letters or numbers in the link.'); return }
+    const { error } = await sb.from('galleries').update({ token: slug }).eq('id', gallery.id)
+    if (error) { setMessage(error.code === '23505' ? 'That link is taken. Try another.' : error.message); return }
+    setGallery({ ...gallery, token: slug })
+    flash('Link saved')
+  }
+
+  async function ensurePublished(): Promise<boolean> {
+    if (!gallery) return false
+    if (isPublished) return true
+    const ok = await saveSettings({ status: 'published' })
+    if (ok) await syncCover(gallery.cover_photo_id)
+    return ok
+  }
+
+  async function publishAndSend() {
+    const sb = supabase
+    if (!sb || !gallery) return
+    if (pin.trim() && pin.trim().length < 4) { setMessage('Use a PIN of at least 4 characters.'); return }
+    setFinalBusy(true)
+    try {
+      if (pin.trim()) await savePin(false)
+      const ok = isPublished || await saveSettings({ status: 'published' })
+      if (!ok) return
+      if (!isPublished) await syncCover(gallery.cover_photo_id)
+      let note = 'Published'
+      if (gallery.session_id && coupleUserId) {
+        const was = !!sentAt
+        const err = await sendGalleryToClient(sb, { weddingId: gallery.session_id, coupleUserId, token: gallery.token, expiresAt: gallery.expires_at, pin: '', alreadySent: was })
+        if (err) { flash(err); return }
+        setSentAt(new Date().toISOString())
+        note = was ? 'Update sent to their Camrhia app' : 'Sent to their Camrhia app'
+      }
+      const to = sendTo.trim()
+      const hi = `Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}`
+      if (!to && !(gallery.session_id && coupleUserId)) { navigator.clipboard?.writeText(shareUrl); note = 'Published. Link copied' }
+      flash(note)
+      await loadGallery()
+      if (to) window.location.href = to.includes('@') ? `mailto:${to}?subject=${encodeURIComponent('Your photos are ready')}&body=${encodeURIComponent(hi)}` : `sms:${to}?&body=${encodeURIComponent(hi)}`
+    } finally { setFinalBusy(false) }
   }
 
   async function savePin(clear: boolean) {
@@ -749,22 +798,11 @@ export default function GalleryManagePage() {
             </div>
 
             {gallery && (
-              <div className="mb-5 grid gap-2 sm:grid-cols-4">
+              <div className="mb-5 grid gap-2 sm:grid-cols-3">
                 {([
                   { label: 'Add photos', hint: 'Client-ready edited photos', done: photos.length > 0, go: () => fileInput.current?.click() },
                   { label: 'Style', hint: 'Design your cover photo and photo layout', done: !!gallery.design && Object.keys(gallery.design).length > 0, go: () => setDesignOpen(true) },
-                  {
-                    label: 'Publish',
-                    hint: 'Make the link live and active',
-                    done: isPublished,
-                    off: photos.length === 0,
-                    go: async () => {
-                      if (isPublished) return
-                      const ok = await saveSettings({ status: 'published' })
-                      if (ok) { await syncCover(gallery.cover_photo_id); setPublishedOpen(true) }
-                    },
-                  },
-                  { label: 'Send', hint: openedAt ? `Opened by client ${new Date(openedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Send straight to your customer by the Camrhia app, text, or email', done: !!openedAt, off: !isPublished, go: () => setShareOpen(true) },
+                  { label: 'Publish and send', hint: openedAt ? `Opened by client ${new Date(openedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Set a PIN, then send it to your client', done: !!openedAt || !!sentAt, off: photos.length === 0, go: () => setShareOpen(true) },
                 ] as { label: string; hint?: string; done: boolean; off?: boolean; go: () => void }[]).map((st, i) => (
                   <button
                     key={st.label}
@@ -792,14 +830,7 @@ export default function GalleryManagePage() {
                 coverPhotoId={gallery.cover_photo_id}
                 onPickCover={async (id) => { if (await saveSettings({ cover_photo_id: id })) await syncCover(id) }}
                 onClose={() => setDesignOpen(false)}
-                onSend={async () => {
-                  if (!isPublished) {
-                    const ok = await saveSettings({ status: 'published' })
-                    if (!ok) return
-                    await syncCover(gallery.cover_photo_id)
-                  }
-                  setShareOpen(true)
-                }}
+                onSend={() => setShareOpen(true)}
                 onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as Record<string, unknown> } : g))}
               />
             )}
@@ -852,7 +883,7 @@ export default function GalleryManagePage() {
                     const ok = await saveSettings({ status: publishing ? 'published' : 'draft' })
                     if (ok && publishing) {
                       await syncCover(gallery.cover_photo_id)
-                      setPublishedOpen(true)
+                      setShareOpen(true)
                     }
                   }}
                   disabled={!isPublished && photos.length === 0}
@@ -1025,58 +1056,52 @@ export default function GalleryManagePage() {
           </>
         )}
         {gallery && shareOpen && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4" onClick={() => setShareOpen(false)}>
-            <div className={`${card} max-h-[90vh] w-full max-w-lg overflow-y-auto`} onClick={(e) => e.stopPropagation()}>
-              <div className="mb-4 flex items-center justify-between">
-                <p className="font-fraunces text-xl text-ink">Share with your client</p>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-paper">
+            <div className="mx-auto max-w-6xl px-5 py-8">
+              <div className="mb-6 flex items-center justify-between gap-3">
+                <button className="text-sm text-ink-soft hover:text-ink" onClick={() => { setShareOpen(false); setDesignOpen(true) }}>← Back to style</button>
                 <button className="text-2xl leading-none text-ink-soft" onClick={() => setShareOpen(false)} aria-label="Close">×</button>
               </div>
-              <input readOnly value={shareUrl} className={input} onFocus={(e) => e.currentTarget.select()} />
-              {gallery.session_id && coupleUserId && (
-                <button
-                  className={`${btn} mt-3 w-full`}
-                  onClick={async () => {
-                    const sb = supabase
-                    if (!sb || !gallery.session_id) return
-                    const was = !!sentAt
-                    const err = await sendGalleryToClient(sb, { weddingId: gallery.session_id, coupleUserId, token: gallery.token, expiresAt: gallery.expires_at, pin: '', alreadySent: !!sentAt })
-                    if (err) { flash(err); return }
-                    setSentAt(new Date().toISOString())
-                    flash(was ? 'Update sent to their Camrhia app' : 'Sent to their Camrhia app')
-                  }}
-                >
-                  {sentAt ? `Resend update to ${clientName ?? 'client'}'s Camrhia app` : `Send to ${clientName ?? 'client'}'s Camrhia app`}
-                </button>
-              )}
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <a className={`${btnGhost} text-center`} href={`mailto:?subject=${encodeURIComponent('Your photos are ready')}&body=${encodeURIComponent(`Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}`)}`}>
-                  Email
-                </a>
-                <a className={`${btnGhost} text-center`} href={`sms:?&body=${encodeURIComponent(`Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}`)}`}>
-                  Text
-                </a>
-                <button className={btnGhost} onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }}>
-                  Copy link
-                </button>
-                <a className={`${btnGhost} text-center`} href={shareUrl} target="_blank" rel="noreferrer">
-                  Preview
-                </a>
-              </div>
-              {!isPublished && (
-                <p className="mt-3 text-xs text-ink-soft">This gallery is a draft. Publish it before sharing the link.</p>
-              )}
-            </div>
-          </div>
-        )}
-        {gallery && publishedOpen && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
-            <div className={`${card} w-full max-w-md text-center`}>
-              <p className="font-fraunces text-2xl text-ink">Gallery published</p>
-              <p className="mt-2 text-sm text-ink-soft">{clientName ? `${clientName}'s` : 'Your client'} link is now active. Style the gallery the way you want it, then send it over.</p>
-              <div className="mt-6 flex flex-col gap-3">
-                <button className={btn} onClick={() => { setPublishedOpen(false); setDesignOpen(true) }}>Design gallery</button>
-                <button className={btn} onClick={() => { setPublishedOpen(false); setShareOpen(true) }}>Send to {clientName ?? 'client'}</button>
-                <button className={btnGhost} onClick={() => router.push('/galleries')}>Done</button>
+              <h2 className="font-fraunces text-3xl text-ink">Publish and send</h2>
+              <p className="mt-1 text-sm text-ink-soft">{gallery.title}</p>
+              <div className="mt-6 grid gap-6 lg:grid-cols-[400px_1fr]">
+                <div className="space-y-5">
+                  <div className={card}>
+                    <label className={label}>Gallery link</label>
+                    <div className="flex items-center overflow-hidden rounded-xl border border-line bg-paper focus-within:border-twilight">
+                      <span className="shrink-0 pl-3 text-xs text-ink-soft">{origin.replace(/^https?:\/\//, '')}/g/</span>
+                      <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40))} className="min-w-0 flex-1 bg-transparent py-2.5 pr-3 text-sm text-ink outline-none" />
+                    </div>
+                    {slug !== gallery.token && (
+                      <div className="mt-2 flex items-center gap-3">
+                        <button className={btn} onClick={saveSlug}>Save link</button>
+                        <button className="text-xs text-ink-soft underline" onClick={() => setSlug(gallery.token)}>Cancel</button>
+                      </div>
+                    )}
+                    {sentAt && slug !== gallery.token && <p className="mt-2 text-xs text-ink-soft">Links you already sent will stop working.</p>}
+                  </div>
+                  <div className={card}>
+                    <label className={label}>PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(optional)</span>}</label>
+                    <div className="flex gap-2">
+                      <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder={gallery.pin_hash ? 'Set a new PIN' : 'Add a PIN'} className={input} />
+                      {pin.trim() && <button className={btnGhost} onClick={() => savePin(false)}>Save</button>}
+                    </div>
+                    {gallery.pin_hash && <button className="mt-2 text-xs text-ink-soft underline" onClick={() => savePin(true)}>Remove PIN</button>}
+                    <p className="mt-2 text-xs text-ink-soft">Anyone opening the link types this first. {clientName ? `${clientName} won't need it` : 'Your client won’t need it'} when signed in to their dashboard.</p>
+                  </div>
+                  <div className={card}>
+                    <label className={label}>Send to</label>
+                    <input value={sendTo} onChange={(e) => setSendTo(e.target.value)} placeholder="Email or phone number" className={input} />
+                    <p className="mt-2 text-xs text-ink-soft">{gallery.session_id && coupleUserId ? `${clientName ?? 'Your client'} also gets it in their Camrhia app. ` : ''}Type an email or number and their email or messages app opens with the link ready to send.</p>
+                    <button className={`${btn} mt-4 w-full py-3`} disabled={finalBusy} onClick={publishAndSend}>
+                      {finalBusy ? 'Sending…' : sentAt ? 'Update and send' : 'Publish and send'}
+                    </button>
+                  </div>
+                  {message && <p className="text-sm text-twilight">{message}</p>}
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm" style={{ height: 'min(78vh, 760px)' }}>
+                  <iframe key={gallery.token} src={`/g/${gallery.token}?preview=1`} title="Gallery preview" className="h-full w-full border-0" />
+                </div>
               </div>
             </div>
           </div>

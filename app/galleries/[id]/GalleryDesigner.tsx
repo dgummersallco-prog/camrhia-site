@@ -1,6 +1,7 @@
 'use client'
 
 import CamriTyping from '@/app/components/CamriTyping'
+import ColorInput from '@/app/components/ColorInput'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
@@ -233,21 +234,6 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const ring = 'border-twilight ring-2 ring-twilight'
   const head = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
   const cur = pick ? d.el?.[pick.key] : undefined
-  const topColor = (label: string, value: string, isSet: boolean, onSet: (v: string) => void, onReset: () => void) => (
-    <label className="flex items-center gap-2 text-sm text-ink">
-      <input type="color" value={value} onChange={(e) => onSet(e.target.value)} className="h-8 w-8 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
-      <span>{label}</span>
-      {isSet && <button type="button" onClick={(e) => { e.preventDefault(); onReset() }} className="text-[11px] text-twilight underline">Reset</button>}
-    </label>
-  )
-  const colorRow = (label: string, value: string, isSet: boolean, onSet: (v: string) => void, onReset: () => void) => (
-    <div className="flex items-center gap-2 rounded-lg border border-line bg-white px-2.5 py-2">
-      <input type="color" value={value} onChange={(e) => onSet(e.target.value)} className="h-8 w-8 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
-      <span className="flex-1 text-sm text-ink">{label}</span>
-      {isSet && <button type="button" onClick={onReset} className="text-[11px] text-twilight underline">Reset</button>}
-    </div>
-  )
-
   return (
     <div className="fixed inset-0 z-50 flex overflow-hidden bg-paper">
       <aside className="flex w-[320px] shrink-0 flex-col overflow-y-auto border-r border-line bg-white/50 px-5 pb-8 pt-6">
@@ -359,19 +345,16 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       <div className="flex min-w-0 flex-1 flex-col px-3 pb-3 pt-10">
         <div className="mb-5 flex flex-wrap items-center justify-end gap-x-3 gap-y-3 px-1">
           <div className="mr-auto flex flex-wrap items-center gap-x-5 gap-y-2">
-            {!['ticket', 'stack'].includes(eff.cover) && topColor('Cover', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
-            {topColor('Page', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
-            {topColor('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
+            {!['ticket', 'stack'].includes(eff.cover) && <div className="w-40"><ColorInput float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
+            <div className="w-40"><ColorInput float label="Page" value={eff.pal.bg} onChange={(v) => change({ bg: v })} /></div>
+            <div className="w-40"><ColorInput float label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} /></div>
           </div>
-          {focusOn && <p className="text-sm text-ink-soft">Click the part of any photo that should stay in frame.</p>}
-          <button type="button" onClick={toggleFocus} className={'rounded-xl border px-4 py-2 text-sm font-medium transition ' + (focusOn ? 'border-twilight bg-twilight text-white' : 'border-line bg-white text-ink hover:border-twilight')}>{focusOn ? 'Done setting focus' : 'Set focus'}</button>
           <div className="flex overflow-hidden rounded-xl border border-line bg-white text-sm">
             {(['desktop', 'phone'] as const).map((x) => (
               <button key={x} type="button" onClick={() => setDevice(x)} className={'px-4 py-2 font-medium transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
             ))}
           </div>
-          {onSend && <button type="button" onClick={closeAndSend} className="rounded-xl bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90">Done and send</button>}
-          <button type="button" onClick={close} className={onSend ? 'rounded-xl border border-line bg-white px-5 py-2 text-sm font-medium text-ink transition hover:opacity-90' : 'rounded-xl bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90'}>Done</button>
+          <button type="button" onClick={onSend ? closeAndSend : close} className="rounded-xl bg-twilight px-6 py-2 text-sm font-medium text-white transition hover:opacity-90">Done</button>
         </div>
         <div ref={boxRef} className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
           <iframe ref={frameRef} src={`/g/${token}?preview=1`} title="Gallery preview" style={{ width: device === 'phone' ? 390 : '100%', height: '100%', border: 0, background: '#fff' }} />
@@ -383,9 +366,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
               </div>
               {pick.key === 'bg' ? (
                 <div className="space-y-2">
-                  {!['ticket', 'stack'].includes(eff.cover) && colorRow('Cover', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
-                  {colorRow('Page background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
-                  {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
+                  {!['ticket', 'stack'].includes(eff.cover) && <ColorInput label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} />}
+                  <ColorInput label="Page background" value={eff.pal.bg} onChange={(v) => change({ bg: v })} />
+                  <ColorInput label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} />
                 </div>
               ) : pick.key === 'photos' ? (
                 <div className="space-y-3">
@@ -423,10 +406,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                     </label>
                   )}
                   {pick.key === 'title' && eff.cover === 'bigtype' && (
-                    <label className="flex items-center gap-2 text-xs text-ink-soft">
-                      <input type="color" value={eff.el?.titlein?.color ?? '#FFFFFF'} onChange={(e) => setEl('titlein', { color: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-black/10" />
-                      Color over the photo (the color above is below the photo)
-                    </label>
+                    <ColorInput label="Color over the photo" value={eff.el?.titlein?.color ?? '#FFFFFF'} onChange={(v) => setEl('titlein', { color: v })} />
                   )}
                   {pick.key === 'brand' && (
                     <label className="block text-xs text-ink-soft">Cover subtitle (date, season, etc.)
@@ -436,10 +416,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                   <label className="block text-xs text-ink-soft">Size ({cur?.size ?? pick.size}px)
                     <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(pick.key, { size: Number(e.target.value) })} className="mt-1 w-full" />
                   </label>
-                  <label className="flex items-center gap-2 text-xs text-ink-soft">
-                    <input type="color" value={cur?.color ?? pick.color} onChange={(e) => setEl(pick.key, { color: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
-                    Color
-                  </label>
+                  <ColorInput label="Color" value={cur?.color ?? pick.color} onChange={(v) => setEl(pick.key, { color: v })} />
                   <label className="flex items-center gap-2 text-xs text-ink-soft">
                     <input type="checkbox" checked={cur?.bold ?? pick.bold} onChange={(e) => setEl(pick.key, { bold: e.target.checked })} />
                     Bold

@@ -68,7 +68,7 @@ function HexBox({ value, onChange, onCommit, className }: { value: string; onCha
   )
 }
 
-export default function ColorInput({ label, value, onChange, swatches = DEFAULT_SWATCHES }: { label: string; value: string; onChange: (v: string) => void; swatches?: string[] }) {
+export default function ColorInput({ label, value, onChange, swatches = DEFAULT_SWATCHES, float = false }: { label: string; value: string; onChange: (v: string) => void; swatches?: string[]; float?: boolean }) {
   const [open, setOpen] = useState(false)
   const boxRef = useRef<HTMLDivElement>(null)
   const valRef = useRef(value)
@@ -87,7 +87,7 @@ export default function ColorInput({ label, value, onChange, swatches = DEFAULT_
   const circles = Array.from(new Set([...list, ...swatches.map((s) => s.toUpperCase())]))
 
   return (
-    <div ref={boxRef}>
+    <div ref={boxRef} className={float ? 'relative' : undefined}>
       <span className="text-sm font-medium text-ink">{label}</span>
       <div className="mt-1 flex w-full items-center gap-2 rounded-xl border border-line bg-card px-3 py-2">
         <button type="button" onClick={() => setOpen(!open)} aria-label="Open color picker" className="h-5 w-5 shrink-0 rounded border border-line" style={{ background: value || 'transparent' }} />
@@ -95,7 +95,7 @@ export default function ColorInput({ label, value, onChange, swatches = DEFAULT_
         <button type="button" onClick={() => setOpen(!open)} aria-label="Toggle color picker" className="px-1 text-ink-soft">{open ? '▴' : '▾'}</button>
       </div>
       {open && (
-        <div className="mt-2 rounded-xl border border-line bg-card p-3">
+        <div className={'mt-2 rounded-xl border border-line bg-card p-3' + (float ? ' absolute left-0 top-full z-40 w-64 shadow-xl' : '')}>
           <div className="mb-3 flex flex-wrap gap-2">
             {circles.map((h) => (
               <button key={h} type="button" title={h} onClick={() => pick(h)} className="h-7 w-7 rounded-full border border-line" style={{ background: h, boxShadow: shown === h ? '0 0 0 2px #fff, 0 0 0 4px #2A1F24' : undefined }} />
