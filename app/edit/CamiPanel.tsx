@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { TOOLS } from '@/lib/tools'
 import type { Adjust } from '@/lib/enhance'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 type Change = { key: keyof Adjust; ui: number; label: string }
 type Msg = { role: 'user' | 'cami'; text: string; changes?: Change[]; state?: 'open' | 'done' | 'no' }
 
@@ -28,6 +30,10 @@ async function snap(url: string | null): Promise<string | null> {
   }
 }
 
+function fixName(t: string) {
+  return t.replace(/\b(camri|camry|camrie|camree|cammy|kamri|kamry|cam ri|cam ree)\b/gi, 'Camri')
+}
+
 export default function CamiPanel({
   value,
   onChange,
@@ -37,6 +43,7 @@ export default function CamiPanel({
   brief,
   light,
   photoId,
+  onBusyChange,
   children,
 }: {
   value: Adjust
@@ -47,6 +54,7 @@ export default function CamiPanel({
   brief: unknown
   light: string
   photoId: string
+  onBusyChange?: (b: boolean) => void
   children?: ReactNode
 }) {
   const [msgs, setMsgs] = useState<Msg[]>([])
@@ -54,6 +62,24 @@ export default function CamiPanel({
   const [busy, setBusy] = useState(false)
   const [prev, setPrev] = useState<Adjust | null>(null)
   const boxRef = useRef<HTMLDivElement | null>(null)
+  const [listening, setListening] = useState(false)
+  const [micOk, setMicOk] = useState(false)
+  const recRef = useRef<any>(null)
+  const sendRef = useRef<(m: string) => void>(() => {})
+
+  useEffect(() => {
+    const w = window as any
+    setMicOk(!!(w.SpeechRecognition || w.webkitSpeechRecognition))
+    return () => {
+      const r = recRef.current
+      if (r) { r.onend = null; try { r.abort() } catch {} }
+    }
+  }, [])
+
+  useEffect(() => {
+    onBusyChange?.(busy)
+    return () => onBusyChange?.(false)
+  }, [busy, onBusyChange])
 
   // A new photo means old suggestions no longer fit it
   useEffect(() => {
@@ -123,6 +149,39 @@ export default function CamiPanel({
     setBusy(false)
   }
 
+  sendRef.current = (m: string) => { void send(m) }
+
+  function toggleMic() {
+    if (listening) { recRef.current?.stop(); return }
+    const w = window as any
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition
+    if (!SR) return
+    const rec = new SR()
+    rec.lang = 'en-US'
+    rec.interimResults = true
+    rec.continuous = false
+    let finalText = ''
+    rec.onresult = (e: any) => {
+      let interim = ''
+      for (let k = e.resultIndex; k < e.results.length; k++) {
+        const t = e.results[k][0].transcript
+        if (e.results[k].isFinal) finalText += t
+        else interim += t
+      }
+      setText(fixName((finalText + interim).trim()))
+    }
+    rec.onerror = () => setListening(false)
+    rec.onend = () => {
+      setListening(false)
+      recRef.current = null
+      const t = fixName(finalText.trim())
+      if (t) sendRef.current(t)
+    }
+    recRef.current = rec
+    setListening(true)
+    try { rec.start() } catch { setListening(false) }
+  }
+
   return (
     <div className="mb-4 rounded-2xl border border-white/10 bg-[#7a5c45]/45 p-3">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -169,10 +228,24 @@ export default function CamiPanel({
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Ask Camri about this photo"
+          placeholder={listening ? 'Listening...' : 'Ask Camri about this photo'}
           maxLength={500}
           className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white outline-none placeholder:text-white/30 focus:border-white/30"
         />
+        {micOk && (
+          <button
+            type="button"
+            aria-label={listening ? 'Stop listening' : 'Talk to Camri'}
+            onClick={toggleMic}
+            disabled={busy}
+            className={`flex w-8 shrink-0 items-center justify-center rounded-full border border-white/10 transition disabled:opacity-40 ${listening ? 'animate-pulse bg-[var(--color-twilight)] text-white' : 'bg-black/40 text-white/70 hover:border-white/30'}`}
+          >
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="9" y="3" width="6" height="11" rx="3" />
+              <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+            </svg>
+          </button>
+        )}
         <button type="submit" disabled={busy || !text.trim()} className="rounded-full bg-[var(--color-twilight)] px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90 disabled:opacity-40">Ask</button>
       </form>
       {prev && (

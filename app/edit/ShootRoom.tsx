@@ -962,9 +962,9 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
     <div className={onBack ? 'min-h-[60vh]' : 'min-h-screen bg-[#0c0c0e] text-[#ececf0]'}>
       <div className={`mx-auto px-6 py-8 ${editTab === 'each' && !dev.busy ? 'max-w-[2400px]' : 'max-w-5xl'}`}>
         <div className="flex items-center justify-between gap-4">
-          {onBack ? <button onClick={onBack} className="text-sm text-white/50 transition hover:text-white">← Editing room</button> : <Link href="/edit" className="text-sm text-white/50 transition hover:text-white">← Editing room</Link>}
+          {step > 0 ? <button onClick={() => goTo(step - 1)} className="text-sm text-white/50 transition hover:text-white">← {STEPS[step - 1]}</button> : onBack ? <button onClick={onBack} className="text-sm text-white/50 transition hover:text-white">← Editing room</button> : <Link href="/edit" className="text-sm text-white/50 transition hover:text-white">← Editing room</Link>}
           <p className="truncate font-fraunces text-lg text-white">{gallery?.title}</p>
-          <Link href={`/galleries/${galleryId}`} className="text-sm text-white/50 transition hover:text-white">Gallery</Link>
+          <span aria-hidden className="w-24" />
         </div>
 
         <ol className="mt-8 flex items-center gap-2 overflow-x-auto pb-2">

@@ -185,6 +185,7 @@ export default function ReviewStep({
   const [flags, setFlags] = useState<Record<string, string>>({})
   const [checked, setChecked] = useState(false)
   const [camiBusy, setCamiBusy] = useState(false)
+  const [askBusy, setAskBusy] = useState(false)
   const [camiNote, setCamiNote] = useState<{ id: string; notes: string[]; bw: boolean } | null>(null)
   const [camiProgress, setCamiProgress] = useState(0)
   const [sceneBusy, setSceneBusy] = useState<{ done: number; total: number } | null>(null)
@@ -1013,6 +1014,29 @@ export default function ReviewStep({
                   (showing === 'before' ? beforeUrl : afterUrl) && <img src={(showing === 'before' ? beforeUrl : afterUrl) as string} alt="" className={frameImg} />
                 )}
                 {!afterUrl && !err && <p className="absolute text-sm text-white/40">Loading…</p>}
+                {(askBusy || camiBusy || sceneBusy) && (
+                  <div className="pointer-events-none absolute inset-0 z-[5] overflow-hidden rounded-2xl">
+                    <style>{`
+                      @keyframes camriScan { 0% { top: -6rem; } 100% { top: 100%; } }
+                      @keyframes camriGlow { 0%, 100% { opacity: 0.05; } 50% { opacity: 0.16; } }
+                      .camri-scan { animation: camriScan 2.2s ease-in-out infinite; }
+                      .camri-glow { animation: camriGlow 2.2s ease-in-out infinite; }
+                      @media (prefers-reduced-motion: reduce) { .camri-scan, .camri-glow { animation: none; } }
+                    `}</style>
+                    <div className="camri-glow absolute inset-0 bg-[rgb(255,236,200)]" />
+                    <div
+                      className="camri-scan absolute inset-x-0 h-24"
+                      style={{
+                        background: 'linear-gradient(to bottom, rgba(255,236,200,0), rgba(255,236,200,0.28) 65%, rgba(255,246,225,0.8) 100%)',
+                        borderBottom: '2px solid rgba(255,246,225,0.95)',
+                        boxShadow: '0 8px 28px rgba(255,230,180,0.55)',
+                      }}
+                    />
+                    <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white/85">
+                      {sceneBusy ? 'Camri is fixing this scene…' : 'Camri is reading this photo…'}
+                    </span>
+                  </div>
+                )}
                 <span className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-xs text-white/80">
                   {showing === 'before' ? 'Before' : showing === 'split' ? 'Before · After' : 'After'}
                 </span>
@@ -1087,7 +1111,7 @@ export default function ReviewStep({
 
             {/* RIGHT: crop, detail, color mix, your style */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
-              <CamiPanel value={manual} onChange={editManual} previewUrl={afterUrl} lookName={lookId} strength={strength} brief={brief} light={light[row.id] || brief.light || ''} photoId={row.id}>
+              <CamiPanel onBusyChange={setAskBusy} value={manual} onChange={editManual} previewUrl={afterUrl} lookName={lookId} strength={strength} brief={brief} light={light[row.id] || brief.light || ''} photoId={row.id}>
               <div className="mt-3 border-t border-white/10 pt-3">
                 <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
                   {camiBusy ? (camiProgress > 0 ? 'Camri is studying this shoot… ' + camiProgress + '/' + rows.length : 'Camri is looking…') : 'Use Camri to scan & fix'}

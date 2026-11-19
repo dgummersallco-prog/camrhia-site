@@ -269,7 +269,7 @@ export default function EditingRoom() {
         groups={[
           { items: [{ href: '/dashboard', label: '← Back to dashboard' }] },
           { label: 'The Editing Room', items: [
-            { href: '/edit', label: 'Shoots', onClick: () => setTab('edit') },
+            { href: '/edit', label: 'Shoots', onClick: () => { setTab('edit'); if (shootId) void backToStart() } },
             { href: '/edit?tab=styles', label: 'My styles', onClick: () => setTab('styles') },
             { href: '/edit?tab=brain', label: 'Camri\'s notes', onClick: () => setTab('brain') },
           ] },

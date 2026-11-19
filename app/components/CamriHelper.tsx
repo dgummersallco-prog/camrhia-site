@@ -31,10 +31,18 @@ function helpFor(p: string): Help {
 }
 const P = '/camri/'
 
+const CONTACT = /(\(?\d{3}\)?[-.\s]\d{3}[-.]\d{4}|[\w.+-]+@[\w-]+(?:\.[\w-]+)+)/g
+function keepTogether(t: string) {
+  return t.split(CONTACT).map((p, i) => (i % 2 === 1 ? <span key={i} className="whitespace-nowrap">{p}</span> : p))
+}
 function bold(t: string) {
   return t.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.length > 4 && part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{part.slice(2, -2)}</strong> : part,
+    part.length > 4 && part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{keepTogether(part.slice(2, -2))}</strong> : <span key={i}>{keepTogether(part)}</span>,
   )
+}
+
+function fixName(t: string) {
+  return t.replace(/\b(camri|camry|camrie|camree|cammy|kamri|kamry|cam ri|cam ree)\b/gi, 'Camri')
 }
 
 export default function CamriHelper() {
@@ -188,13 +196,13 @@ export default function CamriHelper() {
         if (e.results[k].isFinal) finalText += t
         else interim += t
       }
-      setText((finalText + interim).trim())
+      setText(fixName((finalText + interim).trim()))
     }
     rec.onerror = () => setListening(false)
     rec.onend = () => {
       setListening(false)
       recRef.current = null
-      const t = finalText.trim()
+      const t = fixName(finalText.trim())
       if (t) sendRef.current(t)
     }
     recRef.current = rec
