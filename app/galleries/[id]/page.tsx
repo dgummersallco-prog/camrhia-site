@@ -301,7 +301,7 @@ export default function GalleryManagePage() {
   }, [designOpen, shareOpen])
 
   const stepsBar = (active: number, nav: { photos: () => void; style: () => void; publish: () => void }) => (
-    <div className="grid gap-2 sm:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-3">
       {([
         { label: 'Add photos', hint: 'Client-ready edited photos', done: photos.length > 0, go: nav.photos, off: false },
         { label: 'Style', hint: 'Cover photo and photo layout', done: !!gallery?.design && Object.keys(gallery.design).length > 0, go: nav.style, off: photos.length === 0 },
@@ -312,10 +312,10 @@ export default function GalleryManagePage() {
           type="button"
           disabled={st.off}
           onClick={st.go}
-          className={'flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm text-ink transition disabled:opacity-50 ' + (i === active ? 'border-twilight bg-white ring-1 ring-twilight' : st.done ? 'border-emerald-200 bg-emerald-50/70' : 'border-line bg-white/60 hover:bg-white')}
+          className={'flex items-start gap-3.5 rounded-2xl border px-5 py-4 text-left text-base text-ink transition disabled:opacity-50 ' + (i === active ? 'border-twilight bg-white ring-1 ring-twilight' : st.done ? 'border-emerald-200 bg-emerald-50/70' : 'border-line bg-white/60 hover:bg-white')}
         >
-          <span className={'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ' + (st.done ? 'bg-emerald-500 text-white' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
-          <span className="leading-tight">{st.label}<span className="mt-0.5 block text-xs text-ink-soft">{st.hint}</span></span>
+          <span className={'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium ' + (st.done ? 'bg-emerald-500 text-white' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
+          <span className="leading-tight">{st.label}<span className="mt-1 block text-sm text-ink-soft">{st.hint}</span></span>
         </button>
       ))}
     </div>
@@ -836,18 +836,15 @@ export default function GalleryManagePage() {
         ) : (
           <>
             {/* Header */}
-            <div className="mb-6 text-center">
-              <div className="mb-3 text-left">
-                <button type="button" onClick={() => router.push('/galleries')} className="text-sm text-ink-soft hover:text-ink">← Galleries</button>
-              </div>
+            <div className="mb-8">
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }}
-                className="w-full bg-transparent text-center font-fraunces text-3xl font-semibold text-ink focus:outline-none focus:ring-0"
+                className="w-full bg-transparent font-fraunces text-4xl font-semibold text-ink focus:outline-none focus:ring-0"
                 aria-label="Gallery name"
               />
-              <p className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-ink-soft">
+              <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
                 <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-emerald-100 text-emerald-700' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
                 {sessInfo && <span>{sessInfo}</span>}
               </p>
@@ -859,10 +856,10 @@ export default function GalleryManagePage() {
 
             {gallery && (
               <div ref={barRef}>
-                <div className="mx-auto mb-4 max-w-4xl">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>
-                <div className="mx-auto mb-5 flex min-h-[44px] max-w-4xl justify-end gap-2">
-                  {(designOpen || shareOpen) && <button className={btnGhost} onClick={() => goStep(designOpen ? 0 : 1)}>Back</button>}
-                  {!shareOpen && photos.length > 0 && <button className={btn} onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
+                <div className="mb-5">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>
+                <div className="mb-6 flex min-h-[52px] gap-3">
+                  <button className="rounded-xl border border-line bg-white/70 px-8 py-3.5 text-base text-ink transition hover:border-twilight" onClick={() => (designOpen || shareOpen ? goStep(designOpen ? 0 : 1) : router.push('/galleries'))}>Back</button>
+                  {!shareOpen && photos.length > 0 && <button className="rounded-xl bg-twilight px-10 py-3.5 text-base font-medium text-white transition hover:opacity-90" onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
                 </div>
               </div>
             )}
@@ -1134,7 +1131,6 @@ export default function GalleryManagePage() {
                   </div>
                   {message && <p className="text-sm text-twilight">{message}</p>}
                   <div className="flex gap-4 text-xs text-ink-soft">
-                    <button className="underline" onClick={() => setAccessOpen(true)}>More settings</button>
                     {isPublished && <button className="underline" onClick={async () => { if (await saveSettings({ status: 'draft' })) flash('Unpublished') }}>Unpublish</button>}
                   </div>
                 </div>
