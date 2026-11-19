@@ -124,6 +124,21 @@ export default function MyMessagesPage() {
   }, [uid, loadMsgs, markRead])
 
   useEffect(() => {
+    const sb = supabase
+    if (!sb || !uid) return
+    const ch = sb
+      .channel('cmsgs-' + uid)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'inquiry_messages' }, () => {
+        void refresh()
+        const cur = curRef.current
+        if (cur) void loadMsgs(uid, cur).then(() => markRead(uid, cur))
+        window.dispatchEvent(new Event('camrhia-unread'))
+      })
+      .subscribe()
+    return () => { sb.removeChannel(ch) }
+  }, [uid, refresh, loadMsgs, markRead])
+
+  useEffect(() => {
     if (autoRef.current || !ready || !uid || sel || threads.length === 0) return
     const want = new URLSearchParams(window.location.search).get('t')
     const target = threads.find((t) => t.key === want)

@@ -76,7 +76,7 @@ export default function MyGalleriesPage() {
   const years = useMemo(() => {
     const map = new Map<string, typeof shown>()
     shown.forEach((x) => {
-      const y = x.r.wedding_date ? x.r.wedding_date.slice(0, 4) : 'Undated'
+      const y = 'all'
       map.set(y, [...(map.get(y) ?? []), x])
     })
     return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1))
@@ -94,25 +94,6 @@ export default function MyGalleriesPage() {
           <p className="mt-8 rounded-2xl border border-line bg-card p-6 text-ink-soft">Your photos will show up here as soon as your photographer shares them.</p>
         ) : (
           <>
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
-              <span>Your photographer{studios.length > 1 ? 's' : ''}: {studios.join(', ')}</span>
-              <a href="/my/messages" className={PILL}>Message</a>
-            </div>
-            {types.length > 1 && (
-              <div className="mt-6 flex flex-wrap gap-2">
-                {['all', ...types].map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setFilter(t)}
-                    className={`rounded-full border px-4 py-1.5 text-sm transition ${filter === t ? 'border-twilight bg-twilight text-white' : 'border-line bg-card text-ink hover:border-twilight'}`}
-                  >
-                    {t === 'all' ? 'All' : label(t)}
-                  </button>
-                ))}
-              </div>
-            )}
-
             {years.map(([year, list]) => (
               <section key={year} className="mt-10">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
