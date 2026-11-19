@@ -178,9 +178,7 @@ export default function GalleryManagePage() {
   const shortened = useRef<string | null>(null)
   const designFlush = useRef<(() => void) | null>(null)
   const [topOff, setTopOff] = useState(0)
-  const [sendPhone, setSendPhone] = useState('')
-  const [sendEmail, setSendEmail] = useState('')
-  const [textLink, setTextLink] = useState<string | null>(null)
+  const [shareMsg, setShareMsg] = useState<string | null>(null)
   const [finalBusy, setFinalBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
@@ -394,9 +392,6 @@ export default function GalleryManagePage() {
     const p = pin.trim()
     if (!gallery.pin_hash && !p) { setMessage('Add a PIN before sending.'); return }
     if (p && p.length < 4) { setMessage('Use a PIN of at least 4 characters.'); return }
-    const email = sendEmail.trim()
-    const phone = sendPhone.trim()
-    if (email && !/^\S+@\S+\.\S+$/.test(email)) { setMessage('That email does not look right.'); return }
     setFinalBusy(true)
     try {
       if (nm !== gallery.title && !(await saveSettings({ title: nm }))) return
@@ -414,14 +409,10 @@ export default function GalleryManagePage() {
       }
       const onCamrhia = !!(gallery.session_id && coupleUserId)
       const hi = `Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}${p ? `\nPIN: ${p}` : ''}${onCamrhia ? '' : `\n\nNew to Camrhia? Create your free account to keep everything in one place: ${origin}${inviteCode ? `/s/${inviteCode}` : '/signup'}`}`
-      const smsHref = phone ? `sms:${phone}?&body=${encodeURIComponent(hi)}` : null
-      if (!email && !phone && !(gallery.session_id && coupleUserId)) { navigator.clipboard?.writeText(shareUrl); note = 'Published. Link copied' }
+      setShareMsg(onCamrhia ? null : hi)
+      if (!onCamrhia) { navigator.clipboard?.writeText(hi); note = 'Published. Message copied' }
       flash(note)
       await loadGallery()
-      if (email) {
-        setTextLink(smsHref)
-        window.location.href = `mailto:${email}?subject=${encodeURIComponent('Your photos are ready')}&body=${encodeURIComponent(hi)}`
-      } else if (smsHref) window.location.href = smsHref
     } finally { setFinalBusy(false) }
   }
 
@@ -1211,7 +1202,7 @@ export default function GalleryManagePage() {
                   <p className="mt-2 text-xs text-ink-soft">Anyone opening the link types this first. {clientName ? `${clientName} won't need it` : 'Your client won’t need it'} when signed in to their dashboard.</p>
                 </div>
                 <div className="border-t border-line pt-6">
-                  <label className={label}>Send to</label>
+                  <label className={label}>Delivery</label>
                   {gallery.session_id && coupleUserId && (
                     <div className="mb-3 flex items-center gap-2 rounded-xl bg-twilight/10 px-3 py-2 text-sm text-ink">
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-twilight text-xs text-white">✓</span>
@@ -1220,17 +1211,18 @@ export default function GalleryManagePage() {
                   )}
                   {!(gallery.session_id && coupleUserId) && (
                     <div className="mb-3 rounded-xl bg-paper px-3 py-2 text-sm text-ink-soft">
-                      {clientName ?? 'Your client'} isn&apos;t on Camrhia yet. Your message will include a link to sign up.
+                      {clientName ?? 'Your client'} isn&apos;t on Camrhia yet. After publishing, send them the message below yourself, with a link to sign up.
                     </div>
                   )}
-                  <div className="space-y-2">
-                    <input type="tel" value={sendPhone} onChange={(e) => setSendPhone(e.target.value)} placeholder="Phone number" className={input} />
-                    <input type="email" value={sendEmail} onChange={(e) => setSendEmail(e.target.value)} placeholder="Email" className={input} />
-                  </div>
                   <button className={`${btn} mt-4 w-full py-3`} disabled={finalBusy} onClick={publishAndSend}>
-                    {finalBusy ? 'Sending…' : sentAt ? 'Update and send' : 'Publish and send'}
+                    {finalBusy ? 'Publishing…' : isPublished ? 'Update gallery' : 'Publish gallery'}
                   </button>
-                  {textLink && <a href={textLink} className={`${btnGhost} mt-2 block text-center`}>Now open the text</a>}
+                  {shareMsg && (
+                    <div className="mt-4 rounded-xl bg-paper px-3 py-3">
+                      <p className="whitespace-pre-wrap text-sm text-ink-soft">{shareMsg}</p>
+                      <button type="button" className={`${btnGhost} mt-3 w-full`} onClick={() => { navigator.clipboard?.writeText(shareMsg); flash('Message copied') }}>Copy message</button>
+                    </div>
+                  )}
                 </div>
                 {message && <p className="text-sm text-twilight">{message}</p>}
                 {isPublished && (
