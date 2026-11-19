@@ -50,6 +50,7 @@ export default function GalleryViewPage() {
   const [isPreview, setIsPreview] = useState(false)
   const textRef = useRef<Record<string, string>>({})
   const [coverOverride, setCoverOverride] = useState<string | null>(null)
+  const [dlPrompt, setDlPrompt] = useState(false)
   const [zip, setZip] = useState<{ busy: boolean; done: number; total: number; error: string | null }>({ busy: false, done: 0, total: 0, error: null })
 
   const load = useCallback(async (pinValue?: string) => {
@@ -88,6 +89,13 @@ export default function GalleryViewPage() {
   }, [token])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (phase !== 'ready' || typeof window === 'undefined') return
+    const q = new URLSearchParams(window.location.search)
+    if (q.get('download') === '1') setDlPrompt(true)
+    if (q.get('favs') === '1') setOnlyFavs(true)
+  }, [phase])
 
   // Tint the page with the photographer's accent color.
   useEffect(() => {
@@ -1151,6 +1159,15 @@ export default function GalleryViewPage() {
 
       {zip.busy && zip.total > 0 && (
         <p className="px-6 pt-3 text-center text-sm" style={{ color: pal.soft }}>Keep this tab open until your download finishes.</p>
+      )}
+      {dlPrompt && data && (
+        <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 rounded-full bg-white px-5 py-3 shadow-xl">
+            <span className="text-sm text-neutral-800">Download all {data.photos.length} photos?</span>
+            <button type="button" onClick={() => { setDlPrompt(false); void downloadAll() }} className="rounded-full bg-black px-4 py-1.5 text-sm font-medium text-white">Download all</button>
+            <button type="button" onClick={() => setDlPrompt(false)} className="text-sm text-neutral-500">Not now</button>
+          </div>
+        </div>
       )}
       {zip.error && <p className="px-6 pt-3 text-center text-sm text-red-600">{zip.error}</p>}
 

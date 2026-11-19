@@ -8,6 +8,9 @@ export function storageLimitBytes(plan: string | null | undefined, packs: number
   return (base + PACK_GB * Math.max(0, packs)) * GB
 }
 
+// What a client can keep across all the galleries shared with them.
+export const CLIENT_STORAGE_GB = 30
+
 export function formatBytes(n: number): string {
   if (n >= GB) return `${(n / GB).toFixed(n >= 100 * GB ? 0 : 1)} GB`
   if (n >= 1e6) return `${Math.round(n / 1e6)} MB`
