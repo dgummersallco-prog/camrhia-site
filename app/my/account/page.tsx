@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ClientHeader } from '@/app/components/ClientHeader'
+import { CLIENT_STORAGE_GB, formatBytes } from '@/lib/storageLimit'
 
 const card = 'rounded-2xl border border-line bg-card p-5'
 
@@ -16,6 +17,7 @@ export default function MyAccountPage() {
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [usedBytes, setUsedBytes] = useState<number | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -28,6 +30,21 @@ export default function MyAccountPage() {
       const { data } = await sb.from('profiles').select('display_name').eq('id', sess.session.user.id).maybeSingle()
       setName(((data as { display_name?: string | null } | null)?.display_name) ?? '')
       setReady(true)
+      try {
+        const { data: ps } = await sb.rpc('client_portal_sessions')
+        const tokens = ((ps ?? []) as { galleries: { token: string }[] | null }[]).flatMap((r) => (r.galleries ?? []).map((g) => g.token))
+        if (tokens.length === 0) { setUsedBytes(0) } else {
+          const res = await fetch('/api/gallery/portal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess.session.access_token}` },
+            body: JSON.stringify({ tokens }),
+          })
+          if (res.ok) {
+            const j = (await res.json()) as { galleries?: Record<string, { bytes?: number }> }
+            setUsedBytes(Object.values(j.galleries ?? {}).reduce((a, x) => a + (x.bytes || 0), 0))
+          }
+        }
+      } catch { /* storage card just stays hidden */ }
     }
     load()
   }, [router])
@@ -92,6 +109,17 @@ export default function MyAccountPage() {
               <p className="mb-3 text-sm text-ink-soft">See what you've paid, what's still due, and your receipts.</p>
               <a href="/my/payments" className="inline-block rounded-full border border-line px-5 py-2 text-sm font-semibold text-ink hover:border-twilight">View payments</a>
             </section>
+
+            {usedBytes !== null && (
+              <section className={card}>
+                <p className="mb-1 font-fraunces text-xl font-semibold text-ink">Storage</p>
+                <p className="mb-3 text-sm text-ink-soft">{formatBytes(usedBytes)} of {CLIENT_STORAGE_GB} GB used</p>
+                <div className="h-2 overflow-hidden rounded-full bg-black/10">
+                  <div className="h-full rounded-full bg-twilight transition-all" style={{ width: Math.min(100, (usedBytes / (CLIENT_STORAGE_GB * 1e9)) * 100) + '%' }} />
+                </div>
+                {usedBytes >= CLIENT_STORAGE_GB * 1e9 * 0.8 && <p className="mt-3 text-sm text-ink-soft">{usedBytes >= CLIENT_STORAGE_GB * 1e9 ? 'Your storage is full.' : 'Running low on storage.'} Download your photos and clear some space.</p>}
+              </section>
+            )}
 
             <section className={card}>
               <p className="mb-1 font-fraunces text-xl font-semibold text-ink">Camrhia app</p>

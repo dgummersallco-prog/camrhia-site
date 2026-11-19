@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ClientHeader } from '@/app/components/ClientHeader'
-import { CLIENT_STORAGE_GB, formatBytes } from '@/lib/storageLimit'
 
 type Gallery = { token: string; title: string | null; has_pin: boolean; allow_downloads: boolean; expires_at: string | null }
 type Portal = {
@@ -70,8 +69,6 @@ export default function MyGalleriesPage() {
   )
   const types = useMemo(() => Array.from(new Set(items.map((x) => x.r.session_type))), [items])
   const studios = useMemo(() => Array.from(new Set(items.map((x) => x.r.studio_name || x.r.display_name || 'Your photographer'))), [items])
-  const usedBytes = Object.values(info).reduce((a, x) => a + (x.bytes || 0), 0)
-  const pct = (usedBytes / (CLIENT_STORAGE_GB * 1000 * 1000 * 1000)) * 100
   const shown = items.filter((x) => filter === 'all' || x.r.session_type === filter)
   const years = useMemo(() => {
     const map = new Map<string, typeof shown>()
@@ -134,18 +131,6 @@ export default function MyGalleriesPage() {
                 </div>
               </section>
             ))}
-            {Object.keys(info).length > 0 && (
-              <div className="mt-12 rounded-2xl border border-white/60 bg-white/50 p-5 backdrop-blur">
-                <div className="flex items-baseline justify-between text-sm text-ink">
-                  <span className="font-medium">Storage</span>
-                  <span className="text-ink-soft">{formatBytes(usedBytes)} of {CLIENT_STORAGE_GB} GB used</span>
-                </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/10">
-                  <div className="h-full rounded-full bg-twilight transition-all" style={{ width: Math.min(100, pct) + '%' }} />
-                </div>
-                {pct >= 80 && <p className="mt-3 text-sm text-ink-soft">{pct >= 100 ? 'Your storage is full.' : 'Running low on storage.'} Download your photos and clear some space.</p>}
-              </div>
-            )}
           </>
         )}
       </main>
