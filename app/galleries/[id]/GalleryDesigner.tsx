@@ -2,7 +2,8 @@
 
 import CamriTyping from '@/app/components/CamriTyping'
 import ColorInput from '@/app/components/ColorInput'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { COVERS, LAYOUTS, LAYOUT_PRESETS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign, COVER_PRESETS, COVER_SLOTS } from '@/lib/galleryDesign'
@@ -48,10 +49,10 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
   return { cover: k, ...p, el: { ...clearCoverEl(el), ...(p.el ?? {}) } }
 }
 
-export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef }: {
+export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
   photoChoices?: { id: string; url: string }[]; coverPhotoId?: string | null; onPickCover?: (id: string) => void
-  onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void; topOffset?: number; flushRef?: { current: (() => void) | null }
+  onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void; topOffset?: number; flushRef?: { current: (() => void) | null }; leftHost?: HTMLElement | null
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
@@ -245,7 +246,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const cur = pick ? d.el?.[pick.key] : undefined
   return (
     <div ref={rootRef} className="relative flex gap-4" style={{ height: `calc(100vh - ${topOffset ?? 0}px - 16px)` }}>
-      <aside className="flex w-[320px] shrink-0 flex-col overflow-y-auto rounded-2xl border border-line bg-white/50 px-5 pb-8 pt-6">
+      <PortalTo host={leftHost}>
         <div className="mb-6 flex items-center justify-between">
           <button type="button" onClick={close} className="text-sm text-ink-soft hover:text-ink">✕ Close</button>
           <span className="text-xs text-ink-soft">{saving ? 'Saving…' : 'Saved'}</span>
@@ -342,9 +343,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             <button type="submit" disabled={gBusy} className="rounded-lg bg-twilight px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60">Send</button>
           </form>
         </div>
-      </aside>
+      </PortalTo>
       {zoom && (
-        <div className="pointer-events-none fixed z-[60] rounded-xl border border-line bg-white p-2 shadow-2xl" style={{ left: 330 + (rootRef.current?.getBoundingClientRect().left ?? 0), top: Math.max(8, Math.min(zoom.top - 40, (typeof window !== 'undefined' ? window.innerHeight : 800) - 600)) }}>
+        <div className="pointer-events-none fixed z-[60] rounded-xl border border-line bg-white p-2 shadow-2xl" style={{ left: (rootRef.current?.getBoundingClientRect().left ?? 330) + 8, top: Math.max(8, Math.min(zoom.top - 40, (typeof window !== 'undefined' ? window.innerHeight : 800) - 600)) }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={zoom.src} alt="" style={{ maxWidth: 560, maxHeight: '85vh' }} className="block h-auto w-auto rounded" />
           <p className="mt-1 text-center text-xs text-ink-soft">{zoom.name}</p>
@@ -441,4 +442,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       </div>
     </div>
   )
+}
+
+function PortalTo({ host, children }: { host?: HTMLElement | null; children: ReactNode }) {
+  if (!host) return null
+  return createPortal(<div className="flex min-h-full flex-col">{children}</div>, host)
 }

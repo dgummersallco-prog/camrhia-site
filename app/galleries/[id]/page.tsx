@@ -131,6 +131,7 @@ export default function GalleryManagePage() {
   const [shareOpen, setShareOpen] = useState(false)
   const [slug, setSlug] = useState('')
   const barRef = useRef<HTMLDivElement>(null)
+  const [leftHost, setLeftHost] = useState<HTMLDivElement | null>(null)
   const shortened = useRef<string | null>(null)
   const designFlush = useRef<(() => void) | null>(null)
   const [topOff, setTopOff] = useState(0)
@@ -301,7 +302,7 @@ export default function GalleryManagePage() {
   }, [designOpen, shareOpen])
 
   const stepsBar = (active: number, nav: { photos: () => void; style: () => void; publish: () => void }) => (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-3">
       {([
         { label: 'Add photos', hint: 'Client-ready edited photos', done: photos.length > 0, go: nav.photos, off: false },
         { label: 'Style', hint: 'Cover photo and photo layout', done: !!gallery?.design && Object.keys(gallery.design).length > 0, go: nav.style, off: photos.length === 0 },
@@ -312,10 +313,10 @@ export default function GalleryManagePage() {
           type="button"
           disabled={st.off}
           onClick={st.go}
-          className={'flex items-start gap-3.5 rounded-2xl border px-5 py-4 text-left text-base text-ink transition disabled:opacity-50 ' + (i === active ? 'border-twilight bg-white ring-1 ring-twilight' : st.done ? 'border-emerald-200 bg-emerald-50/70' : 'border-line bg-white/60 hover:bg-white')}
+          className={'flex items-start gap-3 rounded-xl border px-4 py-3 text-left text-sm text-ink transition disabled:opacity-50 ' + (i === active ? 'border-twilight bg-white ring-1 ring-twilight' : st.done ? 'border-twilight/30 bg-twilight/10' : 'border-line bg-white/60 hover:bg-white')}
         >
-          <span className={'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium ' + (st.done ? 'bg-emerald-500 text-white' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
-          <span className="leading-tight">{st.label}<span className="mt-1 block text-sm text-ink-soft">{st.hint}</span></span>
+          <span className={'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium ' + (st.done ? 'bg-twilight text-white' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
+          <span className="leading-tight">{st.label}<span className="mt-0.5 block text-xs text-ink-soft">{st.hint}</span></span>
         </button>
       ))}
     </div>
@@ -830,22 +831,80 @@ export default function GalleryManagePage() {
     <div className="min-h-screen bg-paper">
       <DashScenes />
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row">
+        <aside className="flex w-full shrink-0 flex-col overflow-y-auto rounded-2xl border border-line bg-white/50 px-5 pb-8 pt-6 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:w-[320px]">
+          <div ref={setLeftHost} className="flex flex-col" />
+          {gallery && shareOpen && (
+            <div>
+              <div className="mb-6 h-5" />
+              <h2 className="font-fraunces text-2xl font-semibold text-ink">Publish and send</h2>
+              <p className="mb-6 truncate text-sm text-ink-soft">{title}</p>
+              <div className="space-y-6">
+                <div>
+                  <label className={label}>Gallery name</label>
+                  <input value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }} placeholder="Chloe's Graduation" className={input} />
+                  <p className="mt-2 text-xs text-ink-soft">This is the name your client sees on their dashboard.</p>
+                </div>
+                <div className="border-t border-line pt-6">
+                  <label className={label}>Gallery link</label>
+                  <div className="flex items-center overflow-hidden rounded-xl border border-line bg-paper focus-within:border-twilight">
+                    <span className="shrink-0 pl-3 text-xs text-ink-soft">{origin.replace(/^https?:\/\//, '')}/g/</span>
+                    <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40))} className="min-w-0 flex-1 bg-transparent py-2.5 pr-3 text-sm text-ink outline-none" />
+                  </div>
+                  {slug !== gallery.token && (
+                    <div className="mt-2 flex items-center gap-3">
+                      <button className={btn} onClick={saveSlug}>Save link</button>
+                      <button className="text-xs text-ink-soft underline" onClick={() => setSlug(gallery.token)}>Cancel</button>
+                    </div>
+                  )}
+                  {sentAt && slug !== gallery.token && <p className="mt-2 text-xs text-ink-soft">Links you already sent will stop working.</p>}
+                </div>
+                <div className="border-t border-line pt-6">
+                  <label className={label}>PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(required)</span>}</label>
+                  <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder={gallery.pin_hash ? 'Type to change the PIN' : 'Choose a PIN'} className={input} />
+                  <p className="mt-2 text-xs text-ink-soft">Anyone opening the link types this first. {clientName ? `${clientName} won't need it` : 'Your client won’t need it'} when signed in to their dashboard.</p>
+                </div>
+                <div className="border-t border-line pt-6">
+                  <label className={label}>Send to</label>
+                  {gallery.session_id && coupleUserId && (
+                    <div className="mb-3 flex items-center gap-2 rounded-xl bg-twilight/10 px-3 py-2 text-sm text-ink">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-twilight text-xs text-white">✓</span>
+                      Also goes to {clientName ?? 'your client'}&apos;s Camrhia dashboard
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <input type="tel" value={sendPhone} onChange={(e) => setSendPhone(e.target.value)} placeholder="Phone number" className={input} />
+                    <input type="email" value={sendEmail} onChange={(e) => setSendEmail(e.target.value)} placeholder="Email" className={input} />
+                  </div>
+                  <button className={`${btn} mt-4 w-full py-3`} disabled={finalBusy} onClick={publishAndSend}>
+                    {finalBusy ? 'Sending…' : sentAt ? 'Update and send' : 'Publish and send'}
+                  </button>
+                  {textLink && <a href={textLink} className={`${btnGhost} mt-2 block text-center`}>Now open the text</a>}
+                </div>
+                {message && <p className="text-sm text-twilight">{message}</p>}
+                {isPublished && (
+                  <button className="text-xs text-ink-soft underline" onClick={async () => { if (await saveSettings({ status: 'draft' })) flash('Unpublished') }}>Unpublish</button>
+                )}
+              </div>
+            </div>
+          )}
+        </aside>
+        <main className="min-w-0 flex-1">
         {!gallery ? (
           <p className="text-sm text-ink-soft">{message ?? 'Loading…'}</p>
         ) : (
           <>
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-5">
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }}
-                className="w-full bg-transparent font-fraunces text-4xl font-semibold text-ink focus:outline-none focus:ring-0"
+                className="w-full bg-transparent font-fraunces text-2xl font-semibold text-ink focus:outline-none focus:ring-0"
                 aria-label="Gallery name"
               />
               <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
-                <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-emerald-100 text-emerald-700' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
+                <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-twilight/15 text-twilight' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
                 {sessInfo && <span>{sessInfo}</span>}
               </p>
               <p className="mt-1 text-xs text-ink-soft">
@@ -863,7 +922,7 @@ export default function GalleryManagePage() {
                 </div>
               </div>
             )}
-            {message && <p className="mb-4 text-sm text-twilight">{message}</p>}
+            {message && !shareOpen && <p className="mb-4 text-sm text-twilight">{message}</p>}
 
             {designOpen && (
               <GalleryDesigner
@@ -879,6 +938,7 @@ export default function GalleryManagePage() {
                 onSend={() => setShareOpen(true)}
                 topOffset={topOff}
                 flushRef={designFlush}
+                leftHost={leftHost}
                 onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as Record<string, unknown> } : g))}
               />
             )}
@@ -1084,61 +1144,8 @@ export default function GalleryManagePage() {
           </>
         )}
         {gallery && shareOpen && (
-          <div>
-            <div>
-              <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
-                <div className="space-y-5">
-                  <div className={card}>
-                    <label className={label}>Gallery name</label>
-                    <input value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }} placeholder="Chloe's Graduation" className={input} />
-                    <p className="mt-2 text-xs text-ink-soft">This is the name your client sees on their dashboard.</p>
-                  </div>
-                  <div className={card}>
-                    <label className={label}>Gallery link</label>
-                    <div className="flex items-center overflow-hidden rounded-xl border border-line bg-paper focus-within:border-twilight">
-                      <span className="shrink-0 pl-3 text-xs text-ink-soft">{origin.replace(/^https?:\/\//, '')}/g/</span>
-                      <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40))} className="min-w-0 flex-1 bg-transparent py-2.5 pr-3 text-sm text-ink outline-none" />
-                    </div>
-                    {slug !== gallery.token && (
-                      <div className="mt-2 flex items-center gap-3">
-                        <button className={btn} onClick={saveSlug}>Save link</button>
-                        <button className="text-xs text-ink-soft underline" onClick={() => setSlug(gallery.token)}>Cancel</button>
-                      </div>
-                    )}
-                    {sentAt && slug !== gallery.token && <p className="mt-2 text-xs text-ink-soft">Links you already sent will stop working.</p>}
-                  </div>
-                  <div className={card}>
-                    <label className={label}>PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(required)</span>}</label>
-                    <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder={gallery.pin_hash ? 'Type to change the PIN' : 'Choose a PIN'} className={input} />
-                    <p className="mt-2 text-xs text-ink-soft">Anyone opening the link types this first. {clientName ? `${clientName} won't need it` : 'Your client won’t need it'} when signed in to their dashboard.</p>
-                  </div>
-                  <div className={card}>
-                    <label className={label}>Send to</label>
-                    {gallery.session_id && coupleUserId && (
-                      <div className="mb-3 flex items-center gap-2 rounded-xl bg-emerald-50/80 px-3 py-2 text-sm text-emerald-800">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs text-white">✓</span>
-                        Also goes to {clientName ?? 'your client'}&apos;s Camrhia dashboard
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <input type="tel" value={sendPhone} onChange={(e) => setSendPhone(e.target.value)} placeholder="Phone number" className={input} />
-                      <input type="email" value={sendEmail} onChange={(e) => setSendEmail(e.target.value)} placeholder="Email" className={input} />
-                    </div>
-                    <button className={`${btn} mt-4 w-full py-3`} disabled={finalBusy} onClick={publishAndSend}>
-                      {finalBusy ? 'Sending…' : sentAt ? 'Update and send' : 'Publish and send'}
-                    </button>
-                    {textLink && <a href={textLink} className={`${btnGhost} mt-2 block text-center`}>Now open the text</a>}
-                  </div>
-                  {message && <p className="text-sm text-twilight">{message}</p>}
-                  <div className="flex gap-4 text-xs text-ink-soft">
-                    {isPublished && <button className="underline" onClick={async () => { if (await saveSettings({ status: 'draft' })) flash('Unpublished') }}>Unpublish</button>}
-                  </div>
-                </div>
-                <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm" style={{ height: 'min(78vh, 760px)' }}>
-                  <iframe key={gallery.token} src={`/g/${gallery.token}?preview=1`} title="Gallery preview" className="h-full w-full border-0" />
-                </div>
-              </div>
-            </div>
+          <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm" style={{ height: 'min(78vh, 760px)' }}>
+            <iframe key={gallery.token} src={`/g/${gallery.token}?preview=1`} title="Gallery preview" className="h-full w-full border-0" />
           </div>
         )}
         {gallery && accessOpen && (
@@ -1227,6 +1234,7 @@ export default function GalleryManagePage() {
           </div>
         )}
       </main>
+      </div>
     </div>
   )
 }
