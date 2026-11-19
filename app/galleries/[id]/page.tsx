@@ -27,6 +27,7 @@ type Gallery = {
   cover_path: string | null
   design?: Record<string, unknown> | null
   session_id: string | null
+  moments?: { id: string; name: string; startId: string }[] | null
 }
 type Photo = {
   id: string
@@ -154,7 +155,6 @@ export default function GalleryManagePage() {
   const [scan, setScan] = useState<{ done: number; total: number } | null>(null)
   const [scanned, setScanned] = useState<Set<string>>(new Set())
   const [feats, setFeats] = useState<Record<string, { t?: number; lum: number; sat: number; hue: number; vec: number[] }> | null>(null)
-  const [groups, setGroups] = useState<{ label: string; ids: string[] }[] | null>(null)
   const [sessDate, setSessDate] = useState<string | null>(null)
   const [openedAt, setOpenedAt] = useState<string | null>(null)
   const [coupleUserId, setCoupleUserId] = useState<string | null>(null)
@@ -206,7 +206,7 @@ export default function GalleryManagePage() {
     if (!sb) return
     const { data, error } = await sb
       .from('galleries')
-      .select('id, title, token, pin_hash, allow_downloads, expires_at, status, cover_photo_id, cover_path, session_id, design')
+      .select('id, title, token, pin_hash, allow_downloads, expires_at, status, cover_photo_id, cover_path, session_id, design, moments')
       .eq('id', galleryId)
       .maybeSingle()
     if (error || !data) { setMessage('Gallery not found.'); return }
@@ -617,6 +617,44 @@ export default function GalleryManagePage() {
     }
   }
 
+  const sceneInfo = (() => {
+    const ms = gallery?.moments ?? []
+    const sorted = [...photos].sort((a, b) => a.sort_order - b.sort_order)
+    const start = new Map(ms.map((m) => [m.startId, m]))
+    const head: string[] = []
+    const blocks: { m: { id: string; name: string; startId: string }; ids: string[] }[] = []
+    for (const p of sorted) {
+      const m = start.get(p.id)
+      if (m) blocks.push({ m, ids: [p.id] })
+      else if (blocks.length) blocks[blocks.length - 1].ids.push(p.id)
+      else head.push(p.id)
+    }
+    return { head, blocks }
+  })()
+
+  async function saveMoments(ms: { id: string; name: string; startId: string }[]) {
+    const sb = supabase
+    if (!sb || !gallery) return
+    const { error } = await sb.from('galleries').update({ moments: ms }).eq('id', gallery.id)
+    if (error) { setMessage(error.message); return }
+    setGallery((g) => (g ? { ...g, moments: ms } : g))
+  }
+
+  async function moveScene(i: number, d: number) {
+    const j = i + d
+    const bl = [...sceneInfo.blocks]
+    if (j < 0 || j >= bl.length) return
+    ;[bl[i], bl[j]] = [bl[j], bl[i]]
+    const byId = new Map(photos.map((p) => [p.id, p]))
+    await saveOrder([...sceneInfo.head, ...bl.flatMap((b) => b.ids)].map((id) => byId.get(id)!))
+  }
+
+  async function renameScene(id: string, name: string) {
+    const nm = name.trim()
+    if (!nm || !gallery?.moments) return
+    await saveMoments(gallery.moments.map((m) => (m.id === id ? { ...m, name: nm } : m)))
+  }
+
   async function saveOrder(arr: Photo[]) {
     const sb = supabase
     if (!sb) return
@@ -635,7 +673,6 @@ export default function GalleryManagePage() {
     const list = [...photos]
     setScan({ done: 0, total: list.length })
     setScanned(new Set())
-    setGroups(null)
     const out: Record<string, { t?: number; lum: number; sat: number; hue: number; vec: number[] }> = {}
     let idx = 0
     let done = 0
@@ -701,6 +738,62 @@ export default function GalleryManagePage() {
     setScan(null)
   }
 
+  async function aiScan() {
+    const sb = supabase
+    if (!sb || photos.length < 1 || scan) return
+    const { data: ses } = await sb.auth.getSession()
+    const token = ses.session?.access_token
+    if (!token) { setMessage('Please sign in again.'); return }
+    const list = [...photos].sort((x, y) => x.sort_order - y.sort_order)
+    setScan({ done: 0, total: list.length })
+    setScanned(new Set())
+    const order = ['Getting ready', 'Ceremony', 'Portraits', 'Couple', 'Family and group', 'Details', 'Cocktail hour', 'Reception', 'First dance', 'Dancing', 'Cake and toasts', 'Sendoff', 'Candid', 'Venue and scenery', 'Other']
+    const labels: Record<string, string> = {}
+    let next = 0
+    let done = 0
+    let failed: string | null = null
+    const thumb = async (p: Photo): Promise<string> => {
+      try {
+        const url = p.thumb_path ? thumbs[p.thumb_path] : undefined
+        if (!url) return ''
+        const im = await new Promise<HTMLImageElement>((res, rej) => { const el = new Image(); el.crossOrigin = 'anonymous'; el.onload = () => res(el); el.onerror = rej; el.src = url + (url.includes('?') ? '&' : '?') + 'scan=1' })
+        const k = 320 / Math.max(im.naturalWidth, im.naturalHeight, 1)
+        const cv = document.createElement('canvas')
+        cv.width = Math.max(1, Math.round(im.naturalWidth * Math.min(1, k)))
+        cv.height = Math.max(1, Math.round(im.naturalHeight * Math.min(1, k)))
+        cv.getContext('2d')?.drawImage(im, 0, 0, cv.width, cv.height)
+        return cv.toDataURL('image/jpeg', 0.7)
+      } catch { return '' }
+    }
+    const worker = async () => {
+      while (!failed) {
+        const start = next
+        next += 12
+        if (start >= list.length) return
+        const batch = list.slice(start, start + 12)
+        const imgs = await Promise.all(batch.map(thumb))
+        const ok = batch.map((p, i) => ({ p, b: imgs[i] })).filter((x) => x.b)
+        if (ok.length) {
+          const r = await fetch('/api/ai/camri-scenes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ images: ok.map((x) => x.b), galleryId: gallery?.id }) })
+          const j = await r.json().catch(() => ({}))
+          if (!r.ok) { failed = j.error ?? 'Camri could not scan right now.'; return }
+          ok.forEach((x, i) => { labels[x.p.id] = (j.labels ?? [])[i] ?? 'Other' })
+        }
+        done += batch.length
+        setScan({ done: Math.min(done, list.length), total: list.length })
+        setScanned((prev) => { const n = new Set(prev); batch.forEach((p) => n.add(p.id)); return n })
+      }
+    }
+    await Promise.all(Array.from({ length: 3 }, worker))
+    setScan(null)
+    if (failed) { setMessage(failed); return }
+    const gs = order.map((label) => ({ label, ids: list.filter((p) => (labels[p.id] ?? 'Other') === label).map((p) => p.id) })).filter((g) => g.ids.length)
+    const byId = new Map(photos.map((p) => [p.id, p]))
+    const arr = gs.flatMap((g) => g.ids.map((id) => byId.get(id)!))
+    await saveOrder(arr)
+    await saveMoments(gs.map((g) => ({ id: crypto.randomUUID(), name: g.label, startId: g.ids[0] })))
+  }
+
   async function groupBy(mode: 'scenes' | 'colors' | 'moments') {
     if (!feats) return
     const byName = (x: Photo, y: Photo) => (x.filename ?? '').localeCompare(y.filename ?? '', undefined, { numeric: true, sensitivity: 'base' })
@@ -748,8 +841,8 @@ export default function GalleryManagePage() {
     const byId = new Map(photos.map((p) => [p.id, p]))
     const used = new Set(gs.flatMap((g) => g.ids))
     const arr = [...gs.flatMap((g) => g.ids.map((id) => byId.get(id)!)), ...photos.filter((p) => !used.has(p.id))]
-    setGroups(gs)
     await saveOrder(arr)
+    await saveMoments(gs.map((g) => ({ id: crypto.randomUUID(), name: g.label, startId: g.ids[0] })))
   }
 
   const shareUrl = gallery ? `${origin}/g/${gallery.token}` : ''
@@ -1040,6 +1133,7 @@ export default function GalleryManagePage() {
               <div className="mt-6 border-t border-line pt-5">
                 <p className="text-sm font-medium text-ink">Sort photos</p>
                 <button type="button" onClick={scanPhotos} disabled={!!scan} className="mt-3 w-full rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60">{scan ? `Scanning ${scan.done} of ${scan.total}` : feats ? 'Scan again' : 'Scan photos'}</button>
+                <button type="button" onClick={aiScan} disabled={!!scan} className="mt-2 w-full rounded-xl border border-twilight px-4 py-2.5 text-sm font-medium text-twilight transition hover:bg-twilight/10 disabled:opacity-60">Scan with AI</button>
                 {feats && !scan && (
                   <div className="mt-3">
                     <p className="text-xs text-ink-soft">Group by</p>
@@ -1050,20 +1144,28 @@ export default function GalleryManagePage() {
                     </div>
                   </div>
                 )}
-                {groups && (
-                  <ul className="mt-3 space-y-3">
-                    {groups.map((g, i) => (
-                      <li key={i}>
-                        <p className="text-xs"><span className="font-medium text-ink">{g.label}</span> <span className="text-ink-soft">· {g.ids.length} photos</span></p>
-                        <div className="mt-1.5 flex gap-1">
-                          {g.ids.slice(0, 5).map((id) => { const ph = photos.find((x) => x.id === id); const u = ph?.thumb_path ? thumbs[ph.thumb_path] : undefined; return u ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img key={id} src={u} alt="" className="h-9 w-9 rounded object-cover" />
-                          ) : null })}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                {sceneInfo.blocks.length > 0 && (
+                  <>
+                    <ul className="mt-4 space-y-2.5">
+                      {sceneInfo.blocks.map((b, i) => (
+                        <li key={b.m.id} className="rounded-xl border border-line bg-white/60 p-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <input key={b.m.name} defaultValue={b.m.name} onBlur={(e) => { if (e.target.value.trim() && e.target.value.trim() !== b.m.name) renameScene(b.m.id, e.target.value) }} className="min-w-0 flex-1 rounded-lg border border-line bg-paper px-2 py-1 text-sm text-ink focus:border-twilight focus:outline-none" />
+                            <button type="button" disabled={i === 0} onClick={() => moveScene(i, -1)} aria-label="Move up" className="rounded-lg border border-line px-2 py-1 text-xs text-ink-soft transition hover:border-twilight disabled:opacity-30">↑</button>
+                            <button type="button" disabled={i === sceneInfo.blocks.length - 1} onClick={() => moveScene(i, 1)} aria-label="Move down" className="rounded-lg border border-line px-2 py-1 text-xs text-ink-soft transition hover:border-twilight disabled:opacity-30">↓</button>
+                          </div>
+                          <p className="mt-1.5 text-xs text-ink-soft">{b.ids.length} photos</p>
+                          <div className="mt-1.5 flex gap-1">
+                            {b.ids.slice(0, 5).map((id) => { const ph = photos.find((x) => x.id === id); const u = ph?.thumb_path ? thumbs[ph.thumb_path] : undefined; return u ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img key={id} src={u} alt="" className="h-9 w-9 rounded object-cover" />
+                            ) : null })}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <button type="button" onClick={() => saveMoments([])} className="mt-3 text-xs text-ink-soft underline">Remove scene titles</button>
+                  </>
                 )}
               </div>
               <div className="mt-6 border-t border-line pt-5">
