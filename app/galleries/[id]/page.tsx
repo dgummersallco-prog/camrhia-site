@@ -13,7 +13,7 @@ import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { enhancePhoto } from '@/lib/enhance'
 import { storageLimitBytes, formatBytes } from '@/lib/storageLimit'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
-import { GallerySidebar } from '@/app/components/GallerySidebar'
+import DashScenes from '@/app/components/DashScenes'
 
 type Gallery = {
   id: string
@@ -827,8 +827,8 @@ export default function GalleryManagePage() {
   })
 
   return (
-    <div className="min-h-screen bg-paper xl:pl-60">
-      <GallerySidebar active="galleries" />
+    <div className="min-h-screen bg-paper">
+      <DashScenes />
 
       <main className="mx-auto max-w-7xl px-6 py-8">
         {!gallery ? (
@@ -836,31 +836,36 @@ export default function GalleryManagePage() {
         ) : (
           <>
             {/* Header */}
-            <div className="mb-6 flex flex-wrap items-start gap-4">
-              {coverThumb && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={coverThumb} alt="Cover" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
-              )}
-              <div className="min-w-0 flex-1">
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }}
-                  className="w-full bg-transparent font-fraunces text-3xl font-semibold text-ink focus:outline-none focus:ring-0"
-                  aria-label="Gallery name"
-                />
-                <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
-                  <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-emerald-100 text-emerald-700' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
-                  {sessInfo && <span>{sessInfo}</span>}
-                </p>
-                <p className="mt-1 text-xs text-ink-soft">
-                  {photos.length} {photos.length === 1 ? 'photo' : 'photos'} · {totalFavs} {totalFavs === 1 ? 'favorite' : 'favorites'}
-                  {!isPublished ? (photos.length === 0 ? ' · Add photos, then publish when you are ready to share.' : ' · Publish when you are ready to share.') : ''}
-                </p>
+            <div className="mb-6 text-center">
+              <div className="mb-3 text-left">
+                <button type="button" onClick={() => router.push('/galleries')} className="text-sm text-ink-soft hover:text-ink">← Galleries</button>
               </div>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }}
+                className="w-full bg-transparent text-center font-fraunces text-3xl font-semibold text-ink focus:outline-none focus:ring-0"
+                aria-label="Gallery name"
+              />
+              <p className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-ink-soft">
+                <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-emerald-100 text-emerald-700' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
+                {sessInfo && <span>{sessInfo}</span>}
+              </p>
+              <p className="mt-1 text-xs text-ink-soft">
+                {photos.length} {photos.length === 1 ? 'photo' : 'photos'} · {totalFavs} {totalFavs === 1 ? 'favorite' : 'favorites'}
+                {!isPublished ? (photos.length === 0 ? ' · Add photos, then publish when you are ready to share.' : ' · Publish when you are ready to share.') : ''}
+              </p>
             </div>
 
-            {gallery && <div ref={barRef} className="mb-5">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>}
+            {gallery && (
+              <div ref={barRef}>
+                <div className="mx-auto mb-4 max-w-4xl">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>
+                <div className="mx-auto mb-5 flex min-h-[44px] max-w-4xl justify-end gap-2">
+                  {(designOpen || shareOpen) && <button className={btnGhost} onClick={() => goStep(designOpen ? 0 : 1)}>Back</button>}
+                  {!shareOpen && photos.length > 0 && <button className={btn} onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
+                </div>
+              </div>
+            )}
             {message && <p className="mb-4 text-sm text-twilight">{message}</p>}
 
             {designOpen && (
@@ -1019,7 +1024,7 @@ export default function GalleryManagePage() {
                       <p className="hidden text-xs text-ink-soft sm:block">Drag photos to reorder</p>
                     )}
                     {!selecting ? (
-                      photos.length > 0 ? <button className={btn} onClick={() => setDesignOpen(true)}>Next</button> : null
+                      null
                     ) : (
                       <>
                         <button className={btnGhost} onClick={() => setSelected(new Set(shown.map((p) => p.id)))}>Select all ({shown.length})</button>
@@ -1122,12 +1127,9 @@ export default function GalleryManagePage() {
                       <input type="tel" value={sendPhone} onChange={(e) => setSendPhone(e.target.value)} placeholder="Phone number" className={input} />
                       <input type="email" value={sendEmail} onChange={(e) => setSendEmail(e.target.value)} placeholder="Email" className={input} />
                     </div>
-                    <div className="mt-4 flex gap-2">
-                      <button className={btnGhost} onClick={() => goStep(1)}>Back</button>
-                      <button className={`${btn} flex-1 py-3`} disabled={finalBusy} onClick={publishAndSend}>
-                        {finalBusy ? 'Sending…' : sentAt ? 'Update and send' : 'Publish and send'}
-                      </button>
-                    </div>
+                    <button className={`${btn} mt-4 w-full py-3`} disabled={finalBusy} onClick={publishAndSend}>
+                      {finalBusy ? 'Sending…' : sentAt ? 'Update and send' : 'Publish and send'}
+                    </button>
                     {textLink && <a href={textLink} className={`${btnGhost} mt-2 block text-center`}>Now open the text</a>}
                   </div>
                   {message && <p className="text-sm text-twilight">{message}</p>}

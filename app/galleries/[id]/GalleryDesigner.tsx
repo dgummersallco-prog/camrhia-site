@@ -363,8 +363,6 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
               <button key={x} type="button" onClick={() => setDevice(x)} className={'px-4 py-2 font-medium transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
             ))}
           </div>
-          <button type="button" onClick={close} className="rounded-xl border border-line bg-white px-5 py-2 text-sm font-medium text-ink transition hover:border-twilight">Back</button>
-          <button type="button" onClick={onSend ? closeAndSend : close} className="rounded-xl bg-twilight px-6 py-2 text-sm font-medium text-white transition hover:opacity-90">Done</button>
         </div>
         <div ref={boxRef} className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
           <iframe ref={frameRef} src={`/g/${token}?preview=1`} title="Gallery preview" style={{ width: device === 'phone' ? 390 : '100%', height: '100%', border: 0, background: '#fff' }} />
