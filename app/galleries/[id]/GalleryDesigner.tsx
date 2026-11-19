@@ -2,7 +2,7 @@
 
 import CamriTyping from '@/app/components/CamriTyping'
 import ColorInput from '@/app/components/ColorInput'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
 import { COVERS, LAYOUTS, LAYOUT_PRESETS, LOOKS, LOOK_KEYS, PALETTES, resolveDesign, type ElStyle, type GalleryDesign, COVER_PRESETS, COVER_SLOTS } from '@/lib/galleryDesign'
@@ -48,10 +48,10 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
   return { cover: k, ...p, el: { ...clearCoverEl(el), ...(p.el ?? {}) } }
 }
 
-export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend }: {
+export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, steps }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
   photoChoices?: { id: string; url: string }[]; coverPhotoId?: string | null; onPickCover?: (id: string) => void
-  onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void
+  onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void; steps?: (nav: { photos: () => void; publish: () => void }) => ReactNode
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
@@ -342,7 +342,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col px-3 pb-3 pt-10">
+      <div className="flex min-w-0 flex-1 flex-col px-3 pb-3 pt-5">
+        {steps && <div className="mb-4">{steps({ photos: close, publish: closeAndSend })}</div>}
         <div className="mb-5 flex flex-wrap items-center justify-end gap-x-3 gap-y-3 px-1">
           <div className="mr-auto flex flex-wrap items-center gap-x-5 gap-y-2">
             {!['ticket', 'stack'].includes(eff.cover) && <div className="w-40"><ColorInput float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}

@@ -130,7 +130,9 @@ export default function GalleryManagePage() {
   const [accessOpen, setAccessOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [slug, setSlug] = useState('')
-  const [sendTo, setSendTo] = useState('')
+  const [sendPhone, setSendPhone] = useState('')
+  const [sendEmail, setSendEmail] = useState('')
+  const [textLink, setTextLink] = useState<string | null>(null)
   const [finalBusy, setFinalBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
@@ -278,13 +280,59 @@ export default function GalleryManagePage() {
     return ok
   }
 
+  const stepsBar = (active: number, nav: { photos: () => void; style: () => void; publish: () => void }) => (
+    <div className="grid gap-2 sm:grid-cols-3">
+      {([
+        { label: 'Add photos', hint: 'Client-ready edited photos', done: photos.length > 0, go: nav.photos, off: false },
+        { label: 'Style', hint: 'Cover photo and photo layout', done: !!gallery?.design && Object.keys(gallery.design).length > 0, go: nav.style, off: photos.length === 0 },
+        { label: 'Publish and send', hint: openedAt ? `Opened by client ${new Date(openedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Set a PIN, then send it to your client', done: !!openedAt || !!sentAt, go: nav.publish, off: photos.length === 0 },
+      ] as { label: string; hint: string; done: boolean; off: boolean; go: () => void }[]).map((st, i) => (
+        <button
+          key={st.label}
+          type="button"
+          disabled={st.off}
+          onClick={st.go}
+          className={'flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm text-ink transition disabled:opacity-50 ' + (i === active ? 'border-twilight bg-white ring-1 ring-twilight' : st.done ? 'border-emerald-200 bg-emerald-50/70' : 'border-line bg-white/60 hover:bg-white')}
+        >
+          <span className={'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ' + (st.done ? 'bg-emerald-500 text-white' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
+          <span className="leading-tight">{st.label}<span className="mt-0.5 block text-xs text-ink-soft">{st.hint}</span></span>
+        </button>
+      ))}
+    </div>
+  )
+
+  // New galleries get a long random link. Swap it for a short readable one until it has been sent.
+  useEffect(() => {
+    const sb = supabase
+    if (!shareOpen || !sb || !gallery || sentAt || gallery.status === 'published' || gallery.token.length < 20) return
+    let cancelled = false
+    ;(async () => {
+      const base = (gallery.title || 'gallery').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24).replace(/-+$/g, '') || 'gallery'
+      for (let i = 0; i < 4; i++) {
+        const t = `${base}-${Math.random().toString(36).slice(2, 6)}`
+        const { error } = await sb.from('galleries').update({ token: t }).eq('id', gallery.id)
+        if (!error) { if (!cancelled) setGallery((g) => (g ? { ...g, token: t } : g)); return }
+        if (error.code !== '23505') return
+      }
+    })()
+    return () => { cancelled = true }
+  }, [shareOpen, gallery?.id, gallery?.token, gallery?.status, sentAt]) // eslint-disable-line react-hooks/exhaustive-deps
+
   async function publishAndSend() {
     const sb = supabase
     if (!sb || !gallery) return
-    if (pin.trim() && pin.trim().length < 4) { setMessage('Use a PIN of at least 4 characters.'); return }
+    const nm = title.trim()
+    if (!nm) { setMessage('Give the gallery a name.'); return }
+    const p = pin.trim()
+    if (!gallery.pin_hash && !p) { setMessage('Add a PIN before sending.'); return }
+    if (p && p.length < 4) { setMessage('Use a PIN of at least 4 characters.'); return }
+    const email = sendEmail.trim()
+    const phone = sendPhone.trim()
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) { setMessage('That email does not look right.'); return }
     setFinalBusy(true)
     try {
-      if (pin.trim()) await savePin(false)
+      if (nm !== gallery.title && !(await saveSettings({ title: nm }))) return
+      if (p) await savePin(false)
       const ok = isPublished || await saveSettings({ status: 'published' })
       if (!ok) return
       if (!isPublished) await syncCover(gallery.cover_photo_id)
@@ -294,14 +342,17 @@ export default function GalleryManagePage() {
         const err = await sendGalleryToClient(sb, { weddingId: gallery.session_id, coupleUserId, token: gallery.token, expiresAt: gallery.expires_at, pin: '', alreadySent: was })
         if (err) { flash(err); return }
         setSentAt(new Date().toISOString())
-        note = was ? 'Update sent to their Camrhia app' : 'Sent to their Camrhia app'
+        note = was ? 'Update sent to their Camrhia dashboard' : 'Sent to their Camrhia dashboard'
       }
-      const to = sendTo.trim()
-      const hi = `Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}`
-      if (!to && !(gallery.session_id && coupleUserId)) { navigator.clipboard?.writeText(shareUrl); note = 'Published. Link copied' }
+      const hi = `Hi${clientName ? ` ${clientName}` : ''}, your photos are ready: ${shareUrl}${p ? `\nPIN: ${p}` : ''}`
+      const smsHref = phone ? `sms:${phone}?&body=${encodeURIComponent(hi)}` : null
+      if (!email && !phone && !(gallery.session_id && coupleUserId)) { navigator.clipboard?.writeText(shareUrl); note = 'Published. Link copied' }
       flash(note)
       await loadGallery()
-      if (to) window.location.href = to.includes('@') ? `mailto:${to}?subject=${encodeURIComponent('Your photos are ready')}&body=${encodeURIComponent(hi)}` : `sms:${to}?&body=${encodeURIComponent(hi)}`
+      if (email) {
+        setTextLink(smsHref)
+        window.location.href = `mailto:${email}?subject=${encodeURIComponent('Your photos are ready')}&body=${encodeURIComponent(hi)}`
+      } else if (smsHref) window.location.href = smsHref
     } finally { setFinalBusy(false) }
   }
 
@@ -788,35 +839,9 @@ export default function GalleryManagePage() {
                   {!isPublished ? (photos.length === 0 ? ' · Add photos, then publish when you are ready to share.' : ' · Publish when you are ready to share.') : ''}
                 </p>
               </div>
-              <div className="flex shrink-0 flex-wrap gap-2">
-                {photos.length > 0 && (
-                  <button className={gallery.design && Object.keys(gallery.design).length > 0 ? btnGhost : btn} onClick={() => setDesignOpen(true)}>
-                    {gallery.design && Object.keys(gallery.design).length > 0 ? 'Edit design' : 'Next: design your gallery'}
-                  </button>
-                )}
-              </div>
             </div>
 
-            {gallery && (
-              <div className="mb-5 grid gap-2 sm:grid-cols-3">
-                {([
-                  { label: 'Add photos', hint: 'Client-ready edited photos', done: photos.length > 0, go: () => fileInput.current?.click() },
-                  { label: 'Style', hint: 'Design your cover photo and photo layout', done: !!gallery.design && Object.keys(gallery.design).length > 0, go: () => setDesignOpen(true) },
-                  { label: 'Publish and send', hint: openedAt ? `Opened by client ${new Date(openedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Set a PIN, then send it to your client', done: !!openedAt || !!sentAt, off: photos.length === 0, go: () => setShareOpen(true) },
-                ] as { label: string; hint?: string; done: boolean; off?: boolean; go: () => void }[]).map((st, i) => (
-                  <button
-                    key={st.label}
-                    type="button"
-                    disabled={st.off}
-                    onClick={st.go}
-                    className={'flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition disabled:opacity-50 ' + (st.done ? 'border-emerald-200 bg-emerald-50/70 text-ink' : 'border-line bg-white/60 text-ink hover:bg-white')}
-                  >
-                    <span className={'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ' + (st.done ? 'bg-emerald-500 text-white' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
-                    <span className="leading-tight">{st.label}{st.hint && <span className="mt-0.5 block text-xs text-ink-soft">{st.hint}</span>}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+            {gallery && <div className="mb-5">{stepsBar(0, { photos: () => fileInput.current?.click(), style: () => setDesignOpen(true), publish: () => setShareOpen(true) })}</div>}
             {message && <p className="mb-4 text-sm text-twilight">{message}</p>}
 
             {designOpen && (
@@ -831,6 +856,7 @@ export default function GalleryManagePage() {
                 onPickCover={async (id) => { if (await saveSettings({ cover_photo_id: id })) await syncCover(id) }}
                 onClose={() => setDesignOpen(false)}
                 onSend={() => setShareOpen(true)}
+                steps={(nav) => stepsBar(1, { photos: nav.photos, style: () => {}, publish: nav.publish })}
                 onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as Record<string, unknown> } : g))}
               />
             )}
@@ -873,24 +899,6 @@ export default function GalleryManagePage() {
                     <button className={btnGhost} disabled={active} onClick={() => folderInput.current?.click()}>
                       Choose folder
                     </button>
-                  </div>
-                  <div className="flex w-full flex-wrap gap-2 border-t border-line pt-3" onClick={(e) => e.stopPropagation()}>
-                <button className={btnGhost} onClick={() => setShareOpen(true)}>Share</button>
-                <button className={btnGhost} onClick={() => setAccessOpen(true)}>Access</button>
-                <button
-                  onClick={async () => {
-                    const publishing = !isPublished
-                    const ok = await saveSettings({ status: publishing ? 'published' : 'draft' })
-                    if (ok && publishing) {
-                      await syncCover(gallery.cover_photo_id)
-                      setShareOpen(true)
-                    }
-                  }}
-                  disabled={!isPublished && photos.length === 0}
-                  className={isPublished || !(gallery.design && Object.keys(gallery.design).length > 0) ? btnGhost : btn}
-                >
-                  {isPublished ? 'Unpublish' : 'Publish gallery'}
-                </button>
                   </div>
                 </section>
 
@@ -991,9 +999,7 @@ export default function GalleryManagePage() {
                       <p className="hidden text-xs text-ink-soft sm:block">Drag photos to reorder</p>
                     )}
                     {!selecting ? (
-                      <button className={btnGhost} disabled={photos.length === 0} onClick={() => { setSelecting(true); setSelected(new Set()) }}>
-                        Select
-                      </button>
+                      photos.length > 0 ? <button className={btn} onClick={() => setDesignOpen(true)}>Next</button> : null
                     ) : (
                       <>
                         <button className={btnGhost} onClick={() => setSelected(new Set(shown.map((p) => p.id)))}>Select all ({shown.length})</button>
@@ -1057,15 +1063,18 @@ export default function GalleryManagePage() {
         )}
         {gallery && shareOpen && (
           <div className="fixed inset-0 z-50 overflow-y-auto bg-paper">
-            <div className="mx-auto max-w-6xl px-5 py-8">
-              <div className="mb-6 flex items-center justify-between gap-3">
-                <button className="text-sm text-ink-soft hover:text-ink" onClick={() => { setShareOpen(false); setDesignOpen(true) }}>← Back to style</button>
+            <div className="mx-auto max-w-6xl px-5 py-6">
+              <div className="mb-6 flex items-start gap-3">
+                <div className="min-w-0 flex-1">{stepsBar(2, { photos: () => { setShareOpen(false); setDesignOpen(false) }, style: () => { setShareOpen(false); setDesignOpen(true) }, publish: () => {} })}</div>
                 <button className="text-2xl leading-none text-ink-soft" onClick={() => setShareOpen(false)} aria-label="Close">×</button>
               </div>
-              <h2 className="font-fraunces text-3xl text-ink">Publish and send</h2>
-              <p className="mt-1 text-sm text-ink-soft">{gallery.title}</p>
-              <div className="mt-6 grid gap-6 lg:grid-cols-[400px_1fr]">
+              <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
                 <div className="space-y-5">
+                  <div className={card}>
+                    <label className={label}>Gallery name</label>
+                    <input value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }} placeholder="Chloe's Graduation" className={input} />
+                    <p className="mt-2 text-xs text-ink-soft">This is the name your client sees on their dashboard.</p>
+                  </div>
                   <div className={card}>
                     <label className={label}>Gallery link</label>
                     <div className="flex items-center overflow-hidden rounded-xl border border-line bg-paper focus-within:border-twilight">
@@ -1081,23 +1090,32 @@ export default function GalleryManagePage() {
                     {sentAt && slug !== gallery.token && <p className="mt-2 text-xs text-ink-soft">Links you already sent will stop working.</p>}
                   </div>
                   <div className={card}>
-                    <label className={label}>PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(optional)</span>}</label>
-                    <div className="flex gap-2">
-                      <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder={gallery.pin_hash ? 'Set a new PIN' : 'Add a PIN'} className={input} />
-                      {pin.trim() && <button className={btnGhost} onClick={() => savePin(false)}>Save</button>}
-                    </div>
-                    {gallery.pin_hash && <button className="mt-2 text-xs text-ink-soft underline" onClick={() => savePin(true)}>Remove PIN</button>}
+                    <label className={label}>PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(required)</span>}</label>
+                    <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder={gallery.pin_hash ? 'Type to change the PIN' : 'Choose a PIN'} className={input} />
                     <p className="mt-2 text-xs text-ink-soft">Anyone opening the link types this first. {clientName ? `${clientName} won't need it` : 'Your client won’t need it'} when signed in to their dashboard.</p>
                   </div>
                   <div className={card}>
                     <label className={label}>Send to</label>
-                    <input value={sendTo} onChange={(e) => setSendTo(e.target.value)} placeholder="Email or phone number" className={input} />
-                    <p className="mt-2 text-xs text-ink-soft">{gallery.session_id && coupleUserId ? `${clientName ?? 'Your client'} also gets it in their Camrhia app. ` : ''}Type an email or number and their email or messages app opens with the link ready to send.</p>
+                    {gallery.session_id && coupleUserId && (
+                      <div className="mb-3 flex items-center gap-2 rounded-xl bg-emerald-50/80 px-3 py-2 text-sm text-emerald-800">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs text-white">✓</span>
+                        Also goes to {clientName ?? 'your client'}&apos;s Camrhia dashboard
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <input type="tel" value={sendPhone} onChange={(e) => setSendPhone(e.target.value)} placeholder="Phone number" className={input} />
+                      <input type="email" value={sendEmail} onChange={(e) => setSendEmail(e.target.value)} placeholder="Email" className={input} />
+                    </div>
                     <button className={`${btn} mt-4 w-full py-3`} disabled={finalBusy} onClick={publishAndSend}>
                       {finalBusy ? 'Sending…' : sentAt ? 'Update and send' : 'Publish and send'}
                     </button>
+                    {textLink && <a href={textLink} className={`${btnGhost} mt-2 block text-center`}>Now open the text</a>}
                   </div>
                   {message && <p className="text-sm text-twilight">{message}</p>}
+                  <div className="flex gap-4 text-xs text-ink-soft">
+                    <button className="underline" onClick={() => setAccessOpen(true)}>More settings</button>
+                    {isPublished && <button className="underline" onClick={async () => { if (await saveSettings({ status: 'draft' })) flash('Unpublished') }}>Unpublish</button>}
+                  </div>
                 </div>
                 <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm" style={{ height: 'min(78vh, 760px)' }}>
                   <iframe key={gallery.token} src={`/g/${gallery.token}?preview=1`} title="Gallery preview" className="h-full w-full border-0" />
@@ -1107,7 +1125,7 @@ export default function GalleryManagePage() {
           </div>
         )}
         {gallery && accessOpen && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4" onClick={() => setAccessOpen(false)}>
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={() => setAccessOpen(false)}>
             <div className={`${card} max-h-[90vh] w-full max-w-lg overflow-y-auto`} onClick={(e) => e.stopPropagation()}>
               <div className="mb-4 flex items-center justify-between">
                 <p className="font-fraunces text-xl text-ink">Access settings</p>
