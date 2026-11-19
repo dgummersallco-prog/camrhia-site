@@ -113,6 +113,8 @@ export default function GalleryManagePage() {
   const [origin, setOrigin] = useState('')
   const [sessInfo, setSessInfo] = useState<string | null>(null)
   const [clientName, setClientName] = useState<string | null>(null)
+  const [sessType, setSessType] = useState<string | null>(null)
+  const [sessDate, setSessDate] = useState<string | null>(null)
   const [openedAt, setOpenedAt] = useState<string | null>(null)
   const [coupleUserId, setCoupleUserId] = useState<string | null>(null)
   const [sentAt, setSentAt] = useState<string | null>(null)
@@ -181,6 +183,8 @@ export default function GalleryManagePage() {
       const date = wd?.wedding_date ? new Date(`${wd.wedding_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null
       const nm = wd?.names && wd.names.trim().toLowerCase() !== g.title.trim().toLowerCase() ? wd.names : null
       setClientName(wd?.names?.trim() || null)
+      setSessType(label)
+      setSessDate(date)
       setOpenedAt(wd?.gallery_opened_at ?? null)
       setCoupleUserId(wd?.couple_user_id ?? null)
       setSentAt(wd?.gallery_sent_at ?? null)
@@ -568,6 +572,21 @@ export default function GalleryManagePage() {
     }
   }
 
+  async function sortPhotos(mode: 'name' | 'reverse') {
+    const sb = supabase
+    if (!sb || photos.length < 2) return
+    const arr = [...photos]
+    if (mode === 'name') arr.sort((x, y) => (x.filename ?? '').localeCompare(y.filename ?? '', undefined, { numeric: true, sensitivity: 'base' }))
+    else arr.reverse()
+    const next = arr.map((p, i) => ({ ...p, sort_order: i }))
+    const before = new Map(photos.map((p) => [p.id, p.sort_order]))
+    const changed = next.filter((p) => before.get(p.id) !== p.sort_order)
+    setPhotos(next)
+    for (let i = 0; i < changed.length; i += 10) {
+      await Promise.all(changed.slice(i, i + 10).map((p) => sb.from('gallery_photos').update({ sort_order: p.sort_order }).eq('id', p.id)))
+    }
+  }
+
   const shareUrl = gallery ? `${origin}/g/${gallery.token}` : ''
   async function toggleBefore() {
     const sb = supabase
@@ -834,6 +853,51 @@ export default function GalleryManagePage() {
       <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row">
         <aside className="flex w-full shrink-0 flex-col overflow-y-auto rounded-2xl border border-line bg-white/50 px-5 pb-8 pt-6 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:w-[320px]">
           <div ref={setLeftHost} className="flex flex-col" />
+          {gallery && !designOpen && !shareOpen && (
+            <div>
+              <h2 className="font-fraunces text-2xl font-semibold text-ink">Gallery details</h2>
+              <div className="mt-5">
+                <label className={label}>Gallery name</label>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }}
+                  className={input}
+                />
+              </div>
+              {(clientName || sessType || sessDate) && (
+                <dl className="mt-5 space-y-3 text-sm">
+                  {clientName && <div><dt className="text-xs text-ink-soft">Client</dt><dd className="text-ink">{clientName}</dd></div>}
+                  {sessType && <div><dt className="text-xs text-ink-soft">Shoot type</dt><dd className="text-ink">{sessType}</dd></div>}
+                  {sessDate && <div><dt className="text-xs text-ink-soft">Shoot date</dt><dd className="text-ink">{sessDate}</dd></div>}
+                </dl>
+              )}
+              <div className="mt-6 border-t border-line pt-5">
+                <label className="flex cursor-pointer items-center justify-between text-sm font-medium text-ink">
+                  Allow downloads
+                  <input type="checkbox" checked={gallery.allow_downloads} onChange={(e) => saveSettings({ allow_downloads: e.target.checked })} className="h-5 w-5" />
+                </label>
+                <p className="mt-2 text-xs text-ink-soft">When off, clients can view and favorite but not download.</p>
+              </div>
+              <div className="mt-6 border-t border-line pt-5">
+                <p className="text-sm font-medium text-ink">Sort photos</p>
+                <div className="mt-2 flex gap-2">
+                  <button type="button" onClick={() => sortPhotos('name')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">By filename</button>
+                  <button type="button" onClick={() => sortPhotos('reverse')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">Reverse</button>
+                </div>
+              </div>
+              <div className="mt-6 border-t border-line pt-5">
+                <p className="text-sm font-medium text-ink">Upload and storage</p>
+                <p className="mt-2 text-xs text-ink-soft">{photos.length} {photos.length === 1 ? 'photo' : 'photos'} · {(photos.reduce((n, p) => n + (p.size_bytes ?? 0), 0) / (1024 * 1024 * 1024)).toFixed(2)} GB</p>
+                {uploads.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-ink-soft">{active ? 'Uploading' : 'Finished'}: {doneCount} of {uploads.length}</p>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-twilight transition-all" style={{ width: `${(doneCount / uploads.length) * 100}%` }} /></div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {gallery && shareOpen && (
             <div>
               <div className="mb-6 h-5" />

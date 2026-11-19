@@ -57,6 +57,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
   const [slot, setSlot] = useState('main')
+  const [pickOpen, setPickOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [popPos, setPopPos] = useState<{ top?: number; bottom?: number; maxHeight: number } | null>(null)
@@ -259,22 +260,37 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         {photoChoices && photoChoices.length > 0 && onPickCover && (
           <>
             <p className={head + ' mt-2'}>Cover photo</p>
-            <p className="mt-1 text-xs text-ink-soft">Tap the photo that should open the gallery.</p>
-            {slotKeys.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {slotKeys.map((k) => (
-                  <button key={k} type="button" onClick={() => setSlot(k)} className={`rounded-full border px-3 py-1 text-xs font-medium transition ${curSlot === k ? 'border-twilight bg-twilight text-white' : 'border-line text-ink-soft hover:border-twilight'}`}>{k === 'main' ? 'Main' : 'Photo ' + (Number(k.slice(1)) + 1)}</button>
-                ))}
-              </div>
-            )}
-            <div className="mt-3 grid max-h-56 grid-cols-4 gap-2 overflow-y-auto pr-0.5">
-              {photoChoices.map((c) => (
-                <button key={c.id} type="button" onClick={() => pickCover(c.id)} className={`aspect-square overflow-hidden rounded-lg border-2 transition ${(curSlot === 'main' ? coverPhotoId : eff.slots[curSlot]) === c.id ? 'border-twilight ring-2 ring-twilight/40' : 'border-transparent hover:border-line'}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={c.url} alt="" className="h-full w-full object-cover" draggable={false} />
-                </button>
-              ))}
+            <p className="mt-1 text-xs text-ink-soft">Tap a photo to change it.</p>
+            <div className="mt-3 grid grid-cols-5 gap-2">
+              {(slotKeys.length > 0 ? slotKeys : ['main']).map((k) => {
+                const pid = k === 'main' ? coverPhotoId : eff.slots[k]
+                const u = photoChoices.find((c) => c.id === pid)?.url
+                const on = (slotKeys.length > 0 ? curSlot : 'main') === k
+                return (
+                  <button key={k} type="button" onClick={() => { setSlot(k); setPickOpen(true) }} className={`flex aspect-square items-center justify-center overflow-hidden rounded-lg border-2 bg-paper transition ${on ? 'border-twilight ring-2 ring-twilight/40' : 'border-line hover:border-twilight'}`}>
+                    {u ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={u} alt="" className="h-full w-full object-cover" draggable={false} />
+                    ) : (
+                      <span className="text-lg text-ink-soft">+</span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
+            {pickOpen && (
+              <>
+                <div className="mt-3 grid max-h-48 grid-cols-4 gap-2 overflow-y-auto pr-0.5">
+                  {photoChoices.slice(0, 24).map((c) => (
+                    <button key={c.id} type="button" onClick={() => { pickCover(c.id); setPickOpen(false) }} className="aspect-square overflow-hidden rounded-lg border-2 border-transparent transition hover:border-twilight">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.url} alt="" loading="lazy" className="h-full w-full object-cover" draggable={false} />
+                    </button>
+                  ))}
+                </div>
+                <button type="button" onClick={() => setPickOpen(false)} className="mt-2 text-xs text-ink-soft underline">Close</button>
+              </>
+            )}
           </>
         )}
         {coverUrl && (
