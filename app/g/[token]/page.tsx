@@ -47,6 +47,7 @@ export default function GalleryViewPage() {
   const [brand, setBrand] = useState<Brand | null>(null)
   const [designPreview, setDesignPreview] = useState<GalleryDesign | null>(null)
   const [focusMode, setFocusMode] = useState(false)
+  const [isPreview, setIsPreview] = useState(false)
   const [zip, setZip] = useState<{ busy: boolean; done: number; total: number; error: string | null }>({ busy: false, done: 0, total: 0, error: null })
 
   const load = useCallback(async (pinValue?: string) => {
@@ -218,6 +219,7 @@ export default function GalleryViewPage() {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
     const onMsg = (e: MessageEvent) => { const m = e.data; if (m && m.type === 'camrhia-gallery-design') setDesignPreview((m.design ?? {}) as GalleryDesign) }
     window.addEventListener('message', onMsg)
+    setIsPreview(true)
     window.parent?.postMessage({ type: 'camrhia-gallery-ready' }, '*')
     return () => window.removeEventListener('message', onMsg)
   }, [])
@@ -264,6 +266,121 @@ export default function GalleryViewPage() {
     return () => { window.removeEventListener('click', click, true); st.remove() }
   }, [focusMode])
 
+  // Preview only: drag the cover to move it, pinch (or hold Ctrl and scroll) to zoom it.
+  useEffect(() => {
+    if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
+    const st = document.createElement('style')
+    st.textContent = '.gal-root img[data-cover]{cursor:grab}'
+    document.head.appendChild(st)
+    const coverImg = () => document.querySelector('img[data-cover]') as HTMLImageElement | null
+    const inside = (img: HTMLImageElement, x: number, y: number) => {
+      const r = (img.parentElement ?? img).getBoundingClientRect()
+      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
+    }
+    const curZoom = (img: HTMLImageElement) => {
+      const m = /scale\(([\d.]+)\)/.exec(img.style.transform || '')
+      return m ? parseFloat(m[1]) : 1
+    }
+    const curPos = (img: HTMLImageElement): [number, number] => {
+      const op = getComputedStyle(img).objectPosition.split(' ')
+      const px = parseFloat(op[0])
+      const py = parseFloat(op[1])
+      return [Number.isFinite(px) ? px : 50, Number.isFinite(py) ? py : 50]
+    }
+    let drag: { x: number; y: number; px: number; py: number; moved: boolean } | null = null
+    let suppress = false
+    let zl: number | null = null
+    let zt = 0
+    let gBase = 1
+    const sendZoom = (z: number) => {
+      const v = Math.round(Math.min(3, Math.max(1, z)) * 100) / 100
+      zl = v
+      zt = Date.now()
+      window.parent?.postMessage({ type: 'camrhia-gallery-zoom', zoom: v }, '*')
+    }
+    const baseZoom = (img: HTMLImageElement) => (zl !== null && Date.now() - zt < 400 ? zl : curZoom(img))
+    const down = (e: MouseEvent) => {
+      if (e.button !== 0) return
+      const img = coverImg()
+      if (!img || !inside(img, e.clientX, e.clientY)) return
+      const [px, py] = curPos(img)
+      drag = { x: e.clientX, y: e.clientY, px, py, moved: false }
+      e.preventDefault()
+    }
+    const move = (e: MouseEvent) => {
+      if (!drag) return
+      const img = coverImg()
+      if (!img) return
+      const dx = e.clientX - drag.x
+      const dy = e.clientY - drag.y
+      if (!drag.moved && Math.hypot(dx, dy) < 4) return
+      drag.moved = true
+      const W = img.clientWidth
+      const H = img.clientHeight
+      const nw = img.naturalWidth
+      const nh = img.naturalHeight
+      if (!W || !H || !nw || !nh) return
+      const z = curZoom(img)
+      const sc = Math.max(W / nw, H / nh)
+      const kx = W - z * nw * sc
+      const ky = H - z * nh * sc
+      let x = drag.px
+      let y = drag.py
+      if (Math.abs(kx) > 1) x = drag.px + (dx / kx) * 100
+      if (Math.abs(ky) > 1) y = drag.py + (dy / ky) * 100
+      x = Math.round(Math.min(100, Math.max(0, x)) * 10) / 10
+      y = Math.round(Math.min(100, Math.max(0, y)) * 10) / 10
+      window.parent?.postMessage({ type: 'camrhia-gallery-focus', id: img.dataset.pid, cover: true, x, y }, '*')
+    }
+    const up = () => {
+      if (drag?.moved) { suppress = true; setTimeout(() => { suppress = false }, 0) }
+      drag = null
+    }
+    const click = (e: MouseEvent) => {
+      if (!suppress) return
+      e.preventDefault()
+      e.stopImmediatePropagation()
+    }
+    const wheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return
+      const img = coverImg()
+      if (!img || !inside(img, e.clientX, e.clientY)) return
+      e.preventDefault()
+      sendZoom(baseZoom(img) * Math.exp(-e.deltaY * 0.01))
+    }
+    const gStart = (e: Event) => {
+      const img = coverImg()
+      if (!img) return
+      e.preventDefault()
+      gBase = curZoom(img)
+    }
+    const gChange = (e: Event) => {
+      const ge = e as Event & { scale?: number; clientX?: number; clientY?: number }
+      const img = coverImg()
+      if (!img || !ge.scale) return
+      if (typeof ge.clientX === 'number' && typeof ge.clientY === 'number' && !inside(img, ge.clientX, ge.clientY)) return
+      e.preventDefault()
+      sendZoom(gBase * ge.scale)
+    }
+    window.addEventListener('click', click, true)
+    window.addEventListener('mousedown', down, true)
+    window.addEventListener('mousemove', move, true)
+    window.addEventListener('mouseup', up, true)
+    window.addEventListener('wheel', wheel, { passive: false, capture: true })
+    window.addEventListener('gesturestart', gStart as EventListener, true)
+    window.addEventListener('gesturechange', gChange as EventListener, true)
+    return () => {
+      window.removeEventListener('click', click, true)
+      window.removeEventListener('mousedown', down, true)
+      window.removeEventListener('mousemove', move, true)
+      window.removeEventListener('mouseup', up, true)
+      window.removeEventListener('wheel', wheel, true)
+      window.removeEventListener('gesturestart', gStart as EventListener, true)
+      window.removeEventListener('gesturechange', gChange as EventListener, true)
+      st.remove()
+    }
+  }, [])
+
   // Preview only: hover names and click-to-edit for the gallery lines.
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
@@ -296,6 +413,13 @@ export default function GalleryViewPage() {
     }
     const hide = () => { box.style.display = 'none' }
     const click = (e: MouseEvent) => {
+      const sc = (e.target as HTMLElement | null)?.closest?.('[data-setcover]')
+      if (sc) {
+        e.preventDefault()
+        e.stopPropagation()
+        window.parent?.postMessage({ type: 'camrhia-gallery-setcover', id: sc.getAttribute('data-setcover') }, '*')
+        return
+      }
       const h = hit(e.target)
       if (!h) {
         const t = e.target as HTMLElement | null
@@ -456,9 +580,13 @@ export default function GalleryViewPage() {
         >
           <Heart filled={favs.has(p.id)} className="h-4 w-4" />
         </button>
+        {coverBtn(p)}
       </div>
     </Fragment>
   )
+  const coverBtn = (p: (typeof list)[number]) => isPreview ? (
+    <button type="button" data-setcover={p.id} className="absolute bottom-2 left-2 z-10 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 transition hover:bg-black/80 group-hover:opacity-100">Set as cover</button>
+  ) : null
   const heartBtn = (p: (typeof list)[number]) => (
     <button
       onClick={() => toggleFav(p.id)}
@@ -489,6 +617,7 @@ export default function GalleryViewPage() {
             />
           )}
           {heartBtn(p)}
+          {coverBtn(p)}
         </div>
       </Fragment>
     )
@@ -632,7 +761,7 @@ export default function GalleryViewPage() {
         const f1 = big1 ? 71 : Math.max(24, 270 / (0.62 * l1.length))
         const f2 = big1 ? 105.9 : Math.min(105.9, f1 * 1.41)
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#F6DCBD' }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;800&family=DM+Serif+Display&display=swap" />
             <div className="absolute overflow-hidden" style={{ left: '2.9cqw', top: '6.2cqw', width: '57.6cqw', height: '37cqw', background: pal.line }}>
               <div className="absolute inset-0">{imgEl}</div>
@@ -648,7 +777,7 @@ export default function GalleryViewPage() {
           </div>
         )
       })() : coverKind === 'circle' && cover?.web ? (
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: pal.bg }}>
           <div className="absolute overflow-hidden" style={{ left: '30.9cqw', top: '0.8cqw', width: '38.1cqw', height: '38.1cqw', borderRadius: '50%', border: '0.33cqw solid ' + pal.accent, background: pal.line }}>
             <div className="absolute inset-0">{imgEl}</div>
           </div>
@@ -672,7 +801,7 @@ export default function GalleryViewPage() {
         const ts: CSSProperties = { ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: pal.bg }}>
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
               {tiles.map((t, i) => {
@@ -703,7 +832,7 @@ export default function GalleryViewPage() {
         const half = Math.ceil(sw.length / 2)
         const pmL: string[] = !sub ? [] : ci > 0 ? [sub.slice(0, ci + 1).trim(), sub.slice(ci + 1).trim()] : sw.length > 1 ? [sw.slice(0, half).join(' '), sw.slice(half).join(' ')] : [sub]
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#E8D5BA' }}>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#E8D5BA' }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hurricane&family=Playfair+Display:wght@500&display=swap" />
             <div className="absolute overflow-hidden" style={{ left: '6.92cqw', top: '5.16cqw', width: '46.67cqw', height: '40.67cqw', transform: 'rotate(-3deg)', background: pal.line }}>
               <div className="absolute inset-0">{imgEl}</div>
@@ -728,7 +857,7 @@ export default function GalleryViewPage() {
         const ts: CSSProperties = { ...headStyle, fontFamily: "'Bodoni Moda', Georgia, serif", fontWeight: 400, fontStyle: 'normal', letterSpacing: 0, textTransform: 'uppercase' }
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: pal.bg }}>
             <div className="absolute overflow-hidden" style={{ left: '5.9cqw', top: '4.55cqw', width: '88.1cqw', height: '37.8cqw', background: pal.line }}>
               <div className="absolute inset-0">{imgEl}</div>
             </div>
@@ -751,7 +880,7 @@ export default function GalleryViewPage() {
         const tf = Math.min(78.2, (78.2 * 10) / Math.max(title.length, 10))
         const sub = coverSub ? String(coverSub).toUpperCase() : ''
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#271407' }}>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#271407' }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&display=swap" />
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
@@ -771,7 +900,7 @@ export default function GalleryViewPage() {
           </div>
         )
       })() : coverKind === 'arch' && cover?.web ? (
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.bg }}>
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: pal.bg }}>
           <div className="absolute overflow-hidden" style={{ left: '4.2cqw', top: '0.8cqw', width: '40.6cqw', height: '48.2cqw', borderTopLeftRadius: '20.3cqw', borderTopRightRadius: '20.3cqw', background: pal.line }}>
             <div className="absolute inset-0">{imgEl}</div>
           </div>
@@ -795,15 +924,15 @@ export default function GalleryViewPage() {
         const ss: CSSProperties = { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: 0, fill: 'currentColor', color: '#6B4F3C', pointerEvents: 'auto' }
         const box = (cx: number, cy: number, w: number, h: number, a: number): CSSProperties => ({ left: ((cx - w / 2) / 9) + 'cqw', top: ((cy - h / 2) / 9) + 'cqw', width: (w / 9) + 'cqw', height: (h / 9) + 'cqw', transform: 'rotate(' + a + 'deg)' })
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#F3E4CB' }}>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#F3E4CB' }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Qwigley&family=Playfair+Display:wght@500&display=swap" />
             {slots.map((sl, k) => (
-              <div key={k} className="absolute overflow-hidden" style={{ ...box(sl.cx, sl.cy, sl.w, sl.h, sl.a), background: pal.line }}>
+              <div key={k} className="absolute overflow-hidden" style={{ ...box(sl.cx, sl.cy, sl.w + 12, sl.h + 12, sl.a), background: pal.line }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={sl.src} alt="" className="h-full w-full object-cover" />
               </div>
             ))}
-            <div className="absolute overflow-hidden" style={{ ...box(473, 169.7, 292.7, 250.8, 3.96), background: pal.line }}>
+            <div className="absolute overflow-hidden" style={{ ...box(473, 169.7, 304.7, 262.8, 3.96), background: pal.line }}>
               <div className="absolute inset-0">{imgEl}</div>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -820,7 +949,7 @@ export default function GalleryViewPage() {
         const lines = String(coverTitle).split(/\s*(&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean).map((x) => (/^(and)$/i.test(x) ? '&' : x === '+' ? '&' : x))
         const ts: CSSProperties = { ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }
         return (
-          <div className="relative grid w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', gridTemplateColumns: '1fr minmax(84px, 13%) 1fr', background: pal.bg }}>
+          <div className="relative grid w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', gridTemplateColumns: '1fr minmax(84px, 13%) 1fr', background: pal.bg }}>
             <div className="relative overflow-hidden" style={{ background: pal.line }}><div className="absolute inset-0">{imgEl}</div></div>
             <div style={{ background: pal.bg }} />
             <div className="relative overflow-hidden" style={{ background: pal.line }}>
@@ -837,7 +966,7 @@ export default function GalleryViewPage() {
           </div>
         )
       })() : coverKind === 'magazine' && cover?.web ? (
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.line }}>
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: pal.line }}>
           <div className="absolute inset-0">{imgEl}</div>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0) 42%)' }} />
           <h1 className="sr-only">{coverTitle}</h1>
@@ -858,7 +987,7 @@ export default function GalleryViewPage() {
         const ff = "'Cormorant Garamond', 'Playfair Display', Georgia, serif"
         const big = { position: 'absolute' as const, fontFamily: ff, fontWeight: 300, lineHeight: 1, color: 'rgba(255,255,255,0.58)', whiteSpace: 'nowrap' as const }
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: pal.line }}>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: pal.line }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" />
             <div className="absolute inset-0">{imgEl}</div>
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28))' }} />
@@ -881,7 +1010,7 @@ export default function GalleryViewPage() {
           </div>
         )
       })() : coverKind === 'cinema' && cover?.web ? (
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', minHeight: 300, containerType: 'inline-size', background: '#000' }}>
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#000' }}>
           <div className="absolute overflow-hidden" style={{ left: 0, right: 0, top: '4.1cqw', height: '39.1cqw' }}>
             <div className="absolute inset-0">{imgEl}</div>
           </div>

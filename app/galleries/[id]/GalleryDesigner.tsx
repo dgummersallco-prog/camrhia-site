@@ -167,6 +167,11 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           else change({ focals: { ...(latest.current.focals ?? {}), [String(m.id)]: { x, y } } })
         }
       }
+      if (m.type === 'camrhia-gallery-setcover' && onPickCover && m.id) onPickCover(String(m.id))
+      if (m.type === 'camrhia-gallery-zoom') {
+        const z = Number(m.zoom)
+        if (Number.isFinite(z)) change({ zoom: z })
+      }
       if (m.type === 'camrhia-gallery-pick') {
         setPick({ key: String(m.key), name: String(m.name), size: Number(m.size) || 16, color: toHex(String(m.color)), bold: !!m.bold })
         const H = boxRef.current?.clientHeight ?? 0
@@ -217,11 +222,20 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <h2 className="font-fraunces text-2xl font-semibold text-ink">Style this gallery</h2>
         <p className="mb-6 truncate text-sm text-ink-soft">{title}</p>
         {err && <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
+        <div className="mt-24 mb-12">
+          <p className={head}>Colors</p>
+          <div className="mt-3 space-y-2">
+            {!['ticket', 'stack'].includes(eff.cover) && colorRow('Cover', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
+            {colorRow('Page background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
+            {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
+          </div>
+        </div>
+
 
 
         {photoChoices && photoChoices.length > 0 && onPickCover && (
           <>
-            <p className={head + ' mt-2'}>Cover photo</p>
+            <p className={head}>Cover photo</p>
             <p className="mt-1 text-xs text-ink-soft">Tap the photo that should open the gallery.</p>
             <div className="mt-3 grid max-h-56 grid-cols-4 gap-2 overflow-y-auto pr-0.5">
               {photoChoices.map((c) => (
@@ -234,17 +248,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           </>
         )}
         {coverUrl && (
-          <label className="mt-4 block text-xs text-ink-soft">Cover zoom ({(eff.zoom ?? 1).toFixed(1)}x)
-            <input type="range" min={1} max={3} step={0.1} value={eff.zoom ?? 1} onChange={(e) => change({ zoom: Number(e.target.value) })} className="mt-1 w-full" />
-          </label>
+          <p className="mt-4 text-xs text-ink-soft">Drag the cover in the preview to move it. Pinch, or hold Ctrl and scroll, to zoom.</p>
         )}
-
-        <p className={head + ' mt-8'}>Colors</p>
-        <div className="mt-3 space-y-2">
-          {colorRow('Page background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
-          {colorRow('Opening photo background', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
-          {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
-        </div>
 
 
         <p className={head + ' mt-8'}>Opening photo</p>
@@ -339,8 +344,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
               </div>
               {pick.key === 'bg' ? (
                 <div className="space-y-2">
+                  {!['ticket', 'stack'].includes(eff.cover) && colorRow('Cover', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
                   {colorRow('Page background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
-          {colorRow('Opening photo background', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
                   {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
                 </div>
               ) : pick.key === 'photos' ? (
