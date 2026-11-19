@@ -745,22 +745,6 @@ export default function GalleryManagePage() {
                     {gallery.design && Object.keys(gallery.design).length > 0 ? 'Edit design' : 'Next: design your gallery'}
                   </button>
                 )}
-                <button className={btnGhost} onClick={() => setShareOpen(true)}>Share</button>
-                <button className={btnGhost} onClick={() => setAccessOpen(true)}>Access</button>
-                <button
-                  onClick={async () => {
-                    const publishing = !isPublished
-                    const ok = await saveSettings({ status: publishing ? 'published' : 'draft' })
-                    if (ok && publishing) {
-                      await syncCover(gallery.cover_photo_id)
-                      setPublishedOpen(true)
-                    }
-                  }}
-                  disabled={!isPublished && photos.length === 0}
-                  className={isPublished || !(gallery.design && Object.keys(gallery.design).length > 0) ? btnGhost : btn}
-                >
-                  {isPublished ? 'Unpublish' : 'Publish gallery'}
-                </button>
               </div>
             </div>
 
@@ -804,6 +788,9 @@ export default function GalleryManagePage() {
                 title={gallery.title}
                 initial={(gallery.design ?? null) as unknown as GalleryDesign | null}
                 coverUrl={coverThumb}
+                photoChoices={photos.filter((x) => x.thumb_path && thumbs[x.thumb_path]).slice(0, 60).map((x) => ({ id: x.id, url: thumbs[x.thumb_path as string] }))}
+                coverPhotoId={gallery.cover_photo_id}
+                onPickCover={async (id) => { if (await saveSettings({ cover_photo_id: id })) await syncCover(id) }}
                 onClose={() => setDesignOpen(false)}
                 onSend={async () => {
                   if (!isPublished) {
@@ -855,6 +842,24 @@ export default function GalleryManagePage() {
                     <button className={btnGhost} disabled={active} onClick={() => folderInput.current?.click()}>
                       Choose folder
                     </button>
+                  </div>
+                  <div className="flex w-full flex-wrap gap-2 border-t border-line pt-3" onClick={(e) => e.stopPropagation()}>
+                <button className={btnGhost} onClick={() => setShareOpen(true)}>Share</button>
+                <button className={btnGhost} onClick={() => setAccessOpen(true)}>Access</button>
+                <button
+                  onClick={async () => {
+                    const publishing = !isPublished
+                    const ok = await saveSettings({ status: publishing ? 'published' : 'draft' })
+                    if (ok && publishing) {
+                      await syncCover(gallery.cover_photo_id)
+                      setPublishedOpen(true)
+                    }
+                  }}
+                  disabled={!isPublished && photos.length === 0}
+                  className={isPublished || !(gallery.design && Object.keys(gallery.design).length > 0) ? btnGhost : btn}
+                >
+                  {isPublished ? 'Unpublish' : 'Publish gallery'}
+                </button>
                   </div>
                 </section>
 
@@ -949,18 +954,6 @@ export default function GalleryManagePage() {
                     >
                       ♥ Client favorites ({favPhotoCount})
                     </button>
-                    {(['pick', 'maybe', 'reject'] as const).map((l) => {
-                      const n = photos.filter((p) => p.cull_label === l).length
-                      return n > 0 ? (
-                        <button
-                          key={l}
-                          onClick={() => setFilter(l)}
-                          className={`rounded-full px-4 py-1.5 capitalize ${filter === l ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
-                        >
-                          {l} ({n})
-                        </button>
-                      ) : null
-                    })}
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-sm">
                     {filter === 'all' && photos.length > 1 && !selecting && (
@@ -973,9 +966,6 @@ export default function GalleryManagePage() {
                     ) : (
                       <>
                         <button className={btnGhost} onClick={() => setSelected(new Set(shown.map((p) => p.id)))}>Select all ({shown.length})</button>
-                        {(['pick', 'maybe', 'reject'] as const).map((l) => (
-                          <button key={l} className={`${btnGhost} capitalize`} disabled={selected.size === 0} onClick={() => setLabel(Array.from(selected), l)}>Mark {l}</button>
-                        ))}
                         <button className={`${btnGhost} text-red-600`} disabled={selected.size === 0} onClick={bulkDelete}>Delete{selected.size ? ` (${selected.size})` : ''}</button>
                         <button className={btnGhost} onClick={() => { setSelecting(false); setSelected(new Set()) }}>Cancel</button>
                       </>
@@ -1013,18 +1003,12 @@ export default function GalleryManagePage() {
                         {gallery.cover_photo_id === p.id && (
                           <span className="absolute left-2 top-2 rounded-full bg-twilight px-2 py-0.5 text-[10px] text-white">Cover</span>
                         )}
-                        {p.cull_label && (
-                          <span title={p.cull_reason ?? undefined} className={`absolute bottom-2 right-2 rounded-full px-2 py-0.5 text-[10px] capitalize text-white ${p.cull_label === 'pick' ? 'bg-emerald-600' : p.cull_label === 'maybe' ? 'bg-amber-500' : 'bg-red-600'}`}>
-                            {p.cull_label}
-                          </span>
-                        )}
                         {favCounts[p.id] > 0 && (
                           <span style={{ color: 'color-mix(in srgb, var(--color-twilight) 55%, white)' }} className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs">
                             ♥ {favCounts[p.id]}
                           </span>
                         )}
-                        <div className={`absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-black/60 p-1.5 sm:opacity-0 sm:transition sm:group-hover:opacity-100 ${selecting ? 'hidden' : ''}`}>
-                          <button className="text-xs text-white" onClick={async (e) => { e.stopPropagation(); if (await saveSettings({ cover_photo_id: p.id })) await syncCover(p.id) }}>Set cover</button>
+                        <div className={`absolute inset-x-0 bottom-0 flex justify-end gap-1 bg-black/60 p-1.5 sm:opacity-0 sm:transition sm:group-hover:opacity-100 ${selecting ? 'hidden' : ''}`}>
                           <button className="text-xs text-red-300" onClick={(e) => { e.stopPropagation(); deletePhoto(p) }}>Delete</button>
                         </div>
                       </div>
@@ -1163,15 +1147,6 @@ export default function GalleryManagePage() {
                     </>
                   ) : null
                 })()}
-                {(['pick', 'maybe', 'reject'] as const).map((l) => {
-                  const cur = photos.find((x) => x.id === view.id)?.cull_label
-                  return (
-                    <button key={l} className={`text-sm capitalize ${cur === l ? 'font-semibold underline' : 'opacity-70'}`} onClick={() => setLabel([view.id], cur === l ? null : l)}>{l}</button>
-                  )
-                })}
-                <button className="text-sm" onClick={async () => { if (await saveSettings({ cover_photo_id: view.id })) await syncCover(view.id) }}>
-                  Set as cover
-                </button>
                 <button className="text-2xl leading-none" onClick={() => setView(null)} aria-label="Close">×</button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean; dy?: number; text?: string }
 export type GalleryDesign = {
-  look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; zoom?: number
+  look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; focals?: Record<string, { x: number; y: number }>; zoom?: number
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
 }
 
@@ -162,5 +162,9 @@ export function resolveDesign(d?: GalleryDesign | null) {
   const layout = LAYOUTS.some((l) => l.k === d?.layout) ? (d?.layout as string) : base.grid === 'masonry' ? 'masonry' : 'grid'
   const el: Record<string, ElStyle> = d?.el ?? {}
   const zoom = Math.min(3, Math.max(1, Number(d?.zoom) || 1))
-  return { look, cover, pal, coverPal, focal, zoom, layout, el }
+  const focals: Record<string, { x: number; y: number }> = {}
+  for (const [k, v] of Object.entries(d?.focals ?? {})) {
+    if (v && Number.isFinite(v.x) && Number.isFinite(v.y)) focals[k] = { x: Math.min(100, Math.max(0, v.x)), y: Math.min(100, Math.max(0, v.y)) }
+  }
+  return { look, cover, pal, coverPal, focal, focals, zoom, layout, el }
 }

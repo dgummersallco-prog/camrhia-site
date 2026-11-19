@@ -47,8 +47,9 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
   return { cover: k, ...p, el: { ...clearCoverEl(el), ...(p.el ?? {}) } }
 }
 
-export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, onClose, onSaved, onSend }: {
+export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
+  photoChoices?: { id: string; url: string }[]; coverPhotoId?: string | null; onPickCover?: (id: string) => void
   onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
@@ -60,6 +61,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean } | null>(null)
   const [zoom, setZoom] = useState<{ src: string; name: string; top: number } | null>(null)
   const [fontOpen, setFontOpen] = useState(false)
+  const [focusOn, setFocusOn] = useState(false)
+  const focusRef = useRef(false)
   const frameRef = useRef<HTMLIFrameElement>(null)
   const latest = useRef<GalleryDesign>(initial ?? {})
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -105,6 +108,16 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     }
   }
 
+  function postFocus(on: boolean) {
+    try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-focus-mode', on }, '*') } catch { /* ignore */ }
+  }
+  function toggleFocus() {
+    const on = !focusRef.current
+    focusRef.current = on
+    setFocusOn(on)
+    if (on) setPick(null)
+    postFocus(on)
+  }
   function postDesign(next: GalleryDesign) {
     try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-design', design: next }, '*') } catch { /* ignore */ }
   }
@@ -146,7 +159,14 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     function onMsg(e: MessageEvent) {
       const m = e.data
       if (!m || e.source !== frameRef.current?.contentWindow) return
-      if (m.type === 'camrhia-gallery-ready') postDesign(latest.current)
+      if (m.type === 'camrhia-gallery-ready') { postDesign(latest.current); postFocus(focusRef.current) }
+      if (m.type === 'camrhia-gallery-focus') {
+        const x = Number(m.x), y = Number(m.y)
+        if (Number.isFinite(x) && Number.isFinite(y)) {
+          if (m.cover) change({ focal: { x, y } })
+          else change({ focals: { ...(latest.current.focals ?? {}), [String(m.id)]: { x, y } } })
+        }
+      }
       if (m.type === 'camrhia-gallery-pick') {
         setPick({ key: String(m.key), name: String(m.name), size: Number(m.size) || 16, color: toHex(String(m.color)), bold: !!m.bold })
         const H = boxRef.current?.clientHeight ?? 0
@@ -189,16 +209,77 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
 
   return (
     <div className="fixed inset-0 z-50 flex overflow-hidden bg-paper">
-      <aside className="flex w-[290px] shrink-0 flex-col overflow-y-auto border-r border-line bg-white/50 p-4">
-        <div className="mb-5 flex items-center justify-between">
+      <aside className="flex w-[320px] shrink-0 flex-col overflow-y-auto border-r border-line bg-white/50 px-5 pb-8 pt-6">
+        <div className="mb-6 flex items-center justify-between">
           <button type="button" onClick={close} className="text-sm text-ink-soft hover:text-ink">✕ Close</button>
           <span className="text-xs text-ink-soft">{saving ? 'Saving…' : 'Saved'}</span>
         </div>
         <h2 className="font-fraunces text-2xl font-semibold text-ink">Style this gallery</h2>
-        <p className="mb-4 truncate text-sm text-ink-soft">{title}</p>
+        <p className="mb-6 truncate text-sm text-ink-soft">{title}</p>
         {err && <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
 
-        <div className="mb-5 rounded-xl border border-[#E8DDD0] bg-white/80 p-3">
+
+        {photoChoices && photoChoices.length > 0 && onPickCover && (
+          <>
+            <p className={head + ' mt-2'}>Cover photo</p>
+            <p className="mt-1 text-xs text-ink-soft">Tap the photo that should open the gallery.</p>
+            <div className="mt-3 grid max-h-56 grid-cols-4 gap-2 overflow-y-auto pr-0.5">
+              {photoChoices.map((c) => (
+                <button key={c.id} type="button" onClick={() => onPickCover(c.id)} className={`aspect-square overflow-hidden rounded-lg border-2 transition ${coverPhotoId === c.id ? 'border-twilight ring-2 ring-twilight/40' : 'border-transparent hover:border-line'}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={c.url} alt="" className="h-full w-full object-cover" draggable={false} />
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {coverUrl && (
+          <label className="mt-4 block text-xs text-ink-soft">Cover zoom ({(eff.zoom ?? 1).toFixed(1)}x)
+            <input type="range" min={1} max={3} step={0.1} value={eff.zoom ?? 1} onChange={(e) => change({ zoom: Number(e.target.value) })} className="mt-1 w-full" />
+          </label>
+        )}
+
+        <p className={head + ' mt-8'}>Colors</p>
+        <div className="mt-3 space-y-2">
+          {colorRow('Page background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
+          {colorRow('Opening photo background', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
+          {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
+        </div>
+
+
+        <p className={head + ' mt-8'}>Opening photo</p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {COVERS.map((c) => (
+            <button key={c.k} type="button" onClick={() => change(coverPatch(c.k, eff.el))} onMouseEnter={(e) => setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
+              <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>
+              <span className="mt-1 block text-[11px] text-ink">{c.name}</span>
+            </button>
+          ))}
+        </div>
+
+
+        <p className={head + ' mt-8'}>Photo layout</p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {LAYOUTS.map((l) => (
+            <button key={l.k} type="button" onClick={() => change({ layout: l.k, ...(LAYOUT_PRESETS[l.k] ?? {}) })} onMouseEnter={(e) => { if (HAS_PNG.has(l.k)) setZoom({ src: '/gallery-layout/' + l.k + '.png', name: l.name, top: e.currentTarget.getBoundingClientRect().top }) }} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.layout === l.k ? ring : 'border-line')}>
+              <div className="overflow-hidden rounded border border-black/5">{HAS_PNG.has(l.k) ? (/* eslint-disable-next-line @next/next/no-img-element */ <img src={'/gallery-layout/' + l.k + '.png'} alt="" className="block aspect-[3/2] w-full object-cover object-top" />) : <LayoutThumb k={l.k} />}</div>
+              <span className="mt-1 block text-[11px] text-ink">{l.name}</span>
+            </button>
+          ))}
+        </div>
+
+
+        <p className={head + ' mt-8'}>Photo spacing</p>
+        <div className="mt-3 space-y-3 rounded-lg border border-line bg-white p-3">
+          <label className="block text-xs text-ink-soft">Space between photos
+            <input type="range" min={0} max={48} value={eff.look.gap} onChange={(e) => change({ gap: Number(e.target.value) })} className="mt-1 w-full" />
+          </label>
+          <label className="block text-xs text-ink-soft">Rounded corners
+            <input type="range" min={0} max={40} value={eff.look.radius} onChange={(e) => change({ radius: Number(e.target.value) })} className="mt-1 w-full" />
+          </label>
+        </div>
+        <p className="mt-4 text-xs text-ink-soft">Click any line in the preview to change its font, size and color.</p>
+        <div className="mt-8 rounded-xl border border-[#E8DDD0] bg-white/80 p-3">
           <div className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/camri/13_face_avatar.png" alt="" className="h-7 w-7 rounded-full" />
@@ -227,67 +308,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             <button type="submit" disabled={gBusy} className="rounded-lg bg-twilight px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60">Send</button>
           </form>
         </div>
-
-        <p className={head + ' mt-2'}>Opening photo</p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {COVERS.map((c) => (
-            <button key={c.k} type="button" onClick={() => change(coverPatch(c.k, eff.el))} onMouseEnter={(e) => setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
-              <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>
-              <span className="mt-1 block text-[11px] text-ink">{c.name}</span>
-            </button>
-          ))}
-        </div>
-
-        {coverUrl && (
-          <div className="mt-4">
-            <p className="mb-2 text-sm font-medium text-ink">Focal point <span className="font-normal text-ink-soft">(click the part to keep in frame)</span></p>
-            <label className="mb-2 block text-xs text-ink-soft">Zoom ({(eff.zoom ?? 1).toFixed(1)}x)
-              <input type="range" min={1} max={3} step={0.1} value={eff.zoom ?? 1} onChange={(e) => change({ zoom: Number(e.target.value) })} className="mt-1 w-full" />
-            </label>
-            <div
-              className="relative cursor-crosshair overflow-hidden rounded-xl border border-line"
-              onClick={(e) => {
-                const r = e.currentTarget.getBoundingClientRect()
-                change({ focal: { x: Math.round(((e.clientX - r.left) / r.width) * 100), y: Math.round(((e.clientY - r.top) / r.height) * 100) } })
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={coverUrl} alt="Cover" className="block w-full" draggable={false} />
-              <span className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-white/30 shadow" style={{ left: `${eff.focal.x}%`, top: `${eff.focal.y}%` }} />
-            </div>
-          </div>
-        )}
-
-        <p className={head + ' mt-8'}>Photo layout</p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {LAYOUTS.map((l) => (
-            <button key={l.k} type="button" onClick={() => change({ layout: l.k, ...(LAYOUT_PRESETS[l.k] ?? {}) })} onMouseEnter={(e) => { if (HAS_PNG.has(l.k)) setZoom({ src: '/gallery-layout/' + l.k + '.png', name: l.name, top: e.currentTarget.getBoundingClientRect().top }) }} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.layout === l.k ? ring : 'border-line')}>
-              <div className="overflow-hidden rounded border border-black/5">{HAS_PNG.has(l.k) ? (/* eslint-disable-next-line @next/next/no-img-element */ <img src={'/gallery-layout/' + l.k + '.png'} alt="" className="block aspect-[3/2] w-full object-cover object-top" />) : <LayoutThumb k={l.k} />}</div>
-              <span className="mt-1 block text-[11px] text-ink">{l.name}</span>
-            </button>
-          ))}
-        </div>
-
-        <p className={head + ' mt-8'}>Colors</p>
-        <div className="mt-3 space-y-2">
-          {colorRow('Page background', eff.pal.bg, !!d.bg, (v) => change({ bg: v }), () => change({ bg: undefined }))}
-          {colorRow('Opening photo background', eff.coverPal.bg, !!d.coverBg, (v) => change({ coverBg: v }), () => change({ coverBg: undefined }))}
-          {colorRow('Accent', eff.pal.accent, !!d.accent, (v) => change({ accent: v }), () => change({ accent: undefined }))}
-        </div>
-
-        <p className={head + ' mt-8'}>Photo spacing</p>
-        <div className="mt-3 space-y-3 rounded-lg border border-line bg-white p-3">
-          <label className="block text-xs text-ink-soft">Space between photos
-            <input type="range" min={0} max={48} value={eff.look.gap} onChange={(e) => change({ gap: Number(e.target.value) })} className="mt-1 w-full" />
-          </label>
-          <label className="block text-xs text-ink-soft">Rounded corners
-            <input type="range" min={0} max={40} value={eff.look.radius} onChange={(e) => change({ radius: Number(e.target.value) })} className="mt-1 w-full" />
-          </label>
-        </div>
-        <p className="mt-4 text-xs text-ink-soft">Click any line in the preview to change its font, size and color.</p>
       </aside>
       {zoom && (
-        <div className="pointer-events-none fixed z-[60] rounded-xl border border-line bg-white p-2 shadow-2xl" style={{ left: 300, top: Math.max(8, Math.min(zoom.top - 40, (typeof window !== 'undefined' ? window.innerHeight : 800) - 600)) }}>
+        <div className="pointer-events-none fixed z-[60] rounded-xl border border-line bg-white p-2 shadow-2xl" style={{ left: 330, top: Math.max(8, Math.min(zoom.top - 40, (typeof window !== 'undefined' ? window.innerHeight : 800) - 600)) }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={zoom.src} alt="" style={{ maxWidth: 560, maxHeight: '85vh' }} className="block h-auto w-auto rounded" />
           <p className="mt-1 text-center text-xs text-ink-soft">{zoom.name}</p>
@@ -295,7 +318,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       )}
 
       <div className="flex min-w-0 flex-1 flex-col p-3">
-        <div className="mb-3 flex items-center justify-end gap-3">
+        <div className="mb-4 flex items-center justify-end gap-3 px-1 pt-1">
+          {focusOn && <p className="mr-auto text-sm text-ink-soft">Click the part of any photo that should stay in frame.</p>}
+          <button type="button" onClick={toggleFocus} className={'rounded-xl border px-4 py-2 text-sm font-medium transition ' + (focusOn ? 'border-twilight bg-twilight text-white' : 'border-line bg-white text-ink hover:border-twilight')}>{focusOn ? 'Done setting focus' : 'Set focus'}</button>
           <div className="flex overflow-hidden rounded-xl border border-line bg-white text-sm">
             {(['desktop', 'phone'] as const).map((x) => (
               <button key={x} type="button" onClick={() => setDevice(x)} className={'px-4 py-2 font-medium transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>

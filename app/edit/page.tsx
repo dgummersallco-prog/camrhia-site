@@ -272,7 +272,6 @@ export default function EditingRoom() {
           { items: [{ href: '/dashboard', label: '← Back to dashboard' }] },
           { label: 'The Editing Room', items: [
             { href: '/edit', label: 'Shoots', badge: inProgress, onClick: () => { setTab('edit'); if (shootId) void backToStart() } },
-            { href: '/galleries', label: 'Galleries' },
             { href: '/edit?tab=styles', label: 'My styles', onClick: () => setTab('styles') },
             { href: '/edit?tab=brain', label: 'My habits', onClick: () => setTab('brain') },
           ] },

@@ -46,6 +46,7 @@ export default function GalleryViewPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [brand, setBrand] = useState<Brand | null>(null)
   const [designPreview, setDesignPreview] = useState<GalleryDesign | null>(null)
+  const [focusMode, setFocusMode] = useState(false)
   const [zip, setZip] = useState<{ busy: boolean; done: number; total: number; error: string | null }>({ busy: false, done: 0, total: 0, error: null })
 
   const load = useCallback(async (pinValue?: string) => {
@@ -221,6 +222,48 @@ export default function GalleryViewPage() {
     return () => window.removeEventListener('message', onMsg)
   }, [])
 
+  // Preview only: focus mode lets the photographer click a photo to choose the part that stays in frame.
+  useEffect(() => {
+    if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
+    const onMsg = (e: MessageEvent) => { const m = e.data; if (m && m.type === 'camrhia-gallery-focus-mode') setFocusMode(!!m.on) }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
+  useEffect(() => {
+    if (!focusMode) return
+    const st = document.createElement('style')
+    st.textContent = '.gal-root img[data-pid]{cursor:crosshair!important}'
+    document.head.appendChild(st)
+    const click = (e: MouseEvent) => {
+      const img = (e.target as HTMLElement | null)?.closest?.('img[data-pid]') as HTMLImageElement | null
+      if (!img) return
+      e.preventDefault()
+      e.stopPropagation()
+      const r = img.getBoundingClientRect()
+      const cx = e.clientX - r.left
+      const cy = e.clientY - r.top
+      let x = (cx / r.width) * 100
+      let y = (cy / r.height) * 100
+      const nw = img.naturalWidth
+      const nh = img.naturalHeight
+      if (nw && nh && r.width && r.height) {
+        const scale = Math.max(r.width / nw, r.height / nh)
+        const dw = nw * scale
+        const dh = nh * scale
+        const op = getComputedStyle(img).objectPosition.split(' ')
+        const px = Number.isFinite(parseFloat(op[0])) ? parseFloat(op[0]) / 100 : 0.5
+        const py = Number.isFinite(parseFloat(op[1])) ? parseFloat(op[1]) / 100 : 0.5
+        x = ((cx - (r.width - dw) * px) / dw) * 100
+        y = ((cy - (r.height - dh) * py) / dh) * 100
+      }
+      x = Math.round(Math.min(100, Math.max(0, x)))
+      y = Math.round(Math.min(100, Math.max(0, y)))
+      window.parent?.postMessage({ type: 'camrhia-gallery-focus', id: img.dataset.pid, cover: img.dataset.cover === '1', x, y }, '*')
+    }
+    window.addEventListener('click', click, true)
+    return () => { window.removeEventListener('click', click, true); st.remove() }
+  }, [focusMode])
+
   // Preview only: hover names and click-to-edit for the gallery lines.
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
@@ -338,13 +381,14 @@ export default function GalleryViewPage() {
   }
 
   if (!data) return null
-  const { look, cover: coverKind, pal, coverPal, focal, zoom, layout, el } = resolveDesign(designPreview ?? data.design ?? null)
+  const { look, cover: coverKind, pal, coverPal, focal, focals, zoom, layout, el } = resolveDesign(designPreview ?? data.design ?? null)
   const elRules = elCss(el, (k) => FONT_OPTIONS[k]?.family)
   const fontHref = (() => {
     const g = Array.from(new Set(Object.values(el).map((x) => FONT_OPTIONS[x?.font ?? '']?.gf).filter(Boolean) as string[]))
     return g.length ? 'https://fonts.googleapis.com/css2?' + g.map((x) => 'family=' + x.replace(/^family=/, '')).join('&') + '&display=swap' : ''
   })()
   const pos = `${focal.x}% ${focal.y}%`
+  const fpos = (id: string) => (focals[id] ? `${focals[id].x}% ${focals[id].y}%` : undefined)
   const headCls = look.font === 'fraunces' ? 'font-fraunces' : ''
   const headStyle: CSSProperties = { ...(look.font === 'fraunces' ? {} : { fontFamily: look.font }), fontWeight: look.weight, letterSpacing: look.track, textTransform: look.upper ? 'uppercase' : 'none', fontStyle: look.italic ? 'italic' : 'normal' }
   const cover = data.photos.find((p) => p.id === data.coverId) ?? data.photos[0]
@@ -380,7 +424,7 @@ export default function GalleryViewPage() {
 
   const imgEl = cover?.web ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={cover.web} alt="" className="h-full w-full object-cover" style={{ objectPosition: pos, transform: zoom > 1 ? `scale(${zoom})` : undefined, transformOrigin: pos }} />
+    <img src={cover.web} alt="" data-pid={cover.id} data-cover="1" className="h-full w-full object-cover" style={{ objectPosition: pos, transform: zoom > 1 ? `scale(${zoom})` : undefined, transformOrigin: pos }} />
   ) : null
   const coverTitle = String((el as Record<string, { text?: string }> | undefined)?.title?.text ?? '').trim() || String(data.title)
   const coverSub = String((el as Record<string, { text?: string }> | undefined)?.brand?.text ?? '').trim() || (brand?.name ? String(brand.name) : '')
@@ -397,10 +441,11 @@ export default function GalleryViewPage() {
           <img
             src={p.thumb}
             alt={p.filename ?? ''}
+            data-pid={p.id}
             loading="lazy"
             onClick={() => setOpenIndex(i)}
             className={uniform ? 'aspect-[5/6] w-full cursor-zoom-in object-cover' : 'w-full cursor-zoom-in'}
-            style={!uniform && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : undefined}
+            style={{ ...(!uniform && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : {}), ...(uniform && fpos(p.id) ? { objectPosition: fpos(p.id) } : {}) }}
           />
         )}
         <button
@@ -436,10 +481,11 @@ export default function GalleryViewPage() {
             <img
               src={p.thumb}
               alt={p.filename ?? ''}
+              data-pid={p.id}
               loading="lazy"
               onClick={() => setOpenIndex(i)}
               className={fill ? 'absolute inset-0 h-full w-full cursor-zoom-in object-cover' : 'block w-full cursor-zoom-in'}
-              style={!fill && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : undefined}
+              style={{ ...(!fill && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : {}), ...(fill && fpos(p.id) ? { objectPosition: fpos(p.id) } : {}) }}
             />
           )}
           {heartBtn(p)}
