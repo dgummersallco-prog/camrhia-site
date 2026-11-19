@@ -1,6 +1,7 @@
 'use client'
 
 import CamriTyping from '@/app/components/CamriTyping'
+import MicButton from '@/app/components/MicButton'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ICONS } from '@/lib/specialIcons'
@@ -1159,6 +1160,7 @@ export default function SpecialsPage() {
               {spUndo && <button type="button" onClick={() => { setForm(spUndo); setSpUndo(null) }} className="mt-2 text-xs text-twilight underline">Undo Camri&apos;s last change</button>}
               <form onSubmit={(e) => { e.preventDefault(); spAsk(spInput) }} className="mt-3 flex gap-2">
                 <input value={spInput} onChange={(e) => setSpInput(e.target.value)} placeholder={spTour === 3 ? 'Describe your offer' : 'Ask Camri to write, restyle or advise'} className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
+                <MicButton disabled={spBusy} onText={setSpInput} onDone={(t) => { void spAsk(t) }} />
                 <button type="submit" disabled={spBusy} className="rounded-xl bg-twilight px-4 py-2 text-sm font-medium text-white disabled:opacity-60">Send</button>
               </form>
             </div>
