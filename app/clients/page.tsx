@@ -272,6 +272,8 @@ type LeadRow = { id: string; funnel_id: string; name: string; email: string; pho
 function LeadsView() {
   const [rows, setRows] = useState<LeadRow[] | null>(null)
   const [names, setNames] = useState<Record<string, string>>({})
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [delErr, setDelErr] = useState<string | null>(null)
   useEffect(() => {
     async function run() {
       const sb = supabase
@@ -298,6 +300,16 @@ function LeadsView() {
     setRows((rs) => (rs ?? []).map((x) => (x.id === l.id ? { ...x, handled_at: stamp } : x)))
     window.dispatchEvent(new Event('camrhia-leads'))
   }
+  async function removeLead(l: LeadRow) {
+    const sb = supabase
+    if (!sb) return
+    setDelErr(null)
+    const { data, error } = await sb.from('funnel_leads').delete().eq('id', l.id).select('id')
+    if (error || !data || data.length === 0) { setDelErr('Could not delete that lead. Try again.'); setConfirmId(null); return }
+    setRows((rs) => (rs ?? []).filter((x) => x.id !== l.id))
+    setConfirmId(null)
+    window.dispatchEvent(new Event('camrhia-leads'))
+  }
   const pill = 'rounded-full border border-white/80 bg-white/70 px-3 py-1 text-xs font-medium text-ink transition hover:border-ink'
   if (rows === null) return <p className="mt-8 text-sm text-ink-soft">Loading...</p>
   if (rows.length === 0) return (
@@ -307,6 +319,8 @@ function LeadsView() {
     </section>
   )
   return (
+    <>
+    {delErr && <p className="mt-4 text-sm text-red-700">{delErr}</p>}
     <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {rows.map((l) => (
         <div key={l.id} className="flex flex-col rounded-2xl border border-white/70 bg-white/60 p-4 shadow-lg backdrop-blur-xl">
@@ -334,9 +348,18 @@ function LeadsView() {
           {l.note && <p className="mt-3 break-words text-xs text-ink">{l.note}</p>}
           <Link href={'/sessions/new?lead=' + l.id + '&name=' + encodeURIComponent(l.name) + '&phone=' + encodeURIComponent(l.phone ?? '') + '&email=' + encodeURIComponent(l.email)} className="mt-4 block rounded-2xl px-3 py-2 text-center text-sm font-semibold text-white transition hover:opacity-90" style={{ background: '#8C6B3F' }}>Create session</Link>
           <button type="button" onClick={() => mark(l, !l.handled_at)} className="mt-2 text-center text-xs font-medium text-ink-soft transition hover:text-ink">{l.handled_at ? 'Mark as new' : 'Mark as handled'}</button>
+          {confirmId === l.id ? (
+            <div className="mt-1 flex items-center justify-center gap-3 text-xs">
+              <button type="button" onClick={() => removeLead(l)} className="font-semibold text-red-700 transition hover:underline">Yes, delete</button>
+              <button type="button" onClick={() => setConfirmId(null)} className="text-ink-soft transition hover:text-ink">Cancel</button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setConfirmId(l.id)} className="mt-1 text-center text-xs font-medium text-ink-soft transition hover:text-red-700">Delete lead</button>
+          )}
         </div>
       ))}
     </div>
+    </>
   )
 }
 
