@@ -422,6 +422,7 @@ export default function GalleryManagePage() {
       if (!onCamrhia) { navigator.clipboard?.writeText(hi); note = 'Published. Message copied' }
       flash(note)
       await loadGallery()
+      if (onCamrhia) router.push('/galleries')
     } finally { setFinalBusy(false) }
   }
 

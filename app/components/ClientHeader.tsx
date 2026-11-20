@@ -30,6 +30,12 @@ export function ClientHeader({ active }: { active: ClientTab }) {
   const [unread, setUnread] = useState(0)
 
   useEffect(() => {
+    const root = document.documentElement
+    root.classList.add('dash-shell')
+    return () => root.classList.remove('dash-shell')
+  }, [])
+
+  useEffect(() => {
     let off = false
     async function run() {
       const sb = supabase

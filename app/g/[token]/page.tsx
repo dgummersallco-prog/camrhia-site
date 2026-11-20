@@ -541,14 +541,20 @@ export default function GalleryViewPage() {
     const hide = () => { box.style.display = 'none'; curEl = null }
     let editor: HTMLInputElement | null = null
     let hidden: HTMLElement | null = null
+    let hiddenMore: HTMLElement[] = []
     let secOn = false
-    const closeEditor = () => { if (editor) { editor.remove(); editor = null } if (hidden) { hidden.style.visibility = ''; hidden = null } }
+    const closeEditor = () => { if (editor) { editor.remove(); editor = null } if (hidden) { hidden.style.visibility = ''; hidden = null }; hiddenMore.forEach((e) => { e.style.visibility = '' }); hiddenMore = [] }
     const openEditor = (target: HTMLElement, k: string) => {
       if (!['title', 'title2', 'brand', 'count', 'initials', 'moment'].includes(k) && !/^x\d+$/.test(k)) return
       const key = k === 'title2' ? 'title' : k
       const orig = k === 'moment' ? (target.textContent ?? '') : textRef.current[key] ?? ''
       closeEditor()
-      const r = target.getBoundingClientRect()
+      const peers = key === 'title' ? (Array.from(document.querySelectorAll('[data-gk="title"],[data-gk="title2"]')) as HTMLElement[]) : [target]
+      const multi = peers.length > 1
+      const rects = peers.map((e) => e.getBoundingClientRect())
+      const r = multi
+        ? (() => { const l = Math.min(...rects.map((q) => q.left)), t = Math.min(...rects.map((q) => q.top)), rt = Math.max(...rects.map((q) => q.right)), b = Math.max(...rects.map((q) => q.bottom)); return { left: l, top: t, width: rt - l, height: b - t } as DOMRect })()
+        : target.getBoundingClientRect()
       const cs = getComputedStyle(target)
       const isSvg = target instanceof SVGElement
       const sc = isSvg ? ((target as unknown as SVGGraphicsElement).getScreenCTM?.()?.a ?? 1) : 1
@@ -563,13 +569,19 @@ export default function GalleryViewPage() {
       const shownTxt = cs.textTransform === 'uppercase' ? orig.toUpperCase() : orig
       const mc = document.createElement('canvas').getContext('2d')
       let ls = 0
-      if (mc && shownTxt.length > 1) {
+      let fs2 = fs
+      if (multi && mc) {
+        mc.font = `${cs.fontStyle} ${cs.fontWeight} ${fs}px ${cs.fontFamily}`
+        const tw = mc.measureText(shownTxt).width
+        if (tw > w - 8) fs2 = (fs * (w - 8)) / tw
+      }
+      if (!multi && mc && shownTxt.length > 1) {
         mc.font = `${cs.fontStyle} ${cs.fontWeight} ${fs}px ${cs.fontFamily}`
         ls = Math.min(40, Math.max(-2, (r.width - mc.measureText(shownTxt).width) / shownTxt.length))
       }
       inp.style.cssText = 'position:fixed;z-index:2147483646;box-sizing:border-box;padding:0;margin:0;border:0;border-radius:0;background:transparent;outline:none;box-shadow:none;text-align:center'
       inp.style.fontFamily = cs.fontFamily
-      inp.style.fontSize = fs + 'px'
+      inp.style.fontSize = fs2 + 'px'
       inp.style.fontWeight = cs.fontWeight
       inp.style.fontStyle = cs.fontStyle
       inp.style.textTransform = cs.textTransform
@@ -582,6 +594,8 @@ export default function GalleryViewPage() {
       inp.style.top = r.top + r.height / 2 - hgt / 2 + 'px'
       target.style.visibility = 'hidden'
       hidden = target
+      hiddenMore = peers.filter((e) => e !== target)
+      hiddenMore.forEach((e) => { e.style.visibility = 'hidden' })
       let finished = false
       const mid = k === 'moment' ? target.getAttribute('data-mid') : null
       const send = (t: string) => {

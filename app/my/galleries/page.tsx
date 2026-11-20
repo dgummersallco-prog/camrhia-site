@@ -83,7 +83,7 @@ export default function MyGalleriesPage() {
   }, [shown, info])
 
   return (
-    <div className="h-[100dvh] overflow-y-auto overscroll-contain bg-paper xl:pl-60">
+    <div className="min-h-screen h-[100dvh] overflow-y-auto overscroll-contain bg-paper xl:pl-60">
       <ClientHeader active="galleries" />
       <main className="mx-auto max-w-[1200px] px-6 py-10">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Galleries</p>
