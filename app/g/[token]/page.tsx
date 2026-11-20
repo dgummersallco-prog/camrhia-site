@@ -491,6 +491,63 @@ export default function GalleryViewPage() {
     }
   }, [])
 
+  // Preview only: move photos (to top, earlier, later) from a small bar on hover.
+  useEffect(() => {
+    if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
+    const SEL = '.gal-root img[data-pid]:not([data-cover]):not([data-slot])'
+    const bar = document.createElement('div')
+    bar.style.cssText = 'position:fixed;z-index:2147483645;display:none;gap:4px;padding:4px;border-radius:12px;background:rgba(255,255,255,0.96);box-shadow:0 4px 14px rgba(0,0,0,0.25);font:600 12px system-ui,sans-serif'
+    let cur: string | null = null
+    const mk = (label: string, to: string) => {
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.textContent = label
+      b.style.cssText = 'border:0;border-radius:8px;padding:5px 9px;background:#8C6B3F;color:#fff;cursor:pointer;font:inherit'
+      b.addEventListener('click', (ev) => {
+        ev.preventDefault()
+        ev.stopPropagation()
+        if (!cur) return
+        const imgs = Array.from(document.querySelectorAll<HTMLImageElement>(SEL))
+        const idx = imgs.findIndex((x) => x.getAttribute('data-pid') === cur)
+        const nbEl = to === 'left' ? imgs[idx - 1] : to === 'right' ? imgs[idx + 1] : null
+        window.parent?.postMessage({ type: 'camrhia-gallery-photo-move', id: cur, to, nb: nbEl?.getAttribute('data-pid') ?? undefined }, '*')
+      })
+      bar.appendChild(b)
+    }
+    mk('Top', 'top')
+    mk('◀', 'left')
+    mk('▶', 'right')
+    document.body.appendChild(bar)
+    let hideT: number | undefined
+    const over = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null
+      if (t && bar.contains(t)) { window.clearTimeout(hideT); return }
+      const im = t?.closest?.(SEL) as HTMLImageElement | null
+      if (!im) { window.clearTimeout(hideT); hideT = window.setTimeout(() => { bar.style.display = 'none' }, 250); return }
+      window.clearTimeout(hideT)
+      cur = im.getAttribute('data-pid')
+      const r = im.getBoundingClientRect()
+      bar.style.display = 'flex'
+      bar.style.left = Math.max(4, r.left + 6) + 'px'
+      bar.style.top = Math.max(4, r.top + 6) + 'px'
+    }
+    const onMsg = (e: MessageEvent) => {
+      const m = e.data
+      if (!m || m.type !== 'camrhia-gallery-photo-order' || !Array.isArray(m.ids)) return
+      const ids = (m.ids as unknown[]).map(String)
+      setData((d) => {
+        if (!d) return d
+        const by = new Map(d.photos.map((p) => [p.id, p]))
+        const ordered = ids.map((id) => by.get(id)).filter((p): p is Photo => !!p)
+        const seen = new Set(ordered.map((p) => p.id))
+        return { ...d, photos: [...ordered, ...d.photos.filter((p) => !seen.has(p.id))] }
+      })
+    }
+    document.addEventListener('mouseover', over, true)
+    window.addEventListener('message', onMsg)
+    return () => { document.removeEventListener('mouseover', over, true); window.removeEventListener('message', onMsg); bar.remove() }
+  }, [])
+
   // Preview only: hover names and click-to-edit for the gallery lines.
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return

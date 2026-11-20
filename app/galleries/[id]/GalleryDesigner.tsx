@@ -50,11 +50,11 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
 }
 
 type SecM = { id: string; name: string; startId: string; line?: boolean }
-export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost, onAddSection, onMoveSection, onSectionLine, onRemoveSection, onRenameSection }: {
+export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost, onAddSection, onMoveSection, onMovePhoto, onSectionLine, onRemoveSection, onRenameSection }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
   photoChoices?: { id: string; url: string }[]; coverPhotoId?: string | null; onPickCover?: (id: string) => void
   onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void; topOffset?: number; flushRef?: { current: (() => void) | null }; leftHost?: HTMLElement | null
-  onAddSection?: (pid?: string) => Promise<{ id: string; moments: SecM[] } | null>; onMoveSection?: (id: string, pid: string) => Promise<SecM[] | null>; onSectionLine?: (id: string, on: boolean) => Promise<SecM[] | null>; onRemoveSection?: (id: string) => Promise<SecM[] | null>; onRenameSection?: (id: string, name: string) => void
+  onAddSection?: (pid?: string) => Promise<{ id: string; moments: SecM[] } | null>; onMoveSection?: (id: string, pid: string) => Promise<SecM[] | null>; onMovePhoto?: (id: string, to: string, nb?: string) => Promise<string[] | null>; onSectionLine?: (id: string, on: boolean) => Promise<SecM[] | null>; onRemoveSection?: (id: string) => Promise<SecM[] | null>; onRenameSection?: (id: string, name: string) => void
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
@@ -190,6 +190,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   }
   const onMoveSecRef = useRef(onMoveSection)
   onMoveSecRef.current = onMoveSection
+  const onMovePhotoRef = useRef(onMovePhoto)
+  onMovePhotoRef.current = onMovePhoto
   const addSectionRef = useRef(addSectionAt)
   addSectionRef.current = addSectionAt
   const renameRef = useRef((id: string, text: string) => { void id; void text })
@@ -282,6 +284,12 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       if (m.type === 'camrhia-gallery-section-at' && typeof m.id === 'string') void addSectionRef.current(String(m.id))
       if (m.type === 'camrhia-gallery-moment-move' && typeof m.id === 'string' && typeof m.pid === 'string') {
         void (async () => { const ms = await onMoveSecRef.current?.(String(m.id), String(m.pid)); if (ms) postMoments(ms) })()
+      }
+      if (m.type === 'camrhia-gallery-photo-move' && typeof m.id === 'string') {
+        void (async () => {
+          const ids = await onMovePhotoRef.current?.(String(m.id), String(m.to), m.nb ? String(m.nb) : undefined)
+          if (ids) { try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-photo-order', ids }, '*') } catch { /* ignore */ } }
+        })()
       }
       if (m.type === 'camrhia-gallery-moment-text' && typeof m.id === 'string') renameRef.current(String(m.id), String(m.text ?? ''))
       if (m.type === 'camrhia-gallery-focus') {

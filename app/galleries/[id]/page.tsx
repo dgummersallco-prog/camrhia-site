@@ -714,6 +714,21 @@ export default function GalleryManagePage() {
     }
   }
 
+  async function movePhotoTo(id: string, to: string, nb?: string): Promise<string[] | null> {
+    const arr = [...photos].sort((a, b) => a.sort_order - b.sort_order)
+    const i = arr.findIndex((p) => p.id === id)
+    if (i < 0) return null
+    const [m] = arr.splice(i, 1)
+    if (to === 'top') arr.unshift(m)
+    else {
+      const k = nb ? arr.findIndex((p) => p.id === nb) : -1
+      if (k < 0) arr.splice(i, 0, m)
+      else arr.splice(to === 'left' ? k : k + 1, 0, m)
+    }
+    await saveOrder(arr)
+    return arr.map((p) => p.id)
+  }
+
   async function scanPhotos() {
     const sb = supabase
     if (!sb || photos.length < 2 || scan) return
@@ -1586,6 +1601,7 @@ export default function GalleryManagePage() {
                 leftHost={leftHost}
                 onAddSection={addSectionFromPreview}
                 onMoveSection={moveSectionTo}
+                onMovePhoto={movePhotoTo}
                 onSectionLine={setSectionLine}
                 onRemoveSection={removeSection}
                 onRenameSection={(id, t) => void renameScene(id, t)}
