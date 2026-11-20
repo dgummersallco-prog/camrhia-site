@@ -656,6 +656,12 @@ export default function GalleryManagePage() {
     flash(error ? error.message : 'Reminder sent to their dashboard')
   }
 
+  async function addSectionFromPreview(pid: string): Promise<string | null> {
+    const rest = (gallery?.moments ?? []).filter((m) => m.startId !== pid)
+    const id = crypto.randomUUID()
+    await saveMoments([...rest, { id, name: 'New section', startId: pid }])
+    return id
+  }
   function startSection(pid: string) {
     const rest = (gallery?.moments ?? []).filter((m) => m.startId !== pid)
     const id = crypto.randomUUID()
@@ -1551,6 +1557,8 @@ export default function GalleryManagePage() {
                 topOffset={topOff}
                 flushRef={designFlush}
                 leftHost={leftHost}
+                onAddSection={addSectionFromPreview}
+                onRenameSection={(id, t) => void renameScene(id, t)}
                 onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as Record<string, unknown> } : g))}
               />
             )}

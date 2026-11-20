@@ -49,10 +49,11 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
   return { cover: k, ...p, el: { ...clearCoverEl(el), ...(p.el ?? {}) } }
 }
 
-export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost }: {
+export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost, onAddSection, onRenameSection }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
   photoChoices?: { id: string; url: string }[]; coverPhotoId?: string | null; onPickCover?: (id: string) => void
   onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void; topOffset?: number; flushRef?: { current: (() => void) | null }; leftHost?: HTMLElement | null
+  onAddSection?: (pid: string) => Promise<string | null>; onRenameSection?: (id: string, name: string) => void
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
@@ -65,6 +66,11 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean } | null>(null)
   const [zoom, setZoom] = useState<{ src: string; name: string; top: number } | null>(null)
   const [fontOpen, setFontOpen] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
+  const [secPick, setSecPick] = useState(false)
+  const addRef = useRef<HTMLDivElement>(null)
+  const pendingEdit = useRef<{ key: string; id?: string } | null>(null)
+  const renTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [focusOn, setFocusOn] = useState(false)
   const focusRef = useRef(false)
   const frameRef = useRef<HTMLIFrameElement>(null)
@@ -139,6 +145,32 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     if (on) setPick(null)
     postFocus(on)
   }
+  function postEdit(key: string, id?: string) {
+    try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-edit', key, id }, '*') } catch { /* ignore */ }
+  }
+  function postSectionMode(on: boolean) {
+    try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-section-mode', on }, '*') } catch { /* ignore */ }
+  }
+  function addCoverText() {
+    setAddOpen(false)
+    if (!latest.current.el?.brand?.text?.trim()) setEl('brand', { text: 'Your text' })
+    setTimeout(() => postEdit('brand'), 500)
+  }
+  async function addSectionAt(pid: string) {
+    setSecPick(false)
+    postSectionMode(false)
+    const id = await onAddSection?.(pid)
+    if (!id) return
+    pendingEdit.current = { key: 'moment', id }
+    try { frameRef.current?.contentWindow?.location.reload() } catch { /* ignore */ }
+  }
+  const addSectionRef = useRef(addSectionAt)
+  addSectionRef.current = addSectionAt
+  const renameRef = useRef((id: string, text: string) => { void id; void text })
+  renameRef.current = (id, text) => {
+    if (renTimer.current) clearTimeout(renTimer.current)
+    renTimer.current = setTimeout(() => onRenameSection?.(id, text), 600)
+  }
   function postDesign(next: GalleryDesign) {
     try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-design', design: next }, '*') } catch { /* ignore */ }
   }
@@ -184,11 +216,45 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     return () => { flushRef.current = null }
   })
 
+  // First time here: put photos in the cover boxes so nothing starts empty.
+  useEffect(() => {
+    if (!photoChoices || photoChoices.length === 0) return
+    const used = new Set<string>()
+    if (coverPhotoId) used.add(coverPhotoId)
+    else if (onPickCover) { onPickCover(photoChoices[0].id); used.add(photoChoices[0].id) }
+    const have: Record<string, string> = { ...(latest.current.slots ?? {}) }
+    Object.values(have).forEach((v) => used.add(v))
+    let changed = false
+    for (const k of slotKeys) {
+      if (k === 'main' || have[k]) continue
+      const nx = photoChoices.find((c) => !used.has(c.id))
+      if (nx) { have[k] = nx.id; used.add(nx.id); changed = true }
+    }
+    if (changed) change({ slots: have })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eff.cover, photoChoices?.length])
+
+  useEffect(() => {
+    if (!addOpen) return
+    const down = (e: PointerEvent) => { if (addRef.current && !addRef.current.contains(e.target as Node)) setAddOpen(false) }
+    const away = () => setAddOpen(false)
+    document.addEventListener('pointerdown', down)
+    window.addEventListener('blur', away)
+    return () => { document.removeEventListener('pointerdown', down); window.removeEventListener('blur', away) }
+  }, [addOpen])
+
   useEffect(() => {
     function onMsg(e: MessageEvent) {
       const m = e.data
       if (!m || e.source !== frameRef.current?.contentWindow) return
-      if (m.type === 'camrhia-gallery-ready') { postDesign(latest.current); postFocus(focusRef.current) }
+      if (m.type === 'camrhia-gallery-ready') {
+        postDesign(latest.current)
+        postFocus(focusRef.current)
+        const pe = pendingEdit.current
+        if (pe) { pendingEdit.current = null; setTimeout(() => postEdit(pe.key, pe.id), 700) }
+      }
+      if (m.type === 'camrhia-gallery-section-at' && typeof m.id === 'string') void addSectionRef.current(String(m.id))
+      if (m.type === 'camrhia-gallery-moment-text' && typeof m.id === 'string') renameRef.current(String(m.id), String(m.text ?? ''))
       if (m.type === 'camrhia-gallery-focus') {
         const x = Number(m.x), y = Number(m.y)
         if (Number.isFinite(x) && Number.isFinite(y)) {
@@ -281,7 +347,12 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           </>
         )}
         {coverUrl && (
-          <p className="mt-4 text-xs text-ink-soft">Drag the cover in the preview to move it. Pinch, or hold Ctrl and scroll, to zoom.</p>
+          <div className="mt-4">
+            <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-10 shrink-0">Zoom</span>
+              <input type="range" min={1} max={3} step={0.05} value={eff.zoom} onChange={(e) => change({ zoom: Number(e.target.value) })} className="min-w-0 flex-1" />
+            </label>
+            <p className="mt-2 text-xs text-ink-soft">Drag the cover in the preview to move it.</p>
+          </div>
         )}
 
 
@@ -357,10 +428,26 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
 
       <div className="flex min-w-0 flex-1 flex-col pb-1">
         <div className="mb-5 flex flex-wrap items-center justify-end gap-x-3 gap-y-3 px-1">
-          <div className="mr-auto flex flex-wrap items-center gap-x-5 gap-y-2">
+          <div className="mr-auto flex flex-wrap items-end gap-x-5 gap-y-2">
             {!['ticket', 'stack'].includes(eff.cover) && <div className="w-40"><ColorInput float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
             <div className="w-40"><ColorInput float label="Page" value={eff.pal.bg} onChange={(v) => change({ bg: v })} /></div>
             <div className="w-40"><ColorInput float label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} /></div>
+            <div ref={addRef} className="relative">
+              <button type="button" onClick={() => setAddOpen((o) => !o)} className="h-[42px] rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight">+ Add text</button>
+              {addOpen && (
+                <div className="absolute left-0 top-full z-40 mt-2 w-60 rounded-xl border border-line bg-white p-2 shadow-xl">
+                  <p className="px-2 pb-1.5 pt-1 text-sm font-medium text-ink">What do you want to add?</p>
+                  <button type="button" onClick={addCoverText} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-paper">
+                    <span className="block text-sm text-ink">Cover text box</span>
+                    <span className="block text-xs text-ink-soft">A line on the opening photo</span>
+                  </button>
+                  <button type="button" onClick={() => { setAddOpen(false); setSecPick(true); postSectionMode(true) }} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-paper">
+                    <span className="block text-sm text-ink">Section text box</span>
+                    <span className="block text-xs text-ink-soft">Splits your photos into parts</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex overflow-hidden rounded-xl border border-line bg-white text-sm">
             {(['desktop', 'phone'] as const).map((x) => (
@@ -370,6 +457,12 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         </div>
         <div ref={boxRef} className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
           <iframe ref={frameRef} src={`/g/${token}?preview=1`} title="Gallery preview" style={{ width: device === 'phone' ? 390 : '100%', height: '100%', border: 0, background: '#fff' }} />
+          {secPick && (
+            <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full bg-[#1f1a14] px-4 py-2 text-sm text-white shadow-lg">
+              <span>Click the photo where the section starts</span>
+              <button type="button" onClick={() => { setSecPick(false); postSectionMode(false) }} className="text-white/70 underline">Cancel</button>
+            </div>
+          )}
           {pick && (
             <div className="absolute right-3 z-20 w-64 overflow-y-auto rounded-xl border border-line bg-white p-3 shadow-lg" style={popPos ?? { top: 12, maxHeight: '92%' }}>
               <div className="mb-2 flex items-center justify-between">
@@ -393,7 +486,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                   <p className="text-[11px] text-ink-soft">These apply to every photo. Pick a different layout on the left.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <div className="text-xs text-ink-soft">Font
                     <button type="button" onClick={() => setFontOpen((o) => !o)} className="mt-1 flex w-full items-center justify-between rounded-lg border border-line bg-white px-2 py-1.5 text-left text-sm text-ink" style={{ fontFamily: cur?.font ? FONT_OPTIONS[cur.font]?.family : undefined }}>
                       <span>{cur?.font ? FONT_OPTIONS[cur.font]?.label : 'Gallery default'}</span><span className="text-ink-soft">▾</span>
@@ -407,34 +500,21 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                       </div>
                     )}
                   </div>
-                  {(pick.key === 'title' || pick.key === 'title2') && (
-                    <label className="block text-xs text-ink-soft">Cover text
-                      <input type="text" maxLength={60} value={eff.el?.title?.text ?? ''} placeholder="Gallery title" onChange={(e) => setEl('title', { text: e.target.value })} className="mt-1 w-full rounded border border-black/10 px-2 py-1.5 text-sm text-ink" />
-                    </label>
-                  )}
-                  {pick.key === 'initials' && (
-                    <label className="block text-xs text-ink-soft">Initials (first two letters are used)
-                      <input type="text" maxLength={4} value={cur?.text ?? ''} placeholder="Auto from title" onChange={(e) => setEl(pick.key, { text: e.target.value })} className="mt-1 w-full rounded border border-black/10 bg-white px-2 py-1.5 text-sm text-ink" />
-                    </label>
-                  )}
+                  <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-14 shrink-0">Size {cur?.size ?? pick.size}</span>
+                    <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(pick.key, { size: Number(e.target.value) })} className="min-w-0 flex-1" />
+                  </label>
                   {pick.key === 'title' && eff.cover === 'bigtype' && (
                     <ColorInput label="Color over the photo" value={eff.el?.titlein?.color ?? '#FFFFFF'} onChange={(v) => setEl('titlein', { color: v })} />
                   )}
-                  {pick.key === 'brand' && (
-                    <label className="block text-xs text-ink-soft">Cover subtitle (date, season, etc.)
-                      <input type="text" maxLength={40} value={cur?.text ?? ''} placeholder="Studio name" onChange={(e) => setEl(pick.key, { text: e.target.value })} className="mt-1 w-full rounded border border-black/10 px-2 py-1.5 text-sm text-ink" />
+                  <div className="flex items-end gap-3">
+                    <div className="min-w-0 flex-1"><ColorInput label="Color" value={cur?.color ?? pick.color} onChange={(v) => setEl(pick.key, { color: v })} /></div>
+                    <label className="flex shrink-0 items-center gap-1.5 pb-3 text-xs text-ink-soft">
+                      <input type="checkbox" checked={cur?.bold ?? pick.bold} onChange={(e) => setEl(pick.key, { bold: e.target.checked })} />
+                      Bold
                     </label>
-                  )}
-                  <label className="block text-xs text-ink-soft">Size ({cur?.size ?? pick.size}px)
-                    <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(pick.key, { size: Number(e.target.value) })} className="mt-1 w-full" />
-                  </label>
-                  <ColorInput label="Color" value={cur?.color ?? pick.color} onChange={(v) => setEl(pick.key, { color: v })} />
-                  <label className="flex items-center gap-2 text-xs text-ink-soft">
-                    <input type="checkbox" checked={cur?.bold ?? pick.bold} onChange={(e) => setEl(pick.key, { bold: e.target.checked })} />
-                    Bold
-                  </label>
-                  <label className="block text-xs text-ink-soft">Move up or down ({cur?.dy ?? 0}px)
-                    <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(pick.key, { dy: Number(e.target.value) })} className="mt-1 w-full" />
+                  </div>
+                  <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-14 shrink-0">Move {cur?.dy ?? 0}</span>
+                    <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(pick.key, { dy: Number(e.target.value) })} className="min-w-0 flex-1" />
                   </label>
                   <button type="button" onClick={() => resetEl(pick.key)} className="text-[11px] text-twilight underline">Reset this line</button>
                 </div>

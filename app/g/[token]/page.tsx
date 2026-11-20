@@ -47,6 +47,7 @@ export default function GalleryViewPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [brand, setBrand] = useState<Brand | null>(null)
   const [designPreview, setDesignPreview] = useState<GalleryDesign | null>(null)
+  const [momentText, setMomentText] = useState<Record<string, string>>({})
   const [focusMode, setFocusMode] = useState(false)
   const [isPreview, setIsPreview] = useState(false)
   const textRef = useRef<Record<string, string>>({})
@@ -465,11 +466,12 @@ export default function GalleryViewPage() {
     const hide = () => { box.style.display = 'none' }
     let editor: HTMLInputElement | null = null
     let hidden: HTMLElement | null = null
+    let secOn = false
     const closeEditor = () => { if (editor) { editor.remove(); editor = null } if (hidden) { hidden.style.visibility = ''; hidden = null } }
     const openEditor = (target: HTMLElement, k: string) => {
-      if (!['title', 'title2', 'brand', 'count', 'initials'].includes(k)) return
+      if (!['title', 'title2', 'brand', 'count', 'initials', 'moment'].includes(k)) return
       const key = k === 'title2' ? 'title' : k
-      const orig = textRef.current[key] ?? ''
+      const orig = k === 'moment' ? (target.textContent ?? '') : textRef.current[key] ?? ''
       closeEditor()
       const r = target.getBoundingClientRect()
       const cs = getComputedStyle(target)
@@ -506,7 +508,11 @@ export default function GalleryViewPage() {
       target.style.visibility = 'hidden'
       hidden = target
       let finished = false
-      const send = (t: string) => window.parent?.postMessage({ type: 'camrhia-gallery-text', key, text: t }, '*')
+      const mid = k === 'moment' ? target.getAttribute('data-mid') : null
+      const send = (t: string) => {
+        if (mid) { setMomentText((p) => ({ ...p, [mid]: t })); window.parent?.postMessage({ type: 'camrhia-gallery-moment-text', id: mid, text: t }, '*') }
+        else window.parent?.postMessage({ type: 'camrhia-gallery-text', key, text: t }, '*')
+      }
       inp.addEventListener('input', () => send(inp.value))
       inp.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); finished = true; closeEditor() }
@@ -519,6 +525,10 @@ export default function GalleryViewPage() {
       inp.select()
     }
     const click = (e: MouseEvent) => {
+      if (secOn) {
+        const im = (e.target as HTMLElement | null)?.closest?.('img[data-pid]:not([data-cover]):not([data-slot])')
+        if (im) { e.preventDefault(); e.stopPropagation(); window.parent?.postMessage({ type: 'camrhia-gallery-section-at', id: im.getAttribute('data-pid') }, '*'); return }
+      }
       const sc = (e.target as HTMLElement | null)?.closest?.('[data-setcover]')
       if (sc) {
         e.preventDefault()
@@ -546,7 +556,21 @@ export default function GalleryViewPage() {
     document.addEventListener('mouseover', over, true)
     document.addEventListener('scroll', hide, true)
     document.addEventListener('click', click, true)
+    const secSt = document.createElement('style')
+    document.head.appendChild(secSt)
+    const onCtl = (e: MessageEvent) => {
+      const m = e.data
+      if (!m) return
+      if (m.type === 'camrhia-gallery-section-mode') { secOn = !!m.on; secSt.textContent = secOn ? '.gal-root img[data-pid]{cursor:copy!important}' : '' }
+      if (m.type === 'camrhia-gallery-edit') {
+        const el = (m.key === 'moment' ? document.querySelector(`[data-mid="${String(m.id)}"]`) : document.querySelector(`[data-gk="${String(m.key)}"]`)) as HTMLElement | null
+        if (el) { el.scrollIntoView({ block: 'center' }); setTimeout(() => openEditor(el, String(m.key)), 250) }
+      }
+    }
+    window.addEventListener('message', onCtl)
     return () => {
+      window.removeEventListener('message', onCtl)
+      secSt.remove()
       document.removeEventListener('mouseover', over, true)
       document.removeEventListener('scroll', hide, true)
       document.removeEventListener('click', click, true)
@@ -633,9 +657,9 @@ export default function GalleryViewPage() {
     const m = (p as { moment?: string | null }).moment ?? null
     const prev = i > 0 ? ((list[i - 1] as unknown as { moment?: string | null }).moment ?? null) : undefined
     if (i > 0 && m === prev) return null
-    const name = m ? momentMeta.find((x) => x.id === m)?.name : null
-    if (!name) return null
-    return <h2 data-gk="moment" className={`mb-4 mt-8 w-full basis-full text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
+    const name = m ? (m in momentText ? momentText[m] : momentMeta.find((x) => x.id === m)?.name) : null
+    if (name === null || name === undefined) return null
+    return <h2 data-gk="moment" data-mid={m ?? undefined} className={`mb-4 mt-8 w-full basis-full text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
   }
   const current = openIndex !== null ? list[openIndex] : null
   const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
