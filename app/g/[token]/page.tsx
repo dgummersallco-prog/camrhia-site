@@ -636,9 +636,11 @@ export default function GalleryViewPage() {
   const wmText = wmCfg?.on ? String(wmCfg.text ?? '').trim() : ''
   const wmEl = wmText ? (() => {
     const t = wmText.toUpperCase().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    const w = Math.max(200, wmText.length * 13 + 90)
-    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='150'><text x='${w / 2}' y='75' text-anchor='middle' dominant-baseline='middle' transform='rotate(-28 ${w / 2} 75)' font-family='Arial, sans-serif' font-size='15' font-weight='600' letter-spacing='3' fill='rgba(255,255,255,0.5)' stroke='rgba(0,0,0,0.3)' stroke-width='0.6'>${t}</text></svg>`
-    return <span aria-hidden className="pointer-events-none absolute inset-0 select-none overflow-hidden" style={{ backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`, backgroundRepeat: 'repeat' }} />
+    const tw = wmText.length * 31
+    const w = 2 * (tw + 30)
+    const h = Math.max(200, Math.round(1.16 * tw + 56))
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><g font-family='Arial, Helvetica, sans-serif' font-size='40' font-weight='800' letter-spacing='2' text-anchor='middle' dominant-baseline='middle' fill='white' fill-opacity='0.55' stroke='black' stroke-opacity='0.12' stroke-width='1'><text x='${w / 4}' y='${h / 4}' transform='rotate(-35 ${w / 4} ${h / 4})'>${t}</text><text x='${(w * 3) / 4}' y='${(h * 3) / 4}' transform='rotate(-35 ${(w * 3) / 4} ${(h * 3) / 4})'>${t}</text></g></svg>`
+    return <span aria-hidden className="pointer-events-none absolute inset-0 select-none overflow-hidden" style={{ backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`, backgroundRepeat: 'repeat', backgroundSize: `min(${Math.round((w / tw) * 300)}px, ${((w / tw) * 40).toFixed(1)}%) auto` }} />
   })() : null
 
   const imgEl = cover?.web ? (

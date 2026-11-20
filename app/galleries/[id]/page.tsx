@@ -1250,6 +1250,15 @@ export default function GalleryManagePage() {
     if (!gallery) return
     void saveSettings({ design: { ...(gallery.design ?? {}), watermark: { on: wm?.on ?? false, text: wm?.text ?? '', ...patch } } })
   }
+  const wmTxt = wm?.on ? String(wm.text ?? '').trim() : ''
+  const wmStyle = wmTxt ? (() => {
+    const t = wmTxt.toUpperCase().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const tw = wmTxt.length * 31
+    const w = 2 * (tw + 30)
+    const h = Math.max(200, Math.round(1.16 * tw + 56))
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><g font-family='Arial, Helvetica, sans-serif' font-size='40' font-weight='800' letter-spacing='2' text-anchor='middle' dominant-baseline='middle' fill='white' fill-opacity='0.55' stroke='black' stroke-opacity='0.12' stroke-width='1'><text x='${w / 4}' y='${h / 4}' transform='rotate(-35 ${w / 4} ${h / 4})'>${t}</text><text x='${(w * 3) / 4}' y='${(h * 3) / 4}' transform='rotate(-35 ${(w * 3) / 4} ${(h * 3) / 4})'>${t}</text></g></svg>`
+    return { backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`, backgroundRepeat: 'repeat', backgroundSize: `min(${Math.round((w / tw) * 300)}px, ${((w / tw) * 40).toFixed(1)}%) auto` } as const
+  })() : null
   const liveIds = (ids: string[]) => ids.filter((id) => photos.some((x) => x.id === id))
   const thumbOf = (id: string) => { const ph = photos.find((x) => x.id === id); return ph?.thumb_path ? thumbs[ph.thumb_path] : undefined }
 
@@ -1706,6 +1715,7 @@ export default function GalleryManagePage() {
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={thumbs[p.thumb_path]} alt={p.filename ?? ''} loading="lazy" draggable={false} className="h-full w-full object-cover" />
                         )}
+                        {wmStyle && <span aria-hidden className="pointer-events-none absolute inset-0" style={wmStyle} />}
                         {selecting && (
                           <span className={`absolute bottom-2 left-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-xs ${selected.has(p.id) ? 'bg-twilight text-white' : 'bg-black/30 text-transparent'}`}>✓</span>
                         )}
