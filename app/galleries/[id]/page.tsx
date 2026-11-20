@@ -352,7 +352,7 @@ export default function GalleryManagePage() {
   }, [designOpen, shareOpen])
 
   const stepsBar = (active: number, nav: { photos: () => void; style: () => void; publish: () => void }) => (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid overflow-hidden rounded-2xl border border-line bg-white/60 sm:grid-cols-3">
       {([
         { label: 'Add photos', hint: 'Client-ready edited photos', done: photos.length > 0, go: nav.photos, off: false },
         { label: 'Style', hint: 'Cover photo and photo layout', done: !!gallery?.design && Object.keys(gallery.design).length > 0, go: nav.style, off: photos.length === 0 },
@@ -363,10 +363,11 @@ export default function GalleryManagePage() {
           type="button"
           disabled={st.off}
           onClick={st.go}
-          className={'flex items-start gap-3 rounded-xl border px-4 py-3 text-left text-sm text-ink transition disabled:opacity-50 ' + (i === active ? 'border-twilight bg-white ring-1 ring-twilight' : st.done ? 'border-twilight/30 bg-twilight/10' : 'border-line bg-white/60 hover:bg-white')}
+          className={'relative flex items-center gap-3 border-line px-5 py-4 text-left text-sm text-ink transition disabled:opacity-50 ' + (i > 0 ? 'border-t sm:border-l sm:border-t-0 ' : '') + (i === active ? 'bg-white' : 'hover:bg-white/80')}
         >
-          <span className={'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium ' + (st.done ? 'bg-twilight text-white' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
-          <span className="leading-tight">{st.label}<span className="mt-0.5 block text-xs text-ink-soft">{st.hint}</span></span>
+          <span className={'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ' + (st.done ? 'bg-twilight text-white' : i === active ? 'bg-twilight/15 text-twilight' : 'bg-line text-ink-soft')}>{st.done ? '✓' : i + 1}</span>
+          <span className="leading-tight"><span className="font-medium">{st.label}</span><span className="mt-0.5 block text-xs text-ink-soft">{st.hint}</span></span>
+          {i === active && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-twilight" />}
         </button>
       ))}
     </div>
@@ -772,7 +773,14 @@ export default function GalleryManagePage() {
     await saveMoments(gs.map((g) => ({ id: crypto.randomUUID(), name: g.label, startId: g.ids[0] })))
   }
 
-  async function aiScan() {
+  async function pickOrg(mode: 'scenes' | 'best' | 'color' | 'name') {
+    if (scan) return
+    if (mode === 'name') { await applyOrg('name', orgInfo ?? ({} as OrgInfo)); return }
+    if (orgInfo) { await applyOrg(mode); return }
+    await aiScan(mode)
+  }
+
+  async function aiScan(mode: 'scenes' | 'best' | 'color' | 'name' = 'scenes') {
     const sb = supabase
     if (!sb || !gallery || photos.length < 1 || scan) return
     const { data: ses } = await sb.auth.getSession()
@@ -853,7 +861,7 @@ export default function GalleryManagePage() {
     for (const p of list) if (info[p.id]?.tags.length) tagMap[p.id] = info[p.id].tags
     const { error } = await sb.from('galleries').update({ photo_tags: tagMap }).eq('id', gallery.id)
     if (error) setMessage(error.message)
-    await applyOrg('scenes', info, order)
+    await applyOrg(mode, info, order)
   }
 
   async function groupBy(mode: 'scenes' | 'colors' | 'moments') {
@@ -1175,47 +1183,23 @@ export default function GalleryManagePage() {
           <div ref={setLeftHost} className="flex flex-col" />
           {gallery && !designOpen && !shareOpen && (
             <div>
-              <h2 className="font-fraunces text-2xl font-semibold text-ink">Gallery details</h2>
-              <div className="mt-5">
-                <label className={label}>Gallery name</label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }}
-                  className={input}
-                />
+              <h2 className="font-fraunces text-2xl font-semibold text-ink">Organize your photos</h2>
+              <p className="mt-1.5 text-sm leading-snug text-ink-soft">Choose how to sort this gallery.</p>
+              <div className="mt-5 grid grid-cols-2 gap-2.5">
+                {([['scenes', 'By scene', 'Groups photos into moments'], ['best', 'Best first', 'Strongest photos on top'], ['color', 'By color', 'Black and white, warm, bright'], ['name', 'By filename', 'Original shot order']] as const).map(([k, l, d]) => (
+                  <button key={k} type="button" disabled={!!scan || photos.length === 0} onClick={() => pickOrg(k)} className={`rounded-2xl border p-3.5 text-left transition disabled:opacity-50 ${orgMode === k ? 'border-twilight bg-twilight/10 ring-1 ring-twilight' : 'border-line bg-white/70 hover:border-twilight hover:bg-white'}`}>
+                    <span className="block text-sm font-medium text-ink">{l}</span>
+                    <span className="mt-1 block text-xs leading-snug text-ink-soft">{d}</span>
+                  </button>
+                ))}
               </div>
-              {(clientName || sessType || sessDate) && (
-                <dl className="mt-5 space-y-3 text-sm">
-                  {clientName && <div><dt className="text-xs text-ink-soft">Client</dt><dd className="text-ink">{clientName}</dd></div>}
-                  {sessType && <div><dt className="text-xs text-ink-soft">Shoot type</dt><dd className="text-ink">{sessType}</dd></div>}
-                  {sessDate && <div><dt className="text-xs text-ink-soft">Shoot date</dt><dd className="text-ink">{sessDate}</dd></div>}
-                </dl>
+              {scan && (
+                <div className="mt-4">
+                  <p className="text-xs text-ink-soft">Organizing {scan.done} of {scan.total}</p>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-twilight transition-all" style={{ width: `${(scan.done / Math.max(1, scan.total)) * 100}%` }} /></div>
+                </div>
               )}
-              <div className="mt-6 border-t border-line pt-5">
-                <p className="text-sm font-medium text-ink">Status</p>
-                <dl className="mt-3 space-y-2 text-sm">
-                  <div className="flex justify-between"><dt className="text-ink-soft">Gallery</dt><dd className="text-ink">{isPublished ? 'Published' : 'Draft'}</dd></div>
-                  <div className="flex justify-between"><dt className="text-ink-soft">Client favorites</dt><dd className="text-ink">{Object.values(favCounts).reduce((n, c) => n + c, 0)}</dd></div>
-                  {sentAt && <div className="flex justify-between"><dt className="text-ink-soft">Sent to dashboard</dt><dd className="text-ink">{new Date(sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</dd></div>}
-                  {openedAt && <div className="flex justify-between"><dt className="text-ink-soft">Opened by client</dt><dd className="text-ink">{new Date(openedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</dd></div>}
-                </dl>
-                {isPublished && <button type="button" onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }} className="mt-3 w-full rounded-xl border border-line bg-white/70 px-4 py-2 text-sm text-ink transition hover:border-twilight">Copy link</button>}
-                {isPublished && coupleUserId && !openedAt && <button type="button" onClick={sendReminder} className="mt-2 w-full rounded-xl border border-line bg-white/70 px-4 py-2 text-sm text-ink transition hover:border-twilight">Send reminder</button>}
-              </div>
-              <div className="mt-6 border-t border-line pt-5">
-                <p className="text-sm font-medium text-ink">Organize</p>
-                <button type="button" onClick={aiScan} disabled={!!scan} className="mt-3 w-full rounded-xl border border-twilight bg-white/70 px-4 py-2.5 text-sm font-medium text-twilight transition hover:bg-twilight/10 disabled:opacity-60">{scan ? `Organizing ${scan.done} of ${scan.total}` : orgInfo ? 'Scan again' : 'Organize photos'}</button>
-                {orgInfo && !scan && (
-                  <div className="mt-3">
-                    <p className="text-xs text-ink-soft">Organize by</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {([['scenes', 'Scenes'], ['best', 'Best first'], ['color', 'Color'], ['name', 'Filename']] as const).map(([k, l]) => (
-                        <button key={k} type="button" onClick={() => applyOrg(k)} className={`rounded-full border px-3 py-1 text-xs font-medium transition ${orgMode === k ? 'border-twilight bg-twilight text-white' : 'border-line text-ink-soft hover:border-twilight'}`}>{l}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <div className="mt-4">
                 {sceneInfo.blocks.length > 0 && (
                   <>
                     <ul className="mt-4 space-y-2.5">
@@ -1240,6 +1224,16 @@ export default function GalleryManagePage() {
                     <button type="button" onClick={() => saveMoments([])} className="mt-3 text-xs text-ink-soft underline">Remove scene titles</button>
                   </>
                 )}
+              </div>
+              <div className="mt-6 border-t border-line pt-5">
+                {(sentAt || openedAt) && (
+                  <dl className="mt-4 space-y-2 text-sm">
+                    {sentAt && <div className="flex justify-between"><dt className="text-ink-soft">Sent to dashboard</dt><dd className="text-ink">{new Date(sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</dd></div>}
+                    {openedAt && <div className="flex justify-between"><dt className="text-ink-soft">Opened by client</dt><dd className="text-ink">{new Date(openedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</dd></div>}
+                  </dl>
+                )}
+                {isPublished && <button type="button" onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }} className="mt-3 w-full rounded-xl border border-line bg-white/70 px-4 py-2 text-sm text-ink transition hover:border-twilight">Copy link</button>}
+                {isPublished && coupleUserId && !openedAt && <button type="button" onClick={sendReminder} className="mt-2 w-full rounded-xl border border-line bg-white/70 px-4 py-2 text-sm text-ink transition hover:border-twilight">Send reminder</button>}
               </div>
               <div className="mt-6 border-t border-line pt-5">
                 <p className="text-sm font-medium text-ink">Upload and storage</p>
@@ -1320,30 +1314,29 @@ export default function GalleryManagePage() {
         ) : (
           <>
             {/* Header */}
-            <div className="mb-5">
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }}
-                className="w-full bg-transparent font-fraunces text-2xl font-semibold text-ink focus:outline-none focus:ring-0"
-                aria-label="Gallery name"
-              />
-              <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
-                <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-twilight/15 text-twilight' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
-                {sessInfo && <span>{sessInfo}</span>}
-              </p>
-              <p className="mt-1 text-xs text-ink-soft">
-                {photos.length} {photos.length === 1 ? 'photo' : 'photos'} · {totalFavs} {totalFavs === 1 ? 'favorite' : 'favorites'}
-                {!isPublished ? (photos.length === 0 ? ' · Add photos, then publish when you are ready to share.' : ' · Publish when you are ready to share.') : ''}
-              </p>
+            <div className="mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+              <div className="min-w-0 flex-1">
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }}
+                  className="w-full bg-transparent font-fraunces text-3xl font-semibold text-ink focus:outline-none focus:ring-0"
+                  aria-label="Gallery name"
+                />
+                <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
+                  <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-twilight/15 text-twilight' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
+                  {sessInfo && <span>{sessInfo}</span>}
+                  <span>· {photos.length} {photos.length === 1 ? 'photo' : 'photos'} · {totalFavs} {totalFavs === 1 ? 'favorite' : 'favorites'}</span>
+                </p>
+              </div>
+              <div className="flex shrink-0 gap-3">
+                <button className="rounded-xl border border-line bg-white/70 px-6 py-3 text-base text-ink transition hover:border-twilight" onClick={() => (designOpen || shareOpen ? goStep(designOpen ? 0 : 1) : router.push('/galleries'))}>Back</button>
+                {!shareOpen && photos.length > 0 && <button className="rounded-xl border border-twilight bg-white/70 px-6 py-3 text-base font-medium text-twilight transition hover:bg-twilight/10" onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
+              </div>
             </div>
 
             {gallery && (
               <div ref={barRef}>
-                <div className="mb-5 flex min-h-[52px] justify-end gap-3">
-                  <button className="rounded-xl border border-line bg-white/70 px-6 py-3 text-base text-ink transition hover:border-twilight" onClick={() => (designOpen || shareOpen ? goStep(designOpen ? 0 : 1) : router.push('/galleries'))}>Back</button>
-                  {!shareOpen && photos.length > 0 && <button className="rounded-xl border border-twilight bg-white/70 px-6 py-3 text-base font-medium text-twilight transition hover:bg-twilight/10" onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
-                </div>
                 <div className="mb-8">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>
               </div>
             )}

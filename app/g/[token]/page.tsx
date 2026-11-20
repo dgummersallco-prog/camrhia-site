@@ -638,11 +638,11 @@ export default function GalleryViewPage() {
     <img src={cover.web} alt="" data-pid={cover.id} data-cover="1" className="h-full w-full object-cover" style={{ objectPosition: pos, transform: zoom > 1 ? `scale(${zoom})` : undefined, transformOrigin: pos }} />
   ) : null
   const coverTitle = String((el as Record<string, { text?: string }> | undefined)?.title?.text ?? '').trim() || String(data.title)
-  const coverSub = String((el as Record<string, { text?: string }> | undefined)?.brand?.text ?? '').trim() || (brand?.name ? String(brand.name) : '')
+  const coverSub = String((el as Record<string, { text?: string }> | undefined)?.brand?.text ?? '').trim()
   const countText = String((el as Record<string, { text?: string }> | undefined)?.count?.text ?? '').trim()
   textRef.current = { title: coverTitle, brand: coverSub, count: countText || `${data.photos.length} photos`, initials: String((el as Record<string, { text?: string }> | undefined)?.initials?.text ?? '') }
-  const brandLine = brand?.name ? (
-    <p data-gk="brand" className="mb-3 font-mono text-xs uppercase tracking-widest" style={{ color: pal.soft }}>{brand.name}</p>
+  const brandLine = coverSub ? (
+    <p data-gk="brand" className="mb-3 font-mono text-xs uppercase tracking-widest" style={{ color: pal.soft }}>{coverSub}</p>
   ) : null
   const titleEl = (extra: string) => <h1 className={`${headCls} ${extra}`} style={headStyle}>{data.title}</h1>
   const renderItem = (p: (typeof list)[number], i: number, uniform: boolean) => (
