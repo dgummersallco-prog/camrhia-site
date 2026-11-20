@@ -154,6 +154,10 @@ export default function GalleryManagePage() {
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [scan, setScan] = useState<{ done: number; total: number } | null>(null)
   const [scanned, setScanned] = useState<Set<string>>(new Set())
+  type OrgInfo = Record<string, { scene: string; tags: string[]; score: number; lum: number; sat: number; hue: number }>
+  const [orgInfo, setOrgInfo] = useState<OrgInfo | null>(null)
+  const [orgOrder, setOrgOrder] = useState<string[]>(['Other'])
+  const [orgMode, setOrgMode] = useState<string | null>(null)
   const [feats, setFeats] = useState<Record<string, { t?: number; lum: number; sat: number; hue: number; vec: number[] }> | null>(null)
   const [sessDate, setSessDate] = useState<string | null>(null)
   const [openedAt, setOpenedAt] = useState<string | null>(null)
@@ -736,6 +740,38 @@ export default function GalleryManagePage() {
     setScan(null)
   }
 
+  async function applyOrg(mode: 'scenes' | 'best' | 'color' | 'name', info: OrgInfo | null = orgInfo, order: string[] = orgOrder) {
+    if (!info) return
+    const byName = (x: Photo, y: Photo) => (x.filename ?? '').localeCompare(y.filename ?? '', undefined, { numeric: true, sensitivity: 'base' })
+    const list = [...photos].sort(byName)
+    const gs: { label: string; ids: string[] }[] = []
+    const used = new Set<string>()
+    const add = (label: string, ids: string[]) => { if (ids.length) { gs.push({ label, ids }); ids.forEach((id) => used.add(id)) } }
+    if (mode === 'scenes') {
+      if (list.length >= 40) {
+        const n = Math.min(30, Math.max(8, Math.round(list.length * 0.08)))
+        const top = list.filter((p) => (info[p.id]?.score ?? 0) >= 7).sort((x, y) => info[y.id].score - info[x.id].score).slice(0, n)
+        if (top.length >= 6) add('Highlights', top.map((p) => p.id))
+      }
+      order.forEach((label) => add(label, list.filter((p) => !used.has(p.id) && (info[p.id]?.scene ?? 'Other') === label).map((p) => p.id)))
+    } else if (mode === 'color') {
+      const names = ['Black and white', 'Dark', 'Bright', 'Warm', 'Green', 'Cool']
+      const bucket = (f: { lum: number; sat: number; hue: number }) => (f.sat < 0.08 ? 0 : f.lum < 0.25 ? 1 : f.lum > 0.75 ? 2 : f.hue < 70 || f.hue >= 300 ? 3 : f.hue < 170 ? 4 : 5)
+      names.forEach((label, i) => add(label, list.filter((p) => info[p.id] && bucket(info[p.id]) === i).map((p) => p.id)))
+    }
+    const left = list.filter((p) => !used.has(p.id))
+    let arr: Photo[]
+    if (gs.length) {
+      if (left.length) add('Other', left.map((p) => p.id))
+      const byId = new Map(photos.map((p) => [p.id, p]))
+      arr = gs.flatMap((g) => g.ids.map((id) => byId.get(id)!))
+    } else if (mode === 'best') arr = [...list].sort((x, y) => (info[y.id]?.score ?? 0) - (info[x.id]?.score ?? 0))
+    else arr = list
+    setOrgMode(mode)
+    await saveOrder(arr)
+    await saveMoments(gs.map((g) => ({ id: crypto.randomUUID(), name: g.label, startId: g.ids[0] })))
+  }
+
   async function aiScan() {
     const sb = supabase
     if (!sb || !gallery || photos.length < 1 || scan) return
@@ -746,22 +782,44 @@ export default function GalleryManagePage() {
     setScan({ done: 0, total: list.length })
     setScanned(new Set())
     let order: string[] = ['Other']
-    const info: Record<string, { scene: string; tags: string[]; score: number }> = {}
+    const info: OrgInfo = {}
     let next = 0
     let done = 0
     let failed: string | null = null
-    const thumb = async (p: Photo): Promise<string> => {
+    const thumb = async (p: Photo): Promise<{ b: string; col: { lum: number; sat: number; hue: number } }> => {
+      const col = { lum: 0.5, sat: 0, hue: 0 }
       try {
         const url = p.thumb_path ? thumbs[p.thumb_path] : undefined
-        if (!url) return ''
+        if (!url) return { b: '', col }
         const im = await new Promise<HTMLImageElement>((res, rej) => { const el = new Image(); el.crossOrigin = 'anonymous'; el.onload = () => res(el); el.onerror = rej; el.src = url + (url.includes('?') ? '&' : '?') + 'scan=1' })
         const k = 320 / Math.max(im.naturalWidth, im.naturalHeight, 1)
         const cv = document.createElement('canvas')
         cv.width = Math.max(1, Math.round(im.naturalWidth * Math.min(1, k)))
         cv.height = Math.max(1, Math.round(im.naturalHeight * Math.min(1, k)))
         cv.getContext('2d')?.drawImage(im, 0, 0, cv.width, cv.height)
-        return cv.toDataURL('image/jpeg', 0.7)
-      } catch { return '' }
+        const sm = document.createElement('canvas')
+        sm.width = 8; sm.height = 8
+        const sx = sm.getContext('2d', { willReadFrequently: true })
+        if (sx) {
+          sx.drawImage(cv, 0, 0, 8, 8)
+          const d = sx.getImageData(0, 0, 8, 8).data
+          let lum = 0, sat = 0, hs = 0, hc = 0
+          for (let i = 0; i < 64; i++) {
+            const r = d[i * 4] / 255, g = d[i * 4 + 1] / 255, b = d[i * 4 + 2] / 255
+            const mx = Math.max(r, g, b), mn = Math.min(r, g, b), c = mx - mn
+            lum += (0.299 * r + 0.587 * g + 0.114 * b) / 64
+            sat += (mx ? c / mx : 0) / 64
+            if (c > 0.05) {
+              const h = ((mx === r ? ((g - b) / c) % 6 : mx === g ? (b - r) / c + 2 : (r - g) / c + 4) * 60 * Math.PI) / 180
+              hs += Math.sin(h) * c; hc += Math.cos(h) * c
+            }
+          }
+          col.lum = lum; col.sat = sat
+          col.hue = (Math.atan2(hs, hc) * 180) / Math.PI
+          if (col.hue < 0) col.hue += 360
+        }
+        return { b: cv.toDataURL('image/jpeg', 0.7), col }
+      } catch { return { b: '', col } }
     }
     const worker = async () => {
       while (!failed) {
@@ -770,7 +828,7 @@ export default function GalleryManagePage() {
         if (start >= list.length) return
         const batch = list.slice(start, start + 12)
         const imgs = await Promise.all(batch.map(thumb))
-        const ok = batch.map((p, i) => ({ p, b: imgs[i] })).filter((x) => x.b)
+        const ok = batch.map((p, i) => ({ p, b: imgs[i].b, col: imgs[i].col })).filter((x) => x.b)
         if (ok.length) {
           const r = await fetch('/api/ai/camri-scenes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ images: ok.map((x) => x.b), galleryId: gallery.id, sessionType: sessType ?? '' }) })
           const j = await r.json().catch(() => ({}))
@@ -778,7 +836,7 @@ export default function GalleryManagePage() {
           if (Array.isArray(j.order)) order = j.order
           ok.forEach((x, i) => {
             const q = (j.photos ?? [])[i]
-            info[x.p.id] = { scene: q?.scene ?? 'Other', tags: Array.isArray(q?.tags) ? q.tags : [], score: Number(q?.score) || 5 }
+            info[x.p.id] = { scene: q?.scene ?? 'Other', tags: Array.isArray(q?.tags) ? q.tags : [], score: Number(q?.score) || 5, ...x.col }
           })
         }
         done += batch.length
@@ -789,29 +847,13 @@ export default function GalleryManagePage() {
     await Promise.all(Array.from({ length: 3 }, worker))
     setScan(null)
     if (failed) { setMessage(failed); return }
-    const gs: { label: string; ids: string[] }[] = []
-    let rest = list
-    if (list.length >= 40) {
-      const n = Math.min(30, Math.max(8, Math.round(list.length * 0.08)))
-      const top = list.filter((p) => (info[p.id]?.score ?? 0) >= 7).sort((x, y) => info[y.id].score - info[x.id].score).slice(0, n)
-      if (top.length >= 6) {
-        gs.push({ label: 'Highlights', ids: top.map((p) => p.id) })
-        const hs = new Set(top.map((p) => p.id))
-        rest = list.filter((p) => !hs.has(p.id))
-      }
-    }
-    order.forEach((label) => {
-      const ids = rest.filter((p) => (info[p.id]?.scene ?? 'Other') === label).map((p) => p.id)
-      if (ids.length) gs.push({ label, ids })
-    })
-    const byId = new Map(photos.map((p) => [p.id, p]))
-    const arr = gs.flatMap((g) => g.ids.map((id) => byId.get(id)!))
-    await saveOrder(arr)
-    await saveMoments(gs.map((g) => ({ id: crypto.randomUUID(), name: g.label, startId: g.ids[0] })))
+    setOrgInfo(info)
+    setOrgOrder(order)
     const tagMap: Record<string, string[]> = {}
     for (const p of list) if (info[p.id]?.tags.length) tagMap[p.id] = info[p.id].tags
     const { error } = await sb.from('galleries').update({ photo_tags: tagMap }).eq('id', gallery.id)
     if (error) setMessage(error.message)
+    await applyOrg('scenes', info, order)
   }
 
   async function groupBy(mode: 'scenes' | 'colors' | 'moments') {
@@ -1163,7 +1205,17 @@ export default function GalleryManagePage() {
               </div>
               <div className="mt-6 border-t border-line pt-5">
                 <p className="text-sm font-medium text-ink">Organize</p>
-                <button type="button" onClick={aiScan} disabled={!!scan} className="mt-3 w-full rounded-xl border border-twilight bg-white/70 px-4 py-2.5 text-sm font-medium text-twilight transition hover:bg-twilight/10 disabled:opacity-60">{scan ? `Organizing ${scan.done} of ${scan.total}` : 'Organize photos'}</button>
+                <button type="button" onClick={aiScan} disabled={!!scan} className="mt-3 w-full rounded-xl border border-twilight bg-white/70 px-4 py-2.5 text-sm font-medium text-twilight transition hover:bg-twilight/10 disabled:opacity-60">{scan ? `Organizing ${scan.done} of ${scan.total}` : orgInfo ? 'Scan again' : 'Organize photos'}</button>
+                {orgInfo && !scan && (
+                  <div className="mt-3">
+                    <p className="text-xs text-ink-soft">Organize by</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {([['scenes', 'Scenes'], ['best', 'Best first'], ['color', 'Color'], ['name', 'Filename']] as const).map(([k, l]) => (
+                        <button key={k} type="button" onClick={() => applyOrg(k)} className={`rounded-full border px-3 py-1 text-xs font-medium transition ${orgMode === k ? 'border-twilight bg-twilight text-white' : 'border-line text-ink-soft hover:border-twilight'}`}>{l}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {sceneInfo.blocks.length > 0 && (
                   <>
                     <ul className="mt-4 space-y-2.5">
