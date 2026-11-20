@@ -27,7 +27,7 @@ type Gallery = {
   cover_path: string | null
   design?: Record<string, unknown> | null
   session_id: string | null
-  moments?: { id: string; name: string; startId: string }[] | null
+  moments?: { id: string; name: string; startId: string; line?: boolean }[] | null
 }
 type Photo = {
   id: string
@@ -622,7 +622,7 @@ export default function GalleryManagePage() {
     const sorted = [...photos].sort((a, b) => a.sort_order - b.sort_order)
     const start = new Map(ms.map((m) => [m.startId, m]))
     const head: string[] = []
-    const blocks: { m: { id: string; name: string; startId: string }; ids: string[] }[] = []
+    const blocks: { m: { id: string; name: string; startId: string; line?: boolean }; ids: string[] }[] = []
     for (const p of sorted) {
       const m = start.get(p.id)
       if (m) blocks.push({ m, ids: [p.id] })
@@ -632,12 +632,13 @@ export default function GalleryManagePage() {
     return { head, blocks }
   })()
 
-  async function saveMoments(ms: { id: string; name: string; startId: string }[]) {
+  async function saveMoments(ms: { id: string; name: string; startId: string; line?: boolean }[]): Promise<{ id: string; name: string; startId: string; line?: boolean }[] | null> {
     const sb = supabase
-    if (!sb || !gallery) return
+    if (!sb || !gallery) return null
     const { error } = await sb.from('galleries').update({ moments: ms }).eq('id', gallery.id)
-    if (error) { setMessage(error.message); return }
+    if (error) { setMessage(error.message); return null }
     setGallery((g) => (g ? { ...g, moments: ms } : g))
+    return ms
   }
 
   async function moveScene(i: number, d: number) {
@@ -656,11 +657,23 @@ export default function GalleryManagePage() {
     flash(error ? error.message : 'Reminder sent to their dashboard')
   }
 
-  async function moveSectionTo(id: string, pid: string) {
+  async function moveSectionTo(id: string, pid: string): Promise<{ id: string; name: string; startId: string; line?: boolean }[] | null> {
     const ms = gallery?.moments ?? []
-    await saveMoments(ms.filter((m) => m.id === id || m.startId !== pid).map((m) => (m.id === id ? { ...m, startId: pid } : m)))
+    const sorted = [...photos].sort((x, y) => x.sort_order - y.sort_order)
+    let i = sorted.findIndex((p) => p.id === pid)
+    if (i < 0) return null
+    const taken = new Set(ms.filter((m) => m.id !== id).map((m) => m.startId))
+    while (i < sorted.length - 1 && taken.has(sorted[i].id)) i++
+    if (taken.has(sorted[i].id)) return null
+    return saveMoments(ms.map((m) => (m.id === id ? { ...m, startId: sorted[i].id } : m)))
   }
-  async function addSectionFromPreview(pidIn?: string): Promise<string | null> {
+  async function setSectionLine(id: string, on: boolean): Promise<{ id: string; name: string; startId: string; line?: boolean }[] | null> {
+    return saveMoments((gallery?.moments ?? []).map((m) => (m.id === id ? { ...m, line: on } : m)))
+  }
+  async function removeSection(id: string): Promise<{ id: string; name: string; startId: string; line?: boolean }[] | null> {
+    return saveMoments((gallery?.moments ?? []).filter((m) => m.id !== id))
+  }
+  async function addSectionFromPreview(pidIn?: string): Promise<{ id: string; moments: { id: string; name: string; startId: string; line?: boolean }[] } | null> {
     let pid = pidIn
     if (!pid) {
       const sorted = [...photos].sort((a, b) => a.sort_order - b.sort_order)
@@ -672,8 +685,8 @@ export default function GalleryManagePage() {
     }
     const rest = (gallery?.moments ?? []).filter((m) => m.startId !== pid)
     const id = crypto.randomUUID()
-    await saveMoments([...rest, { id, name: 'New section', startId: pid }])
-    return id
+    const saved = await saveMoments([...rest, { id, name: 'New section', startId: pid }])
+    return saved ? { id, moments: saved } : null
   }
   function startSection(pid: string) {
     const rest = (gallery?.moments ?? []).filter((m) => m.startId !== pid)
@@ -1572,6 +1585,8 @@ export default function GalleryManagePage() {
                 leftHost={leftHost}
                 onAddSection={addSectionFromPreview}
                 onMoveSection={moveSectionTo}
+                onSectionLine={setSectionLine}
+                onRemoveSection={removeSection}
                 onRenameSection={(id, t) => void renameScene(id, t)}
                 onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as Record<string, unknown> } : g))}
               />

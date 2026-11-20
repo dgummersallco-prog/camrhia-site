@@ -48,6 +48,7 @@ export default function GalleryViewPage() {
   const [brand, setBrand] = useState<Brand | null>(null)
   const [designPreview, setDesignPreview] = useState<GalleryDesign | null>(null)
   const [momentText, setMomentText] = useState<Record<string, string>>({})
+  const [liveMoments, setLiveMoments] = useState<{ id: string; name: string; startId: string; line?: boolean }[] | null>(null)
   const [focusMode, setFocusMode] = useState(false)
   const [isPreview, setIsPreview] = useState(false)
   const textRef = useRef<Record<string, string>>({})
@@ -119,10 +120,16 @@ export default function GalleryViewPage() {
   const list = useMemo(() => {
     if (!data) return []
     const q = query.trim().toLowerCase()
-    const names = new Map(((data as unknown as { moments?: { id: string; name: string }[] }).moments ?? []).map((m) => [m.id, m.name.toLowerCase()]))
-    const base = onlyFavs ? data.photos.filter((p) => favs.has(p.id)) : data.photos
+    const names = new Map((liveMoments ?? ((data as unknown as { moments?: { id: string; name: string }[] }).moments ?? [])).map((m) => [m.id, m.name.toLowerCase()]))
+    let all = data.photos
+    if (liveMoments) {
+      const st = new Map(liveMoments.map((m) => [m.startId, m.id]))
+      let cur: string | null = null
+      all = data.photos.map((p) => { const sid = st.get(p.id); if (sid) cur = sid; return { ...p, moment: cur } as typeof p })
+    }
+    const base = onlyFavs ? all.filter((p) => favs.has(p.id)) : all
     return q ? base.filter((p) => (p.tags ?? []).some((t) => t.includes(q)) || (names.get((p as unknown as { moment?: string | null }).moment ?? '') ?? '').includes(q)) : base
-  }, [data, favs, onlyFavs, query])
+  }, [data, favs, onlyFavs, query, liveMoments])
 
   async function toggleFav(id: string) {
     if (!data) return
@@ -459,8 +466,16 @@ export default function GalleryViewPage() {
       if (!was.moved) return
       swallow = true
       setTimeout(() => { swallow = false }, 50)
-      const im = document.elementsFromPoint(e.clientX, e.clientY).find((n) => n instanceof HTMLImageElement && n.hasAttribute('data-pid') && !n.hasAttribute('data-cover') && !n.hasAttribute('data-slot')) as HTMLImageElement | undefined
-      if (im) window.parent?.postMessage({ type: 'camrhia-gallery-moment-move', id: was.mid, pid: im.getAttribute('data-pid') }, '*')
+      let im = document.elementsFromPoint(e.clientX, e.clientY).find((n) => n instanceof HTMLImageElement && n.hasAttribute('data-pid') && !n.hasAttribute('data-cover') && !n.hasAttribute('data-slot')) as HTMLImageElement | undefined
+      if (!im) return
+      const rc = im.getBoundingClientRect()
+      if (e.clientY > rc.top + rc.height / 2) {
+        const all = Array.from(document.querySelectorAll<HTMLImageElement>('.gal-root img[data-pid]:not([data-cover]):not([data-slot])'))
+        const nx = all[all.indexOf(im) + 1]
+        if (!nx) return
+        im = nx
+      }
+      window.parent?.postMessage({ type: 'camrhia-gallery-moment-move', id: was.mid, pid: im.getAttribute('data-pid') }, '*')
     }
     const click = (e: MouseEvent) => { if (swallow) { e.preventDefault(); e.stopPropagation() } }
     window.addEventListener('mousedown', down, true)
@@ -492,8 +507,25 @@ export default function GalleryViewPage() {
       const k = el.getAttribute('data-gk') ?? 'title'
       return NAMES[k] ? { el, k } : null
     }
+    let curEl: HTMLElement | null = null
+    let rafId = 0
+    const follow = () => {
+      if (curEl && box.style.display === 'block') {
+        if (!curEl.isConnected) { box.style.display = 'none'; curEl = null }
+        else {
+          const rr = curEl.getBoundingClientRect()
+          box.style.left = rr.left + 'px'
+          box.style.top = rr.top + 'px'
+          box.style.width = rr.width + 'px'
+          box.style.height = rr.height + 'px'
+        }
+      }
+      rafId = requestAnimationFrame(follow)
+    }
+    rafId = requestAnimationFrame(follow)
     const over = (e: MouseEvent) => {
       const h = hit(e.target)
+      curEl = h ? h.el : null
       if (!h) { box.style.display = 'none'; return }
       const r = h.el.getBoundingClientRect()
       box.style.display = 'block'
@@ -506,7 +538,7 @@ export default function GalleryViewPage() {
       tag.style.bottom = flip ? 'auto' : '100%'
       tag.style.top = flip ? '100%' : 'auto'
     }
-    const hide = () => { box.style.display = 'none' }
+    const hide = () => { box.style.display = 'none'; curEl = null }
     let editor: HTMLInputElement | null = null
     let hidden: HTMLElement | null = null
     let secOn = false
@@ -594,7 +626,7 @@ export default function GalleryViewPage() {
       openEditor(h.el, h.k)
       const cs = getComputedStyle(h.el)
       const rr = h.el.getBoundingClientRect()
-      window.parent?.postMessage({ type: 'camrhia-gallery-pick', key: h.k, top: rr.top, bottom: rr.bottom, name: NAMES[h.k], size: Math.round(parseFloat(cs.fontSize)), color: cs.color, bold: parseInt(cs.fontWeight, 10) >= 600 }, '*')
+      window.parent?.postMessage({ type: 'camrhia-gallery-pick', key: h.k, top: rr.top, bottom: rr.bottom, name: NAMES[h.k], mid: h.el.getAttribute('data-mid'), line: h.el.getAttribute('data-line'), size: Math.round(parseFloat(cs.fontSize)), color: cs.color, bold: parseInt(cs.fontWeight, 10) >= 600 }, '*')
     }
     document.addEventListener('mouseover', over, true)
     document.addEventListener('scroll', hide, true)
@@ -606,12 +638,31 @@ export default function GalleryViewPage() {
       if (!m) return
       if (m.type === 'camrhia-gallery-section-mode') { secOn = !!m.on; secSt.textContent = secOn ? '.gal-root img[data-pid]{cursor:copy!important}' : '' }
       if (m.type === 'camrhia-gallery-edit') {
-        const el = (m.key === 'moment' ? document.querySelector(`[data-mid="${String(m.id)}"]`) : document.querySelector(`[data-gk="${String(m.key)}"]`)) as HTMLElement | null
-        if (el) { el.scrollIntoView({ block: 'center' }); setTimeout(() => openEditor(el, String(m.key)), 250) }
+        const go = (n: number) => {
+          const el = (m.key === 'moment' ? document.querySelector(`[data-mid="${String(m.id)}"]`) : document.querySelector(`[data-gk="${String(m.key)}"]`)) as HTMLElement | null
+          if (el) { el.scrollIntoView({ block: 'center' }); setTimeout(() => openEditor(el, String(m.key)), 250) }
+          else if (n < 12) setTimeout(() => go(n + 1), 120)
+        }
+        go(0)
+      }
+      if (m.type === 'camrhia-gallery-moments') setLiveMoments(Array.isArray(m.moments) ? m.moments : null)
+      if (m.type === 'camrhia-gallery-section-row') {
+        const imgs = Array.from(document.querySelectorAll<HTMLImageElement>('.gal-root img[data-pid]:not([data-cover]):not([data-slot])'))
+        const hd = document.querySelector(`[data-mid="${String(m.id)}"]`)
+        if (hd && imgs.length > 0) {
+          const idx = imgs.findIndex((im) => !!(hd.compareDocumentPosition(im) & Node.DOCUMENT_POSITION_FOLLOWING))
+          if (idx >= 0) {
+            const t0 = imgs[0].getBoundingClientRect().top
+            const perRow = Math.max(1, imgs.filter((im) => Math.abs(im.getBoundingClientRect().top - t0) < 24).length)
+            const ni = Math.min(imgs.length - 1, Math.max(0, idx + (Number(m.dir) > 0 ? perRow : -perRow)))
+            if (ni !== idx) window.parent?.postMessage({ type: 'camrhia-gallery-moment-move', id: String(m.id), pid: imgs[ni].getAttribute('data-pid') }, '*')
+          }
+        }
       }
     }
     window.addEventListener('message', onCtl)
     return () => {
+      cancelAnimationFrame(rafId)
       window.removeEventListener('message', onCtl)
       secSt.remove()
       document.removeEventListener('mouseover', over, true)
@@ -694,7 +745,7 @@ export default function GalleryViewPage() {
     // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt="" data-pid={ph?.id} data-slot={key} className="h-full w-full object-cover" style={{ objectPosition: fpos('slot:' + key) || fallbackPos }} />
   )
-  const momentMeta = (data as unknown as { moments?: { id: string; name: string }[] }).moments ?? []
+  const momentMeta: { id: string; name: string; line?: boolean }[] = liveMoments ?? (data as unknown as { moments?: { id: string; name: string; line?: boolean }[] }).moments ?? []
   const momentHead = (p: unknown, i: number) => {
     if (momentMeta.length === 0) return null
     const m = (p as { moment?: string | null }).moment ?? null
@@ -702,7 +753,15 @@ export default function GalleryViewPage() {
     if (i > 0 && m === prev) return null
     const name = m ? (m in momentText ? momentText[m] : momentMeta.find((x) => x.id === m)?.name) : null
     if (name === null || name === undefined) return null
-    return <h2 data-gk="moment" data-mid={m ?? undefined} className={`mb-4 mt-8 w-full basis-full text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
+    if (m && momentMeta.find((x) => x.id === m)?.line) {
+      return (
+        <div className="mb-4 mt-8 flex w-full basis-full items-center gap-4 first:mt-0 [column-span:all] col-span-full">
+          <h2 data-gk="moment" data-mid={m} data-line="1" className={`shrink-0 text-2xl ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
+          <span aria-hidden className="h-px min-w-0 flex-1" style={{ background: pal.accent, opacity: 0.55 }} />
+        </div>
+      )
+    }
+    return <h2 data-gk="moment" data-mid={m ?? undefined} data-line="0" className={`mb-4 mt-8 w-full basis-full text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
   }
   const current = openIndex !== null ? list[openIndex] : null
   const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
@@ -957,14 +1016,14 @@ export default function GalleryViewPage() {
         return (
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#F5DDC2 url(/gallery-cover/ticket.png) center / 100% 100% no-repeat' }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;800&family=DM+Serif+Display&display=swap" />
-            <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs><clipPath id="tkclip" clipPathUnits="objectBoundingBox"><path transform="scale(0.0011111 0.0022222)" d="M58 56 H545 V389 H58 L26 358 V278 A53 53 0 0 0 26 194 V92 Z" /></clipPath></defs></svg>
+            <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs><clipPath id="tkclip" clipPathUnits="objectBoundingBox"><path transform="scale(0.0011111 0.0022222)" d="M24 93 L24 184 L26 184 L27 185 L27 194 L37 204 L37 205 L40 208 L40 209 L44 216 L44 218 L45 219 L45 221 L46 222 L46 225 L47 226 L47 235 L48 236 L47 237 L47 246 L46 247 L46 250 L45 251 L44 256 L43 257 L40 264 L37 267 L37 268 L27 278 L27 285 L26 286 L24 286 L24 356 L55 388 L56 388 L57 389 L537 389 L538 388 L539 388 L545 382 L545 58 L543 56 L542 56 L541 55 L60 55 L59 56 L58 56 L51 63 L51 64 L40 75 L40 76 L29 87 L29 88 Z" /></clipPath><clipPath id="tkart" clipPathUnits="objectBoundingBox"><path transform="scale(0.0011111 0.0022222)" d="M22 92 L22 169 L109 169 L110 170 L110 299 L109 300 L22 300 L22 357 L54 390 L56 390 L57 391 L537 391 L538 390 L540 390 L547 383 L547 57 L544 54 L542 54 L541 53 L60 53 L59 54 L57 54 L49 62 L49 63 L38 74 L38 75 Z M570 83 H873 V202.5 H846 V270 H873 V367 H570 Z" /></clipPath></defs></svg>
             <div className="absolute inset-0" style={{ clipPath: 'url(#tkclip)' }}>
               <div className="absolute overflow-hidden" style={{ left: '2.9cqw', top: '6.2cqw', width: '57.6cqw', height: '37cqw', background: pal.line }}>
                 <div className="absolute inset-0">{imgEl}</div>
               </div>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/gallery-cover/ticket-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" style={{ clipPath: 'polygon(63.3% 18.5%, 97% 18.5%, 97% 45%, 94% 45%, 94% 60%, 97% 60%, 97% 81.5%, 63.3% 81.5%)' }} />
+            <img src="/gallery-cover/ticket-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" style={{ clipPath: 'url(#tkart)' }} />
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
               {l1 && <text data-gk="title" x="716" y="181" textAnchor="middle" style={{ ...tt, fontSize: f1 }} textLength={big1 ? Math.min(270, 33.6 * l1.length) : undefined} lengthAdjust="spacingAndGlyphs">{l1}</text>}

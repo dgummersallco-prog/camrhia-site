@@ -116,7 +116,7 @@ export async function POST(req: Request) {
     } catch { /* tracking must never block the gallery */ }
   }
 
-  const momentList = (Array.isArray(g.moments) ? g.moments : []) as { id: string; name: string; startId: string }[]
+  const momentList = (Array.isArray(g.moments) ? g.moments : []) as { id: string; name: string; startId: string; line?: boolean }[]
   const startMap = new Map(momentList.map((m) => [m.startId, m.id]))
   const momentOf: Record<string, string | null> = {}
   let curMoment: string | null = null
@@ -174,7 +174,7 @@ export async function POST(req: Request) {
     design: g.design ?? null,
     access: signAccess(g.id),
     favorites,
-    moments: momentList.map((m) => ({ id: m.id, name: m.name })),
+    moments: momentList.map((m) => ({ id: m.id, name: m.name, line: !!m.line })),
     photos: photos.map((p) => ({
       id: p.id,
       moment: momentOf[p.id] ?? null,

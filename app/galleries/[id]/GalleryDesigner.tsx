@@ -49,11 +49,12 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
   return { cover: k, ...p, el: { ...clearCoverEl(el), ...(p.el ?? {}) } }
 }
 
-export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost, onAddSection, onMoveSection, onRenameSection }: {
+type SecM = { id: string; name: string; startId: string; line?: boolean }
+export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost, onAddSection, onMoveSection, onSectionLine, onRemoveSection, onRenameSection }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
   photoChoices?: { id: string; url: string }[]; coverPhotoId?: string | null; onPickCover?: (id: string) => void
   onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void; topOffset?: number; flushRef?: { current: (() => void) | null }; leftHost?: HTMLElement | null
-  onAddSection?: (pid?: string) => Promise<string | null>; onMoveSection?: (id: string, pid: string) => Promise<void>; onRenameSection?: (id: string, name: string) => void
+  onAddSection?: (pid?: string) => Promise<{ id: string; moments: SecM[] } | null>; onMoveSection?: (id: string, pid: string) => Promise<SecM[] | null>; onSectionLine?: (id: string, on: boolean) => Promise<SecM[] | null>; onRemoveSection?: (id: string) => Promise<SecM[] | null>; onRenameSection?: (id: string, name: string) => void
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
@@ -63,7 +64,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [popPos, setPopPos] = useState<{ top?: number; bottom?: number; maxHeight: number } | null>(null)
   const boxRef = useRef<HTMLDivElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
-  const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean } | null>(null)
+  const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean; mid?: string | null; line?: boolean } | null>(null)
   const [zoom, setZoom] = useState<{ src: string; name: string; top: number } | null>(null)
   const [fontOpen, setFontOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
@@ -151,6 +152,26 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   function postSectionMode(on: boolean) {
     try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-section-mode', on }, '*') } catch { /* ignore */ }
   }
+  function postMoments(ms: SecM[]) {
+    try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-moments', moments: ms }, '*') } catch { /* ignore */ }
+  }
+  async function sectionLine(on: boolean) {
+    if (!pick?.mid) return
+    setPick((p) => (p ? { ...p, line: on } : p))
+    const ms = await onSectionLine?.(pick.mid, on)
+    if (ms) postMoments(ms)
+  }
+  async function removeSection() {
+    if (!pick?.mid) return
+    const id = pick.mid
+    setPick(null)
+    const ms = await onRemoveSection?.(id)
+    if (ms) postMoments(ms)
+  }
+  function rowMove(dir: number) {
+    if (!pick?.mid) return
+    try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-section-row', id: pick.mid, dir }, '*') } catch { /* ignore */ }
+  }
   function addCoverText() {
     setAddOpen(false)
     const cur = latest.current.el ?? {}
@@ -162,10 +183,10 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   async function addSectionAt(pid?: string) {
     setSecPick(false)
     postSectionMode(false)
-    const id = await onAddSection?.(pid)
-    if (!id) return
-    pendingEdit.current = { key: 'moment', id }
-    try { frameRef.current?.contentWindow?.location.reload() } catch { /* ignore */ }
+    const r = await onAddSection?.(pid)
+    if (!r) return
+    postMoments(r.moments)
+    setTimeout(() => postEdit('moment', r.id), 400)
   }
   const onMoveSecRef = useRef(onMoveSection)
   onMoveSecRef.current = onMoveSection
@@ -260,7 +281,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       }
       if (m.type === 'camrhia-gallery-section-at' && typeof m.id === 'string') void addSectionRef.current(String(m.id))
       if (m.type === 'camrhia-gallery-moment-move' && typeof m.id === 'string' && typeof m.pid === 'string') {
-        void (async () => { await onMoveSecRef.current?.(String(m.id), String(m.pid)); try { frameRef.current?.contentWindow?.location.reload() } catch { /* ignore */ } })()
+        void (async () => { const ms = await onMoveSecRef.current?.(String(m.id), String(m.pid)); if (ms) postMoments(ms) })()
       }
       if (m.type === 'camrhia-gallery-moment-text' && typeof m.id === 'string') renameRef.current(String(m.id), String(m.text ?? ''))
       if (m.type === 'camrhia-gallery-focus') {
@@ -288,7 +309,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         if (Number.isFinite(z)) change({ zoom: z })
       }
       if (m.type === 'camrhia-gallery-pick') {
-        setPick({ key: String(m.key), name: String(m.name), size: Number(m.size) || 16, color: toHex(String(m.color)), bold: !!m.bold })
+        setPick({ key: String(m.key), name: String(m.name), size: Number(m.size) || 16, color: toHex(String(m.color)), bold: !!m.bold, mid: m.mid ? String(m.mid) : null, line: m.line === '1' })
         const H = boxRef.current?.clientHeight ?? 0
         const t = Number(m.top)
         const b = Number(m.bottom)
@@ -492,10 +513,29 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                       Bold
                     </label>
                   </div>
-                  <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-14 shrink-0">Move {cur?.dy ?? 0}</span>
-                    <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(pick.key, { dy: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
-                  </label>
-                  <button type="button" onClick={() => resetEl(pick.key)} className="text-[11px] text-twilight underline">Reset this line</button>
+                  {pick.key === 'moment' && pick.mid ? (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => rowMove(-1)} className="flex-1 rounded-lg border border-line bg-white px-2 py-1.5 text-xs text-ink hover:border-twilight">Up a row</button>
+                        <button type="button" onClick={() => rowMove(1)} className="flex-1 rounded-lg border border-line bg-white px-2 py-1.5 text-xs text-ink hover:border-twilight">Down a row</button>
+                      </div>
+                      <label className="flex items-center gap-1.5 text-xs text-ink-soft">
+                        <input type="checkbox" checked={!!pick.line} onChange={(e) => void sectionLine(e.target.checked)} />
+                        Divider line
+                      </label>
+                    </div>
+                  ) : ['title', 'title2', 'brand', 'count', 'initials'].includes(pick.key) || /^x\d+$/.test(pick.key) || pick.key === 'moment' ? null : (
+                    <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-14 shrink-0">Move {cur?.dy ?? 0}</span>
+                      <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(pick.key, { dy: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
+                    </label>
+                  )}
+                  {pick.key === 'moment' && pick.mid ? (
+                    <button type="button" onClick={() => void removeSection()} className="text-[11px] text-twilight underline">Remove this line</button>
+                  ) : /^x\d+$/.test(pick.key) ? (
+                    <button type="button" onClick={() => { resetEl(pick.key); setPick(null) }} className="text-[11px] text-twilight underline">Remove this line</button>
+                  ) : (
+                    <button type="button" onClick={() => resetEl(pick.key)} className="text-[11px] text-twilight underline">Reset this line</button>
+                  )}
                 </div>
               )}
             </div>

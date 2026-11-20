@@ -72,15 +72,18 @@ export default function MyGalleriesPage() {
   const shown = items.filter((x) => filter === 'all' || x.r.session_type === filter)
   const years = useMemo(() => {
     const map = new Map<string, typeof shown>()
-    shown.forEach((x) => {
-      const y = 'all'
+    const when = (x: (typeof shown)[number]) => info[x.g.token]?.sent ?? (x.r.wedding_date ? x.r.wedding_date + 'T12:00:00' : '')
+    const sorted = [...shown].sort((a, b) => (when(a) < when(b) ? 1 : -1))
+    sorted.forEach((x) => {
+      const w = when(x)
+      const y = w ? String(new Date(w).getFullYear()) : 'Undated'
       map.set(y, [...(map.get(y) ?? []), x])
     })
     return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1))
-  }, [shown])
+  }, [shown, info])
 
   return (
-    <div className="min-h-screen bg-paper xl:pl-60">
+    <div className="h-[100dvh] overflow-y-auto overscroll-contain bg-paper xl:pl-60">
       <ClientHeader active="galleries" />
       <main className="mx-auto max-w-[1200px] px-6 py-10">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Galleries</p>
@@ -93,6 +96,7 @@ export default function MyGalleriesPage() {
           <>
             {years.map(([year, list]) => (
               <section key={year} className="mt-10">
+                <h2 className="mb-5 border-b border-line pb-2 font-fraunces text-2xl font-semibold text-ink">{year}</h2>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {list.map(({ g, r }) => {
                     const studio = r.studio_name || r.display_name || 'Your photographer'
