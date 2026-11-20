@@ -640,6 +640,13 @@ export default function GalleryManagePage() {
     await saveOrder([...sceneInfo.head, ...bl.flatMap((b) => b.ids)].map((id) => byId.get(id)!))
   }
 
+  async function sendReminder() {
+    const sb = supabase
+    if (!sb || !gallery?.session_id || !coupleUserId) return
+    const { error } = await sb.from('notifications').insert({ user_id: coupleUserId, type: 'gallery_ready', title: 'Your gallery is waiting', body: 'Your photographer shared your gallery. Tap to view your photos.', wedding_id: gallery.session_id })
+    flash(error ? error.message : 'Reminder sent to their dashboard')
+  }
+
   async function renameScene(id: string, name: string) {
     const nm = name.trim()
     if (!nm || !gallery?.moments) return
@@ -731,15 +738,15 @@ export default function GalleryManagePage() {
 
   async function aiScan() {
     const sb = supabase
-    if (!sb || photos.length < 1 || scan) return
+    if (!sb || !gallery || photos.length < 1 || scan) return
     const { data: ses } = await sb.auth.getSession()
     const token = ses.session?.access_token
     if (!token) { setMessage('Please sign in again.'); return }
     const list = [...photos].sort((x, y) => x.sort_order - y.sort_order)
     setScan({ done: 0, total: list.length })
     setScanned(new Set())
-    const order = ['Getting ready', 'Ceremony', 'Portraits', 'Couple', 'Family and group', 'Details', 'Cocktail hour', 'Reception', 'First dance', 'Dancing', 'Cake and toasts', 'Sendoff', 'Candid', 'Venue and scenery', 'Other']
-    const labels: Record<string, string> = {}
+    let order: string[] = ['Other']
+    const info: Record<string, { scene: string; tags: string[]; score: number }> = {}
     let next = 0
     let done = 0
     let failed: string | null = null
@@ -765,10 +772,14 @@ export default function GalleryManagePage() {
         const imgs = await Promise.all(batch.map(thumb))
         const ok = batch.map((p, i) => ({ p, b: imgs[i] })).filter((x) => x.b)
         if (ok.length) {
-          const r = await fetch('/api/ai/camri-scenes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ images: ok.map((x) => x.b), galleryId: gallery?.id }) })
+          const r = await fetch('/api/ai/camri-scenes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ images: ok.map((x) => x.b), galleryId: gallery.id, sessionType: sessType ?? '' }) })
           const j = await r.json().catch(() => ({}))
           if (!r.ok) { failed = j.error ?? 'Camri could not scan right now.'; return }
-          ok.forEach((x, i) => { labels[x.p.id] = (j.labels ?? [])[i] ?? 'Other' })
+          if (Array.isArray(j.order)) order = j.order
+          ok.forEach((x, i) => {
+            const q = (j.photos ?? [])[i]
+            info[x.p.id] = { scene: q?.scene ?? 'Other', tags: Array.isArray(q?.tags) ? q.tags : [], score: Number(q?.score) || 5 }
+          })
         }
         done += batch.length
         setScan({ done: Math.min(done, list.length), total: list.length })
@@ -778,11 +789,29 @@ export default function GalleryManagePage() {
     await Promise.all(Array.from({ length: 3 }, worker))
     setScan(null)
     if (failed) { setMessage(failed); return }
-    const gs = order.map((label) => ({ label, ids: list.filter((p) => (labels[p.id] ?? 'Other') === label).map((p) => p.id) })).filter((g) => g.ids.length)
+    const gs: { label: string; ids: string[] }[] = []
+    let rest = list
+    if (list.length >= 40) {
+      const n = Math.min(30, Math.max(8, Math.round(list.length * 0.08)))
+      const top = list.filter((p) => (info[p.id]?.score ?? 0) >= 7).sort((x, y) => info[y.id].score - info[x.id].score).slice(0, n)
+      if (top.length >= 6) {
+        gs.push({ label: 'Highlights', ids: top.map((p) => p.id) })
+        const hs = new Set(top.map((p) => p.id))
+        rest = list.filter((p) => !hs.has(p.id))
+      }
+    }
+    order.forEach((label) => {
+      const ids = rest.filter((p) => (info[p.id]?.scene ?? 'Other') === label).map((p) => p.id)
+      if (ids.length) gs.push({ label, ids })
+    })
     const byId = new Map(photos.map((p) => [p.id, p]))
     const arr = gs.flatMap((g) => g.ids.map((id) => byId.get(id)!))
     await saveOrder(arr)
     await saveMoments(gs.map((g) => ({ id: crypto.randomUUID(), name: g.label, startId: g.ids[0] })))
+    const tagMap: Record<string, string[]> = {}
+    for (const p of list) if (info[p.id]?.tags.length) tagMap[p.id] = info[p.id].tags
+    const { error } = await sb.from('galleries').update({ photo_tags: tagMap }).eq('id', gallery.id)
+    if (error) setMessage(error.message)
   }
 
   async function groupBy(mode: 'scenes' | 'colors' | 'moments') {
@@ -1122,19 +1151,19 @@ export default function GalleryManagePage() {
                 </dl>
               )}
               <div className="mt-6 border-t border-line pt-5">
-                <p className="text-sm font-medium text-ink">Sort photos</p>
-                <button type="button" onClick={scanPhotos} disabled={!!scan} className="mt-3 w-full rounded-xl bg-twilight px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60">{scan ? `Scanning ${scan.done} of ${scan.total}` : feats ? 'Scan again' : 'Scan photos'}</button>
-                <button type="button" onClick={aiScan} disabled={!!scan} className="mt-2 w-full rounded-xl border border-twilight px-4 py-2.5 text-sm font-medium text-twilight transition hover:bg-twilight/10 disabled:opacity-60">Scan with AI</button>
-                {feats && !scan && (
-                  <div className="mt-3">
-                    <p className="text-xs text-ink-soft">Group by</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button type="button" onClick={() => groupBy('scenes')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">Scenes</button>
-                      <button type="button" onClick={() => groupBy('colors')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">Colors</button>
-                      {Object.values(feats).some((f) => f.t) && <button type="button" onClick={() => groupBy('moments')} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink-soft transition hover:border-twilight">Moments</button>}
-                    </div>
-                  </div>
-                )}
+                <p className="text-sm font-medium text-ink">Status</p>
+                <dl className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between"><dt className="text-ink-soft">Gallery</dt><dd className="text-ink">{isPublished ? 'Published' : 'Draft'}</dd></div>
+                  <div className="flex justify-between"><dt className="text-ink-soft">Client favorites</dt><dd className="text-ink">{Object.values(favCounts).reduce((n, c) => n + c, 0)}</dd></div>
+                  {sentAt && <div className="flex justify-between"><dt className="text-ink-soft">Sent to dashboard</dt><dd className="text-ink">{new Date(sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</dd></div>}
+                  {openedAt && <div className="flex justify-between"><dt className="text-ink-soft">Opened by client</dt><dd className="text-ink">{new Date(openedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</dd></div>}
+                </dl>
+                {isPublished && <button type="button" onClick={() => { navigator.clipboard?.writeText(shareUrl); flash('Link copied') }} className="mt-3 w-full rounded-xl border border-line bg-white/70 px-4 py-2 text-sm text-ink transition hover:border-twilight">Copy link</button>}
+                {isPublished && coupleUserId && !openedAt && <button type="button" onClick={sendReminder} className="mt-2 w-full rounded-xl border border-line bg-white/70 px-4 py-2 text-sm text-ink transition hover:border-twilight">Send reminder</button>}
+              </div>
+              <div className="mt-6 border-t border-line pt-5">
+                <p className="text-sm font-medium text-ink">Organize</p>
+                <button type="button" onClick={aiScan} disabled={!!scan} className="mt-3 w-full rounded-xl border border-twilight bg-white/70 px-4 py-2.5 text-sm font-medium text-twilight transition hover:bg-twilight/10 disabled:opacity-60">{scan ? `Organizing ${scan.done} of ${scan.total}` : 'Organize photos'}</button>
                 {sceneInfo.blocks.length > 0 && (
                   <>
                     <ul className="mt-4 space-y-2.5">
@@ -1144,6 +1173,7 @@ export default function GalleryManagePage() {
                             <input key={b.m.name} defaultValue={b.m.name} onBlur={(e) => { if (e.target.value.trim() && e.target.value.trim() !== b.m.name) renameScene(b.m.id, e.target.value) }} className="min-w-0 flex-1 rounded-lg border border-line bg-paper px-2 py-1 text-sm text-ink focus:border-twilight focus:outline-none" />
                             <button type="button" disabled={i === 0} onClick={() => moveScene(i, -1)} aria-label="Move up" className="rounded-lg border border-line px-2 py-1 text-xs text-ink-soft transition hover:border-twilight disabled:opacity-30">↑</button>
                             <button type="button" disabled={i === sceneInfo.blocks.length - 1} onClick={() => moveScene(i, 1)} aria-label="Move down" className="rounded-lg border border-line px-2 py-1 text-xs text-ink-soft transition hover:border-twilight disabled:opacity-30">↓</button>
+                            <button type="button" onClick={() => saveMoments((gallery?.moments ?? []).filter((m) => m.id !== b.m.id))} aria-label="Remove scene" className="rounded-lg border border-line px-2 py-1 text-xs text-ink-soft transition hover:border-twilight">✕</button>
                           </div>
                           <p className="mt-1.5 text-xs text-ink-soft">{b.ids.length} photos</p>
                           <div className="mt-1.5 flex gap-1">
@@ -1259,8 +1289,8 @@ export default function GalleryManagePage() {
             {gallery && (
               <div ref={barRef}>
                 <div className="mb-5 flex min-h-[52px] justify-end gap-3">
-                  <button className="rounded-xl border border-line bg-white/70 px-8 py-3.5 text-base text-ink transition hover:border-twilight" onClick={() => (designOpen || shareOpen ? goStep(designOpen ? 0 : 1) : router.push('/galleries'))}>Back</button>
-                  {!shareOpen && photos.length > 0 && <button className="rounded-xl bg-twilight px-10 py-3.5 text-base font-medium text-white transition hover:opacity-90" onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
+                  <button className="rounded-xl border border-line bg-white/70 px-6 py-3 text-base text-ink transition hover:border-twilight" onClick={() => (designOpen || shareOpen ? goStep(designOpen ? 0 : 1) : router.push('/galleries'))}>Back</button>
+                  {!shareOpen && photos.length > 0 && <button className="rounded-xl border border-twilight bg-white/70 px-6 py-3 text-base font-medium text-twilight transition hover:bg-twilight/10" onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
                 </div>
                 <div className="mb-8">{stepsBar(designOpen ? 1 : shareOpen ? 2 : 0, { photos: () => goStep(0), style: () => goStep(1), publish: () => goStep(2) })}</div>
               </div>
@@ -1441,7 +1471,7 @@ export default function GalleryManagePage() {
 
                 {scan && (
                   <div className="mb-3 rounded-xl border border-line bg-white/70 px-4 py-3">
-                    <p className="text-sm text-ink">Scanning your photos… {scan.done} of {scan.total}</p>
+                    <p className="text-sm text-ink">Organizing your photos… {scan.done} of {scan.total}</p>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-twilight transition-all" style={{ width: `${(scan.done / scan.total) * 100}%` }} /></div>
                   </div>
                 )}

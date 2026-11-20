@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useParams } from 'next/navigation'
 
-type Photo = { id: string; filename: string | null; width: number | null; height: number | null; thumb: string | null; web: string | null }
+type Photo = { id: string; filename: string | null; width: number | null; height: number | null; thumb: string | null; web: string | null; tags?: string[] }
 type Data = { title: string; allowDownloads: boolean; coverId: string | null; access: string; favorites: string[]; photos: Photo[]; design?: GalleryDesign | null }
 type Phase = 'loading' | 'pin' | 'ready' | 'missing' | 'expired'
 type ZipFile = { id: string; name: string; size: number | null; url: string }
@@ -43,6 +43,7 @@ export default function GalleryViewPage() {
   const [busy, setBusy] = useState(false)
   const [favs, setFavs] = useState<Set<string>>(new Set())
   const [onlyFavs, setOnlyFavs] = useState(false)
+  const [query, setQuery] = useState('')
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [brand, setBrand] = useState<Brand | null>(null)
   const [designPreview, setDesignPreview] = useState<GalleryDesign | null>(null)
@@ -116,8 +117,11 @@ export default function GalleryViewPage() {
 
   const list = useMemo(() => {
     if (!data) return []
-    return onlyFavs ? data.photos.filter((p) => favs.has(p.id)) : data.photos
-  }, [data, favs, onlyFavs])
+    const q = query.trim().toLowerCase()
+    const names = new Map(((data as unknown as { moments?: { id: string; name: string }[] }).moments ?? []).map((m) => [m.id, m.name.toLowerCase()]))
+    const base = onlyFavs ? data.photos.filter((p) => favs.has(p.id)) : data.photos
+    return q ? base.filter((p) => (p.tags ?? []).some((t) => t.includes(q)) || (names.get((p as unknown as { moment?: string | null }).moment ?? '') ?? '').includes(q)) : base
+  }, [data, favs, onlyFavs, query])
 
   async function toggleFav(id: string) {
     if (!data) return
@@ -1158,6 +1162,9 @@ export default function GalleryViewPage() {
               {zip.busy ? (zip.total ? `Zipping ${zip.done}/${zip.total}` : 'Preparing…') : onlyFavs ? 'Download favorites' : 'Download all'}
             </button>
           )}
+          {data.photos.some((p) => p.tags && p.tags.length > 0) && (
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search photos" className="w-36 rounded-full px-4 py-1.5 text-sm outline-none sm:w-48" style={{ ...pill(false), cursor: 'text' }} />
+          )}
           <button data-gk="all" onClick={() => setOnlyFavs(false)} className="rounded-full px-4 py-1.5 transition" style={pill(!onlyFavs)}>All</button>
           <button data-gk="favs" onClick={() => setOnlyFavs(true)} className="flex items-center gap-1.5 rounded-full px-4 py-1.5 transition" style={pill(onlyFavs)}>
             <Heart filled={onlyFavs} className="h-4 w-4" /> {favs.size}
@@ -1182,7 +1189,7 @@ export default function GalleryViewPage() {
       <main className="px-3 py-4 sm:px-6">
         {list.length === 0 ? (
           <p className="py-20 text-center text-sm" style={{ color: pal.soft }}>
-            {onlyFavs ? 'No favorites yet. Tap the heart on any photo.' : 'No photos in this gallery yet.'}
+            {query.trim() ? 'No photos match your search.' : onlyFavs ? 'No favorites yet. Tap the heart on any photo.' : 'No photos in this gallery yet.'}
           </p>
         ) : (
           gridEl

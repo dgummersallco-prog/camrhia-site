@@ -159,6 +159,13 @@ export async function POST(req: Request) {
     favorites = (data ?? []).map((r: { photo_id: string }) => r.photo_id)
   }
 
+  let tagMap: Record<string, string[]> = {}
+  try {
+    const { data: pt } = await sb.from('galleries').select('photo_tags').eq('id', g.id).maybeSingle()
+    const v = (pt as { photo_tags?: unknown } | null)?.photo_tags
+    if (v && typeof v === 'object') tagMap = v as Record<string, string[]>
+  } catch { /* tags are optional */ }
+
   return NextResponse.json({
     title: g.title,
     brand,
@@ -171,6 +178,7 @@ export async function POST(req: Request) {
     photos: photos.map((p) => ({
       id: p.id,
       moment: momentOf[p.id] ?? null,
+      tags: tagMap[p.id] ?? [],
       filename: p.filename,
       width: p.width,
       height: p.height,
