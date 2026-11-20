@@ -2,6 +2,7 @@ export type ElStyle = { font?: string; size?: number; color?: string; bold?: boo
 export type GalleryDesign = {
   look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; focals?: Record<string, { x: number; y: number }>; zoom?: number; slots?: Record<string, string>
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
+  watermark?: { on?: boolean; text?: string }
 }
 
 export const COVER_SLOTS: Record<string, number> = { mosaic: 5, strip: 5, stack: 3, diptych: 1 }

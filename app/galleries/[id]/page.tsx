@@ -154,10 +154,11 @@ export default function GalleryManagePage() {
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [scan, setScan] = useState<{ done: number; total: number } | null>(null)
   const [scanned, setScanned] = useState<Set<string>>(new Set())
-  type OrgInfo = Record<string, { scene: string; tags: string[]; score: number; lum: number; sat: number; hue: number }>
+  type OrgInfo = Record<string, { scene: string; tags: string[]; score: number; closed: boolean; hash: string; blur: number; lum: number; sat: number; hue: number }>
   const [orgInfo, setOrgInfo] = useState<OrgInfo | null>(null)
   const [orgOrder, setOrgOrder] = useState<string[]>(['Other'])
   const [orgMode, setOrgMode] = useState<string | null>(null)
+  const [check, setCheck] = useState<null | { kind: 'dups' | 'flags' | 'social'; groups?: { ids: string[]; best: string }[]; items?: { id: string; why: string }[]; ids?: string[] }>(null)
   const [feats, setFeats] = useState<Record<string, { t?: number; lum: number; sat: number; hue: number; vec: number[] }> | null>(null)
   const [sessDate, setSessDate] = useState<string | null>(null)
   const [openedAt, setOpenedAt] = useState<string | null>(null)
@@ -563,10 +564,10 @@ export default function GalleryManagePage() {
     uploadFiles(files)
   }
 
-  async function deletePhoto(p: Photo) {
+  async function deletePhoto(p: Photo, quiet = false) {
     const sb = supabase
     if (!sb) return
-    if (!window.confirm('Delete this photo?')) return
+    if (!quiet && !window.confirm('Delete this photo?')) return
     const paths = [p.orig_path, p.web_path, p.thumb_path, p.full_path, p.pre_web_path, p.pre_thumb_path, p.pre_full_path].filter((x): x is string => !!x)
     const { error } = await sb.from('gallery_photos').delete().eq('id', p.id)
     if (error) { setMessage(error.message); return }
@@ -773,6 +774,51 @@ export default function GalleryManagePage() {
     await saveMoments(gs.map((g) => ({ id: crypto.randomUUID(), name: g.label, startId: g.ids[0] })))
   }
 
+  async function runCheck(kind: 'dups' | 'flags' | 'social') {
+    if (scan) return
+    const info = orgInfo ?? (await aiScan('none'))
+    if (!info) return
+    const list = [...photos].sort((x, y) => x.sort_order - y.sort_order).filter((p) => info[p.id])
+    if (kind === 'dups') {
+      const parent = list.map((_, i) => i)
+      const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])))
+      for (let i = 0; i < list.length; i++) {
+        for (let j = i + 1; j < Math.min(list.length, i + 7); j++) {
+          const a = info[list[i].id]
+          const b = info[list[j].id]
+          if (!a.hash || !b.hash) continue
+          let dist = 0
+          for (let k = 0; k < 64; k++) if (a.hash[k] !== b.hash[k]) dist++
+          if (dist <= 4 && Math.abs(a.lum - b.lum) < 0.06 && Math.abs(a.sat - b.sat) < 0.08) parent[find(j)] = find(i)
+        }
+      }
+      const by = new Map<number, string[]>()
+      list.forEach((p, i) => { const root = find(i); by.set(root, [...(by.get(root) ?? []), p.id]) })
+      const groups = [...by.values()].filter((ids) => ids.length > 1).map((ids) => ({ ids, best: [...ids].sort((x, y) => (info[y].score - info[x].score) || (info[y].blur - info[x].blur))[0] }))
+      setCheck({ kind, groups })
+    } else if (kind === 'flags') {
+      const bl = list.map((p) => info[p.id].blur).filter((v) => v > 0).sort((x, y) => x - y)
+      const med = bl.length ? bl[Math.floor(bl.length / 2)] : 0
+      const items: { id: string; why: string }[] = []
+      list.forEach((p) => {
+        const f = info[p.id]
+        const soft = med > 0 && f.blur > 0 && f.blur < med * 0.3
+        if (soft && f.closed) items.push({ id: p.id, why: 'Blurry, eyes closed' })
+        else if (soft) items.push({ id: p.id, why: 'Blurry' })
+        else if (f.closed) items.push({ id: p.id, why: 'Eyes closed' })
+      })
+      setCheck({ kind, items })
+    } else {
+      setCheck({ kind, ids: [...list].sort((x, y) => (info[y.id].score - info[x.id].score) || (info[y.id].blur - info[x.id].blur)).slice(0, 10).map((p) => p.id) })
+    }
+  }
+
+  async function removeOthers(ids: string[], best: string) {
+    const gone = ids.filter((id) => id !== best).map((id) => photos.find((x) => x.id === id)).filter((x): x is Photo => !!x)
+    if (!gone.length || !window.confirm(`Delete ${gone.length} duplicate ${gone.length === 1 ? 'photo' : 'photos'} and keep the best one?`)) return
+    for (const ph of gone) await deletePhoto(ph, true)
+  }
+
   async function pickOrg(mode: 'scenes' | 'best' | 'color' | 'name') {
     if (scan) return
     if (mode === 'name') { await applyOrg('name', orgInfo ?? ({} as OrgInfo)); return }
@@ -780,12 +826,12 @@ export default function GalleryManagePage() {
     await aiScan(mode)
   }
 
-  async function aiScan(mode: 'scenes' | 'best' | 'color' | 'name' = 'scenes') {
+  async function aiScan(mode: 'scenes' | 'best' | 'color' | 'name' | 'none' = 'scenes'): Promise<OrgInfo | null> {
     const sb = supabase
-    if (!sb || !gallery || photos.length < 1 || scan) return
+    if (!sb || !gallery || photos.length < 1 || scan) return null
     const { data: ses } = await sb.auth.getSession()
     const token = ses.session?.access_token
-    if (!token) { setMessage('Please sign in again.'); return }
+    if (!token) { setMessage('Please sign in again.'); return null }
     const list = [...photos].sort((x, y) => x.sort_order - y.sort_order)
     setScan({ done: 0, total: list.length })
     setScanned(new Set())
@@ -794,8 +840,8 @@ export default function GalleryManagePage() {
     let next = 0
     let done = 0
     let failed: string | null = null
-    const thumb = async (p: Photo): Promise<{ b: string; col: { lum: number; sat: number; hue: number } }> => {
-      const col = { lum: 0.5, sat: 0, hue: 0 }
+    const thumb = async (p: Photo): Promise<{ b: string; col: { lum: number; sat: number; hue: number; hash: string; blur: number } }> => {
+      const col = { lum: 0.5, sat: 0, hue: 0, hash: '', blur: 0 }
       try {
         const url = p.thumb_path ? thumbs[p.thumb_path] : undefined
         if (!url) return { b: '', col }
@@ -825,6 +871,30 @@ export default function GalleryManagePage() {
           col.lum = lum; col.sat = sat
           col.hue = (Math.atan2(hs, hc) * 180) / Math.PI
           if (col.hue < 0) col.hue += 360
+          const ys: number[] = []
+          for (let i = 0; i < 64; i++) ys.push(0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2])
+          const mean = ys.reduce((x, y) => x + y, 0) / 64
+          col.hash = ys.map((v) => (v > mean ? '1' : '0')).join('')
+        }
+        const bw = 200
+        const bh = Math.max(8, Math.round((bw * cv.height) / Math.max(1, cv.width)))
+        const bc = document.createElement('canvas')
+        bc.width = bw; bc.height = bh
+        const bx = bc.getContext('2d', { willReadFrequently: true })
+        if (bx) {
+          bx.drawImage(cv, 0, 0, bw, bh)
+          const bd = bx.getImageData(0, 0, bw, bh).data
+          const gy = new Float32Array(bw * bh)
+          for (let i = 0; i < bw * bh; i++) gy[i] = 0.299 * bd[i * 4] + 0.587 * bd[i * 4 + 1] + 0.114 * bd[i * 4 + 2]
+          let sum = 0, sq = 0, cnt = 0
+          for (let y = 1; y < bh - 1; y++) {
+            for (let x = 1; x < bw - 1; x++) {
+              const i = y * bw + x
+              const l = gy[i - 1] + gy[i + 1] + gy[i - bw] + gy[i + bw] - 4 * gy[i]
+              sum += l; sq += l * l; cnt++
+            }
+          }
+          col.blur = cnt ? sq / cnt - (sum / cnt) * (sum / cnt) : 0
         }
         return { b: cv.toDataURL('image/jpeg', 0.7), col }
       } catch { return { b: '', col } }
@@ -844,7 +914,7 @@ export default function GalleryManagePage() {
           if (Array.isArray(j.order)) order = j.order
           ok.forEach((x, i) => {
             const q = (j.photos ?? [])[i]
-            info[x.p.id] = { scene: q?.scene ?? 'Other', tags: Array.isArray(q?.tags) ? q.tags : [], score: Number(q?.score) || 5, ...x.col }
+            info[x.p.id] = { scene: q?.scene ?? 'Other', tags: Array.isArray(q?.tags) ? q.tags : [], score: Number(q?.score) || 5, closed: q?.closed === true, ...x.col }
           })
         }
         done += batch.length
@@ -854,14 +924,15 @@ export default function GalleryManagePage() {
     }
     await Promise.all(Array.from({ length: 3 }, worker))
     setScan(null)
-    if (failed) { setMessage(failed); return }
+    if (failed) { setMessage(failed); return null }
     setOrgInfo(info)
     setOrgOrder(order)
     const tagMap: Record<string, string[]> = {}
     for (const p of list) if (info[p.id]?.tags.length) tagMap[p.id] = info[p.id].tags
     const { error } = await sb.from('galleries').update({ photo_tags: tagMap }).eq('id', gallery.id)
     if (error) setMessage(error.message)
-    await applyOrg(mode, info, order)
+    if (mode !== 'none') await applyOrg(mode, info, order)
+    return info
   }
 
   async function groupBy(mode: 'scenes' | 'colors' | 'moments') {
@@ -1174,6 +1245,14 @@ export default function GalleryManagePage() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
+  const wm = ((gallery?.design ?? null) as { watermark?: { on?: boolean; text?: string } } | null)?.watermark
+  function setWm(patch: { on?: boolean; text?: string }) {
+    if (!gallery) return
+    void saveSettings({ design: { ...(gallery.design ?? {}), watermark: { on: wm?.on ?? false, text: wm?.text ?? '', ...patch } } })
+  }
+  const liveIds = (ids: string[]) => ids.filter((id) => photos.some((x) => x.id === id))
+  const thumbOf = (id: string) => { const ph = photos.find((x) => x.id === id); return ph?.thumb_path ? thumbs[ph.thumb_path] : undefined }
+
   return (
     <div className="min-h-screen bg-paper">
       <DashScenes />
@@ -1183,7 +1262,16 @@ export default function GalleryManagePage() {
           <div ref={setLeftHost} className="flex flex-col" />
           {gallery && !designOpen && !shareOpen && (
             <div>
-              <h2 className="font-fraunces text-2xl font-semibold text-ink">Organize your photos</h2>
+              <div>
+                <label className={label}>Gallery name</label>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onBlur={() => { if (title.trim() && title.trim() !== gallery.title) saveSettings({ title: title.trim() }) }}
+                  className={input}
+                />
+              </div>
+              <h2 className="mt-7 font-fraunces text-2xl font-semibold text-ink">Organize your photos</h2>
               <p className="mt-1.5 text-sm leading-snug text-ink-soft">Choose how to sort this gallery.</p>
               <div className="mt-5 grid grid-cols-2 gap-2.5">
                 {([['scenes', 'By scene', 'Groups photos into moments'], ['best', 'Best first', 'Strongest photos on top'], ['color', 'By color', 'Black and white, warm, bright'], ['name', 'By filename', 'Original shot order']] as const).map(([k, l, d]) => (
@@ -1223,6 +1311,84 @@ export default function GalleryManagePage() {
                     </ul>
                     <button type="button" onClick={() => saveMoments([])} className="mt-3 text-xs text-ink-soft underline">Remove scene titles</button>
                   </>
+                )}
+              </div>
+              <div className="mt-6 border-t border-line pt-5">
+                <p className="text-sm font-medium text-ink">Final check</p>
+                <p className="mt-1 text-xs text-ink-soft">A last look before you send it.</p>
+                <div className="mt-3 space-y-2">
+                  {([['dups', 'Find duplicates', 'Near-identical shots, best one kept'], ['flags', 'Blurry or closed eyes', 'Photos worth a second look'], ['social', 'Top 10 for social', 'Your strongest photos']] as const).map(([k, l, dsc]) => (
+                    <button key={k} type="button" disabled={!!scan || photos.length === 0} onClick={() => runCheck(k)} className={`w-full rounded-xl border px-3.5 py-3 text-left transition disabled:opacity-50 ${check?.kind === k ? 'border-twilight bg-twilight/10' : 'border-line bg-white/70 hover:border-twilight hover:bg-white'}`}>
+                      <span className="block text-sm font-medium text-ink">{l}</span>
+                      <span className="mt-0.5 block text-xs text-ink-soft">{dsc}</span>
+                    </button>
+                  ))}
+                </div>
+                {check && !scan && (
+                  <div className="mt-4">
+                    {check.kind === 'dups' && (() => {
+                      const gs = (check.groups ?? []).map((g) => ({ ...g, ids: liveIds(g.ids) })).filter((g) => g.ids.length > 1)
+                      return gs.length ? (
+                        <ul className="space-y-3">
+                          {gs.map((g) => (
+                            <li key={g.best} className="rounded-xl border border-line bg-white/60 p-2.5">
+                              <div className="flex flex-wrap gap-1.5">
+                                {g.ids.map((id) => (
+                                  <div key={id} className="relative">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    {thumbOf(id) && <img src={thumbOf(id)} alt="" className={`h-14 w-14 rounded object-cover ${id === g.best ? 'ring-2 ring-twilight' : ''}`} />}
+                                    {id === g.best && <span className="absolute inset-x-0 bottom-0 rounded-b bg-twilight/90 text-center text-[10px] text-white">Keep</span>}
+                                  </div>
+                                ))}
+                              </div>
+                              <button type="button" onClick={() => removeOthers(g.ids, g.best)} className="mt-2 text-xs text-red-600 underline">Remove the others</button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : <p className="text-xs text-ink-soft">No duplicates found.</p>
+                    })()}
+                    {check.kind === 'flags' && (() => {
+                      const its = (check.items ?? []).filter((it) => liveIds([it.id]).length)
+                      return its.length ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {its.map((it) => (
+                            <div key={it.id}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              {thumbOf(it.id) && <img src={thumbOf(it.id)} alt="" className="aspect-square w-full rounded object-cover" />}
+                              <p className="mt-1 text-[11px] leading-tight text-ink-soft">{it.why}</p>
+                              <button type="button" onClick={() => { const ph = photos.find((x) => x.id === it.id); if (ph) void deletePhoto(ph) }} className="text-[11px] text-red-600 underline">Delete</button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : <p className="text-xs text-ink-soft">Nothing flagged. Everything looks sharp.</p>
+                    })()}
+                    {check.kind === 'social' && (
+                      <div>
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {liveIds(check.ids ?? []).map((id) => (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            thumbOf(id) ? <img key={id} src={thumbOf(id)} alt="" className="aspect-square w-full rounded object-cover" /> : null
+                          ))}
+                        </div>
+                        <button type="button" onClick={() => { navigator.clipboard?.writeText(liveIds(check.ids ?? []).map((id) => photos.find((x) => x.id === id)?.filename ?? '').filter(Boolean).join('\n')); flash('Filenames copied') }} className="mt-2 text-xs text-ink underline">Copy filenames</button>
+                      </div>
+                    )}
+                    <button type="button" onClick={() => setCheck(null)} className="mt-3 block text-xs text-ink-soft underline">Close</button>
+                  </div>
+                )}
+              </div>
+              <div className="mt-6 border-t border-line pt-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-ink">Watermark</p>
+                    <p className="mt-0.5 text-xs text-ink-soft">Your text across each photo</p>
+                  </div>
+                  <button type="button" role="switch" aria-checked={!!wm?.on} onClick={() => setWm({ on: !wm?.on })} className={`relative h-6 w-11 shrink-0 rounded-full transition ${wm?.on ? 'bg-twilight' : 'bg-line'}`}>
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${wm?.on ? 'left-[22px]' : 'left-0.5'}`} />
+                  </button>
+                </div>
+                {wm?.on && (
+                  <input key={wm?.text ?? ''} defaultValue={wm?.text ?? ''} maxLength={40} placeholder="Your name or website" onBlur={(e) => { if (e.target.value.trim() !== (wm?.text ?? '')) setWm({ text: e.target.value.trim() }) }} className={`${input} mt-3`} />
                 )}
               </div>
               <div className="mt-6 border-t border-line pt-5">

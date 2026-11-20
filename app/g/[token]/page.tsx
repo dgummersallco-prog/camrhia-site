@@ -632,6 +632,13 @@ export default function GalleryViewPage() {
     window.location.href = url
   }
   const heart = brand?.accent || '#fb7185'
+  const wmCfg = (designPreview ?? data.design ?? null)?.watermark
+  const wmText = wmCfg?.on ? String(wmCfg.text ?? '').trim() : ''
+  const wmEl = wmText ? (
+    <span aria-hidden className="pointer-events-none absolute inset-0 flex select-none items-center justify-center overflow-hidden">
+      <span style={{ transform: 'rotate(-28deg)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.25em', fontSize: 'clamp(12px, 2.4vw, 26px)', fontWeight: 500, color: 'rgba(255,255,255,0.6)', textShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>{wmText}</span>
+    </span>
+  ) : null
 
   const imgEl = cover?.web ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -661,6 +668,7 @@ export default function GalleryViewPage() {
             style={{ ...(!uniform && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : {}), ...(uniform && fpos(p.id) ? { objectPosition: fpos(p.id) } : {}) }}
           />
         )}
+        {wmEl}
         <button
           onClick={() => toggleFav(p.id)}
           aria-label="Favorite"
@@ -1224,6 +1232,7 @@ export default function GalleryViewPage() {
             </div>
           </div>
           <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4">
+            {wmEl}
             {openIndex > 0 && (
               <button
                 onClick={(e) => { e.stopPropagation(); setOpenIndex(openIndex - 1) }}

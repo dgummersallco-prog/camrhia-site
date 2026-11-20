@@ -51,10 +51,10 @@ export async function POST(request: Request) {
       content.push({ type: 'text', text: `Photo ${i + 1}:` })
       content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } })
     })
-    content.push({ type: 'text', text: `These ${n} photos are from one professional ${sessionType || 'photo'} shoot. For each photo give: "scene" (use ONLY one of: ${labels.join(', ')}), "tags" (3 to 5 short lowercase words for what is visible, like kiss, cake, dog, bouquet, laughing), and "score" (1 to 10, how strong a keeper it is for the client's gallery: expression, moment, composition). Reply with ONLY a JSON object: {"photos": [${n} objects like {"scene": "...", "tags": ["..."], "score": 7}, one per photo in order]}` })
+    content.push({ type: 'text', text: `These ${n} photos are from one professional ${sessionType || 'photo'} shoot. For each photo give: "scene" (use ONLY one of: ${labels.join(', ')}), "tags" (3 to 5 short lowercase words for what is visible, like kiss, cake, dog, bouquet, laughing), "score" (1 to 10, how strong a keeper it is for the client's gallery: expression, moment, composition), and "closed" (true only if the main person clearly has their eyes closed, otherwise false). Reply with ONLY a JSON object: {"photos": [${n} objects like {"scene": "...", "tags": ["..."], "score": 7, "closed": false}, one per photo in order]}` })
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 120 + n * 50, messages: [{ role: 'user', content }] })
+    const res = await client.messages.create({ model: MODEL_ID.haiku, max_tokens: 140 + n * 60, messages: [{ role: 'user', content }] })
 
     const inTok = res.usage?.input_tokens ?? 0
     const outTok = res.usage?.output_tokens ?? 0
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       const scene = typeof r.scene === 'string' && labels.includes(r.scene) ? r.scene : labels[labels.length - 1]
       const tags = Array.isArray(r.tags) ? r.tags.filter((t: unknown): t is string => typeof t === 'string').map((t: string) => t.toLowerCase().trim().slice(0, 24)).filter(Boolean).slice(0, 5) : []
       const score = Math.min(10, Math.max(1, Math.round(Number(r.score) || 5)))
-      return { scene, tags, score }
+      return { scene, tags, score, closed: r.closed === true }
     })
     return Response.json({ photos, order: labels })
   } catch {
