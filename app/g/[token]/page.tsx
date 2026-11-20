@@ -634,11 +634,12 @@ export default function GalleryViewPage() {
   const heart = brand?.accent || '#fb7185'
   const wmCfg = (designPreview ?? data.design ?? null)?.watermark
   const wmText = wmCfg?.on ? String(wmCfg.text ?? '').trim() : ''
-  const wmEl = wmText ? (
-    <span aria-hidden className="pointer-events-none absolute inset-0 flex select-none items-center justify-center overflow-hidden">
-      <span style={{ transform: 'rotate(-28deg)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.25em', fontSize: 'clamp(12px, 2.4vw, 26px)', fontWeight: 500, color: 'rgba(255,255,255,0.6)', textShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>{wmText}</span>
-    </span>
-  ) : null
+  const wmEl = wmText ? (() => {
+    const t = wmText.toUpperCase().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const w = Math.max(200, wmText.length * 13 + 90)
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='150'><text x='${w / 2}' y='75' text-anchor='middle' dominant-baseline='middle' transform='rotate(-28 ${w / 2} 75)' font-family='Arial, sans-serif' font-size='15' font-weight='600' letter-spacing='3' fill='rgba(255,255,255,0.5)' stroke='rgba(0,0,0,0.3)' stroke-width='0.6'>${t}</text></svg>`
+    return <span aria-hidden className="pointer-events-none absolute inset-0 select-none overflow-hidden" style={{ backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`, backgroundRepeat: 'repeat' }} />
+  })() : null
 
   const imgEl = cover?.web ? (
     // eslint-disable-next-line @next/next/no-img-element
