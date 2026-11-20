@@ -85,12 +85,12 @@ export default function GalleriesPage() {
           const src = ph?.[0]?.web_path ?? ph?.[0]?.thumb_path
           if (!src) continue
           const dl = await sb.storage.from('galleries').download(src)
-          if (dl.error || !dl.data) continue
+          if (dl.error || !dl.data) { setError('Cover download: ' + (dl.error?.message ?? 'no data')); continue }
           const path = `${uid}/${g.id}-${Date.now()}.jpg`
           const up = await sb.storage.from('gallery-covers').upload(path, dl.data, { contentType: 'image/jpeg', upsert: true })
-          if (up.error) continue
+          if (up.error) { setError('Cover upload: ' + up.error.message); continue }
           const { error: ue } = await sb.from('galleries').update({ cover_path: path }).eq('id', g.id)
-          if (!ue) n++
+          if (ue) setError('Cover save: ' + ue.message); else n++
         }
         if (n > 0) void load()
       })()
