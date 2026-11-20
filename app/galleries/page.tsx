@@ -59,6 +59,7 @@ export default function GalleriesPage() {
   const [saving, setSaving] = useState(false)
   const prefilled = useRef(false)
   const startView = useRef(false)
+  const backfilled = useRef(false)
 
   const load = useCallback(async () => {
     const sb = supabase
@@ -70,6 +71,30 @@ export default function GalleriesPage() {
     if (e) { setError(e.message); return }
     const list = (data ?? []) as unknown as Row[]
     setRows(list)
+    const missing = list.filter((g) => g.status === 'published' && !g.cover_path)
+    if (missing.length > 0 && !backfilled.current) {
+      backfilled.current = true
+      void (async () => {
+        const { data: ss } = await sb.auth.getSession()
+        const uid = ss.session?.user.id
+        if (!uid) return
+        let n = 0
+        for (const g of missing) {
+          const q = sb.from('gallery_photos').select('web_path, thumb_path').eq('gallery_id', g.id)
+          const { data: ph } = g.cover_photo_id ? await q.eq('id', g.cover_photo_id).limit(1) : await q.order('sort_order', { ascending: true }).limit(1)
+          const src = ph?.[0]?.web_path ?? ph?.[0]?.thumb_path
+          if (!src) continue
+          const dl = await sb.storage.from('galleries').download(src)
+          if (dl.error || !dl.data) continue
+          const path = `${uid}/${g.id}-${Date.now()}.jpg`
+          const up = await sb.storage.from('gallery-covers').upload(path, dl.data, { contentType: 'image/jpeg', upsert: true })
+          if (up.error) continue
+          const { error: ue } = await sb.from('galleries').update({ cover_path: path }).eq('id', g.id)
+          if (!ue) n++
+        }
+        if (n > 0) void load()
+      })()
+    }
     if (!startView.current) {
       startView.current = true
       if (list.some((g) => g.status !== 'published')) setFilter('draft')
