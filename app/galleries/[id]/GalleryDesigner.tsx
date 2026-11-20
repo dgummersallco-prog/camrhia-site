@@ -531,6 +531,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                   )}
                   {pick.key === 'moment' && pick.mid ? (
                     <button type="button" onClick={() => void removeSection()} className="text-[11px] text-twilight underline">Remove this line</button>
+                  ) : pick.key === 'count' ? (
+                    <button type="button" onClick={() => { setEl('count', { hide: true }); setPick(null) }} className="text-[11px] text-twilight underline">Remove this line</button>
                   ) : /^x\d+$/.test(pick.key) ? (
                     <button type="button" onClick={() => { resetEl(pick.key); setPick(null) }} className="text-[11px] text-twilight underline">Remove this line</button>
                   ) : (
