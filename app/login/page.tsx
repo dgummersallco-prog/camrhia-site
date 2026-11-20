@@ -54,7 +54,7 @@ export default function LoginPage() {
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
           <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">
-            Photographer
+            Photographer or client
           </p>
           <h1 className="font-fraunces text-3xl font-semibold text-ink mb-8">
             Sign in
