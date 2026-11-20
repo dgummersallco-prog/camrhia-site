@@ -158,6 +158,9 @@ export default function GalleryManagePage() {
   const [orgInfo, setOrgInfo] = useState<OrgInfo | null>(null)
   const [orgOrder, setOrgOrder] = useState<string[]>(['Other'])
   const [orgMode, setOrgMode] = useState<string | null>(null)
+  const [wmDraft, setWmDraft] = useState<string | null>(null)
+  const [addingSec, setAddingSec] = useState(false)
+  const [newSec, setNewSec] = useState<string | null>(null)
   const [check, setCheck] = useState<null | { kind: 'dups' | 'flags' | 'social'; groups?: { ids: string[]; best: string }[]; items?: { id: string; why: string }[]; ids?: string[] }>(null)
   const [feats, setFeats] = useState<Record<string, { t?: number; lum: number; sat: number; hue: number; vec: number[] }> | null>(null)
   const [sessDate, setSessDate] = useState<string | null>(null)
@@ -653,6 +656,13 @@ export default function GalleryManagePage() {
     flash(error ? error.message : 'Reminder sent to their dashboard')
   }
 
+  function startSection(pid: string) {
+    const rest = (gallery?.moments ?? []).filter((m) => m.startId !== pid)
+    const id = crypto.randomUUID()
+    void saveMoments([...rest, { id, name: 'New section', startId: pid }])
+    setNewSec(id)
+    setAddingSec(false)
+  }
   async function renameScene(id: string, name: string) {
     const nm = name.trim()
     if (!nm || !gallery?.moments) return
@@ -1246,9 +1256,13 @@ export default function GalleryManagePage() {
   })
 
   const wm = ((gallery?.design ?? null) as { watermark?: { on?: boolean; text?: string } } | null)?.watermark
-  function setWm(patch: { on?: boolean; text?: string }) {
-    if (!gallery) return
-    void saveSettings({ design: { ...(gallery.design ?? {}), watermark: { on: wm?.on ?? false, text: wm?.text ?? '', ...patch } } })
+  async function setWm(patch: { on?: boolean; text?: string }) {
+    const sb = supabase
+    if (!sb || !gallery) return
+    const design = { ...(gallery.design ?? {}), watermark: { on: wm?.on ?? false, text: wm?.text ?? '', ...patch } }
+    const { error } = await sb.from('galleries').update({ design }).eq('id', gallery.id)
+    if (error) { setMessage(error.message); return }
+    setGallery({ ...gallery, design })
   }
   const wmTxt = wm?.on ? String(wm.text ?? '').trim() : ''
   const wmStyle = wmTxt ? (() => {
@@ -1259,6 +1273,7 @@ export default function GalleryManagePage() {
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><g font-family='Arial, Helvetica, sans-serif' font-size='40' font-weight='800' letter-spacing='2' text-anchor='middle' dominant-baseline='middle' fill='white' fill-opacity='0.55' stroke='black' stroke-opacity='0.12' stroke-width='1'><text x='${w / 4}' y='${h / 4}' transform='rotate(-35 ${w / 4} ${h / 4})'>${t}</text><text x='${(w * 3) / 4}' y='${(h * 3) / 4}' transform='rotate(-35 ${(w * 3) / 4} ${(h * 3) / 4})'>${t}</text></g></svg>`
     return { backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`, backgroundRepeat: 'repeat', backgroundSize: `min(${Math.round((w / tw) * 300)}px, ${((w / tw) * 40).toFixed(1)}%) auto` } as const
   })() : null
+  const secStart = new Map((gallery?.moments ?? []).map((m) => [m.startId, m]))
   const liveIds = (ids: string[]) => ids.filter((id) => photos.some((x) => x.id === id))
   const thumbOf = (id: string) => { const ph = photos.find((x) => x.id === id); return ph?.thumb_path ? thumbs[ph.thumb_path] : undefined }
 
@@ -1296,6 +1311,7 @@ export default function GalleryManagePage() {
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-twilight transition-all" style={{ width: `${(scan.done / Math.max(1, scan.total)) * 100}%` }} /></div>
                 </div>
               )}
+              <button type="button" disabled={!!scan || photos.length === 0} onClick={() => setAddingSec(!addingSec)} className={`mt-3 w-full rounded-xl border border-dashed px-4 py-2.5 text-sm font-medium transition disabled:opacity-50 ${addingSec ? 'border-twilight bg-twilight/10 text-twilight' : 'border-twilight/60 bg-white/60 text-twilight hover:bg-twilight/10'}`}>{addingSec ? 'Click the photo where it starts' : '+ Add section'}</button>
               <div className="mt-4">
                 {sceneInfo.blocks.length > 0 && (
                   <>
@@ -1397,7 +1413,10 @@ export default function GalleryManagePage() {
                   </button>
                 </div>
                 {wm?.on && (
-                  <input key={wm?.text ?? ''} defaultValue={wm?.text ?? ''} maxLength={40} placeholder="Your name or website" onBlur={(e) => { if (e.target.value.trim() !== (wm?.text ?? '')) setWm({ text: e.target.value.trim() }) }} className={`${input} mt-3`} />
+                  <>
+                    <input value={wmDraft ?? wm?.text ?? ''} onChange={(e) => setWmDraft(e.target.value)} maxLength={40} placeholder="Your name or website" className={`${input} mt-3`} />
+                    <button type="button" disabled={wmDraft === null || wmDraft.trim() === (wm?.text ?? '')} onClick={async () => { await setWm({ text: (wmDraft ?? '').trim() }); setWmDraft(null) }} className="mt-2 w-full rounded-xl border border-twilight bg-white/70 px-4 py-2 text-sm font-medium text-twilight transition hover:bg-twilight/10 disabled:opacity-50">{wmDraft === null || wmDraft.trim() === (wm?.text ?? '') ? ((wm?.text ?? '') ? 'Saved' : 'Save') : 'Save'}</button>
+                  </>
                 )}
               </div>
               <div className="mt-6 border-t border-line pt-5">
@@ -1701,11 +1720,27 @@ export default function GalleryManagePage() {
                   </p>
                 ) : (
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-                    {shown.map((p) => (
+                    {shown.flatMap((p) => [
+                      filter === 'all' && secStart.get(p.id) ? (
+                        <div key={'sec-' + secStart.get(p.id)!.id} className="col-span-full flex items-center gap-3 pt-3">
+                          <input
+                            key={secStart.get(p.id)!.name}
+                            defaultValue={secStart.get(p.id)!.name}
+                            autoFocus={newSec === secStart.get(p.id)!.id}
+                            onFocus={(e) => e.target.select()}
+                            onBlur={(e) => { const v = e.target.value.trim(); const sec = secStart.get(p.id); if (sec && v && v !== sec.name) void renameScene(sec.id, v) }}
+                            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+                            placeholder="Section title"
+                            className="min-w-0 flex-1 border-b border-line bg-transparent pb-1 font-fraunces text-xl text-ink focus:border-twilight focus:outline-none"
+                          />
+                          <button type="button" onClick={() => { const sec = secStart.get(p.id); if (sec) void saveMoments((gallery.moments ?? []).filter((m) => m.id !== sec.id)) }} className="text-xs text-ink-soft hover:text-ink">Remove</button>
+                        </div>
+                      ) : null,
+                      (
                       <div
                         key={p.id}
                         draggable={filter === 'all' && !selecting}
-                        onClick={() => (selecting ? toggleSel(p.id) : openView(p))}
+                        onClick={() => (addingSec ? startSection(p.id) : selecting ? toggleSel(p.id) : openView(p))}
                         onDragStart={() => { dragId.current = p.id }}
                         onDragOver={(e) => { if (filter === 'all') e.preventDefault() }}
                         onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropOn(p.id) }}
@@ -1731,7 +1766,7 @@ export default function GalleryManagePage() {
                           <button className="text-xs text-red-300" onClick={(e) => { e.stopPropagation(); deletePhoto(p) }}>Delete</button>
                         </div>
                       </div>
-                    ))}
+                    )])}
                   </div>
                 )}
               </div>

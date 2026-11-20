@@ -78,8 +78,10 @@ export default function ColorInput({ label, value, onChange, swatches = DEFAULT_
   useEffect(() => {
     if (!open) return
     const down = (e: PointerEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    const away = () => setOpen(false)
     document.addEventListener('pointerdown', down)
-    return () => document.removeEventListener('pointerdown', down)
+    window.addEventListener('blur', away)
+    return () => { document.removeEventListener('pointerdown', down); window.removeEventListener('blur', away) }
   }, [open])
 
   const pick = (c: string) => { onChange(c); remember(c) }
@@ -91,7 +93,7 @@ export default function ColorInput({ label, value, onChange, swatches = DEFAULT_
       <span className="text-sm font-medium text-ink">{label}</span>
       <div className="mt-1 flex w-full items-center gap-2 rounded-xl border border-line bg-card px-3 py-2">
         <button type="button" onClick={() => setOpen(!open)} aria-label="Open color picker" className="h-5 w-5 shrink-0 rounded border border-line" style={{ background: value || 'transparent' }} />
-        <HexBox value={value} onChange={onChange} onCommit={remember} className="min-w-0 flex-1 bg-transparent font-mono text-xs uppercase text-ink outline-none" />
+        <HexBox value={value} onChange={onChange} onCommit={remember} className="min-w-0 flex-1 bg-transparent text-sm uppercase tracking-wide text-ink outline-none" />
         <button type="button" onClick={() => setOpen(!open)} aria-label="Toggle color picker" className="px-1 text-ink-soft">{open ? '▴' : '▾'}</button>
       </div>
       {open && (
@@ -104,7 +106,7 @@ export default function ColorInput({ label, value, onChange, swatches = DEFAULT_
           <div onPointerUp={() => remember(valRef.current)}>
             <HexColorPicker color={value || '#FFFFFF'} onChange={onChange} style={{ width: '100%', height: 160 }} />
           </div>
-          <HexBox value={value} onChange={onChange} onCommit={remember} className="mt-3 w-full rounded-lg border border-line bg-paper px-3 py-2 font-mono text-sm uppercase text-ink outline-none focus:border-twilight" />
+          <HexBox value={value} onChange={onChange} onCommit={remember} className="mt-3 w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm uppercase tracking-wide text-ink outline-none focus:border-twilight" />
           <button type="button" onClick={() => { remember(valRef.current); setOpen(false) }} className="mt-2 text-xs font-medium text-twilight">Done</button>
         </div>
       )}

@@ -464,22 +464,47 @@ export default function GalleryViewPage() {
     }
     const hide = () => { box.style.display = 'none' }
     let editor: HTMLInputElement | null = null
-    const closeEditor = () => { if (editor) { editor.remove(); editor = null } }
+    let hidden: HTMLElement | null = null
+    const closeEditor = () => { if (editor) { editor.remove(); editor = null } if (hidden) { hidden.style.visibility = ''; hidden = null } }
     const openEditor = (target: HTMLElement, k: string) => {
       if (!['title', 'title2', 'brand', 'count', 'initials'].includes(k)) return
       const key = k === 'title2' ? 'title' : k
       const orig = textRef.current[key] ?? ''
       closeEditor()
       const r = target.getBoundingClientRect()
-      const w = Math.min(Math.max(r.width + 40, 240), window.innerWidth - 24)
+      const cs = getComputedStyle(target)
+      const isSvg = target instanceof SVGElement
+      const sc = isSvg ? ((target as unknown as SVGGraphicsElement).getScreenCTM?.()?.a ?? 1) : 1
+      const fs = (parseFloat(cs.fontSize) || 16) * sc
+      const colr = isSvg && cs.fill && cs.fill !== 'none' ? cs.fill : cs.color
+      const w = Math.min(Math.max(r.width + 24, 60), window.innerWidth - 12)
+      const hgt = Math.max(r.height + 6, fs * 1.3)
       const inp = document.createElement('input')
       inp.type = 'text'
       inp.maxLength = key === 'brand' ? 40 : key === 'initials' ? 4 : 60
       inp.value = orig
-      inp.style.cssText = 'position:fixed;z-index:2147483646;height:42px;box-sizing:border-box;padding:0 12px;border:2px dashed #d9a21b;border-radius:10px;background:#fff;color:#1f1a14;font:500 17px system-ui,sans-serif;text-align:center;outline:none;box-shadow:0 6px 24px rgba(0,0,0,0.25)'
+      const shownTxt = cs.textTransform === 'uppercase' ? orig.toUpperCase() : orig
+      const mc = document.createElement('canvas').getContext('2d')
+      let ls = 0
+      if (mc && shownTxt.length > 1) {
+        mc.font = `${cs.fontStyle} ${cs.fontWeight} ${fs}px ${cs.fontFamily}`
+        ls = Math.min(40, Math.max(-2, (r.width - mc.measureText(shownTxt).width) / shownTxt.length))
+      }
+      inp.style.cssText = 'position:fixed;z-index:2147483646;box-sizing:border-box;padding:0;margin:0;border:0;border-radius:0;background:transparent;outline:none;box-shadow:none;text-align:center'
+      inp.style.fontFamily = cs.fontFamily
+      inp.style.fontSize = fs + 'px'
+      inp.style.fontWeight = cs.fontWeight
+      inp.style.fontStyle = cs.fontStyle
+      inp.style.textTransform = cs.textTransform
+      inp.style.letterSpacing = ls.toFixed(2) + 'px'
+      inp.style.color = colr
+      inp.style.caretColor = colr
       inp.style.width = w + 'px'
-      inp.style.left = Math.min(Math.max(12, r.left + r.width / 2 - w / 2), window.innerWidth - w - 12) + 'px'
-      inp.style.top = Math.min(Math.max(12, r.top + r.height / 2 - 21), window.innerHeight - 54) + 'px'
+      inp.style.height = hgt + 'px'
+      inp.style.left = r.left + r.width / 2 - w / 2 + 'px'
+      inp.style.top = r.top + r.height / 2 - hgt / 2 + 'px'
+      target.style.visibility = 'hidden'
+      hidden = target
       let finished = false
       const send = (t: string) => window.parent?.postMessage({ type: 'camrhia-gallery-text', key, text: t }, '*')
       inp.addEventListener('input', () => send(inp.value))
@@ -508,7 +533,6 @@ export default function GalleryViewPage() {
         if (t && root && (t === root || t.tagName === 'MAIN' || t.parentElement === root || t.parentElement?.parentElement === root || t.parentElement?.tagName === 'MAIN')) {
           e.preventDefault()
           e.stopPropagation()
-          window.parent?.postMessage({ type: 'camrhia-gallery-pick', key: 'bg', name: 'Background', size: 16, color: '#000000', bold: false }, '*')
         }
         return
       }
@@ -716,6 +740,7 @@ export default function GalleryViewPage() {
               style={{ ...(!fill && p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : {}), ...(fill && fpos(p.id) ? { objectPosition: fpos(p.id) } : {}) }}
             />
           )}
+          {wmEl}
           {heartBtn(p)}
           {coverBtn(p)}
         </div>
