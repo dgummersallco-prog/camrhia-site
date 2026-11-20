@@ -111,16 +111,7 @@ export default function MyGalleriesPage() {
                           <a href={`/g/${g.token}`} className="absolute inset-0 z-10" aria-label={`Open ${g.title || 'gallery'}`} />
                         </div>
                         <div className="mt-3 px-1">
-                          <p className="text-sm text-ink-soft">{label(r.session_type)} · by {studio}{meta ? ` · ${meta.count} photo${meta.count === 1 ? '' : 's'}` : ''}</p>
-                          {meta?.sent && (
-                            <p className="mt-0.5 flex items-center gap-2 text-xs text-ink-soft">
-                              Delivered {new Date(meta.sent).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                              {Date.now() - new Date(meta.sent).getTime() < 7 * 86400000 && <span className="rounded-full bg-twilight px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">New</span>}
-                            </p>
-                          )}
                           <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <a href={`/g/${g.token}?download=1`} className={PILL}>Download all</a>
-                            {meta && meta.favs > 0 && <a href={`/g/${g.token}?favs=1`} className={PILL}>♥ {meta.favs} favorite{meta.favs === 1 ? '' : 's'}</a>}
                             {pin && (
                               <button type="button" onClick={() => setPinFor(pinFor === g.token ? null : g.token)} className={PILL}>
                                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
