@@ -656,7 +656,20 @@ export default function GalleryManagePage() {
     flash(error ? error.message : 'Reminder sent to their dashboard')
   }
 
-  async function addSectionFromPreview(pid: string): Promise<string | null> {
+  async function moveSectionTo(id: string, pid: string) {
+    const ms = gallery?.moments ?? []
+    await saveMoments(ms.filter((m) => m.id === id || m.startId !== pid).map((m) => (m.id === id ? { ...m, startId: pid } : m)))
+  }
+  async function addSectionFromPreview(pidIn?: string): Promise<string | null> {
+    let pid = pidIn
+    if (!pid) {
+      const sorted = [...photos].sort((a, b) => a.sort_order - b.sort_order)
+      if (sorted.length === 0) return null
+      const taken = new Set((gallery?.moments ?? []).map((m) => m.startId))
+      let i = Math.min(sorted.length - 1, (gallery?.moments ?? []).length * 8)
+      while (i < sorted.length - 1 && taken.has(sorted[i].id)) i++
+      pid = sorted[i].id
+    }
     const rest = (gallery?.moments ?? []).filter((m) => m.startId !== pid)
     const id = crypto.randomUUID()
     await saveMoments([...rest, { id, name: 'New section', startId: pid }])
@@ -1558,6 +1571,7 @@ export default function GalleryManagePage() {
                 flushRef={designFlush}
                 leftHost={leftHost}
                 onAddSection={addSectionFromPreview}
+                onMoveSection={moveSectionTo}
                 onRenameSection={(id, t) => void renameScene(id, t)}
                 onSaved={(dd) => setGallery((g) => (g ? { ...g, design: dd as Record<string, unknown> } : g))}
               />

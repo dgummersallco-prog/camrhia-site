@@ -49,11 +49,11 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
   return { cover: k, ...p, el: { ...clearCoverEl(el), ...(p.el ?? {}) } }
 }
 
-export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost, onAddSection, onRenameSection }: {
+export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost, onAddSection, onMoveSection, onRenameSection }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
   photoChoices?: { id: string; url: string }[]; coverPhotoId?: string | null; onPickCover?: (id: string) => void
   onClose: () => void; onSaved: (d: GalleryDesign) => void; onSend?: () => void; topOffset?: number; flushRef?: { current: (() => void) | null }; leftHost?: HTMLElement | null
-  onAddSection?: (pid: string) => Promise<string | null>; onRenameSection?: (id: string, name: string) => void
+  onAddSection?: (pid?: string) => Promise<string | null>; onMoveSection?: (id: string, pid: string) => Promise<void>; onRenameSection?: (id: string, name: string) => void
 }) {
   const [d, setD] = useState<GalleryDesign>(initial ?? {})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
@@ -85,7 +85,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [gBusy, setGBusy] = useState(false)
   const [gUndo, setGUndo] = useState<GalleryDesign | null>(null)
   const [gTour, setGTour] = useState<number | null>(null)
-  const G_Q = ["Let's style your gallery. How should the opening photo look?", 'Now pick a photo layout.', 'All set! Check the preview. Click any line in it to change its font, size or color.']
+  const G_Q = ["Let's style your gallery. How should the cover photo look?", 'Now pick a photo layout.', 'All set! Check the preview. Click any line in it to change its font, size or color.']
   const gChip = 'rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] text-ink transition hover:border-twilight'
   const gSay = (text: string) => setGMsgs((m) => [...m, { from: 'cami', text }])
   const gPick = (label: string, patch: Partial<GalleryDesign>, next: number) => {
@@ -153,10 +153,13 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   }
   function addCoverText() {
     setAddOpen(false)
-    if (!latest.current.el?.brand?.text?.trim()) setEl('brand', { text: 'Your text' })
-    setTimeout(() => postEdit('brand'), 500)
+    const cur = latest.current.el ?? {}
+    let n = 1
+    while (cur['x' + n]) n++
+    setEl('x' + n, { text: 'Your text' })
+    setTimeout(() => postEdit('x' + n), 600)
   }
-  async function addSectionAt(pid: string) {
+  async function addSectionAt(pid?: string) {
     setSecPick(false)
     postSectionMode(false)
     const id = await onAddSection?.(pid)
@@ -164,6 +167,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     pendingEdit.current = { key: 'moment', id }
     try { frameRef.current?.contentWindow?.location.reload() } catch { /* ignore */ }
   }
+  const onMoveSecRef = useRef(onMoveSection)
+  onMoveSecRef.current = onMoveSection
   const addSectionRef = useRef(addSectionAt)
   addSectionRef.current = addSectionAt
   const renameRef = useRef((id: string, text: string) => { void id; void text })
@@ -254,6 +259,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         if (pe) { pendingEdit.current = null; setTimeout(() => postEdit(pe.key, pe.id), 700) }
       }
       if (m.type === 'camrhia-gallery-section-at' && typeof m.id === 'string') void addSectionRef.current(String(m.id))
+      if (m.type === 'camrhia-gallery-moment-move' && typeof m.id === 'string' && typeof m.pid === 'string') {
+        void (async () => { await onMoveSecRef.current?.(String(m.id), String(m.pid)); try { frameRef.current?.contentWindow?.location.reload() } catch { /* ignore */ } })()
+      }
       if (m.type === 'camrhia-gallery-moment-text' && typeof m.id === 'string') renameRef.current(String(m.id), String(m.text ?? ''))
       if (m.type === 'camrhia-gallery-focus') {
         const x = Number(m.x), y = Number(m.y)
@@ -330,7 +338,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             <div className="mt-3 grid grid-cols-5 gap-2">
               {(slotKeys.length > 0 ? slotKeys : ['main']).map((k) => {
                 const pid = k === 'main' ? coverPhotoId : eff.slots[k]
-                const u = photoChoices.find((c) => c.id === pid)?.url
+                const u = photoChoices.find((c) => c.id === pid)?.url ?? (k === 'main' && pid ? coverUrl : undefined)
                 const on = (slotKeys.length > 0 ? curSlot : 'main') === k
                 return (
                   <button key={k} type="button" onClick={() => setSlot(k)} className={`flex aspect-square items-center justify-center overflow-hidden rounded-lg border-2 bg-paper transition ${on ? 'border-twilight ring-2 ring-twilight/40' : 'border-line hover:border-twilight'}`}>
@@ -349,14 +357,14 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         {coverUrl && (
           <div className="mt-4">
             <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-10 shrink-0">Zoom</span>
-              <input type="range" min={1} max={3} step={0.05} value={eff.zoom} onChange={(e) => change({ zoom: Number(e.target.value) })} className="min-w-0 flex-1" />
+              <input type="range" min={1} max={3} step={0.05} value={eff.zoom} onChange={(e) => change({ zoom: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
             </label>
             <p className="mt-2 text-xs text-ink-soft">Drag the cover in the preview to move it.</p>
           </div>
         )}
 
 
-        <p className={head + ' mt-8'}>Opening photo</p>
+        <p className={head + ' mt-8'}>Cover photo</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {COVERS.map((c) => (
             <button key={c.k} type="button" onClick={() => change(coverPatch(c.k, eff.el))} onMouseEnter={(e) => setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
@@ -378,45 +386,16 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         </div>
 
 
-        <p className={head + ' mt-8'}>Photo spacing</p>
+        <p className={head + ' mt-8'}>Photo settings</p>
         <div className="mt-3 space-y-3 rounded-lg border border-line bg-white p-3">
           <label className="block text-xs text-ink-soft">Space between photos
-            <input type="range" min={0} max={48} value={eff.look.gap} onChange={(e) => change({ gap: Number(e.target.value) })} className="mt-1 w-full" />
+            <input type="range" min={0} max={48} value={eff.look.gap} onChange={(e) => change({ gap: Number(e.target.value) })} className="accent-[var(--color-twilight)] mt-1 w-full" />
           </label>
           <label className="block text-xs text-ink-soft">Rounded corners
-            <input type="range" min={0} max={40} value={eff.look.radius} onChange={(e) => change({ radius: Number(e.target.value) })} className="mt-1 w-full" />
+            <input type="range" min={0} max={40} value={eff.look.radius} onChange={(e) => change({ radius: Number(e.target.value) })} className="accent-[var(--color-twilight)] mt-1 w-full" />
           </label>
         </div>
         <p className="mt-4 text-xs text-ink-soft">Click any line in the preview to change its font, size and color.</p>
-        <div className="mt-8 rounded-xl border border-[#E8DDD0] bg-white/80 p-3">
-          <div className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/camri/13_face_avatar.png" alt="" className="h-7 w-7 rounded-full" />
-            <p className="font-fraunces text-base font-semibold text-ink">Camri</p>
-          </div>
-          <div className="mt-2 space-y-1.5">
-            {gMsgs.slice(-3).map((m, i) => (
-              <div key={i} className={'max-w-[92%] rounded-xl px-2.5 py-1.5 text-xs ' + (m.from === 'you' ? 'ml-auto bg-twilight text-white' : 'bg-[#EBDDCF] text-ink')}>{m.text}</div>
-            ))}
-            {gBusy && (
-              <div className="flex items-center gap-1.5 text-xs text-ink-soft">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/camri/04_thinking.png" alt="" className="h-8 w-auto" /> <CamriTyping />
-              </div>
-            )}
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {gTour === null && <button type="button" className={gChip} onClick={() => { gSay(G_Q[0]); setGTour(0) }}>Walk me through it</button>}
-            {gTour === 0 && COVERS.map((c) => <button key={c.k} type="button" className={gChip} onClick={() => gPick(c.name, coverPatch(c.k, eff.el), 1)}>{c.name}</button>)}
-            {gTour === 1 && LAYOUTS.map((l) => <button key={l.k} type="button" className={gChip} onClick={() => gPick(l.name, { layout: l.k, ...(LAYOUT_PRESETS[l.k] ?? {}) } as Partial<GalleryDesign>, 2)}>{l.name}</button>)}
-            {gTour !== null && <button type="button" className="px-1 text-[11px] text-ink-soft underline" onClick={() => { setGTour(null); gSay('Okay, I am here whenever you want a change.') }}>Skip</button>}
-          </div>
-          {gUndo && <button type="button" onClick={() => { const u = gUndo; setGUndo(null); change({ cover: u.cover, look: u.look, colors: u.colors, focal: u.focal, layout: u.layout } as Partial<GalleryDesign>) }} className="mt-1.5 text-[11px] text-twilight underline">Undo Camri&apos;s last change</button>}
-          <form onSubmit={(e) => { e.preventDefault(); gAsk(gInput) }} className="mt-2 flex gap-1.5">
-            <input value={gInput} onChange={(e) => setGInput(e.target.value)} placeholder="Ask Camri to restyle" className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-xs text-ink outline-none focus:border-twilight" />
-            <button type="submit" disabled={gBusy} className="rounded-lg bg-twilight px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60">Send</button>
-          </form>
-        </div>
       </PortalTo>
       {zoom && (
         <div className="pointer-events-none fixed z-[60] rounded-xl border border-line bg-white p-2 shadow-2xl" style={{ left: (rootRef.current?.getBoundingClientRect().left ?? 330) + 8, top: Math.max(8, Math.min(zoom.top - 40, (typeof window !== 'undefined' ? window.innerHeight : 800) - 600)) }}>
@@ -439,9 +418,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                   <p className="px-2 pb-1.5 pt-1 text-sm font-medium text-ink">What do you want to add?</p>
                   <button type="button" onClick={addCoverText} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-paper">
                     <span className="block text-sm text-ink">Cover text box</span>
-                    <span className="block text-xs text-ink-soft">A line on the opening photo</span>
+                    <span className="block text-xs text-ink-soft">A line on the cover photo</span>
                   </button>
-                  <button type="button" onClick={() => { setAddOpen(false); setSecPick(true); postSectionMode(true) }} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-paper">
+                  <button type="button" onClick={() => { setAddOpen(false); void addSectionRef.current() }} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-paper">
                     <span className="block text-sm text-ink">Section text box</span>
                     <span className="block text-xs text-ink-soft">Splits your photos into parts</span>
                   </button>
@@ -478,10 +457,10 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
               ) : pick.key === 'photos' ? (
                 <div className="space-y-3">
                   <label className="block text-xs text-ink-soft">Space between photos
-                    <input type="range" min={0} max={48} value={eff.look.gap} onChange={(e) => change({ gap: Number(e.target.value) })} className="mt-1 w-full" />
+                    <input type="range" min={0} max={48} value={eff.look.gap} onChange={(e) => change({ gap: Number(e.target.value) })} className="accent-[var(--color-twilight)] mt-1 w-full" />
                   </label>
                   <label className="block text-xs text-ink-soft">Rounded corners
-                    <input type="range" min={0} max={40} value={eff.look.radius} onChange={(e) => change({ radius: Number(e.target.value) })} className="mt-1 w-full" />
+                    <input type="range" min={0} max={40} value={eff.look.radius} onChange={(e) => change({ radius: Number(e.target.value) })} className="accent-[var(--color-twilight)] mt-1 w-full" />
                   </label>
                   <p className="text-[11px] text-ink-soft">These apply to every photo. Pick a different layout on the left.</p>
                 </div>
@@ -501,7 +480,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                     )}
                   </div>
                   <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-14 shrink-0">Size {cur?.size ?? pick.size}</span>
-                    <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(pick.key, { size: Number(e.target.value) })} className="min-w-0 flex-1" />
+                    <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(pick.key, { size: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
                   </label>
                   {pick.key === 'title' && eff.cover === 'bigtype' && (
                     <ColorInput label="Color over the photo" value={eff.el?.titlein?.color ?? '#FFFFFF'} onChange={(v) => setEl('titlein', { color: v })} />
@@ -514,7 +493,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                     </label>
                   </div>
                   <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-14 shrink-0">Move {cur?.dy ?? 0}</span>
-                    <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(pick.key, { dy: Number(e.target.value) })} className="min-w-0 flex-1" />
+                    <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(pick.key, { dy: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
                   </label>
                   <button type="button" onClick={() => resetEl(pick.key)} className="text-[11px] text-twilight underline">Reset this line</button>
                 </div>

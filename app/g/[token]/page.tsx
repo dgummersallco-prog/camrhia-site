@@ -336,7 +336,7 @@ export default function GalleryViewPage() {
       if (e.button !== 0) return
       const tg = (e.target as Element | null)?.closest?.('[data-gk]') as Element | null
       const gk = tg?.getAttribute('data-gk') ?? ''
-      if (tg && MOVABLE.includes(gk)) {
+      if (tg && (MOVABLE.includes(gk) || /^x\d+$/.test(gk))) {
         const svg = (tg as SVGElement).ownerSVGElement
         const k = svg ? svg.getBoundingClientRect().width / (svg.viewBox.baseVal?.width || 900) || 1 : 1
         tdrag = { key: gk, x: e.clientX, y: e.clientY, k, moved: false }
@@ -433,10 +433,53 @@ export default function GalleryViewPage() {
     }
   }, [])
 
+  // Preview only: drag a section heading onto the photo where it should start.
+  useEffect(() => {
+    if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
+    const st = document.createElement('style')
+    st.textContent = '.gal-root [data-gk="moment"]{cursor:grab}'
+    document.head.appendChild(st)
+    let d: { mid: string; x: number; y: number; moved: boolean } | null = null
+    let swallow = false
+    const down = (e: MouseEvent) => {
+      const t = (e.target as HTMLElement | null)?.closest?.('[data-gk="moment"]') as HTMLElement | null
+      const mid = t?.getAttribute('data-mid')
+      if (!t || !mid || e.button !== 0 || (e.target as HTMLElement).tagName === 'INPUT') return
+      d = { mid, x: e.clientX, y: e.clientY, moved: false }
+    }
+    const move = (e: MouseEvent) => {
+      if (!d) return
+      if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) { d.moved = true; document.body.style.cursor = 'grabbing' }
+    }
+    const up = (e: MouseEvent) => {
+      if (!d) return
+      const was = d
+      d = null
+      document.body.style.cursor = ''
+      if (!was.moved) return
+      swallow = true
+      setTimeout(() => { swallow = false }, 50)
+      const im = document.elementsFromPoint(e.clientX, e.clientY).find((n) => n instanceof HTMLImageElement && n.hasAttribute('data-pid') && !n.hasAttribute('data-cover') && !n.hasAttribute('data-slot')) as HTMLImageElement | undefined
+      if (im) window.parent?.postMessage({ type: 'camrhia-gallery-moment-move', id: was.mid, pid: im.getAttribute('data-pid') }, '*')
+    }
+    const click = (e: MouseEvent) => { if (swallow) { e.preventDefault(); e.stopPropagation() } }
+    window.addEventListener('mousedown', down, true)
+    window.addEventListener('mousemove', move, true)
+    window.addEventListener('mouseup', up, true)
+    window.addEventListener('click', click, true)
+    return () => {
+      st.remove()
+      window.removeEventListener('mousedown', down, true)
+      window.removeEventListener('mousemove', move, true)
+      window.removeEventListener('mouseup', up, true)
+      window.removeEventListener('click', click, true)
+    }
+  }, [])
+
   // Preview only: hover names and click-to-edit for the gallery lines.
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
-    const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials', title2: 'Gallery title line 2' }
+    const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials', title2: 'Gallery title line 2', ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => ['x' + (i + 1), 'Text'])) }
     const box = document.createElement('div')
     box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:1.5px dashed #d9a21b;border-radius:3px;display:none'
     const tag = document.createElement('div')
@@ -469,7 +512,7 @@ export default function GalleryViewPage() {
     let secOn = false
     const closeEditor = () => { if (editor) { editor.remove(); editor = null } if (hidden) { hidden.style.visibility = ''; hidden = null } }
     const openEditor = (target: HTMLElement, k: string) => {
-      if (!['title', 'title2', 'brand', 'count', 'initials', 'moment'].includes(k)) return
+      if (!['title', 'title2', 'brand', 'count', 'initials', 'moment'].includes(k) && !/^x\d+$/.test(k)) return
       const key = k === 'title2' ? 'title' : k
       const orig = k === 'moment' ? (target.textContent ?? '') : textRef.current[key] ?? ''
       closeEditor()
@@ -698,7 +741,9 @@ export default function GalleryViewPage() {
   const coverTitle = String((el as Record<string, { text?: string }> | undefined)?.title?.text ?? '').trim() || String(data.title)
   const coverSub = String((el as Record<string, { text?: string }> | undefined)?.brand?.text ?? '').trim()
   const countText = String((el as Record<string, { text?: string }> | undefined)?.count?.text ?? '').trim()
-  textRef.current = { title: coverTitle, brand: coverSub, count: countText || `${data.photos.length} photos`, initials: String((el as Record<string, { text?: string }> | undefined)?.initials?.text ?? '') }
+  const extraKeys = Object.keys((el ?? {}) as Record<string, unknown>).filter((k) => /^x\d+$/.test(k)).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
+  const extraTxt = (k: string) => String((el as Record<string, { text?: string }> | undefined)?.[k]?.text ?? '')
+  textRef.current = { ...Object.fromEntries(extraKeys.map((k) => [k, extraTxt(k)])), title: coverTitle, brand: coverSub, count: countText || `${data.photos.length} photos`, initials: String((el as Record<string, { text?: string }> | undefined)?.initials?.text ?? '') }
   const brandLine = coverSub ? (
     <p data-gk="brand" className="mb-3 font-mono text-xs uppercase tracking-widest" style={{ color: pal.soft }}>{coverSub}</p>
   ) : null
@@ -899,7 +944,7 @@ export default function GalleryViewPage() {
       {fontHref && <link rel="stylesheet" href={fontHref} />}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Bodoni+Moda:wght@400&display=swap" />
       {elRules && <style>{elRules}</style>}
-      <div data-cover-wrap style={{ background: coverPal.bg, color: coverPal.ink }}>{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
+      <div data-cover-wrap style={{ background: coverPal.bg, color: coverPal.ink, position: 'relative' }}>{extraKeys.map((k, i) => <div key={k} data-gk={k} style={{ position: 'absolute', left: '50%', top: 24 + i * 56, transform: 'translateX(-50%)', zIndex: 6, fontSize: 28, lineHeight: 1.2, whiteSpace: 'nowrap', color: coverPal.ink, fontFamily: "'Playfair Display', Georgia, serif", cursor: 'grab' }}>{extraTxt(k) || 'Your text'}</div>)}{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
         const words = String(coverTitle).trim().split(/\s+/).filter(Boolean)
         const one = words.length <= 1
         const l1 = one ? '' : words.slice(0, -1).join(' ')
@@ -910,16 +955,16 @@ export default function GalleryViewPage() {
         const f1 = big1 ? 71 : Math.max(24, 270 / (0.62 * l1.length))
         const f2 = big1 ? 105.9 : Math.min(105.9, f1 * 1.41)
         return (
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#F6DCBD' }}>
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#F5DDC2 url(/gallery-cover/ticket.png) center / 100% 100% no-repeat' }}>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;800&family=DM+Serif+Display&display=swap" />
-            <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs><clipPath id="tkclip" clipPathUnits="objectBoundingBox"><path transform="scale(0.0011111 0.0022222)" d="M58 56 H545 V389 H58 L26 358 V278 A46 46 0 0 0 26 194 V92 Z" /></clipPath></defs></svg>
+            <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs><clipPath id="tkclip" clipPathUnits="objectBoundingBox"><path transform="scale(0.0011111 0.0022222)" d="M58 56 H545 V389 H58 L26 358 V278 A53 53 0 0 0 26 194 V92 Z" /></clipPath></defs></svg>
             <div className="absolute inset-0" style={{ clipPath: 'url(#tkclip)' }}>
               <div className="absolute overflow-hidden" style={{ left: '2.9cqw', top: '6.2cqw', width: '57.6cqw', height: '37cqw', background: pal.line }}>
                 <div className="absolute inset-0">{imgEl}</div>
               </div>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/gallery-cover/ticket-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
+            <img src="/gallery-cover/ticket-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" style={{ clipPath: 'polygon(63.3% 18.5%, 97% 18.5%, 97% 45%, 94% 45%, 94% 60%, 97% 60%, 97% 81.5%, 63.3% 81.5%)' }} />
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
               {l1 && <text data-gk="title" x="716" y="181" textAnchor="middle" style={{ ...tt, fontSize: f1 }} textLength={big1 ? Math.min(270, 33.6 * l1.length) : undefined} lengthAdjust="spacingAndGlyphs">{l1}</text>}

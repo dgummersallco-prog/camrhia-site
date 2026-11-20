@@ -122,7 +122,7 @@ const HEX = /^#[0-9a-f]{6}$/i
 export function elCss(el: Record<string, ElStyle>, famOf: (k: string) => string | undefined): string {
   let out = ''
   for (const [k, s] of Object.entries(el)) {
-    const sel = EL_SEL[k]
+    const sel = EL_SEL[k] ?? (/^x\d{1,2}$/.test(k) ? `.gal-root [data-gk="${k}"]` : undefined)
     if (!sel || !s) continue
     const r: string[] = []
     if (s.font) { const f = famOf(s.font); if (f) r.push(`font-family:${f}!important`) }
