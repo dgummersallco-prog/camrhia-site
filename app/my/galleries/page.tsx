@@ -95,8 +95,9 @@ export default function MyGalleriesPage() {
         ) : (
           <>
             {years.map(([year, list]) => (
-              <section key={year} className="mt-10">
-                <h2 className="mb-5 border-b border-line pb-2 font-fraunces text-2xl font-semibold text-ink">{year}</h2>
+              <section key={year} className="mt-16 first:mt-10">
+                <h2 className="font-fraunces text-6xl font-light tracking-tight text-brass md:text-7xl">{year}</h2>
+                <div className="mb-10 mt-3 h-[3px] w-full rounded-full bg-gradient-to-r from-brass via-brass/50 to-transparent" />
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {list.map(({ g, r }) => {
                     const studio = r.studio_name || r.display_name || 'Your photographer'
