@@ -38,7 +38,7 @@ export const LOOKS: Record<string, LookSpec> = {
   spotlight: { name: 'After dark', blurb: 'Dark and dramatic.', font: SANS, upper: true, weight: 600, track: '0.12em', radius: 10, gap: 10, grid: 'masonry', cover: 'magazine', colors: 'charcoal' },
   editorial: { name: 'Press', blurb: 'Bold magazine type.', font: 'fraunces', upper: true, weight: 700, track: '0.04em', radius: 0, gap: 8, grid: 'masonry', cover: 'diptych', colors: 'sand' },
   expressive: { name: 'Loud', blurb: 'Big, rounded and loud.', font: "'Arial Black', Helvetica, sans-serif", upper: true, weight: 800, track: '0.02em', radius: 22, gap: 10, grid: 'masonry', cover: 'stack', colors: 'blush' },
-  folk: { name: 'Handmade', blurb: 'Handmade, italic serif.', font: SERIF, upper: false, italic: true, weight: 400, track: '0', radius: 16, gap: 16, grid: 'masonry', cover: 'postcard', colors: 'sage' },
+  folk: { name: 'Handmade', blurb: 'Handmade, italic serif.', font: SERIF, upper: false, italic: true, weight: 400, track: '0', radius: 16, gap: 16, grid: 'masonry', cover: 'cinema', colors: 'sage' },
   soft: { name: 'Petal', blurb: 'Gentle and rounded.', font: 'fraunces', upper: false, weight: 400, track: '0', radius: 28, gap: 14, grid: 'masonry', cover: 'circle', colors: 'mist' },
 }
 export const LOOK_KEYS = ['classic', 'fine', 'minimal', 'airy', 'spotlight', 'editorial', 'expressive', 'folk', 'soft']
@@ -66,9 +66,7 @@ export const COVERS = [
   { k: 'diptych', name: 'Diptych' },
   { k: 'stack', name: 'Stack' },
   { k: 'arch', name: 'Arch' },
-  { k: 'strip', name: 'Film strip' },
   { k: 'bigtype', name: 'Big type' },
-  { k: 'postcard', name: 'Postcard' },
   { k: 'mosaic', name: 'Mosaic' },
   { k: 'circle', name: 'Circle' },
   { k: 'ticket', name: 'Ticket' },
