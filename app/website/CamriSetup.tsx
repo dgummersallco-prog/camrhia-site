@@ -95,6 +95,7 @@ function withModes(s: Struct, d: Record<string, string>): Struct {
   }
   const a = d.about_mode
   if (a === 'page') { pageOn('about'); drop('about'); n.about.unshift('about') }
+  else if (a === 'both') { pageOn('about'); drop('about'); n.about.unshift('about'); const hi = n.home.indexOf('explore'); n.home.splice(hi >= 0 ? hi + 1 : 0, 0, 'about') }
   else if (a === 'section') { pageOff('about'); toHome('about') }
   else if (a === 'none') { pageOff('about'); drop('about') }
   const pr = d.pricing_mode
@@ -164,7 +165,6 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     s.about = []
     s.galleries = []
     s.extra = s.extra.map((e) => ({ ...e, sections: [] }))
-    if (designs.nav && designs.nav_mode !== 'none') s.home = ['explore']
     setStruct(s)
     setStep(3)
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -174,7 +174,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     const nd = { ...designs, ...camriPick(layouts[0], styles) }
     const base: Struct = { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] }
     const s = withModes(base, nd)
-    s.home = nd.nav && nd.nav_mode !== 'none' ? ['explore'] : []
+    s.home = []
     setDesigns(nd)
     setStruct(s)
     setStep(3)
@@ -471,7 +471,11 @@ function thumbsOf(designs: Record<string, string>) {
 function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, baseName }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; onBack: () => void; onDone: () => void; onAuto: () => void; baseKey?: string; baseName?: string }) {
   type Pk = { dir: string; ar: string; field: string; items: { key: string; name: string }[] }
   const PK = PICKERS() as unknown as Record<string, Pk>
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState<number>(() => {
+    try { const v = Number(window.localStorage.getItem('camriDsStep')); if (Number.isInteger(v) && v >= 0 && v < DESIGN_SECTIONS.length) return v } catch {}
+    return 0
+  })
+  usePersist(() => { try { window.localStorage.setItem('camriDsStep', String(step)) } catch {} }, [step])
   const [zoom, setZoom] = useState<string | null>(null)
   const [ask, setAsk] = useState(false)
   const [ans, setAns] = useState<string | null>(null)
@@ -500,15 +504,14 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
     if (added && MODED.includes(sec.k) && sec.k !== 'blog') {
       const kd = rowKind(row)
       const cur = designs[sec.k + '_mode'] || ''
-      if (sec.k === 'about') nd.about_mode = kd === 'page' ? 'page' : 'section'
-      else if (kd === 'page') nd[sec.k + '_mode'] = cur === 'section' || cur === 'both' ? 'both' : 'page'
+      if (kd === 'page') nd[sec.k + '_mode'] = cur === 'section' || cur === 'both' ? 'both' : 'page'
       else if (kd === 'section') nd[sec.k + '_mode'] = cur === 'page' || cur === 'both' ? 'both' : 'section'
     }
     setDesigns(nd)
   }
   const tryPick = (pk: Pk, key: string, row: string) => {
     const kd = rowKind(row)
-    const clash = !!key && !(designs[pk.field + '_alts'] || designs[pk.field] || '').split(',').includes(key) && ['galleries', 'pricing'].includes(sec.k) && ((kd === 'page' && mode === 'section') || (kd === 'section' && mode === 'page'))
+    const clash = !!key && !(designs[pk.field + '_alts'] || designs[pk.field] || '').split(',').includes(key) && ['galleries', 'pricing', 'about'].includes(sec.k) && ((kd === 'page' && mode === 'section') || (kd === 'section' && mode === 'page'))
     if (clash) setPend({ pk, key, row })
     else pickDesign(pk, key, row)
   }
@@ -606,7 +609,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
             <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              {([...(sec.k === 'blog' ? BLOG_MODES : MODES.filter((m) => !(sec.k === 'about' && m.k === 'both'))), ...(sec.k === 'blog' ? [] : [{ k: 'none', t: "I don't want this", d: 'Leave it off my site.' }])] as { k: string; t: string; d: string }[]).map((m) => (
+              {([...(sec.k === 'blog' ? BLOG_MODES : MODES), ...(sec.k === 'blog' ? [] : [{ k: 'none', t: "I don't want this", d: 'Leave it off my site.' }])] as { k: string; t: string; d: string }[]).map((m) => (
                 <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
                   <p className="text-sm font-medium text-ink">{m.t}</p>
                   <p className="mt-1 text-xs text-ink-soft">{m.d}</p>

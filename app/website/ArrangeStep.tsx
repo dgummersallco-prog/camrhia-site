@@ -105,7 +105,11 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   thumbs: Record<string, { src: string; ar: string }>; heroSrc?: string; heroName?: string; heroList?: { key: string; name: string }[]; heroActive?: string; onHero?: (k: string) => void; secAlts?: Record<string, { field: string; keys: string[]; active: string }>
   designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; photoDesigns: { key: string; name: string }[]
 }) {
-  const [cur, setCur] = useState(0)
+  const [cur, setCur] = useState<number>(() => {
+    try { const v = Number(window.localStorage.getItem('camriArrCur')); if (Number.isInteger(v) && v >= 0) return v } catch {}
+    return 0
+  })
+  useEffect(() => { try { window.localStorage.setItem('camriArrCur', String(cur)) } catch {} }, [cur])
   const [sel, setSel] = useState<number | null>(null)
   const [act, setAct] = useState<string | null>(null)
   const secN = SEC_COUNT[(designs.galleries_section || '').toLowerCase()]
@@ -205,11 +209,14 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     ...(struct.off.includes('galleries') ? [] : [{ id: 'galleries', label: 'Galleries' }]),
     ...(struct.off.includes('about') ? [] : [{ id: 'about', label: 'About' }]),
     ...struct.extra.map((e) => ({ id: e.id, label: e.label, extra: true })),
+    ...(designs.blog_mode === 'page' ? [{ id: 'blog', label: 'Blog' }] : []),
     { id: 'book', label: 'Booking' },
   ]
   const i = Math.min(cur, pages.length - 1)
   const page = pages[i]
   const isBook = page.id === 'book'
+  const isBlog = page.id === 'blog'
+  const isFixed = isBook || isBlog
   const clone = (): Struct => JSON.parse(JSON.stringify(struct))
   const where = (k: string) => pages.find((p) => listOf(struct, p.id).includes(k))
   const sections = ORDER.filter((k) => thumbs[k] || where(k))
@@ -222,7 +229,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const focus: string | null = act && (mine.includes(act) || act === 'hero' || (vMain && act === mainKey)) ? act : (mine.find((k) => GAL.includes(k) || k === 'social') ?? (page.id === 'galleries' ? 'portfolio' : null))
 
   function add(sec: string) {
-    if (page.id === 'galleries' || (isBook && sec !== 'faq')) return
+    if (page.id === 'galleries' || (isFixed && sec !== 'faq')) return
     const s = clone()
     strip(s, sec)
     setList(s, page.id, [...listOf(s, page.id), sec])
@@ -384,7 +391,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   else panel = (
     <div className="flex items-start gap-3">
       <img src="/camri/08_peeking.png" alt="" className="h-14 w-auto shrink-0" />
-      <p className="font-fraunces text-base leading-snug text-ink">{isBook ? 'Booking is just your calendar, so there is nothing to add here.' : 'Tap any block on the page to see what it does and fill out what it needs.'}</p>
+      <p className="font-fraunces text-base leading-snug text-ink">{isBook ? 'Booking is just your calendar, so there is nothing to add here.' : isBlog ? 'Your Blog page lists your posts for you, so there is nothing to arrange here.' : 'Tap any block on the page to see what it does and fill out what it needs.'}</p>
     </div>
   )
 
@@ -393,6 +400,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     if (p.id === 'galleries') return thumbs.portfolio?.src
     if (p.id === 'about') return thumbs.about?.src
     if (p.id === 'book') return thumbs.book?.src
+    if (p.id === 'blog') return thumbs.blog?.src
     const f = listOf(struct, p.id)[0]
     return (f && thumbs[f]?.src) || thumbs.investment?.src
   }
@@ -419,7 +427,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     about: 'People often read About right before they book. Add a few reviews and a booking button.',
     book: 'Booking is your calendar. A short FAQ right under it answers the last questions before someone inquires.',
   }
-  const okRec = (k: string) => !!BLOCKS[k] && k !== 'portfolio' && !(k === 'about' && designs.about_mode !== 'section') && !(k === 'galsec' && designs.galleries_mode === 'page') && (!['galsec', 'pricesec', 'investment', 'explore'].includes(k) || !!thumbs[k] || !!where(k))
+  const okRec = (k: string) => !!BLOCKS[k] && k !== 'portfolio' && !(k === 'about' && designs.about_mode !== 'section' && designs.about_mode !== 'both') && !(k === 'galsec' && designs.galleries_mode === 'page') && (!['galsec', 'pricesec', 'investment', 'explore'].includes(k) || !!thumbs[k] || !!where(k))
   const recKeys = (RECS[page.id] ?? (page.extra ? ['faq', 'testimonials', 'contact'] : [])).filter(okRec)
   const others = sections.filter((k) => okRec(k) && !recKeys.includes(k) && !mine.includes(k))
   function addAll() {
@@ -461,7 +469,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
           </div>
         )}
       </div>
-      {!isBook && <div className="border-t border-black/10 pt-5">{panel}</div>}
+      {!isFixed && <div className="border-t border-black/10 pt-5">{panel}</div>}
     </div>
   )
 
@@ -490,7 +498,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                   <p className="px-1 pb-1.5 font-fraunces text-base text-ink">{p.label}</p>
                   {src
                     ? <img src={src} alt="" className="h-32 w-full rounded-lg object-cover object-top" />
-                    : <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-black/20 text-xs text-ink-soft">{p.id === 'book' ? 'Your calendar' : 'Add sections'}</div>}
+                    : <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-black/20 text-xs text-ink-soft">{p.id === 'book' ? 'Your calendar' : p.id === 'blog' ? 'Your posts' : 'Add sections'}</div>}
                 </button>
               </div>
             )
@@ -546,7 +554,10 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
               {isBook && (thumbs.book
                 ? <Row label="Booking page" on={false} onClick={() => setAct(null)}><img src={thumbs.book.src} alt="" className="block w-full" /></Row>
                 : <Row label="Calendar" on={false} onClick={() => setAct(null)}><div className={slice + ' py-16 text-center'}>Your booking calendar</div></Row>)}
-              {!isBook && mine.length === 0 && !vMain && page.id !== 'home' && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from Camri's suggestions</div>}
+              {isBlog && (thumbs.blog
+                ? <Row label="Blog page" on={false} onClick={() => setAct(null)}><img src={thumbs.blog.src} alt="" className="block w-full" /></Row>
+                : <Row label="Blog" on={false} onClick={() => setAct(null)}><div className={slice + ' py-16 text-center'}>Your blog posts</div></Row>)}
+              {!isFixed && mine.length === 0 && !vMain && page.id !== 'home' && <div className="border-t border-dashed border-black/20 px-4 py-10 text-center text-sm text-ink-soft">Add sections from Camri's suggestions</div>}
               
             </div>
           </div>

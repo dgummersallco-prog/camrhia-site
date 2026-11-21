@@ -227,7 +227,7 @@ export default function CamiDesigner() {
   const [review, setReview] = useState(() => { try { return window.localStorage.getItem('camriReview') === '1' } catch { return false } })
   useEffect(() => {
     try {
-      if (setupFinished) { ['camriReview', 'camriStep', 'camriDraft', 'camriStep2', 'camriDraft2'].forEach((k) => window.localStorage.removeItem(k)) }
+      if (setupFinished) { ['camriReview', 'camriStep', 'camriDraft', 'camriStep2', 'camriDraft2', 'camriDsStep', 'camriArrCur'].forEach((k) => window.localStorage.removeItem(k)) }
       else if (review) window.localStorage.setItem('camriReview', '1')
       else window.localStorage.removeItem('camriReview')
     } catch {}
