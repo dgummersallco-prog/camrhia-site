@@ -45,7 +45,7 @@ export function cropRect(W: number, H: number, crop: Crop): CropRect {
   return { cw, ch, dx: tx * a, dy: ty * a }
 }
 
-export function drawCropped(ctx: CanvasRenderingContext2D, bmp: ImageBitmap, crop: Crop, r: CropRect, outW: number, outH: number, s: number) {
+export function drawCropped(ctx: CanvasRenderingContext2D, bmp: ImageBitmap | HTMLCanvasElement, crop: Crop, r: CropRect, outW: number, outH: number, s: number) {
   ctx.save()
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'

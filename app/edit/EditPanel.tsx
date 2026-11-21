@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { LOOKS, renderPreview, originalPreview, type Adjust } from '@/lib/enhance'
+import { LOOKS, renderPreview, originalPreview, photoFeatures, type Adjust } from '@/lib/enhance'
 import { briefAdjust, type Brief } from '@/lib/brief'
 import { addAdj } from '@/lib/tools'
 import Dials from '@/app/edit/Dials'
@@ -59,6 +59,11 @@ export default function EditPanel({
   const [tick, setTick] = useState(0)
   const [err, setErr] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [view, setView] = useState<'split' | 'after' | 'before'>('split')
+  const autoRef = useRef(true)
+  const scanned = useRef(0)
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => { wrapRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }) }, [])
   const cache = useRef<Map<string, ImageBitmap>>(new Map())
   const [lookThumbs, setLookThumbs] = useState<Record<string, string>>({})
   const lookRef = useRef<Record<string, string>>({})
@@ -103,6 +108,16 @@ export default function EditPanel({
         cache.current.set(selId, bmp)
       }
       if (cancelled) return
+      if (autoRef.current) {
+        const at = samples.findIndex((x) => x.id === selId)
+        const sat = photoFeatures(bmp).saturation ?? 1
+        if (sat < 0.06 && at >= 0 && at < samples.length - 1 && scanned.current < 8) {
+          scanned.current++
+          setSelId(samples[at + 1].id)
+          return
+        }
+        autoRef.current = false
+      }
       const url = await originalPreview(bmp, 900)
       if (cancelled) { URL.revokeObjectURL(url); return }
       setBeforeUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url })
@@ -162,91 +177,93 @@ export default function EditPanel({
 
   useEffect(() => () => { cache.current.forEach((b) => b.close()); cache.current.clear() }, [])
 
+  const pane = (label: string, url: string | null) => (
+    <div className="relative min-h-0 overflow-hidden rounded-2xl bg-black/40">
+      {url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt="" className="absolute inset-0 h-full w-full object-contain" />
+      )}
+      <span className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-xs text-white/80">{label}</span>
+    </div>
+  )
+  const viewTab = (on: boolean) => `rounded-full border px-3 py-1.5 text-xs transition ${on ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`
+
   return (
-    <div className="mt-8">
-      <div className="rounded-2xl border border-white/10 bg-[#151518] p-5">
-        <div className="flex gap-3 overflow-x-auto pb-2">
-          {LOOKS.map((l) => (
-            <button key={l.id} onClick={() => setLookId(l.id)} className="w-28 shrink-0 text-left">
-              <div className={`aspect-[4/3] overflow-hidden rounded-lg bg-white/5 transition ${l.id === lookId ? 'ring-2 ring-[var(--color-twilight)]' : 'opacity-90 hover:opacity-100'}`}>
-                {lookThumbs[l.id] && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={lookThumbs[l.id]} alt="" className="h-full w-full object-cover" />
-                )}
-              </div>
-              <p className={`mt-1.5 text-xs ${l.id === lookId ? 'text-white' : 'text-white/55'}`}>{l.label}</p>
-            </button>
-          ))}
+    <div ref={wrapRef} className="mt-6 scroll-mt-4 grid gap-4 lg:h-[calc(100vh-7rem)] lg:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="flex min-h-0 flex-col gap-3">
+        <div className="shrink-0 rounded-2xl border border-white/10 bg-[#151518] p-4">
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {LOOKS.map((l) => (
+              <button key={l.id} onClick={() => setLookId(l.id)} className="w-24 shrink-0 text-left">
+                <div className={`aspect-[4/3] overflow-hidden rounded-lg bg-white/5 transition ${l.id === lookId ? 'ring-2 ring-[var(--color-twilight)]' : 'opacity-90 hover:opacity-100'}`}>
+                  {lookThumbs[l.id] && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={lookThumbs[l.id]} alt="" className="h-full w-full object-cover" />
+                  )}
+                </div>
+                <p className={`mt-1.5 truncate text-xs ${l.id === lookId ? 'text-white' : 'text-white/55'}`}>{l.label}</p>
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center gap-3 text-sm">
+            <span className="text-white/70">Intensity</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={Math.round(strength * 100)}
+              onChange={(e) => setStrength(Number(e.target.value) / 100)}
+              className="w-full max-w-xs accent-[var(--color-twilight)]"
+            />
+            <span className="w-10 text-white/50">{Math.round(strength * 100)}%</span>
+          </div>
         </div>
-        <div className="mt-4 flex items-center gap-3 text-sm">
-          <span className="text-white/70">Intensity</span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={Math.round(strength * 100)}
-            onChange={(e) => setStrength(Number(e.target.value) / 100)}
-            className="w-full max-w-xs accent-[var(--color-twilight)]"
-          />
-          <span className="text-white/50">{Math.round(strength * 100)}%</span>
+
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <button className={viewTab(view === 'split')} onClick={() => setView('split')}>Side by side</button>
+          <button className={viewTab(view === 'after')} onClick={() => setView('after')}>After</button>
+          <button className={viewTab(view === 'before')} onClick={() => setView('before')}>Before</button>
+          <span className="ml-auto text-xs text-white/45">Tap a photo below to try the edit on it</span>
+        </div>
+
+        <div className={`grid h-[60vh] min-h-0 gap-3 lg:h-auto lg:flex-1 ${view === 'split' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          {view !== 'after' && pane('Before', beforeUrl)}
+          {view !== 'before' && pane('After', afterUrl)}
+        </div>
+        {err && <p className="shrink-0 text-sm text-red-300">{err}</p>}
+
+        <div className="flex shrink-0 gap-1.5 overflow-x-auto pb-1">
+          {samples.map((p) => {
+            const src = p.thumb_path ? thumbs[p.thumb_path] : undefined
+            return (
+              <button
+                key={p.id}
+                onClick={() => { autoRef.current = false; setSelId(p.id) }}
+                className={`h-14 w-14 shrink-0 overflow-hidden rounded-md bg-white/5 ${selId === p.id ? 'ring-2 ring-[var(--color-twilight)]' : ''}`}
+              >
+                {src && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <div className="lg:sticky lg:top-4 lg:self-start">
-          <p className="mb-2 text-xs text-white/45">Tap a photo to try the edit on it</p>
-          <div className="flex gap-1.5 overflow-x-auto pb-2">
-            {samples.map((p) => {
-              const src = p.thumb_path ? thumbs[p.thumb_path] : undefined
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => setSelId(p.id)}
-                  className={`h-16 w-16 shrink-0 overflow-hidden rounded-md bg-white/5 ${selId === p.id ? 'ring-2 ring-[var(--color-twilight)]' : ''}`}
-                >
-                  {src && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={src} alt="" className="h-full w-full object-cover" />
-                  )}
-                </button>
-              )
-            })}
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">Before</p>
-              <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-white/5">
-                {beforeUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={beforeUrl} alt="" className="h-full w-full object-contain" />
-                )}
-              </div>
-            </div>
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">After</p>
-              <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-white/5">
-                {afterUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={afterUrl} alt="" className="h-full w-full object-contain" />
-                )}
-              </div>
-            </div>
-          </div>
-          {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
-        </div>
-
-        <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
+      <div className="min-h-0 lg:overflow-y-auto lg:pr-1">
+        <Dials value={tweak} onChange={setTweak} />
+        <div className="mt-4">
           <AskCami value={tweak} onChange={setTweak} lookName={lookId} strength={strength} brief={brief} previewUrl={afterUrl} />
-          <Dials value={tweak} onChange={setTweak} />
-          {signatureName && onSaveToSignature && (
-            <div className="mt-4">
-              <button className={quiet} onClick={async () => { await onSaveToSignature(); setSaved(true); setTimeout(() => setSaved(false), 2500) }}>
-                Save these dials to {signatureName}
-              </button>
-              {saved && <p className="mt-2 text-xs text-white/50">Saved.</p>}
-            </div>
-          )}
         </div>
+        {signatureName && onSaveToSignature && (
+          <div className="pb-2">
+            <button className={quiet} onClick={async () => { await onSaveToSignature(); setSaved(true); setTimeout(() => setSaved(false), 2500) }}>
+              Save these dials to {signatureName}
+            </button>
+            {saved && <p className="mt-2 text-xs text-white/50">Saved.</p>}
+          </div>
+        )}
       </div>
     </div>
   )

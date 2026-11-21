@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { supabase } from '@/lib/supabase'
 import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjust } from '@/lib/enhance'
 import { briefAdjust, type Brief } from '@/lib/brief'
-import type { Crop } from '@/lib/crop'
+import { cropRect, type Crop } from '@/lib/crop'
+import { emptyLocal, cleanLocal, outToSrc, srcToOut, autoHealSource, curveIsFlat, curveLut, type CurvePt, type LocalEdits, type Mask, type MaskAdj } from '@/lib/localEdit'
 import ColorMixer from '@/app/edit/ColorMixer'
 import CamiPanel from '@/app/edit/CamiPanel'
 import { camiRead, camiFix, camiBaselines, camiPickBW, camiBWAdjust, camiLearn, camiDelta, camiFlag, type CamiReading, type Baseline, type CamiBias, type FeedbackRow } from '@/lib/cami'
@@ -22,6 +23,7 @@ type Row = {
   review_adj: Adjust | null
   reviewed: boolean
   crop: Crop | null
+  local_edits: LocalEdits | null
   enhanced: boolean
   pre_web_path: string | null
   pre_thumb_path: string | null
@@ -31,6 +33,16 @@ type Row = {
 const srcOf = (r: Row) => (r.enhanced ? r.pre_full_path ?? r.orig_path : r.full_path ?? r.orig_path)
 // The first time a photo is saved here it becomes a developed photo, the same as the batch develop does.
 const firstPatch = (r: Row) => (r.enhanced ? {} : { enhanced: true, pre_web_path: r.web_path, pre_thumb_path: r.thumb_path, pre_full_path: r.full_path ?? null })
+
+const MASK_TOOLS: { key: keyof MaskAdj; label: string; scale: number }[] = [
+  { key: 'exposure', label: 'Exposure', scale: 1 },
+  { key: 'contrast', label: 'Contrast', scale: 0.5 },
+  { key: 'highlights', label: 'Highlights', scale: 1 },
+  { key: 'shadows', label: 'Shadows', scale: 1 },
+  { key: 'temp', label: 'Temperature', scale: 0.3 },
+  { key: 'saturation', label: 'Saturation', scale: 0.5 },
+  { key: 'sharpen', label: 'Sharpen', scale: 1 },
+]
 
 const TOOLS: { key: keyof Adjust; label: string; scale: number }[] = [
   { key: 'exposure', label: 'Exposure', scale: 1 },
@@ -45,11 +57,13 @@ const TOOLS: { key: keyof Adjust; label: string; scale: number }[] = [
   { key: 'saturation', label: 'Saturation', scale: 0.5 },
   { key: 'sharpen', label: 'Sharpen', scale: 1 },
   { key: 'noise', label: 'Noise reduction', scale: 1 },
+  { key: 'vignette', label: 'Vignette', scale: 1 },
 ]
 const byKeys = (keys: string[]) => TOOLS.filter((t) => keys.includes(t.key as string))
 const LIGHT = byKeys(['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks'])
 const COLOR = byKeys(['temp', 'tint', 'vibrance', 'saturation'])
 const DETAIL = byKeys(['sharpen', 'noise'])
+const EFFECTS = byKeys(['vignette'])
 
 const PHRASE: Record<string, [string, string]> = {
   exposure: ['Brighten', 'Darken'],
@@ -122,6 +136,141 @@ function Slide({ label, shown, min, max, step, value, onChange, onReset }: {
   )
 }
 
+type Snap = { manual: Adjust; crop: Crop | null; local: LocalEdits }
+
+function Histogram({ url }: { url: string | null }) {
+  const ref = useRef<HTMLCanvasElement | null>(null)
+  const [clip, setClip] = useState({ lo: false, hi: false })
+  useEffect(() => {
+    if (!url) return
+    let off = false
+    const im = new Image()
+    im.onload = () => {
+      if (off) return
+      const W = 128
+      const H = Math.max(1, Math.round((im.naturalHeight / Math.max(1, im.naturalWidth)) * W))
+      const c = document.createElement('canvas')
+      c.width = W
+      c.height = H
+      const g = c.getContext('2d', { willReadFrequently: true })
+      const out = ref.current
+      if (!g || !out) return
+      g.drawImage(im, 0, 0, W, H)
+      const d = g.getImageData(0, 0, W, H).data
+      const bins = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)]
+      let lo = 0
+      let hi = 0
+      for (let i = 0; i < d.length; i += 4) {
+        bins[0][d[i]]++
+        bins[1][d[i + 1]]++
+        bins[2][d[i + 2]]++
+        if (d[i] <= 1 || d[i + 1] <= 1 || d[i + 2] <= 1) lo++
+        if (d[i] >= 254 || d[i + 1] >= 254 || d[i + 2] >= 254) hi++
+      }
+      const n = d.length / 4
+      setClip({ lo: lo / n > 0.005, hi: hi / n > 0.005 })
+      let peak = 1
+      for (const b of bins) for (let v = 1; v < 255; v++) peak = Math.max(peak, b[v])
+      const ctx = out.getContext('2d')
+      if (!ctx) return
+      ctx.clearRect(0, 0, out.width, out.height)
+      ctx.globalCompositeOperation = 'lighter'
+      const cols = ['rgba(255,70,70,0.6)', 'rgba(70,220,90,0.6)', 'rgba(80,120,255,0.6)']
+      bins.forEach((b, k) => {
+        ctx.fillStyle = cols[k]
+        ctx.beginPath()
+        ctx.moveTo(0, out.height)
+        for (let v = 0; v < 256; v++) ctx.lineTo(v, out.height - Math.min(1, b[v] / peak) * (out.height - 2))
+        ctx.lineTo(255, out.height)
+        ctx.closePath()
+        ctx.fill()
+      })
+    }
+    im.src = url
+    return () => { off = true }
+  }, [url])
+  return (
+    <div className="mb-3 rounded-xl border border-white/10 bg-black/30 p-2">
+      <canvas ref={ref} width={256} height={80} className="block h-20 w-full" />
+      <div className="mt-1 flex justify-between px-0.5 text-[10px]">
+        <span className={clip.lo ? 'text-white' : 'text-white/25'} title="Shadows are clipped">◣ shadows</span>
+        <span className={clip.hi ? 'text-white' : 'text-white/25'} title="Highlights are clipped">highlights ◢</span>
+      </div>
+    </div>
+  )
+}
+
+function CurveEditor({ pts, onChange }: { pts: CurvePt[]; onChange: (p: CurvePt[]) => void }) {
+  const ref = useRef<SVGSVGElement | null>(null)
+  const drag = useRef<number | null>(null)
+  const cl = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+  const at = (e: React.PointerEvent): CurvePt => {
+    const r = ref.current!.getBoundingClientRect()
+    return [cl((e.clientX - r.left) / r.width, 0, 1), cl(1 - (e.clientY - r.top) / r.height, 0, 1)]
+  }
+  const near = (x: number, y: number) => {
+    let hit = -1
+    let best = 0.07
+    pts.forEach((q, i) => {
+      const d = Math.hypot(q[0] - x, q[1] - y)
+      if (d < best) { best = d; hit = i }
+    })
+    return hit
+  }
+  function down(e: React.PointerEvent<SVGSVGElement>) {
+    const [x, y] = at(e)
+    ref.current!.setPointerCapture(e.pointerId)
+    const hit = near(x, y)
+    if (hit >= 0) { drag.current = hit; return }
+    const next = [...pts, [x, y] as CurvePt].sort((a, b) => a[0] - b[0])
+    onChange(next)
+    drag.current = next.findIndex((q) => q[0] === x && q[1] === y)
+  }
+  function move(e: React.PointerEvent<SVGSVGElement>) {
+    const i = drag.current
+    if (i === null) return
+    const [x, y] = at(e)
+    const next = pts.map((q) => [q[0], q[1]] as CurvePt)
+    const last = next.length - 1
+    next[i][1] = y
+    if (i > 0 && i < last) next[i][0] = cl(x, next[i - 1][0] + 0.02, next[i + 1][0] - 0.02)
+    onChange(next)
+  }
+  function dbl(e: React.MouseEvent<SVGSVGElement>) {
+    const r = ref.current!.getBoundingClientRect()
+    const x = (e.clientX - r.left) / r.width
+    const y = 1 - (e.clientY - r.top) / r.height
+    const hit = near(x, y)
+    if (hit > 0 && hit < pts.length - 1) onChange(pts.filter((_, i) => i !== hit))
+  }
+  const lut = curveLut(pts)
+  let path = ''
+  for (let v = 0; v <= 255; v += 5) path += `${v === 0 ? 'M' : 'L'}${(v / 255) * 200},${200 - (lut[v] / 255) * 200} `
+  return (
+    <svg
+      ref={ref}
+      viewBox="0 0 200 200"
+      className="w-full touch-none select-none rounded-lg border border-white/10 bg-black/30"
+      onPointerDown={down}
+      onPointerMove={move}
+      onPointerUp={() => { drag.current = null }}
+      onDoubleClick={dbl}
+    >
+      {[50, 100, 150].map((g) => (
+        <g key={g}>
+          <line x1={g} y1={0} x2={g} y2={200} stroke="rgba(255,255,255,0.08)" />
+          <line x1={0} y1={g} x2={200} y2={g} stroke="rgba(255,255,255,0.08)" />
+        </g>
+      ))}
+      <line x1={0} y1={200} x2={200} y2={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="3 3" />
+      <path d={path} fill="none" stroke="white" strokeWidth={1.6} />
+      {pts.map((q, i) => (
+        <circle key={i} cx={q[0] * 200} cy={200 - q[1] * 200} r={4.5} fill="white" stroke="rgba(0,0,0,0.6)" />
+      ))}
+    </svg>
+  )
+}
+
 function Panel({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
@@ -171,6 +320,16 @@ export default function ReviewStep({
   const [light, setLight] = useState<Record<string, string>>({})
   const [manual, setManual] = useState<Adjust>({})
   const [crop, setCrop] = useState<Crop | null>(null)
+  const [local, setLocal] = useState<LocalEdits>(emptyLocal())
+  const [pen, setPen] = useState<null | 'heal' | 'radial' | 'linear' | 'brush'>(null)
+  const [selMask, setSelMask] = useState<string | null>(null)
+  const [healSize, setHealSize] = useState(0.02)
+  const [brushSize, setBrushSize] = useState(0.05)
+  const [box, setBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null)
+  const dragRef = useRef<string | null>(null)
+  const imgRef = useRef<HTMLImageElement | null>(null)
+  const stageRef = useRef<HTMLDivElement | null>(null)
   const [afterUrl, setAfterUrl] = useState<string | null>(null)
   const [beforeUrl, setBeforeUrl] = useState<string | null>(null)
   const [mode, setMode] = useState<'after' | 'before' | 'split'>('after')
@@ -213,6 +372,13 @@ export default function ReviewStep({
   const row: Row | undefined = rows[idx]
   const manualKey = JSON.stringify(manual)
   const cropKey = JSON.stringify(crop)
+  const localKey = JSON.stringify(local)
+  const snapRef = useRef<Snap>({ manual: {}, crop: null, local: emptyLocal() })
+  snapRef.current = { manual, crop, local }
+  const hist = useRef<{ past: Snap[]; future: Snap[] }>({ past: [], future: [] })
+  const histT = useRef(0)
+  const [, setHistTick] = useState(0)
+  const [clip, setClip] = useState<{ adj: Adjust; curve?: CurvePt[] } | null>(null)
 
   const base = useMemo(() => {
     const lg = row ? light[row.id] : ''
@@ -362,7 +528,7 @@ export default function ReviewStep({
           const lg = light[r.id]
           const b = briefAdjust(lg ? { ...brief, light: lg } : brief)
           const tot = mine.raw ? mine : addAdj(addAdj(b.adjust, baseTweak), mine)
-          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: tot, skin: b.skin, crop: r.crop ?? undefined })
+          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: tot, skin: b.skin, crop: r.crop ?? undefined, local: r.local_edits ?? undefined })
           const dir = r.orig_path.slice(0, r.orig_path.lastIndexOf('/'))
           const v = Date.now().toString(36) + i
           const np = { full: `${dir}/enh-full-${v}.jpg`, web: `${dir}/enh-web-${v}.jpg`, thumb: `${dir}/enh-thumb-${v}.jpg` }
@@ -415,11 +581,77 @@ export default function ReviewStep({
     camiPrev.current = null
     setCamiNote(null)
   }
+  function editLocal(l: LocalEdits) {
+    pushHist(false)
+    setLocal(l)
+    bump()
+  }
+  function editLocalLive(l: LocalEdits) {
+    pushHist(true)
+    setLocal(l)
+    bump()
+  }
   function editManual(m: Adjust) {
+    pushHist(true)
     setManual(m)
     bump()
   }
+  function pushHist(coalesce: boolean) {
+    const now = Date.now()
+    if (coalesce && now - histT.current < 700) {
+      histT.current = now
+      return
+    }
+    histT.current = now
+    const h = hist.current
+    h.past.push(snapRef.current)
+    if (h.past.length > 60) h.past.shift()
+    h.future = []
+    setHistTick((t) => t + 1)
+  }
+  function undo() {
+    const h = hist.current
+    const prev = h.past.pop()
+    if (!prev) return
+    h.future.push(snapRef.current)
+    histT.current = 0
+    setManual(prev.manual)
+    setCrop(prev.crop)
+    setLocal(prev.local)
+    bump()
+    setHistTick((t) => t + 1)
+  }
+  function redo() {
+    const h = hist.current
+    const next = h.future.pop()
+    if (!next) return
+    h.past.push(snapRef.current)
+    histT.current = 0
+    setManual(next.manual)
+    setCrop(next.crop)
+    setLocal(next.local)
+    bump()
+    setHistTick((t) => t + 1)
+  }
+  function resetPhoto() {
+    pushHist(false)
+    setManual({ raw: 1 })
+    setCrop(null)
+    setLocal(emptyLocal())
+    setSelMask(null)
+    setPen(null)
+    bump()
+  }
+  function copySettings() {
+    setClip({ adj: cleanAdj(manual), curve: local.curve })
+  }
+  function pasteSettings() {
+    if (!clip) return
+    editManual({ ...clip.adj })
+    editLocalLive({ ...local, curve: clip.curve })
+  }
   function editCrop(c: Crop | null) {
+    pushHist(true)
     setCrop(c)
     bump()
   }
@@ -434,7 +666,7 @@ export default function ReviewStep({
       for (let from = 0; ; from += 1000) {
         const { data } = await sb
           .from('gallery_photos')
-          .select('id, filename, orig_path, full_path, pre_full_path, web_path, thumb_path, review_adj, reviewed, crop, enhanced, pre_web_path, pre_thumb_path')
+          .select('id, filename, orig_path, full_path, pre_full_path, web_path, thumb_path, review_adj, reviewed, crop, local_edits, enhanced, pre_web_path, pre_thumb_path')
           .eq('gallery_id', galleryId)
           .or('cull_label.is.null,cull_label.neq.reject')
           .range(from, from + 999)
@@ -531,7 +763,7 @@ export default function ReviewStep({
     autoRef.current = true
     const first = rows.findIndex((r) => flags[r.id] && !r.reviewed)
     if (first >= 0) {
-      setFilter('flagged')
+      setFilter('all')
       if (!movedRef.current) setIdx(first)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -550,6 +782,11 @@ export default function ReviewStep({
     let cancelled = false
     setManual(row.review_adj ?? {})
     setCrop(row.crop ?? null)
+    setLocal(row.local_edits ?? emptyLocal())
+    setPen(null)
+    setSelMask(null)
+    hist.current = { past: [], future: [] }
+    setHistTick((t) => t + 1)
     dirtyRef.current = 0
     pendingRef.current = false
     setDirty(0)
@@ -585,8 +822,8 @@ export default function ReviewStep({
   }, [row?.id])
 
   // Draw the edited version: a quick small draw while dragging, then the sharp one
-  const latestRef = useRef({ rowId: row?.id ?? '', lookId, strength, total, skin: base.skin, crop })
-  latestRef.current = { rowId: row?.id ?? '', lookId, strength, total, skin: base.skin, crop }
+  const latestRef = useRef({ rowId: row?.id ?? '', lookId, strength, total, skin: base.skin, crop, local })
+  latestRef.current = { rowId: row?.id ?? '', lookId, strength, total, skin: base.skin, crop, local }
   const liveRef = useRef({ busy: false, again: false })
   useEffect(() => {
     const src = srcRef.current
@@ -604,7 +841,7 @@ export default function ReviewStep({
           const s2 = srcRef.current
           const L = latestRef.current
           if (!s2 || s2.id !== L.rowId) break
-          const url = await renderPreview(s2.bmp, L.lookId, L.strength, 520, L.total, L.skin, L.crop ?? undefined)
+          const url = await renderPreview(s2.bmp, L.lookId, L.strength, 520, L.total, L.skin, L.crop ?? undefined, L.local)
           if (!srcRef.current || srcRef.current.id !== latestRef.current.rowId) { URL.revokeObjectURL(url); break }
           show(url)
         } while (live.again)
@@ -618,7 +855,7 @@ export default function ReviewStep({
     const t = setTimeout(async () => {
       try {
         const L = latestRef.current
-        const url = await renderPreview(src.bmp, L.lookId, L.strength, 1400, L.total, L.skin, L.crop ?? undefined)
+        const url = await renderPreview(src.bmp, L.lookId, L.strength, 1400, L.total, L.skin, L.crop ?? undefined, L.local)
         if (cancelled) { URL.revokeObjectURL(url); return }
         show(url)
       } catch {
@@ -627,7 +864,7 @@ export default function ReviewStep({
     }, 220)
     return () => { cancelled = true; clearTimeout(t) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [srcTick, manualKey, cropKey, lookId, strength, base])
+  }, [srcTick, manualKey, cropKey, localKey, lookId, strength, base])
 
   // Full-size render for checking focus and noise
   useEffect(() => {
@@ -637,7 +874,7 @@ export default function ReviewStep({
     setFullBusy(true)
     const t = setTimeout(async () => {
       try {
-        const url = await renderPreview(src.bmp, lookId, strength, 100000, total, base.skin, crop ?? undefined)
+        const url = await renderPreview(src.bmp, lookId, strength, 100000, total, base.skin, crop ?? undefined, local)
         if (cancelled) { URL.revokeObjectURL(url); return }
         setFullUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url })
       } catch {
@@ -647,7 +884,7 @@ export default function ReviewStep({
     }, 500)
     return () => { cancelled = true; clearTimeout(t) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom100, srcTick, manualKey, cropKey, lookId, strength, base])
+  }, [zoom100, srcTick, manualKey, cropKey, localKey, lookId, strength, base])
 
   useEffect(() => () => { srcRef.current?.bmp.close() }, [])
 
@@ -681,7 +918,8 @@ export default function ReviewStep({
       const mine = cleanAdj(manual)
       const adjSame = JSON.stringify(mine) === JSON.stringify(cleanAdj(row.review_adj ?? {}))
       const cropSame = JSON.stringify(crop ?? null) === JSON.stringify(row.crop ?? null)
-      const same = row.enhanced && adjSame && cropSame
+      const localSame = JSON.stringify(cleanLocal(local)) === JSON.stringify(cleanLocal(row.local_edits))
+      const same = row.enhanced && adjSame && cropSame && localSame
       if (same && row.reviewed) {
         setBusy(false)
         finishSave(mark)
@@ -691,7 +929,7 @@ export default function ReviewStep({
       const oldPaths: string[] = []
       let newPaths: { full: string; web: string; thumb: string } | null = null
       if (!same) {
-        const out = await enhancePhoto(src.blob, srcOf(row), { id: lookId, strength, adjust: total, skin: base.skin, crop: crop ?? undefined })
+        const out = await enhancePhoto(src.blob, srcOf(row), { id: lookId, strength, adjust: total, skin: base.skin, crop: crop ?? undefined, local })
         const dir = row.orig_path.slice(0, row.orig_path.lastIndexOf('/'))
         const v = Date.now().toString(36)
         newPaths = { full: `${dir}/enh-full-${v}.jpg`, web: `${dir}/enh-web-${v}.jpg`, thumb: `${dir}/enh-thumb-${v}.jpg` }
@@ -714,6 +952,7 @@ export default function ReviewStep({
           thumb_path: newPaths.thumb,
           enh_bytes: out.full.size + out.web.blob.size + out.thumb.blob.size,
           crop: crop ?? null,
+          local_edits: cleanLocal(local),
           ...(cropSame ? {} : { width: out.web.width, height: out.web.height }),
         }
       }
@@ -742,6 +981,7 @@ export default function ReviewStep({
         reviewed: true,
         review_adj: Object.keys(mine).length > 0 ? mine : null,
         crop: crop ?? null,
+        local_edits: cleanLocal(local),
         ...(newPaths ? { full_path: newPaths.full, web_path: newPaths.web, thumb_path: newPaths.thumb } : {}),
       }
       setRows((prev) => prev.map((r) => (r.id === row.id ? updated : r)))
@@ -876,6 +1116,218 @@ export default function ReviewStep({
     editManual(next)
   }
 
+
+  // ---- masks and spot removal ----
+  function measure() {
+    const im = imgRef.current
+    const st = stageRef.current
+    if (!im || !st || !im.naturalWidth) { setBox(null); return }
+    const r = im.getBoundingClientRect()
+    const sr = st.getBoundingClientRect()
+    const sc = Math.min(r.width / im.naturalWidth, r.height / im.naturalHeight)
+    const w = im.naturalWidth * sc
+    const h = im.naturalHeight * sc
+    setBox({ x: r.left - sr.left + (r.width - w) / 2, y: r.top - sr.top + (r.height - h) / 2, w, h })
+  }
+  useEffect(() => {
+    measure()
+    const st = stageRef.current
+    const ro = typeof ResizeObserver !== 'undefined' && st ? new ResizeObserver(() => measure()) : null
+    if (ro && st) ro.observe(st)
+    window.addEventListener('resize', measure)
+    return () => { ro?.disconnect(); window.removeEventListener('resize', measure) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [afterUrl, row?.id, mode, zoom100, hold])
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && (t as HTMLInputElement).type !== 'range'))) return
+      const mod = e.metaKey || e.ctrlKey
+      const k = e.key.toLowerCase()
+      if (mod && k === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo() }
+      else if (mod && k === 'y') { e.preventDefault(); redo() }
+      else if (mod && e.shiftKey && k === 'c') { e.preventDefault(); copySettings() }
+      else if (mod && e.shiftKey && k === 'v') { e.preventDefault(); pasteSettings() }
+      else if (!mod && e.key === '\\') { e.preventDefault(); setMode((m) => (m === 'after' ? 'before' : 'after')) }
+      else if (!mod && e.key === 'Escape') setPen(null)
+      else if (!mod && (e.key === '[' || e.key === ']')) {
+        const f = e.key === ']' ? 1.2 : 1 / 1.2
+        if (pen === 'heal') setHealSize((v) => Math.max(0.005, Math.min(0.08, v * f)))
+        else if (pen === 'brush') setBrushSize((v) => Math.max(0.005, Math.min(0.15, v * f)))
+      }
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  })
+
+  function pickPen(p: 'heal' | 'radial' | 'linear' | 'brush') {
+    setPicking(false)
+    setMode('after')
+    setZoom100(false)
+    setPen(pen === p ? null : p)
+  }
+  function ptOf(e: React.PointerEvent): { u: number; v: number } | null {
+    const st = stageRef.current
+    if (!box || !st) return null
+    const sr = st.getBoundingClientRect()
+    return { u: (e.clientX - sr.left - box.x) / box.w, v: (e.clientY - sr.top - box.y) / box.h }
+  }
+  function srcPt(e: React.PointerEvent): [number, number] | null {
+    const p = ptOf(e)
+    const s = srcRef.current
+    if (!p || !s) return null
+    return outToSrc(Math.max(0, Math.min(1, p.u)), Math.max(0, Math.min(1, p.v)), s.bmp.width, s.bmp.height, crop)
+  }
+  function toolDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.stopPropagation()
+    const pt = srcPt(e)
+    const s = srcRef.current
+    if (!pt || !s || !pen) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    if (pen === 'heal') {
+      const [sx, sy] = autoHealSource(s.bmp, pt[0], pt[1], healSize)
+      editLocal({ ...local, heals: [...local.heals, { x: pt[0], y: pt[1], r: healSize, sx, sy }] })
+      return
+    }
+    pushHist(false)
+    const id = 'm' + Date.now().toString(36)
+    const m: Mask = pen === 'radial'
+      ? { id, kind: 'radial', a: pt, b: [0.005, 0.005], feather: 0.5, adj: { exposure: 0.3 } }
+      : pen === 'linear'
+        ? { id, kind: 'linear', a: pt, b: pt, feather: 0.5, adj: { exposure: -0.3 } }
+        : { id, kind: 'brush', a: pt, b: pt, pts: [pt], size: brushSize, feather: 0.5, adj: { exposure: 0.3 } }
+    dragRef.current = id
+    setLocal((prev) => ({ ...prev, masks: [...prev.masks, m] }))
+    setSelMask(id)
+  }
+  function toolMove(e: React.PointerEvent<HTMLDivElement>) {
+    const p = ptOf(e)
+    if (p && box) setCursor({ x: p.u * box.w, y: p.v * box.h })
+    const id = dragRef.current
+    if (!id) return
+    const pt = srcPt(e)
+    if (!pt) return
+    setLocal((prev) => ({
+      ...prev,
+      masks: prev.masks.map((m) => {
+        if (m.id !== id) return m
+        if (m.kind === 'radial') return { ...m, b: [Math.max(0.005, Math.abs(pt[0] - m.a[0])), Math.max(0.005, Math.abs(pt[1] - m.a[1]))] as [number, number] }
+        if (m.kind === 'linear') return { ...m, b: pt }
+        const pts = m.pts ?? []
+        const last = pts[pts.length - 1]
+        if (last && Math.hypot(pt[0] - last[0], pt[1] - last[1]) < (m.size ?? 0.05) * 0.25) return m
+        return { ...m, pts: [...pts, pt] }
+      }),
+    }))
+  }
+  function toolUp(e: React.PointerEvent<HTMLDivElement>) {
+    e.stopPropagation()
+    const id = dragRef.current
+    if (!id) return
+    dragRef.current = null
+    setLocal((prev) => ({
+      ...prev,
+      masks: prev.masks.map((m) => {
+        if (m.id !== id) return m
+        if (m.kind === 'radial' && m.b[0] < 0.012 && m.b[1] < 0.012) return { ...m, b: [0.18, 0.18] as [number, number] }
+        if (m.kind === 'linear' && Math.hypot(m.b[0] - m.a[0], m.b[1] - m.a[1]) < 0.02) return { ...m, b: [m.a[0], Math.min(1, m.a[1] + 0.3)] as [number, number] }
+        return m
+      }),
+    }))
+    bump()
+  }
+  function patchMask(id: string, p: Partial<Mask>) {
+    editLocalLive({ ...local, masks: local.masks.map((m) => (m.id === id ? { ...m, ...p } : m)) })
+  }
+  function setMaskAdj(m: Mask, key: keyof MaskAdj, ui: number, scale: number) {
+    const next: MaskAdj = { ...m.adj }
+    if (ui === 0) delete next[key]
+    else next[key] = (ui / 100) * scale
+    patchMask(m.id, { adj: next })
+  }
+  function removeMask(id: string) {
+    editLocal({ ...local, masks: local.masks.filter((m) => m.id !== id) })
+    if (selMask === id) setSelMask(null)
+  }
+
+  function penOverlay() {
+    const sel = local.masks.find((m) => m.id === selMask)
+    const s = srcRef.current
+    if (!box || !s || showing !== 'after' || zoom100 || (!pen && !sel)) return null
+    const sw = s.bmp.width
+    const sh = s.bmp.height
+    const L = Math.max(sw, sh)
+    const so = crop ? box.w / cropRect(sw, sh, crop).cw : box.w / sw
+    const P = (p: [number, number]): [number, number] => {
+      const [u, v] = srcToOut(p[0], p[1], sw, sh, crop)
+      return [u * box.w, v * box.h]
+    }
+    const ang = crop?.angle ?? 0
+    const ring = (key: string, cx: number, cy: number, r: number, dash?: string) => (
+      <g key={key}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth={3} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="white" strokeWidth={1.5} strokeDasharray={dash} />
+      </g>
+    )
+    const parts: ReactNode[] = []
+    if (pen === 'heal') {
+      local.heals.forEach((h, i) => {
+        const [cx, cy] = P([h.x, h.y])
+        parts.push(ring('h' + i, cx, cy, Math.max(3, h.r * L * so)))
+      })
+    }
+    if (sel) {
+      if (sel.kind === 'radial') {
+        const [cx, cy] = P(sel.a)
+        const rx = Math.max(2, sel.b[0] * sw * so)
+        const ry = Math.max(2, sel.b[1] * sh * so)
+        parts.push(
+          <g key="sel" transform={`rotate(${ang} ${cx} ${cy})`}>
+            <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth={3} />
+            <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="none" stroke="white" strokeWidth={1.5} />
+            <ellipse cx={cx} cy={cy} rx={rx * (1 - sel.feather)} ry={ry * (1 - sel.feather)} fill="none" stroke="white" strokeOpacity={0.7} strokeWidth={1} strokeDasharray="4 4" />
+            <circle cx={cx} cy={cy} r={3} fill="white" />
+          </g>,
+        )
+      } else if (sel.kind === 'linear') {
+        const [ax, ay] = P(sel.a)
+        const [bx, by] = P(sel.b)
+        const len = Math.max(1, Math.hypot(bx - ax, by - ay))
+        const nx = (-(by - ay) / len) * 70
+        const ny = ((bx - ax) / len) * 70
+        for (const [lx, ly, k] of [[ax, ay, 'a'], [bx, by, 'b']] as [number, number, string][]) {
+          parts.push(<line key={'l' + k} x1={lx - nx} y1={ly - ny} x2={lx + nx} y2={ly + ny} stroke="white" strokeWidth={1.5} />)
+          parts.push(<circle key={'c' + k} cx={lx} cy={ly} r={4} fill="white" stroke="rgba(0,0,0,0.5)" />)
+        }
+        parts.push(<line key="lab" x1={ax} y1={ay} x2={bx} y2={by} stroke="white" strokeOpacity={0.7} strokeWidth={1} strokeDasharray="4 4" />)
+      } else {
+        const pts = (sel.pts ?? []).map(P)
+        const sw2 = Math.max(2, 2 * (sel.size ?? 0.05) * L * so)
+        if (pts.length > 0) {
+          parts.push(<circle key="b0" cx={pts[0][0]} cy={pts[0][1]} r={sw2 / 2} fill="rgba(255,80,80,0.3)" />)
+          parts.push(<polyline key="b1" points={pts.map((q) => q.join(',')).join(' ')} fill="none" stroke="rgba(255,80,80,0.3)" strokeWidth={sw2} strokeLinecap="round" strokeLinejoin="round" />)
+        }
+      }
+    }
+    if (cursor && (pen === 'heal' || pen === 'brush')) {
+      parts.push(ring('cur', cursor.x, cursor.y, Math.max(3, (pen === 'heal' ? healSize : brushSize) * L * so), '3 3'))
+    }
+    return (
+      <div
+        className={`absolute z-[6] touch-none ${pen ? 'cursor-crosshair' : 'pointer-events-none'}`}
+        style={{ left: box.x, top: box.y, width: box.w, height: box.h }}
+        onPointerDown={pen ? toolDown : undefined}
+        onPointerMove={pen ? toolMove : undefined}
+        onPointerUp={pen ? toolUp : undefined}
+        onPointerLeave={() => setCursor(null)}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox={`0 0 ${box.w} ${box.h}`}>{parts}</svg>
+      </div>
+    )
+  }
+
   const tools = (list: typeof TOOLS) =>
     list.map((t) => {
       const ui = Math.round((((manual[t.key] ?? 0) as number) / t.scale) * 100)
@@ -954,10 +1406,6 @@ export default function ReviewStep({
 
   return (
     <section className="mt-6">
-      <p className="max-w-2xl text-white/55">
-        Change anything and it saves on its own. Use the arrows on the sides of the photo to move between photos.
-      </p>
-
       {loading ? (
         <p className="mt-10 text-white/50">Loading your photos…</p>
       ) : rows.length === 0 || !row ? (
@@ -967,29 +1415,96 @@ export default function ReviewStep({
         </div>
       ) : (
         <>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <button className={tab(filter === 'flagged')} onClick={() => setFilter('flagged')}>Needs a look ({rows.filter(needs).length})</button>
-            <button className={tab(filter === 'all')} onClick={() => setFilter('all')}>All photos ({rows.length})</button>
-            {!checked && <span className="text-xs text-white/40">Checking your photos…</span>}
-          </div>
-
-          <div ref={wrapRef} className="mt-4 grid scroll-mt-4 gap-4 lg:h-[calc(100vh-1rem)] lg:grid-cols-[15rem_minmax(0,1fr)_18rem] xl:grid-cols-[16rem_minmax(0,1fr)_19rem]">
+          <div ref={wrapRef} className="mt-2 grid scroll-mt-4 gap-4 lg:h-[calc(100vh-1rem)] lg:grid-cols-[15rem_minmax(0,1fr)_18rem] xl:grid-cols-[16rem_minmax(0,1fr)_19rem]">
             {/* LEFT: light and color */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
+              <Histogram url={afterUrl} />
               <Panel title="Light">{tools(LIGHT)}</Panel>
               <Panel title="Color">
                 {tools(COLOR)}
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <button className={tab(picking)} onClick={() => { setPicking(!picking); setMode('after') }}>White balance picker</button>
+                  <button className={tab(picking)} onClick={() => { setPen(null); setPicking(!picking); setMode('after') }}>White balance picker</button>
                   <button className={tab(isBw)} onClick={() => editManual({ ...manual, bw: isBw ? 0 : 1 })}>Black &amp; White</button>
                 </div>
                 {picking && <p className="text-xs text-white/50">Click something that should be neutral gray or white.</p>}
+              </Panel>
+              <Panel title="Tone curve" defaultOpen={false}>
+                <p className="text-xs text-white/50">Click the line to add a point and drag it. Double-click a point to remove it.</p>
+                <CurveEditor pts={local.curve && local.curve.length >= 2 ? local.curve : [[0, 0], [1, 1]]} onChange={(c) => editLocalLive({ ...local, curve: c })} />
+                {!curveIsFlat(local.curve) && <button className={tab(false)} onClick={() => editLocalLive({ ...local, curve: undefined })}>Reset curve</button>}
+              </Panel>
+              <Panel title="Spot removal" defaultOpen={false}>
+                <p className="text-xs text-white/50">Click a spot on the photo. Camri copies a clean patch over it.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button className={tab(pen === 'heal')} onClick={() => pickPen('heal')}>{pen === 'heal' ? 'Done' : 'Remove spots'}</button>
+                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: local.heals.slice(0, -1) })}>Undo last spot</button>}
+                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: [] })}>Clear all ({local.heals.length})</button>}
+                </div>
+                <Slide label="Spot size" shown={Math.round(healSize * 1000)} min={5} max={80} value={Math.round(healSize * 1000)} onChange={(v) => setHealSize(v / 1000)} onReset={() => setHealSize(0.02)} />
+              </Panel>
+              <Panel title="Masks" defaultOpen={false}>
+                <p className="text-xs text-white/50">Change just one part of the photo.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button className={tab(pen === 'radial')} onClick={() => pickPen('radial')}>Radial</button>
+                  <button className={tab(pen === 'linear')} onClick={() => pickPen('linear')}>Linear</button>
+                  <button className={tab(pen === 'brush')} onClick={() => pickPen('brush')}>Brush</button>
+                </div>
+                {pen && pen !== 'heal' && (
+                  <p className="text-xs text-white/50">
+                    {pen === 'brush' ? 'Paint over the part you want to change.' : pen === 'radial' ? 'Drag from the center outward.' : 'Drag from where the change is full to where it fades out.'}
+                  </p>
+                )}
+                {pen === 'brush' && <Slide label="Brush size" shown={Math.round(brushSize * 1000)} min={5} max={150} value={Math.round(brushSize * 1000)} onChange={(v) => setBrushSize(v / 1000)} onReset={() => setBrushSize(0.05)} />}
+                {local.masks.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {local.masks.map((m, i) => {
+                      const n = local.masks.slice(0, i + 1).filter((x) => x.kind === m.kind).length
+                      return (
+                        <button key={m.id} className={tab(selMask === m.id)} onClick={() => setSelMask(selMask === m.id ? null : m.id)}>
+                          {m.kind === 'radial' ? 'Radial' : m.kind === 'linear' ? 'Linear' : 'Brush'} {n}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                {(() => {
+                  const sm = local.masks.find((m) => m.id === selMask)
+                  if (!sm) return null
+                  return (
+                    <div className="space-y-3 border-t border-white/10 pt-3">
+                      {MASK_TOOLS.map((t) => {
+                        const ui = Math.round(((sm.adj[t.key] ?? 0) / t.scale) * 100)
+                        return (
+                          <Slide
+                            key={t.key}
+                            label={t.label}
+                            shown={ui > 0 ? `+${ui}` : ui}
+                            min={-100}
+                            max={100}
+                            value={ui}
+                            onChange={(v) => setMaskAdj(sm, t.key, v, t.scale)}
+                            onReset={() => setMaskAdj(sm, t.key, 0, t.scale)}
+                          />
+                        )
+                      })}
+                      <Slide label="Feather" shown={Math.round(sm.feather * 100)} min={0} max={100} value={Math.round(sm.feather * 100)} onChange={(v) => patchMask(sm.id, { feather: v / 100 })} onReset={() => patchMask(sm.id, { feather: 0.5 })} />
+                      {sm.kind === 'brush' && !pen && (
+                        <Slide label="Size" shown={Math.round((sm.size ?? 0.05) * 1000)} min={5} max={150} value={Math.round((sm.size ?? 0.05) * 1000)} onChange={(v) => patchMask(sm.id, { size: v / 1000 })} onReset={() => patchMask(sm.id, { size: 0.05 })} />
+                      )}
+                      <div className="flex gap-2">
+                        <button className={tab(!!sm.invert)} onClick={() => patchMask(sm.id, { invert: !sm.invert })}>Invert</button>
+                        <button className={tab(false)} onClick={() => removeMask(sm.id)}>Delete mask</button>
+                      </div>
+                    </div>
+                  )
+                })()}
               </Panel>
             </div>
 
             {/* CENTER: the photo */}
             <div className="flex min-h-0 flex-col">
               <div
+                ref={stageRef}
                 className={`relative flex min-h-[420px] flex-1 select-none items-center justify-center overflow-hidden rounded-2xl bg-black/40 ${picking ? 'cursor-crosshair' : ''}`}
                 onClick={pickBalance}
                 onPointerDown={() => { if (!picking && !zoom100) setHold(true) }}
@@ -1011,9 +1526,10 @@ export default function ReviewStep({
                   </div>
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
-                  (showing === 'before' ? beforeUrl : afterUrl) && <img src={(showing === 'before' ? beforeUrl : afterUrl) as string} alt="" className={frameImg} />
+                  (showing === 'before' ? beforeUrl : afterUrl) && <img ref={imgRef} onLoad={measure} src={(showing === 'before' ? beforeUrl : afterUrl) as string} alt="" className={frameImg} />
                 )}
                 {!afterUrl && !err && <p className="absolute text-sm text-white/40">Loading…</p>}
+                {penOverlay()}
                 {(askBusy || camiBusy || sceneBusy) && (
                   <div className="pointer-events-none absolute inset-0 z-[5] overflow-hidden rounded-2xl">
                     <style>{`
@@ -1067,7 +1583,13 @@ export default function ReviewStep({
                 <button className={tab(mode === 'split')} onClick={() => setMode('split')}>Side by side</button>
                 <button className={tab(zoom100)} onClick={() => setZoom100(!zoom100)}>100%</button>
                 {flags[row.id] && !row.reviewed && <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs text-amber-300">{flags[row.id]}</span>}
-                <span className="ml-auto text-xs text-white/45">Photo {idx + 1} of {rows.length} · {reviewed} checked</span>
+                <span className="ml-auto flex flex-wrap items-center gap-2">
+                  <button className={`${tab(false)} disabled:opacity-40`} disabled={hist.current.past.length === 0} onClick={undo} title="Undo (Ctrl or Cmd + Z)">Undo</button>
+                  <button className={`${tab(false)} disabled:opacity-40`} disabled={hist.current.future.length === 0} onClick={redo} title="Redo (Shift + Ctrl or Cmd + Z)">Redo</button>
+                  <button className={tab(false)} onClick={copySettings} title="Copy these settings (Shift + Ctrl or Cmd + C)">Copy settings</button>
+                  <button className={`${tab(false)} disabled:opacity-40`} disabled={!clip} onClick={pasteSettings} title="Paste settings (Shift + Ctrl or Cmd + V)">Paste settings</button>
+                  <span className="text-xs text-white/45">Photo {idx + 1} of {rows.length} · {reviewed} checked</span>
+                </span>
               </div>
               {err && <p className="mt-2 shrink-0 text-sm text-red-300">{err}</p>}
 
@@ -1111,24 +1633,6 @@ export default function ReviewStep({
 
             {/* RIGHT: crop, detail, color mix, your style */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
-              <CamiPanel onBusyChange={setAskBusy} value={manual} onChange={editManual} previewUrl={afterUrl} lookName={lookId} strength={strength} brief={brief} light={light[row.id] || brief.light || ''} photoId={row.id}>
-              <div className="mt-3 border-t border-white/10 pt-3">
-                <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
-                  {camiBusy ? (camiProgress > 0 ? 'Camri is studying this shoot… ' + camiProgress + '/' + rows.length : 'Camri is looking…') : 'Use Camri to scan & fix'}
-                </button>
-                <button className={tab(false) + ' mt-2'} disabled={camiBusy || !!sceneBusy} onClick={camiScanScene}>
-                  {sceneBusy ? 'Camri is fixing this scene… ' + sceneBusy.done + '/' + sceneBusy.total : 'Scan the whole scene'}
-                </button>
-                {sceneBusy && <button className="mt-2 block text-xs text-white/60 underline" onClick={() => { sceneStop.current = true }}>Stop</button>}
-                {camiNote && camiNote.id === row.id && (
-                  <div className="mt-2 space-y-1 text-xs text-white/60">
-                    {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
-                    {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Camri thinks this could be black &amp; white. Try it</button>}
-                    {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Camri</button>}
-                  </div>
-                )}
-              </div>
-              </CamiPanel>
               <Panel title="Crop & straighten">
                 <Slide
                   label="Straighten"
@@ -1163,13 +1667,43 @@ export default function ReviewStep({
                 ) : null}
               </Panel>
               <Panel title="Detail" defaultOpen={false}>{tools(DETAIL)}</Panel>
+              <Panel title="Effects" defaultOpen={false}>
+                {tools(EFFECTS)}
+                <Slide
+                  label="Grain"
+                  shown={Math.round((manual.grain ?? 0) * 100)}
+                  min={0}
+                  max={100}
+                  value={Math.round((manual.grain ?? 0) * 100)}
+                  onChange={(v) => { const n: Adjust = { ...manual }; if (v === 0) delete n.grain; else n.grain = v / 100; editManual(n) }}
+                  onReset={() => { const n: Adjust = { ...manual }; delete n.grain; editManual(n) }}
+                />
+              </Panel>
               <Panel title="Color mix" defaultOpen={false}>
                 <ColorMixer value={manual} onChange={editManual} />
               </Panel>
               <div className="py-3">
-                <button className={tab(false)} onClick={() => { editManual({ raw: 1 }); editCrop(null) }}>Reset this photo</button>
+                <button className={tab(false)} onClick={resetPhoto}>Reset this photo</button>
                 {manual.raw ? <button className="ml-3 text-xs text-white/55 underline" onClick={() => editManual({})}>Back to the shoot&apos;s look</button> : null}
               </div>
+              <CamiPanel onBusyChange={setAskBusy} value={manual} onChange={editManual} previewUrl={afterUrl} lookName={lookId} strength={strength} brief={brief} light={light[row.id] || brief.light || ''} photoId={row.id}>
+              <div className="mt-3 border-t border-white/10 pt-3">
+                <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
+                  {camiBusy ? (camiProgress > 0 ? 'Camri is studying this shoot… ' + camiProgress + '/' + rows.length : 'Camri is looking…') : 'Use Camri to scan & fix'}
+                </button>
+                <button className={tab(false) + ' mt-2'} disabled={camiBusy || !!sceneBusy} onClick={camiScanScene}>
+                  {sceneBusy ? 'Camri is fixing this scene… ' + sceneBusy.done + '/' + sceneBusy.total : 'Scan the whole scene'}
+                </button>
+                {sceneBusy && <button className="mt-2 block text-xs text-white/60 underline" onClick={() => { sceneStop.current = true }}>Stop</button>}
+                {camiNote && camiNote.id === row.id && (
+                  <div className="mt-2 space-y-1 text-xs text-white/60">
+                    {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
+                    {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Camri thinks this could be black &amp; white. Try it</button>}
+                    {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Camri</button>}
+                  </div>
+                )}
+              </div>
+              </CamiPanel>
               <div className="rounded-xl border border-white/10 bg-[#7a5c45]/45 p-3">
                 <p className="text-xs uppercase tracking-[0.18em] text-white/50">Your style</p>
                 <p className="mt-2 text-xs text-white/55">Every fix you make is saved, so Camrhia can learn how you edit.</p>

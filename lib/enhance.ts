@@ -2,6 +2,8 @@ import { encode, scaled, type Version } from '@/lib/galleryImages'
 
 import { cropRect, drawCropped, type Crop } from '@/lib/crop'
 import { BANDS, type HslKey } from '@/lib/hsl'
+import { healSource, maskWeights, curveIsFlat, curveLut, type LocalEdits, type Mask } from '@/lib/localEdit'
+import type { CropRect } from '@/lib/crop'
 
 export type Enhanced = { full: Blob; web: Version; thumb: Version }
 
@@ -22,8 +24,8 @@ export type LookParams = {
   splitHigh: [number, number, number]
 }
 export type Look = { id: string; label: string; blurb: string; params: LookParams }
-export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>> & { sharpen?: number; noise?: number; raw?: number } & Partial<Record<HslKey, number>>
-export type LookChoice = { id: string; strength: number; adjust?: Adjust; skin?: boolean; crop?: Crop }
+export type Adjust = Partial<Pick<LookParams, 'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'tint' | 'saturation' | 'fade' | 'whites' | 'blacks' | 'vibrance' | 'bw'>> & { sharpen?: number; noise?: number; raw?: number; vignette?: number; grain?: number } & Partial<Record<HslKey, number>>
+export type LookChoice = { id: string; strength: number; adjust?: Adjust; skin?: boolean; crop?: Crop; local?: LocalEdits }
 
 const Z: LookParams = {
   exposure: 0, contrast: 0, highlights: 0, shadows: 0, temp: 0, tint: 0, saturation: 0, fade: 0, bw: 0,
@@ -260,6 +262,61 @@ function process(d: Uint8ClampedArray, w: number, h: number, look: LookParams | 
     d[i + 2] = b
   }
   if (adjust && (adjust.sharpen || adjust.noise)) detail(d, w, h, adjust.sharpen ?? 0, adjust.noise ?? 0)
+  if (adjust && (adjust.vignette || adjust.grain)) effects(d, w, h, adjust.vignette ?? 0, adjust.grain ?? 0)
+}
+
+const grainHash = (x: number, y: number) => {
+  let h = (x * 374761393 + y * 668265263) | 0
+  h = Math.imul(h ^ (h >>> 13), 1274126177)
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967295 - 0.5
+}
+
+function effects(d: Uint8ClampedArray, w: number, h: number, vig: number, grain: number) {
+  const v = clamp(vig, -1, 1)
+  const gr = clamp(grain, 0, 1)
+  const cx = w / 2
+  const cy = h / 2
+  const block = Math.max(1, Math.round(Math.max(w, h) / 1600))
+  for (let y = 0; y < h; y++) {
+    const dy = (y - cy) / cy
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4
+      if (v !== 0) {
+        const dx = (x - cx) / cx
+        const e = Math.min(1, Math.sqrt(dx * dx + dy * dy) / Math.SQRT2)
+        const t0 = clamp((e - 0.3) / 0.7, 0, 1)
+        const t = t0 * t0 * (3 - 2 * t0)
+        if (v < 0) {
+          const f = 1 + v * 0.85 * t
+          d[i] = d[i] * f
+          d[i + 1] = d[i + 1] * f
+          d[i + 2] = d[i + 2] * f
+        } else {
+          const a = v * 0.7 * t
+          d[i] = d[i] + (255 - d[i]) * a
+          d[i + 1] = d[i + 1] + (255 - d[i + 1]) * a
+          d[i + 2] = d[i + 2] + (255 - d[i + 2]) * a
+        }
+      }
+      if (gr > 0) {
+        const l = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / 255
+        const wgt = Math.max(0.2, 1 - Math.abs(l - 0.5) * 1.2)
+        const nz = grainHash(Math.floor(x / block), Math.floor(y / block)) * gr * 70 * wgt
+        d[i] = d[i] + nz
+        d[i + 1] = d[i + 1] + nz
+        d[i + 2] = d[i + 2] + nz
+      }
+    }
+  }
+}
+
+function applyCurve(d: Uint8ClampedArray, curve: [number, number][]) {
+  const lut = curveLut(curve)
+  for (let i = 0; i < d.length; i += 4) {
+    d[i] = lut[d[i]]
+    d[i + 1] = lut[d[i + 1]]
+    d[i + 2] = lut[d[i + 2]]
+  }
 }
 
 // Simple box blur (3 channels) used by sharpening and noise reduction.
@@ -314,6 +371,23 @@ function detail(d: Uint8ClampedArray, w: number, h: number, sharpen: number, noi
   }
 }
 
+function applyMasks(d: Uint8ClampedArray, w: number, h: number, masks: Mask[], W: number, H: number, crop: Crop | null, cr: CropRect | null, s: number) {
+  for (const m of masks) {
+    const adj = m.adj
+    if (!Object.values(adj).some((v) => v)) continue
+    const wt = maskWeights(m, w, h, W, H, crop, cr, s)
+    const copy = new Uint8ClampedArray(d)
+    process(copy, w, h, null, 1, { ...adj, raw: 1 }, false)
+    for (let p = 0, i = 0; p < w * h; p++, i += 4) {
+      const a = wt[p]
+      if (a <= 0.003) continue
+      d[i] += (copy[i] - d[i]) * a
+      d[i + 1] += (copy[i + 1] - d[i + 1]) * a
+      d[i + 2] += (copy[i + 2] - d[i + 2]) * a
+    }
+  }
+}
+
 const findLook = (id: string | undefined) => (id ? LOOKS.find((l) => l.id === id)?.params ?? null : null)
 
 export async function enhancePhoto(source: Blob, path: string, look?: LookChoice): Promise<Enhanced> {
@@ -333,10 +407,13 @@ export async function enhancePhoto(source: Blob, path: string, look?: LookChoice
     canvas.height = h
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     if (!ctx) throw new Error('Your browser cannot process photos.')
-    if (cr && look?.crop) drawCropped(ctx, bmp, look.crop, cr, w, h, 1)
-    else ctx.drawImage(bmp, 0, 0)
+    const drawSrc: ImageBitmap | HTMLCanvasElement = look?.local?.heals.length ? healSource(bmp, 1, look.local.heals) : bmp
+    if (cr && look?.crop) drawCropped(ctx, drawSrc, look.crop, cr, w, h, 1)
+    else ctx.drawImage(drawSrc, 0, 0)
     const img = ctx.getImageData(0, 0, w, h)
     process(img.data, w, h, findLook(look?.id), look?.strength ?? 1, look?.adjust, look?.skin)
+    if (look?.local && !curveIsFlat(look.local.curve)) applyCurve(img.data, look.local.curve!)
+    if (look?.local?.masks.length) applyMasks(img.data, w, h, look.local.masks, bmp.width, bmp.height, look.crop ?? null, cr, 1)
     ctx.putImageData(img, 0, 0)
 
     const full = await encode(canvas, 0.92)
@@ -358,7 +435,7 @@ export async function enhancePhoto(source: Blob, path: string, look?: LookChoice
 }
 
 // Small, fast preview of a look on one photo. Returns an object URL; the caller should revoke it.
-export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: number, maxEdge = 480, adjust?: Adjust, skin?: boolean, crop?: Crop): Promise<string> {
+export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: number, maxEdge = 480, adjust?: Adjust, skin?: boolean, crop?: Crop, local?: LocalEdits): Promise<string> {
   const cr = crop ? cropRect(bmp.width, bmp.height, crop) : null
   const sw = cr ? cr.cw : bmp.width
   const sh = cr ? cr.ch : bmp.height
@@ -370,10 +447,16 @@ export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: 
   c.height = h
   const ctx = c.getContext('2d', { willReadFrequently: true })
   if (!ctx) throw new Error('Your browser cannot process photos.')
-  if (cr && crop) drawCropped(ctx, bmp, crop, cr, w, h, scale)
+  if (local?.heals.length) {
+    const hs = healSource(bmp, scale, local.heals)
+    if (cr && crop) drawCropped(ctx, hs, crop, { ...cr, dx: cr.dx * scale, dy: cr.dy * scale }, w, h, 1)
+    else ctx.drawImage(hs, 0, 0, w, h)
+  } else if (cr && crop) drawCropped(ctx, bmp, crop, cr, w, h, scale)
   else ctx.drawImage(bmp, 0, 0, w, h)
   const img = ctx.getImageData(0, 0, w, h)
   process(img.data, w, h, findLook(lookId), strength, adjust, skin)
+  if (local && !curveIsFlat(local.curve)) applyCurve(img.data, local.curve!)
+  if (local?.masks.length) applyMasks(img.data, w, h, local.masks, bmp.width, bmp.height, crop ?? null, cr, scale)
   ctx.putImageData(img, 0, 0)
   const blob = await encode(c, 0.85)
   return URL.createObjectURL(blob)

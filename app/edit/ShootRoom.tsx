@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { cullPhotos, type CullLabel } from '@/lib/cull'
 import { findPeople, type Person } from '@/lib/people'
 import { buildZip } from '@/lib/zipStore'
+import { EXPORT_PRESETS, exportBlob } from '@/lib/exportPreset'
 import { useEntitlements } from '@/lib/useEntitlements'
 import { enhancePhoto, renderPreview, LOOKS, type Adjust } from '@/lib/enhance'
 import { addAdj, cleanAdj } from '@/lib/tools'
@@ -200,7 +201,9 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
 
   const [cullView, setCullView] = useState<'all' | 'cuts' | 'picks' | 'maybe' | 'dupes' | 'people'>('all')
   const ent = useEntitlements()
-  const [withMaybes, setWithMaybes] = useState(false)
+  const [withMaybes] = useState(false)
+  const [expPreset, setExpPreset] = useState('original')
+  const [expMark, setExpMark] = useState('')
   const [saving, setSaving] = useState<{ busy: boolean; done: number; total: number; note: string }>({ busy: false, done: 0, total: 0, note: '' })
   const [people, setPeople] = useState<Person[]>([])
   const [personSel, setPersonSel] = useState<string | null>(null)
@@ -603,6 +606,18 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   const picks = photos.filter((p) => p.cull_label === 'pick').length
   const maybes = photos.filter((p) => p.cull_label === 'maybe').length
 
+  async function decideMaybes(label: 'pick' | 'reject') {
+    const sb = supabase
+    if (!sb) return
+    const ids = photos.filter((p) => p.cull_label === 'maybe').map((p) => p.id)
+    const patch = label === 'reject' ? { cull_label: label, cull_reason: 'Cut by you', cull_group: null } : { cull_label: label, cull_reason: null }
+    setPhotos((prev) => prev.map((x) => (ids.includes(x.id) ? { ...x, ...patch } : x)))
+    setCullView('all')
+    for (let i = 0; i < ids.length; i += 100) {
+      await sb.from('gallery_photos').update(patch).in('id', ids.slice(i, i + 100))
+    }
+  }
+
   async function doCut() {
     const sb = supabase
     if (!sb || working) return
@@ -733,6 +748,8 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
       .map((x) => ({ x, path: x.full_path ?? x.web_path ?? x.orig_path }))
       .filter((r) => !!r.path)
     if (list.length === 0) { setMsg('There are no photos to save yet.'); return }
+    const preset = expPreset
+    const mark = expMark
     type DirH = { getDirectoryHandle: (n: string, o?: { create: boolean }) => Promise<DirH>; getFileHandle: (n: string, o?: { create: boolean }) => Promise<{ createWritable: () => Promise<{ write: (b: Blob) => Promise<void>; close: () => Promise<void> }> }> }
     const w = window as unknown as { showDirectoryPicker?: (o?: { mode: string }) => Promise<DirH> }
     let dir: DirH | null = null
@@ -757,8 +774,9 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
           if (!u) continue
           const res = await fetch(u)
           if (!res.ok) continue
-          const blob = await res.blob()
+          const blob = await exportBlob(await res.blob(), preset, mark)
           let name = r.x.filename || (r.path as string).split('/').pop() || `photo-${done + 1}.jpg`
+          if (blob.type === 'image/jpeg' && !/\.jpe?g$/i.test(name)) name = name.replace(/\.[^.]+$/, '') + '.jpg'
           if (used.has(name.toLowerCase())) name = `${done + 1}-${name}`
           used.add(name.toLowerCase())
           if (dir) {
@@ -1025,14 +1043,14 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
 
   return (
     <div className={onBack ? 'min-h-[60vh]' : 'min-h-screen bg-[#0c0c0e] text-[#ececf0]'}>
-      <div className={`mx-auto px-6 py-8 ${editTab === 'each' && !dev.busy ? 'max-w-[2400px]' : 'max-w-5xl'}`}>
+      <div className={`mx-auto px-6 py-8 ${!dev.busy ? 'max-w-[2400px]' : 'max-w-5xl'}`}>
         <div className="flex items-center justify-between gap-4">
           {step > 0 ? <button onClick={() => goTo(step - 1)} className="text-sm text-white/50 transition hover:text-white">← {STEPS[step - 1]}</button> : onBack ? <button onClick={onBack} className="text-sm text-white/50 transition hover:text-white">← Editing room</button> : <Link href="/edit" className="text-sm text-white/50 transition hover:text-white">← Editing room</Link>}
           <p className="truncate font-fraunces text-lg text-white">{gallery?.title}</p>
           <span aria-hidden className="w-24" />
         </div>
 
-        <ol className="mt-8 flex items-center gap-2 overflow-x-auto pb-2">
+        <ol className="-mx-6 -mb-3 mt-3 flex items-center gap-2 overflow-x-auto px-6 py-5">
           {STEPS.map((label, i) => (
             <li key={label} className="flex items-center gap-2">
               <button
@@ -1132,13 +1150,9 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
 
             {!labeled && !cull.busy && (
               <div className={`${panel} mt-8`}>
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-lg text-white">Ready to cull</p>
-                    <p className="mt-2 text-white/70">Here is what happens. Nothing is removed until you say so.</p>
-                  </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/camri/10_holding_sliders.png" alt="" className="h-24 w-auto shrink-0 sm:h-28" />
+                <div>
+                  <p className="text-lg text-white">Ready to cull</p>
+                  <p className="mt-2 text-white/70">Here is what happens. Nothing is removed until you say so.</p>
                 </div>
                 <div className="mt-6 grid grid-cols-4 gap-2 sm:grid-cols-7">
                   {[
@@ -1197,11 +1211,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
               ]
               return (
                 <div className={`${panel} mt-8`}>
-                  <div className="mb-6 flex items-center gap-4">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/camri/03_working_laptop.png" alt="" className="h-24 w-auto shrink-0 sm:h-28" />
-                    <p className="text-white/70">Camri is going through your photos.</p>
-                  </div>
+                  <p className="mb-6 text-white/70">Camri is going through your photos.</p>
                   <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
                     {cols.map((c) => (
                       <div key={c.key} className={c.state === 'wait' ? 'opacity-40' : ''}>
@@ -1222,12 +1232,12 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
             {labeled && !cull.busy && (
               <>
                 <div className="mt-6 flex flex-wrap gap-3 text-sm">
-                  <button className={chipCls('all')} onClick={() => setCullView('all')}><b className="text-white">{photos.length}</b> all</button>
-                  <button className={chipCls('picks')} onClick={() => setCullView('picks')}><b className="text-white">{picks}</b> keepers</button>
-                  <button className={chipCls('maybe')} onClick={() => setCullView('maybe')}><b className="text-white">{maybes}</b> maybe</button>
-                  <button className={chipCls('cuts')} onClick={() => setCullView('cuts')}><b className="text-white">{cuts.length}</b> suggested cuts</button>
-                  <button className={chipCls('dupes')} onClick={() => setCullView('dupes')}><b className="text-white">{groupList.length}</b> duplicate groups</button>
-                  {people.length > 0 && <button className={chipCls('people')} onClick={() => setCullView('people')}><b className="text-white">{people.length}</b> people</button>}
+                  <button className={chipCls('all')} onClick={() => setCullView('all')}><span className="font-medium text-white">{photos.length}</span> all</button>
+                  <button className={chipCls('picks')} onClick={() => setCullView('picks')}><span className="font-medium text-white">{picks}</span> keepers</button>
+                  <button className={chipCls('maybe')} onClick={() => setCullView('maybe')}><span className="font-medium text-white">{maybes}</span> maybe</button>
+                  <button className={chipCls('cuts')} onClick={() => setCullView('cuts')}><span className="font-medium text-white">{cuts.length}</span> suggested cuts</button>
+                  <button className={chipCls('dupes')} onClick={() => setCullView('dupes')}><span className="font-medium text-white">{groupList.length}</span> duplicate groups</button>
+                  {people.length > 0 && <button className={chipCls('people')} onClick={() => setCullView('people')}><span className="font-medium text-white">{people.length}</span> people</button>}
                 </div>
 
                 {aiOn && (
@@ -1255,12 +1265,9 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                   </div>
                 )}
 
-                <p className="mt-4 text-xs text-white/40">Keys: ← → move · P keeper · M maybe · X cut · Space keeps or un-keeps a suggested cut</p>
-
                 {cullView === 'all' ? (
                   <div className="mt-8">
-                    <p className="max-w-2xl text-white/55">Every photo in this shoot with what we think of it. Use the buttons under a photo to change your mind.</p>
-                    <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
                       {photos.map((p, i) => {
                         const isDup = p.cull_label === 'reject' && !!p.cull_group
                         const tag = isDup ? 'Duplicate' : p.cull_label === 'pick' ? 'Keeper' : p.cull_label === 'maybe' ? 'Maybe' : p.cull_label === 'reject' ? 'Cut' : 'Unchecked'
@@ -1409,41 +1416,40 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                   <p className="mt-8 text-white/60">Nothing to cut here. Nice shoot.</p>
                 )}
 
-                <div className="mt-8 flex flex-wrap items-center gap-3">
-                  {toCut.length > 0 ? (
-                    confirmCut ? (
-                      <>
-                        <button className={btnDanger} disabled={working} onClick={doCut}>{working ? 'Removing…' : `Yes, remove ${toCut.length} photo${toCut.length === 1 ? '' : 's'}`}</button>
-                        <button className={btnQuiet} disabled={working} onClick={() => setConfirmCut(false)}>Cancel</button>
-                      </>
-                    ) : (
-                      <button className={btnPrimary} onClick={() => setConfirmCut(true)}>Cut {toCut.length} photo{toCut.length === 1 ? '' : 's'}</button>
-                    )
-                  ) : ent.retouch ? (
-                    <button className={btnPrimary} onClick={() => goTo(2)}>Continue to Edit</button>
-                  ) : !ent.loading ? (
-                    <button className={btnPrimary} disabled={saving.busy} onClick={saveKeepers}>{saving.busy ? `Saving ${saving.done} of ${saving.total}…` : 'Save my keepers'}</button>
-                  ) : null}
-                  {toCut.length > 0 && !confirmCut && ent.retouch && <button className={btnQuiet} onClick={() => goTo(2)}>Skip, keep everything</button>}
-                  {ent.retouch && toCut.length === 0 && (
-                    <button className={btnQuiet} disabled={saving.busy} onClick={saveKeepers}>{saving.busy ? `Saving ${saving.done} of ${saving.total}…` : 'Save keepers to a folder'}</button>
-                  )}
-                  <button className={btnQuiet} disabled={working} onClick={runCull}>Run again</button>
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/55">
-                  <label className="flex cursor-pointer items-center gap-2">
-                    <input type="checkbox" checked={withMaybes} onChange={(e) => setWithMaybes(e.target.checked)} />
-                    Include maybes when saving
-                  </label>
-                  {saving.note && <span className="text-white/80">{saving.note}</span>}
-                  <details className="text-white/45">
-                    <summary className="cursor-pointer">More</summary>
-                    <div className="mt-2 flex gap-4">
-                      <button className="underline" onClick={() => exportList('txt')}>Keepers as a text list</button>
-                      <button className="underline" onClick={() => exportList('csv')}>Everything as a spreadsheet</button>
+                {maybes > 0 ? (
+                  <div className={`${panel} mt-8`}>
+                    <p className="text-lg text-white">{maybes} maybe{maybes === 1 ? '' : 's'} left to decide</p>
+                    <p className="mt-2 text-white/70">Keep them or cut them before you move on.</p>
+                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                      <button className={btnQuiet} onClick={() => setCullView('maybe')}>Review them</button>
+                      <button className={btnQuiet} onClick={() => decideMaybes('reject')}>Cut them all</button>
+                      <button className={btnPrimary} onClick={() => decideMaybes('pick')}>Keep them all</button>
                     </div>
-                  </details>
-                </div>
+                  </div>
+                ) : (
+                  <div className="mt-8 flex flex-wrap items-center gap-3">
+                    <button className={btnQuiet} disabled={working} onClick={runCull}>Run again</button>
+                    {toCut.length > 0 && !confirmCut && ent.retouch && <button className={btnQuiet} onClick={() => goTo(2)}>Skip, keep everything</button>}
+                    {ent.retouch && toCut.length === 0 && (
+                      <button className={btnQuiet} disabled={saving.busy} onClick={saveKeepers}>{saving.busy ? `Saving ${saving.done} of ${saving.total}…` : 'Save keepers to a folder'}</button>
+                    )}
+                    {toCut.length > 0 ? (
+                      confirmCut ? (
+                        <>
+                          <button className={btnQuiet} disabled={working} onClick={() => setConfirmCut(false)}>Cancel</button>
+                          <button className={btnDanger} disabled={working} onClick={doCut}>{working ? 'Removing…' : `Yes, remove ${toCut.length} photo${toCut.length === 1 ? '' : 's'}`}</button>
+                        </>
+                      ) : (
+                        <button className={btnPrimary} onClick={() => setConfirmCut(true)}>Cut {toCut.length} photo{toCut.length === 1 ? '' : 's'}</button>
+                      )
+                    ) : ent.retouch ? (
+                      <button className={btnPrimary} onClick={() => goTo(2)}>Continue to Edit</button>
+                    ) : !ent.loading ? (
+                      <button className={btnPrimary} disabled={saving.busy} onClick={saveKeepers}>{saving.busy ? `Saving ${saving.done} of ${saving.total}…` : 'Save my keepers'}</button>
+                    ) : null}
+                    {saving.note && <span className="text-sm text-white/80">{saving.note}</span>}
+                  </div>
+                )}
               </>
             )}
           </section>
@@ -1497,7 +1503,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                   onSaveToSignature={saveTweakToSignature}
                 />
 
-            <div className={`${panel} mt-8`}>
+            <div className={`${panel} mt-4`}>
               <button className="flex w-full items-center justify-between text-left" onClick={() => setShowScenes(!showScenes)}>
                 <span className="text-white/80">Set different light for parts of the day</span>
                 <span className="text-sm text-white/45">{showScenes ? 'Hide' : 'Optional'}</span>
@@ -1563,12 +1569,12 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
               )}
             </div>
 
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <button className={btnPrimary} onClick={() => runDevelop()}>Edit all {todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'}</button>
-                  <button className={btnQuiet} onClick={() => goTo(3)}>Skip</button>
+                <div className="sticky bottom-0 z-20 -mx-2 mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-[#151518]/90 px-4 py-3 backdrop-blur">
                   <button className={btnQuiet} onClick={() => goTo(1)}>Back</button>
+                  <button className={btnQuiet} onClick={() => goTo(3)}>Skip</button>
+                  <button className={btnPrimary} onClick={() => runDevelop()}>Edit all {todoDev.length} {todoDev.length === 1 ? 'photo' : 'photos'}</button>
+                  <span className="text-xs text-white/45">Keep this tab open while it runs.</span>
                 </div>
-                <p className="mt-3 text-xs text-white/40">Keep this tab open while it runs.</p>
               </>
             )}
 
@@ -1634,7 +1640,25 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
               <div className={panel}>
                 <p className="font-fraunces text-2xl text-white">Save the edited photos</p>
                 <p className="mt-2 text-sm text-white/60">Download them to a folder on your computer, ready to deliver with your own gallery tool.</p>
-                <button className={`${btnQuiet} mt-6`} disabled={saving.busy} onClick={saveEdited}>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {EXPORT_PRESETS.map((x) => (
+                    <button
+                      key={x.id}
+                      onClick={() => setExpPreset(x.id)}
+                      className={`rounded-full border px-3 py-1.5 text-xs transition ${expPreset === x.id ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                    >
+                      {x.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-white/50">{EXPORT_PRESETS.find((x) => x.id === expPreset)?.note}</p>
+                <input
+                  value={expMark}
+                  onChange={(e) => setExpMark(e.target.value)}
+                  placeholder="Watermark text (optional)"
+                  className="mt-3 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white placeholder:text-white/35"
+                />
+                <button className={`${btnQuiet} mt-5`} disabled={saving.busy} onClick={saveEdited}>
                   {saving.busy ? `Saving ${saving.done} of ${saving.total}…` : 'Save edited photos'}
                 </button>
                 {saving.note && <p className="mt-3 text-sm text-white/80">{saving.note}</p>}

@@ -1,6 +1,6 @@
 'use client'
 
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { TOOLS } from '@/lib/tools'
 import ColorMixer from '@/app/edit/ColorMixer'
 import type { Adjust } from '@/lib/enhance'
@@ -24,6 +24,8 @@ function trackBg(ui: number): string {
 
 export default function Dials({ value, onChange }: { value: Adjust; onChange: (a: Adjust) => void }) {
   const isBw = (value.bw ?? 0) > 0
+  const [open, setOpen] = useState<Record<string, boolean>>({ Light: true, Color: true })
+  const [mixOpen, setMixOpen] = useState(false)
 
   function setTool(key: keyof Adjust, ui: number, scale: number) {
     const next: Adjust = { ...value }
@@ -51,15 +53,19 @@ export default function Dials({ value, onChange }: { value: Adjust; onChange: (a
           const moved = tools.some((t) => (value[t.key] ?? 0) !== 0)
           return (
             <div key={g.title}>
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">{g.title}</p>
-                {moved && (
-                  <button className="text-[11px] text-white/45 transition hover:text-white/80" onClick={() => resetKeys(tools.map((t) => t.key as string))}>
+              <div className="flex items-center justify-between">
+                <button className="flex flex-1 items-center gap-2 text-left" onClick={() => setOpen({ ...open, [g.title]: !open[g.title] })}>
+                  <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">{g.title}</span>
+                  {moved && <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-twilight)]" />}
+                </button>
+                {moved && open[g.title] && (
+                  <button className="mr-3 text-[11px] text-white/45 transition hover:text-white/80" onClick={() => resetKeys(tools.map((t) => t.key as string))}>
                     Reset
                   </button>
                 )}
+                <button className="text-sm text-white/35" onClick={() => setOpen({ ...open, [g.title]: !open[g.title] })}>{open[g.title] ? '–' : '+'}</button>
               </div>
-              <div className="space-y-2.5">
+              {open[g.title] && <div className="mt-3 space-y-2.5">
                 {tools.map((t) => {
                   const ui = Math.round((((value[t.key] ?? 0) as number) / t.scale) * 100)
                   return (
@@ -82,7 +88,7 @@ export default function Dials({ value, onChange }: { value: Adjust; onChange: (a
                     </div>
                   )
                 })}
-              </div>
+              </div>}
             </div>
           )
         })}
@@ -91,7 +97,13 @@ export default function Dials({ value, onChange }: { value: Adjust; onChange: (a
         <button className={chip(isBw)} onClick={() => onChange({ ...value, bw: isBw ? 0 : 1 })}>Black &amp; White</button>
         <button className={chip(false)} onClick={() => onChange({})}>Reset all</button>
       </div>
-      <div className="mt-6 border-t border-white/10 pt-5"><ColorMixer value={value} onChange={onChange} /></div>
+      <div className="mt-6 border-t border-white/10 pt-4">
+        <div className="flex items-center justify-between">
+          <button className="flex-1 text-left text-[10px] font-medium uppercase tracking-[0.22em] text-white/40" onClick={() => setMixOpen(!mixOpen)}>Color mix</button>
+          <button className="text-sm text-white/35" onClick={() => setMixOpen(!mixOpen)}>{mixOpen ? '–' : '+'}</button>
+        </div>
+        {mixOpen && <div className="mt-4"><ColorMixer value={value} onChange={onChange} /></div>}
+      </div>
     </div>
   )
 }
