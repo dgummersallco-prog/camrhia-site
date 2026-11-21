@@ -160,7 +160,15 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
 
   function goArrange() {
     const base: Struct = { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] }
-    const s = withModes(base, designs)
+    const dn: Record<string, string> = { ...designs }
+    if (dn.about_mode !== 'none') {
+      if (dn.about_page && dn.about_section) dn.about_mode = 'both'
+      else if (dn.about_page) dn.about_mode = 'page'
+      else if (dn.about_section) dn.about_mode = 'section'
+    }
+    if ((dn.blog_list || dn.blog_post) && dn.blog_mode !== 'none') dn.blog_mode = 'page'
+    setDesigns(dn)
+    const s = withModes(base, dn)
     s.home = []
     s.about = []
     s.galleries = []
@@ -501,6 +509,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
     const alts = !key ? [] : have.includes(key) ? have.filter((x) => x !== key) : [...have, key]
     const added = !!key && alts.includes(key)
     const nd: Record<string, string> = { ...designs, [pk.field]: alts.includes(designs[pk.field]) ? designs[pk.field] : (alts[0] ?? ''), [pk.field + '_alts']: alts.join(',') }
+    if (added && sec.k === 'blog' && mode !== 'none') nd.blog_mode = 'page'
     if (added && MODED.includes(sec.k) && sec.k !== 'blog') {
       const kd = rowKind(row)
       const cur = designs[sec.k + '_mode'] || ''

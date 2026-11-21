@@ -416,7 +416,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     explore: 'Your menu already links your pages, so only add this if you want a visual shortcut.',
   }
   const RECS: Record<string, string[]> = {
-    home: ['explore', 'galsec', 'testimonials', 'pricesec', 'faq', 'social', 'contact'],
+    home: ['explore', 'about', 'galsec', 'testimonials', 'pricesec', 'faq', 'social', 'contact'],
     galleries: ['testimonials', 'contact'],
     about: ['testimonials', 'contact'],
     book: ['faq'],
