@@ -1565,11 +1565,6 @@ export default function GalleryManagePage() {
                   className="w-full bg-transparent font-fraunces text-3xl font-semibold text-ink focus:outline-none focus:ring-0"
                   aria-label="Gallery name"
                 />
-                <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
-                  <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${isPublished ? 'bg-twilight/15 text-twilight' : 'bg-line text-ink-soft'}`}>{isPublished ? 'Published' : 'Draft'}</span>
-                  {sessInfo && <span>{sessInfo}</span>}
-                  <span>· {photos.length} {photos.length === 1 ? 'photo' : 'photos'} · {totalFavs} {totalFavs === 1 ? 'favorite' : 'favorites'}</span>
-                </p>
               </div>
               <div className="flex shrink-0 gap-3">
                 <button className="rounded-xl border border-line bg-white/70 px-6 py-3 text-base text-ink transition hover:border-twilight" onClick={() => (designOpen || shareOpen ? goStep(designOpen ? 0 : 1) : router.push('/galleries'))}>Back</button>
