@@ -8,9 +8,12 @@ import SceneSidebar from '@/app/components/SceneSidebar'
 import ImportStart from './ImportStart'
 import ShootRoom from './ShootRoom'
 import TeachStyle from './TeachStyle'
+import StyleBuilder from './StyleBuilder'
+import { exportStyle, parseStyleFile, pushVersion, type StyleSnap } from '@/lib/styleFile'
 import StyleNotes, { type StyleUse } from './StyleNotes'
 import { QUESTIONS, type Signature } from '@/lib/brief'
 import { EXPORT_PRESETS } from '@/lib/exportPreset'
+import { TOOLS } from '@/lib/tools'
 
 type Row = { id: string; title: string; status: string; created_at: string; edit_archived?: boolean | null; gallery_photos: { count: number }[] }
 type Tab = 'edit' | 'styles' | 'brain' | 'settings' | 'shortcuts'
@@ -42,6 +45,12 @@ const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
   { title: 'Culling', items: [['← →', 'Previous or next photo'], ['P', 'Pick'], ['M', 'Maybe'], ['X', 'Cut'], ['Space', 'Rescue a cut photo (in the cuts view)']] },
   { title: 'Editing', items: [['← →', 'Previous or next photo'], ['Enter', 'Next photo'], ['\\', 'Flip between before and after'], ['Esc', 'Leave spot removal or a mask tool'], ['[  ]', 'Make the spot or brush smaller or bigger']] },
   { title: 'Undo and settings', items: [['Cmd or Ctrl + Z', 'Undo'], ['Shift + Cmd or Ctrl + Z', 'Redo'], ['Ctrl + Y', 'Redo (Windows)'], ['Shift + Cmd or Ctrl + C', 'Copy this photo\'s settings'], ['Shift + Cmd or Ctrl + V', 'Paste settings onto this photo']] },
+]
+
+const HABIT_GROUPS: { title: string; keys: string[] }[] = [
+  { title: 'Light and tone', keys: ['exposure', 'highlights', 'shadows', 'whites', 'blacks', 'contrast'] },
+  { title: 'Color', keys: ['temp', 'tint', 'vibrance', 'saturation'] },
+  { title: 'Detail', keys: ['sharpen', 'noise'] },
 ]
 
 const FIELDS = [
@@ -92,6 +101,9 @@ export default function EditingRoom() {
   const [dPreset, setDPreset] = useState('original')
   const [dMark, setDMark] = useState('')
   const [dSaved, setDSaved] = useState(false)
+  const [habitMsg, setHabitMsg] = useState('')
+  const [localUse, setLocalUse] = useState<{ photos: number; masks: number; heals: number; curves: number } | null>(null)
+  const [lightMsg, setLightMsg] = useState('')
   useEffect(() => {
     try {
       const pr = window.localStorage.getItem('camrhia:exportPreset')
@@ -107,6 +119,28 @@ export default function EditingRoom() {
     setDSaved(true)
     setTimeout(() => setDSaved(false), 2500)
   }
+  async function saveHabitsStyle() {
+    const sb = supabase
+    if (!sb || !userId || !brain) return
+    const usual: Record<string, number> = {}
+    for (const h of brain.habits) if (h.n / brain.fixed >= 0.4) usual[h.key] = Math.round((h.sum / brain.fixed) * 1000) / 1000
+    if (Object.keys(usual).length === 0) { setHabitMsg('Keep reviewing. A few more fixes and a pattern shows up.'); return }
+    const answers = { skin: 'yes', look: 'natural', tweak: usual, learnedAt: new Date().toISOString() }
+    const { data: row, error: e } = await sb.from('edit_signatures').insert({ owner_id: userId, name: 'My usual edit', answers, strength: 0.8 }).select('id, name, answers, strength').maybeSingle()
+    if (e || !row) { setHabitMsg(e?.message ?? 'Could not save the style.'); return }
+    setSigs((prev) => [...(prev ?? []), { ...(row as Signature), strength: Number((row as Signature).strength) }])
+    setHabitMsg('Saved as "My usual edit" in My styles.')
+  }
+  async function saveLightStyle(light: string, usual: Record<string, number>) {
+    const sb = supabase
+    if (!sb || !userId) return
+    const label = optionLabel('light', light) ?? light
+    const answers = { skin: 'yes', look: 'natural', light, tweak: usual, learnedAt: new Date().toISOString() }
+    const { data: row, error: e } = await sb.from('edit_signatures').insert({ owner_id: userId, name: `My ${label.toLowerCase()} edit`, answers, strength: 0.8 }).select('id, name, answers, strength').maybeSingle()
+    if (e || !row) { setLightMsg(e?.message ?? 'Could not save the style.'); return }
+    setSigs((prev) => [...(prev ?? []), { ...(row as Signature), strength: Number((row as Signature).strength) }])
+    setLightMsg(`Saved as "My ${label.toLowerCase()} edit" in My styles.`)
+  }
   const [rows, setRows] = useState<Row[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -117,6 +151,10 @@ export default function EditingRoom() {
   const [adding, setAdding] = useState<string | null>(null)
   const [shootId, setShootId] = useState<string | null>(null)
   const [teachFor, setTeachFor] = useState<string | null>(null)
+  const [histFor, setHistFor] = useState<string | null>(null)
+  const [importMsg, setImportMsg] = useState('')
+  const [styleMode, setStyleMode] = useState<null | 'build' | 'teach'>(null)
+  const [buildFor, setBuildFor] = useState<Signature | null>(null)
   const [stages, setStages] = useState<Record<string, { culled: number; edited: number }> | null>(null)
 
   async function loadStages(ids: string[]) {
@@ -151,6 +189,23 @@ export default function EditingRoom() {
       if (g.error) { setError(g.error.message); setRows([]) } else { setRows((g.data ?? []) as unknown as Row[]); void loadStages(((g.data ?? []) as unknown as Row[]).map((x) => x.id)) }
       setSigs(((sg.data ?? []) as Signature[]).map((s) => ({ ...s, strength: Number(s.strength) })))
       setCorr((co.data ?? []) as unknown as Correction[])
+      const le = await sb.from('gallery_photos').select('local_edits').not('local_edits', 'is', null).limit(3000)
+      if (!le.error) {
+        const out = { photos: 0, masks: 0, heals: 0, curves: 0 }
+        for (const r of (le.data ?? []) as { local_edits: { masks?: unknown[]; heals?: unknown[]; curve?: unknown[] } | null }[]) {
+          const l = r.local_edits
+          if (!l) continue
+          const m = l.masks?.length ?? 0
+          const h = l.heals?.length ?? 0
+          const c = l.curve && l.curve.length > 0 ? 1 : 0
+          if (m + h + c === 0) continue
+          out.photos++
+          out.masks += m
+          out.heals += h
+          out.curves += c
+        }
+        setLocalUse(out)
+      }
     })
   }, [router])
 
@@ -170,7 +225,7 @@ export default function EditingRoom() {
     if (!latest) return null
     const all = summarize(latest)
     const shoots = new Set(latest.map((c) => c.gallery_id)).size
-    const habits = all.habits.filter((h) => h.n >= 3).slice(0, 8)
+    const habits = all.habits.filter((h) => h.n >= 3)
 
     const byGallery = new Map<string, Correction[]>()
     for (const c of latest) {
@@ -194,9 +249,11 @@ export default function EditingRoom() {
       .map(([light, items]) => {
         const s = summarize(items)
         const top = s.habits.filter((h) => s.fixed >= 3 && h.n / s.fixed >= 0.4).slice(0, 3)
-        return { light, fixed: s.fixed, top }
+        const usual: Record<string, number> = {}
+        for (const h of s.habits) if (s.fixed >= 3 && h.n / s.fixed >= 0.4) usual[h.key] = Math.round((h.sum / s.fixed) * 1000) / 1000
+        return { light, fixed: s.fixed, top, usual }
       })
-      .filter((x) => x.top.length > 0)
+      .filter((x) => x.fixed > 0)
       .sort((a, b) => b.fixed - a.fixed)
 
     return { checked: all.checked, fixed: all.fixed, shoots, habits, scores, situations }
@@ -254,11 +311,32 @@ export default function EditingRoom() {
     const tweak: Record<string, number> = { ...((a.tweak ?? {}) as Record<string, number>) }
     for (const [k, v] of Object.entries(usual)) tweak[k] = Math.round(((tweak[k] ?? 0) + v) * 1000) / 1000
     for (const k of Object.keys(tweak)) if (!tweak[k]) delete tweak[k]
-    const answers = { ...a, tweak, learnedAt: new Date().toISOString() }
+    const answers = { ...a, tweak, learnedAt: new Date().toISOString(), versions: pushVersion(sig) }
     const { error: e } = await sb.from('edit_signatures').update({ answers }).eq('id', sig.id)
     setAdding(null)
     if (e) { setError(e.message); return }
     setSigs((prev) => (prev ?? []).map((s) => (s.id === sig.id ? { ...s, answers: answers as unknown as Signature['answers'] } : s)))
+  }
+
+  async function importStyleFile(f: File | undefined) {
+    const sb = supabase
+    if (!sb || !userId || !f) return
+    const r = parseStyleFile(await f.text(), f.name)
+    if ('error' in r) { setImportMsg(r.error); return }
+    const { data: row, error: e } = await sb.from('edit_signatures').insert({ owner_id: userId, name: r.name, answers: r.answers, strength: r.strength }).select('id, name, answers, strength').maybeSingle()
+    if (e || !row) { setImportMsg(e?.message ?? 'Could not import that style.'); return }
+    setSigs((prev) => [...(prev ?? []), { ...(row as Signature), strength: Number((row as Signature).strength) }])
+    setImportMsg(`Imported "${r.name}".`)
+  }
+
+  async function restoreVersion(s: Signature, v: StyleSnap) {
+    const sb = supabase
+    if (!sb) return
+    const answers = { ...v.answers, versions: pushVersion(s) }
+    const { error: e } = await sb.from('edit_signatures').update({ name: v.name, answers, strength: v.strength }).eq('id', s.id)
+    if (e) { setError(e.message); return }
+    setSigs((prev) => (prev ?? []).map((x) => (x.id === s.id ? { ...x, name: v.name, answers: answers as unknown as Signature['answers'], strength: v.strength } : x)))
+    setHistFor(null)
   }
 
   async function saveRename(id: string) {
@@ -320,57 +398,123 @@ export default function EditingRoom() {
 
         {tab === 'styles' && (
           <div className="mt-8">
-            <p className="max-w-xl text-ink-soft">Teach Camri your look with photos you have already edited. Pick a style at the start of a shoot and the editing room starts from it.</p>
+            <p className="font-fraunces text-3xl text-ink">My styles</p>
+            <p className="mt-1 max-w-xl text-ink-soft">Your looks. Pick one at the start of a shoot and the editing room starts from it.</p>
 
-            <div className="mt-8">
-              {userId && <TeachStyle userId={userId} onCreated={(sg) => setSigs((prev) => [...(prev ?? []), sg])} />}
-            </div>
-
-
-            {sigs === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
-            {sigs && sigs.length === 0 && (
-              <p className="mt-8 rounded-2xl border border-white/70 bg-white/60 p-8 text-ink-soft">No signature styles yet. Create your first one above.</p>
+            {styleMode === 'build' && userId && (
+              <div className="room-light mt-8">
+                <StyleBuilder
+                  key={buildFor?.id ?? 'new'}
+                  userId={userId}
+                  target={buildFor}
+                  onClose={() => { setStyleMode(null); setBuildFor(null) }}
+                  onSaved={(sg) => {
+                    setSigs((prev) => (buildFor ? (prev ?? []).map((x) => (x.id === sg.id ? sg : x)) : [...(prev ?? []), sg]))
+                    setStyleMode(null)
+                    setBuildFor(null)
+                  }}
+                />
+              </div>
             )}
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {(sigs ?? []).map((s) => {
-                const a = s.answers as Record<string, unknown>
-                const bits = FIELDS.map((f) => optionLabel(f.key, a[f.key])).filter(Boolean)
-                return (
-                  <div key={s.id} className="rounded-2xl border border-white/70 bg-white/60 p-6">
-                    {renaming === s.id ? (
-                      <div className="flex gap-2">
-                        <input
-                          autoFocus
-                          value={renameVal}
-                          onChange={(e) => setRenameVal(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') void saveRename(s.id) }}
-                          className="w-full rounded-lg border border-white/70 bg-white/70 px-3 py-2 text-sm text-ink outline-none focus:border-twilight"
-                        />
-                        <button className={quiet} onClick={() => saveRename(s.id)}>Save</button>
-                      </div>
-                    ) : (
-                      <p className="font-fraunces text-xl text-ink">{s.name}</p>
-                    )}
-                    <p className="mt-2 text-sm text-ink-soft">{typeof a.about === 'string' && a.about ? a.about : bits.length ? bits.join(' · ') : 'Your custom tweaks'}</p>
-                    {(a.learned as { fp?: { n?: number } } | undefined)?.fp?.n ? <p className="mt-1 text-xs text-ink-soft">Learned from {(a.learned as { fp: { n: number } }).fp.n} photos</p> : null}
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      <button className={quiet} onClick={() => setTeachFor(teachFor === s.id ? null : s.id)}>Teach more</button>
-                      <button className={quiet} onClick={() => { setRenaming(s.id); setRenameVal(s.name) }}>Rename</button>
-                      <button className={quiet} onClick={() => removeStyle(s)}>Delete</button>
-                    </div>
-                    {teachFor === s.id && userId && (
-                      <TeachStyle
-                        userId={userId}
-                        target={s}
-                        onUpdated={(u) => setSigs((prev) => (prev ?? []).map((x) => (x.id === u.id ? u : x)))}
-                        onClose={() => setTeachFor(null)}
-                      />
-                    )}
+            {styleMode === 'teach' && userId && (
+              <div className="mt-8">
+                <button className="text-sm text-ink-soft transition hover:text-ink" onClick={() => setStyleMode(null)}>← All styles</button>
+                <div className="mt-4">
+                  <TeachStyle userId={userId} onCreated={(sg) => setSigs((prev) => [...(prev ?? []), sg])} />
+                </div>
+              </div>
+            )}
+
+            {styleMode === null && (
+              <>
+                <div className="mt-8 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl border border-white/70 bg-white/60 p-6">
+                    <p className="font-fraunces text-2xl text-ink">Build a style</p>
+                    <p className="mt-2 text-sm text-ink-soft">Set every dial yourself and see it on one of your own photos. For when you know exactly the look you want.</p>
+                    <button className={`${primary} mt-5`} onClick={() => { setBuildFor(null); setStyleMode('build') }}>Build a style</button>
                   </div>
-                )
-              })}
-            </div>
+                  <div className="rounded-2xl border border-white/70 bg-white/60 p-6">
+                    <p className="font-fraunces text-2xl text-ink">Teach Camri from photos</p>
+                    <p className="mt-2 text-sm text-ink-soft">Drop in photos you have already edited and Camri learns the look from them.</p>
+                    <button className={`${quiet} mt-5`} onClick={() => setStyleMode('teach')}>Teach from photos</button>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <label className={`${quiet} cursor-pointer`}>
+                    Import a style file
+                    <input type="file" accept=".json,.xmp" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; void importStyleFile(f) }} />
+                  </label>
+                  <span className="text-xs text-ink-soft">A Camrhia style file, or a Lightroom preset (.xmp).</span>
+                  {importMsg && <span className="text-sm text-ink-soft">{importMsg}</span>}
+                </div>
+
+                {sigs === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
+                {sigs && sigs.length === 0 && (
+                  <p className="mt-8 rounded-2xl border border-white/70 bg-white/60 p-8 text-ink-soft">No styles yet. Build one, or teach Camri from photos.</p>
+                )}
+
+                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                  {(sigs ?? []).map((s) => {
+                    const a = s.answers as unknown as Record<string, unknown>
+                    const bits = FIELDS.map((f) => optionLabel(f.key, a[f.key])).filter(Boolean)
+                    const learnedN = (a.learned as { fp?: { n?: number } } | undefined)?.fp?.n
+                    return (
+                      <div key={s.id} className="rounded-2xl border border-white/70 bg-white/60 p-6">
+                        {renaming === s.id ? (
+                          <div className="flex gap-2">
+                            <input
+                              autoFocus
+                              value={renameVal}
+                              onChange={(e) => setRenameVal(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') void saveRename(s.id) }}
+                              className="w-full rounded-lg border border-white/70 bg-white/70 px-3 py-2 text-sm text-ink outline-none focus:border-twilight"
+                            />
+                            <button className={quiet} onClick={() => saveRename(s.id)}>Save</button>
+                          </div>
+                        ) : (
+                          <p className="font-fraunces text-xl text-ink">{s.name}</p>
+                        )}
+                        <p className="mt-2 text-sm text-ink-soft">{typeof a.about === 'string' && a.about ? a.about : bits.length ? bits.join(' · ') : 'Your custom tweaks'}</p>
+                        <p className="mt-1 text-xs text-ink-soft">{learnedN ? `Learned from ${learnedN} photos` : a.built ? 'Built by you' : 'Your settings'}</p>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <button className={quiet} onClick={() => { setBuildFor(s); setStyleMode('build') }}>Edit</button>
+                          <button className={quiet} onClick={() => setTeachFor(teachFor === s.id ? null : s.id)}>Teach more</button>
+                          <button className={quiet} onClick={() => { setRenaming(s.id); setRenameVal(s.name) }}>Rename</button>
+                          <button className={quiet} onClick={() => exportStyle(s)}>Export</button>
+                          {Array.isArray(a.versions) && (a.versions as unknown[]).length > 0 && (
+                            <button className={quiet} onClick={() => setHistFor(histFor === s.id ? null : s.id)}>History</button>
+                          )}
+                          <button className={quiet} onClick={() => removeStyle(s)}>Delete</button>
+                        </div>
+                        {histFor === s.id && Array.isArray(a.versions) && (
+                          <div className="mt-4 border-t border-white/60 pt-4">
+                            <p className="text-xs uppercase tracking-[0.18em] text-ink-soft">Earlier versions</p>
+                            <ul className="mt-2 space-y-2">
+                              {(a.versions as StyleSnap[]).map((v, i) => (
+                                <li key={`${v.at}-${i}`} className="flex items-center justify-between gap-3 text-sm text-ink-soft">
+                                  <span>{new Date(v.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} · {v.name}</span>
+                                  <button className={quiet} onClick={() => void restoreVersion(s, v)}>Restore</button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {teachFor === s.id && userId && (
+                          <TeachStyle
+                            userId={userId}
+                            target={s}
+                            onUpdated={(u) => setSigs((prev) => (prev ?? []).map((x) => (x.id === u.id ? u : x)))}
+                            onClose={() => setTeachFor(null)}
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -432,74 +576,133 @@ export default function EditingRoom() {
 
         {tab === 'brain' && (
           <div className="mt-8">
-            <div className="flex items-center gap-5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/15_thinking_peek.png" alt="" className="h-28 w-auto shrink-0" />
-              <div>
-                <p className="font-fraunces text-3xl text-ink">My habits</p>
-                <p className="mt-1 max-w-xl text-ink-soft">The fixes you keep making while you review photos. The more you fix, the closer I get to your taste.</p>
-              </div>
-            </div>
+            <p className="font-fraunces text-3xl text-ink">My habits</p>
+            <p className="mt-1 max-w-xl text-ink-soft">The fixes you make most while reviewing photos.</p>
 
             {brain === null && <p className="mt-8 text-sm text-ink-soft">Loading…</p>}
             {brain && brain.checked === 0 && (
               <p className="mt-8 rounded-2xl border border-white/70 bg-white/60 p-8 text-ink-soft">
-                Nothing yet. Review a few photos in a shoot and fix what you want to change. Camri starts noticing your habits right away.
+                Nothing yet. Review a few photos in a shoot and fix what you want to change. Your habits show up here.
               </p>
             )}
-            {brain && brain.checked > 0 && (
-              <>
-                <p className="mt-10 font-fraunces text-xl text-ink">Your habits by light</p>
-                {brain.situations.length === 0 ? (
-                  <p className="mt-3 text-ink-soft">Not enough fixes yet to see a pattern for each kind of light. Keep reviewing and they show up here.</p>
-                ) : (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {brain.situations.map((sit) => (
-                      <div key={sit.light} className="rounded-2xl border border-white/70 bg-white/60 p-5">
-                        <p className="text-lg text-ink">{optionLabel('light', sit.light) ?? sit.light}</p>
-                        <ul className="mt-3 space-y-1 text-sm text-ink-soft">
-                          {sit.top.map((h) => <li key={h.key}>{h.phrase} · {h.n} of {sit.fixed} photos</li>)}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            {brain && brain.checked > 0 && (() => {
+              const often = brain.habits.filter((h) => h.n / brain.fixed >= 0.4).slice(0, 4).map((h) => h.phrase.toLowerCase())
+              const typical = often.length === 0 ? '' : often.length === 1 ? often[0] : `${often.slice(0, -1).join(', ')} and ${often[often.length - 1]}`
+              return (
+                <>
+                  <p className="mt-6 text-sm text-ink-soft">
+                    {brain.checked} photos reviewed across {brain.shoots} {brain.shoots === 1 ? 'shoot' : 'shoots'}. You fixed {brain.fixed} of them.
+                  </p>
 
-                <p className="mt-10 font-fraunces text-xl text-ink">Your habits overall</p>
-                {brain.habits.length === 0 ? (
-                  <p className="mt-3 text-ink-soft">Not enough fixes yet to see a pattern. Keep reviewing and they show up here.</p>
-                ) : (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {brain.habits.map((h) => (
-                      <div key={h.key} className="rounded-2xl border border-white/70 bg-white/60 p-5">
-                        <p className="text-lg text-ink">{h.phrase}</p>
-                        <p className="mt-1 text-sm text-ink-soft">{h.n} of {brain.fixed} photos you fixed</p>
+                  {typical && (
+                    <div className="mt-6 rounded-2xl border border-white/70 bg-white/60 p-6">
+                      <p className="text-xs uppercase tracking-[0.18em] text-ink-soft">Your typical edit</p>
+                      <p className="mt-2 font-fraunces text-2xl text-ink">On a typical photo you {typical}.</p>
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <button className={primary} onClick={() => void saveHabitsStyle()}>Save this as a style</button>
+                        {habitMsg && <span className="text-sm text-ink-soft">{habitMsg}</span>}
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {suggestions.length > 0 && (
-                  <>
-                    <p className="mt-10 font-fraunces text-xl text-ink">Make Camri&apos;s edits yours</p>
-                    <p className="mt-2 max-w-xl text-ink-soft">You keep making the same fixes. Add them to your style and they happen on their own next time.</p>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      {suggestions.map(({ sig, fixed, useful, usual }) => (
-                        <div key={sig.id} className="rounded-2xl border border-white/70 bg-white/60 p-5">
-                          <p className="font-fraunces text-lg text-ink">{sig.name}</p>
-                          <ul className="mt-3 space-y-1 text-sm text-ink-soft">
-                            {useful.map((h) => <li key={h.key}>{h.phrase} · {h.n} of {fixed} photos</li>)}
-                          </ul>
-                          <button className={`${primary} mt-4`} disabled={adding === sig.id} onClick={() => addToStyle(sig, usual)}>
-                            {adding === sig.id ? 'Adding…' : 'Add these to this style'}
-                          </button>
-                        </div>
-                      ))}
                     </div>
-                  </>
-                )}
-              </>
-            )}
+                  )}
+
+                  {brain.habits.length === 0 ? (
+                    <p className="mt-8 text-ink-soft">Not enough fixes yet to see a pattern. Keep reviewing and they show up here.</p>
+                  ) : (
+                    HABIT_GROUPS.map((g) => {
+                      const list = brain.habits.filter((h) => g.keys.includes(h.key))
+                      if (list.length === 0) return null
+                      return (
+                        <div key={g.title}>
+                          <p className="mt-10 font-fraunces text-xl text-ink">{g.title}</p>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            {list.map((h) => {
+                              const share = h.n / brain.fixed
+                              const t = TOOLS.find((x) => (x.key as string) === h.key)
+                              const ui = t ? Math.round((h.sum / h.n / t.scale) * 100) : 0
+                              const label = share >= 0.7 ? 'Almost always' : share >= 0.4 ? 'Often' : 'Sometimes'
+                              return (
+                                <div key={h.key} className="rounded-2xl border border-white/70 bg-white/60 p-5">
+                                  <div className="flex items-baseline justify-between gap-3">
+                                    <p className="text-lg text-ink">{h.phrase}</p>
+                                    {ui !== 0 && <p className="text-sm text-ink-soft">typically {ui > 0 ? '+' : ''}{ui}</p>}
+                                  </div>
+                                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/10">
+                                    <div className="h-full rounded-full bg-[var(--color-twilight)]" style={{ width: `${Math.round(share * 100)}%` }} />
+                                  </div>
+                                  <p className="mt-2 text-sm text-ink-soft">{label} · {h.n} of {brain.fixed} fixed photos</p>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+
+                  <p className="mt-10 font-fraunces text-xl text-ink">By kind of light</p>
+                  {brain.situations.length === 0 ? (
+                    <p className="mt-3 max-w-xl text-ink-soft">Set the light for each scene when you split a shoot, and your habits for each kind of light show up here.</p>
+                  ) : (
+                    <>
+                      <p className="mt-2 max-w-xl text-sm text-ink-soft">What you fix most under each kind of light. Three fixes in the same light and a pattern shows up.</p>
+                      {lightMsg && <p className="mt-2 text-sm text-ink-soft">{lightMsg}</p>}
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        {brain.situations.map((sit) => {
+                          const name = optionLabel('light', sit.light) ?? sit.light
+                          return (
+                            <div key={sit.light} className="rounded-2xl border border-white/70 bg-white/60 p-5">
+                              <p className="text-lg text-ink">{name}</p>
+                              {sit.top.length === 0 ? (
+                                <p className="mt-3 text-sm text-ink-soft">{sit.fixed} {sit.fixed === 1 ? 'fix' : 'fixes'} so far. {Math.max(1, 3 - sit.fixed)} more and a pattern shows up.</p>
+                              ) : (
+                                <>
+                                  <ul className="mt-3 space-y-1 text-sm text-ink-soft">
+                                    {sit.top.map((h) => <li key={h.key}>{h.phrase} · {h.n} of {sit.fixed} photos</li>)}
+                                  </ul>
+                                  <button className={`${primary} mt-4`} onClick={() => void saveLightStyle(sit.light, sit.usual)}>Make this my {name.toLowerCase()} style</button>
+                                </>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  {localUse && localUse.photos > 0 && (
+                    <>
+                      <p className="mt-10 font-fraunces text-xl text-ink">Local edits</p>
+                      <p className="mt-2 max-w-xl text-ink-soft">
+                        You touched up {localUse.photos} {localUse.photos === 1 ? 'photo' : 'photos'} by hand:
+                        {localUse.masks > 0 ? ` ${localUse.masks} ${localUse.masks === 1 ? 'mask' : 'masks'}` : ''}
+                        {localUse.heals > 0 ? `${localUse.masks > 0 ? ',' : ''} ${localUse.heals} spot ${localUse.heals === 1 ? 'fix' : 'fixes'}` : ''}
+                        {localUse.curves > 0 ? `${localUse.masks + localUse.heals > 0 ? ',' : ''} ${localUse.curves} tone ${localUse.curves === 1 ? 'curve' : 'curves'}` : ''}.
+                      </p>
+                    </>
+                  )}
+
+                  {suggestions.length > 0 && (
+                    <>
+                      <p className="mt-10 font-fraunces text-xl text-ink">Add your habits to a style</p>
+                      <p className="mt-2 max-w-xl text-ink-soft">You keep making the same fixes. Add them to a style and they happen on their own next time.</p>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        {suggestions.map(({ sig, fixed, useful, usual }) => (
+                          <div key={sig.id} className="rounded-2xl border border-white/70 bg-white/60 p-5">
+                            <p className="font-fraunces text-lg text-ink">{sig.name}</p>
+                            <ul className="mt-3 space-y-1 text-sm text-ink-soft">
+                              {useful.map((h) => <li key={h.key}>{h.phrase} · {h.n} of {fixed} photos</li>)}
+                            </ul>
+                            <button className={`${primary} mt-4`} disabled={adding === sig.id} onClick={() => addToStyle(sig, usual)}>
+                              {adding === sig.id ? 'Adding…' : 'Add these to this style'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              )
+            })()}
           </div>
         )}
       </div>

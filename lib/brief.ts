@@ -1,7 +1,8 @@
 import type { Adjust } from '@/lib/enhance'
+import type { CurvePt } from '@/lib/localEdit'
 
 export type SceneDef = { id: string; name: string; startId: string; light: string }
-export type Brief = { type?: string; style?: string; setting?: string; light?: string; mood?: string; skin?: string; scenes?: SceneDef[]; look?: string; tweak?: Adjust }
+export type Brief = { type?: string; style?: string; setting?: string; light?: string; mood?: string; skin?: string; scenes?: SceneDef[]; look?: string; tweak?: Adjust; curve?: CurvePt[]; variants?: Record<string, Adjust>; auto?: { types?: string[] } }
 export type Signature = { id: string; name: string; answers: Brief; strength: number }
 export type Option = { value: string; label: string; blurb?: string }
 export type Question = { key: keyof Brief; title: string; hint?: string; options: Option[] }
@@ -106,5 +107,6 @@ function add(a: Adjust, b: Adjust | undefined): Adjust {
 export function briefAdjust(b: Brief): { adjust: Adjust | undefined; skin: boolean } {
   let a: Adjust = {}
   a = add(a, b.light ? LIGHT[b.light] : undefined)
+  a = add(a, b.light ? b.variants?.[b.light] : undefined)
   return { adjust: Object.keys(a).length > 0 ? a : undefined, skin: b.skin === 'yes' }
 }

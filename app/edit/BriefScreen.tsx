@@ -70,6 +70,16 @@ export default function BriefScreen({
   const cols = nOpts <= 2 ? 2 : nOpts <= 4 ? nOpts : nOpts <= 6 ? 3 : 4
 
   function pick(v: string) {
+    if (q.key === 'type') {
+      const m = signatures.find((x) => x.answers.auto?.types?.includes(v))
+      if (m) {
+        setB({ ...clean({ ...m.answers }), type: v })
+        setSig(m)
+        setSavedAs(null)
+        setI(QS.length - 1)
+        return
+      }
+    }
     setB({ ...b, [q.key]: v })
     setSig(null)
     setSavedAs(null)
@@ -131,7 +141,7 @@ export default function BriefScreen({
             <div className="mt-3 flex flex-wrap gap-2">
               {signatures.map((s) => (
                 <div key={s.id} className="flex items-center overflow-hidden rounded-full border border-white/15 bg-[#151518]">
-                  <button className="px-4 py-2 text-sm text-white hover:bg-white/5" onClick={() => useSignature(s)}>{s.name}</button>
+                  <button className="px-4 py-2 text-sm text-white hover:bg-white/5" onClick={() => useSignature(s)}>{s.name}{s.answers.auto?.types?.length ? <span className="ml-2 text-[11px] text-white/40">auto</span> : null}</button>
                   <button
                     className="px-3 py-2 text-sm text-white/35 hover:text-white"
                     aria-label={`Delete ${s.name}`}

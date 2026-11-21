@@ -969,7 +969,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
           if (dl.error || !dl.data) throw dl.error ?? new Error('Could not load the photo.')
           const lg = lightMap[p.id]
           const pa = lg ? briefAdjust({ ...brief, light: lg }) : { adjust, skin }
-          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: addAdj(addAdj(pa.adjust, tweak), over?.adj), skin: pa.skin })
+          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: addAdj(addAdj(pa.adjust, tweak), over?.adj), skin: pa.skin, local: brief.curve ? { masks: [], heals: [], curve: brief.curve } : undefined })
           const dir = p.orig_path.slice(0, p.orig_path.lastIndexOf('/'))
           const eFull = `${dir}/enh-full.jpg`
           const eWeb = `${dir}/enh-web.jpg`

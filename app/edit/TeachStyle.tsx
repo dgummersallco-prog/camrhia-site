@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { analyzeFiles, deriveStyle, mergeFingerprints, type Fingerprint } from '@/lib/styleLearn'
 import { QUESTIONS, STYLE_LOOK, type Signature } from '@/lib/brief'
+import { TOOLS } from '@/lib/tools'
 
 const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
 const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-ink-soft transition hover:border-white/35 hover:text-ink disabled:opacity-40'
@@ -161,6 +162,18 @@ export default function TeachStyle({
           {(phase === 'ready' || phase === 'saving') && derived && (
             <div className="mt-4">
               <p className="font-fraunces text-lg text-ink">{derived.about}</p>
+              {(() => {
+                const t = derived.tweak as Record<string, number>
+                const chips = TOOLS.map((x) => ({ label: x.label, ui: Math.round(((t[x.key as string] ?? 0) / x.scale) * 100) })).filter((c) => c.ui !== 0)
+                if (chips.length === 0) return null
+                return (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {chips.map((c) => (
+                      <span key={c.label} className="rounded-full border border-white/70 bg-white/70 px-3 py-1 text-xs text-ink">{c.label} {c.ui > 0 ? `+${c.ui}` : c.ui}</span>
+                    ))}
+                  </div>
+                )
+              })()}
               {!target && (
                 <input
                   value={name}

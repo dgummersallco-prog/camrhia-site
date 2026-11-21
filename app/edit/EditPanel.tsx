@@ -137,7 +137,7 @@ export default function EditPanel({
       try {
         const lg = lightOf[selId] ?? ''
         const base = briefAdjust(lg ? { ...brief, light: lg } : brief)
-        const url = await renderPreview(bmp, lookId, strength, 900, addAdj(base.adjust, tweak), base.skin)
+        const url = await renderPreview(bmp, lookId, strength, 900, addAdj(base.adjust, tweak), base.skin, undefined, brief.curve ? { masks: [], heals: [], curve: brief.curve } : undefined)
         if (cancelled) { URL.revokeObjectURL(url); return }
         setAfterUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url })
       } catch {

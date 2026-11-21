@@ -200,7 +200,7 @@ function Histogram({ url }: { url: string | null }) {
   )
 }
 
-function CurveEditor({ pts, onChange }: { pts: CurvePt[]; onChange: (p: CurvePt[]) => void }) {
+export function CurveEditor({ pts, onChange }: { pts: CurvePt[]; onChange: (p: CurvePt[]) => void }) {
   const ref = useRef<SVGSVGElement | null>(null)
   const drag = useRef<number | null>(null)
   const cl = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
@@ -529,7 +529,7 @@ export default function ReviewStep({
           const lg = light[r.id]
           const b = briefAdjust(lg ? { ...brief, light: lg } : brief)
           const tot = mine.raw ? mine : addAdj(addAdj(b.adjust, baseTweak), mine)
-          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: tot, skin: b.skin, crop: r.crop ?? undefined, local: r.local_edits ?? undefined })
+          const out = await enhancePhoto(dl.data, srcPath, { id: lookId, strength, adjust: tot, skin: b.skin, crop: r.crop ?? undefined, local: r.local_edits ?? (brief.curve ? { masks: [], heals: [], curve: brief.curve } : undefined) })
           const dir = r.orig_path.slice(0, r.orig_path.lastIndexOf('/'))
           const v = Date.now().toString(36) + i
           const np = { full: `${dir}/enh-full-${v}.jpg`, web: `${dir}/enh-web-${v}.jpg`, thumb: `${dir}/enh-thumb-${v}.jpg` }
@@ -783,7 +783,7 @@ export default function ReviewStep({
     let cancelled = false
     setManual(row.review_adj ?? {})
     setCrop(row.crop ?? null)
-    setLocal(row.local_edits ?? emptyLocal())
+    setLocal(row.local_edits ?? (brief.curve ? { ...emptyLocal(), curve: brief.curve } : emptyLocal()))
     setPen(null)
     setSelMask(null)
     hist.current = { past: [], future: [] }
