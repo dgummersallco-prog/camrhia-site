@@ -1326,7 +1326,7 @@ export default function GalleryManagePage() {
   const thumbOf = (id: string) => { const ph = photos.find((x) => x.id === id); return ph?.thumb_path ? thumbs[ph.thumb_path] : undefined }
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="scene-accent min-h-screen bg-paper">
       <DashScenes />
 
       <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row">

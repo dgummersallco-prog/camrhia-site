@@ -617,8 +617,9 @@ export default function GalleryViewPage() {
       const sc = isSvg ? ((target as unknown as SVGGraphicsElement).getScreenCTM?.()?.a ?? 1) : 1
       const fs = (parseFloat(cs.fontSize) || 16) * sc
       const colr = isSvg && cs.fill && cs.fill !== 'none' ? cs.fill : cs.color
-      const w = Math.min(Math.max(r.width + 24, 60), window.innerWidth - 12)
-      const hgt = Math.max(r.height + 6, fs * 1.3)
+      const isInit = k === 'initials'
+      const w = isInit ? 280 : Math.min(Math.max(r.width + 24, 60), window.innerWidth - 12)
+      const hgt = isInit ? 76 : Math.max(r.height + 6, fs * 1.3)
       const inp = document.createElement('input')
       inp.type = 'text'
       inp.maxLength = key === 'brand' ? 40 : key === 'initials' ? 4 : 60
@@ -626,33 +627,28 @@ export default function GalleryViewPage() {
       const shownTxt = cs.textTransform === 'uppercase' ? orig.toUpperCase() : orig
       const mc = document.createElement('canvas').getContext('2d')
       let ls = 0
-      let fs2 = fs
+      let fs2 = isInit ? 48 : fs
       if (multi && mc) {
         mc.font = `${cs.fontStyle} ${cs.fontWeight} ${fs}px ${cs.fontFamily}`
         const tw = mc.measureText(shownTxt).width
         if (tw > w - 8) fs2 = (fs * (w - 8)) / tw
       }
-      if (!multi && mc && shownTxt.length > 1) {
+      if (!multi && !isInit && isSvg && mc && shownTxt.length > 1) {
         mc.font = `${cs.fontStyle} ${cs.fontWeight} ${fs}px ${cs.fontFamily}`
         ls = Math.min(40, Math.max(-2, (r.width - mc.measureText(shownTxt).width) / shownTxt.length))
+      } else if (!isInit && !isSvg) {
+        ls = (parseFloat(cs.letterSpacing) || 0) * (fs2 / fs)
       }
-      inp.style.cssText = 'position:fixed;z-index:2147483646;box-sizing:border-box;padding:0;margin:0;border:0;border-radius:0;background:transparent;outline:none;box-shadow:none;text-align:center'
-      inp.style.fontFamily = cs.fontFamily
-      inp.style.fontSize = fs2 + 'px'
-      inp.style.fontWeight = cs.fontWeight
-      inp.style.fontStyle = cs.fontStyle
-      inp.style.textTransform = cs.textTransform
-      inp.style.letterSpacing = ls.toFixed(2) + 'px'
-      inp.style.color = colr
-      inp.style.caretColor = colr
-      inp.style.width = w + 'px'
-      inp.style.height = hgt + 'px'
-      inp.style.left = r.left + r.width / 2 - w / 2 + 'px'
-      inp.style.top = r.top + r.height / 2 - hgt / 2 + 'px'
-      target.style.visibility = 'hidden'
-      hidden = target
-      hiddenMore = peers.filter((e) => e !== target)
-      hiddenMore.forEach((e) => { e.style.visibility = 'hidden' })
+      if (!document.getElementById('cam-edit-style')) { const st = document.createElement('style'); st.id = 'cam-edit-style'; st.textContent = '.cam-edit::selection{background:#B08D57;color:#fff}'; document.head.appendChild(st) }
+      inp.className = 'cam-edit'
+      inp.style.cssText = 'position:fixed;z-index:2147483646;box-sizing:border-box;margin:0;padding:10px 14px;border:2px solid #B08D57;border-radius:12px;background:#FFFDF9;color:#2A1F24;caret-color:#2A1F24;outline:none;box-shadow:0 10px 30px rgba(42,31,36,0.28);font:500 16px system-ui,-apple-system,Segoe UI,sans-serif;text-align:left;text-transform:none;letter-spacing:0'
+      const bw = Math.min(360, window.innerWidth - 24)
+      inp.style.width = bw + 'px'
+      const above = r.top - 58
+      inp.style.top = (above >= 8 ? above : Math.min(r.bottom + 8, window.innerHeight - 56)) + 'px'
+      inp.style.left = Math.max(12, Math.min(window.innerWidth - bw - 12, r.left + r.width / 2 - bw / 2)) + 'px'
+      hidden = null
+      hiddenMore = []
       let finished = false
       const mid = k === 'moment' ? target.getAttribute('data-mid') : null
       const send = (t: string) => {
@@ -808,6 +804,8 @@ export default function GalleryViewPage() {
   })()
   const pos = `${focal.x}% ${focal.y}%`
   const fpos = (id: string) => (focals[id] ? `${focals[id].x}% ${focals[id].y}%` : undefined)
+  const cineBg = (() => { const v = ((designPreview ?? data.design ?? null) as { coverBg?: string } | null)?.coverBg; return v && /^#[0-9a-fA-F]{6}$/.test(v) ? v : '#000000' })()
+  const cineLight = (() => { const n = parseInt(cineBg.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 > 0.6 })()
   const headCls = look.font === 'fraunces' ? 'font-fraunces' : ''
   const headStyle: CSSProperties = { ...(look.font === 'fraunces' ? {} : { fontFamily: look.font }), fontWeight: look.weight, letterSpacing: look.track, textTransform: look.upper ? 'uppercase' : 'none', fontStyle: look.italic ? 'italic' : 'normal' }
   const cover = data.photos.find((p) => p.id === (coverOverride ?? data.coverId)) ?? data.photos[0]
@@ -1337,14 +1335,14 @@ export default function GalleryViewPage() {
           </div>
         )
       })() : coverKind === 'cinema' && cover?.web ? (
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: '#000' }}>
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', background: cineBg }}>
           <div className="absolute overflow-hidden" style={{ left: 0, right: 0, top: '4.1cqw', height: '39.1cqw' }}>
             <div className="absolute inset-0">{imgEl}</div>
           </div>
           <h1 className="sr-only">{coverTitle}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-            <text data-gk="title" x="450" y="417.6" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 22, fill: 'currentColor', color: '#F1E6D2', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(304, 27.64 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacing">{String(coverTitle).toUpperCase()}</text>
-            {coverSub && <text data-gk="brand" x="450.5" y="436.6" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 7.9, fill: 'currentColor', color: 'rgba(241,230,210,0.8)', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(147, 11.28 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+            <text data-gk="title" x="450" y="417.6" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 22, fill: 'currentColor', color: cineLight ? '#2A1F24' : '#F1E6D2', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(304, 27.64 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacing">{String(coverTitle).toUpperCase()}</text>
+            {coverSub && <text data-gk="brand" x="450.5" y="436.6" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 7.9, fill: 'currentColor', color: cineLight ? 'rgba(42,31,36,0.75)' : 'rgba(241,230,210,0.8)', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(147, 11.28 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
           </svg>
         </div>
 ) : coverKind === 'text' || !cover?.web ? (

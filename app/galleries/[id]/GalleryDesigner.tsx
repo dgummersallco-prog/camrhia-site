@@ -476,7 +476,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                 </div>
               )}
             </div>
-            <button type="button" onClick={undo} disabled={histN === 0} className="h-[42px] rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight disabled:cursor-default disabled:opacity-40 disabled:hover:border-line">↶ Undo</button>
+            <button type="button" onClick={undo} disabled={histN === 0} className="inline-flex h-[42px] items-center gap-2 rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight disabled:cursor-default disabled:opacity-40 disabled:hover:border-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>Undo</button>
           <div className="flex overflow-hidden h-[42px] rounded-xl border border-line bg-white text-sm">
             {(['desktop', 'phone'] as const).map((x) => (
               <button key={x} type="button" onClick={() => setDevice(x)} className={'px-4 font-medium transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
@@ -545,8 +545,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                   {pick.key === 'moment' && pick.mid ? (
                     <div className="space-y-3 border-t border-[#EFE4D8] pt-3">
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => rowMove(-1)} className="flex-1 rounded-full border border-[#E8DDD0] bg-white px-2 py-1.5 text-xs text-ink hover:border-[#8C6B3F]">↑ Up a row</button>
-                        <button type="button" onClick={() => rowMove(1)} className="flex-1 rounded-full border border-[#E8DDD0] bg-white px-2 py-1.5 text-xs text-ink hover:border-[#8C6B3F]">↓ Down a row</button>
+                        <button type="button" onClick={() => rowMove(-1)} className="flex-1 rounded-full border border-[#E8DDD0] bg-white px-2 py-1.5 text-xs text-ink hover:border-twilight">↑ Up a row</button>
+                        <button type="button" onClick={() => rowMove(1)} className="flex-1 rounded-full border border-[#E8DDD0] bg-white px-2 py-1.5 text-xs text-ink hover:border-twilight">↓ Down a row</button>
                       </div>
                       <div className="text-xs text-ink-soft">Alignment
                         <div className="mt-1 flex rounded-full bg-[#F3E9DD] p-1">
@@ -557,7 +557,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                       </div>
                       <button type="button" role="switch" aria-checked={!!pick.line} onClick={() => void sectionLine(!pick.line)} className="flex w-full items-center justify-between text-xs text-ink">
                         <span>Divider line</span>
-                        <span className={'relative h-5 w-9 rounded-full transition-colors ' + (pick.line ? 'bg-[#8C6B3F]' : 'bg-[#DCD2C6]')}>
+                        <span className={'relative h-5 w-9 rounded-full transition-colors ' + (pick.line ? 'bg-twilight' : 'bg-[#DCD2C6]')}>
                           <span className={'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ' + (pick.line ? 'left-[18px]' : 'left-0.5')} />
                         </span>
                       </button>
