@@ -104,6 +104,18 @@ const accentBtn = 'rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_13
 const ghostBtn = 'rounded-xl border border-white/80 bg-white/60 px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-white/80'
 const ringOn = 'border-[rgb(var(--scene-b,201_133_136))] ring-2 ring-[rgb(var(--scene-b,201_133_136))]'
 const fam = (k: string) => FONT_OPTIONS[k]?.family ?? 'serif'
+const DESIGN_PATHS: Record<string, string[]> = {
+  nav: ['explore', 'layout'], galleries: ['galindex', 'layout'], photos: ['galpage', 'layout'], social: ['socialDesign'], faq: ['faqDesign'],
+  contact: ['contactDesign'], testimonials: ['testiDesign'], pricing_page: ['pricing', 'pageDesign'], pricing_section: ['pricing', 'sectionDesign'],
+  book: ['bookDesign'], galleries_section: ['galSection'], blog_list: ['blog', 'listDesign'], blog_post: ['blog', 'postDesign'],
+  about_page: ['about', 'pageDesign'], about_section: ['about', 'sectionDesign'],
+}
+const getPath = (x: Record<string, any>, p: string[]): unknown => p.reduce<any>((o, k) => (o == null ? o : o[k]), x)
+function setPath(x: Record<string, any>, p: string[], v: string) {
+  let o = x
+  for (let i = 0; i < p.length - 1; i++) o = (o[p[i]] = { ...(o[p[i]] ?? {}) })
+  o[p[p.length - 1]] = v
+}
 const fname = (k: string) => { const o = FONT_OPTIONS[k] as unknown as Record<string, string> | undefined; return o?.label ?? o?.name ?? k }
 const FONT_IDS = Object.keys(FONT_OPTIONS)
 type Pick = { key: string; text: string; left: number; top: number; color: string }
@@ -419,6 +431,7 @@ export default function CamiDesigner() {
         x[key] = b
       }
     }
+    if (kc.design) { const dp = DESIGN_PATHS[kc.design.field]; if (dp) setPath(x, dp, String(kc.design.key)) }
     if (kc.palette) { const p = (k.palettes ?? []).find((q: any) => q.name === kc.palette); if (p) applyPalette(n, p.accent, p.bg, p.text) }
     if (kc.fonts) {
       const ts = TYPE_SETS.find((t) => t.key === kc.fonts)
@@ -968,13 +981,49 @@ export default function CamiDesigner() {
               {(() => {
                 const lab = 'mt-3 text-[11px] font-semibold uppercase tracking-wider text-ink-soft'
                 const pill = 'rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-ink transition hover:border-twilight'
+                const x0 = ((form.site_settings ?? {}) as Record<string, any>)
+                const numPill = (on: boolean) => pill + ' inline-flex items-center gap-1.5' + (on ? ' !border-twilight !bg-[#f6ece3]' : '')
+                const num = (i: number) => <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-twilight text-[11px] font-semibold text-white">{i + 1}</span>
                 return (
                   <>
                     {(kitNow.layouts ?? []).length > 0 && (
                       <div><p className={lab}>Layouts</p><div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {(kitNow.layouts as string[]).map((key, i) => <button key={key} type="button" className={pill + (Number(kitNow.layout_idx ?? 0) === i ? ' !border-twilight' : '')} onClick={() => { void commit((n) => applyKitOps(n, { layout: key })) }}>{STYLES.find((q) => q.key === key)?.name ?? key}</button>)}
+                        {(kitNow.layouts as string[]).map((key, i) => <button key={key} type="button" className={numPill(Number(kitNow.layout_idx ?? 0) === i)} onClick={() => { void commit((n) => applyKitOps(n, { layout: key })) }}>{num(i)}{STYLES.find((q) => q.key === key)?.name ?? key}</button>)}
                       </div></div>
                     )}
+                    {(kitNow.palettes ?? []).length > 0 && (
+                      <div><p className={lab}>Colors</p><div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {(kitNow.palettes as any[]).map((p, i) => (
+                          <button key={String(p.name) + i} type="button" className={numPill(form.site_accent === p.accent && x0.colors?.bg === p.bg)} onClick={() => { void commit((n) => applyKitOps(n, { palette: p.name })) }}>
+                            {num(i)}
+                            <span className="flex overflow-hidden rounded-full border border-black/10"><span className="h-4 w-4" style={{ background: p.accent }} /><span className="h-4 w-4" style={{ background: p.bg }} /><span className="h-4 w-4" style={{ background: p.text }} /></span>
+                            {p.name}
+                          </button>
+                        ))}
+                      </div></div>
+                    )}
+                    {(['title', 'subtitle', 'paragraph'] as const).some((r) => (kitNow.type?.[r] ?? []).length > 0) && (
+                      <div><p className={lab}>Fonts</p>
+                        {(['title', 'subtitle', 'paragraph'] as const).map((role) => {
+                          const list = (kitNow.type?.[role] ?? []) as string[]
+                          if (list.length === 0) return null
+                          const cur = role === 'title' ? (x0.hero?.headline_font ?? x0.fonts?.head) : role === 'subtitle' ? x0.hero?.subhead_font : (x0.hero?.para_font ?? x0.fonts?.body)
+                          return (
+                            <div key={role} className="mt-1.5">
+                              <p className="text-[11px] capitalize text-ink-soft">{role}</p>
+                              <div className="mt-1 flex flex-wrap gap-1.5">
+                                {list.map((id, i) => <button key={id} type="button" className={numPill(cur === id)} style={{ fontFamily: fam(id) }} onClick={() => { void commit((n) => applyKitOps(n, { role_font: { role, font: id } })) }}>{num(i)}{fname(id)}</button>)}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                    {Object.entries((kitNow.designAlts ?? {}) as Record<string, { label: string; items: { key: string; name: string }[] }>).map(([field, d]) => (
+                      <div key={field}><p className={lab}>{d.label}</p><div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {d.items.map((it, i) => <button key={it.key} type="button" className={numPill(DESIGN_PATHS[field] ? getPath(x0, DESIGN_PATHS[field]) === it.key : false)} onClick={() => { void commit((n) => applyKitOps(n, { design: { field, key: it.key } })) }}>{num(i)}{it.name}</button>)}
+                      </div></div>
+                    ))}
                     {(kitNow.themes ?? []).length > 0 && (
                       <div><p className={lab}>Saved themes</p><div className="mt-1.5 flex flex-wrap gap-1.5">
                         {(kitNow.themes as any[]).map((t) => (

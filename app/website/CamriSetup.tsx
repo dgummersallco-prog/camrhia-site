@@ -17,6 +17,7 @@ export type Kit = {
   palettes: { name: string; accent: string; bg: string; text: string }[]
   fonts: string[]
   type: FontPick
+  designAlts?: Record<string, { label: string; items: { key: string; name: string }[] }>
   pages: string[]
   extra_pages: string
   themes: unknown[]
@@ -145,7 +146,14 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     
     const s2 = cleanStruct(struct)
     const pagesOut = ['home', 'book', ...(s2.off.includes('galleries') ? [] : ['galleries']), ...(s2.off.includes('about') ? [] : ['about']), ...s2.extra.map((e) => e.id)]
-    await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, pages: pagesOut, extra_pages: '', themes: [] }, s2, ls, designs)
+    const nameOf: Record<string, Record<string, string>> = {}
+    for (const p of Object.values(PICKERS())) { const m = (nameOf[p.field] = nameOf[p.field] ?? {}); p.items.forEach((it) => { m[it.key] = it.name }) }
+    const designAlts: NonNullable<Kit['designAlts']> = {}
+    for (const f of Object.keys(nameOf)) {
+      const keys = (designs[f + '_alts'] || designs[f] || '').split(',').filter(Boolean)
+      if (keys.length) designAlts[f] = { label: DESIGN_LABELS[f] ?? f, items: keys.map((k) => ({ key: k, name: nameOf[f][k] ?? k })) }
+    }
+    await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, designAlts, pages: pagesOut, extra_pages: '', themes: [] }, s2, ls, designs)
     setBusy(false)
   }
 
@@ -282,6 +290,12 @@ const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'contact', title: 'Booking button', rows: ['Section designs'] },
   { k: 'blog', title: 'Blog', rows: ['Blog main page designs', 'Post designs (inside a post)'] },
 ]
+
+const DESIGN_LABELS: Record<string, string> = {
+  nav: 'Explore section', galleries: 'Galleries page', photos: 'Photo display', galleries_section: 'Galleries section', book: 'Booking page',
+  testimonials: 'Testimonials', about_page: 'About page', about_section: 'About section', pricing_page: 'Pricing page', pricing_section: 'Pricing section',
+  social: 'Social links', faq: 'FAQ', contact: 'Booking button', blog_list: 'Blog page', blog_post: 'Blog post',
+}
 
 const HELP: Record<string, string> = {
   nav: "These are the three picture boxes on your home page that send visitors to your Galleries, About and Booking pages. Pick the look you like best.",
