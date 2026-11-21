@@ -6,8 +6,8 @@
   --color-paper-deep: #F3EBE1;
   --color-ink: #2A1F24;
   --color-ink-soft: #6F5E64;
-  --color-twilight: #8C6B3F;
-  --color-brass: #8C6B3F;
+  --color-twilight: color-mix(in srgb, rgb(var(--scene-a, 155 110 76)) 65%, #e6e6e6);
+  --color-brass: color-mix(in srgb, rgb(var(--scene-a, 155 110 76)) 65%, #e6e6e6);
   --color-sage: #5E7F5A;
   --color-line: #EADFD6;
   --color-card: #FFFCF8;
@@ -41,7 +41,7 @@ details[open] .faq-chevron {
   transform: rotate(180deg);
 }
 details[open] .faq-question-text {
-  color: #8C6B3F;
+  color: var(--color-twilight);
 }
 
 /* ── Blog post prose ──────────────────────────────────────────────────────── */
@@ -107,7 +107,7 @@ details[open] .faq-question-text {
 }
 
 .blog-content a {
-  color: #8C6B3F;
+  color: var(--color-twilight);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -117,7 +117,7 @@ details[open] .faq-question-text {
 }
 
 .blog-content blockquote {
-  border-left: 3px solid #8C6B3F;
+  border-left: 3px solid var(--color-twilight);
   padding-left: 1.25rem;
   margin-left: 0;
   margin-bottom: 1.5rem;

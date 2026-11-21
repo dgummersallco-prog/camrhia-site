@@ -25,7 +25,7 @@ function BlogNav() {
         <Link
           href="/#waitlist"
           className="inline-flex items-center rounded-full bg-twilight px-4 py-2 text-sm font-semibold text-white hover:bg-twilight/90 transition-colors"
-          style={{ backgroundColor: '#8C6B3F' }}
+          style={{ backgroundColor: 'var(--color-twilight)' }}
         >
           Get early access
         </Link>

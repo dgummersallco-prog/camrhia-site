@@ -187,6 +187,7 @@ export default function GalleryManagePage() {
   const designFlush = useRef<(() => void) | null>(null)
   const [topOff, setTopOff] = useState(0)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
+  const [popup, setPopup] = useState<{ t: string; b?: string } | null>(null)
   const [finalBusy, setFinalBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
@@ -348,6 +349,15 @@ export default function GalleryManagePage() {
     else { setDesignOpen(false); setShareOpen(true) }
   }
 
+  // Keep the current step in the address so a refresh stays on it.
+  useEffect(() => {
+    const u = new URL(window.location.href)
+    u.searchParams.delete('design'); u.searchParams.delete('share')
+    if (shareOpen) u.searchParams.set('share', '1')
+    else if (designOpen) u.searchParams.set('design', '1')
+    window.history.replaceState(null, '', u.toString())
+  }, [designOpen, shareOpen])
+
   // The steps bar stays where it is. The style and publish screens open right below it.
   useEffect(() => {
     if (!designOpen && !shareOpen) return
@@ -399,8 +409,8 @@ export default function GalleryManagePage() {
     const nm = title.trim()
     if (!nm) { setMessage('Give the gallery a name.'); return }
     const p = pin.trim()
-    if (!gallery.pin_hash && !p) { setMessage('Add a PIN before sending.'); return }
-    if (p && p.length < 4) { setMessage('Use a PIN of at least 4 characters.'); return }
+    if (!gallery.pin_hash && !p) { setPopup({ t: 'PIN required' }); return }
+    if (p && p.length < 4) { setPopup({ t: 'PIN too short', b: 'Use at least 4 characters.' }); return }
     setFinalBusy(true)
     try {
       if (nm !== gallery.title && !(await saveSettings({ title: nm }))) return
@@ -1328,6 +1338,15 @@ export default function GalleryManagePage() {
   return (
     <div className="scene-accent min-h-screen bg-paper">
       <DashScenes />
+      {popup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 px-4" onClick={() => setPopup(null)}>
+          <div role="alertdialog" aria-modal="true" className="w-full max-w-sm rounded-2xl border border-line bg-white p-6 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="font-fraunces text-2xl font-semibold text-ink">{popup.t}</p>
+            {popup.b && <p className="mt-2 text-sm text-ink-soft">{popup.b}</p>}
+            <button type="button" autoFocus className={`${btn} mt-5 w-full`} onClick={() => setPopup(null)}>OK</button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row">
         <aside className="flex w-full shrink-0 flex-col overflow-y-auto rounded-2xl border border-line bg-white/50 px-5 pb-8 pt-6 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:w-[320px]">
@@ -1473,7 +1492,6 @@ export default function GalleryManagePage() {
                 <div className="border-t border-line pt-6">
                   <label className={label}>PIN {gallery.pin_hash ? <span className="text-twilight">(on)</span> : <span className="text-ink-soft">(required)</span>}</label>
                   <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder={gallery.pin_hash ? 'Type to change the PIN' : 'Choose a PIN'} className={input} />
-                  <p className="mt-2 text-xs text-ink-soft">Anyone opening the link types this first. {clientName ? `${clientName} won't need it` : 'Your client won’t need it'} when signed in to their dashboard.</p>
                 </div>
               <div className="border-t border-line pt-6">
                 <div className="flex items-center justify-between gap-3">
@@ -1492,17 +1510,13 @@ export default function GalleryManagePage() {
                   </>
                 )}
               </div>
+                {((gallery.session_id && coupleUserId) || shareMsg) && (
                 <div className="border-t border-line pt-6">
                   <label className={label}>Delivery</label>
                   {gallery.session_id && coupleUserId && (
                     <div className="mb-3 flex items-center gap-2 rounded-xl bg-twilight/10 px-3 py-2 text-sm text-ink">
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-twilight text-xs text-white">✓</span>
                       Also goes to {clientName ?? 'your client'}&apos;s Camrhia dashboard
-                    </div>
-                  )}
-                  {!(gallery.session_id && coupleUserId) && (
-                    <div className="mb-3 rounded-xl bg-paper px-3 py-2 text-sm text-ink-soft">
-                      {clientName ?? 'Your client'} isn&apos;t on Camrhia yet. After publishing, send them the message below yourself, with a link to sign up.
                     </div>
                   )}
                   {shareMsg && (
@@ -1512,6 +1526,7 @@ export default function GalleryManagePage() {
                     </div>
                   )}
                 </div>
+                )}
                 {message && <p className="text-sm text-twilight">{message}</p>}
                 {isPublished && (
                   <button className="text-xs text-ink-soft underline" onClick={async () => { if (await saveSettings({ status: 'draft' })) flash('Unpublished') }}>Unpublish</button>

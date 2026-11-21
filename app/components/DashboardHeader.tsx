@@ -269,7 +269,7 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
       >
         <span className={isActive ? 'text-[#FFFFFF]' : 'text-[#FFFFFF]'}><Icon name={it.tab} /></span>
         {it.label}
-        {(it.tab === 'galleries' || it.tab === 'edit' || it.tab === 'website') && (
+        {(it.tab === 'edit' || it.tab === 'website') && (
           <span className="rounded-full border border-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">Beta</span>
         )}
         {it.tab === 'messages' && unread > 0 && (

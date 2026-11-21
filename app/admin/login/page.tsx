@@ -90,7 +90,7 @@ export default function AdminLoginPage() {
               type="submit"
               disabled={loading}
               className="w-full rounded-full bg-twilight py-3 text-sm font-semibold text-white hover:bg-twilight/90 disabled:opacity-50 transition-colors mt-2"
-              style={{ backgroundColor: '#8C6B3F', color: '#ffffff' }}
+              style={{ backgroundColor: 'var(--color-twilight)', color: '#ffffff' }}
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>

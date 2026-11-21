@@ -159,7 +159,7 @@ export default function AdminUsersPage() {
             type="submit"
             disabled={searching || !token}
             className="rounded-xl bg-twilight px-5 py-2.5 text-sm font-semibold text-white hover:bg-twilight/90 disabled:opacity-50 transition-colors"
-            style={{ backgroundColor: '#8C6B3F', color: '#ffffff' }}
+            style={{ backgroundColor: 'var(--color-twilight)', color: '#ffffff' }}
           >
             {searching ? 'Searching…' : 'Search'}
           </button>
@@ -196,7 +196,7 @@ export default function AdminUsersPage() {
                   onClick={() => handleAccess('grant')}
                   disabled={actionLoading}
                   className="rounded-full bg-twilight px-4 py-2 text-sm font-semibold text-white hover:bg-twilight/90 disabled:opacity-50 transition-colors"
-                  style={{ backgroundColor: '#8C6B3F', color: '#ffffff' }}
+                  style={{ backgroundColor: 'var(--color-twilight)', color: '#ffffff' }}
                 >
                   {actionLoading ? 'Updating…' : 'Grant free access for life'}
                 </button>

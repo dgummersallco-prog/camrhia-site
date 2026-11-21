@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Live in three steps. Make it yours, share one link, run it from your phone.",
 }
 
-const NAVY = "#8C6B3F"
+const NAVY = "var(--color-twilight)"
 const STEPS = [
   ["Make it yours", "Add your photos and packages. Your website goes live when you save."],
   ["Share one link", "Clients inquire, book and pay from it."],

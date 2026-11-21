@@ -285,7 +285,7 @@ function MiniCard({ title, children }: { title: string; summary?: string; childr
 }
 
 function NudgeBtns({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
-  const cls = 'flex h-8 w-8 items-center justify-center rounded-full border border-line bg-card text-base leading-none text-[#8C6B3F] transition hover:border-[#8C6B3F] disabled:opacity-30'
+  const cls = 'flex h-8 w-8 items-center justify-center rounded-full border border-line bg-card text-base leading-none text-twilight transition hover:border-twilight disabled:opacity-30'
   return (
     <div className="flex items-center gap-1">
       <button type="button" aria-label="Smaller" disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))} className={cls}>-</button>
@@ -310,7 +310,7 @@ function SizeField({ value, min, max, onChange }: { value: number; min: number; 
       />
       <NudgeBtns value={value} min={min} max={max} onChange={onChange} />
       <span className="text-sm text-ink-soft">px</span>
-      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-[#8C6B3F]" />
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-twilight" />
     </div>
   )
 }
@@ -340,7 +340,7 @@ function SizeBox({ value, min, max, onChange }: { value: number; min: number; ma
 function PadSlider({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
   return (
     <div className="mt-1 flex items-center gap-3">
-      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-[#8C6B3F]" />
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-twilight" />
       <span className="w-16 text-right text-sm text-ink-soft">{value} px</span>
     </div>
   )
@@ -349,7 +349,7 @@ function PadSlider({ value, min, max, onChange }: { value: number; min: number; 
 function PctSlider({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
   return (
     <div className="mt-1 flex items-center gap-3">
-      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-[#8C6B3F]" />
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-twilight" />
       <span className="w-16 text-right text-sm text-ink-soft">{value}%</span>
     </div>
   )

@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { supabaseAffiliate as supabase } from '@/lib/supabaseAffiliate'
 import Wordmark from '@/app/components/Wordmark'
 
-const ROSE = '#8C6B3F'
+const ROSE = 'var(--color-twilight)'
 const inputCls =
-  'w-full rounded-xl border border-line bg-card px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-[#8C6B3F]/25 focus:border-[#8C6B3F] transition'
+  'w-full rounded-xl border border-line bg-card px-4 py-3 text-sm text-ink placeholder:text-ink-soft/50 focus:outline-none focus:ring-2 focus:ring-twilight/25 focus:border-twilight transition'
 
 function baseCode(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16) || 'user'

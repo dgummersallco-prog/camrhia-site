@@ -211,7 +211,7 @@ export default function AdminAffiliatesPage() {
                   <div>
                     <p className="font-medium text-ink">{a.name}</p>
                     <p className="text-sm text-ink-soft">{a.email}</p>
-                    {a.team_of ? <p className="mt-1 text-sm font-medium" style={{ color: '#8C6B3F' }}>Invited by {a.team_of}. Joins their team.</p> : null}
+                    {a.team_of ? <p className="mt-1 text-sm font-medium" style={{ color: 'var(--color-twilight)' }}>Invited by {a.team_of}. Joins their team.</p> : null}
                     <p className="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-ink">
                       {a.phone ? <a href={`tel:${a.phone}`} className="font-medium underline">{a.phone}</a> : null}
                       {a.handle ? <span>{a.handle}</span> : null}
@@ -220,7 +220,7 @@ export default function AdminAffiliatesPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button onClick={() => appAction(a, 'approve_application')} disabled={busyId === a.id} className="rounded-full px-5 py-2 text-sm font-medium text-white disabled:opacity-60" style={{ backgroundColor: '#8C6B3F' }}>
+                    <button onClick={() => appAction(a, 'approve_application')} disabled={busyId === a.id} className="rounded-full px-5 py-2 text-sm font-medium text-white disabled:opacity-60" style={{ backgroundColor: 'var(--color-twilight)' }}>
                       {busyId === a.id ? 'Saving…' : 'Approve'}
                     </button>
                     <button onClick={() => appAction(a, 'decline_application')} disabled={busyId === a.id} className="rounded-full border border-line px-5 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-60">
@@ -271,7 +271,7 @@ export default function AdminAffiliatesPage() {
                   onClick={() => setApproved(r)}
                   disabled={busyId === r.id}
                   className="rounded-full px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
-                  style={{ backgroundColor: '#8C6B3F' }}
+                  style={{ backgroundColor: 'var(--color-twilight)' }}
                 >
                   {busyId === r.id ? 'Saving…' : 'Approve'}
                 </button>
@@ -284,7 +284,7 @@ export default function AdminAffiliatesPage() {
                     ? 'rounded-full border border-line px-5 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-60'
                     : 'rounded-full px-5 py-2 text-sm font-medium text-white disabled:opacity-60'
                 }
-                style={r.is_master ? undefined : { backgroundColor: '#8C6B3F' }}
+                style={r.is_master ? undefined : { backgroundColor: 'var(--color-twilight)' }}
               >
                 {busyId === r.id ? 'Saving…' : r.is_master ? 'Remove master' : 'Promote to master'}
               </button>

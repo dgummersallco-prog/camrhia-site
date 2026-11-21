@@ -317,7 +317,7 @@ export default function Home() {
         </section>
 
         {/* OFFER STACK */}
-        <section id="pricing" className="bg-gradient-to-br from-[#8C6B3F] to-[#A6824F] text-white">
+        <section id="pricing" className="bg-gradient-to-br from-twilight to-twilight/80 text-white">
           <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
             <div className="text-center">
               <h2 className="font-fraunces text-4xl md:text-6xl font-medium leading-[1.1]">Go all in, or keep what you want.</h2>

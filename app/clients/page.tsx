@@ -330,7 +330,7 @@ function LeadsView() {
               ? <span className="shrink-0 rounded-full bg-line px-2.5 py-1 text-[11px] font-semibold text-ink-soft">Handled</span>
               : <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ROSE }}>New</span>}
           </div>
-          <p className="mt-2 inline-flex max-w-full items-center gap-1.5 self-start rounded-full bg-[#8C6B3F]/10 px-2.5 py-1 text-xs font-semibold text-[#8C6B3F]"><span aria-hidden>&#9733;</span><span className="truncate">{names[l.funnel_id] ?? 'Special'}</span></p>
+          <p className="mt-2 inline-flex max-w-full items-center gap-1.5 self-start rounded-full bg-twilight/10 px-2.5 py-1 text-xs font-semibold text-twilight"><span aria-hidden>&#9733;</span><span className="truncate">{names[l.funnel_id] ?? 'Special'}</span></p>
           <p className="mt-1.5 text-xs text-ink-soft">Signed up {new Date(l.created_at).toLocaleDateString()}</p>
           {l.phone && (
             <div className="mt-3">
@@ -346,7 +346,7 @@ function LeadsView() {
             <div className="mt-1.5 flex gap-1.5"><a href={'mailto:' + l.email} className={pill}>Email</a></div>
           </div>
           {l.note && <p className="mt-3 break-words text-xs text-ink">{l.note}</p>}
-          <Link href={'/sessions/new?lead=' + l.id + '&name=' + encodeURIComponent(l.name) + '&phone=' + encodeURIComponent(l.phone ?? '') + '&email=' + encodeURIComponent(l.email)} className="mt-4 block rounded-2xl px-3 py-2 text-center text-sm font-semibold text-white transition hover:opacity-90" style={{ background: '#8C6B3F' }}>Create session</Link>
+          <Link href={'/sessions/new?lead=' + l.id + '&name=' + encodeURIComponent(l.name) + '&phone=' + encodeURIComponent(l.phone ?? '') + '&email=' + encodeURIComponent(l.email)} className="mt-4 block rounded-2xl px-3 py-2 text-center text-sm font-semibold text-white transition hover:opacity-90" style={{ background: 'var(--color-twilight)' }}>Create session</Link>
           <button type="button" onClick={() => mark(l, !l.handled_at)} className="mt-2 text-center text-xs font-medium text-ink-soft transition hover:text-ink">{l.handled_at ? 'Mark as new' : 'Mark as handled'}</button>
           {confirmId === l.id ? (
             <div className="mt-1 flex items-center justify-center gap-3 text-xs">
