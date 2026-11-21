@@ -1359,33 +1359,6 @@ export default function GalleryManagePage() {
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-twilight transition-all" style={{ width: `${(scan.done / Math.max(1, scan.total)) * 100}%` }} /></div>
                 </div>
               )}
-              <button type="button" disabled={!!scan || photos.length === 0} onClick={() => setAddingSec(!addingSec)} className={`mt-3 w-full rounded-xl border border-dashed px-4 py-2.5 text-sm font-medium transition disabled:opacity-50 ${addingSec ? 'border-twilight bg-twilight/10 text-twilight' : 'border-twilight/60 bg-white/60 text-twilight hover:bg-twilight/10'}`}>{addingSec ? 'Click the photo where it starts' : '+ Add section'}</button>
-              <div className="mt-4">
-                {sceneInfo.blocks.length > 0 && (
-                  <>
-                    <ul className="mt-4 space-y-2.5">
-                      {sceneInfo.blocks.map((b, i) => (
-                        <li key={b.m.id} className="rounded-xl border border-line bg-white/60 p-2.5">
-                          <div className="flex items-center gap-1.5">
-                            <input key={b.m.name} defaultValue={b.m.name} onBlur={(e) => { if (e.target.value.trim() && e.target.value.trim() !== b.m.name) renameScene(b.m.id, e.target.value) }} className="min-w-0 flex-1 rounded-lg border border-line bg-paper px-2 py-1 text-sm text-ink focus:border-twilight focus:outline-none" />
-                            <button type="button" disabled={i === 0} onClick={() => moveScene(i, -1)} aria-label="Move up" className="rounded-lg border border-line px-2 py-1 text-xs text-ink-soft transition hover:border-twilight disabled:opacity-30">↑</button>
-                            <button type="button" disabled={i === sceneInfo.blocks.length - 1} onClick={() => moveScene(i, 1)} aria-label="Move down" className="rounded-lg border border-line px-2 py-1 text-xs text-ink-soft transition hover:border-twilight disabled:opacity-30">↓</button>
-                            <button type="button" onClick={() => saveMoments((gallery?.moments ?? []).filter((m) => m.id !== b.m.id))} aria-label="Remove scene" className="rounded-lg border border-line px-2 py-1 text-xs text-ink-soft transition hover:border-twilight">✕</button>
-                          </div>
-                          <p className="mt-1.5 text-xs text-ink-soft">{b.ids.length} photos</p>
-                          <div className="mt-1.5 flex gap-1">
-                            {b.ids.slice(0, 5).map((id) => { const ph = photos.find((x) => x.id === id); const u = ph?.thumb_path ? thumbs[ph.thumb_path] : undefined; return u ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img key={id} src={u} alt="" className="h-9 w-9 rounded object-cover" />
-                            ) : null })}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                    <button type="button" onClick={() => saveMoments([])} className="mt-3 text-xs text-ink-soft underline">Remove scene titles</button>
-                  </>
-                )}
-              </div>
               <div className="mt-6 border-t border-line pt-5">
                 <p className="text-sm font-medium text-ink">Final check</p>
                 <p className="mt-1 text-xs text-ink-soft">A last look before you send it.</p>
