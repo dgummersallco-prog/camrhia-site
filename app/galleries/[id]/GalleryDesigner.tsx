@@ -210,7 +210,25 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     if (error) setErr(error.message.includes('design') ? 'Run the design SQL in Supabase first.' : error.message)
     else setErr(null)
   }
+  const hist = useRef<GalleryDesign[]>([])
+  const histT = useRef(0)
+  const [histN, setHistN] = useState(0)
+  function undo() {
+    const prev = hist.current.pop()
+    if (!prev) return
+    latest.current = prev
+    setD(prev)
+    postDesign(prev)
+    histT.current = 0
+    setHistN(hist.current.length)
+    if (timer.current) clearTimeout(timer.current)
+    setSaving(true)
+    timer.current = setTimeout(() => { void save(latest.current) }, 300)
+  }
   function change(patch: Partial<GalleryDesign>) {
+    const now = Date.now()
+    if (now - histT.current > 700) { hist.current.push({ ...latest.current }); if (hist.current.length > 40) hist.current.shift(); setHistN(hist.current.length) }
+    histT.current = now
     const next = { ...latest.current, ...patch }
     latest.current = next
     setD(next)
@@ -435,11 +453,13 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       )}
 
       <div className="flex min-w-0 flex-1 flex-col pb-1">
-        <div className="mb-5 flex flex-wrap items-center justify-end gap-x-3 gap-y-3 px-1">
-          <div className="mr-auto flex flex-wrap items-end gap-x-5 gap-y-2">
-            {!['ticket', 'stack'].includes(eff.cover) && <div className="w-40"><ColorInput float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
-            <div className="w-40"><ColorInput float label="Page" value={eff.pal.bg} onChange={(v) => change({ bg: v })} /></div>
-            <div className="w-40"><ColorInput float label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} /></div>
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 rounded-2xl border border-line bg-white/70 px-4 py-3 shadow-sm">
+          <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+            {!['ticket', 'stack'].includes(eff.cover) && <div className="w-36"><ColorInput float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
+            <div className="w-36"><ColorInput float label="Page" value={eff.pal.bg} onChange={(v) => change({ bg: v })} /></div>
+            <div className="w-36"><ColorInput float label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} /></div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <div ref={addRef} className="relative">
               <button type="button" onClick={() => setAddOpen((o) => !o)} className="h-[42px] rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight">+ Add text</button>
               {addOpen && (
@@ -456,11 +476,12 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                 </div>
               )}
             </div>
-          </div>
-          <div className="flex overflow-hidden rounded-xl border border-line bg-white text-sm">
+            <button type="button" onClick={undo} disabled={histN === 0} className="h-[42px] rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight disabled:cursor-default disabled:opacity-40 disabled:hover:border-line">↶ Undo</button>
+          <div className="flex overflow-hidden h-[42px] rounded-xl border border-line bg-white text-sm">
             {(['desktop', 'phone'] as const).map((x) => (
-              <button key={x} type="button" onClick={() => setDevice(x)} className={'px-4 py-2 font-medium transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
+              <button key={x} type="button" onClick={() => setDevice(x)} className={'px-4 font-medium transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
             ))}
+          </div>
           </div>
         </div>
         <div ref={boxRef} className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">

@@ -1424,23 +1424,6 @@ export default function GalleryManagePage() {
                 )}
               </div>
               <div className="mt-6 border-t border-line pt-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-ink">Watermark</p>
-                    <p className="mt-0.5 text-xs text-ink-soft">Your text across each photo</p>
-                  </div>
-                  <button type="button" role="switch" aria-checked={!!wm?.on} onClick={() => setWm({ on: !wm?.on })} className={`relative h-6 w-11 shrink-0 rounded-full transition ${wm?.on ? 'bg-twilight' : 'bg-line'}`}>
-                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${wm?.on ? 'left-[22px]' : 'left-0.5'}`} />
-                  </button>
-                </div>
-                {wm?.on && (
-                  <>
-                    <input value={wmDraft ?? wm?.text ?? ''} onChange={(e) => setWmDraft(e.target.value)} maxLength={40} placeholder="Your name or website" className={`${input} mt-3`} />
-                    <button type="button" disabled={wmDraft === null || wmDraft.trim() === (wm?.text ?? '')} onClick={async () => { await setWm({ text: (wmDraft ?? '').trim() }); setWmDraft(null) }} className="mt-2 w-full rounded-xl border border-twilight bg-white/70 px-4 py-2 text-sm font-medium text-twilight transition hover:bg-twilight/10 disabled:opacity-50">{wmDraft === null || wmDraft.trim() === (wm?.text ?? '') ? ((wm?.text ?? '') ? 'Saved' : 'Save') : 'Save'}</button>
-                  </>
-                )}
-              </div>
-              <div className="mt-6 border-t border-line pt-5">
                 {(sentAt || openedAt) && (
                   <dl className="mt-4 space-y-2 text-sm">
                     {sentAt && <div className="flex justify-between"><dt className="text-ink-soft">Sent to dashboard</dt><dd className="text-ink">{new Date(sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</dd></div>}
@@ -1492,6 +1475,23 @@ export default function GalleryManagePage() {
                   <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder={gallery.pin_hash ? 'Type to change the PIN' : 'Choose a PIN'} className={input} />
                   <p className="mt-2 text-xs text-ink-soft">Anyone opening the link types this first. {clientName ? `${clientName} won't need it` : 'Your client won’t need it'} when signed in to their dashboard.</p>
                 </div>
+              <div className="border-t border-line pt-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-ink">Watermark</p>
+                    <p className="mt-0.5 text-xs text-ink-soft">Your text across each photo</p>
+                  </div>
+                  <button type="button" role="switch" aria-checked={!!wm?.on} onClick={() => setWm({ on: !wm?.on })} className={`relative h-6 w-11 shrink-0 rounded-full transition ${wm?.on ? 'bg-twilight' : 'bg-line'}`}>
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${wm?.on ? 'left-[22px]' : 'left-0.5'}`} />
+                  </button>
+                </div>
+                {wm?.on && (
+                  <>
+                    <input value={wmDraft ?? wm?.text ?? ''} onChange={(e) => setWmDraft(e.target.value)} maxLength={40} placeholder="Your name or website" className={`${input} mt-3`} />
+                    <button type="button" disabled={wmDraft === null || wmDraft.trim() === (wm?.text ?? '')} onClick={async () => { await setWm({ text: (wmDraft ?? '').trim() }); setWmDraft(null) }} className="mt-2 w-full rounded-xl border border-twilight bg-white/70 px-4 py-2 text-sm font-medium text-twilight transition hover:bg-twilight/10 disabled:opacity-50">{wmDraft === null || wmDraft.trim() === (wm?.text ?? '') ? ((wm?.text ?? '') ? 'Saved' : 'Save') : 'Save'}</button>
+                  </>
+                )}
+              </div>
                 <div className="border-t border-line pt-6">
                   <label className={label}>Delivery</label>
                   {gallery.session_id && coupleUserId && (
@@ -1505,9 +1505,6 @@ export default function GalleryManagePage() {
                       {clientName ?? 'Your client'} isn&apos;t on Camrhia yet. After publishing, send them the message below yourself, with a link to sign up.
                     </div>
                   )}
-                  <button className={`${btn} mt-4 w-full py-3`} disabled={finalBusy} onClick={publishAndSend}>
-                    {finalBusy ? 'Publishing…' : isPublished ? 'Update gallery' : 'Publish gallery'}
-                  </button>
                   {shareMsg && (
                     <div className="mt-4 rounded-xl bg-paper px-3 py-3">
                       <p className="whitespace-pre-wrap text-sm text-ink-soft">{shareMsg}</p>
@@ -1542,6 +1539,7 @@ export default function GalleryManagePage() {
               <div className="flex shrink-0 gap-3">
                 <button className="rounded-xl border border-line bg-white/70 px-6 py-3 text-base text-ink transition hover:border-twilight" onClick={() => (designOpen || shareOpen ? goStep(designOpen ? 0 : 1) : router.push('/galleries'))}>Back</button>
                 {!shareOpen && photos.length > 0 && <button className="rounded-xl border border-twilight bg-white/70 px-6 py-3 text-base font-medium text-twilight transition hover:bg-twilight/10" onClick={() => goStep(designOpen ? 2 : 1)}>Next</button>}
+                {shareOpen && <button className="rounded-xl bg-twilight px-6 py-3 text-base font-medium text-white transition hover:opacity-90 disabled:opacity-50" disabled={finalBusy} onClick={publishAndSend}>{finalBusy ? 'Publishing…' : isPublished ? 'Update gallery' : 'Publish gallery'}</button>}
               </div>
             </div>
 
