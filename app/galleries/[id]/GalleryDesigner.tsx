@@ -472,9 +472,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             </div>
           )}
           {pick && (
-            <div className="absolute right-3 z-20 w-64 overflow-y-auto rounded-xl border border-line bg-white p-3 shadow-lg" style={popPos ?? { top: 12, maxHeight: '92%' }}>
-              <div className="mb-2 flex items-center justify-between">
-                <p className="font-fraunces text-base font-semibold text-ink">{pick.name}</p>
+            <div className="absolute right-3 z-20 w-64 overflow-y-auto rounded-2xl border border-[#E8DDD0] bg-[#FFFDF9] p-4 shadow-[0_18px_50px_rgba(42,31,36,0.18)]" style={popPos ?? { top: 12, maxHeight: '92%' }}>
+              <div className="mb-3 flex items-center justify-between border-b border-[#EFE4D8] pb-2">
+                <p className="font-fraunces text-lg font-semibold text-ink">{pick.name}</p>
                 <button type="button" onClick={() => setPick(null)} className="text-ink-soft hover:text-ink">✕</button>
               </div>
               {pick.key === 'bg' ? (
@@ -522,15 +522,25 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                     </label>
                   </div>
                   {pick.key === 'moment' && pick.mid ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3 border-t border-[#EFE4D8] pt-3">
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => rowMove(-1)} className="flex-1 rounded-lg border border-line bg-white px-2 py-1.5 text-xs text-ink hover:border-twilight">Up a row</button>
-                        <button type="button" onClick={() => rowMove(1)} className="flex-1 rounded-lg border border-line bg-white px-2 py-1.5 text-xs text-ink hover:border-twilight">Down a row</button>
+                        <button type="button" onClick={() => rowMove(-1)} className="flex-1 rounded-full border border-[#E8DDD0] bg-white px-2 py-1.5 text-xs text-ink hover:border-[#8C6B3F]">↑ Up a row</button>
+                        <button type="button" onClick={() => rowMove(1)} className="flex-1 rounded-full border border-[#E8DDD0] bg-white px-2 py-1.5 text-xs text-ink hover:border-[#8C6B3F]">↓ Down a row</button>
                       </div>
-                      <label className="flex items-center gap-1.5 text-xs text-ink-soft">
-                        <input type="checkbox" checked={!!pick.line} onChange={(e) => void sectionLine(e.target.checked)} />
-                        Divider line
-                      </label>
+                      <div className="text-xs text-ink-soft">Alignment
+                        <div className="mt-1 flex rounded-full bg-[#F3E9DD] p-1">
+                          {(['left', 'center', 'right'] as const).map((a) => (
+                            <button key={a} type="button" onClick={() => setEl('moment', { align: a })} className={'flex-1 rounded-full px-2 py-1 text-xs capitalize ' + ((eff.el?.moment?.align ?? 'left') === a ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}>{a}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <button type="button" role="switch" aria-checked={!!pick.line} onClick={() => void sectionLine(!pick.line)} className="flex w-full items-center justify-between text-xs text-ink">
+                        <span>Divider line</span>
+                        <span className={'relative h-5 w-9 rounded-full transition-colors ' + (pick.line ? 'bg-[#8C6B3F]' : 'bg-[#DCD2C6]')}>
+                          <span className={'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ' + (pick.line ? 'left-[18px]' : 'left-0.5')} />
+                        </span>
+                      </button>
+                      {pick.line && <ColorInput label="Line color" value={eff.el?.moment?.lineColor ?? eff.pal.accent} onChange={(v) => setEl('moment', { lineColor: v })} />}
                     </div>
                   ) : ['title', 'title2', 'brand', 'count', 'initials'].includes(pick.key) || /^x\d+$/.test(pick.key) || pick.key === 'moment' ? null : (
                     <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-14 shrink-0">Move {cur?.dy ?? 0}</span>

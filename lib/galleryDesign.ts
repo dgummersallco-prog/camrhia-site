@@ -1,4 +1,4 @@
-export type ElStyle = { font?: string; size?: number; color?: string; bold?: boolean; dx?: number; dy?: number; text?: string; hide?: boolean }
+export type ElStyle = { align?: 'left' | 'center' | 'right'; lineColor?: string; font?: string; size?: number; color?: string; bold?: boolean; dx?: number; dy?: number; text?: string; hide?: boolean }
 export type GalleryDesign = {
   look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; focals?: Record<string, { x: number; y: number }>; zoom?: number; slots?: Record<string, string>
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>

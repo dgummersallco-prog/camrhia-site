@@ -824,15 +824,20 @@ export default function GalleryViewPage() {
     if (i > 0 && m === prev) return null
     const name = m ? (m in momentText ? momentText[m] : momentMeta.find((x) => x.id === m)?.name) : null
     if (name === null || name === undefined) return null
+    const mEl = (el as Record<string, { align?: string; lineColor?: string } | undefined>).moment
+    const al = mEl?.align === 'center' || mEl?.align === 'right' ? mEl.align : 'left'
+    const lc = mEl?.lineColor && /^#[0-9a-fA-F]{6}$/.test(mEl.lineColor) ? mEl.lineColor : null
     if (m && momentMeta.find((x) => x.id === m)?.line) {
+      const rule = <span aria-hidden className="h-px min-w-0 flex-1" style={{ background: lc ?? pal.accent, opacity: lc ? 1 : 0.55 }} />
       return (
         <div className="mb-4 mt-8 flex w-full basis-full items-center gap-4 first:mt-0 [column-span:all] col-span-full">
+          {al !== 'left' && rule}
           <h2 data-gk="moment" data-mid={m} data-line="1" className={`shrink-0 text-2xl ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
-          <span aria-hidden className="h-px min-w-0 flex-1" style={{ background: pal.accent, opacity: 0.55 }} />
+          {al !== 'right' && rule}
         </div>
       )
     }
-    return <h2 data-gk="moment" data-mid={m ?? undefined} data-line="0" className={`mb-4 mt-8 w-full basis-full text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink }}>{name}</h2>
+    return <h2 data-gk="moment" data-mid={m ?? undefined} data-line="0" className={`mb-4 mt-8 w-full basis-full text-2xl first:mt-0 [column-span:all] col-span-full ${headCls}`} style={{ ...headStyle, color: pal.ink, textAlign: al }}>{name}</h2>
   }
   const current = openIndex !== null ? list[openIndex] : null
   const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
