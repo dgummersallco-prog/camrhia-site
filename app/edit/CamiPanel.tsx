@@ -4,13 +4,13 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import { TOOLS } from '@/lib/tools'
 import type { Adjust } from '@/lib/enhance'
+import { PLAYBOOK, PLAY_CHIPS, matchPlay, type Play } from '@/lib/camiPlaybook'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 type Change = { key: keyof Adjust; ui: number; label: string }
 type Msg = { role: 'user' | 'cami'; text: string; changes?: Change[]; state?: 'open' | 'done' | 'no' }
 
-const STARTERS = ['How should I edit this photo?', 'How would a pro set this in this light?', 'What looks off in this one?']
 const YES = /^\s*(yes|yeah|yep|yup|sure|ok|okay|do it|apply|apply it|go ahead|please|sounds good)\b/i
 
 async function snap(url: string | null): Promise<string | null> {
@@ -106,6 +106,15 @@ export default function CamiPanel({
     setMsgs((ms) => ms.map((x, j) => (j === i ? { ...x, state: 'done' } : x)))
   }
 
+  function playChanges(pl: Play): Change[] {
+    const out: Change[] = []
+    for (const t of TOOLS) {
+      const v = pl.set[t.key as string]
+      if (typeof v === 'number') out.push({ key: t.key, ui: v, label: t.label })
+    }
+    return out
+  }
+
   async function send(raw: string) {
     const message = raw.trim()
     if (!message || busy) return
@@ -114,6 +123,12 @@ export default function CamiPanel({
       setMsgs((ms) => [...ms, { role: 'user', text: message }])
       setText('')
       applyAt(openAt)
+      return
+    }
+    const play = matchPlay(message)
+    if (play) {
+      setMsgs((ms) => [...ms.map((m) => (m.state === 'open' ? { ...m, state: 'no' as const } : m)), { role: 'user', text: message }, { role: 'cami', text: play.line, changes: playChanges(play), state: 'open' as const }])
+      setText('')
       return
     }
     const history = msgs.slice(-6).map((m) => ({ role: m.role, text: m.text }))
@@ -183,11 +198,8 @@ export default function CamiPanel({
   }
 
   return (
-    <div className="mb-4 rounded-2xl border border-white/10 bg-[#7a5c45]/45 p-3">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/camri/14_peeking_sliders.png" alt="Camri" className="mx-auto h-28 w-auto object-contain" />
-      <p className="mt-1 text-center text-sm font-medium text-white/85">Ask Camri</p>
-      <p className="mt-1 text-center text-xs text-white/50">I can see this photo and your sliders. Ask me how to edit it, or how a pro handles this kind of light, and I&rsquo;ll move the sliders when you say yes.</p>
+    <div>
+      <p className="text-xs text-white/50">Tap the light you shot in, or ask. I&rsquo;ll move the sliders when you say yes.</p>
 
       {msgs.length > 0 && (
         <div ref={boxRef} className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
@@ -217,9 +229,9 @@ export default function CamiPanel({
       )}
 
       {msgs.length === 0 && (
-        <div className="mt-3 flex flex-col gap-1.5">
-          {STARTERS.map((s) => (
-            <button key={s} className="rounded-full border border-white/10 px-3 py-1.5 text-left text-xs text-white/65 transition hover:border-white/30 hover:text-white" disabled={busy} onClick={() => void send(s)}>{s}</button>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {PLAY_CHIPS.map((id) => PLAYBOOK.find((x) => x.id === id)).filter((x): x is Play => !!x).map((pl) => (
+            <button key={pl.id} className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/70 transition hover:border-twilight hover:text-white" disabled={busy} onClick={() => void send(pl.label)}>{pl.label}</button>
           ))}
         </div>
       )}
@@ -228,7 +240,7 @@ export default function CamiPanel({
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={listening ? 'Listening...' : 'Ask Camri about this photo'}
+          placeholder={listening ? 'Listening...' : 'Ask a quick question'}
           maxLength={500}
           className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white outline-none placeholder:text-white/30 focus:border-white/30"
         />

@@ -204,6 +204,14 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
   const [withMaybes] = useState(false)
   const [expPreset, setExpPreset] = useState('original')
   const [expMark, setExpMark] = useState('')
+  useEffect(() => {
+    try {
+      const pr = window.localStorage.getItem('camrhia:exportPreset')
+      if (pr && EXPORT_PRESETS.some((x) => x.id === pr)) setExpPreset(pr)
+      const m = window.localStorage.getItem('camrhia:exportMark')
+      if (m) setExpMark(m)
+    } catch { /* ignore */ }
+  }, [])
   const [saving, setSaving] = useState<{ busy: boolean; done: number; total: number; note: string }>({ busy: false, done: 0, total: 0, note: '' })
   const [people, setPeople] = useState<Person[]>([])
   const [personSel, setPersonSel] = useState<string | null>(null)
@@ -1645,7 +1653,7 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                     <button
                       key={x.id}
                       onClick={() => setExpPreset(x.id)}
-                      className={`rounded-full border px-3 py-1.5 text-xs transition ${expPreset === x.id ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`}
+                      className={`rounded-full border px-4 py-2 text-sm font-medium transition ${expPreset === x.id ? 'border-twilight bg-twilight text-white' : 'border-white/20 text-white/75 hover:border-twilight'}`}
                     >
                       {x.label}
                     </button>
@@ -1656,9 +1664,9 @@ export default function ShootRoom({ galleryId, onBack }: { galleryId: string; on
                   value={expMark}
                   onChange={(e) => setExpMark(e.target.value)}
                   placeholder="Watermark text (optional)"
-                  className="mt-3 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white placeholder:text-white/35"
+                  className="mt-3 w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-twilight"
                 />
-                <button className={`${btnQuiet} mt-5`} disabled={saving.busy} onClick={saveEdited}>
+                <button className={`${btnPrimary} mt-5`} disabled={saving.busy} onClick={saveEdited}>
                   {saving.busy ? `Saving ${saving.done} of ${saving.total}…` : 'Save edited photos'}
                 </button>
                 {saving.note && <p className="mt-3 text-sm text-white/80">{saving.note}</p>}

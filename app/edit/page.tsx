@@ -10,9 +10,10 @@ import ShootRoom from './ShootRoom'
 import TeachStyle from './TeachStyle'
 import StyleNotes, { type StyleUse } from './StyleNotes'
 import { QUESTIONS, type Signature } from '@/lib/brief'
+import { EXPORT_PRESETS } from '@/lib/exportPreset'
 
-type Row = { id: string; title: string; status: string; created_at: string; gallery_photos: { count: number }[] }
-type Tab = 'edit' | 'styles' | 'brain'
+type Row = { id: string; title: string; status: string; created_at: string; edit_archived?: boolean | null; gallery_photos: { count: number }[] }
+type Tab = 'edit' | 'styles' | 'brain' | 'settings' | 'shortcuts'
 type Correction = {
   photo_id: string
   gallery_id: string
@@ -36,6 +37,12 @@ const PHRASE: Record<string, [string, string]> = {
   sharpen: ['Sharpen', 'Soften'],
   noise: ['Reduce noise', 'Add grain'],
 }
+
+const SHORTCUT_GROUPS: { title: string; items: [string, string][] }[] = [
+  { title: 'Culling', items: [['← →', 'Previous or next photo'], ['P', 'Pick'], ['M', 'Maybe'], ['X', 'Cut'], ['Space', 'Rescue a cut photo (in the cuts view)']] },
+  { title: 'Editing', items: [['← →', 'Previous or next photo'], ['Enter', 'Next photo'], ['\\', 'Flip between before and after'], ['Esc', 'Leave spot removal or a mask tool'], ['[  ]', 'Make the spot or brush smaller or bigger']] },
+  { title: 'Undo and settings', items: [['Cmd or Ctrl + Z', 'Undo'], ['Shift + Cmd or Ctrl + Z', 'Redo'], ['Ctrl + Y', 'Redo (Windows)'], ['Shift + Cmd or Ctrl + C', 'Copy this photo\'s settings'], ['Shift + Cmd or Ctrl + V', 'Paste settings onto this photo']] },
+]
 
 const FIELDS = [
   { key: 'style', label: 'Style' },
@@ -82,6 +89,24 @@ const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-ink-so
 export default function EditingRoom() {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('edit')
+  const [dPreset, setDPreset] = useState('original')
+  const [dMark, setDMark] = useState('')
+  const [dSaved, setDSaved] = useState(false)
+  useEffect(() => {
+    try {
+      const pr = window.localStorage.getItem('camrhia:exportPreset')
+      if (pr && EXPORT_PRESETS.some((x) => x.id === pr)) setDPreset(pr)
+      setDMark(window.localStorage.getItem('camrhia:exportMark') ?? '')
+    } catch { /* ignore */ }
+  }, [])
+  function saveDefaults() {
+    try {
+      window.localStorage.setItem('camrhia:exportPreset', dPreset)
+      window.localStorage.setItem('camrhia:exportMark', dMark.trim())
+    } catch { /* ignore */ }
+    setDSaved(true)
+    setTimeout(() => setDSaved(false), 2500)
+  }
   const [rows, setRows] = useState<Row[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -119,7 +144,7 @@ export default function EditingRoom() {
       const uid = data.session.user.id
       setUserId(uid)
       const [g, sg, co] = await Promise.all([
-        sb.from('galleries').select('id, title, status, created_at, gallery_photos(count)').eq('owner_id', uid).order('created_at', { ascending: false }),
+        sb.from('galleries').select('id, title, status, created_at, edit_archived, gallery_photos(count)').eq('owner_id', uid).order('created_at', { ascending: false }),
         sb.from('edit_signatures').select('id, name, answers, strength').eq('owner_id', uid).order('created_at', { ascending: true }),
         sb.from('edit_corrections').select('photo_id, gallery_id, light, signature_id, created_at, manual:final->manual').eq('owner_id', uid).order('created_at', { ascending: false }).limit(5000),
       ])
@@ -257,7 +282,7 @@ export default function EditingRoom() {
     setShootId(null)
     const sb = supabase
     if (!sb || !userId) return
-    const g = await sb.from('galleries').select('id, title, status, created_at, gallery_photos(count)').eq('owner_id', userId).order('created_at', { ascending: false })
+    const g = await sb.from('galleries').select('id, title, status, created_at, edit_archived, gallery_photos(count)').eq('owner_id', userId).order('created_at', { ascending: false })
     if (!g.error) { setRows((g.data ?? []) as unknown as Row[]); void loadStages(((g.data ?? []) as unknown as Row[]).map((x) => x.id)) }
   }
 
@@ -274,9 +299,11 @@ export default function EditingRoom() {
             { href: '/edit', label: 'Shoots', badge: inProgress, onClick: () => { setTab('edit'); if (shootId) void backToStart() } },
             { href: '/edit?tab=styles', label: 'My styles', onClick: () => setTab('styles') },
             { href: '/edit?tab=brain', label: 'My habits', onClick: () => setTab('brain') },
+            { href: '/edit?tab=settings', label: 'Settings', onClick: () => setTab('settings') },
+            { href: '/edit?tab=shortcuts', label: 'Shortcuts', onClick: () => setTab('shortcuts') },
           ] },
         ]}
-        activeHref={tab === 'edit' ? '/edit' : tab === 'styles' ? '/edit?tab=styles' : '/edit?tab=brain'}
+        activeHref={tab === 'edit' ? '/edit' : `/edit?tab=${tab}`}
         homeHref="/edit"
         onSignOut={async () => { if (supabase) await supabase.auth.signOut(); window.location.href = '/login' }}
       />
@@ -287,7 +314,7 @@ export default function EditingRoom() {
 
         {tab === 'edit' && (
           <>
-            {shootId ? <div className="room-light mt-2"><ShootRoom galleryId={shootId} onBack={backToStart} /></div> : <ImportStart rows={rows} stages={stages} userId={userId} onOpen={setShootId} />}
+            {shootId ? <div className="room-light mt-2"><ShootRoom galleryId={shootId} onBack={backToStart} /></div> : <ImportStart rows={rows} stages={stages} userId={userId} onOpen={setShootId} onRows={(f) => setRows((p) => f(p ?? []))} />}
           </>
         )}
 
@@ -343,6 +370,62 @@ export default function EditingRoom() {
                   </div>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {tab === 'settings' && (
+          <div className="mt-8 max-w-2xl">
+            <p className="font-fraunces text-3xl text-ink">Settings</p>
+            <p className="mt-1 text-ink-soft">What the editing room starts with every time. You can still change them on any shoot.</p>
+            <div className="mt-8 rounded-2xl border border-white/70 bg-white/60 p-6">
+              <p className="font-fraunces text-xl text-ink">Saving your edited photos</p>
+              <p className="mt-1 text-sm text-ink-soft">The size and quality you start with when you save a finished shoot.</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {EXPORT_PRESETS.map((x) => (
+                  <button
+                    key={x.id}
+                    onClick={() => setDPreset(x.id)}
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition ${dPreset === x.id ? 'border-twilight bg-twilight text-white' : 'border-white/70 bg-white/40 text-ink-soft hover:border-twilight'}`}
+                  >
+                    {x.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-sm text-ink-soft">{EXPORT_PRESETS.find((x) => x.id === dPreset)?.note}</p>
+              <p className="mt-6 text-sm text-ink">Watermark text</p>
+              <input
+                value={dMark}
+                onChange={(e) => setDMark(e.target.value)}
+                placeholder="Your name or studio (leave empty for none)"
+                className="mt-2 w-full rounded-xl border border-white/70 bg-white/70 px-4 py-3 text-sm text-ink outline-none placeholder:text-ink-soft focus:border-twilight"
+              />
+              <div className="mt-6 flex items-center gap-4">
+                <button className="rounded-full bg-[var(--color-twilight)] px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90" onClick={saveDefaults}>Save settings</button>
+                {dSaved && <span className="text-sm text-ink-soft">Saved.</span>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'shortcuts' && (
+          <div className="mt-8">
+            <p className="font-fraunces text-3xl text-ink">Shortcuts</p>
+            <p className="mt-1 max-w-xl text-ink-soft">Keys that work while you cull and edit. On a Mac use Cmd, on Windows use Ctrl.</p>
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              {SHORTCUT_GROUPS.map((g) => (
+                <div key={g.title} className="rounded-2xl border border-white/70 bg-white/60 p-6">
+                  <p className="font-fraunces text-xl text-ink">{g.title}</p>
+                  <ul className="mt-4 space-y-3">
+                    {g.items.map(([k, d]) => (
+                      <li key={k + d} className="flex items-center justify-between gap-4 text-sm">
+                        <span className="text-ink-soft">{d}</span>
+                        <kbd className="shrink-0 rounded-lg border border-white/80 bg-white/80 px-2.5 py-1 text-xs text-ink">{k}</kbd>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         )}

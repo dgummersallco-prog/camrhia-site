@@ -95,7 +95,7 @@ function cleanAdj(a: Adjust): Adjust {
 
 const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
 const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-white/70 transition hover:border-white/35 hover:text-white disabled:opacity-40'
-const tab = (on: boolean) => `rounded-full border px-3 py-1.5 text-xs transition ${on ? 'border-twilight bg-white/10 text-white' : 'border-white/10 text-white/60 hover:border-white/30'}`
+const tab = (on: boolean) => `rounded-full border px-3.5 py-2 text-[13px] font-medium shadow-sm transition ${on ? 'border-twilight bg-twilight/15 text-white' : 'border-white/15 text-white/70 hover:border-white/30 hover:bg-white/5 hover:text-white'}`
 
 function Slide({ label, shown, min, max, step, value, onChange, onReset }: {
   label: string
@@ -271,7 +271,7 @@ function CurveEditor({ pts, onChange }: { pts: CurvePt[]; onChange: (p: CurvePt[
   )
 }
 
-function Panel({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: ReactNode }) {
+function Panel({ title, defaultOpen = true, keep = false, children }: { title: string; defaultOpen?: boolean; keep?: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
     <div className="border-b border-white/10 py-3 first:pt-0 last:border-b-0">
@@ -279,7 +279,7 @@ function Panel({ title, defaultOpen = true, children }: { title: string; default
         <span className="text-xs uppercase tracking-[0.18em] text-white/50">{title}</span>
         <span className="text-sm text-white/35">{open ? '–' : '+'}</span>
       </button>
-      {open && <div className="mt-3 space-y-3">{children}</div>}
+      {(open || keep) && <div className={open ? 'mt-3 space-y-3' : 'hidden'}>{children}</div>}
     </div>
   )
 }
@@ -321,6 +321,7 @@ export default function ReviewStep({
   const [manual, setManual] = useState<Adjust>({})
   const [crop, setCrop] = useState<Crop | null>(null)
   const [local, setLocal] = useState<LocalEdits>(emptyLocal())
+  const [openTool, setOpenTool] = useState<null | 'spot' | 'masks'>(null)
   const [pen, setPen] = useState<null | 'heal' | 'radial' | 'linear' | 'brush'>(null)
   const [selMask, setSelMask] = useState<string | null>(null)
   const [healSize, setHealSize] = useState(0.02)
@@ -410,7 +411,7 @@ export default function ReviewStep({
           const rd = shoot.readings[r.id]
           if (!rd || (shoot.studyAdj[r.id] ?? {}).bw) continue
           const sid = shoot.sceneOf[r.id]
-          const label = camiFlag(camiFix(rd, sid ? shoot.bases[sid] ?? null : null, null, lookId).adjust)
+          const label = camiFlag(camiFix(rd, sid ? shoot.bases[sid] ?? null : null, null, lookId, brief.light || null).adjust)
           if (label) extra[r.id] = label
         }
         setFlags((prev) => ({ ...extra, ...prev }))
@@ -469,7 +470,7 @@ export default function ReviewStep({
       if (before.bw) {
         setCamiNote({ id: row.id, notes: ['This one is black and white, so Camri left it alone.'], bw: false })
       } else {
-        const fix = camiFix(rd, sid ? shoot.bases[sid] ?? null : null, shoot.bias, lookId)
+        const fix = camiFix(rd, sid ? shoot.bases[sid] ?? null : null, shoot.bias, lookId, light[row.id] || brief.light || null)
         camiPrev.current = { adj: manual }
         camiApplied.current[row.id] = { reading: rd, suggested: fix.raw, studyAdj: before }
         editManual(addAdj(before, fix.adjust))
@@ -518,7 +519,7 @@ export default function ReviewStep({
       try {
         const cur = await sb.from('gallery_photos').select('reviewed').eq('id', r.id).maybeSingle()
         if (!cur.data || cur.data.reviewed) { setSceneBusy({ done: i + 1, total: targets.length }); continue }
-        const fix = camiFix(shoot.readings[r.id], shoot.bases[sid] ?? null, shoot.bias, lookId)
+        const fix = camiFix(shoot.readings[r.id], shoot.bases[sid] ?? null, shoot.bias, lookId, light[r.id] || brief.light || null)
         if (Object.keys(fix.adjust).length > 0) {
           const before = shoot.studyAdj[r.id] ?? {}
           const mine = cleanAdj(addAdj(before, fix.adjust))
@@ -1433,72 +1434,6 @@ export default function ReviewStep({
                 <CurveEditor pts={local.curve && local.curve.length >= 2 ? local.curve : [[0, 0], [1, 1]]} onChange={(c) => editLocalLive({ ...local, curve: c })} />
                 {!curveIsFlat(local.curve) && <button className={tab(false)} onClick={() => editLocalLive({ ...local, curve: undefined })}>Reset curve</button>}
               </Panel>
-              <Panel title="Spot removal" defaultOpen={false}>
-                <p className="text-xs text-white/50">Click a spot on the photo. Camri copies a clean patch over it.</p>
-                <div className="flex flex-wrap gap-2">
-                  <button className={tab(pen === 'heal')} onClick={() => pickPen('heal')}>{pen === 'heal' ? 'Done' : 'Remove spots'}</button>
-                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: local.heals.slice(0, -1) })}>Undo last spot</button>}
-                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: [] })}>Clear all ({local.heals.length})</button>}
-                </div>
-                <Slide label="Spot size" shown={Math.round(healSize * 1000)} min={5} max={80} value={Math.round(healSize * 1000)} onChange={(v) => setHealSize(v / 1000)} onReset={() => setHealSize(0.02)} />
-              </Panel>
-              <Panel title="Masks" defaultOpen={false}>
-                <p className="text-xs text-white/50">Change just one part of the photo.</p>
-                <div className="flex flex-wrap gap-2">
-                  <button className={tab(pen === 'radial')} onClick={() => pickPen('radial')}>Radial</button>
-                  <button className={tab(pen === 'linear')} onClick={() => pickPen('linear')}>Linear</button>
-                  <button className={tab(pen === 'brush')} onClick={() => pickPen('brush')}>Brush</button>
-                </div>
-                {pen && pen !== 'heal' && (
-                  <p className="text-xs text-white/50">
-                    {pen === 'brush' ? 'Paint over the part you want to change.' : pen === 'radial' ? 'Drag from the center outward.' : 'Drag from where the change is full to where it fades out.'}
-                  </p>
-                )}
-                {pen === 'brush' && <Slide label="Brush size" shown={Math.round(brushSize * 1000)} min={5} max={150} value={Math.round(brushSize * 1000)} onChange={(v) => setBrushSize(v / 1000)} onReset={() => setBrushSize(0.05)} />}
-                {local.masks.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {local.masks.map((m, i) => {
-                      const n = local.masks.slice(0, i + 1).filter((x) => x.kind === m.kind).length
-                      return (
-                        <button key={m.id} className={tab(selMask === m.id)} onClick={() => setSelMask(selMask === m.id ? null : m.id)}>
-                          {m.kind === 'radial' ? 'Radial' : m.kind === 'linear' ? 'Linear' : 'Brush'} {n}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-                {(() => {
-                  const sm = local.masks.find((m) => m.id === selMask)
-                  if (!sm) return null
-                  return (
-                    <div className="space-y-3 border-t border-white/10 pt-3">
-                      {MASK_TOOLS.map((t) => {
-                        const ui = Math.round(((sm.adj[t.key] ?? 0) / t.scale) * 100)
-                        return (
-                          <Slide
-                            key={t.key}
-                            label={t.label}
-                            shown={ui > 0 ? `+${ui}` : ui}
-                            min={-100}
-                            max={100}
-                            value={ui}
-                            onChange={(v) => setMaskAdj(sm, t.key, v, t.scale)}
-                            onReset={() => setMaskAdj(sm, t.key, 0, t.scale)}
-                          />
-                        )
-                      })}
-                      <Slide label="Feather" shown={Math.round(sm.feather * 100)} min={0} max={100} value={Math.round(sm.feather * 100)} onChange={(v) => patchMask(sm.id, { feather: v / 100 })} onReset={() => patchMask(sm.id, { feather: 0.5 })} />
-                      {sm.kind === 'brush' && !pen && (
-                        <Slide label="Size" shown={Math.round((sm.size ?? 0.05) * 1000)} min={5} max={150} value={Math.round((sm.size ?? 0.05) * 1000)} onChange={(v) => patchMask(sm.id, { size: v / 1000 })} onReset={() => patchMask(sm.id, { size: 0.05 })} />
-                      )}
-                      <div className="flex gap-2">
-                        <button className={tab(!!sm.invert)} onClick={() => patchMask(sm.id, { invert: !sm.invert })}>Invert</button>
-                        <button className={tab(false)} onClick={() => removeMask(sm.id)}>Delete mask</button>
-                      </div>
-                    </div>
-                  )
-                })()}
-              </Panel>
             </div>
 
             {/* CENTER: the photo */}
@@ -1575,6 +1510,91 @@ export default function ReviewStep({
                 >
                   <span className="rounded-full bg-black/55 px-3.5 py-5 text-2xl leading-none text-white/85 transition group-hover:bg-black/80">&rsaquo;</span>
                 </button>
+              </div>
+
+              <div className="relative mt-3 shrink-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs uppercase tracking-[0.18em] text-white/45">Tools</span>
+                  <button className={tab(openTool === 'spot' || pen === 'heal')} onClick={() => { setPen(null); setOpenTool(openTool === 'spot' ? null : 'spot') }}>Spot removal</button>
+                  <button className={tab(openTool === 'masks' || (!!pen && pen !== 'heal'))} onClick={() => { setPen(null); setOpenTool(openTool === 'masks' ? null : 'masks') }}>Masks</button>
+                </div>
+                {openTool && (
+                  <div className="absolute bottom-full left-0 z-30 mb-2 max-h-[55vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-white/10 bg-[#151518] p-4 shadow-xl">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-xs uppercase tracking-[0.18em] text-white/50">{openTool === 'spot' ? 'Spot removal' : 'Masks'}</span>
+                      <button className="text-sm text-white/45 hover:text-white/80" onClick={() => { setPen(null); setOpenTool(null) }}>Close</button>
+                    </div>
+                    {openTool === 'spot' ? (
+              <div className="space-y-3">
+                <p className="text-xs text-white/50">Click a spot on the photo. Camri copies a clean patch over it.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button className={tab(pen === 'heal')} onClick={() => pickPen('heal')}>{pen === 'heal' ? 'Done' : 'Remove spots'}</button>
+                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: local.heals.slice(0, -1) })}>Undo last spot</button>}
+                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: [] })}>Clear all ({local.heals.length})</button>}
+                </div>
+                <Slide label="Spot size" shown={Math.round(healSize * 1000)} min={5} max={80} value={Math.round(healSize * 1000)} onChange={(v) => setHealSize(v / 1000)} onReset={() => setHealSize(0.02)} />
+              </div>
+                    ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-white/50">Change just one part of the photo.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button className={tab(pen === 'radial')} onClick={() => pickPen('radial')}>Radial</button>
+                  <button className={tab(pen === 'linear')} onClick={() => pickPen('linear')}>Linear</button>
+                  <button className={tab(pen === 'brush')} onClick={() => pickPen('brush')}>Brush</button>
+                </div>
+                {pen && pen !== 'heal' && (
+                  <p className="text-xs text-white/50">
+                    {pen === 'brush' ? 'Paint over the part you want to change.' : pen === 'radial' ? 'Drag from the center outward.' : 'Drag from where the change is full to where it fades out.'}
+                  </p>
+                )}
+                {pen === 'brush' && <Slide label="Brush size" shown={Math.round(brushSize * 1000)} min={5} max={150} value={Math.round(brushSize * 1000)} onChange={(v) => setBrushSize(v / 1000)} onReset={() => setBrushSize(0.05)} />}
+                {local.masks.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {local.masks.map((m, i) => {
+                      const n = local.masks.slice(0, i + 1).filter((x) => x.kind === m.kind).length
+                      return (
+                        <button key={m.id} className={tab(selMask === m.id)} onClick={() => setSelMask(selMask === m.id ? null : m.id)}>
+                          {m.kind === 'radial' ? 'Radial' : m.kind === 'linear' ? 'Linear' : 'Brush'} {n}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                {(() => {
+                  const sm = local.masks.find((m) => m.id === selMask)
+                  if (!sm) return null
+                  return (
+                    <div className="space-y-3 border-t border-white/10 pt-3">
+                      {MASK_TOOLS.map((t) => {
+                        const ui = Math.round(((sm.adj[t.key] ?? 0) / t.scale) * 100)
+                        return (
+                          <Slide
+                            key={t.key}
+                            label={t.label}
+                            shown={ui > 0 ? `+${ui}` : ui}
+                            min={-100}
+                            max={100}
+                            value={ui}
+                            onChange={(v) => setMaskAdj(sm, t.key, v, t.scale)}
+                            onReset={() => setMaskAdj(sm, t.key, 0, t.scale)}
+                          />
+                        )
+                      })}
+                      <Slide label="Feather" shown={Math.round(sm.feather * 100)} min={0} max={100} value={Math.round(sm.feather * 100)} onChange={(v) => patchMask(sm.id, { feather: v / 100 })} onReset={() => patchMask(sm.id, { feather: 0.5 })} />
+                      {sm.kind === 'brush' && !pen && (
+                        <Slide label="Size" shown={Math.round((sm.size ?? 0.05) * 1000)} min={5} max={150} value={Math.round((sm.size ?? 0.05) * 1000)} onChange={(v) => patchMask(sm.id, { size: v / 1000 })} onReset={() => patchMask(sm.id, { size: 0.05 })} />
+                      )}
+                      <div className="flex gap-2">
+                        <button className={tab(!!sm.invert)} onClick={() => patchMask(sm.id, { invert: !sm.invert })}>Invert</button>
+                        <button className={tab(false)} onClick={() => removeMask(sm.id)}>Delete mask</button>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2">
@@ -1686,6 +1706,7 @@ export default function ReviewStep({
                 <button className={tab(false)} onClick={resetPhoto}>Reset this photo</button>
                 {manual.raw ? <button className="ml-3 text-xs text-white/55 underline" onClick={() => editManual({})}>Back to the shoot&apos;s look</button> : null}
               </div>
+              <Panel title="Ask Camri" defaultOpen={false} keep>
               <CamiPanel onBusyChange={setAskBusy} value={manual} onChange={editManual} previewUrl={afterUrl} lookName={lookId} strength={strength} brief={brief} light={light[row.id] || brief.light || ''} photoId={row.id}>
               <div className="mt-3 border-t border-white/10 pt-3">
                 <button className={tab(true)} disabled={camiBusy || !!sceneBusy} onClick={camiScanThis}>
@@ -1697,16 +1718,16 @@ export default function ReviewStep({
                 {sceneBusy && <button className="mt-2 block text-xs text-white/60 underline" onClick={() => { sceneStop.current = true }}>Stop</button>}
                 {camiNote && camiNote.id === row.id && (
                   <div className="mt-2 space-y-1 text-xs text-white/60">
-                    {camiNote.notes.map((n) => <p key={n}>{n}</p>)}
+                    <p>{camiNote.notes.join(' ')}</p>
                     {camiNote.bw && <button className="block underline" onClick={camiTryBW}>Camri thinks this could be black &amp; white. Try it</button>}
                     {camiPrev.current && <button className="block underline" onClick={camiUndo}>Undo Camri</button>}
                   </div>
                 )}
               </div>
               </CamiPanel>
-              <div className="rounded-xl border border-white/10 bg-[#7a5c45]/45 p-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/50">Your style</p>
-                <p className="mt-2 text-xs text-white/55">Every fix you make is saved, so Camrhia can learn how you edit.</p>
+              </Panel>
+              <Panel title="Your style" defaultOpen={false}>
+                <p className="text-xs text-white/55">Every fix you make is saved, so Camrhia can learn how you edit.</p>
                 <p className="mt-2 text-sm text-white/80">{reviewed} checked · {style.fixed} changed</p>
                 {style.fixed >= 3 ? (
                   <ul className="mt-2 space-y-1">
@@ -1739,7 +1760,7 @@ export default function ReviewStep({
                     )}
                   </div>
                 )}
-              </div>
+              </Panel>
             </div>
           </div>
         </>
