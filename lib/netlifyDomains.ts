@@ -34,7 +34,13 @@ export async function dnsTarget(): Promise<string> {
 
 async function setAliases(list: string[]) {
   const r = await fetch(`${API}/sites/${siteId()}`, { method: 'PATCH', headers: hdr(), body: JSON.stringify({ domain_aliases: list }) })
-  if (!r.ok) throw new Error('Could not add that domain to the hosting service.')
+  if (!r.ok) {
+    const text = await r.text().catch(() => '')
+    console.error('Netlify refused domain_aliases', r.status, text.slice(0, 500))
+    if (r.status === 401 || r.status === 403) throw new Error('Our connection to the hosting service was refused. This is a setup problem on our side, not yours.')
+    if (r.status === 422 || /already|in use|taken|exists|duplicate/i.test(text)) throw new Error('That address is already set up on another website host, so it cannot be added here yet. Try a different address, like book.yourstudio.com.')
+    throw new Error('The hosting service could not add that domain (error ' + r.status + '). Please try again in a minute.')
+  }
 }
 
 export async function addAlias(d: string) {
