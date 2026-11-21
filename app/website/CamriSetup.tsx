@@ -578,29 +578,31 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             </div>
           </div>
         )}
-        <div className="flex items-center gap-3">
-          {step > 0 && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={'/camri/' + ['03_working_laptop', '08_peeking', '09_holding_photo', '10_holding_sliders', '11_thumbs_up', '14_peeking_sliders', '15_thinking_peek', '16_excited', '05_celebrating'][(step - 1) % 9] + '.png'} alt="" className="h-14 w-auto shrink-0" />
-          )}
-          <p className="text-xs uppercase tracking-wider text-ink-soft">{`Step 2 of 3 · Part ${step + 1} of ${total}`}</p>
+        <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
+          <div className="flex items-center gap-3">
+            {step > 0 && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={'/camri/' + ['03_working_laptop', '08_peeking', '09_holding_photo', '10_holding_sliders', '11_thumbs_up', '14_peeking_sliders', '15_thinking_peek', '16_excited', '05_celebrating'][(step - 1) % 9] + '.png'} alt="" className="h-10 w-auto shrink-0" />
+            )}
+            <p className="min-w-0 flex-1 text-xs uppercase tracking-wider text-ink-soft">{`Step 2 of 3 · Part ${step + 1} of ${total}`}</p>
+            <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink">← Back</button>
+            {step < total - 1 ? (
+              <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
+            ) : (
+              <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
+            )}
+          </div>
+          <div className="mt-2 flex gap-1.5">
+            {DESIGN_SECTIONS.map((x, n) => (
+              <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
+            ))}
+          </div>
         </div>
-        <div className="mt-2 flex gap-1.5">
-          {DESIGN_SECTIONS.map((x, n) => (
-            <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
-          ))}
-        </div>
-        <h3 className="mt-6 font-fraunces text-3xl text-ink">{sec.title}</h3>
-        <div className="mt-4 grid max-w-3xl gap-3 sm:grid-cols-3">
-          <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className={'rounded-xl border-2 p-4 text-left ' + (ask ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
-            <p className="text-sm font-medium text-ink">Ask Camri about this</p>
-            <p className="mt-1 text-xs text-ink-soft">What it is and what she recommends.</p>
-          </button>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <h3 className="font-fraunces text-3xl text-ink">{sec.title}</h3>
+          <button type="button" onClick={() => { setAsk(!ask); setAns(null) }} className={'rounded-full border px-3 py-1 text-xs ' + (ask ? 'border-twilight bg-white text-ink' : 'border-black/15 text-ink-soft hover:border-twilight')}>Ask Camri</button>
           {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
-            <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-xl border-2 p-4 text-left ' + (mode === 'none' ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
-              <p className="text-sm font-medium text-ink">{mode === 'none' ? 'Skipped' : "I don't want this"}</p>
-              <p className="mt-1 text-xs text-ink-soft">{mode === 'none' ? 'Tap to add it back.' : 'Leave it off my site.'}</p>
-            </button>
+            <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-full border px-3 py-1 text-xs ' + (mode === 'none' ? 'border-twilight bg-white text-ink' : 'border-black/15 text-ink-soft hover:border-twilight')}>{mode === 'none' ? 'Skipped · add it back' : 'Skip this'}</button>
           )}
         </div>
         {ask && (
@@ -614,19 +616,23 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           </div>
         )}
 
-        {hasMode && (
-          <div className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
-            <p className="text-sm font-medium text-ink">How do you want {sec.title} on your site?</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              {([...(sec.k === 'blog' ? BLOG_MODES : MODES), ...(sec.k === 'blog' ? [] : [{ k: 'none', t: "I don't want this", d: 'Leave it off my site.' }])] as { k: string; t: string; d: string }[]).map((m) => (
-                <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-xl border-2 p-4 text-left ' + (mode === m.k ? 'border-twilight bg-white' : 'border-black/10 bg-white/60')}>
-                  <p className="text-sm font-medium text-ink">{m.t}</p>
-                  <p className="mt-1 text-xs text-ink-soft">{m.d}</p>
-                </button>
-              ))}
+        {hasMode && (() => {
+          const opts: { k: string; t: string; d: string }[] = sec.k === 'blog'
+            ? [{ k: 'page', t: 'Add a blog', d: 'A Blog page in your menu where your posts live.' }, { k: 'none', t: 'No blog', d: 'You can turn it on later whenever you want.' }]
+            : [{ k: 'page', t: 'Full page', d: 'Its own page in your menu.' }, { k: 'section', t: 'Section', d: 'A smaller block on your home page or any page you choose.' }, { k: 'both', t: 'Both', d: 'A block on a page that also links to the full page.' }, { k: 'none', t: 'Off', d: 'Leave it off my site.' }]
+          const cur = opts.find((m) => m.k === mode)
+          return (
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span className="text-sm text-ink-soft">On my site:</span>
+              <div className="inline-flex flex-wrap rounded-full border border-black/10 bg-white/70 p-1">
+                {opts.map((m) => (
+                  <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-full px-4 py-1.5 text-sm transition ' + (mode === m.k ? 'bg-twilight text-white' : 'text-ink hover:bg-black/5')}>{m.t}</button>
+                ))}
+              </div>
+              <span className="text-xs text-ink-soft">{cur ? cur.d : 'Choose how it shows up.'}</span>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {rows.map((row, ri) => {
           const pk = PK[sec.k + '|' + row]
@@ -663,14 +669,6 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           )
         })}
 
-        <div className="sticky bottom-0 z-10 mt-10 flex items-center gap-3 bg-[#F6F1EA]/90 py-4 backdrop-blur">
-          <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink">← Back</button>
-          {step < total - 1 ? (
-            <button type="button" onClick={() => go(step + 1)} className={btnPrimary}>{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
-          ) : (
-            <button type="button" onClick={onDone} className={btnPrimary}>Arrange my site →</button>
-          )}
-        </div>
       </div>
 
       <aside className="hidden lg:block">
