@@ -275,10 +275,14 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
 }
 
 export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0]) {
+  const [saved, setSaved] = useState(false)
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto bg-[#F6F1EA] px-6 pb-16 md:px-12">
-      <div className="mx-auto flex max-w-[1400px] items-center py-4">
-        <a href="/dashboard" className="rounded-full px-3 py-2 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink">← Dashboard</a>
+      <div className="mx-auto flex max-w-[1400px] items-center justify-end py-4">
+        <a href="/dashboard" onClick={(e) => { e.preventDefault(); setSaved(true); setTimeout(() => { window.location.href = '/dashboard' }, 700) }} className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-twilight">
+          <svg viewBox="0 0 16 16" className="h-4 w-4 text-twilight" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" /></svg>
+          {saved ? 'Progress saved' : 'Save & exit'}
+        </a>
       </div>
       <CamriSetupInner {...props} />
     </div>
@@ -590,24 +594,24 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           </div>
         )}
         <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
-          <div className="flex h-11 items-center gap-3">
-            <h3 className="font-fraunces text-3xl text-ink">{sec.title}</h3>
+          <div className="flex h-16 items-center gap-3">
+            <h3 className="font-fraunces text-5xl tracking-tight text-ink">{sec.title}</h3>
             {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
               <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-full border px-3 py-1 text-xs ' + (mode === 'none' ? 'border-twilight bg-white text-ink' : 'border-black/15 text-ink-soft hover:border-twilight')}>{mode === 'none' ? 'Skipped · add it back' : 'Skip this'}</button>
             )}
-            <div className="ml-auto flex items-center gap-2">
-              <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink">← Back</button>
-              {step < total - 1 ? (
-                <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
-              ) : (
-                <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
-              )}
-            </div>
           </div>
           <div className="mt-3 flex gap-1.5">
             {DESIGN_SECTIONS.map((x, n) => (
               <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
             ))}
+          </div>
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink">← Back</button>
+            {step < total - 1 ? (
+              <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
+            ) : (
+              <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
+            )}
           </div>
         </div>
         {step === 0 && (
@@ -709,7 +713,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
 
       </div>
 
-      <aside className="hidden lg:block lg:pt-16">
+      <aside className="hidden lg:block lg:pt-[84px]">
         <div className="sticky top-6 max-h-[90vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
