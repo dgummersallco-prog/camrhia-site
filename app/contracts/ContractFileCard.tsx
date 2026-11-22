@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 
 type Saved = { path: string; name: string }
 
-export function ContractFileCard() {
+export function ContractFileCard({ children }: { children?: ReactNode }) {
   const [uid, setUid] = useState('')
   const [saved, setSaved] = useState<Saved | null>(null)
   const [busy, setBusy] = useState(false)
@@ -80,8 +80,8 @@ export function ContractFileCard() {
 
   return (
     <section className="rounded-2xl border border-line bg-card p-6">
-      <h2 className="font-fraunces text-lg font-semibold text-ink">Use your own contract file</h2>
-      <p className="mt-1 text-sm text-ink-soft">Upload your contract as a PDF and keep it here. When you send a contract from a session, your client reads your exact file and signs it in Camrhia.</p>
+      <h2 className="font-fraunces text-lg font-semibold text-ink">Already have your own contract?</h2>
+      <p className="mt-1 text-sm text-ink-soft">Add it here once and send it to any client from their session, without copying and pasting it again. Upload a PDF and your client reads your exact file and signs it in Camrhia.</p>
       <input ref={ref} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void pick(f) }} />
       {saved ? (
         <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-white px-4 py-3">
@@ -94,6 +94,12 @@ export function ContractFileCard() {
         <button type="button" className={btn + ' mt-4'} disabled={busy} onClick={() => ref.current?.click()}>{busy ? 'Uploading…' : 'Upload my contract (PDF)'}</button>
       )}
       {msg && <p className={'mt-3 text-sm ' + (msg.ok ? 'text-emerald-700' : 'text-red-600')}>{msg.text}</p>}
+      {children && (
+        <div className="mt-5 border-t border-line pt-4">
+          <p className="text-sm text-ink-soft">Or use text. It is filled in for each client, and you edit it in the box below.</p>
+          <div className="mt-3 flex flex-wrap gap-2">{children}</div>
+        </div>
+      )}
     </section>
   )
 }

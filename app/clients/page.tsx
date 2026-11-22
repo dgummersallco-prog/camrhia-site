@@ -213,9 +213,12 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
   const phone = cts.find((p) => p.phone)?.phone ?? c.phone
   const email = cts.find((p) => p.email)?.email ?? c.email
   const box = 'rounded-2xl border border-white/80 bg-white/50 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]'
+  const cta = 'block truncate rounded-full px-3 py-1.5 text-center text-[13px] font-medium transition'
+  const ctaOut = cta + ' border border-white/80 bg-white/70 text-ink hover:border-ink'
+  const ctaFill = cta + ' bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] font-semibold text-white hover:opacity-90'
 
   return (
-    <div className="w-full" style={{ perspective: '1200px', aspectRatio: '5 / 6' }}>
+    <div className="mx-auto w-[90%]" style={{ perspective: '1200px', aspectRatio: '5 / 6.4' }}>
       <div
         role="button"
         tabIndex={0}
@@ -227,25 +230,21 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
         {/* FRONT */}
         <div className={face} style={{ ...faceStyle, ...GLASS }}>
           {due && <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ROSE }}>Reminder</span>}
-          <div className="flex h-full flex-col items-center px-5 pb-4 pt-7 text-center">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] font-fraunces text-xl font-semibold text-white">{c.name.split(/[\s&]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}</div>
-            <p className="mt-3 line-clamp-2 shrink-0 break-words font-fraunces text-xl font-semibold leading-tight text-ink">{c.name}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-widest text-ink-soft">{c.sessions.length > 0 ? Array.from(new Set(c.sessions.map((x) => typeLabel(x.session_type)))).slice(0, 3).join(' · ') : 'No sessions yet'}</p>
-            <div className="my-4 h-px w-10 shrink-0 bg-black/10" />
-            <div className="w-full min-w-0 space-y-1.5 text-sm" onClick={stop}>
+          <div className="flex h-full flex-col items-center px-4 pb-3 pt-5 text-center">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] font-fraunces text-lg font-semibold text-white">{c.name.split(/[\s&]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}</div>
+            <p className="mt-2 line-clamp-2 shrink-0 break-words font-fraunces text-lg font-semibold leading-tight text-ink">{c.name}</p>
+            <div className="my-3 h-px w-10 shrink-0 bg-black/10" />
+            <div className="w-full min-w-0 space-y-1.5" onClick={stop}>
               {phone && (
-                <p className="flex items-center justify-center gap-3">
-                  <a href={`tel:${phone}`} className="truncate font-medium text-ink hover:underline">{phone}</a>
-                  <a href={`sms:${phone}`} className="text-xs text-ink-soft underline">Text</a>
-                </p>
+                <div className="flex gap-1.5">
+                  <a href={`tel:${phone}`} className={ctaOut + ' min-w-0 flex-1'}>{phone}</a>
+                  <a href={`sms:${phone}`} className={ctaOut}>Text</a>
+                </div>
               )}
-              {email && <a href={`mailto:${email}`} className="block truncate text-ink-soft hover:underline">{email}</a>}
-              {!phone && !email && <p className="text-ink-soft/70">No contact info yet</p>}
+              {email && <a href={`mailto:${email}`} className={ctaOut + ' w-full'}>{email}</a>}
+              <Link href="/messages" className={ctaFill + ' w-full'}>Message on Camrhia</Link>
             </div>
-            <div className="mt-auto w-full shrink-0" onClick={stop}>
-              <Link href="/messages" className="block rounded-full bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-3 py-2.5 text-center text-sm font-semibold text-white transition hover:opacity-90">Message on Camrhia</Link>
-              <p className="mt-2.5 text-xs font-medium text-ink-soft">Flip for notes ↻</p>
-            </div>
+            <p className="mt-auto pt-2 text-xs font-medium text-ink-soft">Flip for notes ↻</p>
           </div>
         </div>
 
@@ -585,7 +584,6 @@ export default function ClientsPage() {
           </div>
           <div className="flex gap-2">
             {mode === 'clients' && <button type="button" onClick={() => setAdding((v) => !v)} className="rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ Add client</button>}
-            <Link href="/sessions/new" className="rounded-xl border border-white/70 bg-white/60 px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-white">+ New session</Link>
           </div>
         </div>
 

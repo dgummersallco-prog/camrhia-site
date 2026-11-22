@@ -122,7 +122,11 @@ export default function ContractPage() {
           <p className="mt-8 text-sm text-ink-soft">Loading…</p>
         ) : (
           <div className="mt-8 space-y-6">
-            <ContractFileCard />
+            <ContractFileCard>
+              <button type="button" className={ghost} onClick={() => { setDraft(''); setTimeout(() => taRef.current?.focus(), 50) }}>Paste my contract</button>
+              <label className={ghost + ' cursor-pointer'}>Upload a .txt file<input type="file" accept=".txt,.md,text/plain" className="hidden" onChange={(e) => { pickFile(e.target.files?.[0]); e.currentTarget.value = '' }} /></label>
+              <button type="button" className={ghost} onClick={() => setDraft(MASTER_CONTRACT_TEMPLATE)}>Use Camrhia&apos;s version</button>
+            </ContractFileCard>
             <section className={card}>
               <h2 className="font-fraunces text-lg font-semibold text-ink">How to get it reviewed</h2>
               <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-ink-soft">
@@ -130,16 +134,6 @@ export default function ContractPage() {
                 <li>Create a review link and send it to your attorney yourself, by text, email or however you like.</li>
                 <li>When your attorney is happy with it, enter their name under &quot;Record the review.&quot;</li>
               </ol>
-            </section>
-
-            <section className={card}>
-              <h2 className="font-fraunces text-lg font-semibold text-ink">Already have your own contract?</h2>
-              <p className="mt-1 text-sm text-ink-soft">Put it here once and it is saved. It replaces Camrhia&apos;s starting version, and you can send it to any client from their session without copying and pasting it again.</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" className={btn} onClick={() => { setDraft(''); setTimeout(() => taRef.current?.focus(), 50) }}>Paste my contract</button>
-                <label className={ghost + ' cursor-pointer'}>Upload a .txt file<input type="file" accept=".txt,.md,text/plain" className="hidden" onChange={(e) => { pickFile(e.target.files?.[0]); e.currentTarget.value = '' }} /></label>
-                <button type="button" className={ghost} onClick={() => setDraft(MASTER_CONTRACT_TEMPLATE)}>Use Camrhia&apos;s version</button>
-              </div>
             </section>
 
             <section className={card}>

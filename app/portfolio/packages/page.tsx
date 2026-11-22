@@ -290,9 +290,9 @@ export default function PackagesEditor() {
 <div className="space-y-10">
             {groups.map((g) => (
               <section key={g.key}>
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2 className="font-fraunces text-2xl font-semibold text-ink">{typeLabel(g.key)} <span className="ml-2 rounded-full bg-blush-wash px-3 py-1 align-middle font-sans text-sm font-semibold text-twilight">{g.items.length}</span></h2>
-                  <button type="button" className="text-sm text-twilight hover:underline" onClick={() => startNew(g.key)}>+ Add package</button>
+                <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <h2 className="font-fraunces text-2xl font-semibold text-ink">{typeLabel(g.key)}</h2>
+                  <button type="button" className="rounded-full border border-twilight bg-white/70 px-4 py-1.5 text-sm font-semibold text-twilight transition hover:bg-twilight hover:text-white" onClick={() => startNew(g.key)}>+ Add {typeLabel(g.key).toLowerCase()} package</button>
                 </div>
                 {g.items.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-line px-4 py-3 text-sm text-ink-soft">No packages yet.</p>
