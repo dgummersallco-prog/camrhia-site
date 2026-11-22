@@ -429,7 +429,7 @@ const BLOG_MODES = [
   { k: 'none', t: 'No blog for now', d: 'You can turn it on later whenever you want.' },
 ]
 
-type PickT = { title: string; row: string; name: string; src: string; ar: string }
+type PickT = { title: string; row: string; name: string; src: string; ar: string; field: string }
 function planOf(designs: Record<string, string>) {
   const PK = PICKERS() as unknown as Record<string, { dir: string; ar: string; field: string; items: { key: string; name: string }[] }>
   const home: (PickT & { k: string })[] = []
@@ -446,7 +446,7 @@ function planOf(designs: Record<string, string>) {
       const it = pk ? pk.items.find((d) => d.key === designs[pk.field]) : undefined
       if (!pk || !it) return
       if (pk.field === 'photos') return
-      const t = { title: s.title, row, name: it.name, src: '/' + pk.dir + '/' + it.key + '.png', ar: pk.ar }
+      const t = { title: s.title, row, name: it.name, src: '/' + pk.dir + '/' + it.key + '.png', ar: pk.ar, field: pk.field }
       const toPage = moded ? kd === 'page' || (kd === 'always' && md !== 'section') : s.k === 'book' || s.k === 'booking'
       if (toPage) {
         let pg = pages.find((q) => q.k === s.k)
@@ -573,6 +573,10 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   const MODED = ['galleries', 'about', 'pricing', 'blog']
   const hasMode = MODED.includes(sec.k)
   const mode = designs[sec.k + '_mode'] || ''
+  const T = sec.title.toLowerCase()
+  const modeOpts: { k: string; t: string }[] = sec.k === 'blog'
+    ? [{ k: 'page', t: 'Add a blog' }, { k: 'none', t: 'No blog' }]
+    : [{ k: 'section', t: 'Section' }, { k: 'page', t: 'Full page' }, { k: 'both', t: 'Both' }, { k: 'none', t: 'Off' }]
   const rows = sec.rows.filter((row) => {
     if (PK[sec.k + '|' + row]?.field === 'photos') return false
     if (mode === 'none' && sec.k !== 'blog') return false
@@ -582,8 +586,19 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   const rowsOrdered = hasMode && sec.k !== 'blog' ? [...rows].sort((a, b) => (rowKind(a) === 'section' ? 0 : 1) - (rowKind(b) === 'section' ? 0 : 1)) : rows
   const plan = planOf(designs)
   const secs = [
-    ...plan.home.map((p) => ({ k: p.k, row: p.row, title: p.title, name: p.name, src: p.src })),
+    ...plan.home.map((p) => ({ k: p.k, row: p.row, title: p.title, name: p.name, src: p.src, ar: p.ar, field: p.field })),
   ]
+  const picker = (field: string) => {
+    const alts = (designs[field + '_alts'] || designs[field] || '').split(',').filter(Boolean)
+    if (alts.length < 2) return null
+    return (
+      <div className="flex items-center gap-1.5 px-2 pb-2">
+        {alts.map((k, i) => (
+          <button key={k} type="button" onClick={() => setDesigns({ ...designs, [field]: k })} className={'h-6 w-6 rounded-full text-xs transition ' + (designs[field] === k ? 'bg-twilight font-medium text-white' : 'border border-black/15 bg-white text-ink hover:border-twilight')}>{i + 1}</button>
+        ))}
+      </div>
+    )
+  }
   const pickDesign = (pk: Pk, key: string, row: string) => {
     const have = (designs[pk.field + '_alts'] || designs[pk.field] || '').split(',').filter(Boolean)
     if (key && !have.includes(key) && have.length >= 3) return
@@ -635,7 +650,11 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           </div>
           <div className="mt-3"><Meter at={step + 1} /></div>
           <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="min-w-0 text-sm font-medium text-ink">{hasMode ? 'How should ' + sec.title + ' show up on your site?' : ''}</p>
+            <div className="flex min-w-0 flex-wrap gap-2">
+              {hasMode && modeOpts.map((m) => (
+                <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-full px-5 py-1.5 text-sm transition ' + (mode === m.k ? 'bg-twilight font-medium text-white hover:opacity-90' : 'border border-black/15 bg-white text-ink hover:border-twilight')}>{m.t}</button>
+              ))}
+            </div>
             <div className="flex shrink-0 items-center gap-2">
             <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink">← Back</button>
             {step < total - 1 ? (
@@ -646,33 +665,6 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             </div>
           </div>
         </div>
-        {hasMode && (() => {
-          const T = sec.title.toLowerCase()
-          const opts: { k: string; t: string; d: string }[] = sec.k === 'blog'
-            ? [{ k: 'page', t: 'Add a blog', d: 'Your Blog page appears in your menu and your posts live there. Pick how it looks below.' }, { k: 'none', t: 'No blog', d: 'Leave the blog off for now. You can turn it on later whenever you want.' }]
-            : [
-              { k: 'section', t: 'Section', d: 'A smaller ' + T + ' block that sits on your home page or any page you choose. Pick up to three section designs below.' },
-              { k: 'page', t: 'Full page', d: T.charAt(0).toUpperCase() + T.slice(1) + ' gets its own page in your menu. Pick up to three page designs below.' },
-              { k: 'both', t: 'Both', d: 'A short block on a page that links to the full ' + T + ' page. Pick designs for each below.' },
-              { k: 'none', t: 'Off', d: 'Leave ' + T + ' off your site.' },
-            ]
-          const cur = opts.find((m) => m.k === mode)
-          return (
-            <div className="mt-3 flex flex-wrap items-start gap-x-8 gap-y-5">
-              <div className="min-w-0 max-w-xl flex-1">
-                <div className="inline-flex flex-wrap gap-1 rounded-2xl border border-black/10 bg-white/70 p-1">
-                  {opts.map((m) => (
-                    <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'flex min-w-[88px] flex-col items-center gap-1 rounded-xl px-4 py-2.5 text-sm transition ' + (mode === m.k ? 'bg-twilight text-white' : 'text-ink hover:bg-black/5')}>
-                      <ModeIcon kind={sec.k === 'blog' ? (m.k === 'none' ? 'none' : 'blog') : m.k} />
-                      {m.t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )
-        })()}
-
         {rowsOrdered.map((row, ri) => {
           const pk = PK[sec.k + '|' + row]
           return (
@@ -752,11 +744,14 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
                     <span className="ml-2 text-[10px] text-ink-soft">{pg.title}</span>
                   </div>
                   {pg.picks.length > 0 ? (
+                    <>
                     <button type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === pg.k))} className="block w-full text-left">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={pg.picks[0].src} alt="" className="w-full object-cover object-top" style={{ aspectRatio: pg.picks[0].ar }} />
                       <p className="px-2 py-1 text-[10px] text-ink-soft">{pg.picks[0].name}</p>
                     </button>
+                    {picker(pg.picks[0].field)}
+                    </>
                   ) : (
                     <div className="space-y-1.5 bg-[#FBF8F4] p-2.5">
                       <div className="h-1.5 w-2/3 rounded bg-black/10" />
@@ -771,13 +766,16 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             {secs.length === 0 ? (
               <p className="text-xs text-ink-soft">The looks you pick show up here.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-3">
                 {secs.map((p) => (
-                  <button key={p.k + p.row} type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === p.k))} className="block overflow-hidden rounded-lg border border-black/10 bg-white text-left shadow-sm">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.src} alt="" className="h-14 w-full object-cover object-top" />
-                    <p className="truncate px-1.5 py-1 text-[10px] text-ink-soft">{p.title} · {p.name}</p>
-                  </button>
+                  <div key={p.k + p.row} className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm">
+                    <button type="button" onClick={() => go(DESIGN_SECTIONS.findIndex((x) => x.k === p.k))} className="block w-full text-left">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.src} alt="" className="w-full object-cover object-top" style={{ aspectRatio: p.ar }} />
+                      <p className="truncate px-2 py-1.5 text-[11px] text-ink-soft">{p.title} · {p.name}</p>
+                    </button>
+                    {picker(p.field)}
+                  </div>
                 ))}
               </div>
             )}
