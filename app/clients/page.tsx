@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 
-type S = { id: string; names: string | null; wedding_date: string | null; session_type: string | null; status: string | null }
+type S = { id: string; names: string | null; wedding_date: string | null; session_type: string | null; status: string | null; couple_user_id?: string | null }
+const AVATAR_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
 type Contact = { wedding_id: string; phone: string | null }
 type Inquiry = { invited_wedding_id: string | null; email: string | null; phone: string | null }
-type Client = { key: string; name: string; sessions: S[]; last: string | null; next: string | null; phone: string | null; email: string | null; fromWeb: boolean }
+type Client = { key: string; name: string; sessions: S[]; last: string | null; next: string | null; phone: string | null; email: string | null; fromWeb: boolean; avatar?: string | null }
 
 type Fam = { id: string; client_key: string; name: string; kind: string; date: string | null }
 type FamIn = { name: string; kind: string; date: string }
@@ -231,8 +232,11 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
         <div className={face} style={{ ...faceStyle, ...GLASS }}>
           {due && <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ROSE }}>Reminder</span>}
           <div className="flex h-full flex-col items-center px-4 pb-3 pt-5 text-center">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] font-fraunces text-lg font-semibold text-white">{c.name.split(/[\s&]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}</div>
-            <p className="mt-2 line-clamp-2 shrink-0 break-words font-fraunces text-lg font-semibold leading-tight text-ink">{c.name}</p>
+            {c.avatar
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={AVATAR_BASE + c.avatar} alt="" className="h-24 w-24 shrink-0 rounded-full object-cover" />
+              : <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] font-fraunces text-3xl font-semibold text-white">{c.name.split(/[\s&]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}</div>}
+            <p className="mt-3 line-clamp-2 shrink-0 break-words font-fraunces text-lg font-semibold leading-tight text-ink">{c.name}</p>
             <div className="my-3 h-px w-10 shrink-0 bg-black/10" />
             <div className="w-full min-w-0 space-y-1.5" onClick={stop}>
               {phone && (
@@ -380,6 +384,7 @@ export default function ClientsPage() {
   const [cts, setCts] = useState<Ct[]>([])
   const [notes, setNotes] = useState<Note[]>([])
   const [uid, setUid] = useState<string | null>(null)
+  const [avatarBy, setAvatarBy] = useState<Record<string, string>>({})
   const [manual, setManual] = useState<{ id: string; name: string; email: string | null; phone: string | null }[]>([])
   const [adding, setAdding] = useState(false)
   const [nc, setNc] = useState({ name: '', email: '', phone: '' })
@@ -416,7 +421,7 @@ export default function ClientsPage() {
       const { data: sess } = await supabase.auth.getSession()
       if (!sess.session) { router.push('/login'); return }
       setUid(sess.session.user.id)
-      const { data, error: e } = await supabase.from('weddings').select('id, names, wedding_date, session_type, status').order('wedding_date', { ascending: false, nullsFirst: false })
+      const { data, error: e } = await supabase.from('weddings').select('id, names, wedding_date, session_type, status, couple_user_id').order('wedding_date', { ascending: false, nullsFirst: false })
       if (e) { setError(e.message); setLoading(false); return }
       const rows = (data ?? []) as S[]
       setSessions(rows)
@@ -432,6 +437,21 @@ export default function ClientsPage() {
       }
       setContacts(cs)
       setInquiries(inq)
+      try {
+        const coupleOf: Record<string, string> = {}
+        for (const r of rows) if (r.couple_user_id) coupleOf[r.id] = r.couple_user_id
+        const { data: iq } = await supabase.from('inquiries').select('couple_id, converted_wedding_id').eq('photographer_id', sess.session.user.id)
+        for (const q of (iq ?? []) as { couple_id: string | null; converted_wedding_id: string | null }[]) if (q.couple_id && q.converted_wedding_id && !coupleOf[q.converted_wedding_id]) coupleOf[q.converted_wedding_id] = q.couple_id
+        const pids = Array.from(new Set(Object.values(coupleOf)))
+        if (pids.length) {
+          const { data: pr } = await supabase.from('profiles').select('id, avatar_path').in('id', pids)
+          const pathOf: Record<string, string> = {}
+          for (const p of (pr ?? []) as { id: string; avatar_path: string | null }[]) if (p.avatar_path) pathOf[p.id] = p.avatar_path
+          const av: Record<string, string> = {}
+          for (const wid of Object.keys(coupleOf)) if (pathOf[coupleOf[wid]]) av[wid] = pathOf[coupleOf[wid]]
+          setAvatarBy(av)
+        }
+      } catch { /* photos are optional */ }
       const { data: fm } = await supabase.from('client_family').select('id, client_key, name, kind, date').order('date', { ascending: true })
       setFams((fm ?? []) as Fam[])
       const { data: ct } = await supabase.from('client_contacts').select('id, client_key, name, role, phone, email').order('created_at', { ascending: true })
@@ -529,6 +549,7 @@ export default function ClientsPage() {
       if (!c.phone && phoneBy[s.id]) c.phone = phoneBy[s.id]
       if (!c.email && emailBy[s.id]) c.email = emailBy[s.id]
       if (webBy[s.id]) c.fromWeb = true
+      if (!c.avatar && avatarBy[s.id]) c.avatar = avatarBy[s.id]
       const d = s.wedding_date
       if (d) {
         if (d >= today) { if (!c.next || d < c.next) c.next = d }
@@ -543,7 +564,7 @@ export default function ClientsPage() {
       else map.set(key, { key, name, sessions: [], last: null, next: null, phone: m.phone, email: m.email, fromWeb: false })
     }
     return Array.from(map.values())
-  }, [sessions, contacts, inquiries, manual])
+  }, [sessions, contacts, inquiries, manual, avatarBy])
 
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase()

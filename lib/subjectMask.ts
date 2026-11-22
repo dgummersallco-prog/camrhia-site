@@ -49,19 +49,23 @@ function small(bmp: ImageBitmap): HTMLCanvasElement {
 // Packs a category mask (any non-zero value counts as "on") into bits for storage.
 function pack(u8: Uint8Array, w: number, h: number, allowFlip: boolean): AiMask {
   const on = new Uint8Array(w * h)
-  let count = 0
   let edge = 0
   let edgeN = 0
+  let mid = 0
+  let midN = 0
+  const bx = Math.max(1, Math.round(w * 0.1))
+  const by = Math.max(1, Math.round(h * 0.1))
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const v = u8[y * w + x] ? 1 : 0
       on[y * w + x] = v
-      count += v
-      if (x < 3 || y < 3 || x >= w - 3 || y >= h - 3) { edgeN++; edge += v }
+      if (x < bx || y < by || x >= w - bx || y >= h - by) { edgeN++; edge += v }
+      else if (x >= w * 0.3 && x < w * 0.7 && y >= h * 0.3 && y < h * 0.7) { midN++; mid += v }
     }
   }
-  // Some model builds mark the background instead of the subject. If the border is mostly "on", flip it.
-  const flip = allowFlip && edgeN > 0 && edge / edgeN > 0.6 && count / (w * h) > 0.5
+  // Some model builds mark the background instead of the person. The person is the part that fills the middle of the frame
+  // more than the edges, so if the edges are more "on" than the middle, flip it.
+  const flip = allowFlip && edgeN > 0 && midN > 0 && edge / edgeN > mid / midN
   const bytes = new Uint8Array(Math.ceil((w * h) / 8))
   for (let i = 0; i < w * h; i++) {
     const v = flip ? 1 - on[i] : on[i]

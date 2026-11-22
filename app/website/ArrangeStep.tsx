@@ -486,7 +486,8 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   return (
     <div>
       <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)_340px]">
-        <nav className="self-start lg:sticky lg:top-48 lg:max-h-[70vh] lg:overflow-y-auto">
+        <nav className="self-start rounded-2xl border border-black/10 bg-[#FBF8F4] p-5 lg:sticky lg:top-48 lg:max-h-[70vh] lg:overflow-y-auto">
+          <p className="mb-3 text-xs uppercase tracking-wider text-ink-soft">Pages you loved</p>
           {pages.map((p, k) => {
             const src = MAIN(p)
             const on = k === i
@@ -501,7 +502,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                 <button type="button" onClick={() => { setCur(k); setAct(null) }} className="block w-full text-left">
                   <p className="font-fraunces text-base text-ink">{p.label}</p>
                   {src
-                    ? <div className="mt-2 overflow-hidden rounded-lg border border-black/10 bg-[#EFE7DC] p-1.5"><img src={src} alt="" className="max-h-28 w-full rounded-md object-cover object-top" /></div>
+                    ? <img src={src} alt="" className="mt-2 max-h-28 w-full rounded-lg object-cover object-top" />
                     : <div className="mt-2 flex h-24 items-center justify-center rounded-lg border border-dashed border-black/20 text-xs text-ink-soft">{p.id === 'book' ? 'Your calendar' : p.id === 'blog' ? 'Your posts' : 'Add sections'}</div>}
                 </button>
                 {pills(pageAlts(p))}

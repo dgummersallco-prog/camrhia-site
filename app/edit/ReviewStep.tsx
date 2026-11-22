@@ -101,7 +101,7 @@ function cleanAdj(a: Adjust): Adjust {
 
 const primary = 'rounded-full bg-[var(--color-twilight)] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
 const quiet = 'rounded-full border border-white/15 px-4 py-2 text-sm text-white/70 transition hover:border-white/35 hover:text-white disabled:opacity-40'
-const tab = (on: boolean) => `rounded-full border px-3.5 py-2 text-[13px] font-medium shadow-sm transition ${on ? 'border-twilight bg-twilight/15 text-white' : 'border-white/15 text-white/70 hover:border-white/30 hover:bg-white/5 hover:text-white'}`
+const tab = (on: boolean) => `rounded-full border px-3.5 py-2 text-[13px] font-medium shadow-sm transition ${on ? 'border-twilight bg-twilight text-white' : 'border-white/15 text-white/70 hover:border-white/30 hover:bg-white/5 hover:text-white'}`
 
 function Slide({ label, shown, min, max, step, value, onChange, onReset }: {
   label: string
@@ -340,6 +340,8 @@ export default function ReviewStep({
   const [box, setBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null)
   const dragRef = useRef<string | null>(null)
+  const healDrag = useRef<{ i: number; part: 'src' | 'dst' } | null>(null)
+  const [selHeal, setSelHeal] = useState<number | null>(null)
   const imgRef = useRef<HTMLImageElement | null>(null)
   const stageRef = useRef<HTMLDivElement | null>(null)
   const [afterUrl, setAfterUrl] = useState<string | null>(null)
@@ -1242,6 +1244,8 @@ export default function ReviewStep({
   async function addAi(bg: boolean) {
     const s = srcRef.current
     if (!s || aiBusy) return
+    const had = local.masks.find((x) => x.kind === 'ai' && !x.label && !!x.invert === bg)
+    if (had) { setSelMask(had.id); setPen(null); setAiErr(null); return }
     setPen(null)
     setAiErr(null)
     setAiBusy(bg ? 'Background' : 'Subject')
@@ -1284,8 +1288,30 @@ export default function ReviewStep({
     e.currentTarget.setPointerCapture(e.pointerId)
     if (pen === 'pick') { addPicked(pt); return }
     if (pen === 'heal') {
+      const W = s.bmp.width
+      const H = s.bmp.height
+      const L = Math.max(W, H)
+      const near = (ax: number, ay: number, r: number) => Math.hypot((pt[0] - ax) * W, (pt[1] - ay) * H) <= Math.max(10, r * L * 1.15)
+      let hit: { i: number; part: 'src' | 'dst' } | null = null
+      const cur = selHeal != null ? local.heals[selHeal] : null
+      if (cur && near(cur.sx, cur.sy, cur.r)) hit = { i: selHeal as number, part: 'src' }
+      else if (cur && near(cur.x, cur.y, cur.r)) hit = { i: selHeal as number, part: 'dst' }
+      else {
+        for (let i = local.heals.length - 1; i >= 0 && !hit; i--) {
+          const h = local.heals[i]
+          if (near(h.x, h.y, h.r)) hit = { i, part: 'dst' }
+          else if (near(h.sx, h.sy, h.r)) hit = { i, part: 'src' }
+        }
+      }
+      if (hit) {
+        pushHist(false)
+        healDrag.current = hit
+        setSelHeal(hit.i)
+        return
+      }
       const [sx, sy] = autoHealSource(s.bmp, pt[0], pt[1], healSize)
       editLocal({ ...local, heals: [...local.heals, { x: pt[0], y: pt[1], r: healSize, sx, sy }] })
+      setSelHeal(local.heals.length)
       return
     }
     pushHist(false)
@@ -1302,6 +1328,16 @@ export default function ReviewStep({
   function toolMove(e: React.PointerEvent<HTMLDivElement>) {
     const p = ptOf(e)
     if (p && box) setCursor({ x: p.u * box.w, y: p.v * box.h })
+    const hd = healDrag.current
+    if (hd) {
+      const q = srcPt(e)
+      if (!q) return
+      setLocal((prev) => ({
+        ...prev,
+        heals: prev.heals.map((h, i) => (i !== hd.i ? h : hd.part === 'src' ? { ...h, sx: q[0], sy: q[1] } : { ...h, x: q[0], y: q[1] })),
+      }))
+      return
+    }
     const id = dragRef.current
     if (!id) return
     const pt = srcPt(e)
@@ -1321,6 +1357,7 @@ export default function ReviewStep({
   }
   function toolUp(e: React.PointerEvent<HTMLDivElement>) {
     e.stopPropagation()
+    if (healDrag.current) { healDrag.current = null; bump(); return }
     const id = dragRef.current
     if (!id) return
     dragRef.current = null
@@ -1372,7 +1409,14 @@ export default function ReviewStep({
     if (pen === 'heal') {
       local.heals.forEach((h, i) => {
         const [cx, cy] = P([h.x, h.y])
-        parts.push(ring('h' + i, cx, cy, Math.max(3, h.r * L * so)))
+        const rr = Math.max(3, h.r * L * so)
+        parts.push(ring('h' + i, cx, cy, rr))
+        if (i === selHeal) {
+          const [sx2, sy2] = P([h.sx, h.sy])
+          parts.push(<line key={'hl' + i} x1={cx} y1={cy} x2={sx2} y2={sy2} stroke="white" strokeOpacity={0.8} strokeWidth={1.5} strokeDasharray="5 5" />)
+          parts.push(ring('hs' + i, sx2, sy2, rr, '5 4'))
+          parts.push(<circle key={'hd' + i} cx={sx2} cy={sy2} r={3.5} fill="white" stroke="rgba(0,0,0,0.6)" />)
+        }
       })
     }
     if (sel) {
@@ -1612,7 +1656,7 @@ export default function ReviewStep({
               <div className="relative mt-3 shrink-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs uppercase tracking-[0.18em] text-white/45">Tools</span>
-                  <button className={tab(openTool === 'spot' || pen === 'heal')} onClick={() => { setPen(null); setOpenTool(openTool === 'spot' ? null : 'spot') }}>Spot removal</button>
+                  <button className={tab(openTool === 'spot' || pen === 'heal')} onClick={() => { if (openTool === 'spot') { setPen(null); setOpenTool(null) } else { setPicking(false); setMode('after'); setZoom100(false); setPen('heal'); setOpenTool('spot') } }}>Spot removal</button>
                   <button className={tab(openTool === 'masks' || (!!pen && pen !== 'heal'))} onClick={() => { setPen(null); setOpenTool(openTool === 'masks' ? null : 'masks') }}>Masks</button>
                 </div>
               </div>
@@ -1683,9 +1727,9 @@ export default function ReviewStep({
               <div className="space-y-3">
                 <p className="text-xs text-white/50">Click a spot on the photo. Camri copies a clean patch over it.</p>
                 <div className="flex flex-wrap gap-2">
-                  <button className={tab(pen === 'heal')} onClick={() => pickPen('heal')}>{pen === 'heal' ? 'Done' : 'Remove spots'}</button>
-                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: local.heals.slice(0, -1) })}>Undo last spot</button>}
-                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: [] })}>Clear all ({local.heals.length})</button>}
+                  <button className={tab(false)} onClick={() => { setPen(null); setOpenTool(null) }}>Done</button>
+                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => { setSelHeal(null); editLocal({ ...local, heals: local.heals.slice(0, -1) }) }}>Undo last spot</button>}
+                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => { setSelHeal(null); editLocal({ ...local, heals: [] }) }}>Clear all ({local.heals.length})</button>}
                 </div>
                 <Slide label="Spot size" shown={Math.round(healSize * 1000)} min={5} max={80} value={Math.round(healSize * 1000)} onChange={(v) => setHealSize(v / 1000)} onReset={() => setHealSize(0.02)} />
               </div>
