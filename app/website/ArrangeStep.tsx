@@ -441,12 +441,8 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const rightPanel = (
     <div className="space-y-6">
       <div>
-        <div className="flex items-start gap-3">
-          <img src={isBook ? '/camri/11_thumbs_up.png' : '/camri/04_thinking.png'} alt="" className="h-14 w-auto shrink-0" />
-          <p className="font-fraunces text-base leading-snug text-ink">{isBook || page.id === 'galleries' ? SAY[page.id] : 'Below are the sections you loved most. Add them to your ' + page.label.toLowerCase() + ' page and watch it grow.'}</p>
-        </div>
         {cardKeys.length > 0 && (
-          <div className="mt-4 space-y-3">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-wider text-ink-soft">Sections you loved</p>
               <button type="button" onClick={addAll} className="rounded-full bg-twilight px-3 py-1 text-xs font-medium text-white">Add all</button>
@@ -476,13 +472,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   return (
     <div>
       <div className="mb-8">
-        <div className="flex items-start gap-4">
-          <img src="/camri/12_open_arms.png" alt="" className="h-20 w-auto shrink-0" />
-          <div className="rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4">
-            <p className="mt-1 font-fraunces text-xl leading-snug text-ink">You have {NUM[pages.length] ?? pages.length} pages: {nameList}. Here is the main block of each. Tap a page to build it out, then I will suggest what goes next.</p>
-          </div>
-        </div>
-        <div className="mt-5 overflow-x-auto pb-2"><div className="mx-auto flex w-max items-start">
+        <div className="overflow-x-auto pb-2"><div className="mx-auto flex w-max items-start">
           {pages.map((p, k) => {
             const src = MAIN(p)
             const on = k === i

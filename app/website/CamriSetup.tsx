@@ -285,12 +285,17 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         )}
         {step === 3 && (
           <div>
-            <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={layouts[0] ? '/layouts/' + layouts[0] + '.png' : undefined} heroName={styles.find((x) => x.key === layouts[0])?.name} heroList={hl.map((k) => ({ key: k, name: styles.find((x) => x.key === k)?.name ?? k }))} heroActive={layouts[0]} onHero={(k) => { setHeroList(hl); setLayouts([k, ...layouts.filter((x) => x !== k)]) }} secAlts={altsOf(designs)} designs={designs} setDesigns={setDesigns} photoDesigns={PHOTO_DESIGNS as unknown as { key: string; name: string }[]} />
-            <div className="sticky bottom-0 z-20 mt-8 flex items-center gap-3 bg-[#F6F1EA]/90 py-4 backdrop-blur">
-              <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm text-ink disabled:opacity-50">← Back</button>
-              <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site'}</button>
-              {onCancel && <button type="button" onClick={onCancel} disabled={busy} className="ml-auto text-sm text-ink-soft underline">Back to my site</button>}
+            <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
+              <div className="flex h-16 items-center gap-3">
+                <h3 className="font-fraunces text-5xl tracking-tight text-ink">Arrange</h3>
+              </div>
+              <div className="mt-3"><Meter at={DESIGN_SECTIONS.length + 1} /></div>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
+                <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site →'}</button>
+              </div>
             </div>
+            <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={layouts[0] ? '/layouts/' + layouts[0] + '.png' : undefined} heroName={styles.find((x) => x.key === layouts[0])?.name} heroList={hl.map((k) => ({ key: k, name: styles.find((x) => x.key === k)?.name ?? k }))} heroActive={layouts[0]} onHero={(k) => { setHeroList(hl); setLayouts([k, ...layouts.filter((x) => x !== k)]) }} secAlts={altsOf(designs)} designs={designs} setDesigns={setDesigns} photoDesigns={PHOTO_DESIGNS as unknown as { key: string; name: string }[]} />
           </div>
         )}
       </div>
