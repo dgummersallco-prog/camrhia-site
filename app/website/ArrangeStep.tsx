@@ -88,9 +88,9 @@ function Row({ label, on, onClick, controls, alts, children }: { label: string; 
         <span className="h-px w-4 bg-black/30" />
       </div>
       {alts && alts.length > 1 && (
-        <div className="absolute right-full top-14 mr-5 flex gap-1">
+        <div className="absolute right-full top-14 mr-5 flex gap-1.5 rounded-xl border border-black/10 bg-white p-2 shadow-sm">
           {alts.map((x) => (
-            <button key={x.n} type="button" onClick={x.click} className={'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-medium shadow-sm transition ' + (x.on ? 'border-twilight bg-twilight text-white' : 'border-black/15 bg-white text-ink hover:border-twilight')}>{x.n}</button>
+            <button key={x.n} type="button" onClick={x.click} className={'h-6 w-6 rounded-full text-xs transition ' + (x.on ? 'bg-twilight font-medium text-white' : 'border border-black/15 bg-white text-ink hover:border-twilight')}>{x.n}</button>
           ))}
         </div>
       )}
