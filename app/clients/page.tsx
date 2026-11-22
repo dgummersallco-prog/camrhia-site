@@ -257,7 +257,7 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
           <div className="flex h-full flex-col p-4">
             <p className="truncate font-fraunces text-lg font-semibold text-ink">{c.name}</p>
             {c.fromWeb && <p className="mt-1 text-xs text-ink-soft">Came in through your website</p>}
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1" onClick={stop}>
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-color:rgba(232,214,196,0.7)_transparent] [scrollbar-width:thin]" onClick={stop}>
               <ClientDetails c={c} fam={fam} cts={cts} notes={notes} api={api} />
             </div>
             <p className="mt-3 text-center text-[11px] text-ink-soft">Tap to flip back</p>
@@ -609,12 +609,21 @@ export default function ClientsPage() {
         </div>
 
         {adding && mode === 'clients' && (
-          <section className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-white/70 bg-white/60 p-4 backdrop-blur-xl">
-            <div className="min-w-[12rem] flex-1"><p className={LABEL}>Name</p><input className={input + ' mt-1 w-full'} value={nc.name} onChange={(e) => setNc({ ...nc, name: e.target.value })} placeholder="Emma and Jake" /></div>
-            <div className="min-w-[12rem] flex-1"><p className={LABEL}>Phone</p><input className={input + ' mt-1 w-full'} value={nc.phone} onChange={(e) => setNc({ ...nc, phone: e.target.value })} /></div>
-            <div className="min-w-[12rem] flex-1"><p className={LABEL}>Email</p><input className={input + ' mt-1 w-full'} value={nc.email} onChange={(e) => setNc({ ...nc, email: e.target.value })} /></div>
-            <button type="button" onClick={saveManual} disabled={!nc.name.trim()} className="rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">Save client</button>
-          </section>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2A1F24]/40 p-4 backdrop-blur-sm" onClick={() => setAdding(false)}>
+            <div className="w-full max-w-md rounded-3xl border border-white/80 bg-[#FBF8F4] p-7 shadow-[0_30px_70px_-30px_rgba(90,50,60,0.55)]" onClick={(e) => e.stopPropagation()}>
+              <h2 className="font-fraunces text-2xl text-ink">Add a client</h2>
+              <p className="mt-1 text-sm text-ink-soft">Someone who is not on Camrhia yet.</p>
+              <div className="mt-5 space-y-4">
+                <div><p className={LABEL}>Name</p><input autoFocus className={input + ' mt-1 w-full'} value={nc.name} onChange={(e) => setNc({ ...nc, name: e.target.value })} placeholder="Emma and Jake" /></div>
+                <div><p className={LABEL}>Phone</p><input className={input + ' mt-1 w-full'} value={nc.phone} onChange={(e) => setNc({ ...nc, phone: e.target.value })} /></div>
+                <div><p className={LABEL}>Email</p><input className={input + ' mt-1 w-full'} value={nc.email} onChange={(e) => setNc({ ...nc, email: e.target.value })} /></div>
+              </div>
+              <div className="mt-6 flex justify-end gap-2">
+                <button type="button" onClick={() => setAdding(false)} className="rounded-xl border border-black/10 bg-white px-5 py-2.5 text-sm text-ink transition hover:bg-black/5">Cancel</button>
+                <button type="button" onClick={saveManual} disabled={!nc.name.trim()} className="rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">Save client</button>
+              </div>
+            </div>
+          </div>
         )}
 
         {error && <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}

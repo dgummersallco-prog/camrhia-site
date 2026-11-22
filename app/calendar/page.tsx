@@ -1,7 +1,8 @@
 'use client'
 
 import CamriTyping from '@/app/components/CamriTyping'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import ColorInput from '@/app/components/ColorInput'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -278,6 +279,12 @@ export default function CalendarPage() {
     setDayBusy(false)
   }
 
+  const colorTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function pickColor(k: 'booked' | 'hold' | 'blocked', col: 'cal_color_booked' | 'cal_color_hold' | 'cal_color_blocked', hex: string) {
+    setColors((c) => ({ ...c, [k]: hex }))
+    if (colorTimer.current) clearTimeout(colorTimer.current)
+    colorTimer.current = setTimeout(() => { void saveColor(col, hex) }, 600)
+  }
   async function saveColor(field: 'cal_color_booked' | 'cal_color_hold' | 'cal_color_blocked', hex: string) {
     const sb = supabase
     if (!sb || !uid) return
@@ -565,16 +572,9 @@ export default function CalendarPage() {
                   ['Hold', 'hold', 'cal_color_hold'],
                   ['Blocked', 'blocked', 'cal_color_blocked'],
                 ] as const).map(([lab, k, col]) => (
-                  <label key={k} className="flex items-center gap-2 text-sm text-ink">
-                    <input
-                      type="color"
-                      value={colors[k]}
-                      onChange={(e) => setColors((c) => ({ ...c, [k]: e.target.value }))}
-                      onBlur={(e) => saveColor(col, e.target.value)}
-                      className="h-8 w-8 cursor-pointer rounded border border-line bg-transparent p-0"
-                    />
-                    {lab}
-                  </label>
+                  <div key={k} className="w-44">
+                    <ColorInput label={lab} value={colors[k]} onChange={(hex: string) => pickColor(k, col, hex)} float />
+                  </div>
                 ))}
               </div>
             </div>

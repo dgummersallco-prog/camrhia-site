@@ -485,7 +485,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
 
   return (
     <div>
-      <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)_340px]">
+      <div className="grid gap-8 lg:grid-cols-[340px_minmax(0,1fr)_340px]">
         <nav className="self-start rounded-2xl border border-black/10 bg-[#FBF8F4] p-5 lg:sticky lg:top-48 lg:max-h-[70vh] lg:overflow-y-auto">
           <p className="mb-3 text-xs uppercase tracking-wider text-ink-soft">Pages you loved</p>
           {pages.map((p, k) => {
@@ -513,7 +513,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
         </nav>
         <div ref={wrapRef} className="relative">
           <p className="mb-5 text-center font-fraunces text-2xl text-ink">{page.label}<span className="ml-3 text-xs text-ink-soft">{i + 1} of {pages.length}</span></p>
-          <div className="mx-auto max-w-xl pl-32 pr-10">
+          <div className="mx-auto max-w-3xl pl-20 pr-6">
             <div data-frame="1" className="border-x border-black/10 bg-white shadow-sm">
               <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#EFE7DC] px-3 py-2">
                 <span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" />

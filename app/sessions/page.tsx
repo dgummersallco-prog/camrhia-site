@@ -296,10 +296,13 @@ export default function SessionsPage() {
   }, [shown, minis, miniSlots, filter, typeFilter, q])
 
   const pastCount = (rows ?? []).filter((r) => isPastDue(r, today)).length
+  const upCount = (rows ?? []).filter((r) => !(r.delivered || r.shoot_completed_at || isPastDue(r, today))).length
+  const editCount = (rows ?? []).filter((r) => !r.delivered && !!r.shoot_completed_at).length
+  const doneCount = (rows ?? []).filter((r) => !!r.delivered).length
   const tab = (key: typeof filter, label: string) => (
     <button
       onClick={() => setFilter(key)}
-      className={`rounded-full px-4 py-1.5 text-sm ${filter === key ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
+      className={`rounded-xl px-4 py-2.5 text-sm ${filter === key ? 'bg-twilight text-white' : 'border border-line text-ink'}`}
     >
       {label}
     </button>
@@ -342,10 +345,10 @@ export default function SessionsPage() {
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-2">
-            {tab('upcoming', 'Upcoming')}
+            {tab('upcoming', upCount > 0 ? `Upcoming (${upCount})` : 'Upcoming')}
             {tab('update', pastCount > 0 ? `Needs update (${pastCount})` : 'Needs update')}
-            {tab('editing', 'Editing')}
-            {tab('delivered', 'Delivered')}
+            {tab('editing', editCount > 0 ? `Editing (${editCount})` : 'Editing')}
+            {tab('delivered', doneCount > 0 ? `Delivered (${doneCount})` : 'Delivered')}
             {tab('all', 'All')}
           </div>
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
