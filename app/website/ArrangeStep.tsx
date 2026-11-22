@@ -404,6 +404,17 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     const f = listOf(struct, p.id)[0]
     return (f && thumbs[f]?.src) || thumbs.investment?.src
   }
+  type Alt = { n: number; on: boolean; click: () => void }
+  const altsFor = (k: string): Alt[] | undefined => secAlts?.[k] && secAlts[k].keys.length > 1 ? secAlts[k].keys.map((kk, n) => ({ n: n + 1, on: kk === secAlts[k].active, click: () => setDesigns({ ...designs, [secAlts[k].field]: kk }) })) : undefined
+  const pageAlts = (p: Pg): Alt[] | undefined => {
+    if (p.id === 'home') return heroList && heroList.length > 1 ? heroList.map((h, n) => ({ n: n + 1, on: h.key === heroActive, click: () => onHero?.(h.key) })) : undefined
+    return altsFor(p.id === 'galleries' ? 'portfolio' : p.id === 'pricing' ? 'investment' : p.id)
+  }
+  const pills = (list?: Alt[]) => list ? (
+    <div className="flex items-center gap-1.5 px-1 pt-2">
+      {list.map((a) => <button key={a.n} type="button" onClick={(e) => { e.stopPropagation(); a.click() }} className={'h-6 w-6 rounded-full text-xs transition ' + (a.on ? 'bg-twilight font-medium text-white' : 'border border-black/15 bg-white text-ink hover:border-twilight')}>{a.n}</button>)}
+    </div>
+  ) : null
   const WHY: Record<string, string> = {
     galsec: 'Show your best work first. Pick a few galleries, not everything, and link to the full Galleries page.',
     testimonials: 'Three to five short, specific reviews right after your work build trust before the ask.',
@@ -459,6 +470,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                   </div>
                   <p className="mt-1 text-xs leading-snug text-ink-soft">{WHY[k]}</p>
                   {th && <img src={th.src} alt="" className="mt-2 max-h-28 w-full rounded-lg object-cover object-top" />}
+                  {pills(altsFor(k))}
                 </div>
               )
             })}
@@ -471,31 +483,31 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
 
   return (
     <div>
-      <div className="mb-8">
-        <div className="overflow-x-auto pb-2"><div className="mx-auto flex w-max items-start">
+      <div className="grid gap-8 lg:grid-cols-[190px_minmax(0,1fr)_340px]">
+        <nav className="self-start lg:sticky lg:top-48 lg:max-h-[70vh] lg:overflow-y-auto">
           {pages.map((p, k) => {
             const src = MAIN(p)
             const on = k === i
             return (
-              <div key={p.id} className="flex items-start">
+              <div key={p.id} className="flex flex-col items-center">
                 {k > 0 && (
-                  <div className="mt-16 flex w-10 shrink-0 items-center justify-center gap-1">
-                    <span className="h-0.5 w-1.5 rounded-full bg-black/30" /><span className="h-0.5 w-1.5 rounded-full bg-black/30" /><span className="h-0.5 w-1.5 rounded-full bg-black/30" />
+                  <div className="flex h-7 flex-col items-center justify-center gap-1">
+                    <span className="h-1.5 w-0.5 rounded-full bg-black/30" /><span className="h-1.5 w-0.5 rounded-full bg-black/30" /><span className="h-1.5 w-0.5 rounded-full bg-black/30" />
                   </div>
                 )}
-                <button type="button" onClick={() => { setCur(k); setAct(null) }} className={'w-44 shrink-0 rounded-2xl border-2 bg-white p-2 text-left shadow-sm transition ' + (on ? 'border-twilight' : 'border-black/10 hover:border-twilight')}>
+                <div className={'w-full rounded-2xl border-2 bg-white p-2 text-left shadow-sm transition ' + (on ? 'border-twilight' : 'border-black/10 hover:border-twilight')}>
+                <button type="button" onClick={() => { setCur(k); setAct(null) }} className="block w-full text-left">
                   <p className="px-1 pb-1.5 font-fraunces text-base text-ink">{p.label}</p>
                   {src
-                    ? <img src={src} alt="" className="h-32 w-full rounded-lg object-cover object-top" />
-                    : <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-black/20 text-xs text-ink-soft">{p.id === 'book' ? 'Your calendar' : p.id === 'blog' ? 'Your posts' : 'Add sections'}</div>}
+                    ? <img src={src} alt="" className="h-24 w-full rounded-lg object-cover object-top" />
+                    : <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-black/20 text-xs text-ink-soft">{p.id === 'book' ? 'Your calendar' : p.id === 'blog' ? 'Your posts' : 'Add sections'}</div>}
                 </button>
+                {pills(pageAlts(p))}
+                </div>
               </div>
             )
           })}
-        </div></div>
-      </div>
-
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        </nav>
         <div ref={wrapRef} className="relative">
           <p className="mb-5 text-center font-fraunces text-2xl text-ink">{page.label}<span className="ml-3 text-xs text-ink-soft">{i + 1} of {pages.length}</span></p>
           <div className="mx-auto max-w-xl pl-32 pr-10">
