@@ -222,6 +222,15 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         )}
 
         {step === 1 && (
+          <div>
+          <div className="sticky top-0 z-20 -mx-2 mb-6 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
+            <div className="flex h-16 items-center"><h3 className="font-fraunces text-5xl tracking-tight text-ink">Hero</h3></div>
+            <div className="mt-3"><Meter at={0} /></div>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button type="button" onClick={() => setStep(0)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
+              <button type="button" onClick={() => setStep(2)} disabled={!canGo} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{`Next: ${DESIGN_SECTIONS[0].title} →`}</button>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3">
             {styles.map((s) => {
               const i = layouts.indexOf(s.key)
@@ -237,6 +246,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
                 </button>
               )
             })}
+          </div>
           </div>
         )}
 
@@ -258,18 +268,6 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         )}
       </div>
 
-      {step === 1 && (
-        <div className="mt-8 flex items-center gap-4">
-          <button type="button" onClick={() => setStep(step - 1)} disabled={busy} className="rounded-full border border-black/15 px-6 py-2.5 text-sm text-ink transition hover:border-twilight disabled:opacity-50">Back</button>
-          {step < 3 ? (
-            <button type="button" onClick={() => setStep(step + 1)} disabled={!canGo} className="rounded-full bg-twilight px-7 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">Continue</button>
-          ) : (
-            <button type="button" onClick={finish} disabled={!canGo || busy} className="rounded-full bg-twilight px-7 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site'}</button>
-          )}
-          {onCancel && <button type="button" onClick={onCancel} disabled={busy} className="ml-auto text-sm text-ink-soft underline">Back to my site</button>}
-          
-        </div>
-      )}
     </div>
   )
 }
@@ -291,15 +289,15 @@ export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0])
 
 const DESIGN_SECTIONS: { k: string; title: string; rows: string[] }[] = [
   { k: 'nav', title: 'Explore section', rows: ['Explore section designs'] },
-  { k: 'galleries', title: 'Galleries', rows: ['Galleries main page designs', 'Photo display designs (inside a gallery)', 'Section designs'] },
-  { k: 'book', title: 'Booking page', rows: ['With the calendar', 'Without the calendar'] },
-  { k: 'testimonials', title: 'Testimonials', rows: ['Section designs'] },
   { k: 'about', title: 'About', rows: ['Page designs', 'Section designs'] },
+  { k: 'galleries', title: 'Galleries', rows: ['Galleries main page designs', 'Photo display designs (inside a gallery)', 'Section designs'] },
+  { k: 'testimonials', title: 'Testimonials', rows: ['Section designs'] },
   { k: 'pricing', title: 'Pricing', rows: ['Page designs', 'Section designs'] },
-  { k: 'social', title: 'Social links', rows: ['Section designs'] },
   { k: 'faq', title: 'FAQ', rows: ['Section designs'] },
-  { k: 'contact', title: 'Booking button', rows: ['Section designs'] },
   { k: 'blog', title: 'Blog', rows: ['Blog main page designs', 'Post designs (inside a post)'] },
+  { k: 'social', title: 'Social links', rows: ['Section designs'] },
+  { k: 'contact', title: 'Booking button', rows: ['Section designs'] },
+  { k: 'book', title: 'Booking page', rows: ['With the calendar', 'Without the calendar'] },
 ]
 
 const DESIGN_LABELS: Record<string, string> = {
@@ -479,6 +477,16 @@ function thumbsOf(designs: Record<string, string>) {
   return out
 }
 
+function Meter({ at }: { at: number }) {
+  return (
+    <div className="flex gap-1.5">
+      {Array.from({ length: DESIGN_SECTIONS.length + 1 }).map((_, n) => (
+        <span key={n} className={'h-1.5 flex-1 rounded-full ' + (n <= at ? 'bg-twilight' : 'bg-black/10')} />
+      ))}
+    </div>
+  )
+}
+
 function ModeIcon({ kind }: { kind: string }) {
   const c = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' as const }
   return (
@@ -573,6 +581,37 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   const go = (n: number) => { if (n < 0) return; setStep(n); setAsk(false); setAns(null); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const btnPrimary = 'rounded-full bg-twilight px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40'
   return (
+    <div>
+    {step === 0 && (
+          <div className="mb-6">
+            <div className="flex items-start gap-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/camri/12_open_arms.png" alt="" className="h-24 w-auto shrink-0" />
+              <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-3">
+                <p className="font-fraunces text-lg leading-snug text-ink">Now it's build-a-bear time! Want me to do this for you? I can pick looks that match your {baseName ? baseName + ' ' : ''}layout, set up your pages the way top photographers do, and take you straight to the last step. You can change anything after.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" onClick={onAuto} className={btnPrimary}>Yes, build it for me</button>
+                  <button type="button" onClick={() => setShowPlan(!showPlan)} className="rounded-full border border-black/15 bg-white px-4 py-2 text-sm text-ink">How would you set it up?</button>
+                </div>
+                {showPlan && (
+                  <div className="mt-4 text-sm leading-relaxed text-ink-soft">
+                    <p className="font-medium text-ink">Pages: Home, Galleries, About and Booking. A short menu works best.</p>
+                    <ol className="mt-2 list-decimal space-y-1 pl-5">
+                      <li>Hero: your best photo and what you shoot. That is your layout.</li>
+                      <li>Explore: three clear paths to Galleries, About and Booking.</li>
+                      <li>Galleries: a few of your best galleries that link to the full page.</li>
+                      <li>Testimonials: three to five short ones, with first names.</li>
+                      <li>Pricing: so people know what to expect before they ask.</li>
+                      <li>FAQ: the last questions before they inquire.</li>
+                      <li>Social links, then a booking button as the next step.</li>
+                    </ol>
+                    <p className="mt-2">Blog is optional. Add it only if you will keep posting.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+    )}
     <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
       <div>
         {zoom && (
@@ -600,11 +639,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
               <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-full border px-3 py-1 text-xs ' + (mode === 'none' ? 'border-twilight bg-white text-ink' : 'border-black/15 text-ink-soft hover:border-twilight')}>{mode === 'none' ? 'Skipped · add it back' : 'Skip this'}</button>
             )}
           </div>
-          <div className="mt-3 flex gap-1.5">
-            {DESIGN_SECTIONS.map((x, n) => (
-              <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
-            ))}
-          </div>
+          <div className="mt-3"><Meter at={step + 1} /></div>
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="min-w-0 text-sm font-medium text-ink">{hasMode ? 'How should ' + sec.title + ' show up on your site?' : ''}</p>
             <div className="flex shrink-0 items-center gap-2">
@@ -617,36 +652,6 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             </div>
           </div>
         </div>
-        {step === 0 && (
-          <div className="mt-4 mb-2">
-            <div className="flex items-start gap-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/12_open_arms.png" alt="" className="h-32 w-auto shrink-0" />
-              <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4">
-                <p className="mt-1 font-fraunces text-xl leading-snug text-ink">Now it's build-a-bear time! Want me to do this for you? I can pick looks that match your {baseName ? baseName + ' ' : ''}layout, set up your pages the way top photographers do, and take you straight to the last step. You can change anything after.</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button type="button" onClick={onAuto} className={btnPrimary}>Yes, build it for me</button>
-                  <button type="button" onClick={() => setShowPlan(!showPlan)} className="rounded-full border border-black/15 bg-white px-4 py-2 text-sm text-ink">How would you set it up?</button>
-                </div>
-                {showPlan && (
-                  <div className="mt-4 text-sm leading-relaxed text-ink-soft">
-                    <p className="font-medium text-ink">Pages: Home, Galleries, About and Booking. A short menu works best.</p>
-                    <ol className="mt-2 list-decimal space-y-1 pl-5">
-                      <li>Hero: your best photo and what you shoot. That is your layout.</li>
-                      <li>Explore: three clear paths to Galleries, About and Booking.</li>
-                      <li>Galleries: a few of your best galleries that link to the full page.</li>
-                      <li>Testimonials: three to five short ones, with first names.</li>
-                      <li>Pricing: so people know what to expect before they ask.</li>
-                      <li>FAQ: the last questions before they inquire.</li>
-                      <li>Social links, then a booking button as the next step.</li>
-                    </ol>
-                    <p className="mt-2">Blog is optional. Add it only if you will keep posting.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
         {hasMode && (() => {
           const T = sec.title.toLowerCase()
           const opts: { k: string; t: string; d: string }[] = sec.k === 'blog'
@@ -786,6 +791,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           </div>
         </div>
       </aside>
+    </div>
     </div>
   )
 }
