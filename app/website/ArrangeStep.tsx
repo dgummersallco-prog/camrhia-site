@@ -411,7 +411,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     return altsFor(p.id === 'galleries' ? 'portfolio' : p.id === 'pricing' ? 'investment' : p.id)
   }
   const pills = (list?: Alt[]) => list ? (
-    <div className="flex items-center gap-1.5 px-1 pt-2">
+    <div className="flex items-center gap-1.5 pt-2">
       {list.map((a) => <button key={a.n} type="button" onClick={(e) => { e.stopPropagation(); a.click() }} className={'h-6 w-6 rounded-full text-xs transition ' + (a.on ? 'bg-twilight font-medium text-white' : 'border border-black/15 bg-white text-ink hover:border-twilight')}>{a.n}</button>)}
     </div>
   ) : null
@@ -483,7 +483,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
 
   return (
     <div>
-      <div className="grid gap-8 lg:grid-cols-[190px_minmax(0,1fr)_340px]">
+      <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)_340px]">
         <nav className="self-start lg:sticky lg:top-48 lg:max-h-[70vh] lg:overflow-y-auto">
           {pages.map((p, k) => {
             const src = MAIN(p)
@@ -495,12 +495,12 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                     <span className="h-1.5 w-0.5 rounded-full bg-black/30" /><span className="h-1.5 w-0.5 rounded-full bg-black/30" /><span className="h-1.5 w-0.5 rounded-full bg-black/30" />
                   </div>
                 )}
-                <div className={'w-full rounded-2xl border-2 bg-white p-2 text-left shadow-sm transition ' + (on ? 'border-twilight' : 'border-black/10 hover:border-twilight')}>
+                <div className={'w-full rounded-xl border bg-white p-3 text-left transition ' + (on ? 'border-twilight ring-1 ring-twilight' : 'border-black/10 hover:border-twilight')}>
                 <button type="button" onClick={() => { setCur(k); setAct(null) }} className="block w-full text-left">
-                  <p className="px-1 pb-1.5 font-fraunces text-base text-ink">{p.label}</p>
+                  <p className="font-fraunces text-base text-ink">{p.label}</p>
                   {src
-                    ? <img src={src} alt="" className="h-24 w-full rounded-lg object-cover object-top" />
-                    : <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-black/20 text-xs text-ink-soft">{p.id === 'book' ? 'Your calendar' : p.id === 'blog' ? 'Your posts' : 'Add sections'}</div>}
+                    ? <img src={src} alt="" className="mt-2 max-h-28 w-full rounded-lg object-cover object-top" />
+                    : <div className="mt-2 flex h-24 items-center justify-center rounded-lg border border-dashed border-black/20 text-xs text-ink-soft">{p.id === 'book' ? 'Your calendar' : p.id === 'blog' ? 'Your posts' : 'Add sections'}</div>}
                 </button>
                 {pills(pageAlts(p))}
                 </div>
