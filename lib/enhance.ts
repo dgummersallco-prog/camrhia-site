@@ -2,7 +2,7 @@ import { encode, scaled, type Version } from '@/lib/galleryImages'
 
 import { cropRect, drawCropped, type Crop } from '@/lib/crop'
 import { BANDS, type HslKey } from '@/lib/hsl'
-import { healSource, maskWeights, curveIsFlat, curveLut, type LocalEdits, type Mask } from '@/lib/localEdit'
+import { healSource, maskWeights, curveIsFlat, curveLut, applyFills, type LocalEdits, type Mask } from '@/lib/localEdit'
 import type { CropRect } from '@/lib/crop'
 
 export type Enhanced = { full: Blob; web: Version; thumb: Version }
@@ -397,7 +397,8 @@ export async function enhancePhoto(source: Blob, path: string, look?: LookChoice
     const out = await mod.default({ blob: source, toType: 'image/jpeg', quality: 0.95 })
     blob = Array.isArray(out) ? out[0] : out
   }
-  const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' })
+  const bmp0 = await createImageBitmap(blob, { imageOrientation: 'from-image' })
+  const bmp = look?.local?.fills?.length ? await applyFills(bmp0, look.local.fills) : bmp0
   const canvas = document.createElement('canvas')
   try {
     const cr = look?.crop ? cropRect(bmp.width, bmp.height, look.crop) : null
@@ -428,6 +429,7 @@ export async function enhancePhoto(source: Blob, path: string, look?: LookChoice
       eb.close()
     }
   } finally {
+    if (bmp !== bmp0) bmp0.close()
     bmp.close()
     canvas.width = 0
     canvas.height = 0
@@ -435,7 +437,8 @@ export async function enhancePhoto(source: Blob, path: string, look?: LookChoice
 }
 
 // Small, fast preview of a look on one photo. Returns an object URL; the caller should revoke it.
-export async function renderPreview(bmp: ImageBitmap, lookId: string, strength: number, maxEdge = 480, adjust?: Adjust, skin?: boolean, crop?: Crop, local?: LocalEdits): Promise<string> {
+export async function renderPreview(bmp0: ImageBitmap, lookId: string, strength: number, maxEdge = 480, adjust?: Adjust, skin?: boolean, crop?: Crop, local?: LocalEdits): Promise<string> {
+  const bmp = local?.fills?.length ? await applyFills(bmp0, local.fills) : bmp0
   const cr = crop ? cropRect(bmp.width, bmp.height, crop) : null
   const sw = cr ? cr.cw : bmp.width
   const sh = cr ? cr.ch : bmp.height

@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DashboardHeader } from '@/app/components/DashboardHeader'
 import { SubTabs } from '@/app/components/SubTabs'
+import { ContractFileCard } from '@/app/contracts/ContractFileCard'
 import { CONTRACT_TYPE_CONFIG, MASTER_CONTRACT_TEMPLATE, MASTER_KEY } from '@/lib/contractDefaults'
 
 type Tpl = {
@@ -28,6 +29,13 @@ export default function ContractPage() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [copied, setCopied] = useState(false)
+  const taRef = useRef<HTMLTextAreaElement>(null)
+  function pickFile(f: File | undefined) {
+    if (!f) return
+    const r = new FileReader()
+    r.onload = () => { setDraft(String(r.result ?? '')); setMsg({ ok: true, text: 'Loaded. Read it over, then press Save changes.' }) }
+    r.readAsText(f)
+  }
 
   useEffect(() => {
     async function load() {
@@ -114,6 +122,7 @@ export default function ContractPage() {
           <p className="mt-8 text-sm text-ink-soft">Loading…</p>
         ) : (
           <div className="mt-8 space-y-6">
+            <ContractFileCard />
             <section className={card}>
               <h2 className="font-fraunces text-lg font-semibold text-ink">How to get it reviewed</h2>
               <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-ink-soft">
@@ -124,14 +133,24 @@ export default function ContractPage() {
             </section>
 
             <section className={card}>
+              <h2 className="font-fraunces text-lg font-semibold text-ink">Already have your own contract?</h2>
+              <p className="mt-1 text-sm text-ink-soft">Put it here once and it is saved. It replaces Camrhia&apos;s starting version, and you can send it to any client from their session without copying and pasting it again.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" className={btn} onClick={() => { setDraft(''); setTimeout(() => taRef.current?.focus(), 50) }}>Paste my contract</button>
+                <label className={ghost + ' cursor-pointer'}>Upload a .txt file<input type="file" accept=".txt,.md,text/plain" className="hidden" onChange={(e) => { pickFile(e.target.files?.[0]); e.currentTarget.value = '' }} /></label>
+                <button type="button" className={ghost} onClick={() => setDraft(MASTER_CONTRACT_TEMPLATE)}>Use Camrhia&apos;s version</button>
+              </div>
+            </section>
+
+            <section className={card}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-fraunces text-lg font-semibold text-ink">Contract</h2>
                 {status && <span className={'rounded-full px-3 py-1 text-[11px] font-semibold ' + (status.startsWith('Reviewed') ? 'bg-blush-wash text-twilight' : 'border border-line text-ink-soft')}>{status}</span>}
               </div>
-              <textarea className={input + ' mt-4 min-h-[30rem] font-mono text-[13px] leading-relaxed'} value={current} onChange={(e) => setDraft(e.target.value)} />
+              <textarea ref={taRef} className={input + ' mt-4 min-h-[30rem] font-mono text-[13px] leading-relaxed'} value={current} onChange={(e) => setDraft(e.target.value)} />
               <p className="mt-2 text-xs text-ink-soft">Words in braces, like {'{client_names}'} or {'{total_price}'}, are filled in for each client. Words like {'{contract_title}'} and {'{cancellation_days}'} change with the session type, see the table below.</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" className={btn} disabled={!dirty || busy} onClick={save}>{busy ? 'Saving…' : 'Save changes'}</button>
+                <button type="button" className={btn} disabled={!dirty || busy || !current.trim()} onClick={save}>{busy ? 'Saving…' : 'Save changes'}</button>
                 {dirty && <button type="button" className={ghost} onClick={() => setDraft(null)}>Discard</button>}
               </div>
             </section>

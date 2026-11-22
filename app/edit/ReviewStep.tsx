@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { enhancePhoto, renderPreview, originalPreview, photoFeatures, type Adjust } from '@/lib/enhance'
 import { briefAdjust, type Brief } from '@/lib/brief'
 import { cropRect, type Crop } from '@/lib/crop'
+import { findSubject, findObject } from '@/lib/subjectMask'
+import { maskBits, grownMask, type Fill } from '@/lib/localEdit'
 import { emptyLocal, cleanLocal, outToSrc, srcToOut, autoHealSource, curveIsFlat, curveLut, type CurvePt, type LocalEdits, type Mask, type MaskAdj } from '@/lib/localEdit'
 import ColorMixer from '@/app/edit/ColorMixer'
 import CamiPanel from '@/app/edit/CamiPanel'
@@ -39,7 +41,11 @@ const MASK_TOOLS: { key: keyof MaskAdj; label: string; scale: number }[] = [
   { key: 'contrast', label: 'Contrast', scale: 0.5 },
   { key: 'highlights', label: 'Highlights', scale: 1 },
   { key: 'shadows', label: 'Shadows', scale: 1 },
+  { key: 'whites', label: 'Whites', scale: 1 },
+  { key: 'blacks', label: 'Blacks', scale: 1 },
   { key: 'temp', label: 'Temperature', scale: 0.3 },
+  { key: 'tint', label: 'Tint', scale: 0.3 },
+  { key: 'vibrance', label: 'Vibrance', scale: 0.5 },
   { key: 'saturation', label: 'Saturation', scale: 0.5 },
   { key: 'sharpen', label: 'Sharpen', scale: 1 },
 ]
@@ -322,7 +328,12 @@ export default function ReviewStep({
   const [crop, setCrop] = useState<Crop | null>(null)
   const [local, setLocal] = useState<LocalEdits>(emptyLocal())
   const [openTool, setOpenTool] = useState<null | 'spot' | 'masks'>(null)
-  const [pen, setPen] = useState<null | 'heal' | 'radial' | 'linear' | 'brush'>(null)
+  useEffect(() => {
+    if (openTool) document.getElementById('rv-tool-panel')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [openTool])
+  const [pen, setPen] = useState<null | 'heal' | 'radial' | 'linear' | 'brush' | 'pick'>(null)
+  const [aiBusy, setAiBusy] = useState<string | null>(null)
+  const [aiErr, setAiErr] = useState<string | null>(null)
   const [selMask, setSelMask] = useState<string | null>(null)
   const [healSize, setHealSize] = useState(0.02)
   const [brushSize, setBrushSize] = useState(0.05)
@@ -1162,7 +1173,92 @@ export default function ReviewStep({
     return () => window.removeEventListener('keydown', h)
   })
 
-  function pickPen(p: 'heal' | 'radial' | 'linear' | 'brush') {
+  async function removeObject(sm: Mask) {
+    const s = srcRef.current
+    if (!s || aiBusy) return
+    setAiErr(null)
+    setAiBusy('Remove')
+    try {
+      const W = s.bmp.width
+      const H = s.bmp.height
+      const ar = W / H
+      const [pw, ph] = ar > 1.25 ? [1536, 1024] : ar < 0.8 ? [1024, 1536] : [1024, 1024]
+      const bits = maskBits(sm, W, H)
+      const ic = document.createElement('canvas')
+      ic.width = pw
+      ic.height = ph
+      ic.getContext('2d')?.drawImage(s.bmp, 0, 0, pw, ph)
+      const mc = document.createElement('canvas')
+      mc.width = pw
+      mc.height = ph
+      const mg = mc.getContext('2d')
+      const gm = grownMask(bits, pw, ph)
+      if (!mg || !gm) throw new Error('mask')
+      mg.fillStyle = '#000'
+      mg.fillRect(0, 0, pw, ph)
+      mg.globalCompositeOperation = 'destination-out'
+      mg.drawImage(gm, 0, 0)
+      const imgBlob = await new Promise<Blob | null>((r) => ic.toBlob(r, 'image/jpeg', 0.92))
+      const maskBlob = await new Promise<Blob | null>((r) => mc.toBlob(r, 'image/png'))
+      if (!imgBlob || !maskBlob) throw new Error('blob')
+      const { data: sess } = await supabase!.auth.getSession()
+      const fd = new FormData()
+      fd.append('image', imgBlob, 'photo.jpg')
+      fd.append('mask', maskBlob, 'mask.png')
+      fd.append('size', pw + 'x' + ph)
+      const r = await fetch('/api/ai/camri-remove', { method: 'POST', headers: { Authorization: 'Bearer ' + (sess.session?.access_token ?? '') }, body: fd })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok || !j.url) throw new Error(j.error || 'failed')
+      pushHist(false)
+      const fill: Fill = { ai: bits, url: j.url }
+      editLocal({ ...local, masks: local.masks.filter((x) => x.id !== sm.id), fills: [...(local.fills ?? []), fill] })
+      setSelMask(null)
+    } catch (e) {
+      const t = (e as Error)?.message
+      setAiErr(t === 'Monthly limit reached.' ? 'You have used this month\'s Camri limit.' : t && !['mask', 'blob', 'failed'].includes(t) ? t : 'Could not remove that. Try again.')
+    } finally {
+      setAiBusy(null)
+    }
+  }
+  async function addPicked(pt: [number, number]) {
+    const s = srcRef.current
+    if (!s || aiBusy) return
+    setAiErr(null)
+    setAiBusy('Pick')
+    try {
+      const ai = await findObject(s.bmp, pt[0], pt[1])
+      pushHist(false)
+      const id = 'm' + Date.now().toString(36)
+      const m: Mask = { id, kind: 'ai', a: [0, 0], b: [0, 0], feather: 0.3, adj: { exposure: 0.3 }, ai, label: 'Object' }
+      editLocal({ ...local, masks: [...local.masks, m] })
+      setSelMask(id)
+      setPen(null)
+    } catch {
+      setAiErr('Could not select that. Try clicking the middle of the thing you want.')
+    } finally {
+      setAiBusy(null)
+    }
+  }
+  async function addAi(bg: boolean) {
+    const s = srcRef.current
+    if (!s || aiBusy) return
+    setPen(null)
+    setAiErr(null)
+    setAiBusy(bg ? 'Background' : 'Subject')
+    try {
+      const ai = await findSubject(s.bmp)
+      pushHist(false)
+      const id = 'm' + Date.now().toString(36)
+      const m: Mask = { id, kind: 'ai', a: [0, 0], b: [0, 0], feather: 0.4, invert: bg, adj: { exposure: bg ? -0.3 : 0.3 }, ai }
+      editLocal({ ...local, masks: [...local.masks, m] })
+      setSelMask(id)
+    } catch {
+      setAiErr('Could not find a person in this photo. Check your connection and try again, or use Brush.')
+    } finally {
+      setAiBusy(null)
+    }
+  }
+  function pickPen(p: 'heal' | 'radial' | 'linear' | 'brush' | 'pick') {
     setPicking(false)
     setMode('after')
     setZoom100(false)
@@ -1186,6 +1282,7 @@ export default function ReviewStep({
     const s = srcRef.current
     if (!pt || !s || !pen) return
     e.currentTarget.setPointerCapture(e.pointerId)
+    if (pen === 'pick') { addPicked(pt); return }
     if (pen === 'heal') {
       const [sx, sy] = autoHealSource(s.bmp, pt[0], pt[1], healSize)
       editLocal({ ...local, heals: [...local.heals, { x: pt[0], y: pt[1], r: healSize, sx, sy }] })
@@ -1518,83 +1615,6 @@ export default function ReviewStep({
                   <button className={tab(openTool === 'spot' || pen === 'heal')} onClick={() => { setPen(null); setOpenTool(openTool === 'spot' ? null : 'spot') }}>Spot removal</button>
                   <button className={tab(openTool === 'masks' || (!!pen && pen !== 'heal'))} onClick={() => { setPen(null); setOpenTool(openTool === 'masks' ? null : 'masks') }}>Masks</button>
                 </div>
-                {openTool && (
-                  <div className="absolute bottom-full left-0 z-30 mb-2 max-h-[55vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-white/10 bg-[#151518] p-4 shadow-xl">
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-xs uppercase tracking-[0.18em] text-white/50">{openTool === 'spot' ? 'Spot removal' : 'Masks'}</span>
-                      <button className="text-sm text-white/45 hover:text-white/80" onClick={() => { setPen(null); setOpenTool(null) }}>Close</button>
-                    </div>
-                    {openTool === 'spot' ? (
-              <div className="space-y-3">
-                <p className="text-xs text-white/50">Click a spot on the photo. Camri copies a clean patch over it.</p>
-                <div className="flex flex-wrap gap-2">
-                  <button className={tab(pen === 'heal')} onClick={() => pickPen('heal')}>{pen === 'heal' ? 'Done' : 'Remove spots'}</button>
-                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: local.heals.slice(0, -1) })}>Undo last spot</button>}
-                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: [] })}>Clear all ({local.heals.length})</button>}
-                </div>
-                <Slide label="Spot size" shown={Math.round(healSize * 1000)} min={5} max={80} value={Math.round(healSize * 1000)} onChange={(v) => setHealSize(v / 1000)} onReset={() => setHealSize(0.02)} />
-              </div>
-                    ) : (
-              <div className="space-y-3">
-                <p className="text-xs text-white/50">Change just one part of the photo.</p>
-                <div className="flex flex-wrap gap-2">
-                  <button className={tab(pen === 'radial')} onClick={() => pickPen('radial')}>Radial</button>
-                  <button className={tab(pen === 'linear')} onClick={() => pickPen('linear')}>Linear</button>
-                  <button className={tab(pen === 'brush')} onClick={() => pickPen('brush')}>Brush</button>
-                </div>
-                {pen && pen !== 'heal' && (
-                  <p className="text-xs text-white/50">
-                    {pen === 'brush' ? 'Paint over the part you want to change.' : pen === 'radial' ? 'Drag from the center outward.' : 'Drag from where the change is full to where it fades out.'}
-                  </p>
-                )}
-                {pen === 'brush' && <Slide label="Brush size" shown={Math.round(brushSize * 1000)} min={5} max={150} value={Math.round(brushSize * 1000)} onChange={(v) => setBrushSize(v / 1000)} onReset={() => setBrushSize(0.05)} />}
-                {local.masks.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {local.masks.map((m, i) => {
-                      const n = local.masks.slice(0, i + 1).filter((x) => x.kind === m.kind).length
-                      return (
-                        <button key={m.id} className={tab(selMask === m.id)} onClick={() => setSelMask(selMask === m.id ? null : m.id)}>
-                          {m.kind === 'radial' ? 'Radial' : m.kind === 'linear' ? 'Linear' : 'Brush'} {n}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-                {(() => {
-                  const sm = local.masks.find((m) => m.id === selMask)
-                  if (!sm) return null
-                  return (
-                    <div className="space-y-3 border-t border-white/10 pt-3">
-                      {MASK_TOOLS.map((t) => {
-                        const ui = Math.round(((sm.adj[t.key] ?? 0) / t.scale) * 100)
-                        return (
-                          <Slide
-                            key={t.key}
-                            label={t.label}
-                            shown={ui > 0 ? `+${ui}` : ui}
-                            min={-100}
-                            max={100}
-                            value={ui}
-                            onChange={(v) => setMaskAdj(sm, t.key, v, t.scale)}
-                            onReset={() => setMaskAdj(sm, t.key, 0, t.scale)}
-                          />
-                        )
-                      })}
-                      <Slide label="Feather" shown={Math.round(sm.feather * 100)} min={0} max={100} value={Math.round(sm.feather * 100)} onChange={(v) => patchMask(sm.id, { feather: v / 100 })} onReset={() => patchMask(sm.id, { feather: 0.5 })} />
-                      {sm.kind === 'brush' && !pen && (
-                        <Slide label="Size" shown={Math.round((sm.size ?? 0.05) * 1000)} min={5} max={150} value={Math.round((sm.size ?? 0.05) * 1000)} onChange={(v) => patchMask(sm.id, { size: v / 1000 })} onReset={() => patchMask(sm.id, { size: 0.05 })} />
-                      )}
-                      <div className="flex gap-2">
-                        <button className={tab(!!sm.invert)} onClick={() => patchMask(sm.id, { invert: !sm.invert })}>Invert</button>
-                        <button className={tab(false)} onClick={() => removeMask(sm.id)}>Delete mask</button>
-                      </div>
-                    </div>
-                  )
-                })()}
-              </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2">
@@ -1653,6 +1673,100 @@ export default function ReviewStep({
 
             {/* RIGHT: crop, detail, color mix, your style */}
             <div className="min-h-0 rounded-2xl border border-white/10 bg-[#151518] p-4 lg:overflow-y-auto">
+              {openTool && (
+                <div id="rv-tool-panel" className="mb-4 rounded-xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-xs uppercase tracking-[0.18em] text-white/50">{openTool === 'spot' ? 'Spot removal' : 'Masks'}</span>
+                      <button className="text-sm text-white/45 hover:text-white/80" onClick={() => { setPen(null); setOpenTool(null) }}>Close</button>
+                    </div>
+                    {openTool === 'spot' ? (
+              <div className="space-y-3">
+                <p className="text-xs text-white/50">Click a spot on the photo. Camri copies a clean patch over it.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button className={tab(pen === 'heal')} onClick={() => pickPen('heal')}>{pen === 'heal' ? 'Done' : 'Remove spots'}</button>
+                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: local.heals.slice(0, -1) })}>Undo last spot</button>}
+                  {local.heals.length > 0 && <button className={tab(false)} onClick={() => editLocal({ ...local, heals: [] })}>Clear all ({local.heals.length})</button>}
+                </div>
+                <Slide label="Spot size" shown={Math.round(healSize * 1000)} min={5} max={80} value={Math.round(healSize * 1000)} onChange={(v) => setHealSize(v / 1000)} onReset={() => setHealSize(0.02)} />
+              </div>
+                    ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-white/50">Change just one part of the photo.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button className={tab(pen === 'radial')} onClick={() => pickPen('radial')}>Radial</button>
+                  <button className={tab(pen === 'linear')} onClick={() => pickPen('linear')}>Linear</button>
+                  <button className={tab(pen === 'brush')} onClick={() => pickPen('brush')}>Brush</button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button className={tab(false)} disabled={!!aiBusy} onClick={() => addAi(false)}>{aiBusy === 'Subject' ? 'Finding…' : 'Subject'}</button>
+                  <button className={tab(false)} disabled={!!aiBusy} onClick={() => addAi(true)}>{aiBusy === 'Background' ? 'Finding…' : 'Background'}</button>
+                  <button className={tab(pen === 'pick')} disabled={!!aiBusy} onClick={() => pickPen('pick')}>{aiBusy === 'Pick' ? 'Finding…' : pen === 'pick' ? 'Click the photo' : 'Pick object'}</button>
+                </div>
+                {aiErr && <p className="text-xs text-red-300">{aiErr}</p>}
+                {(local.fills?.length ?? 0) > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    <button className={tab(false)} onClick={() => editLocal({ ...local, fills: (local.fills ?? []).slice(0, -1) })}>Undo last removal</button>
+                    <span className="self-center text-xs text-white/40">{local.fills?.length} removed</span>
+                  </div>
+                )}
+                {pen && pen !== 'heal' && (
+                  <p className="text-xs text-white/50">
+                    {pen === 'pick' ? 'Click the thing you want to change, like a dress, a dog or the sky.' : pen === 'brush' ? 'Paint over the part you want to change.' : pen === 'radial' ? 'Drag from the center outward.' : 'Drag from where the change is full to where it fades out.'}
+                  </p>
+                )}
+                {pen === 'brush' && <Slide label="Brush size" shown={Math.round(brushSize * 1000)} min={5} max={150} value={Math.round(brushSize * 1000)} onChange={(v) => setBrushSize(v / 1000)} onReset={() => setBrushSize(0.05)} />}
+                {local.masks.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {local.masks.map((m, i) => {
+                      const n = local.masks.slice(0, i + 1).filter((x) => x.kind === m.kind && (m.kind !== 'ai' || (!!x.invert === !!m.invert && x.label === m.label))).length
+                      return (
+                        <button key={m.id} className={tab(selMask === m.id)} onClick={() => setSelMask(selMask === m.id ? null : m.id)}>
+                          {m.kind === 'radial' ? 'Radial' : m.kind === 'linear' ? 'Linear' : m.kind === 'ai' ? (m.label ?? (m.invert ? 'Background' : 'Subject')) : 'Brush'} {n}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                {(() => {
+                  const sm = local.masks.find((m) => m.id === selMask)
+                  if (!sm) return null
+                  return (
+                    <div className="space-y-3 border-t border-white/10 pt-3">
+                      {MASK_TOOLS.map((t) => {
+                        const ui = Math.round(((sm.adj[t.key] ?? 0) / t.scale) * 100)
+                        return (
+                          <Slide
+                            key={t.key}
+                            label={t.label}
+                            shown={ui > 0 ? `+${ui}` : ui}
+                            min={-100}
+                            max={100}
+                            value={ui}
+                            onChange={(v) => setMaskAdj(sm, t.key, v, t.scale)}
+                            onReset={() => setMaskAdj(sm, t.key, 0, t.scale)}
+                          />
+                        )
+                      })}
+                      <ColorMixer value={sm.adj as Adjust} onChange={(a) => patchMask(sm.id, { adj: a as MaskAdj })} />
+                      <Slide label="Feather" shown={Math.round(sm.feather * 100)} min={0} max={100} value={Math.round(sm.feather * 100)} onChange={(v) => patchMask(sm.id, { feather: v / 100 })} onReset={() => patchMask(sm.id, { feather: 0.5 })} />
+                      {sm.kind === 'brush' && !pen && (
+                        <Slide label="Size" shown={Math.round((sm.size ?? 0.05) * 1000)} min={5} max={150} value={Math.round((sm.size ?? 0.05) * 1000)} onChange={(v) => patchMask(sm.id, { size: v / 1000 })} onReset={() => patchMask(sm.id, { size: 0.05 })} />
+                      )}
+                      <div className="flex gap-2">
+                        <button className={tab(!!sm.invert)} onClick={() => patchMask(sm.id, { invert: !sm.invert })}>Invert</button>
+                        <button className={tab(false)} onClick={() => removeMask(sm.id)}>Delete mask</button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button className={tab(false)} disabled={!!aiBusy} onClick={() => removeObject(sm)}>{aiBusy === 'Remove' ? 'Removing… this takes about 20 seconds' : 'Remove this from the photo'}</button>
+                      </div>
+                      <p className="text-xs text-white/40">Uses AI and counts toward your monthly Camri limit.</p>
+                    </div>
+                  )
+                })()}
+              </div>
+                    )}
+                </div>
+              )}
               <Panel title="Crop & straighten">
                 <Slide
                   label="Straighten"

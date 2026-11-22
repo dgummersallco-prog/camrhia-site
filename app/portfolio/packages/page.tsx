@@ -154,6 +154,7 @@ export default function PackagesEditor() {
     setDraft({ id: null, name: '', price: '', covers: '', detail: '', session_type: tk ?? types.find((x) => x.key === 'wedding')?.key ?? types[0]?.key ?? 'wedding', delivery_days: '', show_public: true })
   }
   function startEdit(p: Pkg) {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     setDraft({ id: p.id, name: p.name, price: p.price ?? '', covers: '', detail: [p.covers, p.detail].filter((x) => x && x.trim()).join('\n'), session_type: p.session_type, delivery_days: p.delivery_days ? String(p.delivery_days) : '', show_public: p.show_public })
   }
 

@@ -20,6 +20,8 @@ type CRow = {
   reminder_sent_at: string | null
   manually_edited: boolean
   template_source: string | null
+  file_path?: string | null
+  file_name?: string | null
 }
 type Prof = {
   studio_name: string | null
@@ -29,6 +31,8 @@ type Prof = {
   business_county: string | null
   contract_template: string | null
   signature_name: string | null
+  contract_file_path?: string | null
+  contract_file_name?: string | null
 }
 
 const card = 'rounded-2xl border border-line bg-card p-5'
@@ -52,6 +56,9 @@ const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Alex+Brush&family=Da
 const sigFamily = (k: string | null) => SIG_FAMILIES[k ?? ''] ?? SIG_FAMILIES.DancingScript
 const fmtLong = (d: string | null) => (d ? new Date(d).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : '')
 const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+const fileNote = (name: string, weddingId: string) =>
+  'CONTRACT\n\nYour photographer\'s contract is a document: ' + name + '\nRead it here before you sign: https://camrhia.com/my/contract/' + weddingId + '\n'
 
 export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; w: Record<string, any>; onChanged?: () => void }) {
   const [uid, setUid] = useState<string | null>(null)
@@ -110,14 +117,14 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
     setUid(me)
     const { data: pr } = await sb
       .from('profiles')
-      .select('studio_name, display_name, payout_business_name, business_state, business_county, contract_template, signature_name')
+      .select('studio_name, display_name, payout_business_name, business_state, business_county, contract_template, signature_name, contract_file_path, contract_file_name')
       .eq('id', me)
       .maybeSingle()
     const p = (pr ?? { studio_name: null, display_name: null, payout_business_name: null, business_state: null, business_county: null, contract_template: null, signature_name: null }) as Prof
     setProf(p)
     const { data: ex } = await sb.from('contracts').select('*').eq('wedding_id', weddingId).maybeSingle()
     let row = (ex ?? null) as CRow | null
-    if (row && row.status === 'draft' && !row.manually_edited) {
+    if (row && row.status === 'draft' && !row.manually_edited && !row.file_path) {
       const src = await templateFor(me, p)
       const refilled = fill(src, p)
       if (refilled !== row.body || row.template_source !== src) {
@@ -136,17 +143,30 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
     if (!sb || !uid || !prof) return
     setBusy(true)
     setErr(null)
-    const src = await templateFor(uid, prof)
-    const body = fill(src, prof)
+    const useFile = !!prof.contract_file_path
+    const src = useFile ? 'file' : await templateFor(uid, prof)
+    const body = useFile ? fileNote(prof.contract_file_name || 'Contract.pdf', weddingId) : fill(src, prof)
     const { data, error } = await sb
       .from('contracts')
-      .insert({ wedding_id: weddingId, owner_id: uid, body, status: 'draft', template_source: src })
+      .insert({ wedding_id: weddingId, owner_id: uid, body, status: 'draft', template_source: src, ...(useFile ? { file_path: prof.contract_file_path, file_name: prof.contract_file_name, manually_edited: true } : {}) })
       .select('*')
       .single()
     setBusy(false)
     if (error || !data) { setErr(error?.message ?? 'Could not create the contract.'); return }
     setC(data as CRow)
     onChanged?.()
+  }
+
+  async function openFile() {
+    const sb = supabase
+    if (!sb) return
+    const tab = window.open('', '_blank')
+    const { data: sess } = await sb.auth.getSession()
+    const r = await fetch('/api/contract-file?w=' + weddingId, { headers: { Authorization: 'Bearer ' + (sess.session?.access_token ?? '') } })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok || !j.url) { tab?.close(); setErr(j.error || 'Could not open the file.'); return }
+    if (tab) tab.location.href = j.url
+    else window.location.href = j.url
   }
 
   async function saveEdit() {
@@ -287,9 +307,16 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
             </div>
           )}
 
+          {c.file_path && (
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-paper px-4 py-3">
+              <span className="min-w-0 flex-1 truncate text-sm text-ink">{c.file_name || 'Contract.pdf'}</span>
+              <button type="button" onClick={openFile} className={btn}>Open document</button>
+            </div>
+          )}
+
           {status === 'draft' && (
             <>
-              {c.manually_edited && !editing && (
+              {c.manually_edited && !c.file_path && !editing && (
                 <p className="text-xs text-ink-soft">You edited this contract, so it no longer updates when the session changes.</p>
               )}
               {sigAsk && (
@@ -316,8 +343,8 @@ export function ContractPanel({ weddingId, w, onChanged }: { weddingId: string; 
                 ) : (
                   <>
                     <button type="button" disabled={busy} onClick={sendClick} className={btnPrimary}>Send to client</button>
-                    <button type="button" onClick={() => { setDraft(c.body ?? ''); setEditing(true) }} className={btn}>Edit text</button>
-                    {c.manually_edited && <button type="button" disabled={busy} onClick={resetToTemplate} className={btn}>Reset to template</button>}
+                    {!c.file_path && <button type="button" onClick={() => { setDraft(c.body ?? ''); setEditing(true) }} className={btn}>Edit text</button>}
+                    {c.manually_edited && !c.file_path && <button type="button" disabled={busy} onClick={resetToTemplate} className={btn}>Reset to template</button>}
                   </>
                 )}
               </div>

@@ -215,7 +215,7 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
   const box = 'rounded-2xl border border-white/80 bg-white/50 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]'
 
   return (
-    <div className="w-full" style={{ perspective: '1200px', aspectRatio: '9 / 10' }}>
+    <div className="w-full" style={{ perspective: '1200px', aspectRatio: '5 / 6' }}>
       <div
         role="button"
         tabIndex={0}
@@ -227,27 +227,25 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
         {/* FRONT */}
         <div className={face} style={{ ...faceStyle, ...GLASS }}>
           {due && <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ROSE }}>Reminder</span>}
-          <div className="flex h-full flex-col px-4 pb-3 pt-5">
-            <p className="line-clamp-2 shrink-0 break-words text-center font-fraunces text-xl font-bold leading-[1.15] text-ink">{c.name}</p>
-            <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2" onClick={stop}>
-              <div className={box + ' shrink-0'}>
-                {phone || email ? (
-                  <>
-                    {phone && <p className="break-all text-sm font-semibold text-ink">{phone}</p>}
-                    {email && <p className={(phone ? 'mt-1 ' : '') + 'break-all text-xs text-ink-soft'}>{email}</p>}
-                    <div className="mt-2.5 flex flex-wrap gap-1.5">
-                      {phone && <a href={`tel:${phone}`} className={pill}>Call</a>}
-                      {phone && <a href={`sms:${phone}`} className={pill}>Text</a>}
-                      {email && <a href={`mailto:${email}`} className={pill}>Email</a>}
-                    </div>
-                  </>
-                ) : <p className="text-sm text-ink-soft/70">No phone or email yet</p>}
-              </div>
+          <div className="flex h-full flex-col items-center px-5 pb-4 pt-7 text-center">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] font-fraunces text-xl font-semibold text-white">{c.name.split(/[\s&]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}</div>
+            <p className="mt-3 line-clamp-2 shrink-0 break-words font-fraunces text-xl font-semibold leading-tight text-ink">{c.name}</p>
+            <p className="mt-1 text-[11px] uppercase tracking-widest text-ink-soft">{c.sessions.length > 0 ? Array.from(new Set(c.sessions.map((x) => typeLabel(x.session_type)))).slice(0, 3).join(' · ') : 'No sessions yet'}</p>
+            <div className="my-4 h-px w-10 shrink-0 bg-black/10" />
+            <div className="w-full min-w-0 space-y-1.5 text-sm" onClick={stop}>
+              {phone && (
+                <p className="flex items-center justify-center gap-3">
+                  <a href={`tel:${phone}`} className="truncate font-medium text-ink hover:underline">{phone}</a>
+                  <a href={`sms:${phone}`} className="text-xs text-ink-soft underline">Text</a>
+                </p>
+              )}
+              {email && <a href={`mailto:${email}`} className="block truncate text-ink-soft hover:underline">{email}</a>}
+              {!phone && !email && <p className="text-ink-soft/70">No contact info yet</p>}
             </div>
-            <div className="mt-3 shrink-0" onClick={stop}>
-              <Link href="/messages" className="block rounded-2xl border border-white/90 bg-white/55 px-3 py-2 text-center text-sm font-semibold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_-12px_rgba(90,50,60,0.5)] transition hover:bg-white/75">Message on Camrhia</Link>
+            <div className="mt-auto w-full shrink-0" onClick={stop}>
+              <Link href="/messages" className="block rounded-full bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-3 py-2.5 text-center text-sm font-semibold text-white transition hover:opacity-90">Message on Camrhia</Link>
+              <p className="mt-2.5 text-xs font-medium text-ink-soft">Flip for notes ↻</p>
             </div>
-            <p className="mt-2 shrink-0 text-center text-xs font-medium text-ink-soft">Flip for notes</p>
           </div>
         </div>
 
@@ -383,6 +381,17 @@ export default function ClientsPage() {
   const [cts, setCts] = useState<Ct[]>([])
   const [notes, setNotes] = useState<Note[]>([])
   const [uid, setUid] = useState<string | null>(null)
+  const [manual, setManual] = useState<{ id: string; name: string; email: string | null; phone: string | null }[]>([])
+  const [adding, setAdding] = useState(false)
+  const [nc, setNc] = useState({ name: '', email: '', phone: '' })
+  async function saveManual() {
+    if (!supabase || !uid || !nc.name.trim()) return
+    const { data, error: e } = await supabase.from('manual_clients').insert({ owner_id: uid, name: nc.name.trim(), email: nc.email.trim() || null, phone: nc.phone.trim() || null }).select('id, name, email, phone').single()
+    if (e) { setError(e.message); return }
+    setManual((m) => [...m, data as { id: string; name: string; email: string | null; phone: string | null }])
+    setNc({ name: '', email: '', phone: '' })
+    setAdding(false)
+  }
 
   useEffect(() => {
     let off = false
@@ -430,6 +439,8 @@ export default function ClientsPage() {
       setCts((ct ?? []) as Ct[])
       const { data: nt } = await supabase.from('client_notes').select('id, client_key, body, remind_on, done').order('remind_on', { ascending: true, nullsFirst: false })
       setNotes((nt ?? []) as Note[])
+      const { data: mc } = await supabase.from('manual_clients').select('id, name, email, phone').order('created_at', { ascending: true })
+      setManual((mc ?? []) as { id: string; name: string; email: string | null; phone: string | null }[])
       setLoading(false)
     }
     load()
@@ -525,8 +536,15 @@ export default function ClientsPage() {
         else if (!c.last || d > c.last) c.last = d
       }
     }
+    for (const m of manual) {
+      const name = m.name.trim()
+      const key = name.toLowerCase()
+      const c = map.get(key)
+      if (c) { if (!c.phone && m.phone) c.phone = m.phone; if (!c.email && m.email) c.email = m.email }
+      else map.set(key, { key, name, sessions: [], last: null, next: null, phone: m.phone, email: m.email, fromWeb: false })
+    }
     return Array.from(map.values())
-  }, [sessions, contacts, inquiries])
+  }, [sessions, contacts, inquiries, manual])
 
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase()
@@ -565,8 +583,20 @@ export default function ClientsPage() {
               ))}
             </div>
           </div>
-          <Link href="/sessions/new" className="rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ New session</Link>
+          <div className="flex gap-2">
+            {mode === 'clients' && <button type="button" onClick={() => setAdding((v) => !v)} className="rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">+ Add client</button>}
+            <Link href="/sessions/new" className="rounded-xl border border-white/70 bg-white/60 px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-white">+ New session</Link>
+          </div>
         </div>
+
+        {adding && mode === 'clients' && (
+          <section className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-white/70 bg-white/60 p-4 backdrop-blur-xl">
+            <div className="min-w-[12rem] flex-1"><p className={LABEL}>Name</p><input className={input + ' mt-1 w-full'} value={nc.name} onChange={(e) => setNc({ ...nc, name: e.target.value })} placeholder="Emma and Jake" /></div>
+            <div className="min-w-[12rem] flex-1"><p className={LABEL}>Phone</p><input className={input + ' mt-1 w-full'} value={nc.phone} onChange={(e) => setNc({ ...nc, phone: e.target.value })} /></div>
+            <div className="min-w-[12rem] flex-1"><p className={LABEL}>Email</p><input className={input + ' mt-1 w-full'} value={nc.email} onChange={(e) => setNc({ ...nc, email: e.target.value })} /></div>
+            <button type="button" onClick={saveManual} disabled={!nc.name.trim()} className="rounded-xl bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">Save client</button>
+          </section>
+        )}
 
         {error && <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
@@ -589,7 +619,7 @@ export default function ClientsPage() {
         ) : clients.length === 0 ? (
           <section className="mt-8 rounded-2xl border border-line bg-card p-8 text-center">
             <p className="font-fraunces text-lg font-semibold text-ink">No clients yet</p>
-            <p className="mt-2 text-sm text-ink-soft">Clients appear here as you add sessions.</p>
+            <p className="mt-2 text-sm text-ink-soft">Add a client with the button above, or they appear here as you add sessions.</p>
           </section>
         ) : (
           <>

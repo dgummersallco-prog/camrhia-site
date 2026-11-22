@@ -1,28 +1,32 @@
 import { cropRect, type Crop, type CropRect } from '@/lib/crop'
+import type { HslKey } from '@/lib/hsl'
 
-export type MaskAdj = Partial<Record<'exposure' | 'contrast' | 'highlights' | 'shadows' | 'temp' | 'saturation' | 'sharpen', number>>
+export type MaskAdj = Partial<Record<'exposure' | 'contrast' | 'highlights' | 'shadows' | 'whites' | 'blacks' | 'temp' | 'tint' | 'vibrance' | 'saturation' | 'sharpen', number>> & Partial<Record<HslKey, number>>
 
 export type Mask = {
   id: string
-  kind: 'radial' | 'linear' | 'brush'
+  kind: 'radial' | 'linear' | 'brush' | 'ai'
   a: [number, number]
   b: [number, number]
   pts?: [number, number][]
   size?: number
   feather: number
   invert?: boolean
+  ai?: { w: number; h: number; d: string }
+  label?: string
   adj: MaskAdj
 }
 
 export type Heal = { x: number; y: number; r: number; sx: number; sy: number }
 
 export type CurvePt = [number, number]
-export type LocalEdits = { masks: Mask[]; heals: Heal[]; curve?: CurvePt[] }
+export type Fill = { ai: { w: number; h: number; d: string }; url: string }
+export type LocalEdits = { masks: Mask[]; heals: Heal[]; curve?: CurvePt[]; fills?: Fill[] }
 export const curveIsFlat = (c?: CurvePt[] | null) => !c || c.length < 2 || c.every(([x, y]) => Math.abs(x - y) < 0.002)
 
 export const emptyLocal = (): LocalEdits => ({ masks: [], heals: [] })
-export const hasLocal = (l?: LocalEdits | null) => !!l && (l.masks.length > 0 || l.heals.length > 0 || !curveIsFlat(l.curve))
-export const cleanLocal = (l?: LocalEdits | null): LocalEdits | null => (hasLocal(l) ? { masks: l!.masks, heals: l!.heals, ...(curveIsFlat(l!.curve) ? {} : { curve: l!.curve }) } : null)
+export const hasLocal = (l?: LocalEdits | null) => !!l && (l.masks.length > 0 || l.heals.length > 0 || (l.fills?.length ?? 0) > 0 || !curveIsFlat(l.curve))
+export const cleanLocal = (l?: LocalEdits | null): LocalEdits | null => (hasLocal(l) ? { masks: l!.masks, heals: l!.heals, ...(curveIsFlat(l!.curve) ? {} : { curve: l!.curve }), ...(l!.fills?.length ? { fills: l!.fills } : {}) } : null)
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 
@@ -190,7 +194,39 @@ export function healSource(bmp: ImageBitmap, scale: number, heals: Heal[]): HTML
   return c
 }
 
+const aiCache = new Map<string, HTMLCanvasElement>()
+function aiCanvas(ai: { w: number; h: number; d: string }): HTMLCanvasElement | null {
+  const hit = aiCache.get(ai.d)
+  if (hit) return hit
+  const c = document.createElement('canvas')
+  c.width = ai.w
+  c.height = ai.h
+  const g = c.getContext('2d')
+  if (!g) return null
+  const img = g.createImageData(ai.w, ai.h)
+  const bin = atob(ai.d)
+  for (let i = 0; i < ai.w * ai.h; i++) {
+    if ((bin.charCodeAt(i >> 3) >> (i & 7)) & 1) { const o = i * 4; img.data[o] = 255; img.data[o + 1] = 255; img.data[o + 2] = 255; img.data[o + 3] = 255 }
+  }
+  g.putImageData(img, 0, 0)
+  if (aiCache.size > 12) aiCache.clear()
+  aiCache.set(ai.d, c)
+  return c
+}
+
 function drawMask(g: CanvasRenderingContext2D, m: Mask, mw: number, mh: number) {
+  if (m.kind === 'ai') {
+    const src = m.ai ? aiCanvas(m.ai) : null
+    if (!src) return
+    g.save()
+    g.imageSmoothingEnabled = true
+    g.imageSmoothingQuality = 'high'
+    const blur = clamp(m.feather, 0, 1) * Math.max(mw, mh) * 0.012
+    if (blur > 0.5) g.filter = 'blur(' + blur.toFixed(1) + 'px)'
+    g.drawImage(src, 0, 0, mw, mh)
+    g.restore()
+    return
+  }
   const white = (a: number) => `rgba(255,255,255,${a})`
   const f = clamp(m.feather, 0, 1)
   if (m.kind === 'radial') {
@@ -321,5 +357,99 @@ export function curveLut(pts: CurvePt[]): Uint8ClampedArray {
     }
     out[v] = Math.round(clamp(y, 0, 1) * 255)
   }
+  return out
+}
+
+// The area of a mask as packed bits, so it can be saved with the photo's edits.
+export function maskBits(m: Mask, W: number, H: number, long = 512): { w: number; h: number; d: string } {
+  const k = long / Math.max(W, H)
+  const w = Math.max(1, Math.round(W * k))
+  const h = Math.max(1, Math.round(H * k))
+  const c = document.createElement('canvas')
+  c.width = w
+  c.height = h
+  const g = c.getContext('2d', { willReadFrequently: true })
+  const bytes = new Uint8Array(Math.ceil((w * h) / 8))
+  if (g) {
+    drawMask(g, m, w, h)
+    const a = g.getImageData(0, 0, w, h).data
+    for (let i = 0; i < w * h; i++) {
+      const on = a[i * 4 + 3] > 127
+      if (m.invert ? !on : on) bytes[i >> 3] |= 1 << (i & 7)
+    }
+  }
+  let bin = ''
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i])
+  return { w, h, d: btoa(bin) }
+}
+
+// A slightly grown, softened copy of a packed area, drawn at w by h.
+export function grownMask(ai: { w: number; h: number; d: string }, w: number, h: number): HTMLCanvasElement | null {
+  const src = aiCanvas(ai)
+  if (!src) return null
+  const r = Math.max(1, Math.round(Math.max(ai.w, ai.h) * 0.012))
+  const d = document.createElement('canvas')
+  d.width = ai.w
+  d.height = ai.h
+  const g = d.getContext('2d')
+  if (!g) return null
+  for (const dy of [-r, 0, r]) for (const dx of [-r, 0, r]) g.drawImage(src, dx, dy)
+  const d2 = document.createElement('canvas')
+  d2.width = ai.w
+  d2.height = ai.h
+  const g2 = d2.getContext('2d')
+  if (!g2) return d
+  g2.filter = 'blur(1.5px)'
+  g2.drawImage(d, 0, 0)
+  const out = document.createElement('canvas')
+  out.width = w
+  out.height = h
+  const og = out.getContext('2d')
+  if (!og) return null
+  og.imageSmoothingEnabled = true
+  og.imageSmoothingQuality = 'high'
+  og.drawImage(d2, 0, 0, w, h)
+  return out
+}
+
+const fillCache = new WeakMap<ImageBitmap, { key: string; out: Promise<ImageBitmap> }>()
+// The photo with each removed area replaced by the filled-in picture. Only the removed area changes.
+export function applyFills(bmp: ImageBitmap, fills: Fill[]): Promise<ImageBitmap> {
+  const key = JSON.stringify(fills.map((f) => [f.url, f.ai.d.length, f.ai.d.slice(0, 48)]))
+  const hit = fillCache.get(bmp)
+  if (hit && hit.key === key) return hit.out
+  const out = (async () => {
+    try {
+      const W = bmp.width
+      const H = bmp.height
+      const c = document.createElement('canvas')
+      c.width = W
+      c.height = H
+      const g = c.getContext('2d')
+      if (!g) return bmp
+      g.drawImage(bmp, 0, 0)
+      for (const f of fills) {
+        const res = await fetch(f.url)
+        if (!res.ok) continue
+        const patch = await createImageBitmap(await res.blob())
+        const gm = grownMask(f.ai, W, H)
+        if (!gm) { patch.close(); continue }
+        const t = document.createElement('canvas')
+        t.width = W
+        t.height = H
+        const tg = t.getContext('2d')
+        if (!tg) { patch.close(); continue }
+        tg.drawImage(patch, 0, 0, W, H)
+        tg.globalCompositeOperation = 'destination-in'
+        tg.drawImage(gm, 0, 0)
+        g.drawImage(t, 0, 0)
+        patch.close()
+      }
+      return await createImageBitmap(c)
+    } catch {
+      return bmp
+    }
+  })()
+  fillCache.set(bmp, { key, out })
   return out
 }

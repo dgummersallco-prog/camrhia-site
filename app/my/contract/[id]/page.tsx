@@ -11,6 +11,7 @@ type Contract = {
   sent_at: string | null; signed_at: string | null
   signer_name: string | null; signature_style: string | null
   photographer_signature_name: string | null; photographer_signed_at: string | null; photographer_signature_style: string | null
+  file_path?: string | null; file_name?: string | null
 }
 
 const STYLES: { key: string; label: string; family: string }[] = [
@@ -32,6 +33,7 @@ export default function ClientContractPage() {
   const [agree, setAgree] = useState(false)
   const [signing, setSigning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fileUrl, setFileUrl] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -41,10 +43,16 @@ export default function ClientContractPage() {
       if (!sess.session) { router.replace(`/login?next=/my/contract/${id}`); return }
       const { data } = await sb
         .from('contracts')
-        .select('id, status, body, sent_at, signed_at, signer_name, signature_style, photographer_signature_name, photographer_signed_at, photographer_signature_style')
+        .select('id, status, body, sent_at, signed_at, signer_name, signature_style, photographer_signature_name, photographer_signed_at, photographer_signature_style, file_path, file_name')
         .eq('wedding_id', id)
         .maybeSingle()
-      setContract((data as Contract | null) ?? null)
+      const row = (data as Contract | null) ?? null
+      setContract(row)
+      if (row?.file_path && (row.status === 'sent' || row.status === 'signed')) {
+        const r = await fetch('/api/contract-file?w=' + id, { headers: { Authorization: 'Bearer ' + sess.session.access_token } })
+        const j = await r.json().catch(() => ({}))
+        if (r.ok && j.url) setFileUrl(j.url)
+      }
       setReady(true)
     }
     load()
@@ -82,6 +90,15 @@ export default function ClientContractPage() {
           <p className="rounded-2xl border border-line bg-card p-6 text-ink-soft">Your photographer has not sent the contract yet. You will get a notification when it is ready.</p>
         ) : (
           <>
+            {contract!.file_path && (
+              <section className="mb-6 overflow-hidden rounded-2xl border border-line bg-card print:hidden">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
+                  <p className="min-w-0 truncate text-sm font-medium text-ink">{contract!.file_name || 'Contract.pdf'}</p>
+                  {fileUrl && <a href={fileUrl} target="_blank" rel="noreferrer" className="rounded-full border border-line px-4 py-1.5 text-sm font-semibold text-ink hover:bg-paper-deep">Open full size</a>}
+                </div>
+                {fileUrl ? <iframe src={fileUrl} title="Contract" className="h-[70vh] w-full" /> : <p className="p-5 text-sm text-ink-soft">Loading the document…</p>}
+              </section>
+            )}
             <article className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-line bg-card p-6 text-sm leading-relaxed text-ink print:max-h-none print:overflow-visible">
               <ContractText
                 body={contract!.body ?? ''}
