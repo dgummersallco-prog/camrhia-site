@@ -476,6 +476,46 @@ function thumbsOf(designs: Record<string, string>) {
   return out
 }
 
+function ModeIcon({ kind }: { kind: string }) {
+  const c = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' as const }
+  return (
+    <svg viewBox="0 0 40 28" className="h-7 w-10" aria-hidden="true">
+      {kind === 'section' && (<><rect x="1" y="1" width="38" height="26" rx="3" {...c} /><line x1="5" y1="6" x2="35" y2="6" {...c} /><rect x="5" y="10" width="30" height="8" rx="1.5" fill="currentColor" opacity="0.8" /><line x1="5" y1="22" x2="26" y2="22" {...c} /></>)}
+      {kind === 'page' && (<><rect x="1" y="1" width="38" height="26" rx="3" {...c} /><line x1="6" y1="6" x2="10" y2="6" {...c} /><line x1="14" y1="6" x2="18" y2="6" {...c} /><line x1="22" y1="6" x2="26" y2="6" {...c} /><line x1="6" y1="12" x2="34" y2="12" {...c} /><line x1="6" y1="16" x2="30" y2="16" {...c} /><line x1="6" y1="20" x2="24" y2="20" {...c} /></>)}
+      {kind === 'both' && (<><rect x="1" y="1" width="16" height="26" rx="2.5" {...c} /><rect x="4" y="9" width="10" height="7" rx="1" fill="currentColor" opacity="0.8" /><line x1="18.5" y1="14" x2="21.5" y2="14" {...c} /><rect x="23" y="1" width="16" height="26" rx="2.5" {...c} /><line x1="26" y1="8" x2="36" y2="8" {...c} /><line x1="26" y1="13" x2="34" y2="13" {...c} /><line x1="26" y1="18" x2="31" y2="18" {...c} /></>)}
+      {kind === 'none' && (<><rect x="1" y="1" width="38" height="26" rx="3" {...c} /><line x1="8" y1="21" x2="32" y2="7" {...c} /></>)}
+      {kind === 'blog' && (<><rect x="1" y="1" width="38" height="26" rx="3" {...c} /><rect x="5" y="5" width="13" height="9" rx="1" {...c} /><rect x="22" y="5" width="13" height="9" rx="1" {...c} /><line x1="5" y1="19" x2="18" y2="19" {...c} /><line x1="22" y1="19" x2="35" y2="19" {...c} /></>)}
+    </svg>
+  )
+}
+
+function ModePreview({ title, mode }: { title: string; mode: string }) {
+  const on = mode === 'section' || mode === 'both'
+  const inMenu = mode === 'page' || mode === 'both'
+  const others = ['Home', 'Galleries', 'About', 'Pricing'].filter((x) => x !== title && x !== 'Home').slice(0, 2)
+  const menu = ['Home', ...others, ...(inMenu ? [title] : []), 'Booking']
+  return (
+    <div className="w-full max-w-[280px] overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
+      <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE6DB] px-2.5 py-1.5">
+        <span className="h-1.5 w-1.5 rounded-full bg-black/20" /><span className="h-1.5 w-1.5 rounded-full bg-black/20" /><span className="h-1.5 w-1.5 rounded-full bg-black/20" />
+        <span className="ml-2 text-[10px] text-ink-soft">Your website</span>
+      </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 px-3 pt-2 text-[10px] uppercase tracking-wider text-ink-soft">
+        {menu.map((m) => <span key={m} className={m === title ? 'font-semibold text-twilight underline underline-offset-2' : ''}>{m}</span>)}
+      </div>
+      <div className="space-y-1.5 px-3 pb-3 pt-2">
+        <div className="h-9 rounded bg-black/10" />
+        {on ? (
+          <div className="flex h-9 items-center justify-center rounded border-2 border-dashed border-twilight bg-twilight/10 text-[11px] font-medium text-twilight">{title} block</div>
+        ) : (
+          <div className="h-3 rounded bg-black/5" />
+        )}
+        <div className="h-3 w-2/3 rounded bg-black/5" />
+      </div>
+    </div>
+  )
+}
+
 function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, baseName }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; onBack: () => void; onDone: () => void; onAuto: () => void; baseKey?: string; baseName?: string }) {
   type Pk = { dir: string; ar: string; field: string; items: { key: string; name: string }[] }
   const PK = PICKERS() as unknown as Record<string, Pk>
@@ -500,6 +540,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
     if (hasMode && sec.k !== 'blog') { const kd0 = rowKind(row); if ((kd0 === 'page' && mode === 'section') || (kd0 === 'section' && mode === 'page')) return false }
     return true
   })
+  const rowsOrdered = hasMode && sec.k !== 'blog' ? [...rows].sort((a, b) => (rowKind(a) === 'section' ? 0 : 1) - (rowKind(b) === 'section' ? 0 : 1)) : rows
   const plan = planOf(designs)
   const secs = [
     ...plan.home.map((p) => ({ k: p.k, row: p.row, title: p.title, name: p.name, src: p.src })),
@@ -581,11 +622,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
         )}
         <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
           <div className="flex items-center gap-3">
-            {step > 0 && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={'/camri/' + ['03_working_laptop', '08_peeking', '09_holding_photo', '10_holding_sliders', '11_thumbs_up', '14_peeking_sliders', '15_thinking_peek', '16_excited', '05_celebrating'][(step - 1) % 9] + '.png'} alt="" className="h-10 w-auto shrink-0" />
-            )}
-            <p className="min-w-0 flex-1 text-xs uppercase tracking-wider text-ink-soft">{`Step 2 of 3 · Part ${step + 1} of ${total}`}</p>
+            <p className="min-w-0 flex-1 text-xs uppercase tracking-wider text-ink-soft">Step 2 of 3 · Design your pages</p>
           </div>
           <div className="mt-2 flex gap-1.5">
             {DESIGN_SECTIONS.map((x, n) => (
@@ -603,6 +640,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <h3 className="font-fraunces text-3xl text-ink">{sec.title}</h3>
+          <span className="rounded-full border border-black/10 bg-white/70 px-2.5 py-1 text-xs text-ink-soft">{`${step + 1} of ${total}`}</span>
           {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
             <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-full border px-3 py-1 text-xs ' + (mode === 'none' ? 'border-twilight bg-white text-ink' : 'border-black/15 text-ink-soft hover:border-twilight')}>{mode === 'none' ? 'Skipped · add it back' : 'Skip this'}</button>
           )}
@@ -619,23 +657,33 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             ]
           const cur = opts.find((m) => m.k === mode)
           return (
-            <div className="mt-5 max-w-3xl">
-              <p className="text-sm font-medium text-ink">{'How should ' + sec.title + ' show up on your site?'}</p>
-              <div className="mt-2 inline-flex flex-wrap rounded-full border border-black/10 bg-white/70 p-1">
-                {opts.map((m) => (
-                  <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-full px-5 py-2 text-sm transition ' + (mode === m.k ? 'bg-twilight text-white' : 'text-ink hover:bg-black/5')}>{m.t}</button>
-                ))}
+            <div className="mt-5 flex flex-wrap items-start gap-x-8 gap-y-5">
+              <div className="min-w-0 max-w-xl flex-1">
+                <p className="text-sm font-medium text-ink">{'How should ' + sec.title + ' show up on your site?'}</p>
+                <div className="mt-2 inline-flex flex-wrap gap-1 rounded-2xl border border-black/10 bg-white/70 p-1">
+                  {opts.map((m) => (
+                    <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'flex min-w-[88px] flex-col items-center gap-1 rounded-xl px-4 py-2.5 text-sm transition ' + (mode === m.k ? 'bg-twilight text-white' : 'text-ink hover:bg-black/5')}>
+                      <ModeIcon kind={sec.k === 'blog' ? (m.k === 'none' ? 'none' : 'blog') : m.k} />
+                      {m.t}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-ink-soft">{cur ? cur.d : 'Choose one to see the designs that fit.'}</p>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{cur ? cur.d : 'Choose one to see the designs that fit.'}</p>
+              {mode && mode !== 'none' && <ModePreview title={sec.title} mode={mode} />}
             </div>
           )
         })()}
 
-        {rows.map((row, ri) => {
+        {rowsOrdered.map((row, ri) => {
           const pk = PK[sec.k + '|' + row]
           return (
             <div key={row} className="mt-8 rounded-2xl border border-black/10 bg-white/60 p-5">
-              <p className="text-xs uppercase tracking-wider text-ink-soft">Choice {ri + 1}</p>
+              {hasMode && sec.k !== 'blog' && rowKind(row) !== 'always' ? (
+                <p className="flex items-center gap-2 text-xs uppercase tracking-wider text-ink-soft"><span className="rounded-full bg-twilight/10 px-2.5 py-1 font-medium text-twilight">{rowKind(row) === 'section' ? 'Home page block' : 'Full page'}</span><span>Pick up to 3</span></p>
+              ) : (
+                <p className="text-xs uppercase tracking-wider text-ink-soft">Choice {ri + 1}</p>
+              )}
               <p className="mt-1 font-fraunces text-xl text-ink">{ROW_TITLE[row] ?? row}</p>
               {pk ? (
                 <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3">
