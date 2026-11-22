@@ -310,7 +310,7 @@ function DashboardHeaderInner({ active, hideNav }: { active: Tab; hideNav?: bool
       {/* Desktop sidebar */}
       <aside style={hideNav ? { display: 'none' } : undefined} className="fixed bottom-0 left-0 top-0 z-40 hidden w-60 flex-col border-r border-[#FFFFFF]/30 bg-[linear-gradient(180deg,rgb(var(--scene-a,204_138_140)/0.26)_0%,rgb(var(--scene-b,158_98_106)/0.3)_100%)] px-3 py-7 shadow-[8px_0_40px_-18px_rgba(0,0,0,0.45)] backdrop-blur-xl [text-shadow:0_1px_6px_rgba(0,0,0,0.35)] xl:flex">
         <Link href="/" className="mb-8 block px-3 text-center"><Wordmark className="text-5xl text-[#FFFFFF]!" /></Link>
-        <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto [scrollbar-color:rgba(232,214,196,0.7)_transparent] [scrollbar-width:thin]">
           {groupedNav}
         </nav>
         <button onClick={signOut} className="rounded-xl px-3 py-2.5 text-left text-sm text-[#FFFFFF] transition hover:bg-white/5 hover:text-white">

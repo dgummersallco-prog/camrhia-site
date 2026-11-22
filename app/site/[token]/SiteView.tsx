@@ -1,4 +1,5 @@
 'use client'
+import { sitePackagesOf, groupBySession } from '@/lib/sitePackages'
 import CustomJs from '@/app/site/CustomJs'
 import { sanitizeCss } from '@/lib/safeCss'
 
@@ -134,7 +135,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     }))
     .filter((g) => g.photos.length > 0)
   const galleries = isPreview && realGalleries.length === 0 ? (PH_GALLERIES as typeof realGalleries) : realGalleries
-  const realPkgs = ((r.site_packages ?? []) as { id: string; title: string; price: string | null; description: string | null; session_type?: string | null }[]).map((pk) => {
+  const ownPkgs = sitePackagesOf(r)
+  const realPkgs = ((ownPkgs.length > 0 ? ownPkgs : (r.site_packages ?? [])) as { id: string; title: string; price: string | null; description: string | null; session_type?: string | null }[]).map((pk) => {
     const o = (r.site_settings?.pkgOver ?? {})[pk.id] ?? {}
     return { ...pk, ...(o.title !== undefined ? { title: o.title } : {}), ...(o.price !== undefined ? { price: o.price } : {}), ...(o.description !== undefined ? { description: o.description } : {}) }
   })
@@ -1374,17 +1376,22 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </>)
         const prs: any = (r as any).site_settings?.pricing ?? {}
         const sectionMode = !['investment', 'pricing'].includes(String(page))
+        const pkgsShown = sectionMode ? sitePkgs.slice(0, 3) : sitePkgs
         const pd = String((sectionMode ? prs.sectionDesign : prs.pageDesign) ?? '')
         if ((sectionMode ? PR_SEC : PR_PAGE).includes(pd)) {
           return sec('investment', null,
-            <PricingDesign design={pd} title={t.titles.investment} pkgs={sitePkgs as any} fid={fid ?? ''} intro={t.pricing.intro ?? ''} note={t.pricing.note ?? ''}
+            <PricingDesign design={pd} title={t.titles.investment} pkgs={pkgsShown as any} fid={fid ?? ''} intro={t.pricing.intro ?? ''} note={t.pricing.note ?? ''}
               pkgIntro={t.pricing.pkgIntro} headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} bg={bg} tint={tint}
               pics={(pickPics(4) as any[]).filter(Boolean) as string[]} fsp={fsp as any} fsr={fsr as any} />, tinted)
         }
         return sec('investment', t.titles.investment,
           <div className="mx-auto max-w-5xl">
-
-            {layoutBlocks(sitePkgs)}
+            {(sectionMode ? [{ label: '', items: pkgsShown as any[] }] : groupBySession(sitePkgs as any)).map((g, gi) => (
+              <div key={gi} className={gi > 0 ? 'mt-16' : ''}>
+                {g.label && <p className="mb-8 text-center text-[11px] uppercase tracking-[0.28em]" style={{ color: accent }}>{g.label}</p>}
+                {layoutBlocks(g.items)}
+              </div>
+            ))}
           </div>, tinted)
       }
       case 'testimonials': {

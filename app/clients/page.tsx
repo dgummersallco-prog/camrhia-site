@@ -234,8 +234,8 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
           <div className="flex h-full flex-col items-center px-4 pb-3 pt-5 text-center">
             {c.avatar
               // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={AVATAR_BASE + c.avatar} alt="" className="h-24 w-24 shrink-0 rounded-full object-cover" />
-              : <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] font-fraunces text-3xl font-semibold text-white">{c.name.split(/[\s&]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}</div>}
+              ? <img src={AVATAR_BASE + c.avatar} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover" />
+              : <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] font-fraunces text-2xl font-semibold text-white">{c.name.split(/[\s&]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}</div>}
             <p className="mt-3 line-clamp-2 shrink-0 break-words font-fraunces text-lg font-semibold leading-tight text-ink">{c.name}</p>
             <div className="my-3 h-px w-10 shrink-0 bg-black/10" />
             <div className="w-full min-w-0 space-y-1.5" onClick={stop}>
