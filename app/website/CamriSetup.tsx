@@ -198,7 +198,6 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={step === 0 ? '/camri/01_waving.png' : '/camri/13_face_avatar.png'} alt="" className={(step === 0 ? 'h-32' : 'h-14') + ' w-auto shrink-0'} />
         <div className="rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4 text-ink">
-          {step > 0 && <p className="text-xs uppercase tracking-wider text-ink-soft">Step {step} of 3</p>}
           <p className="mt-1 font-fraunces text-xl leading-snug">{LINES[step]}</p>
         </div>
       </div>
@@ -528,6 +527,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   const [ask, setAsk] = useState(false)
   const [ans, setAns] = useState<string | null>(null)
   const [showPlan, setShowPlan] = useState(false)
+  const [view, setView] = useState<'pages' | 'sections'>('pages')
   const [pend, setPend] = useState<{ pk: Pk; key: string; row: string } | null>(null)
   const total = DESIGN_SECTIONS.length
   const sec = DESIGN_SECTIONS[step]
@@ -589,13 +589,33 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             </div>
           </div>
         )}
+        <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
+          <div className="flex h-11 items-center gap-3">
+            <h3 className="font-fraunces text-3xl text-ink">{sec.title}</h3>
+            {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
+              <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-full border px-3 py-1 text-xs ' + (mode === 'none' ? 'border-twilight bg-white text-ink' : 'border-black/15 text-ink-soft hover:border-twilight')}>{mode === 'none' ? 'Skipped · add it back' : 'Skip this'}</button>
+            )}
+            <div className="ml-auto flex items-center gap-2">
+              <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink">← Back</button>
+              {step < total - 1 ? (
+                <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
+              ) : (
+                <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
+              )}
+            </div>
+          </div>
+          <div className="mt-3 flex gap-1.5">
+            {DESIGN_SECTIONS.map((x, n) => (
+              <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
+            ))}
+          </div>
+        </div>
         {step === 0 && (
-          <div className="mb-6">
+          <div className="mt-4 mb-2">
             <div className="flex items-start gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/camri/12_open_arms.png" alt="" className="h-32 w-auto shrink-0" />
               <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4">
-                <p className="text-xs uppercase tracking-wider text-ink-soft">Step 2 of 3</p>
                 <p className="mt-1 font-fraunces text-xl leading-snug text-ink">Now it's build-a-bear time! Want me to do this for you? I can pick looks that match your {baseName ? baseName + ' ' : ''}layout, set up your pages the way top photographers do, and take you straight to the last step. You can change anything after.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" onClick={onAuto} className={btnPrimary}>Yes, build it for me</button>
@@ -620,31 +640,6 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             </div>
           </div>
         )}
-        <div className="flex flex-wrap items-center gap-3 pt-2">
-          <h3 className="font-fraunces text-3xl text-ink">{sec.title}</h3>
-          <span className="rounded-full border border-black/10 bg-white/70 px-2.5 py-1 text-xs text-ink-soft">{`${step + 1} of ${total}`}</span>
-          {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
-            <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-full border px-3 py-1 text-xs ' + (mode === 'none' ? 'border-twilight bg-white text-ink' : 'border-black/15 text-ink-soft hover:border-twilight')}>{mode === 'none' ? 'Skipped · add it back' : 'Skip this'}</button>
-          )}
-        </div>
-        <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
-          <div className="flex items-center gap-3">
-            <p className="min-w-0 flex-1 text-xs uppercase tracking-wider text-ink-soft">Step 2 of 3 · Design your pages</p>
-          </div>
-          <div className="mt-2 flex gap-1.5">
-            {DESIGN_SECTIONS.map((x, n) => (
-              <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
-            ))}
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink">← Back</button>
-            {step < total - 1 ? (
-              <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
-            ) : (
-              <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
-            )}
-          </div>
-        </div>
         {hasMode && (() => {
           const T = sec.title.toLowerCase()
           const opts: { k: string; t: string; d: string }[] = sec.k === 'blog'
@@ -657,7 +652,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             ]
           const cur = opts.find((m) => m.k === mode)
           return (
-            <div className="mt-5 flex flex-wrap items-start gap-x-8 gap-y-5">
+            <div className="mt-3 flex flex-wrap items-start gap-x-8 gap-y-5">
               <div className="min-w-0 max-w-xl flex-1">
                 <p className="text-sm font-medium text-ink">{'How should ' + sec.title + ' show up on your site?'}</p>
                 <div className="mt-2 inline-flex flex-wrap gap-1 rounded-2xl border border-black/10 bg-white/70 p-1">
@@ -714,11 +709,18 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
 
       </div>
 
-      <aside className="hidden lg:block">
+      <aside className="hidden lg:block lg:pt-16">
         <div className="sticky top-6 max-h-[90vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
-          <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
+            <div className="inline-flex rounded-full border border-black/10 bg-white p-0.5">
+              {([['pages', 'Pages'], ['sections', 'Sections']] as const).map(([k, t]) => (
+                <button key={k} type="button" onClick={() => setView(k)} className={'rounded-full px-3 py-1 text-xs transition ' + (view === k ? 'bg-twilight text-white' : 'text-ink hover:bg-black/5')}>{t}</button>
+              ))}
+            </div>
+          </div>
           <div className="mt-3">
-            <p className="mb-2 text-[11px] uppercase tracking-wider text-ink-soft">Pages</p>
+            {view === 'pages' && (<>
             <div className="mx-auto w-[72%] overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm">
               <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
@@ -759,7 +761,8 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
                 </div>
               </div>
             ))}
-            <p className="mb-2 mt-5 text-[11px] uppercase tracking-wider text-ink-soft">Sections</p>
+            </>)}
+            {view === 'sections' && (<>
             {secs.length === 0 ? (
               <p className="text-xs text-ink-soft">The looks you pick show up here.</p>
             ) : (
@@ -773,6 +776,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
                 ))}
               </div>
             )}
+            </>)}
           </div>
         </div>
       </aside>

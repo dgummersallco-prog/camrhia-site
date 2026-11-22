@@ -479,7 +479,6 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
         <div className="flex items-start gap-4">
           <img src="/camri/12_open_arms.png" alt="" className="h-20 w-auto shrink-0" />
           <div className="rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-4">
-            <p className="text-xs uppercase tracking-wider text-ink-soft">Step 3 of 3</p>
             <p className="mt-1 font-fraunces text-xl leading-snug text-ink">You have {NUM[pages.length] ?? pages.length} pages: {nameList}. Here is the main block of each. Tap a page to build it out, then I will suggest what goes next.</p>
           </div>
         </div>
