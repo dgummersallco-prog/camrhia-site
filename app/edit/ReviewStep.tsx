@@ -1208,7 +1208,7 @@ export default function ReviewStep({
       fd.append('size', pw + 'x' + ph)
       const r = await fetch('/api/ai/camri-remove', { method: 'POST', headers: { Authorization: 'Bearer ' + (sess.session?.access_token ?? '') }, body: fd })
       const j = await r.json().catch(() => ({}))
-      if (!r.ok || !j.url) throw new Error(j.error || 'failed')
+      if (!r.ok || !j.url) throw new Error(j.error ? (j.detail ? j.error + ' ' + j.detail : j.error) : 'failed')
       pushHist(false)
       const fill: Fill = { ai: bits, url: j.url }
       editLocal({ ...local, masks: local.masks.filter((x) => x.id !== sm.id), fills: [...(local.fills ?? []), fill] })
@@ -1229,7 +1229,7 @@ export default function ReviewStep({
       const ai = await findObject(s.bmp, pt[0], pt[1])
       pushHist(false)
       const id = 'm' + Date.now().toString(36)
-      const m: Mask = { id, kind: 'ai', a: [0, 0], b: [0, 0], feather: 0.3, adj: { exposure: 0.3 }, ai, label: 'Object' }
+      const m: Mask = { id, kind: 'ai', a: [0, 0], b: [0, 0], feather: 0.3, adj: {}, ai, label: 'Object' }
       editLocal({ ...local, masks: [...local.masks, m] })
       setSelMask(id)
       setPen(null)
@@ -1249,7 +1249,7 @@ export default function ReviewStep({
       const ai = await findSubject(s.bmp)
       pushHist(false)
       const id = 'm' + Date.now().toString(36)
-      const m: Mask = { id, kind: 'ai', a: [0, 0], b: [0, 0], feather: 0.4, invert: bg, adj: { exposure: bg ? -0.3 : 0.3 }, ai }
+      const m: Mask = { id, kind: 'ai', a: [0, 0], b: [0, 0], feather: 0.4, invert: bg, adj: {}, ai }
       editLocal({ ...local, masks: [...local.masks, m] })
       setSelMask(id)
     } catch {
@@ -1291,10 +1291,10 @@ export default function ReviewStep({
     pushHist(false)
     const id = 'm' + Date.now().toString(36)
     const m: Mask = pen === 'radial'
-      ? { id, kind: 'radial', a: pt, b: [0.005, 0.005], feather: 0.5, adj: { exposure: 0.3 } }
+      ? { id, kind: 'radial', a: pt, b: [0.005, 0.005], feather: 0.5, adj: {} }
       : pen === 'linear'
-        ? { id, kind: 'linear', a: pt, b: pt, feather: 0.5, adj: { exposure: -0.3 } }
-        : { id, kind: 'brush', a: pt, b: pt, pts: [pt], size: brushSize, feather: 0.5, adj: { exposure: 0.3 } }
+        ? { id, kind: 'linear', a: pt, b: pt, feather: 0.5, adj: {} }
+        : { id, kind: 'brush', a: pt, b: pt, pts: [pt], size: brushSize, feather: 0.5, adj: {} }
     dragRef.current = id
     setLocal((prev) => ({ ...prev, masks: [...prev.masks, m] }))
     setSelMask(id)

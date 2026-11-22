@@ -224,7 +224,9 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const nameList = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]
   const mine = listOf(struct, page.id)
   const mainKey = page.id === 'galleries' ? 'portfolio' : page.id === 'about' ? 'about' : page.id === 'pricing' ? 'investment' : null
-  const vMain = !!mainKey && !mine.includes(mainKey) && !!thumbs[mainKey]
+  const ak = (k: string) => (page.id === 'about' && k === 'about' ? 'aboutpage' : k)
+  const T = (k: string) => (page.id === 'about' && k === 'about' ? (thumbs.aboutpage ?? thumbs.about) : thumbs[k])
+  const vMain = !!mainKey && !mine.includes(mainKey) && !!T(mainKey)
   const GAL = ['galsec', 'portfolio']
   const focus: string | null = act && (mine.includes(act) || act === 'hero' || (vMain && act === mainKey)) ? act : (mine.find((k) => GAL.includes(k) || k === 'social') ?? (page.id === 'galleries' ? 'portfolio' : null))
 
@@ -398,7 +400,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const MAIN = (p: Pg): string | undefined => {
     if (p.id === 'home') return heroSrc
     if (p.id === 'galleries') return thumbs.portfolio?.src
-    if (p.id === 'about') return thumbs.about?.src
+    if (p.id === 'about') return (thumbs.aboutpage ?? thumbs.about)?.src
     if (p.id === 'book') return thumbs.book?.src
     if (p.id === 'blog') return thumbs.blog?.src
     const f = listOf(struct, p.id)[0]
@@ -408,7 +410,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
   const altsFor = (k: string): Alt[] | undefined => secAlts?.[k] && secAlts[k].keys.length > 1 ? secAlts[k].keys.map((kk, n) => ({ n: n + 1, on: kk === secAlts[k].active, click: () => setDesigns({ ...designs, [secAlts[k].field]: kk }) })) : undefined
   const pageAlts = (p: Pg): Alt[] | undefined => {
     if (p.id === 'home') return heroList && heroList.length > 1 ? heroList.map((h, n) => ({ n: n + 1, on: h.key === heroActive, click: () => onHero?.(h.key) })) : undefined
-    return altsFor(p.id === 'galleries' ? 'portfolio' : p.id === 'pricing' ? 'investment' : p.id)
+    return altsFor(p.id === 'galleries' ? 'portfolio' : p.id === 'pricing' ? 'investment' : p.id === 'about' ? 'aboutpage' : p.id)
   }
   const pills = (list?: Alt[]) => list ? (
     <div className="flex items-center gap-1.5 pt-2">
@@ -499,7 +501,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
                 <button type="button" onClick={() => { setCur(k); setAct(null) }} className="block w-full text-left">
                   <p className="font-fraunces text-base text-ink">{p.label}</p>
                   {src
-                    ? <img src={src} alt="" className="mt-2 max-h-28 w-full rounded-lg object-cover object-top" />
+                    ? <div className="mt-2 overflow-hidden rounded-lg border border-black/10 bg-[#EFE7DC] p-1.5"><img src={src} alt="" className="max-h-28 w-full rounded-md object-cover object-top" /></div>
                     : <div className="mt-2 flex h-24 items-center justify-center rounded-lg border border-dashed border-black/20 text-xs text-ink-soft">{p.id === 'book' ? 'Your calendar' : p.id === 'blog' ? 'Your posts' : 'Add sections'}</div>}
                 </button>
                 {pills(pageAlts(p))}
@@ -527,20 +529,20 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
               )}
 
               {vMain && mainKey && (
-                <Row label={BLOCKS[mainKey]?.label ?? page.label} on={focus === mainKey} onClick={() => setAct(mainKey)} alts={secAlts?.[mainKey] && secAlts[mainKey].keys.length > 1 ? secAlts[mainKey].keys.map((kk, i) => ({ n: i + 1, on: kk === secAlts[mainKey].active, click: () => setDesigns({ ...designs, [secAlts[mainKey].field]: kk }) })) : undefined}>
-                  <img src={thumbs[mainKey].src} alt="" data-galimg={mainKey === 'portfolio' ? baseOf(thumbs[mainKey].src) : undefined} className="block w-full" />
+                <Row label={BLOCKS[mainKey]?.label ?? page.label} on={focus === mainKey} onClick={() => setAct(mainKey)} alts={secAlts?.[ak(mainKey)] && secAlts[ak(mainKey)].keys.length > 1 ? secAlts[ak(mainKey)].keys.map((kk, i) => ({ n: i + 1, on: kk === secAlts[ak(mainKey)].active, click: () => setDesigns({ ...designs, [secAlts[ak(mainKey)].field]: kk }) })) : undefined}>
+                  <img src={T(mainKey)!.src} alt="" data-galimg={mainKey === 'portfolio' ? baseOf(T(mainKey)!.src) : undefined} className="block w-full" />
                 </Row>
               )}
 
               {mine.map((sec, idx) => {
-                const th = thumbs[sec]
+                const th = T(sec)
                 return (
                   <Row
                     key={sec}
                     label={BLOCKS[sec]?.label ?? 'Section'}
                     on={focus === sec}
                     onClick={() => setAct(sec)}
-                    alts={secAlts?.[sec] && secAlts[sec].keys.length > 1 ? secAlts[sec].keys.map((kk, i) => ({ n: i + 1, on: kk === secAlts[sec].active, click: () => setDesigns({ ...designs, [secAlts[sec].field]: kk }) })) : undefined}
+                    alts={secAlts?.[ak(sec)] && secAlts[ak(sec)].keys.length > 1 ? secAlts[ak(sec)].keys.map((kk, i) => ({ n: i + 1, on: kk === secAlts[ak(sec)].active, click: () => setDesigns({ ...designs, [secAlts[ak(sec)].field]: kk }) })) : undefined}
                     controls={<>
                       <button type="button" disabled={idx === 0} onClick={() => nudge(idx, -1)} aria-label="Move up" className={ctl}>↑</button>
                       <button type="button" disabled={idx === mine.length - 1} onClick={() => nudge(idx, 1)} aria-label="Move down" className={ctl}>↓</button>

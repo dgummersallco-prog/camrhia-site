@@ -32,7 +32,7 @@ export default function TypeRail({ active }: { active?: string }) {
   }, [])
 
   return (
-    <aside className="sticky top-6 hidden w-64 shrink-0 self-start lg:block">
+    <aside className="sticky top-[4.5rem] hidden w-64 shrink-0 self-start lg:block">
       <div className="rounded-3xl bg-[#FBF7F2]/85 p-3 shadow-[0_8px_40px_rgba(60,40,30,0.10)] backdrop-blur-md">
         <p className="px-3 pb-2 pt-2 font-mono text-xs uppercase tracking-widest text-brass">Questionnaires</p>
         {types === null && <p className="px-3 py-2 text-sm text-ink-soft">Loading...</p>}

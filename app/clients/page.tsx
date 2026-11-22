@@ -218,7 +218,7 @@ function ClientCard({ c, fam, cts, notes, api }: { c: Client; fam: Fam[]; cts: C
   const ctaFill = cta + ' bg-[color-mix(in_srgb,rgb(var(--scene-a,201_133_136))_65%,#e6e6e6)] font-semibold text-white hover:opacity-90'
 
   return (
-    <div className="mx-auto w-[90%]" style={{ perspective: '1200px', aspectRatio: '5 / 6.4' }}>
+    <div className="mx-auto w-[90%]" style={{ perspective: '1200px', aspectRatio: '5 / 5.7' }}>
       <div
         role="button"
         tabIndex={0}

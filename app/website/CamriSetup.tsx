@@ -481,6 +481,7 @@ function altsOf(designs: Record<string, string>) {
     const sc = pickOf(s, (kd) => kd === 'section')
     if (s.k === 'galleries') { if (pg) out.portfolio = pg; if (sc) out.galsec = sc }
     else if (s.k === 'pricing') { if (pg) out.investment = pg; if (sc) out.pricesec = sc }
+    else if (s.k === 'about') { if (pg) out.aboutpage = pg; if (sc) out.about = sc; else if (pg) out.about = pg }
     else { const f = pickOf(s, () => true); if (f) out[s.k === 'nav' ? 'explore' : s.k] = f }
   })
   return out
@@ -504,6 +505,7 @@ function thumbsOf(designs: Record<string, string>) {
     const sc = pickOf(s, (kd) => kd === 'section')
     if (s.k === 'galleries') { if (pg) out.portfolio = pg; if (sc) out.galsec = sc }
     else if (s.k === 'pricing') { if (pg) out.investment = pg; if (sc) out.pricesec = sc }
+    else if (s.k === 'about') { if (pg) out.aboutpage = pg; if (sc) out.about = sc; else if (pg) out.about = pg }
     else { const f = pickOf(s, () => true); if (f) out[s.k === 'nav' ? 'explore' : s.k] = f }
   })
   return out

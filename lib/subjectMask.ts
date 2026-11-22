@@ -29,7 +29,7 @@ function selfie(): Promise<any> {
 let touchP: Promise<any> | null = null
 function touch(): Promise<any> {
   if (!touchP) {
-    touchP = mod().then(({ m, fs }) => m.InteractiveSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: TOUCH }, outputCategoryMask: true, outputConfidenceMasks: false })).catch((e) => { touchP = null; throw e })
+    touchP = mod().then(({ m, fs }) => m.InteractiveSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: TOUCH }, outputCategoryMask: false, outputConfidenceMasks: true })).catch((e) => { touchP = null; throw e })
   }
   return touchP
 }
@@ -82,15 +82,37 @@ export async function findSubject(bmp: ImageBitmap): Promise<AiMask> {
   return out
 }
 
-// x and y are 0 to 1 across the photo.
+// x and y are 0 to 1 across the photo. Uses the model's confidence mask (0 to 1 per pixel),
+// keeps only pixels over 0.5, makes sure the clicked spot is inside, and refuses a pick that covers nearly the whole photo.
 export async function findObject(bmp: ImageBitmap, x: number, y: number): Promise<AiMask> {
   const seg = await touch()
   const c = small(bmp)
   let out: AiMask | null = null
+  let why = 'no mask'
   seg.segment(c, { keypoint: { x, y } }, (res: any) => {
-    const m = res.categoryMask
-    if (m) out = pack(m.getAsUint8Array(), m.width, m.height, false)
+    const list: any[] = res.confidenceMasks || []
+    let best: Uint8Array | null = null
+    let bw = 0
+    let bh = 0
+    let bestCover = 2
+    for (const m of list) {
+      const f: Float32Array = m.getAsFloat32Array()
+      const w = m.width
+      const h = m.height
+      const bin = new Uint8Array(w * h)
+      let n = 0
+      for (let i = 0; i < w * h; i++) { if (f[i] > 0.5) { bin[i] = 1; n++ } }
+      const px = Math.min(w - 1, Math.max(0, Math.round(x * (w - 1))))
+      const py = Math.min(h - 1, Math.max(0, Math.round(y * (h - 1))))
+      const inside = bin[py * w + px] === 1
+      const cover = n / (w * h)
+      if (inside && cover < bestCover) { best = bin; bw = w; bh = h; bestCover = cover }
+    }
+    if (!best) { why = 'nothing there'; return }
+    if (bestCover > 0.85) { why = 'too big'; return }
+    if (bestCover < 0.0005) { why = 'too small'; return }
+    out = pack(best, bw, bh, false)
   })
-  if (!out) throw new Error('no mask')
+  if (!out) throw new Error(why)
   return out
 }

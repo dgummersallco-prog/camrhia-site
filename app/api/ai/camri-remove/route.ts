@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     if (cap > 0 && spent >= cap) return Response.json({ error: 'Monthly limit reached.' }, { status: 429 })
 
     const out = new FormData()
-    out.append('model', process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2.5-flare')
+    out.append('model', process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1.5')
     out.append('image', image, 'photo.jpg')
     out.append('mask', mask, 'mask.png')
     out.append('prompt', 'Remove whatever is in the transparent masked area and fill it in so it looks like it was never there. Continue the surrounding background, lighting, texture, color and film grain naturally. Do not change anything outside the masked area. Do not add any new objects, people or text.')

@@ -11,8 +11,10 @@ type T = { key: string; label: string; accent_color: string | null; count: numbe
 export default function QuestionnairesPage() {
   const router = useRouter()
   const [types, setTypes] = useState<T[] | null>(null)
+  const [wide, setWide] = useState<boolean | null>(null)
 
   useEffect(() => {
+    setWide(window.innerWidth >= 1024)
     async function load() {
       const sb = supabase
       if (!sb) return
@@ -35,10 +37,13 @@ export default function QuestionnairesPage() {
     load()
   }, [router])
 
+  // On a wide screen this page only forwards to the first questionnaire, so keep the old list hidden meanwhile.
+  const hold = wide !== false && (types === null || types.length > 0)
+
   return (
     <div className="min-h-screen bg-paper xl:pl-60">
       <DashboardHeader active="questionnaires" />
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="mx-auto max-w-3xl px-6 py-10" style={hold ? { visibility: 'hidden' } : undefined}>
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-brass">Work</p>
         <h1 className="font-fraunces text-3xl font-semibold text-ink">Questionnaires</h1>
         <p className="mt-2 text-sm text-ink-soft">Each session type has its own intake questions. Pick one to view, add, edit or remove questions. Changes also appear in the Camrhia app.</p>
