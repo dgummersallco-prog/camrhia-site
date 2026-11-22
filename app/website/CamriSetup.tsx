@@ -605,13 +605,16 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
               <span key={x.k} className={'h-1.5 flex-1 rounded-full ' + (n <= step ? 'bg-twilight' : 'bg-black/10')} />
             ))}
           </div>
-          <div className="mt-3 flex items-center justify-end gap-2">
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="min-w-0 text-sm font-medium text-ink">{hasMode ? 'How should ' + sec.title + ' show up on your site?' : ''}</p>
+            <div className="flex shrink-0 items-center gap-2">
             <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink">← Back</button>
             {step < total - 1 ? (
               <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
             ) : (
               <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
             )}
+            </div>
           </div>
         </div>
         {step === 0 && (
@@ -658,8 +661,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           return (
             <div className="mt-3 flex flex-wrap items-start gap-x-8 gap-y-5">
               <div className="min-w-0 max-w-xl flex-1">
-                <p className="text-sm font-medium text-ink">{'How should ' + sec.title + ' show up on your site?'}</p>
-                <div className="mt-2 inline-flex flex-wrap gap-1 rounded-2xl border border-black/10 bg-white/70 p-1">
+                <div className="inline-flex flex-wrap gap-1 rounded-2xl border border-black/10 bg-white/70 p-1">
                   {opts.map((m) => (
                     <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'flex min-w-[88px] flex-col items-center gap-1 rounded-xl px-4 py-2.5 text-sm transition ' + (mode === m.k ? 'bg-twilight text-white' : 'text-ink hover:bg-black/5')}>
                       <ModeIcon kind={sec.k === 'blog' ? (m.k === 'none' ? 'none' : 'blog') : m.k} />
