@@ -620,6 +620,13 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             </div>
           </div>
         )}
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <h3 className="font-fraunces text-3xl text-ink">{sec.title}</h3>
+          <span className="rounded-full border border-black/10 bg-white/70 px-2.5 py-1 text-xs text-ink-soft">{`${step + 1} of ${total}`}</span>
+          {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
+            <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-full border px-3 py-1 text-xs ' + (mode === 'none' ? 'border-twilight bg-white text-ink' : 'border-black/15 text-ink-soft hover:border-twilight')}>{mode === 'none' ? 'Skipped · add it back' : 'Skip this'}</button>
+          )}
+        </div>
         <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
           <div className="flex items-center gap-3">
             <p className="min-w-0 flex-1 text-xs uppercase tracking-wider text-ink-soft">Step 2 of 3 · Design your pages</p>
@@ -637,13 +644,6 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
               <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
             )}
           </div>
-        </div>
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <h3 className="font-fraunces text-3xl text-ink">{sec.title}</h3>
-          <span className="rounded-full border border-black/10 bg-white/70 px-2.5 py-1 text-xs text-ink-soft">{`${step + 1} of ${total}`}</span>
-          {!hasMode && sec.k !== 'book' && sec.k !== 'booking' && (
-            <button type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: mode === 'none' ? '' : 'none' })} className={'rounded-full border px-3 py-1 text-xs ' + (mode === 'none' ? 'border-twilight bg-white text-ink' : 'border-black/15 text-ink-soft hover:border-twilight')}>{mode === 'none' ? 'Skipped · add it back' : 'Skip this'}</button>
-          )}
         </div>
         {hasMode && (() => {
           const T = sec.title.toLowerCase()
@@ -668,9 +668,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
                     </button>
                   ))}
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-ink-soft">{cur ? cur.d : 'Choose one to see the designs that fit.'}</p>
               </div>
-              {mode && mode !== 'none' && <ModePreview title={sec.title} mode={mode} />}
             </div>
           )
         })()}
