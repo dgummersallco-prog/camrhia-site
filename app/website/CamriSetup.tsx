@@ -262,11 +262,8 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
           <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
           <div>
           <div className="sticky top-0 z-20 -mx-2 mb-6 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
-            <div className="flex h-16 items-center"><h3 className="font-fraunces text-5xl tracking-tight text-ink">Hero</h3></div>
+            <div className="flex h-16 items-center justify-between gap-3"><h3 className="font-fraunces text-5xl tracking-tight text-ink">Hero</h3><div className="flex shrink-0 items-center gap-2">              <button type="button" onClick={() => { setStep(2) }} disabled={!canGo} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{`Next: ${DESIGN_SECTIONS[0].title} →`}</button></div></div>
             <div className="mt-3"><Meter at={0} onGo={(n) => { if (n === 0 || !canGo) return; try { window.localStorage.setItem('camriDsStep', String(n - 1)) } catch {} setStep(2) }} /></div>
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <button type="button" onClick={() => { setStep(2) }} disabled={!canGo} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{`Next: ${DESIGN_SECTIONS[0].title} →`}</button>
-            </div>
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-12">
             {styles.map((s) => {
@@ -301,14 +298,9 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         {step === 3 && (
           <div>
             <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
-              <div className="flex h-16 items-center gap-3">
-                <h3 className="font-fraunces text-5xl tracking-tight text-ink">Arrange</h3>
-              </div>
+              <div className="flex h-16 items-center justify-between gap-3"><h3 className="font-fraunces text-5xl tracking-tight text-ink">Arrange</h3><div className="flex shrink-0 items-center gap-2">                <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
+                <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site →'}</button></div></div>
               <div className="mt-3"><Meter at={DESIGN_SECTIONS.length + 1} onGo={(n) => { if (n === 0) { setStep(1); return } try { window.localStorage.setItem('camriDsStep', String(n - 1)) } catch {} setStep(2) }} /></div>
-              <div className="mt-3 flex items-center justify-end gap-2">
-                <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
-                <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site →'}</button>
-              </div>
             </div>
             <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={ordered[0] ? '/layouts/' + ordered[0] + '.png' : undefined} heroName={styles.find((x) => x.key === ordered[0])?.name} heroList={hl.map((k) => ({ key: k, name: styles.find((x) => x.key === k)?.name ?? k }))} heroActive={ordered[0]} onHero={(k) => { setHeroList(hl); setLayouts([k, ...layouts.filter((x) => x !== k)]); setStartIdx(0) }} secAlts={altsOf(designs)} designs={designs} setDesigns={setDesigns} photoDesigns={PHOTO_DESIGNS as unknown as { key: string; name: string }[]} />
           </div>
@@ -543,12 +535,16 @@ function Meter({ at, onGo }: { at: number; onGo: (n: number) => void }) {
   const labels = ['Hero', ...DESIGN_SECTIONS.map((x) => (x.k === 'nav' ? 'Explore' : x.title))]
   return (
     <div className="flex gap-1.5">
-      {labels.map((t, n) => (
-        <button key={n} type="button" onClick={() => onGo(n)} className="group min-w-0 flex-1 text-left">
-          <span className={'block h-1.5 rounded-full ' + (n <= at ? 'bg-twilight' : 'bg-black/10')} />
-          <span className={'mt-1 block truncate text-[11px] leading-4 transition ' + (n === at ? 'font-medium text-ink' : 'text-ink-soft group-hover:text-ink')}>{t}</span>
-        </button>
-      ))}
+      {labels.map((t, n) => {
+        const cur = n === at
+        const done = n < at
+        return (
+          <button key={n} type="button" onClick={() => onGo(n)} title={t} className={'flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-2 py-1.5 text-xs transition ' + (cur ? 'border-twilight bg-white font-medium text-ink shadow-sm' : done ? 'border-transparent bg-twilight/10 text-ink hover:bg-twilight/20' : 'border-black/10 bg-white/50 text-ink-soft hover:border-twilight hover:bg-white hover:text-ink')}>
+            <span className={'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ' + (cur || done ? 'bg-twilight text-white' : 'bg-black/10 text-ink-soft')}>{done ? String.fromCharCode(10003) : n + 1}</span>
+            <span className="truncate">{t}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -611,7 +607,7 @@ function SoFar({ designs, setDesigns, baseKey, baseName, baseNo, onGo, homeFoot 
     )
   }
   return (
-      <aside className="hidden lg:block lg:pt-[102px]">
+      <aside className="hidden lg:block lg:pt-[80px]">
         <div className="sticky top-6 max-h-[90vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
@@ -773,25 +769,25 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           </div>
         )}
         <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
-          <div className="flex h-16 items-center gap-3">
+          <div className="flex h-16 items-center justify-between gap-3">
             <h3 className="font-fraunces text-5xl tracking-tight text-ink">{sec.title}</h3>
+            <div className="flex shrink-0 items-center gap-2">
+              <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink">← Back</button>
+              {step < total - 1 ? (
+                <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
+              ) : (
+                <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
+              )}
+            </div>
           </div>
           <div className="mt-3"><Meter at={step + 1} onGo={(n) => (n === 0 ? onBack() : go(n - 1))} /></div>
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <div className="flex min-w-0 flex-wrap gap-2">
-              {hasMode && modeOpts.map((m) => (
-                <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-full px-5 py-1.5 text-sm transition ' + (mode === m.k ? 'bg-twilight font-medium text-white hover:opacity-90' : 'border border-black/15 bg-white text-ink hover:border-twilight')}>{m.t}</button>
+          {hasMode && (
+            <div className="mt-3 inline-flex flex-wrap gap-1 rounded-full border border-black/10 bg-white p-1">
+              {modeOpts.map((m) => (
+                <button key={m.k} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-full px-5 py-1.5 text-sm transition ' + (mode === m.k ? 'bg-twilight font-medium text-white' : 'text-ink hover:bg-black/5')}>{m.t}</button>
               ))}
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-            <button type="button" onClick={() => (step > 0 ? go(step - 1) : onBack())} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink">← Back</button>
-            {step < total - 1 ? (
-              <button type="button" onClick={() => go(step + 1)} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">{`Next: ${DESIGN_SECTIONS[step + 1].title} →`}</button>
-            ) : (
-              <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
-            )}
-            </div>
-          </div>
+          )}
         </div>
         {rowsOrdered.map((row, ri) => {
           const pk = PK[sec.k + '|' + row]
