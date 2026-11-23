@@ -201,6 +201,9 @@ export function resolveTheme(r: Record<string, any>) {
     for (const c of customIds('about')) if (!usedKeys.has(c)) { usedKeys.add(c); orderAbout.push(c) }
     for (const c of customIds('galleries')) if (!usedKeys.has(c)) { usedKeys.add(c); orderGalleries.push(c) }
     for (const k of Array.isArray(strc.off) ? (strc.off as unknown[]) : []) if (k === 'about' || k === 'galleries' || k === 'blog') pagesOff.push(k)
+    if (!pagesOff.includes('galleries') && !orderGalleries.includes('portfolio')) orderGalleries.unshift('portfolio')
+    if (!pagesOff.includes('about') && !orderAbout.includes('about')) orderAbout.unshift('about')
+    extraPages.forEach((e) => { if (e.id === 'pricing' && !e.sections.includes('investment')) e.sections.unshift('investment') })
   }
 
   const titles: Record<string, string> = { ...DEFAULT_TITLES }

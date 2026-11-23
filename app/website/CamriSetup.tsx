@@ -108,6 +108,10 @@ function withModes(s: Struct, d: Record<string, string>): Struct {
   else if (pr === 'both') { setPricePage(); toHome('pricesec') }
   else if (pr === 'section') { n.extra = n.extra.filter((e) => e.id !== 'pricing'); drop('pricesec'); toHome('investment') }
   else if (pr === 'none') { n.extra = n.extra.filter((e) => e.id !== 'pricing'); drop('pricesec'); drop('investment') }
+  const OFFMAP: Record<string, string> = { nav: 'explore', testimonials: 'testimonials', faq: 'faq', social: 'social', contact: 'contact' }
+  Object.keys(OFFMAP).forEach((k) => {
+    if (d[k + '_mode'] === 'none') { drop(OFFMAP[k]); if (n.book) n.book = n.book.filter((x) => x !== OFFMAP[k]) }
+  })
   const b = d.blog_mode
   if (b === 'none') { if (!n.off.includes('blog')) n.off.push('blog') }
   else if (b === 'page') n.off = n.off.filter((x) => x !== 'blog')
@@ -158,6 +162,9 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     
     
     const s2 = cleanStruct(struct)
+    if (!s2.off.includes('galleries') && !s2.galleries.includes('portfolio')) s2.galleries.unshift('portfolio')
+    if (!s2.off.includes('about') && !s2.about.includes('about')) s2.about.unshift('about')
+    s2.extra.forEach((e) => { if (e.id === 'pricing' && !e.sections.includes('investment')) e.sections.unshift('investment') })
     const pagesOut = ['home', 'book', ...(s2.off.includes('galleries') ? [] : ['galleries']), ...(s2.off.includes('about') ? [] : ['about']), ...s2.extra.map((e) => e.id)]
     const nameOf: Record<string, Record<string, string>> = {}
     for (const p of Object.values(PICKERS())) { const m = (nameOf[p.field] = nameOf[p.field] ?? {}); p.items.forEach((it) => { m[it.key] = it.name }) }
@@ -707,6 +714,8 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   const sec = DESIGN_SECTIONS[step]
   const MODED = ['galleries', 'about', 'pricing', 'blog']
   const hasMode = MODED.includes(sec.k)
+  const OFFABLE = ['nav', 'testimonials', 'faq', 'social', 'contact']
+  const canOff = OFFABLE.includes(sec.k)
   const mode = designs[sec.k + '_mode'] || ''
   const T = sec.title.toLowerCase()
   const modeOpts: { k: string; t: string }[] = sec.k === 'blog'
@@ -726,6 +735,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
     const added = !!key && alts.includes(key)
     const nd: Record<string, string> = { ...designs, [pk.field]: alts.includes(designs[pk.field]) ? designs[pk.field] : (alts[0] ?? ''), [pk.field + '_alts']: alts.join(',') }
     if (added && sec.k === 'blog' && mode !== 'none') nd.blog_mode = 'page'
+    if (added && canOff && mode === 'none') nd[sec.k + '_mode'] = ''
     if (added && MODED.includes(sec.k) && sec.k !== 'blog') {
       const kd = rowKind(row)
       const cur = designs[sec.k + '_mode'] || ''
@@ -783,6 +793,13 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
             </div>
           </div>
           <div className="mt-3"><Meter at={step + 1} onGo={(n) => (n === 0 ? onBack() : go(n - 1))} /></div>
+          {canOff && (
+            <div className="mt-3 inline-flex flex-wrap gap-1 rounded-full border border-black/10 bg-white p-1">
+              {[{ k: '', t: 'On' }, { k: 'none', t: 'Off' }].map((m) => (
+                <button key={m.k || 'on'} type="button" onClick={() => setDesigns({ ...designs, [sec.k + '_mode']: m.k })} className={'rounded-full px-5 py-1.5 text-sm transition ' + (mode === m.k ? 'bg-twilight font-medium text-white' : 'text-ink hover:bg-black/5')}>{m.t}</button>
+              ))}
+            </div>
+          )}
           {hasMode && (
             <div className="mt-3 inline-flex flex-wrap gap-1 rounded-full border border-black/10 bg-white p-1">
               {modeOpts.map((m) => (

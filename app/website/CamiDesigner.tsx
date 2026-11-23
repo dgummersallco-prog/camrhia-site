@@ -941,9 +941,9 @@ export default function CamiDesigner() {
   const PAGE_LABEL: Record<string, string> = { home: 'Home', booking: 'Booking', galleries: 'Galleries', about: 'About', blog: 'Blog', pricing: 'Pricing', faq: 'FAQ' }
   const kitNow = ((form.site_settings as any)?.kit ?? {}) as Record<string, any>
   const stNow = structureOf(form as any)
-  const chosenPages: string[] = ['home', 'booking', ...(stNow.off.includes('galleries') ? [] : ['galleries']), ...(stNow.off.includes('about') ? [] : ['about']), ...stNow.extra.map((e) => e.id)]
+  const chosenPages: string[] = ['home', 'booking', ...(stNow.off.includes('galleries') ? [] : ['galleries']), ...(stNow.off.includes('about') ? [] : ['about']), ...stNow.extra.map((e) => e.id), ...(((form.site_settings ?? {}) as any).structure && !stNow.off.includes('blog') ? ['blog'] : [])]
   const pageLabel = (k: string) => PAGE_LABEL[k] ?? stNow.extra.find((e) => e.id === k)?.label ?? (k.charAt(0).toUpperCase() + k.slice(1))
-  const PAGE_PATH: Record<string, string> = { home: '', about: '/about', galleries: '/galleries', booking: '/availability' }
+  const PAGE_PATH: Record<string, string> = { home: '', about: '/about', galleries: '/galleries', booking: '/availability', blog: '/blog' }
   const previewBase = process.env.NODE_ENV === 'production' ? 'https://sites.camrhia.com' : ''
   const previewSrc = previewBase + '/site/' + form.public_token + (PAGE_PATH[curPage] ?? (curPage && curPage !== 'home' ? '/p/' + curPage : '')) + '?preview=1'
   const ACC = 'bg-[color-mix(in_srgb,rgb(var(--scene-a,204_138_140))_65%,#e6e6e6)]'
@@ -1021,7 +1021,15 @@ export default function CamiDesigner() {
                         })}
                       </div>
                     )}
-                    {Object.entries((kitNow.designAlts ?? {}) as Record<string, { label: string; items: { key: string; name: string }[] }>).map(([field, d]) => (
+                    {Object.entries((kitNow.designAlts ?? {}) as Record<string, { label: string; items: { key: string; name: string }[] }>).filter(([field]) => {
+                      const PG: Record<string, string> = { galleries: 'galleries', photos: 'galleries', book: 'book', about_page: 'about', pricing_page: 'pricing', blog_list: 'blog', blog_post: 'blog' }
+                      if (PG[field]) return PG[field] === curPage
+                      const BK: Record<string, string> = { nav: 'explore', galleries_section: 'galsec', about_section: 'about', pricing_section: 'pricesec', testimonials: 'testimonials', faq: 'faq', social: 'social', contact: 'contact' }
+                      const st: any = stNow
+                      const lst: string[] = curPage === 'home' ? st.home : curPage === 'about' ? st.about : curPage === 'galleries' ? st.galleries : curPage === 'book' ? (st.book ?? []) : ((st.extra ?? []).find((e: any) => e.id === curPage)?.sections ?? [])
+                      if (BK[field] === 'about' && curPage !== 'home') return false
+                      return (lst ?? []).includes(BK[field])
+                    }).map(([field, d]) => (
                       <div key={field}><p className={lab}>{d.label}</p><div className="mt-1.5 flex flex-wrap gap-1.5">
                         {d.items.map((it, i) => <button key={it.key} type="button" className={numPill(DESIGN_PATHS[field] ? getPath(x0, DESIGN_PATHS[field]) === it.key : false)} onClick={() => { void commit((n) => applyKitOps(n, { design: { field, key: it.key } })) }}>{num(i)}{it.name}</button>)}
                       </div></div>
@@ -1107,14 +1115,14 @@ export default function CamiDesigner() {
             <p className="p-8 text-center text-sm text-ink-soft">Your website link isn&apos;t set up yet. Finish setting up your portfolio in the app first.</p>
           )}
           {pick && (
-            <div style={{ left: pick.left, top: pick.top, width: 340 }} className="absolute z-30 max-h-[85%] overflow-y-auto rounded-2xl border border-white/80 bg-white/95 p-4 shadow-[0_24px_60px_-20px_rgba(60,30,40,0.55)] backdrop-blur-xl">
-              <div className="flex items-center justify-between">
+            <div className="absolute z-30 max-h-[85%] overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ left: pick.left, top: pick.top, width: 340, background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
+              <div className="flex items-center justify-between border-b border-[#EFE4D8] pb-2">
                 <p className="font-fraunces text-lg font-semibold text-ink">{PICK_LABELS[pick.key] ?? 'Text'}</p>
                 <button type="button" aria-label="Close" onClick={() => { applyText(); setPick(null) }} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
               </div>
               {TEXT_KEYS.includes(pick.key) && (LONG_TEXT.includes(pick.key)
-                ? <textarea value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} rows={4} className="mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />
-                : <input value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} className="mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />)}
+                ? <textarea value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} rows={4} className="mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]" />
+                : <input value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} className="mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]" />)}
               <div className="mt-3">
                 <FontPick label="Font" hint="Just this text" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
               </div>
@@ -1130,8 +1138,8 @@ export default function CamiDesigner() {
                 </div>
               )}
               <div className="mt-4 flex gap-2">
-                <button type="button" className={ghostBtn + ' !px-4 !py-2'} onClick={() => resetEl(pick.key)}>Reset</button>
-                <button type="button" className={accentBtn + ' !px-4 !py-2'} onClick={() => { applyText(); setPick(null) }}>Done</button>
+                <button type="button" className="rounded-full border border-[#B08D57] bg-transparent px-4 py-2 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]" onClick={() => resetEl(pick.key)}>Reset</button>
+                <button type="button" className="rounded-full bg-[#8C6B3F] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90" onClick={() => { applyText(); setPick(null) }}>Done</button>
               </div>
             </div>
           )}

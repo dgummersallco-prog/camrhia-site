@@ -440,7 +440,8 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
     about: 'People often read About right before they book. Add a few reviews and a booking button.',
     book: 'Booking is your calendar. A short FAQ right under it answers the last questions before someone inquires.',
   }
-  const okRec = (k: string) => !!BLOCKS[k] && k !== 'portfolio' && !(k === 'about' && designs.about_mode !== 'section' && designs.about_mode !== 'both') && !(k === 'galsec' && designs.galleries_mode === 'page') && (!['galsec', 'pricesec', 'investment', 'explore'].includes(k) || !!thumbs[k] || !!where(k))
+  const offKey: Record<string, string> = { explore: 'nav', testimonials: 'testimonials', faq: 'faq', social: 'social', contact: 'contact' }
+  const okRec = (k: string) => !!BLOCKS[k] && !(offKey[k] && designs[offKey[k] + '_mode'] === 'none') && k !== 'portfolio' && !(k === 'about' && designs.about_mode !== 'section' && designs.about_mode !== 'both') && !(k === 'galsec' && designs.galleries_mode === 'page') && (!['galsec', 'pricesec', 'investment', 'explore'].includes(k) || !!thumbs[k] || !!where(k))
   const recKeys = (RECS[page.id] ?? (page.extra ? ['faq', 'testimonials', 'contact'] : [])).filter(okRec)
   const others = sections.filter((k) => okRec(k) && !recKeys.includes(k) && !mine.includes(k))
   function addAll() {
@@ -513,7 +514,7 @@ export default function ArrangeStep({ struct, setStruct, links, setLinks, thumbs
         </nav>
         <div ref={wrapRef} className="relative">
           <p className="mb-5 text-center font-fraunces text-2xl text-ink">{page.label}<span className="ml-3 text-xs text-ink-soft">{i + 1} of {pages.length}</span></p>
-          <div className="mx-auto max-w-3xl pl-20 pr-6">
+          <div className="mx-auto max-w-[896px] pl-52 pr-6">
             <div data-frame="1" className="border-x border-black/10 bg-white shadow-sm">
               <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#EFE7DC] px-3 py-2">
                 <span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" /><span className="h-2 w-2 rounded-full bg-black/25" />
