@@ -640,16 +640,14 @@ export default function GalleryViewPage() {
       const cx = r.left + r.width / 2
       const topY = rects[0].top + rects[0].height / 2 - pitch / 2
       const ta = document.createElement('textarea')
-      ta.value = lines.join('
-')
+      ta.value = lines.join('\n')
       ta.maxLength = 80
       ta.spellcheck = false
       ta.className = 'cam-edit'
       const mc = document.createElement('canvas').getContext('2d')
       const al = svg0 ? 'center' : cs0.textAlign === 'right' || cs0.textAlign === 'end' ? 'right' : cs0.textAlign === 'left' || cs0.textAlign === 'start' ? 'left' : 'center'
       const place = () => {
-        const ls = ta.value.split('
-')
+        const ls = ta.value.split('\n')
         let tw = 40
         if (mc) {
           mc.font = `${cs0.fontStyle} ${cs0.fontWeight} ${fs0}px ${cs0.fontFamily}`
@@ -671,8 +669,7 @@ export default function GalleryViewPage() {
       hidden = peers[0]
       hiddenMore = peers.slice(1)
       let finished = false
-      ta.addEventListener('input', () => { place(); send(ta.value.replace(/\s*
-+\s*/g, ' ').trim()) })
+      ta.addEventListener('input', () => { place(); send(ta.value.replace(/\s*\n+\s*/g, ' ').trim()) })
       ta.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); finished = true; closeEditor() }
         if (ev.key === 'Escape') { ev.preventDefault(); finished = true; send(orig); closeEditor() }
