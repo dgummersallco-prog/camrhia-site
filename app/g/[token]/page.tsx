@@ -1329,7 +1329,7 @@ export default function GalleryViewPage() {
   })()
   const CAS = "'Libre Caslon Display', Georgia, serif"
   const stg = (kids: ReactNode) => (
-    <div aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+    <div key={'stg-' + coverKind} aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
       <div data-stage="1" style={{ position: 'absolute', left: 0, top: 0, width: 900, height: 450, transformOrigin: '0 0', transform: 'scale(tan(atan2(100cqw, 900px)))', pointerEvents: 'none' }}>{kids}</div>
     </div>
   )

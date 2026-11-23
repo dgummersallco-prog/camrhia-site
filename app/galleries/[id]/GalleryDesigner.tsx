@@ -40,7 +40,7 @@ const toHex = (c: string) => {
 
 function clearCoverEl<T>(el?: Record<string, T>): Record<string, T> {
   const out: Record<string, T> = {}
-  for (const [k, v] of Object.entries(el ?? {})) if (!['title', 'title2', 'brand', 'initials', 'titlein'].includes(k)) out[k] = v
+  for (const [k, v] of Object.entries(el ?? {})) if (!['title', 'title2', 'brand', 'count', 'initials', 'titlein'].includes(k)) out[k] = v
   return out
 }
 
