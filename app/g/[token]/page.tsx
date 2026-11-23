@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, type CSSProperties } from 'react'
+import { Fragment, type CSSProperties, type ReactNode } from 'react'
 import ReviewCard from './ReviewCard'
 import { resolveDesign, type GalleryDesign, elCss } from '@/lib/galleryDesign'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
@@ -31,6 +31,12 @@ function Heart({ filled, className = 'h-5 w-5' }: { filled: boolean; className?:
       <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
     </svg>
   )
+}
+
+function scaleOf(el: HTMLElement): number {
+  const st = el.closest('[data-stage]') as HTMLElement | null
+  if (st) return st.getBoundingClientRect().width / 900 || 1
+  return el.offsetWidth ? el.getBoundingClientRect().width / el.offsetWidth : 1
 }
 
 export default function GalleryViewPage() {
@@ -357,7 +363,7 @@ export default function GalleryViewPage() {
       if (tg && (MOVABLE.includes(gk) || /^x\d+$/.test(gk))) {
         const svg = tg.closest('svg') as SVGSVGElement | null
         const he = tg as HTMLElement
-        const k = svg ? svg.getBoundingClientRect().width / (svg.viewBox.baseVal?.width || 900) || 1 : he.offsetWidth ? he.getBoundingClientRect().width / he.offsetWidth : 1
+        const k = svg ? svg.getBoundingClientRect().width / (svg.viewBox.baseVal?.width || 900) || 1 : scaleOf(he)
         tdrag = { key: gk, x: e.clientX, y: e.clientY, k, moved: false }
         e.preventDefault()
         return
@@ -600,7 +606,7 @@ export default function GalleryViewPage() {
         if (!el) return
         try { d.setPointerCapture(e.pointerId) } catch {}
         const r0 = el.getBoundingClientRect()
-        const sc = el.offsetWidth ? r0.width / el.offsetWidth : 1
+        const sc = scaleOf(el)
         const cx = r0.left + r0.width / 2
         const w0 = r0.width / sc
         const s0 = parseFloat(getComputedStyle(el).fontSize) || 38
@@ -609,11 +615,11 @@ export default function GalleryViewPage() {
         const apply = () => {
           raf = 0
           if (!last) return
-          el.style.width = last.w + 'px'
+          if (!el.hasAttribute('data-nowidth')) el.style.width = last.w + 'px'
           if (last.size !== undefined) el.style.setProperty('font-size', last.size + 'px', 'important')
         }
         const mv = (ev: PointerEvent) => {
-          const nw = Math.min(el.getAttribute('data-gk') === 'title' ? 420 : 900, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
+          const nw = Math.min(900, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
           const w = Math.round(nw * 10) / 10
           last = kind.length === 2 ? { w, size: Math.round(Math.min(160, Math.max(8, s0 * (nw / w0))) * 10) / 10 } : { w }
           if (!raf) raf = requestAnimationFrame(apply)
@@ -624,7 +630,7 @@ export default function GalleryViewPage() {
           d.removeEventListener('pointercancel', up)
           if (raf) cancelAnimationFrame(raf)
           apply()
-          if (last) window.parent?.postMessage({ type: 'camrhia-gallery-box', key: el.getAttribute('data-gk') || 'title', w: last.w, size: last.size }, '*')
+          if (last) window.parent?.postMessage({ type: 'camrhia-gallery-box', key: el.getAttribute('data-gk') || 'title', w: el.hasAttribute('data-nowidth') ? undefined : last.w, size: last.size }, '*')
         }
         d.addEventListener('pointermove', mv)
         d.addEventListener('pointerup', up)
@@ -679,7 +685,7 @@ export default function GalleryViewPage() {
       const h = hit(e.target)
       curEl = h ? h.el : null
       if (!h) { box.style.display = 'none'; return }
-      hnd.forEach((x) => { x.style.display = h.el.hasAttribute('data-box') ? 'block' : 'none' })
+      hnd.forEach((x) => { x.style.display = h.el.hasAttribute('data-box') && !(h.el.hasAttribute('data-nowidth') && (x.dataset.h || '').length === 1) ? 'block' : 'none' })
       const r = rectOf(h.el)
       box.style.display = 'block'
       box.style.left = r.left + 'px'
@@ -756,22 +762,23 @@ export default function GalleryViewPage() {
       box.style.display = 'block'
       hnd.forEach((x) => { x.style.display = 'block' })
       const gkey = target.getAttribute('data-gk') || 'title'
-      const topAnchor = gkey !== 'title'
-      const sc = target.offsetWidth ? target.getBoundingClientRect().width / target.offsetWidth : 1
+      const topAnchor = !target.hasAttribute('data-center')
+      const sc = scaleOf(target)
       const cs = getComputedStyle(target)
       const r = target.getBoundingClientRect()
       const fsPx = (parseFloat(cs.fontSize) || 16) * sc
+      const lhR = (parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) || 16) * 1.12) / (parseFloat(cs.fontSize) || 16)
       const ta = document.createElement('textarea')
       ta.className = 'cam-edit'
-      ta.value = target.textContent ?? ''
+      ta.value = target.getAttribute('data-raw') ?? target.textContent ?? ''
       ta.maxLength = 80
       ta.spellcheck = false
-      ta.style.cssText = `position:absolute;z-index:2147483646;box-sizing:border-box;margin:0;padding:0;border:0;background:transparent;resize:none;overflow:hidden;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:center;color:${cs.color};caret-color:${cs.color};font-family:${cs.fontFamily};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};font-size:${fsPx}px;line-height:${topAnchor ? 1.2 : 1.12};width:${r.width}px;text-shadow:none`
+      ta.style.cssText = `position:absolute;z-index:2147483646;box-sizing:border-box;margin:0;padding:0;border:0;background:transparent;resize:none;overflow:hidden;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:center;text-transform:${cs.textTransform};letter-spacing:${cs.letterSpacing === 'normal' ? 'normal' : parseFloat(cs.letterSpacing) * sc + 'px'};color:${cs.color};caret-color:${cs.color};font-family:${cs.fontFamily};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};font-size:${fsPx}px;line-height:${lhR};width:${r.width}px;text-shadow:none`
       const cy = r.top + r.height / 2
       ta.style.left = r.left + window.scrollX + 'px'
       const fit = () => {
         ta.style.height = '0px'
-        const h = Math.max(ta.scrollHeight, fsPx * (topAnchor ? 1.2 : 1.12))
+        const h = Math.max(ta.scrollHeight, fsPx * lhR)
         ta.style.height = h + 'px'
         ta.style.top = (topAnchor ? r.top : cy - h / 2) + window.scrollY + 'px'
       }
@@ -793,7 +800,7 @@ export default function GalleryViewPage() {
       ta.setSelectionRange(ta.value.length, ta.value.length)
     }
     const openEditor = (target: HTMLElement, k: string) => {
-      if (target.hasAttribute('data-box')) { openBox(target); return }
+      if (target.hasAttribute('data-box') && k !== 'initials') { openBox(target); return }
       if (!['title', 'title2', 'brand', 'count', 'initials', 'moment'].includes(k) && !/^x\d+$/.test(k)) return
       const key = k === 'title2' ? 'title' : k
       const orig = k === 'moment' ? (target.textContent ?? '') : textRef.current[key] ?? ''
@@ -1320,6 +1327,25 @@ export default function GalleryViewPage() {
       }
     }
   })()
+  const CAS = "'Libre Caslon Display', Georgia, serif"
+  const stg = (kids: ReactNode) => (
+    <div aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+      <div data-stage="1" style={{ position: 'absolute', left: 0, top: 0, width: 900, height: 450, transformOrigin: '0 0', transform: 'scale(tan(atan2(100cqw, 900px)))', pointerEvents: 'none' }}>{kids}</div>
+    </div>
+  )
+  type BxO = { x: number; y: number; fs: number; text: string; maxW: number; style?: CSSProperties; track?: number; lh?: number; rot?: number; ls?: { r: number; style?: CSSProperties }[]; mirror?: boolean }
+  const bx = (k: string, o: BxO) => {
+    const w = extraW(k)
+    const lh = o.lh ?? 1.1
+    return (
+      <div key={k + (o.mirror ? '-m' : '')} data-gk={k} data-box="1" data-center="1" data-raw={o.text} {...(o.mirror ? { 'data-mirror': '1' } : {})} style={{ position: 'absolute', left: o.x, top: o.y, transform: 'translate(-50%, -50%)' + (o.rot ? ' rotate(' + o.rot + 'deg)' : ''), width: w ?? 'max-content', maxWidth: w ? undefined : Math.round(o.maxW * 1.15), textAlign: 'center', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: lh, fontSize: o.fs, fontWeight: 400, fontStyle: 'normal', letterSpacing: o.track !== undefined ? o.track + 'em' : undefined, pointerEvents: o.mirror ? 'none' : 'auto', cursor: 'grab', ...o.style }}>
+        {o.text.split('\n').map((l, i) => { const L = o.ls ? o.ls[Math.min(i, o.ls.length - 1)] : null; return <div key={i} style={L ? { fontSize: L.r + 'em', lineHeight: lh / L.r, ...L.style } : undefined}>{l || String.fromCharCode(160)}</div> })}
+      </div>
+    )
+  }
+  const fit = (t: string, cw: number, cap: number, fs0: number) => Math.min(fs0, cap / (Math.max(...t.split('\n').map((x) => x.length), 1) * cw))
+  const tl = (def: string[]) => (String(coverTitle).includes('\n') ? String(coverTitle) : def.join('\n'))
+  const sl = (def: string[]) => (String(coverSub).includes('\n') ? String(coverSub) : def.join('\n'))
   const pill = (on: boolean): CSSProperties => (on ? { background: pal.accent, color: pal.onAccent, border: '1px solid transparent' } : { border: `1px solid ${pal.line}`, color: pal.ink })
 
   return (
@@ -1350,9 +1376,10 @@ export default function GalleryViewPage() {
             <img src="/gallery-cover/ticket-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" style={{ clipPath: 'url(#tkart)' }} />
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              {l1 && <text data-gk="title" x="716" y="181" textAnchor="middle" style={{ ...tt, fontSize: f1 }} textLength={big1 ? Math.min(270, 33.6 * l1.length) : undefined} lengthAdjust="spacingAndGlyphs">{l1}</text>}
-              {l2 && <text data-gk="title2" x="716" y={one ? 240 : big1 ? 264.1 : 181 + f2 * 0.84} textAnchor="middle" style={{ ...tt, fontFamily: "'DM Serif Display', Georgia, serif", fontWeight: 400, fontSize: f2 }} textLength={Math.min(250, 0.4694 * f2 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
-              {sub && <text data-gk="brand" x="718" y="310" textAnchor="middle" style={{ ...tt, fontWeight: 500, fontSize: 14 }} textLength={Math.min(270, 15 * sub.length)} lengthAdjust="spacing">{sub.toUpperCase()}</text>}
+              </svg>{stg([
+bx('title', { x: 716, y: one ? 240 - 0.35 * f2 : (181 - 0.35 * f1 + (big1 ? 264.1 : 181 + f2 * 0.84) - 0.35 * f2) / 2, fs: f2 * Math.min(1, 250 / Math.max(l1.length * 0.66 * f1, l2.length * 0.56 * f2, 1)), maxW: 270, text: tl(one ? [l2] : [l1, l2]), lh: one ? 1.05 : ((big1 ? 264.1 : 181 + f2 * 0.84) - 181) / f2, ls: one ? [{ r: 1, style: { fontFamily: "'DM Serif Display', Georgia, serif", fontWeight: 400 } }] : [{ r: f1 / f2, style: { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800 } }, { r: 1, style: { fontFamily: "'DM Serif Display', Georgia, serif", fontWeight: 400 } }], style: { color: '#3A1F12', textTransform: 'uppercase' } }),
+sub ? bx('brand', { x: 718, y: 305, fs: 14, maxW: 270, track: 0.41, text: sl([sub]), style: { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, color: '#3A1F12', textTransform: 'uppercase' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             </svg>
           </div>
         )
@@ -1363,8 +1390,10 @@ export default function GalleryViewPage() {
           </div>
           <h1 className="sr-only">{coverTitle}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-            <text data-gk="title" x="450" y="400.4" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 87.2, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(408, 40.8 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacingAndGlyphs">{coverTitle}</text>
-            {coverSub && <text data-gk="brand" x="450" y="434.8" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 10.9, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(288, 16.0 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+            </svg>{stg([
+bx('title', { x: 450, y: 369.9, fs: fit(tl([String(coverTitle)]), 0.48, 450, 87.2), maxW: 408, text: tl([String(coverTitle)]), style: { fontFamily: CAS, color: pal.ink } }),
+coverSub ? bx('brand', { x: 450, y: 431, fs: 10.9, maxW: 288, track: 0.81, text: sl([String(coverSub)]), style: { fontFamily: CAS, color: pal.ink, textTransform: 'uppercase' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
           </svg>
         </div>
       ) : coverKind === 'mosaic' && cover?.web ? (() => {
@@ -1392,9 +1421,10 @@ export default function GalleryViewPage() {
               )
             })}
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }}>
-              <text data-gk="title" x="745" y="190.3" textAnchor="middle" style={{ ...ts, fontSize: 91.5, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(262, 43.68 * Math.max(l1.length, 1))} lengthAdjust="spacingAndGlyphs">{l1}</text>
-              {l2 && <text data-gk="title" x="745.5" y="266.2" textAnchor="middle" style={{ ...ts, fontSize: 89.9, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(221, 36.84 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
-              {sub && <text data-gk="brand" x="745.5" y="309.1" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontSize: 11.1, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(233, 14.56 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+              </svg>{stg([
+bx('title', { x: 745.2, y: l2 ? 196.5 : 190.3 - 0.35 * 91.5, fs: fit(tl(l2 ? [l1, l2] : [l1]), 0.49, 290, 91), maxW: 262, lh: 0.834, text: tl(l2 ? [l1, l2] : [l1]), style: { fontFamily: CAS, color: pal.ink } }),
+coverSub ? bx('brand', { x: 745.5, y: 305.2, fs: 11.1, maxW: 233, track: 0.65, text: sl([String(coverSub)]), style: { fontFamily: CAS, color: pal.ink, textTransform: 'uppercase' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             </svg>
           </div>
         )
@@ -1420,10 +1450,10 @@ export default function GalleryViewPage() {
             <img src="/gallery-cover/postcard-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              {pmL[0] && <text data-gk="brand" x="631" y={pmL[1] ? 84 : 99} textAnchor="middle" style={{ ...pm, fontSize: 17 }} textLength={Math.min(80, 10 * pmL[0].length)} lengthAdjust="spacing">{pmL[0]}</text>}
-              {pmL[1] && <text data-gk="brand" x="631" y="105" textAnchor="middle" style={{ ...pm, fontSize: 17 }} textLength={Math.min(80, 10.8 * pmL[1].length)} lengthAdjust="spacing">{pmL[1]}</text>}
-              {l1 && <text data-gk="title" x="682.5" y="244.0" textAnchor="middle" transform="rotate(-4.5 682.5 244.0)" style={{ ...sc, fontSize: 104.1 }} textLength={Math.min(333, 30.25 * l1.length)} lengthAdjust="spacingAndGlyphs">{l1}</text>}
-              {l2 && <text data-gk="title2" x="686.0" y="318.0" textAnchor="middle" transform="rotate(-4.5 686.0 318.0)" style={{ ...sc, fontSize: 98 }} textLength={Math.min(205, 34.17 * l2.length)} lengthAdjust="spacingAndGlyphs">{l2}</text>}
+              </svg>{stg([
+pmL.length ? bx('brand', { x: 631, y: pmL[1] ? 88.5 : 93, fs: 17, maxW: 120, track: -0.07, lh: 1.235, text: sl(pmL), style: { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, color: '#2A2018', textTransform: 'uppercase' } }) : null,
+bx('title', { x: 684.3, y: l2 ? 245.6 : 244 - 36, fs: fit(tl(l2 ? [l1, l2] : [l1]), 0.39, 280, 104.1), maxW: 333, rot: -4.5, lh: 0.71, text: tl(l2 ? [l1, l2] : [l1]), ls: [{ r: 1 }, { r: 98 / 104.1 }], style: { fontFamily: "'Hurricane', 'Homemade Apple', cursive", color: '#3A2A22' } }),
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             </svg>
           </div>
         )
@@ -1443,9 +1473,11 @@ export default function GalleryViewPage() {
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
               <defs><clipPath id="bt-photo"><rect x="53" y="41" width="793" height="340" /></clipPath></defs>
-              {sub && <text data-gk="brand" x="844" y="23.8" textAnchor="end" style={{ ...ts, fontWeight: 400, fontSize: 11.5, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={Math.min(206, 11.44 * sub.length)} lengthAdjust="spacing">{sub}</text>}
-              <text data-gk="title" x="454.5" y="434" textAnchor="middle" style={{ ...ts, fontSize: tsz, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text>
-              <g clipPath="url(#bt-photo)"><text data-gk="title" x="454.5" y="434" textAnchor="middle" style={{ ...ts, fontSize: tsz, fill: inCol, pointerEvents: 'auto' }} textLength={len} lengthAdjust="spacingAndGlyphs">{t}</text></g>
+              </svg>{stg([
+sub ? bx('brand', { x: 844 - Math.min(206, 11.44 * sub.length) / 2, y: 19.8, fs: 11.5, maxW: 206, track: 0.3, text: sl([String(coverSub)]), style: { fontFamily: "'Bodoni Moda', Georgia, serif", color: pal.ink, textTransform: 'uppercase' } }) : null,
+bx('title', { x: 454.5, y: 387.3, fs: fit(tl([String(coverTitle)]), 0.64, 900, 133.3), maxW: 890, text: tl([String(coverTitle)]), style: { fontFamily: "'Bodoni Moda', Georgia, serif", color: pal.ink, textTransform: 'uppercase' } }),
+<div key="bt-clip" style={{ position: 'absolute', left: 53.1, top: 40.95, width: 792.9, height: 340.2, overflow: 'hidden', pointerEvents: 'none' }}><div style={{ position: 'absolute', left: -53.1, top: -40.95, width: 900, height: 450, pointerEvents: 'none' }}>{bx('title', { x: 454.5, y: 387.3, fs: fit(tl([String(coverTitle)]), 0.64, 900, 133.3), maxW: 890, text: tl([String(coverTitle)]), mirror: true, style: { fontFamily: "'Bodoni Moda', Georgia, serif", color: inCol, WebkitTextFillColor: inCol, textTransform: 'uppercase' } })}</div></div>,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             </svg>
           </div>
         )
@@ -1470,8 +1502,10 @@ export default function GalleryViewPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/gallery-cover/strip-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              <text data-gk="title" x="451.5" y="106.7" textAnchor="middle" style={{ ...ts, color: '#FFF6EA', fontSize: tf, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(429, 0.611 * tf * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
-              {sub && <text data-gk="brand" x="450.5" y="159.2" textAnchor="middle" style={{ ...ts, color: 'rgba(255,246,234,0.9)', textTransform: 'uppercase', fontSize: 11.4, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(327, 17.21 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+              </svg>{stg([
+bx('title', { x: 451.5, y: 106.7 - 0.35 * tf, fs: tf, maxW: 429, text: tl([title]), style: { fontFamily: CAS, color: '#FFF6EA' } }),
+sub ? bx('brand', { x: 450.5, y: 155.2, fs: 11.4, maxW: 327, track: 0.85, text: sl([String(coverSub)]), style: { fontFamily: CAS, color: 'rgba(255,246,234,0.9)', textTransform: 'uppercase' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             </svg>
           </div>
         )
@@ -1482,8 +1516,10 @@ export default function GalleryViewPage() {
           </div>
           <h1 className="sr-only">{coverTitle}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-            <text data-gk="title" x="655.0" y="234.5" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 95.8, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(405, 33.74 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacingAndGlyphs">{coverTitle}</text>
-            {coverSub && <text data-gk="brand" x="660.5" y="275.7" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 17.75, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(275, 21.15 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+            </svg>{stg([
+bx('title', { x: 655, y: 201, fs: fit(tl([String(coverTitle)]), 0.48, 450, 95.8), maxW: 405, text: tl([String(coverTitle)]), style: { fontFamily: CAS, color: pal.ink } }),
+coverSub ? bx('brand', { x: 660.5, y: 269.5, fs: 17.75, maxW: 275, track: 0.53, text: sl([String(coverSub)]), style: { fontFamily: CAS, color: pal.ink, textTransform: 'uppercase' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
           </svg>
         </div>
       ) : coverKind === 'stack' && cover?.web ? (() => {
@@ -1515,8 +1551,10 @@ export default function GalleryViewPage() {
             <img src="/gallery-cover/stack-art.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" />
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              <text data-gk="title" x="450.5" y="393.8" textAnchor="middle" style={{ ...sc, fontSize: 70 }} textLength={Math.min(478, 23.85 * Math.max(title.length, 1))} lengthAdjust="spacingAndGlyphs">{title}</text>
-              {sub && <text data-gk="brand" x="448" y="430" textAnchor="middle" style={{ ...ss, fontSize: 14 }} textLength={Math.min(230, 19.2 * sub.length)} lengthAdjust="spacing">{sub}</text>}
+              </svg>{stg([
+bx('title', { x: 450.5, y: 369.3, fs: fit(tl([title]), 0.34, 500, 70), maxW: 478, text: tl([title]), style: { fontFamily: "'Qwigley', 'Homemade Apple', cursive", color: '#5A3A28' } }),
+sub ? bx('brand', { x: 448, y: 425, fs: 14, maxW: 230, track: 0.71, text: sl([String(coverSub)]), style: { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 500, color: '#6B4F3C', textTransform: 'uppercase' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             </svg>
           </div>
         )
@@ -1536,15 +1574,11 @@ export default function GalleryViewPage() {
             </div>
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              {coverSub && <text data-gk="brand" x="450.5" y="290.9" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontWeight: 400, fontSize: 6.8, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(89, 7.42 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+              </svg>{stg([
+bx('title', { x: 451, y: 205, fs: fit(tLines.join('\n'), 0.48, 150, 38), maxW: 150, lh: 1.12, text: tLines.join('\n'), style: { fontFamily: CAS, color: pal.ink } }),
+coverSub ? bx('brand', { x: 450.5, y: 288.5, fs: 6.8, maxW: 89, track: 0.43, text: sl([String(coverSub)]), style: { fontFamily: CAS, color: pal.ink, textTransform: 'uppercase' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             </svg>
-            <div aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
-              <div style={{ position: 'absolute', left: 0, top: 0, width: 900, height: 450, transformOrigin: '0 0', transform: 'scale(tan(atan2(100cqw, 900px)))', pointerEvents: 'none' }}>
-                <div style={{ position: 'absolute', left: 201, top: 40, width: 500, height: 330, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                  <div data-gk="title" data-box="1" style={{ width: boxW, textAlign: 'center', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.12, fontSize: 38, fontWeight: 400, fontFamily: "'Libre Caslon Display', Georgia, serif", color: pal.ink, pointerEvents: 'auto' }}>{tLines.join('\n')}</div>
-                </div>
-              </div>
-            </div>
           </div>
         )
       })() : coverKind === 'magazine' && cover?.web ? (
@@ -1553,9 +1587,11 @@ export default function GalleryViewPage() {
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0) 42%)' }} />
           <h1 className="sr-only">{coverTitle}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-            <text data-gk="title" x="451.5" y="89.0" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fontSize: 117.3, fill: 'currentColor', color: '#FCF4E6', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(814, 62.55 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacingAndGlyphs">{coverTitle}</text>
-            {coverSub && <text data-gk="brand" x="42.5" y="133.5" textAnchor="start" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 12.4, fill: 'currentColor', color: '#FCF4E6', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(199, 13.2 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
-            {!(el as Record<string, { hide?: boolean }> | undefined)?.count?.hide && (() => { const ct = (countText || data.photos.length + ' photos').toUpperCase(); return <text data-gk="count" x="855" y="133.5" textAnchor="end" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 12.4, fill: '#FCF4E6', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(300, 14.27 * ct.length)} lengthAdjust="spacing">{ct}</text> })()}
+            </svg>{stg([
+bx('title', { x: 451.5, y: 48, fs: fit(tl([String(coverTitle)]), 0.48, 880, 117.3), maxW: 814, text: tl([String(coverTitle)]), style: { fontFamily: CAS, color: '#FCF4E6' } }),
+coverSub ? bx('brand', { x: 42.5 + Math.min(199, 13.2 * String(coverSub).length) / 2, y: 129.2, fs: 12.4, maxW: 199, track: 0.4, text: sl([String(coverSub)]), style: { fontFamily: CAS, color: '#FCF4E6', textTransform: 'uppercase' } }) : null,
+!(el as Record<string, { hide?: boolean }> | undefined)?.count?.hide ? bx('count', { x: 855 - Math.min(300, 14.27 * (countText || data.photos.length + ' photos').length) / 2, y: 129.2, fs: 12.4, maxW: 300, track: 0.49, text: countText || data.photos.length + ' photos', style: { fontFamily: CAS, color: '#FCF4E6', textTransform: 'uppercase' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
           </svg>
         </div>
 ) : coverKind === 'monogram' && cover?.web ? (() => {
@@ -1574,20 +1610,24 @@ export default function GalleryViewPage() {
             <div className="absolute inset-0">{imgEl}</div>
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28))' }} />
             {pair ? (
-              <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-                <g data-gk="initials" style={{ fontFamily: "'Libre Caslon Display', Georgia, serif", fontWeight: 400, fill: 'currentColor', color: 'rgba(255,255,255,0.58)' }}>
-                  <text transform="translate(175.5 363.3) scale(0.89 1)" textAnchor="middle" style={{ fontSize: 448.3, pointerEvents: 'auto' }}>{L}</text>
-                  <text transform="translate(447 346.2) skewX(-8) scale(0.871 1)" textAnchor="middle" style={{ fontSize: 288.7, pointerEvents: 'auto' }}>&amp;</text>
-                  <text transform="translate(701 365) scale(0.89 1)" textAnchor="middle" style={{ fontSize: 459.2, pointerEvents: 'auto' }}>{R}</text>
-                </g>
-              </svg>
+              stg(
+                <div data-gk="initials" data-box="1" data-center="1" data-nowidth="1" style={{ position: 'absolute', left: 448, top: 205.9, width: '1.8em', height: '0.74em', transform: 'translate(-50%, -50%)', fontFamily: "'Libre Caslon Display', Georgia, serif", fontWeight: 400, fontSize: 448.3, color: 'rgba(255,255,255,0.58)', lineHeight: 1, pointerEvents: 'auto', cursor: 'grab' }}>
+                  {[
+                    { t: L, x: -0.6079, y: -0.1308, r: 1, tf: 'scaleX(0.89)' },
+                    { t: '&', x: -0.0022, y: 0.1343, r: 0.644, tf: 'skewX(-8deg) scaleX(0.871)' },
+                    { t: R, x: 0.5644, y: -0.1477, r: 1.0243, tf: 'scaleX(0.89)' },
+                  ].map((q, i) => <span key={i} style={{ position: 'absolute', left: 'calc(50% + ' + Math.round((q.x / q.r) * 10000) / 10000 + 'em)', top: Math.round((q.y / q.r) * 10000) / 10000 + 'em', fontSize: q.r + 'em', lineHeight: 1, whiteSpace: 'nowrap', transform: 'translateX(-50%) ' + q.tf, transformOrigin: '50% 85.2%' }}>{q.t}</span>)}
+                </div>
+              )
             ) : (
               <div data-gk="initials" className="absolute inset-0 flex items-center justify-center" style={{ ...big, position: 'absolute', fontSize: '50cqw', paddingBottom: '4cqw' }}>{mono}</div>
             )}
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              <text data-gk="title" x="454.0" y="402.6" textAnchor="middle" style={{ fontFamily: ff, fontWeight: 600, fontSize: 29.73, fill: '#F9EAD6', textTransform: 'none', fontVariantNumeric: 'lining-nums', pointerEvents: 'auto' }} textLength={Math.min(266, 19 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacing">{coverTitle}</text>
-              {coverSub && <text data-gk="brand" x="454.75" y="425.55" textAnchor="middle" style={{ fontFamily: ff, fontWeight: 600, fontSize: 10.04, fill: 'rgba(244,230,212,0.95)', textTransform: 'uppercase', fontVariantNumeric: 'lining-nums', pointerEvents: 'auto' }} textLength={Math.min(220.5, 12.25 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+              </svg>{stg([
+bx('title', { x: 454, y: 392.2, fs: 29.73, maxW: 266, track: 0.1, text: tl([String(coverTitle)]), style: { fontFamily: ff, fontWeight: 600, color: '#F9EAD6', fontVariantNumeric: 'lining-nums' } }),
+coverSub ? bx('brand', { x: 454.75, y: 422, fs: 10.04, maxW: 220, track: 0.6, text: sl([String(coverSub)]), style: { fontFamily: ff, fontWeight: 600, color: 'rgba(244,230,212,0.95)', textTransform: 'uppercase', fontVariantNumeric: 'lining-nums' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
             </svg>
           </div>
         )
@@ -1598,8 +1638,10 @@ export default function GalleryViewPage() {
           </div>
           <h1 className="sr-only">{coverTitle}</h1>
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-            <text data-gk="title" x="450" y="417.6" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 22, fill: 'currentColor', color: cineLight ? '#2A1F24' : '#F1E6D2', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(304, 27.64 * Math.max(String(coverTitle).length, 1))} lengthAdjust="spacing">{String(coverTitle).toUpperCase()}</text>
-            {coverSub && <text data-gk="brand" x="450.5" y="436.6" textAnchor="middle" style={{ ...headStyle, fontWeight: 400, textTransform: 'uppercase', fontStyle: 'normal', letterSpacing: 0, fontSize: 7.9, fill: 'currentColor', color: cineLight ? 'rgba(42,31,36,0.75)' : 'rgba(241,230,210,0.8)', pointerEvents: 'auto', fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(147, 11.28 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
+            </svg>{stg([
+bx('title', { x: 450, y: 409.9, fs: 22, maxW: 304, track: 0.56, text: tl([String(coverTitle)]), style: { fontFamily: CAS, color: cineLight ? '#2A1F24' : '#F1E6D2', textTransform: 'uppercase' } }),
+coverSub ? bx('brand', { x: 450.5, y: 433.8, fs: 7.9, maxW: 147, track: 0.77, text: sl([String(coverSub)]), style: { fontFamily: CAS, color: cineLight ? 'rgba(42,31,36,0.75)' : 'rgba(241,230,210,0.8)', textTransform: 'uppercase' } }) : null,
+])}<svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
           </svg>
         </div>
 ) : coverKind === 'text' || !cover?.web ? (
