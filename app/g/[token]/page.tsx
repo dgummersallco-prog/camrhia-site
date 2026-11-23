@@ -510,15 +510,25 @@ export default function GalleryViewPage() {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
     const SEL = '.gal-root img[data-pid]:not([data-cover]):not([data-slot])'
     const bar = document.createElement('div')
-    bar.style.cssText = 'position:fixed;z-index:2147483645;display:none;gap:2px;padding:4px;border-radius:999px;background:rgba(251,248,244,0.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.8);box-shadow:0 10px 26px -8px rgba(60,40,20,0.45);font:600 13px system-ui,sans-serif'
+    bar.style.cssText = 'position:fixed;z-index:2147483645;display:none;align-items:center;padding:3px;border-radius:999px;background:rgba(42,31,36,0.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(217,190,143,0.55);box-shadow:0 14px 30px -10px rgba(20,12,8,0.7);font:500 11px/1 system-ui,sans-serif;letter-spacing:0.16em;text-transform:uppercase'
     let cur: string | null = null
+    const ICON: Record<string, string> = {
+      top: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#D9BE8F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+      left: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D9BE8F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+      right: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D9BE8F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+    }
     const mk = (label: string, to: string) => {
+      if (bar.children.length > 0) {
+        const dv = document.createElement('span')
+        dv.style.cssText = 'width:1px;height:16px;background:rgba(217,190,143,0.4)'
+        bar.appendChild(dv)
+      }
       const b = document.createElement('button')
       b.type = 'button'
-      b.textContent = label
-      b.style.cssText = 'border:0;border-radius:999px;min-width:34px;height:34px;padding:0 14px;background:transparent;color:#5B4426;cursor:pointer;font:inherit;transition:background .15s,color .15s'
-      b.addEventListener('mouseenter', () => { b.style.background = '#8C6B3F'; b.style.color = '#fff' })
-      b.addEventListener('mouseleave', () => { b.style.background = 'transparent'; b.style.color = '#5B4426' })
+      b.innerHTML = ICON[to] + (label ? '<span>' + label + '</span>' : '')
+      b.style.cssText = 'border:0;background:transparent;color:#F3E6CC;cursor:pointer;height:34px;min-width:36px;padding:0 14px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font:inherit;letter-spacing:inherit;text-transform:inherit;transition:background .18s,color .18s'
+      b.addEventListener('mouseenter', () => { b.style.background = 'rgba(217,190,143,0.24)'; b.style.color = '#fff' })
+      b.addEventListener('mouseleave', () => { b.style.background = 'transparent'; b.style.color = '#F3E6CC' })
       b.addEventListener('click', (ev) => {
         ev.preventDefault()
         ev.stopPropagation()
@@ -530,9 +540,9 @@ export default function GalleryViewPage() {
       })
       bar.appendChild(b)
     }
-    mk('↑ Top', 'top')
-    mk('←', 'left')
-    mk('→', 'right')
+    mk('Top', 'top')
+    mk('', 'left')
+    mk('', 'right')
     document.body.appendChild(bar)
     let hideT: number | undefined
     const over = (e: MouseEvent) => {
@@ -612,11 +622,67 @@ export default function GalleryViewPage() {
       tag.style.top = flip ? '100%' : 'auto'
     }
     const hide = () => { box.style.display = 'none'; curEl = null }
-    let editor: HTMLInputElement | null = null
+    let editor: HTMLInputElement | HTMLTextAreaElement | null = null
     let hidden: HTMLElement | null = null
     let hiddenMore: HTMLElement[] = []
     let secOn = false
     const closeEditor = () => { if (editor) { editor.remove(); editor = null } if (hidden) { hidden.style.visibility = ''; hidden = null }; hiddenMore.forEach((e) => { e.style.visibility = '' }); hiddenMore = [] }
+    // Several lines (like a stacked "Maya / & / Theo" title): edit them all in one place, same size, free to run over the photos.
+    const openMulti = (peers: HTMLElement[], r: DOMRect) => {
+      const lines = peers.map((e) => (e.textContent ?? '').trim())
+      const cs0 = getComputedStyle(peers[0])
+      const svg0 = peers[0] instanceof SVGElement
+      const sc0 = svg0 ? ((peers[0] as unknown as SVGGraphicsElement).getScreenCTM?.()?.a ?? 1) : 1
+      const fs0 = (parseFloat(cs0.fontSize) || 16) * sc0
+      const col0 = svg0 && cs0.fill && cs0.fill !== 'none' ? cs0.fill : cs0.color
+      const rects = peers.map((e) => e.getBoundingClientRect())
+      const pitch = rects.length > 1 ? Math.max(fs0 * 1.1, (rects[rects.length - 1].top - rects[0].top) / (rects.length - 1)) : Math.max(fs0 * 1.2, rects[0].height)
+      const cx = r.left + r.width / 2
+      const topY = rects[0].top + rects[0].height / 2 - pitch / 2
+      const ta = document.createElement('textarea')
+      ta.value = lines.join('
+')
+      ta.maxLength = 80
+      ta.spellcheck = false
+      ta.className = 'cam-edit'
+      const mc = document.createElement('canvas').getContext('2d')
+      const al = svg0 ? 'center' : cs0.textAlign === 'right' || cs0.textAlign === 'end' ? 'right' : cs0.textAlign === 'left' || cs0.textAlign === 'start' ? 'left' : 'center'
+      const place = () => {
+        const ls = ta.value.split('
+')
+        let tw = 40
+        if (mc) {
+          mc.font = `${cs0.fontStyle} ${cs0.fontWeight} ${fs0}px ${cs0.fontFamily}`
+          tw = Math.max(...ls.map((t) => mc.measureText(cs0.textTransform === 'uppercase' ? t.toUpperCase() : t).width))
+        }
+        const wd = Math.min(Math.max(tw, r.width) + 48, window.innerWidth - 8)
+        ta.style.width = wd + 'px'
+        ta.style.height = ls.length * pitch + 'px'
+        const left = al === 'left' ? r.left : al === 'right' ? r.right - wd : cx - wd / 2
+        ta.style.left = Math.max(4, Math.min(window.innerWidth - wd - 4, left)) + window.scrollX + 'px'
+      }
+      ta.style.cssText = `position:absolute;z-index:2147483646;box-sizing:border-box;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:${col0};caret-color:${col0};outline:none;box-shadow:none;resize:none;overflow:hidden;white-space:pre;font-family:${cs0.fontFamily};font-weight:${cs0.fontWeight};font-style:${cs0.fontStyle};font-size:${fs0}px;line-height:${pitch}px;text-align:${al};text-transform:${cs0.textTransform};text-shadow:none`
+      ta.style.top = topY + window.scrollY + 'px'
+      place()
+      const orig = lines.join(' ')
+      const send = (t: string) => window.parent?.postMessage({ type: 'camrhia-gallery-text', key: 'title', text: t }, '*')
+      closeEditor()
+      peers.forEach((e) => { e.style.visibility = 'hidden' })
+      hidden = peers[0]
+      hiddenMore = peers.slice(1)
+      let finished = false
+      ta.addEventListener('input', () => { place(); send(ta.value.replace(/\s*
++\s*/g, ' ').trim()) })
+      ta.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); finished = true; closeEditor() }
+        if (ev.key === 'Escape') { ev.preventDefault(); finished = true; send(orig); closeEditor() }
+      })
+      ta.addEventListener('blur', () => { if (!finished) { finished = true; closeEditor() } })
+      document.body.appendChild(ta)
+      editor = ta
+      ta.focus()
+      ta.select()
+    }
     const openEditor = (target: HTMLElement, k: string) => {
       if (!['title', 'title2', 'brand', 'count', 'initials', 'moment'].includes(k) && !/^x\d+$/.test(k)) return
       const key = k === 'title2' ? 'title' : k
@@ -627,7 +693,10 @@ export default function GalleryViewPage() {
       const rects = peers.map((e) => e.getBoundingClientRect())
       const r = multi
         ? (() => { const l = Math.min(...rects.map((q) => q.left)), t = Math.min(...rects.map((q) => q.top)), rt = Math.max(...rects.map((q) => q.right)), b = Math.max(...rects.map((q) => q.bottom)); return { left: l, top: t, width: rt - l, height: b - t } as DOMRect })()
-        : target.getBoundingClientRect()
+        : target instanceof SVGElement
+          ? target.getBoundingClientRect()
+          : (() => { const rg = document.createRange(); rg.selectNodeContents(target); const q = rg.getBoundingClientRect(); return q.width > 0 ? q : target.getBoundingClientRect() })()
+      if (multi) { openMulti(peers, r); return }
       const cs = getComputedStyle(target)
       const isSvg = target instanceof SVGElement
       const sc = isSvg ? ((target as unknown as SVGGraphicsElement).getScreenCTM?.()?.a ?? 1) : 1
@@ -661,6 +730,7 @@ export default function GalleryViewPage() {
       const cx = r.left + r.width / 2
       const cy = r.top + r.height / 2
       const fsz = isInit ? fs : fs2
+      const al = isSvg ? 'center' : cs.textAlign === 'right' || cs.textAlign === 'end' ? 'right' : cs.textAlign === 'left' || cs.textAlign === 'start' ? 'left' : 'center'
       const place = () => {
         let tw = r.width
         if (mc) {
@@ -670,11 +740,12 @@ export default function GalleryViewPage() {
         }
         const wd = Math.min(tw + 48, window.innerWidth - 8)
         inp.style.width = wd + 'px'
-        inp.style.left = Math.max(4, Math.min(window.innerWidth - wd - 4, cx - wd / 2)) + 'px'
+        const left = al === 'left' ? r.left : al === 'right' ? r.right - wd : cx - wd / 2
+        inp.style.left = Math.max(4, Math.min(window.innerWidth - wd - 4, left)) + window.scrollX + 'px'
       }
-      inp.style.cssText = `position:fixed;z-index:2147483646;box-sizing:border-box;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:${colr};caret-color:${colr};outline:none;box-shadow:none;font-family:${fam};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};font-size:${fsz}px;line-height:1.2;text-align:center;text-transform:${cs.textTransform};letter-spacing:${ls}px;text-shadow:none`
+      inp.style.cssText = `position:absolute;z-index:2147483646;box-sizing:border-box;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:${colr};caret-color:${colr};outline:none;box-shadow:none;font-family:${fam};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};font-size:${fsz}px;line-height:1.2;text-align:${al};text-transform:${cs.textTransform};letter-spacing:${ls}px;text-shadow:none`
       inp.style.height = Math.max(hgt, fsz * 1.35) + 'px'
-      inp.style.top = (cy - Math.max(hgt, fsz * 1.35) / 2) + 'px'
+      inp.style.top = (cy - Math.max(hgt, fsz * 1.35) / 2 + window.scrollY) + 'px'
       place()
       inp.addEventListener('input', place)
       peers.forEach((e) => { e.style.visibility = 'hidden' })
@@ -684,7 +755,7 @@ export default function GalleryViewPage() {
       let finished = false
       const mid = k === 'moment' ? target.getAttribute('data-mid') : null
       const send = (t: string) => {
-        if (mid) { setMomentText((p) => ({ ...p, [mid]: t })); window.parent?.postMessage({ type: 'camrhia-gallery-moment-text', id: mid, text: t }, '*') }
+        if (mid) { setMomentText((p) => ({ ...p, [mid]: t })); window.parent?.postMessage({ type: 'camrhia-gallery-moment-text', id: mid, text: t, prev: orig }, '*') }
         else window.parent?.postMessage({ type: 'camrhia-gallery-text', key, text: t }, '*')
       }
       inp.addEventListener('input', () => send(inp.value))
@@ -758,6 +829,7 @@ export default function GalleryViewPage() {
         }
         go(0)
       }
+      if (m.type === 'camrhia-gallery-moment-set' && typeof m.id === 'string') setMomentText((p) => ({ ...p, [String(m.id)]: String(m.text ?? '') }))
       if (m.type === 'camrhia-gallery-moments') setLiveMoments(Array.isArray(m.moments) ? m.moments : null)
       if (m.type === 'camrhia-gallery-section-row') {
         const imgs = Array.from(document.querySelectorAll<HTMLImageElement>('.gal-root img[data-pid]:not([data-cover]):not([data-slot])'))
@@ -959,7 +1031,7 @@ export default function GalleryViewPage() {
     </Fragment>
   )
   const coverBtn = (p: (typeof list)[number]) => isPreview ? (
-    <button type="button" data-setcover={p.id} className="absolute bottom-3 left-3 z-10 flex items-center gap-2 rounded-full border border-white/40 bg-[#8C6B3F] px-5 py-2.5 text-sm font-semibold tracking-wide text-white opacity-0 shadow-[0_10px_24px_-8px_rgba(60,40,20,0.6)] transition hover:bg-[#7A5C34] group-hover:opacity-100"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="1.6" /><path d="m21 16-5-5-8 8" /></svg>Set as cover</button>
+    <button type="button" data-setcover={p.id} className="absolute bottom-3 left-3 z-10 flex items-center gap-2.5 rounded-full border border-[#D9BE8F]/55 bg-[#2A1F24]/80 px-6 py-3 text-xs font-medium uppercase tracking-[0.16em] text-[#F3E6CC] opacity-0 shadow-[0_14px_30px_-10px_rgba(20,12,8,0.7)] backdrop-blur-md transition hover:bg-[#8C6B3F] hover:text-white group-hover:opacity-100"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#D9BE8F]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="1.6" /><path d="m21 16-5-5-8 8" /></svg>Set as cover</button>
   ) : null
   const heartBtn = (p: (typeof list)[number]) => (
     <button
@@ -1114,8 +1186,26 @@ export default function GalleryViewPage() {
           </div>
         )
       }
-      default:
-        return <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: look.gap }}>{list.map((p, i) => tile(p, i, { ratio: Math.min(1.2, Math.max(0.75, arOf(p))), wrap: 'break-inside-avoid', style: { marginBottom: look.gap } }))}</div>
+      default: {
+        const groups: { head: ReturnType<typeof momentHead>; items: [(typeof list)[number], number][] }[] = []
+        list.forEach((p, i) => {
+          const h = momentHead(p, i)
+          if (h || groups.length === 0) groups.push({ head: h, items: [] })
+          groups[groups.length - 1].items.push([p, i])
+        })
+        return (
+          <div>
+            {groups.map((gp, gi) => (
+              <Fragment key={gi}>
+                {gp.head}
+                <div className="columns-2 md:columns-3 lg:columns-4" style={{ columnGap: look.gap }}>
+                  {gp.items.map(([p, i]) => tile(p, i, { head: false, ratio: Math.min(1.2, Math.max(0.75, arOf(p))), wrap: 'break-inside-avoid', style: { marginBottom: look.gap } }))}
+                </div>
+              </Fragment>
+            ))}
+          </div>
+        )
+      }
     }
   })()
   const pill = (on: boolean): CSSProperties => (on ? { background: pal.accent, color: pal.onAccent, border: '1px solid transparent' } : { border: `1px solid ${pal.line}`, color: pal.ink })

@@ -202,8 +202,16 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   onMovePhotoRef.current = onMovePhoto
   const addSectionRef = useRef(addSectionAt)
   addSectionRef.current = addSectionAt
-  const renameRef = useRef((id: string, text: string) => { void id; void text })
-  renameRef.current = (id, text) => {
+  const renBurst = useRef(0)
+  const renameRef = useRef((id: string, text: string, prev?: string) => { void id; void text; void prev })
+  renameRef.current = (id, text, prev) => {
+    const nowT = Date.now()
+    if (typeof prev === 'string' && nowT - renBurst.current > 2500) {
+      hist.current.push({ mid: id, name: prev })
+      if (hist.current.length > 40) hist.current.shift()
+      setHistN(hist.current.length)
+    }
+    renBurst.current = nowT
     if (renTimer.current) clearTimeout(renTimer.current)
     renTimer.current = setTimeout(() => onRenameSection?.(id, text), 600)
   }
@@ -218,12 +226,19 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     if (error) setErr(error.message.includes('design') ? 'Run the design SQL in Supabase first.' : error.message)
     else setErr(null)
   }
-  const hist = useRef<GalleryDesign[]>([])
+  const hist = useRef<(GalleryDesign | { mid: string; name: string })[]>([])
   const histT = useRef(0)
   const [histN, setHistN] = useState(0)
   function undo() {
     const prev = hist.current.pop()
     if (!prev) return
+    if ('mid' in prev) {
+      onRenameSection?.(prev.mid, prev.name)
+      try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-moment-set', id: prev.mid, text: prev.name }, '*') } catch { /* ignore */ }
+      histT.current = 0
+      setHistN(hist.current.length)
+      return
+    }
     latest.current = prev
     setD(prev)
     postDesign(prev)
@@ -317,7 +332,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           if (ids) { try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-photo-order', ids }, '*') } catch { /* ignore */ } }
         })()
       }
-      if (m.type === 'camrhia-gallery-moment-text' && typeof m.id === 'string') renameRef.current(String(m.id), String(m.text ?? ''))
+      if (m.type === 'camrhia-gallery-moment-text' && typeof m.id === 'string') renameRef.current(String(m.id), String(m.text ?? ''), typeof m.prev === 'string' ? m.prev : undefined)
       if (m.type === 'camrhia-gallery-focus') {
         const x = Number(m.x), y = Number(m.y)
         if (Number.isFinite(x) && Number.isFinite(y)) {
@@ -393,9 +408,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         {photoChoices && photoChoices.length > 0 && onPickCover && (
           <>
             <p className={head + ' mt-2'}>Cover photo</p>
-            <div className="mt-2 flex items-start gap-3 rounded-xl border border-[#8C6B3F]/30 bg-[#8C6B3F]/10 px-4 py-3.5">
-              <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 shrink-0 text-[#8C6B3F]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
-              <p className="text-sm leading-snug text-ink">Pick a spot below, then <b>hover a photo in the gallery</b> and press <b>Set as cover</b>.</p>
+            <div className="mt-2 flex items-start gap-3.5 rounded-2xl border border-[#E4D3B6] px-5 py-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 12px 26px -18px rgba(140,107,63,0.5)' }}>
+              <svg viewBox="0 0 24 24" className="mt-1 h-5 w-5 shrink-0 text-[#B08D57]" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4z" /></svg>
+              <p className="font-fraunces text-[15px] leading-relaxed text-ink">Pick a spot below, then <span className="font-semibold text-[#8C6B3F]">hover a photo in the gallery</span> and press <span className="font-semibold text-[#8C6B3F]">Set as cover</span>.</p>
             </div>
             <div className="mt-3 grid grid-cols-5 gap-2">
               {(slotKeys.length > 0 ? slotKeys : ['main']).map((k) => {
@@ -416,14 +431,21 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             </div>
           </>
         )}
-        {(coverUrl || slotKeys.length > 0) && (
-          <div className="mt-4">
-            <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-10 shrink-0">Zoom</span>
-              <input type="range" min={1} max={3} step={0.05} value={slotKeys.length > 0 && curSlot !== 'main' ? eff.zooms['slot:' + curSlot] ?? 1 : eff.zoom} onChange={(e) => { const v = Number(e.target.value); if (slotKeys.length > 0 && curSlot !== 'main') change({ zooms: { ...(latest.current.zooms ?? {}), ['slot:' + curSlot]: v } }); else change({ zoom: v }) }} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
-            </label>
-            <p className="mt-2 text-xs text-ink-soft">Zoom and drag apply to the photo you picked above. Drag it in the preview to move it.</p>
+        {(coverUrl || slotKeys.length > 0) && (() => {
+          const zv = slotKeys.length > 0 && curSlot !== 'main' ? eff.zooms['slot:' + curSlot] ?? 1 : eff.zoom
+          const setZ = (v: number) => { if (slotKeys.length > 0 && curSlot !== 'main') change({ zooms: { ...(latest.current.zooms ?? {}), ['slot:' + curSlot]: v } }); else change({ zoom: v }) }
+          return (
+          <div className="mt-5 rounded-2xl border border-[#E4D3B6] px-5 py-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 12px 26px -18px rgba(140,107,63,0.5)' }}>
+            <style>{`.lux-range{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;outline:none;cursor:pointer}.lux-range::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:linear-gradient(90deg,#B08D57 var(--p,0%),#E4D3B6 var(--p,0%))}.lux-range::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-8px;border-radius:50%;background:#FFFDF9;border:1.5px solid #B08D57;box-shadow:0 3px 8px rgba(140,107,63,0.35)}.lux-range::-moz-range-track{height:2px;background:#E4D3B6}.lux-range::-moz-range-progress{height:2px;background:#B08D57}.lux-range::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#FFFDF9;border:1.5px solid #B08D57}`}</style>
+            <div className="flex items-baseline justify-between">
+              <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#8C6B3F]">Zoom</span>
+              <span className="font-fraunces text-sm text-ink">{zv.toFixed(1)}×</span>
+            </div>
+            <input type="range" min={1} max={3} step={0.05} value={zv} onChange={(e) => setZ(Number(e.target.value))} className="lux-range mt-2" style={{ ['--p' as string]: ((zv - 1) / 2) * 100 + '%' } as React.CSSProperties} />
+            <p className="mt-3 font-fraunces text-[13px] italic leading-snug text-ink-soft">Zoom and drag apply to the photo you picked above. Drag it in the preview to move it.</p>
           </div>
-        )}
+          )
+        })()}
 
 
         <p className={head + ' mt-8'}>Cover photo</p>
