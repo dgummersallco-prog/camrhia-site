@@ -80,6 +80,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [addOpen, setAddOpen] = useState(false)
   const [secPick, setSecPick] = useState(false)
   const addRef = useRef<HTMLDivElement>(null)
+  const [layOpen, setLayOpen] = useState(false)
+  const layRef = useRef<HTMLDivElement>(null)
   const pendingEdit = useRef<{ key: string; id?: string } | null>(null)
   const renTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [focusOn, setFocusOn] = useState(false)
@@ -267,6 +269,20 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     el[key] = { ...(el[key] ?? {}), ...patch }
     change({ el })
   }
+  const layerZ = (el: Record<string, ElStyle>, k: string) => (typeof el[k]?.z === 'number' ? (el[k].z as number) : 10 + Number(k.slice(1)))
+  function layerKeys(el: Record<string, ElStyle>) {
+    return Object.keys(el).filter((k) => /^x\d+$/.test(k)).sort((a, b) => layerZ(el, a) - layerZ(el, b))
+  }
+  function moveLayer(key: string, dir: 1 | -1) {
+    const el = { ...(latest.current.el ?? {}) }
+    const ks = layerKeys(el)
+    const i = ks.indexOf(key)
+    const j = i + dir
+    if (i < 0 || j < 0 || j >= ks.length) return
+    ;[ks[i], ks[j]] = [ks[j], ks[i]]
+    ks.forEach((k, n) => { el[k] = { ...el[k], z: 10 + n } })
+    change({ el })
+  }
   function resetEl(key: string) {
     const el = { ...(latest.current.el ?? {}) }
     delete el[key]
@@ -304,6 +320,13 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     if (changed) change({ slots: have })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eff.cover, photoChoices?.length])
+
+  useEffect(() => {
+    if (!layOpen) return
+    const down = (e: PointerEvent) => { if (layRef.current && !layRef.current.contains(e.target as Node)) setLayOpen(false) }
+    document.addEventListener('pointerdown', down)
+    return () => document.removeEventListener('pointerdown', down)
+  }, [layOpen])
 
   useEffect(() => {
     if (!addOpen) return
@@ -350,6 +373,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         if (m.size !== undefined && Number.isFinite(Number(m.size))) patch.size = Number(m.size)
         setElRef.current(String(m.key), patch)
       }
+      if (m.type === 'camrhia-gallery-delete' && typeof m.key === 'string' && /^x\d+$/.test(m.key)) { const el = { ...(latest.current.el ?? {}) }; delete el[String(m.key)]; change({ el }); setPick(null) }
       if (m.type === 'camrhia-gallery-slot' && typeof m.key === 'string') setSlot(String(m.key))
       if (m.type === 'camrhia-gallery-setcover' && m.id) pickRef.current(String(m.id))
       if (m.type === 'camrhia-gallery-text' && typeof m.key === 'string') setElRef.current(String(m.key), { text: String(m.text ?? '').slice(0, 60) })
@@ -504,6 +528,24 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             {!['ticket', 'stack'].includes(eff.cover) && <div className="w-36"><ColorInput lux float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
             <div className="w-36"><ColorInput lux float label="Page" value={eff.pal.bg} onChange={(v) => change({ bg: v })} /></div>
             <div className="w-36"><ColorInput lux float label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} /></div>
+            <div ref={layRef} className="relative">
+              <button type="button" onClick={() => setLayOpen((o) => !o)} className="h-[42px] rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight">Layers</button>
+              {layOpen && (() => {
+                const ks = layerKeys((eff.el ?? {}) as Record<string, ElStyle>)
+                return (
+                  <div className="absolute left-0 top-full z-40 mt-2 w-64 rounded-xl border border-line bg-white p-2 shadow-xl">
+                    <p className="px-2 pb-1.5 pt-1 text-sm font-medium text-ink">Text layers</p>
+                    {ks.length === 0 ? <p className="px-2 py-2 text-xs text-ink-soft">Add a text box to layer it.</p> : [...ks].reverse().map((k, i) => (
+                      <div key={k} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-paper">
+                        <span className="min-w-0 flex-1 truncate text-sm text-ink">{(eff.el?.[k]?.text || 'Your text').replace(/\s+/g, ' ')}</span>
+                        <button type="button" disabled={i === 0} onClick={() => moveLayer(k, 1)} className="h-7 w-7 rounded-md border border-line text-xs text-ink disabled:opacity-30" aria-label="Bring forward">&#9650;</button>
+                        <button type="button" disabled={i === ks.length - 1} onClick={() => moveLayer(k, -1)} className="h-7 w-7 rounded-md border border-line text-xs text-ink disabled:opacity-30" aria-label="Send back">&#9660;</button>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div ref={addRef} className="relative">

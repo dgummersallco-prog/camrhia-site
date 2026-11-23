@@ -1,4 +1,4 @@
-export type ElStyle = { w?: number; align?: 'left' | 'center' | 'right'; lineColor?: string; font?: string; size?: number; color?: string; bold?: boolean; dx?: number; dy?: number; text?: string; hide?: boolean }
+export type ElStyle = { z?: number; w?: number; align?: 'left' | 'center' | 'right'; lineColor?: string; font?: string; size?: number; color?: string; bold?: boolean; dx?: number; dy?: number; text?: string; hide?: boolean }
 export type GalleryDesign = {
   look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; focals?: Record<string, { x: number; y: number }>; zoom?: number; zooms?: Record<string, number>; slots?: Record<string, string>
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
@@ -125,6 +125,7 @@ export function elCss(el: Record<string, ElStyle>, famOf: (k: string) => string 
     const r: string[] = []
     if (s.font) { const f = famOf(s.font); if (f) r.push(`font-family:${f}!important`) }
     if (typeof s.size === 'number' && Number.isFinite(s.size)) r.push(`font-size:${Math.min(160, Math.max(6, s.size))}px!important`)
+    if (typeof s.z === 'number' && Number.isFinite(s.z)) r.push(`z-index:${Math.min(99, Math.max(1, Math.round(s.z)))}!important`)
     if (s.color && HEX.test(s.color)) r.push(`color:${s.color}!important`)
     if (typeof s.bold === 'boolean') r.push(`font-weight:${s.bold ? 700 : 400}!important`)
     {

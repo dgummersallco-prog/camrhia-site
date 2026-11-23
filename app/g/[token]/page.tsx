@@ -627,6 +627,8 @@ export default function GalleryViewPage() {
         const r0 = el.getBoundingClientRect()
         const sc = scaleOf(el)
         const cx = r0.left + r0.width / 2
+        const cy = r0.top + r0.height / 2
+        const diag = Math.hypot(r0.width, r0.height) / 2 || 1
         const w0 = r0.width / sc
         const s0 = parseFloat(getComputedStyle(el).fontSize) || 38
         let last: { w: number; size?: number } | null = null
@@ -638,9 +640,10 @@ export default function GalleryViewPage() {
           if (last.size !== undefined) el.style.setProperty('font-size', last.size + 'px', 'important')
         }
         const mv = (ev: PointerEvent) => {
-          const nw = Math.min(900, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
+          const ratio = Math.hypot(ev.clientX - cx, ev.clientY - cy) / diag
+          const nw = kind.length === 2 ? Math.min(900, Math.max(14, w0 * ratio)) : Math.min(900, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
           const w = Math.round(nw * 10) / 10
-          last = kind.length === 2 ? { w, size: Math.round(Math.min(160, Math.max(8, s0 * (nw / w0))) * 10) / 10 } : { w }
+          last = kind.length === 2 ? { w, size: Math.round(Math.min(160, Math.max(8, s0 * ratio)) * 10) / 10 } : { w }
           if (!raf) raf = requestAnimationFrame(apply)
         }
         const up = () => {
@@ -656,6 +659,22 @@ export default function GalleryViewPage() {
         d.addEventListener('pointercancel', up)
       })
     }
+    const xb = document.createElement('div')
+    xb.textContent = String.fromCharCode(215)
+    xb.title = 'Delete this text'
+    xb.style.cssText = 'position:absolute;right:-9px;top:-34px;width:24px;height:24px;border-radius:50%;background:#1f1a14;color:#fff;font:600 17px/22px system-ui,sans-serif;text-align:center;cursor:pointer;pointer-events:auto;display:none;box-shadow:0 2px 6px rgba(0,0,0,.3)'
+    box.appendChild(xb)
+    xb.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation() })
+    xb.addEventListener('pointerdown', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const k = curEl?.getAttribute('data-gk') || ''
+      if (!/^x\d+$/.test(k)) return
+      closeEditor()
+      box.style.display = 'none'
+      curEl = null
+      window.parent?.postMessage({ type: 'camrhia-gallery-delete', key: k }, '*')
+    })
     const corner = 'width:13px;height:13px;border-radius:50%;'
     mkH('nw', corner + 'left:-7px;top:-7px;cursor:nwse-resize')
     mkH('ne', corner + 'right:-7px;top:-7px;cursor:nesw-resize')
@@ -694,6 +713,10 @@ export default function GalleryViewPage() {
           box.style.top = rr.top + 'px'
           box.style.width = rr.width + 'px'
           box.style.height = rr.height + 'px'
+          const isX = /^x\d+$/.test(curEl.getAttribute('data-gk') || '')
+          xb.style.display = isX ? 'block' : 'none'
+          xb.style.top = rr.top < 44 ? 'auto' : '-34px'
+          xb.style.bottom = rr.top < 44 ? '-34px' : 'auto'
         }
       }
       rafId = requestAnimationFrame(follow)
