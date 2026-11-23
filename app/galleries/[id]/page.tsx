@@ -187,7 +187,7 @@ export default function GalleryManagePage() {
   const designFlush = useRef<(() => void) | null>(null)
   const [topOff, setTopOff] = useState(0)
   const [shareMsg, setShareMsg] = useState<string | null>(null)
-  const [popup, setPopup] = useState<{ t: string; b?: string } | null>(null)
+  const [popup, setPopup] = useState<{ t: string; b?: string; ask?: boolean } | null>(null)
   const [finalBusy, setFinalBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
@@ -409,7 +409,7 @@ export default function GalleryManagePage() {
     const nm = title.trim()
     if (!nm) { setMessage('Give the gallery a name.'); return }
     const p = pin.trim()
-    if (!gallery.pin_hash && !p) { setPopup({ t: 'PIN required' }); return }
+    if (!gallery.pin_hash && !p) { setPopup({ t: 'PIN required', b: 'Choose a PIN your client will use to open the gallery.', ask: true }); return }
     if (p && p.length < 4) { setPopup({ t: 'PIN too short', b: 'Use at least 4 characters.' }); return }
     setFinalBusy(true)
     try {
@@ -1343,7 +1343,15 @@ export default function GalleryManagePage() {
           <div role="alertdialog" aria-modal="true" className="w-full max-w-sm rounded-2xl border border-line bg-white p-6 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <p className="font-fraunces text-2xl font-semibold text-ink">{popup.t}</p>
             {popup.b && <p className="mt-2 text-sm text-ink-soft">{popup.b}</p>}
-            <button type="button" autoFocus className={`${btn} mt-5 w-full`} onClick={() => setPopup(null)}>OK</button>
+            {popup.ask ? (
+              <>
+                <input autoFocus value={pin} onChange={(e) => setPin(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && pin.trim()) { setPopup(null); void publishAndSend() } }} placeholder="Choose a PIN" className={`${input} mt-4 text-center`} />
+                <button type="button" disabled={!pin.trim()} className={`${btn} mt-3 w-full disabled:opacity-40`} onClick={() => { setPopup(null); void publishAndSend() }}>Save PIN and continue</button>
+                <button type="button" className="mt-3 text-xs text-ink-soft underline" onClick={() => setPopup(null)}>Cancel</button>
+              </>
+            ) : (
+              <button type="button" autoFocus className={`${btn} mt-5 w-full`} onClick={() => setPopup(null)}>OK</button>
+            )}
           </div>
         </div>
       )}

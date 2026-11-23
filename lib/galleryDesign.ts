@@ -1,4 +1,4 @@
-export type ElStyle = { z?: number; w?: number; align?: 'left' | 'center' | 'right'; lineColor?: string; font?: string; size?: number; color?: string; bold?: boolean; dx?: number; dy?: number; text?: string; hide?: boolean }
+export type ElStyle = { z?: number; w?: number; align?: 'left' | 'center' | 'right'; lineColor?: string; font?: string; size?: number; color?: string; bold?: boolean; dx?: number; dy?: number; text?: string; hide?: boolean; h?: number; shape?: string }
 export type GalleryDesign = {
   look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; focals?: Record<string, { x: number; y: number }>; zoom?: number; zooms?: Record<string, number>; slots?: Record<string, string>
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
@@ -20,6 +20,7 @@ export const COVER_PRESETS: Record<string, Partial<GalleryDesign>> = {
   postcard: { el: { title: { text: 'The Alvarez Family' }, brand: { text: 'July 12, 2026' } } },
   mosaic: { coverBg: '#F9EFE4', el: { title: { text: 'Hannah & Paul' }, brand: { text: 'Due January 2027' } } },
   stack: { el: { title: { text: 'The Whitfield Family' }, brand: { text: 'October 2026' } } },
+  blank: { coverBg: '#FBF7F0' },
 }
 
 export type LookSpec = {
@@ -70,6 +71,7 @@ export const COVERS = [
   { k: 'mosaic', name: 'Mosaic' },
   { k: 'circle', name: 'Circle' },
   { k: 'ticket', name: 'Ticket' },
+  { k: 'blank', name: 'Blank canvas' },
 ]
 const LEGACY_COVER: Record<string, string> = { bottom: 'cinema', center: 'monogram', split: 'diptych', frame: 'arch', below: 'bigtype', text: 'cinema' }
 
@@ -120,7 +122,7 @@ const HEX = /^#[0-9a-f]{6}$/i
 export function elCss(el: Record<string, ElStyle>, famOf: (k: string) => string | undefined): string {
   let out = ''
   for (const [k, s] of Object.entries(el)) {
-    const sel = EL_SEL[k] ?? (/^x\d{1,2}$/.test(k) ? `.gal-root [data-gk="${k}"]` : /^s_[\w-]{1,64}$/.test(k) ? `.gal-root [data-gk="moment"][data-mid="${k.slice(2)}"]` : undefined)
+    const sel = EL_SEL[k] ?? (/^(x|ph)\d{1,2}$/.test(k) ? `.gal-root [data-gk="${k}"]` : /^s_[\w-]{1,64}$/.test(k) ? `.gal-root [data-gk="moment"][data-mid="${k.slice(2)}"]` : undefined)
     if (!sel || !s) continue
     const r: string[] = []
     if (s.font) { const f = famOf(s.font); if (f) r.push(`font-family:${f}!important`) }

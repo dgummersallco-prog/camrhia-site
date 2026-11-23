@@ -54,6 +54,13 @@ const LUX = 'text-[11px] font-medium uppercase tracking-[0.18em] text-[#8C6B3F]'
 const TB_PILL = { background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', border: '1px solid #E4D3B6', boxShadow: 'inset 0 0 0 3px #FFFDF9, inset 0 0 0 4px #EBDDC3' } as const
 const TB_CARD = { background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', border: '1px solid #E4D3B6', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 8px 28px rgba(60,40,20,0.10)' } as const
 const TB_POP = { background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', border: '1px solid #E4D3B6', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' } as const
+const PHOTO_SHAPES: { k: string; label: string; svg: ReactNode }[] = [
+  { k: 'rect', label: 'Rectangle', svg: <rect x="3" y="5" width="18" height="14" /> },
+  { k: 'rounded', label: 'Rounded', svg: <rect x="3" y="5" width="18" height="14" rx="5" /> },
+  { k: 'circle', label: 'Circle', svg: <circle cx="12" cy="12" r="9" /> },
+  { k: 'arch', label: 'Arch', svg: <path d="M5 20V11a7 7 0 0 1 14 0v9z" /> },
+  { k: 'heart', label: 'Heart', svg: <path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" /> },
+]
 
 export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost, onAddSection, onMoveSection, onMovePhoto, onSectionLine, onRemoveSection, onRenameSection }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
@@ -95,7 +102,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const eff = resolveDesign(d)
   const nSlots = COVER_SLOTS[eff.cover] ?? 0
   const slotKeys = nSlots ? [...(['mosaic', 'strip'].includes(eff.cover) ? [] : ['main']), ...Array.from({ length: nSlots }, (_, i) => 's' + i)] : []
-  const curSlot = slotKeys.includes(slot) ? slot : slotKeys[0] ?? 'main'
+  const phKeys = Object.keys(eff.el ?? {}).filter((k) => /^ph\d+$/.test(k))
+  const curSlot = slotKeys.includes(slot) || phKeys.includes(slot) ? slot : slotKeys[0] ?? 'main'
   const [gMsgs, setGMsgs] = useState<{ from: 'you' | 'cami'; text: string }[]>([])
   const [gInput, setGInput] = useState('')
   const [gBusy, setGBusy] = useState(false)
@@ -161,6 +169,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     if (on) setPick(null)
     postFocus(on)
   }
+  function postSelect(key: string) {
+    try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-select', key }, '*') } catch { /* ignore */ }
+  }
   function postEdit(key: string, id?: string) {
     try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-edit', key, id }, '*') } catch { /* ignore */ }
   }
@@ -186,6 +197,20 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   function rowMove(dir: number) {
     if (!pick?.mid) return
     try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-gallery-section-row', id: pick.mid, dir }, '*') } catch { /* ignore */ }
+  }
+  function addCoverPhoto(shape: string) {
+    setAddOpen(false)
+    const cur = latest.current.el ?? {}
+    let n = 1
+    while (cur['ph' + n]) n++
+    const key = 'ph' + n
+    const used = new Set<string>(Object.values(latest.current.slots ?? {}))
+    if (coverPhotoId) used.add(coverPhotoId)
+    const choices = photoChoices ?? []
+    const pk = choices.find((c) => !used.has(c.id)) ?? choices[0]
+    const sz = shape === 'rect' ? { w: 300, h: 220 } : shape === 'arch' ? { w: 220, h: 300 } : { w: 240, h: 240 }
+    change({ el: { ...cur, [key]: { shape, ...sz } }, ...(pk ? { slots: { ...(latest.current.slots ?? {}), [key]: pk.id } } : {}) })
+    setSlot(key)
   }
   function addCoverText() {
     setAddOpen(false)
@@ -273,12 +298,12 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     change({ el })
   }
   const BASE_Z: Record<string, number> = { initials: 2, title: 3, brand: 4, count: 4 }
-  const layerZ = (el: Record<string, ElStyle>, k: string) => (typeof el[k]?.z === 'number' ? (el[k].z as number) : (BASE_Z[k] ?? 10 + Number(k.slice(1))))
+  const layerZ = (el: Record<string, ElStyle>, k: string) => (typeof el[k]?.z === 'number' ? (el[k].z as number) : (BASE_Z[k] ?? 10 + Number(k.replace(/\D/g, ''))))
   function layerKeys(el: Record<string, ElStyle>) {
-    const base = ['title', 'brand', ...(eff.cover === 'magazine' ? ['count'] : []), ...(eff.cover === 'monogram' ? ['initials'] : [])]
-    return [...base, ...Object.keys(el).filter((k) => /^x\d+$/.test(k))].sort((a, b) => layerZ(el, a) - layerZ(el, b))
+    const base = eff.cover === 'blank' ? [] : ['title', 'brand', ...(eff.cover === 'magazine' ? ['count'] : []), ...(eff.cover === 'monogram' ? ['initials'] : [])]
+    return [...base, ...Object.keys(el).filter((k) => /^(x|ph)\d+$/.test(k))].sort((a, b) => layerZ(el, a) - layerZ(el, b))
   }
-  const layerLabel = (k: string) => (k === 'title' ? (eff.el?.title?.text || title) : k === 'brand' ? (eff.el?.brand?.text || 'Studio name') : k === 'count' ? 'Photo count' : k === 'initials' ? 'Cover initials' : (eff.el?.[k]?.text || 'Your text'))
+  const layerLabel = (k: string) => (k === 'title' ? (eff.el?.title?.text || title) : k === 'brand' ? (eff.el?.brand?.text || 'Studio name') : k === 'count' ? 'Photo count' : k === 'initials' ? 'Cover initials' : /^ph\d+$/.test(k) ? 'Photo ' + k.slice(2) : (eff.el?.[k]?.text || 'Your text'))
   function moveLayer(key: string, dir: 1 | -1) {
     const el = { ...(latest.current.el ?? {}) }
     const ks = layerKeys(el)
@@ -374,12 +399,13 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       }
       if (m.type === 'camrhia-gallery-dismiss') setPick(null)
       if (m.type === 'camrhia-gallery-box' && typeof m.key === 'string') {
-        const patch: { w?: number; size?: number } = {}
+        const patch: { w?: number; h?: number; size?: number } = {}
         if (Number.isFinite(Number(m.w))) patch.w = Number(m.w)
+        if (m.h !== undefined && Number.isFinite(Number(m.h))) patch.h = Number(m.h)
         if (m.size !== undefined && Number.isFinite(Number(m.size))) patch.size = Number(m.size)
         setElRef.current(String(m.key), patch)
       }
-      if (m.type === 'camrhia-gallery-delete' && typeof m.key === 'string' && /^x\d+$/.test(m.key)) { const el = { ...(latest.current.el ?? {}) }; delete el[String(m.key)]; change({ el }); setPick(null) }
+      if (m.type === 'camrhia-gallery-delete' && typeof m.key === 'string' && /^(x|ph)\d+$/.test(m.key)) { const el = { ...(latest.current.el ?? {}) }; delete el[String(m.key)]; change({ el }); setPick(null) }
       if (m.type === 'camrhia-gallery-slot' && typeof m.key === 'string') setSlot(String(m.key))
       if (m.type === 'camrhia-gallery-setcover' && m.id) pickRef.current(String(m.id))
       if (m.type === 'camrhia-gallery-text' && typeof m.key === 'string') setElRef.current(String(m.key), { text: String(m.text ?? '').slice(0, 60) })
@@ -449,13 +475,13 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             <p className={head + ' mt-2'}>Cover photo</p>
             <div className="mt-2 flex items-start gap-3.5 rounded-2xl border border-[#E4D3B6] px-5 py-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 12px 26px -18px rgba(140,107,63,0.5)' }}>
               <svg viewBox="0 0 24 24" className="mt-1 h-5 w-5 shrink-0 text-[#B08D57]" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4z" /></svg>
-              <p className="font-fraunces text-[15px] leading-relaxed text-ink">Pick a spot below, then <span className="font-semibold text-[#8C6B3F]">hover a photo in the gallery</span> and press <span className="font-semibold text-[#8C6B3F]">Set as cover</span>.</p>
+              <p className="font-fraunces text-[15px] leading-relaxed text-ink">Pick a cover below, then <span className="font-semibold text-[#8C6B3F]">hover a photo in the gallery</span> and press <span className="font-semibold text-[#8C6B3F]">Set as cover</span>.</p>
             </div>
             <div className="mt-3 grid grid-cols-5 gap-2">
-              {(slotKeys.length > 0 ? slotKeys : ['main']).map((k) => {
+              {[...(slotKeys.length > 0 ? slotKeys : ['main']), ...phKeys].map((k) => {
                 const pid = k === 'main' ? coverPhotoId : eff.slots[k]
                 const u = photoChoices.find((c) => c.id === pid)?.url ?? (k === 'main' && pid ? coverUrl : undefined)
-                const on = (slotKeys.length > 0 ? curSlot : 'main') === k
+                const on = (phKeys.includes(curSlot) || slotKeys.length > 0 ? curSlot : 'main') === k
                 return (
                   <button key={k} type="button" onClick={() => setSlot(k)} className={`flex aspect-square items-center justify-center overflow-hidden rounded-lg border-2 bg-paper transition ${on ? 'border-twilight ring-2 ring-twilight/40' : 'border-line hover:border-twilight'}`}>
                     {u ? (
@@ -471,8 +497,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           </>
         )}
         {(coverUrl || slotKeys.length > 0) && (() => {
-          const zv = slotKeys.length > 0 && curSlot !== 'main' ? eff.zooms['slot:' + curSlot] ?? 1 : eff.zoom
-          const setZ = (v: number) => { if (slotKeys.length > 0 && curSlot !== 'main') change({ zooms: { ...(latest.current.zooms ?? {}), ['slot:' + curSlot]: v } }); else change({ zoom: v }) }
+          const zv = (slotKeys.length > 0 || phKeys.includes(curSlot)) && curSlot !== 'main' ? eff.zooms['slot:' + curSlot] ?? 1 : eff.zoom
+          const setZ = (v: number) => { if ((slotKeys.length > 0 || phKeys.includes(curSlot)) && curSlot !== 'main') change({ zooms: { ...(latest.current.zooms ?? {}), ['slot:' + curSlot]: v } }); else change({ zoom: v }) }
           return (
           <div className="mt-5 rounded-2xl border border-[#E4D3B6] px-5 py-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 12px 26px -18px rgba(140,107,63,0.5)' }}>
             <style>{`.lux-range{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;outline:none;cursor:pointer}.lux-range::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:linear-gradient(90deg,#B08D57 var(--p,0%),#E4D3B6 var(--p,0%))}.lux-range::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-8px;border-radius:50%;background:#FFFDF9;border:1.5px solid #B08D57;box-shadow:0 3px 8px rgba(140,107,63,0.35)}.lux-range::-moz-range-track{height:2px;background:#E4D3B6}.lux-range::-moz-range-progress{height:2px;background:#B08D57}.lux-range::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#FFFDF9;border:1.5px solid #B08D57}`}</style>
@@ -490,8 +516,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <p className={head + ' mt-8'}>Cover photo</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {COVERS.map((c) => (
-            <button key={c.k} type="button" onClick={() => change(coverPatch(c.k, eff.el))} onMouseEnter={(e) => setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
-              <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>
+            <button key={c.k} type="button" onClick={() => change(coverPatch(c.k, eff.el))} onMouseEnter={(e) => c.k !== 'blank' && setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
+              {c.k === 'blank' ? <div className="flex aspect-[2/1] items-center justify-center rounded border border-dashed border-[#D9C6A3] bg-[#FBF7F0] text-lg text-[#B08D57]">+</div> : <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>}
               <span className="mt-1 block text-[11px] text-ink">{c.name}</span>
             </button>
           ))}
@@ -547,7 +573,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                     <p className="px-2 pb-2 pt-1"><span className={LUX}>Text layers</span><span className="mt-0.5 block font-fraunces text-xs text-[#8a7a68]">Top of the list is in front</span></p>
                     {[...ks].reverse().map((k, i) => (
                       <div key={k} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[#F6EBD9]">
-                        <span className="min-w-0 flex-1 truncate font-fraunces text-sm text-[#3a2d22]">{String(layerLabel(k)).replace(/\s+/g, ' ')}</span>
+                        <button type="button" onClick={() => { setLayOpen(false); postSelect(k) }} title="Select this text on the page" className="min-w-0 flex-1 cursor-pointer truncate text-left font-fraunces text-sm text-[#3a2d22]">{String(layerLabel(k)).replace(/\s+/g, ' ')}</button>
                         <button type="button" disabled={i === 0} onClick={() => moveLayer(k, 1)} className="h-7 w-7 rounded-md border border-[#E4D3B6] bg-[#FFFDF9] text-xs text-[#8C6B3F] transition hover:border-[#B08D57] disabled:opacity-30" aria-label="Bring forward">&#9650;</button>
                         <button type="button" disabled={i === ks.length - 1} onClick={() => moveLayer(k, -1)} className="h-7 w-7 rounded-md border border-[#E4D3B6] bg-[#FFFDF9] text-xs text-[#8C6B3F] transition hover:border-[#B08D57] disabled:opacity-30" aria-label="Send back">&#9660;</button>
                       </div>
@@ -557,10 +583,10 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
               })()}
             </div>
             <div ref={addRef} className="relative w-36">
-              <span className={LUX + ' block leading-4'}>Text</span>
-              <button type="button" onClick={() => setAddOpen((o) => !o)} style={TB_PILL} className={'mt-1 flex h-[41px] w-full items-center justify-between gap-2 rounded-xl px-3.5 font-fraunces text-sm text-[#3a2d22] transition hover:brightness-[0.98]'}><span>+ Add text</span><span className="px-1 text-[#8C6B3F]">{addOpen ? <>&#9652;</> : <>&#9662;</>}</span></button>
+              <span className={LUX + ' block leading-4'}>Add</span>
+              <button type="button" onClick={() => setAddOpen((o) => !o)} style={TB_PILL} className={'mt-1 flex h-[41px] w-full items-center justify-between gap-2 rounded-xl px-3.5 font-fraunces text-sm text-[#3a2d22] transition hover:brightness-[0.98]'}><span>+ Add</span><span className="px-1 text-[#8C6B3F]">{addOpen ? <>&#9652;</> : <>&#9662;</>}</span></button>
               {addOpen && (
-                <div style={TB_POP} className="absolute left-0 top-full z-40 mt-2 w-64 rounded-2xl p-3">
+                <div style={TB_POP} className="absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl p-3">
                   <p className="px-2 pb-2 pt-1"><span className={LUX}>What do you want to add?</span></p>
                   <button type="button" onClick={addCoverText} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-[#F6EBD9]">
                     <span className="block font-fraunces text-sm text-[#3a2d22]">Cover text box</span>
@@ -570,6 +596,17 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                     <span className="block font-fraunces text-sm text-[#3a2d22]">Section text box</span>
                     <span className="block text-xs text-[#8a7a68]">Splits your photos into parts</span>
                   </button>
+                  <div className="mt-1 border-t border-[#EBDDC3] px-2 pb-1 pt-3">
+                    <span className="block font-fraunces text-sm text-[#3a2d22]">Photo</span>
+                    <span className="block text-xs text-[#8a7a68]">Pick a shape, then drag its edges to stretch it</span>
+                    <div className="mt-2 grid grid-cols-5 gap-1.5">
+                      {PHOTO_SHAPES.map((sp) => (
+                        <button key={sp.k} type="button" title={sp.label} aria-label={sp.label} onClick={() => addCoverPhoto(sp.k)} className="flex h-11 items-center justify-center rounded-lg border border-[#E4D3B6] bg-[#FFFDF9] text-[#8C6B3F] transition hover:border-[#B08D57] hover:bg-[#F6EBD9]">
+                          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">{sp.svg}</svg>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

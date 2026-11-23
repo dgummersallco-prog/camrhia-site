@@ -389,7 +389,7 @@ export default function GalleryViewPage() {
       if (e.button !== 0) return
       const tg = (e.target as Element | null)?.closest?.('[data-gk]') as Element | null
       const gk = tg?.getAttribute('data-gk') ?? ''
-      if (tg && (MOVABLE.includes(gk) || /^x\d+$/.test(gk))) {
+      if (tg && (MOVABLE.includes(gk) || /^(x|ph)\d+$/.test(gk))) {
         const svg = tg.closest('svg') as SVGSVGElement | null
         const he = tg as HTMLElement
         const k = svg ? svg.getBoundingClientRect().width / (svg.viewBox.baseVal?.width || 900) || 1 : scaleOf(he)
@@ -581,6 +581,18 @@ export default function GalleryViewPage() {
     mk('', 'right')
     document.body.appendChild(bar)
     let hideT: number | undefined
+    let raf2 = 0
+    const place = () => {
+      raf2 = requestAnimationFrame(place)
+      if (bar.style.display !== 'flex' || !cur) return
+      const el = document.querySelector<HTMLImageElement>(SEL + '[data-pid="' + cur + '"]')
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      if (r.bottom < 0 || r.top > window.innerHeight) { bar.style.display = 'none'; return }
+      bar.style.left = Math.max(4, r.left + 10) + 'px'
+      bar.style.top = Math.max(4, r.top + 10) + 'px'
+    }
+    raf2 = requestAnimationFrame(place)
     const over = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null
       if (t && bar.contains(t)) { window.clearTimeout(hideT); return }
@@ -607,13 +619,13 @@ export default function GalleryViewPage() {
     }
     document.addEventListener('mouseover', over, true)
     window.addEventListener('message', onMsg)
-    return () => { document.removeEventListener('mouseover', over, true); window.removeEventListener('message', onMsg); bar.remove() }
+    return () => { document.removeEventListener('mouseover', over, true); window.removeEventListener('message', onMsg); cancelAnimationFrame(raf2); bar.remove() }
   }, [])
 
   // Preview only: hover names and click-to-edit for the gallery lines.
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
-    const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials', title2: 'Gallery title line 2', ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => ['x' + (i + 1), 'Text'])) }
+    const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials', title2: 'Gallery title line 2', ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => ['x' + (i + 1), 'Text'])), ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => ['ph' + (i + 1), 'Photo'])) }
     const box = document.createElement('div')
     box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:1.5px dashed #d9a21b;border-radius:3px;display:none'
     const tag = document.createElement('div')
@@ -641,15 +653,25 @@ export default function GalleryViewPage() {
         const diag = Math.hypot(r0.width, r0.height) / 2 || 1
         const w0 = r0.width / sc
         const s0 = parseFloat(getComputedStyle(el).fontSize) || 38
-        let last: { w: number; size?: number } | null = null
+        const isPh = el.hasAttribute('data-photo')
+        const h0 = r0.height / sc
+        let last: { w: number; h?: number; size?: number } | null = null
         let raf = 0
         const apply = () => {
           raf = 0
           if (!last) return
           if (!el.hasAttribute('data-nowidth')) el.style.width = last.w + 'px'
           if (last.size !== undefined) el.style.setProperty('font-size', last.size + 'px', 'important')
+          if (last.h !== undefined) el.style.height = last.h + 'px'
         }
         const mv = (ev: PointerEvent) => {
+          if (isPh) {
+            const nw = kind === 'n' || kind === 's' ? w0 : Math.min(900, Math.max(30, (2 * Math.abs(ev.clientX - cx)) / sc))
+            const nh = kind === 'w' || kind === 'e' ? h0 : Math.min(900, Math.max(30, (2 * Math.abs(ev.clientY - cy)) / sc))
+            last = { w: Math.round(nw * 10) / 10, h: Math.round(nh * 10) / 10 }
+            if (!raf) raf = requestAnimationFrame(apply)
+            return
+          }
           const ratio = Math.hypot(ev.clientX - cx, ev.clientY - cy) / diag
           const nw = kind.length === 2 ? Math.min(900, Math.max(14, w0 * ratio)) : Math.min(900, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
           const w = Math.round(nw * 10) / 10
@@ -662,7 +684,7 @@ export default function GalleryViewPage() {
           d.removeEventListener('pointercancel', up)
           if (raf) cancelAnimationFrame(raf)
           apply()
-          if (last) window.parent?.postMessage({ type: 'camrhia-gallery-box', key: el.getAttribute('data-gk') || 'title', w: el.hasAttribute('data-nowidth') ? undefined : last.w, size: last.size }, '*')
+          if (last) window.parent?.postMessage({ type: 'camrhia-gallery-box', key: el.getAttribute('data-gk') || 'title', w: el.hasAttribute('data-nowidth') ? undefined : last.w, size: last.size, h: last.h }, '*')
         }
         d.addEventListener('pointermove', mv)
         d.addEventListener('pointerup', up)
@@ -679,7 +701,7 @@ export default function GalleryViewPage() {
       e.preventDefault()
       e.stopPropagation()
       const k = curEl?.getAttribute('data-gk') || ''
-      if (!/^x\d+$/.test(k)) return
+      if (!/^(x|ph)\d+$/.test(k)) return
       closeEditor()
       box.style.display = 'none'
       curEl = null
@@ -692,6 +714,8 @@ export default function GalleryViewPage() {
     mkH('se', corner + 'right:-7px;bottom:-7px;cursor:nwse-resize')
     mkH('w', 'left:-5px;top:calc(50% - 15px);width:9px;height:30px;border-radius:5px;cursor:ew-resize')
     mkH('e', 'right:-5px;top:calc(50% - 15px);width:9px;height:30px;border-radius:5px;cursor:ew-resize')
+    mkH('n', 'top:-5px;left:calc(50% - 15px);width:30px;height:9px;border-radius:5px;cursor:ns-resize')
+    mkH('s', 'bottom:-5px;left:calc(50% - 15px);width:30px;height:9px;border-radius:5px;cursor:ns-resize')
     const hit = (t: EventTarget | null) => {
       const el = (t as HTMLElement | null)?.closest?.('[data-gk],h1') as HTMLElement | null
       if (!el) return null
@@ -723,7 +747,7 @@ export default function GalleryViewPage() {
           box.style.top = rr.top + 'px'
           box.style.width = rr.width + 'px'
           box.style.height = rr.height + 'px'
-          const isX = /^x\d+$/.test(curEl.getAttribute('data-gk') || '')
+          const isX = /^(x|ph)\d+$/.test(curEl.getAttribute('data-gk') || '')
           xb.style.display = isX ? 'block' : 'none'
           xb.style.top = rr.top < 44 ? 'auto' : '-34px'
           xb.style.bottom = rr.top < 44 ? '-34px' : 'auto'
@@ -737,14 +761,15 @@ export default function GalleryViewPage() {
       const h = hit(e.target)
       curEl = h ? h.el : null
       if (!h) { box.style.display = 'none'; return }
-      hnd.forEach((x) => { x.style.display = h.el.hasAttribute('data-box') && !(h.el.hasAttribute('data-nowidth') && (x.dataset.h || '').length === 1) ? 'block' : 'none' })
+      const isPhoto = h.el.hasAttribute('data-photo')
+      hnd.forEach((x) => { const hk = x.dataset.h || ''; x.style.display = h.el.hasAttribute('data-box') && !(h.el.hasAttribute('data-nowidth') && hk.length === 1) && (isPhoto || (hk !== 'n' && hk !== 's')) ? 'block' : 'none' })
       const r = rectOf(h.el)
       box.style.display = 'block'
       box.style.left = r.left + 'px'
       box.style.top = r.top + 'px'
       box.style.width = r.width + 'px'
       box.style.height = r.height + 'px'
-      tag.textContent = NAMES[h.k] + ' · click to edit'
+      tag.textContent = isPhoto ? 'Photo · drag to move' : NAMES[h.k] + ' · click to edit'
       const flip = r.top < 28
       tag.style.bottom = flip ? 'auto' : '100%'
       tag.style.top = flip ? '100%' : 'auto'
@@ -962,6 +987,7 @@ export default function GalleryViewPage() {
       }
       e.preventDefault()
       e.stopPropagation()
+      if (h.el.hasAttribute('data-photo')) { window.parent?.postMessage({ type: 'camrhia-gallery-slot', key: h.k }, '*'); return }
       openEditor(h.el, h.k)
       const cs = getComputedStyle(h.el)
       const rr = h.el.getBoundingClientRect()
@@ -990,6 +1016,20 @@ export default function GalleryViewPage() {
       const m = e.data
       if (!m) return
       if (m.type === 'camrhia-gallery-section-mode') { secOn = !!m.on; secSt.textContent = secOn ? '.gal-root img[data-pid]{cursor:copy!important}' : '' }
+      if (m.type === 'camrhia-gallery-select' && typeof m.key === 'string') {
+        const sel = String(m.key).replace(/[^a-zA-Z0-9_-]/g, '')
+        const go = (n: number) => {
+          const el = (document.querySelector(`[data-gk="${sel}"][data-box]`) || document.querySelector(`[data-gk="${sel}"]`)) as HTMLElement | null
+          if (el) {
+            el.scrollIntoView({ block: 'center' })
+            setTimeout(() => {
+              el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, cancelable: true }))
+              el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+            }, 250)
+          } else if (n < 12) setTimeout(() => go(n + 1), 120)
+        }
+        go(0)
+      }
       if (m.type === 'camrhia-gallery-edit') {
         const go = (n: number) => {
           const el = (m.key === 'moment' ? document.querySelector(`[data-mid="${String(m.id)}"]`) : document.querySelector(`[data-gk="${String(m.key)}"]`)) as HTMLElement | null
@@ -1165,6 +1205,22 @@ export default function GalleryViewPage() {
   const coverSub = String((el as Record<string, { text?: string }> | undefined)?.brand?.text ?? '').trim()
   const countText = String((el as Record<string, { text?: string }> | undefined)?.count?.text ?? '').trim()
   const extraKeys = Object.keys((el ?? {}) as Record<string, unknown>).filter((k) => /^x\d+$/.test(k)).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
+  const photoKeys = Object.keys((el ?? {}) as Record<string, unknown>).filter((k) => /^ph\d+$/.test(k)).sort((a, b) => Number(a.slice(2)) - Number(b.slice(2)))
+  const phBox = (k: string) => {
+    const s = ((el ?? {}) as Record<string, { w?: number; h?: number; shape?: string } | undefined>)[k] ?? {}
+    const w = typeof s.w === 'number' && Number.isFinite(s.w) ? Math.min(900, Math.max(30, s.w)) : 240
+    const h = typeof s.h === 'number' && Number.isFinite(s.h) ? Math.min(900, Math.max(30, s.h)) : 240
+    const sh = s.shape || 'rect'
+    const ph = slotPh(k, cover)
+    const src = ph?.web || ph?.thumb || undefined
+    const shapeCss: CSSProperties = sh === 'rounded' ? { borderRadius: 26 } : sh === 'circle' ? { borderRadius: '50%' } : sh === 'arch' ? { borderRadius: `${w / 2}px ${w / 2}px 0 0` } : sh === 'heart' ? { clipPath: 'url(#camheart)' } : {}
+    return (
+      <div key={k} data-gk={k} data-box="1" data-photo="1" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: w, height: h, maxWidth: '96%', zIndex: 6, overflow: 'hidden', cursor: 'grab', background: pal.line, ...shapeCss }}>
+        {src ? slotImg(k, ph, src) : null}
+      </div>
+    )
+  }
+  const xBox = (k: string, i: number) => (<div key={k} data-gk={k} data-box="1" style={{ position: 'absolute', left: '50%', top: 24 + i * 56, transform: 'translateX(-50%)', zIndex: 6, fontSize: 28, lineHeight: 1.2, width: extraW(k) ?? 'max-content', whiteSpace: extraW(k) ? 'pre-wrap' : 'pre', overflowWrap: 'anywhere', textAlign: 'center', color: coverPal.ink, fontFamily: "'Playfair Display', Georgia, serif", cursor: 'grab' }}>{extraTxt(k) || 'Your text'}</div>)
   const extraTxt = (k: string) => String((el as Record<string, { text?: string }> | undefined)?.[k]?.text ?? '')
   const extraW = (k: string) => { const w = (el as Record<string, { w?: number } | undefined> | undefined)?.[k]?.w; return typeof w === 'number' && Number.isFinite(w) ? Math.min(900, Math.max(14, w)) : undefined }
   textRef.current = { ...Object.fromEntries(extraKeys.map((k) => [k, extraTxt(k)])), title: coverTitle, brand: coverSub, count: countText || `${data.photos.length} photos`, initials: String((el as Record<string, { text?: string }> | undefined)?.initials?.text ?? '') }
@@ -1266,11 +1322,22 @@ export default function GalleryViewPage() {
       }
       case 'feature': {
         const FEAT = ['col-span-2 row-span-2 aspect-square md:aspect-auto', 'aspect-square md:aspect-auto', 'aspect-square md:aspect-auto', 'aspect-square md:aspect-auto', 'aspect-square md:aspect-auto', 'col-span-2 aspect-[2/1] md:aspect-auto', 'col-span-2 aspect-[2/1] md:aspect-auto', 'row-span-2 aspect-[1/2] md:aspect-auto', 'row-span-2 aspect-[1/2] md:aspect-auto']
+        const fg: { head: ReturnType<typeof momentHead>; items: [(typeof list)[number], number][] }[] = []
+        list.forEach((p, i) => {
+          const h = momentHead(p, i)
+          if (h || fg.length === 0) fg.push({ head: h, items: [] })
+          fg[fg.length - 1].items.push([p, i])
+        })
         return (
           <div style={{ containerType: 'inline-size' }}>
-            <div className="grid grid-cols-2 md:grid-cols-4 md:auto-rows-[calc((100cqw_-_3*var(--g))/4)]" style={{ gap: look.gap, gridAutoFlow: 'dense', ['--g' as string]: `${look.gap}px` }}>
-              {list.map((p, i) => tile(p, i, { fill: true, wrap: FEAT[i % 9] }))}
-            </div>
+            {fg.map((gp, gi) => (
+              <Fragment key={gi}>
+                {gp.head}
+                <div className="grid grid-cols-2 md:grid-cols-4 md:auto-rows-[calc((100cqw_-_3*var(--g))/4)]" style={{ gap: look.gap, gridAutoFlow: 'dense', ['--g' as string]: `${look.gap}px` }}>
+                  {gp.items.map(([p, i]) => tile(p, i, { head: false, fill: true, wrap: FEAT[i % 9] }))}
+                </div>
+              </Fragment>
+            ))}
           </div>
         )
       }
@@ -1412,7 +1479,13 @@ export default function GalleryViewPage() {
       {fontHref && <link rel="stylesheet" href={fontHref} />}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Bodoni+Moda:wght@400&display=swap" />
       {elRules && <style>{elRules}</style>}
-      <div data-cover-wrap style={{ background: coverPal.bg, color: coverPal.ink, position: 'relative' }}>{extraKeys.map((k, i) => <div key={k} data-gk={k} data-box="1" style={{ position: 'absolute', left: '50%', top: 24 + i * 56, transform: 'translateX(-50%)', zIndex: 6, fontSize: 28, lineHeight: 1.2, width: extraW(k) ?? 'max-content', whiteSpace: extraW(k) ? 'pre-wrap' : 'pre', overflowWrap: 'anywhere', textAlign: 'center', color: coverPal.ink, fontFamily: "'Playfair Display', Georgia, serif", cursor: 'grab' }}>{extraTxt(k) || 'Your text'}</div>)}{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
+      <div data-cover-wrap style={{ background: coverPal.bg, color: coverPal.ink, position: 'relative' }}>{(coverKind === 'blank' ? [] : extraKeys).map((k, i) => xBox(k, i))}{photoKeys.length > 0 && <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs><clipPath id="camheart" clipPathUnits="objectBoundingBox"><path d="M0.5,0.97 C0.08,0.68 0,0.46 0,0.29 C0,0.11 0.12,0 0.27,0 C0.37,0 0.46,0.06 0.5,0.15 C0.54,0.06 0.63,0 0.73,0 C0.88,0 1,0.11 1,0.29 C1,0.46 0.92,0.68 0.5,0.97 Z" /></clipPath></defs></svg>}{(coverKind === 'blank' ? [] : photoKeys).map((k) => phBox(k))}{(() => { const pal = coverPal; return (coverKind === 'blank' ? (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2 / 1' }}>
+          <h1 className="sr-only">{coverTitle}</h1>
+          {stg([...extraKeys.map((k, i) => xBox(k, i)), ...photoKeys.map((k) => phBox(k))], 'b')}
+          {extraKeys.length + photoKeys.length === 0 && designPreview !== null ? <p className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm" style={{ color: coverPal.ink, opacity: 0.45, pointerEvents: 'none' }}>Blank canvas. Use Add to place text and photos here.</p> : null}
+        </div>
+      ) : coverKind === 'ticket' && cover?.web ? (() => {
         const words = String(coverTitle).trim().split(/\s+/).filter(Boolean)
         const one = words.length <= 1
         const l1 = one ? '' : words.slice(0, -1).join(' ')
