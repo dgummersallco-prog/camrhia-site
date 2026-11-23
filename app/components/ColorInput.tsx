@@ -92,7 +92,7 @@ function HexBox({ value, onChange, onCommit, className }: { value: string; onCha
   )
 }
 
-export default function ColorInput({ label, value, onChange, swatches = DEFAULT_SWATCHES, float = false }: { label: string; value: string; onChange: (v: string) => void; swatches?: string[]; float?: boolean }) {
+export default function ColorInput({ label, value, onChange, swatches = DEFAULT_SWATCHES, float = false, lux = false }: { lux?: boolean; label: string; value: string; onChange: (v: string) => void; swatches?: string[]; float?: boolean }) {
   const [open, setOpen] = useState(false)
   const boxRef = useRef<HTMLDivElement>(null)
   const valRef = useRef(value)
@@ -114,7 +114,7 @@ export default function ColorInput({ label, value, onChange, swatches = DEFAULT_
 
   return (
     <div ref={boxRef} className={float ? 'relative' : undefined}>
-      <span className="text-sm font-medium text-ink">{label}</span>
+      <span className={lux ? 'text-[11px] font-medium uppercase tracking-[0.18em] text-[#8C6B3F]' : 'text-sm font-medium text-ink'}>{label}</span>
       <div className="mt-1 flex w-full items-center gap-2 rounded-xl border border-line bg-card px-3 py-2">
         <button type="button" onClick={() => setOpen(!open)} aria-label="Open color picker" className="h-5 w-5 shrink-0 rounded border border-line" style={{ background: value || 'transparent' }} />
         <HexBox value={value} onChange={onChange} onCommit={remember} className="min-w-0 flex-1 bg-transparent text-sm uppercase tracking-wide text-ink outline-none" />

@@ -355,7 +355,7 @@ export default function GalleryViewPage() {
       const tg = (e.target as Element | null)?.closest?.('[data-gk]') as Element | null
       const gk = tg?.getAttribute('data-gk') ?? ''
       if (tg && (MOVABLE.includes(gk) || /^x\d+$/.test(gk))) {
-        const svg = (tg as SVGElement).ownerSVGElement
+        const svg = tg.closest('svg') as SVGSVGElement | null
         const k = svg ? svg.getBoundingClientRect().width / (svg.viewBox.baseVal?.width || 900) || 1 : 1
         tdrag = { key: gk, x: e.clientX, y: e.clientY, k, moved: false }
         e.preventDefault()
@@ -591,6 +591,7 @@ export default function GalleryViewPage() {
       d.style.cssText = 'position:absolute;pointer-events:auto;display:none;background:#fff;border:1.5px solid #b08d57;box-shadow:0 2px 6px rgba(0,0,0,.25);' + css
       box.appendChild(d)
       hnd.push(d)
+      d.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation() })
       d.addEventListener('pointerdown', (e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -611,7 +612,7 @@ export default function GalleryViewPage() {
           if (last.size !== undefined) el.style.setProperty('font-size', last.size + 'px', 'important')
         }
         const mv = (ev: PointerEvent) => {
-          const nw = Math.min(420, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
+          const nw = Math.min(el.closest('svg') ? 420 : 900, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
           const w = Math.round(nw * 10) / 10
           last = kind.length === 2 ? { w, size: Math.round(Math.min(160, Math.max(8, s0 * (nw / w0))) * 10) / 10 } : { w }
           if (!raf) raf = requestAnimationFrame(apply)
@@ -622,7 +623,7 @@ export default function GalleryViewPage() {
           d.removeEventListener('pointercancel', up)
           if (raf) cancelAnimationFrame(raf)
           apply()
-          if (last) window.parent?.postMessage({ type: 'camrhia-gallery-box', key: 'title', w: last.w, size: last.size }, '*')
+          if (last) window.parent?.postMessage({ type: 'camrhia-gallery-box', key: el.getAttribute('data-gk') || 'title', w: last.w, size: last.size }, '*')
         }
         d.addEventListener('pointermove', mv)
         d.addEventListener('pointerup', up)
@@ -736,7 +737,11 @@ export default function GalleryViewPage() {
     }
     const openBox = (target: HTMLElement) => {
       closeEditor()
-      hide()
+      curEl = target
+      box.style.display = 'block'
+      hnd.forEach((x) => { x.style.display = 'block' })
+      const gkey = target.getAttribute('data-gk') || 'title'
+      const topAnchor = gkey !== 'title'
       const svg = target.closest('svg') as SVGSVGElement | null
       const sc = svg?.getScreenCTM?.()?.a ?? 1
       const cs = getComputedStyle(target)
@@ -747,19 +752,19 @@ export default function GalleryViewPage() {
       ta.value = target.textContent ?? ''
       ta.maxLength = 80
       ta.spellcheck = false
-      ta.style.cssText = `position:absolute;z-index:2147483646;box-sizing:border-box;margin:0;padding:0;border:0;background:transparent;resize:none;overflow:hidden;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:center;color:${cs.color};caret-color:${cs.color};font-family:${cs.fontFamily};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};font-size:${fsPx}px;line-height:1.12;width:${r.width}px;text-shadow:none`
+      ta.style.cssText = `position:absolute;z-index:2147483646;box-sizing:border-box;margin:0;padding:0;border:0;background:transparent;resize:none;overflow:hidden;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:center;color:${cs.color};caret-color:${cs.color};font-family:${cs.fontFamily};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};font-size:${fsPx}px;line-height:${topAnchor ? 1.2 : 1.12};width:${r.width}px;text-shadow:none`
       const cy = r.top + r.height / 2
       ta.style.left = r.left + window.scrollX + 'px'
       const fit = () => {
         ta.style.height = '0px'
-        const h = Math.max(ta.scrollHeight, fsPx * 1.12)
+        const h = Math.max(ta.scrollHeight, fsPx * (topAnchor ? 1.2 : 1.12))
         ta.style.height = h + 'px'
-        ta.style.top = cy - h / 2 + window.scrollY + 'px'
+        ta.style.top = (topAnchor ? r.top : cy - h / 2) + window.scrollY + 'px'
       }
       document.body.appendChild(ta)
       fit()
       const orig = ta.value
-      const send = (t: string) => window.parent?.postMessage({ type: 'camrhia-gallery-text', key: 'title', text: t }, '*')
+      const send = (t: string) => window.parent?.postMessage({ type: 'camrhia-gallery-text', key: gkey, text: t }, '*')
       target.style.visibility = 'hidden'
       hidden = target
       hiddenMore = []
@@ -1088,6 +1093,7 @@ export default function GalleryViewPage() {
   const countText = String((el as Record<string, { text?: string }> | undefined)?.count?.text ?? '').trim()
   const extraKeys = Object.keys((el ?? {}) as Record<string, unknown>).filter((k) => /^x\d+$/.test(k)).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
   const extraTxt = (k: string) => String((el as Record<string, { text?: string }> | undefined)?.[k]?.text ?? '')
+  const extraW = (k: string) => { const w = (el as Record<string, { w?: number } | undefined> | undefined)?.[k]?.w; return typeof w === 'number' && Number.isFinite(w) ? Math.min(900, Math.max(14, w)) : undefined }
   textRef.current = { ...Object.fromEntries(extraKeys.map((k) => [k, extraTxt(k)])), title: coverTitle, brand: coverSub, count: countText || `${data.photos.length} photos`, initials: String((el as Record<string, { text?: string }> | undefined)?.initials?.text ?? '') }
   const brandLine = coverSub ? (
     <p data-gk="brand" className="mb-3 font-mono text-xs uppercase tracking-widest" style={{ color: pal.soft }}>{coverSub}</p>
@@ -1307,7 +1313,7 @@ export default function GalleryViewPage() {
       {fontHref && <link rel="stylesheet" href={fontHref} />}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Bodoni+Moda:wght@400&display=swap" />
       {elRules && <style>{elRules}</style>}
-      <div data-cover-wrap style={{ background: coverPal.bg, color: coverPal.ink, position: 'relative' }}>{extraKeys.map((k, i) => <div key={k} data-gk={k} style={{ position: 'absolute', left: '50%', top: 24 + i * 56, transform: 'translateX(-50%)', zIndex: 6, fontSize: 28, lineHeight: 1.2, whiteSpace: 'nowrap', color: coverPal.ink, fontFamily: "'Playfair Display', Georgia, serif", cursor: 'grab' }}>{extraTxt(k) || 'Your text'}</div>)}{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
+      <div data-cover-wrap style={{ background: coverPal.bg, color: coverPal.ink, position: 'relative' }}>{extraKeys.map((k, i) => <div key={k} data-gk={k} data-box="1" style={{ position: 'absolute', left: '50%', top: 24 + i * 56, transform: 'translateX(-50%)', zIndex: 6, fontSize: 28, lineHeight: 1.2, width: extraW(k) ?? 'max-content', whiteSpace: extraW(k) ? 'pre-wrap' : 'pre', overflowWrap: 'anywhere', textAlign: 'center', color: coverPal.ink, fontFamily: "'Playfair Display', Georgia, serif", cursor: 'grab' }}>{extraTxt(k) || 'Your text'}</div>)}{(() => { const pal = coverPal; return (coverKind === 'ticket' && cover?.web ? (() => {
         const words = String(coverTitle).trim().split(/\s+/).filter(Boolean)
         const one = words.length <= 1
         const l1 = one ? '' : words.slice(0, -1).join(' ')
