@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, type CSSProperties, type ReactNode } from 'react'
+import { Fragment, useLayoutEffect, type CSSProperties, type ReactNode } from 'react'
 import ReviewCard from './ReviewCard'
 import { resolveDesign, type GalleryDesign, elCss } from '@/lib/galleryDesign'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
@@ -37,6 +37,25 @@ function scaleOf(el: HTMLElement): number {
   const st = el.closest('[data-stage]') as HTMLElement | null
   if (st) return st.getBoundingClientRect().width / 900 || 1
   return el.offsetWidth ? el.getBoundingClientRect().width / el.offsetWidth : 1
+}
+
+function CoverStage({ children }: { children: ReactNode }) {
+  const st = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const el = st.current
+    const host = el?.parentElement
+    if (!el || !host) return
+    const fit = () => { const w = host.offsetWidth; if (w > 0) el.style.transform = 'scale(' + w / 900 + ')' }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(host)
+    return () => ro.disconnect()
+  }, [])
+  return (
+    <div aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+      <div ref={st} data-stage="1" style={{ position: 'absolute', left: 0, top: 0, width: 900, height: 450, transformOrigin: '0 0', pointerEvents: 'none' }}>{children}</div>
+    </div>
+  )
 }
 
 export default function GalleryViewPage() {
@@ -1328,11 +1347,7 @@ export default function GalleryViewPage() {
     }
   })()
   const CAS = "'Libre Caslon Display', Georgia, serif"
-  const stg = (kids: ReactNode, kk = '') => (
-    <div key={'stg-' + coverKind + kk} aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
-      <div data-stage="1" style={{ position: 'absolute', left: 0, top: 0, width: 900, height: 450, transformOrigin: '0 0', transform: 'scale(tan(atan2(100cqw, 900px)))', pointerEvents: 'none' }}>{kids}</div>
-    </div>
-  )
+  const stg = (kids: ReactNode, kk = '') => <CoverStage key={'stg-' + coverKind + kk}>{kids}</CoverStage>
   type BxO = { x: number; y: number; fs: number; text: string; maxW: number; style?: CSSProperties; track?: number; lh?: number; rot?: number; ls?: { r: number; style?: CSSProperties }[]; mirror?: boolean }
   const bx = (k: string, o: BxO) => {
     const w = extraW(k)
