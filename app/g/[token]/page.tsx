@@ -1328,8 +1328,8 @@ export default function GalleryViewPage() {
     }
   })()
   const CAS = "'Libre Caslon Display', Georgia, serif"
-  const stg = (kids: ReactNode) => (
-    <div key={'stg-' + coverKind} aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+  const stg = (kids: ReactNode, kk = '') => (
+    <div key={'stg-' + coverKind + kk} aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
       <div data-stage="1" style={{ position: 'absolute', left: 0, top: 0, width: 900, height: 450, transformOrigin: '0 0', transform: 'scale(tan(atan2(100cqw, 900px)))', pointerEvents: 'none' }}>{kids}</div>
     </div>
   )
@@ -1617,7 +1617,8 @@ coverSub ? bx('brand', { x: 42.5 + Math.min(199, 13.2 * String(coverSub).length)
                     { t: '&', x: -0.0022, y: 0.1343, r: 0.644, tf: 'skewX(-8deg) scaleX(0.871)' },
                     { t: R, x: 0.5644, y: -0.1477, r: 1.0243, tf: 'scaleX(0.89)' },
                   ].map((q, i) => <span key={i} style={{ position: 'absolute', left: 'calc(50% + ' + Math.round((q.x / q.r) * 10000) / 10000 + 'em)', top: Math.round((q.y / q.r) * 10000) / 10000 + 'em', fontSize: q.r + 'em', lineHeight: 1, whiteSpace: 'nowrap', transform: 'translateX(-50%) ' + q.tf, transformOrigin: '50% 85.2%' }}>{q.t}</span>)}
-                </div>
+                </div>,
+                'i'
               )
             ) : (
               <div data-gk="initials" className="absolute inset-0 flex items-center justify-center" style={{ ...big, position: 'absolute', fontSize: '50cqw', paddingBottom: '4cqw' }}>{mono}</div>
