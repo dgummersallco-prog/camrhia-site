@@ -51,6 +51,9 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
 
 type SecM = { id: string; name: string; startId: string; line?: boolean }
 const LUX = 'text-[11px] font-medium uppercase tracking-[0.18em] text-[#8C6B3F]'
+const TB_PILL = { background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', border: '1px solid #E4D3B6', boxShadow: 'inset 0 0 0 3px #FFFDF9, inset 0 0 0 4px #EBDDC3' } as const
+const TB_CARD = { background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', border: '1px solid #E4D3B6', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 8px 28px rgba(60,40,20,0.10)' } as const
+const TB_POP = { background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', border: '1px solid #E4D3B6', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' } as const
 
 export default function GalleryDesigner({ galleryId, token, title, initial, coverUrl, photoChoices, coverPhotoId, onPickCover, onClose, onSaved, onSend, topOffset, flushRef, leftHost, onAddSection, onMoveSection, onMovePhoto, onSectionLine, onRemoveSection, onRenameSection }: {
   galleryId: string; token: string; title: string; initial: GalleryDesign | null; coverUrl?: string
@@ -526,27 +529,27 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       )}
 
       <div className="flex min-w-0 flex-1 flex-col pb-1">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 rounded-2xl border border-line bg-white/70 px-4 py-3 shadow-sm">
+        <div style={TB_CARD} className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 rounded-2xl px-5 py-4">
           <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
             {!['ticket', 'stack'].includes(eff.cover) && <div className="w-36"><ColorInput lux float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
             <div className="w-36"><ColorInput lux float label="Page" value={eff.pal.bg} onChange={(v) => change({ bg: v })} /></div>
             <div className="w-36"><ColorInput lux float label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} /></div>
             <div ref={layRef} className="relative w-36">
-              <span className={LUX}>Layers</span>
-              <button type="button" onClick={() => setLayOpen((o) => !o)} className="mt-1 flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink transition hover:border-twilight">
+              <span className={LUX + ' block leading-4'}>Layers</span>
+              <button type="button" onClick={() => setLayOpen((o) => !o)} style={TB_PILL} className={'mt-1 flex h-[41px] w-full items-center justify-between gap-2 rounded-xl px-3.5 font-fraunces text-sm text-[#3a2d22] transition hover:brightness-[0.98]'}>
                 <span>{layerKeys((eff.el ?? {}) as Record<string, ElStyle>).length} text layers</span>
-                <span className="px-1 text-ink-soft">{layOpen ? <>&#9652;</> : <>&#9662;</>}</span>
+                <span className="px-1 text-[#8C6B3F]">{layOpen ? <>&#9652;</> : <>&#9662;</>}</span>
               </button>
               {layOpen && (() => {
                 const ks = layerKeys((eff.el ?? {}) as Record<string, ElStyle>)
                 return (
-                  <div className="absolute left-0 top-full z-40 mt-2 w-72 rounded-xl border border-line bg-white p-2 shadow-xl">
-                    <p className="px-2 pb-1.5 pt-1 text-sm font-medium text-ink">Text layers <span className="text-xs font-normal text-ink-soft">(top of list is in front)</span></p>
+                  <div style={TB_POP} className="absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl p-3">
+                    <p className="px-2 pb-2 pt-1"><span className={LUX}>Text layers</span><span className="mt-0.5 block font-fraunces text-xs text-[#8a7a68]">Top of the list is in front</span></p>
                     {[...ks].reverse().map((k, i) => (
-                      <div key={k} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-paper">
-                        <span className="min-w-0 flex-1 truncate text-sm text-ink">{String(layerLabel(k)).replace(/\s+/g, ' ')}</span>
-                        <button type="button" disabled={i === 0} onClick={() => moveLayer(k, 1)} className="h-7 w-7 rounded-md border border-line text-xs text-ink disabled:opacity-30" aria-label="Bring forward">&#9650;</button>
-                        <button type="button" disabled={i === ks.length - 1} onClick={() => moveLayer(k, -1)} className="h-7 w-7 rounded-md border border-line text-xs text-ink disabled:opacity-30" aria-label="Send back">&#9660;</button>
+                      <div key={k} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[#F6EBD9]">
+                        <span className="min-w-0 flex-1 truncate font-fraunces text-sm text-[#3a2d22]">{String(layerLabel(k)).replace(/\s+/g, ' ')}</span>
+                        <button type="button" disabled={i === 0} onClick={() => moveLayer(k, 1)} className="h-7 w-7 rounded-md border border-[#E4D3B6] bg-[#FFFDF9] text-xs text-[#8C6B3F] transition hover:border-[#B08D57] disabled:opacity-30" aria-label="Bring forward">&#9650;</button>
+                        <button type="button" disabled={i === ks.length - 1} onClick={() => moveLayer(k, -1)} className="h-7 w-7 rounded-md border border-[#E4D3B6] bg-[#FFFDF9] text-xs text-[#8C6B3F] transition hover:border-[#B08D57] disabled:opacity-30" aria-label="Send back">&#9660;</button>
                       </div>
                     ))}
                   </div>
@@ -554,28 +557,28 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
               })()}
             </div>
             <div ref={addRef} className="relative w-36">
-              <span className={LUX}>Text</span>
-              <button type="button" onClick={() => setAddOpen((o) => !o)} className="mt-1 flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink transition hover:border-twilight"><span>+ Add text</span><span className="px-1 text-ink-soft">{addOpen ? <>&#9652;</> : <>&#9662;</>}</span></button>
+              <span className={LUX + ' block leading-4'}>Text</span>
+              <button type="button" onClick={() => setAddOpen((o) => !o)} style={TB_PILL} className={'mt-1 flex h-[41px] w-full items-center justify-between gap-2 rounded-xl px-3.5 font-fraunces text-sm text-[#3a2d22] transition hover:brightness-[0.98]'}><span>+ Add text</span><span className="px-1 text-[#8C6B3F]">{addOpen ? <>&#9652;</> : <>&#9662;</>}</span></button>
               {addOpen && (
-                <div className="absolute left-0 top-full z-40 mt-2 w-60 rounded-xl border border-line bg-white p-2 shadow-xl">
-                  <p className="px-2 pb-1.5 pt-1 text-sm font-medium text-ink">What do you want to add?</p>
-                  <button type="button" onClick={addCoverText} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-paper">
-                    <span className="block text-sm text-ink">Cover text box</span>
-                    <span className="block text-xs text-ink-soft">A line on the cover photo</span>
+                <div style={TB_POP} className="absolute left-0 top-full z-40 mt-2 w-64 rounded-2xl p-3">
+                  <p className="px-2 pb-2 pt-1"><span className={LUX}>What do you want to add?</span></p>
+                  <button type="button" onClick={addCoverText} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-[#F6EBD9]">
+                    <span className="block font-fraunces text-sm text-[#3a2d22]">Cover text box</span>
+                    <span className="block text-xs text-[#8a7a68]">A line on the cover photo</span>
                   </button>
-                  <button type="button" onClick={() => { setAddOpen(false); void addSectionRef.current() }} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-paper">
-                    <span className="block text-sm text-ink">Section text box</span>
-                    <span className="block text-xs text-ink-soft">Splits your photos into parts</span>
+                  <button type="button" onClick={() => { setAddOpen(false); void addSectionRef.current() }} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-[#F6EBD9]">
+                    <span className="block font-fraunces text-sm text-[#3a2d22]">Section text box</span>
+                    <span className="block text-xs text-[#8a7a68]">Splits your photos into parts</span>
                   </button>
                 </div>
               )}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={undo} disabled={histN === 0} className="inline-flex h-[42px] items-center gap-2 rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight disabled:cursor-default disabled:opacity-40 disabled:hover:border-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>Undo</button>
-          <div className="flex overflow-hidden h-[42px] rounded-xl border border-line bg-white text-sm">
+            <button type="button" onClick={undo} disabled={histN === 0} style={TB_PILL} className="inline-flex h-[41px] items-center gap-2 rounded-xl px-4 font-fraunces text-sm text-[#3a2d22] transition hover:brightness-[0.98] disabled:cursor-default disabled:opacity-40"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>Undo</button>
+          <div style={TB_PILL} className="flex h-[41px] overflow-hidden rounded-xl p-[4px] font-fraunces text-sm">
             {(['desktop', 'phone'] as const).map((x) => (
-              <button key={x} type="button" onClick={() => setDevice(x)} className={'px-4 font-medium transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
+              <button key={x} type="button" onClick={() => setDevice(x)} style={device === x ? { background: 'linear-gradient(135deg,#B08D57,#8C6B3F)' } : undefined} className={'rounded-lg px-4 transition ' + (device === x ? 'text-white' : 'text-[#8C6B3F] hover:text-[#5c4528]')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
             ))}
           </div>
           </div>
