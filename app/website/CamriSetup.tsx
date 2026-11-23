@@ -126,6 +126,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   })
   const [layouts, setLayouts] = useState<string[]>(() => { const d = draftGet('layouts'); return Array.isArray(d) && d.length > 0 ? d : (initial?.layouts ?? []) })
   const [startIdx, setStartIdx] = useState(0)
+  usePersist(() => { document.getElementById('camri-scroll')?.scrollTo(0, 0) }, [step])
   const si = Math.min(startIdx, Math.max(layouts.length - 1, 0))
   const ordered = si > 0 ? [layouts[si], ...layouts.filter((_, j) => j !== si)] : layouts
   const layoutDots = layouts.length > 1 ? (
@@ -235,7 +236,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         {step === 1 && (
           <div>
           <div className="mb-8 flex items-start gap-4">
-            <div className="min-w-0 flex-1 rounded-2xl bg-[#EBDDCF] px-5 py-3">
+            <div className="min-h-[10.5rem] min-w-0 flex-1 rounded-2xl bg-[#EBDDCF] px-5 py-3">
               <p className="font-fraunces text-lg leading-snug text-ink">We&apos;re building your site one section at a time, starting with the hero. Your hero is the first thing visitors see: your best photo and what you shoot.</p>
               <p className="mt-1.5 text-sm text-ink-soft">Pick up to three layouts you love. Tap 1, 2, 3 under &quot;Your site so far&quot; to swap between them. Next up: Explore section. Or I can pick for you.</p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -314,7 +315,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
 export default function CamriSetup(props: Parameters<typeof CamriSetupInner>[0]) {
   const [saved, setSaved] = useState(false)
   return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto bg-[#F6F1EA] px-6 pb-16 md:px-12">
+    <div id="camri-scroll" className="fixed inset-0 z-[100] overflow-y-auto bg-[#F6F1EA] px-6 pb-16 md:px-12">
       <div className="mx-auto flex max-w-[1400px] items-center justify-end py-4">
         <a href="/dashboard" onClick={(e) => { e.preventDefault(); setSaved(true); setTimeout(() => { window.location.href = '/dashboard' }, 700) }} className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-white px-5 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-twilight">
           <svg viewBox="0 0 16 16" className="h-4 w-4 text-twilight" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" /></svg>
@@ -532,7 +533,7 @@ function thumbsOf(designs: Record<string, string>) {
 }
 
 function Meter({ at, onGo }: { at: number; onGo: (n: number) => void }) {
-  const labels = ['Hero', ...DESIGN_SECTIONS.map((x) => (x.k === 'nav' ? 'Explore' : x.title))]
+  const labels = ['Hero', ...DESIGN_SECTIONS.map((x) => (x.k === 'nav' ? 'Explore' : x.k === 'contact' ? 'Button' : x.title))]
   return (
     <div className="flex gap-1.5">
       {labels.map((t, n) => {
@@ -697,6 +698,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   })
   usePersist(() => { try { window.localStorage.setItem('camriDsStep', String(step)) } catch {} }, [step])
   const [zoom, setZoom] = useState<string | null>(null)
+  usePersist(() => { document.getElementById('camri-scroll')?.scrollTo(0, 0) }, [step])
   const [ask, setAsk] = useState(false)
   const [ans, setAns] = useState<string | null>(null)
   const [showPlan, setShowPlan] = useState(false)
@@ -743,7 +745,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   return (
     <div>
         <div className="mb-8 flex items-start gap-4">
-          <div className="min-w-0 flex-1 rounded-2xl bg-[#EBDDCF] px-5 py-3">
+          <div className="min-h-[10.5rem] min-w-0 flex-1 rounded-2xl bg-[#EBDDCF] px-5 py-3">
             <p className="font-fraunces text-lg leading-snug text-ink">{'We are building your site one section at a time. Now: ' + sec.title + '. ' + (SEC_INTRO[sec.k] ?? '')}</p>
             <p className="mt-1.5 text-sm text-ink-soft">{'Pick up to three designs you love. Tap 1, 2, 3 under "Your site so far" to swap between them. ' + (step < total - 1 ? 'Next up: ' + DESIGN_SECTIONS[step + 1].title + '.' : 'Next, we arrange your site.')}</p>
           </div>
