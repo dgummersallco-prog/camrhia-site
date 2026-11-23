@@ -64,7 +64,15 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [popPos, setPopPos] = useState<{ top?: number; bottom?: number; maxHeight: number } | null>(null)
   const boxRef = useRef<HTMLDivElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  const popBox = useRef<HTMLDivElement>(null)
   const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean; mid?: string | null; line?: boolean } | null>(null)
+  useEffect(() => {
+    if (!pick) return
+    const down = (e: PointerEvent) => { if (popBox.current && !popBox.current.contains(e.target as Node)) setPick(null) }
+    document.addEventListener('pointerdown', down)
+    return () => document.removeEventListener('pointerdown', down)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pick !== null])
   const [zoom, setZoom] = useState<{ src: string; name: string; top: number } | null>(null)
   const [fontOpen, setFontOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
@@ -318,6 +326,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           else change({ focals: { ...(latest.current.focals ?? {}), [String(m.id)]: { x, y } } })
         }
       }
+      if (m.type === 'camrhia-gallery-dismiss') setPick(null)
       if (m.type === 'camrhia-gallery-slot' && typeof m.key === 'string') setSlot(String(m.key))
       if (m.type === 'camrhia-gallery-setcover' && m.id) pickRef.current(String(m.id))
       if (m.type === 'camrhia-gallery-text' && typeof m.key === 'string') setElRef.current(String(m.key), { text: String(m.text ?? '').slice(0, 60) })
@@ -332,7 +341,10 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       }
       if (m.type === 'camrhia-gallery-zoom') {
         const z = Number(m.zoom)
-        if (Number.isFinite(z)) change({ zoom: z })
+        if (Number.isFinite(z)) {
+          if (typeof m.slot === 'string' && m.slot) change({ zooms: { ...(latest.current.zooms ?? {}), ['slot:' + m.slot]: z } })
+          else change({ zoom: z })
+        }
       }
       if (m.type === 'camrhia-gallery-pick') {
         setPick({ key: String(m.key), name: String(m.name), size: Number(m.size) || 16, color: toHex(String(m.color)), bold: !!m.bold, mid: m.mid ? String(m.mid) : null, line: m.line === '1' })
@@ -381,7 +393,10 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         {photoChoices && photoChoices.length > 0 && onPickCover && (
           <>
             <p className={head + ' mt-2'}>Cover photo</p>
-            <p className="mt-1 text-xs text-ink-soft">Hover a photo in the gallery and press Set as cover.</p>
+            <div className="mt-2 flex items-start gap-3 rounded-xl border border-[#8C6B3F]/30 bg-[#8C6B3F]/10 px-4 py-3.5">
+              <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 shrink-0 text-[#8C6B3F]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
+              <p className="text-sm leading-snug text-ink">Pick a spot below, then <b>hover a photo in the gallery</b> and press <b>Set as cover</b>.</p>
+            </div>
             <div className="mt-3 grid grid-cols-5 gap-2">
               {(slotKeys.length > 0 ? slotKeys : ['main']).map((k) => {
                 const pid = k === 'main' ? coverPhotoId : eff.slots[k]
@@ -401,12 +416,12 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             </div>
           </>
         )}
-        {coverUrl && (
+        {(coverUrl || slotKeys.length > 0) && (
           <div className="mt-4">
             <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-10 shrink-0">Zoom</span>
-              <input type="range" min={1} max={3} step={0.05} value={eff.zoom} onChange={(e) => change({ zoom: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
+              <input type="range" min={1} max={3} step={0.05} value={slotKeys.length > 0 && curSlot !== 'main' ? eff.zooms['slot:' + curSlot] ?? 1 : eff.zoom} onChange={(e) => { const v = Number(e.target.value); if (slotKeys.length > 0 && curSlot !== 'main') change({ zooms: { ...(latest.current.zooms ?? {}), ['slot:' + curSlot]: v } }); else change({ zoom: v }) }} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
             </label>
-            <p className="mt-2 text-xs text-ink-soft">Drag the cover in the preview to move it.</p>
+            <p className="mt-2 text-xs text-ink-soft">Zoom and drag apply to the photo you picked above. Drag it in the preview to move it.</p>
           </div>
         )}
 
@@ -493,7 +508,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             </div>
           )}
           {pick && (
-            <div className="absolute right-3 z-20 w-64 overflow-y-auto rounded-2xl border border-[#E8DDD0] bg-[#FFFDF9] p-4 shadow-[0_18px_50px_rgba(42,31,36,0.18)]" style={popPos ?? { top: 12, maxHeight: '92%' }}>
+            <div ref={popBox} className="absolute right-3 z-20 w-64 overflow-y-auto rounded-2xl border border-[#E8DDD0] bg-[#FFFDF9] p-4 shadow-[0_18px_50px_rgba(42,31,36,0.18)]" style={popPos ?? { top: 12, maxHeight: '92%' }}>
               <div className="mb-3 flex items-center justify-between border-b border-[#EFE4D8] pb-2">
                 <p className="font-fraunces text-lg font-semibold text-ink">{pick.name}</p>
                 <button type="button" onClick={() => setPick(null)} className="text-ink-soft hover:text-ink">✕</button>

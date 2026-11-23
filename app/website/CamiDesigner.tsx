@@ -3,6 +3,7 @@
 import { structureOf } from '@/lib/siteTheme'
 import CamriTyping from '@/app/components/CamriTyping'
 import { useEffect, useRef, useState } from 'react'
+import { EyeDropperButton } from '@/app/components/ColorInput'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
@@ -866,6 +867,7 @@ export default function CamiDesigner() {
             <button key={c} type="button" aria-label={c} onClick={() => pickColor(c)} className={'h-8 w-8 rounded-full border border-black/15 transition hover:scale-110 ' + (roleVal.toLowerCase() === c.toLowerCase() ? 'ring-2 ring-offset-2 ring-[rgb(var(--scene-b,201_133_136))]' : '')} style={{ background: c }} />
           ))}
           <input value={hexIn} onChange={(e) => { const v = e.target.value.trim(); setHexIn(v); if (/^#[0-9a-fA-F]{6}$/.test(v)) pickColor(v) }} placeholder="#hex" maxLength={7} className="w-24 rounded-lg border border-white/80 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />
+          <EyeDropperButton onPick={(v) => { setHexIn(''); pickColor(v) }} />
         </div>
       </div>
     )

@@ -13,6 +13,7 @@ import { DashboardHeader } from '@/app/components/DashboardHeader'
 import CamiDesigner from './CamiDesigner'
 import { FONT_OPTIONS, PAIR_PRESETS, NAV_DEFAULTS, DEFAULT_TITLES, resolveTheme } from '@/lib/siteTheme'
 import { HexColorPicker } from 'react-colorful'
+import { EyeDropperButton } from '@/app/components/ColorInput'
 
 type Site = {
   id: string
@@ -281,6 +282,7 @@ function ColorField({ label, value, swatches, onChange, onReset }: {
             <HexColorPicker color={ok(value) ? value : '#ffffff'} onChange={(h) => onChange(h)} style={{ width: '100%', height: 170 }} />
             <input value={txt} maxLength={7} placeholder="#A9545F" className={inputCls + ' mt-3 font-mono uppercase'}
               onChange={(e) => { let v = e.target.value.trim(); setTxt(v); if (v && !v.startsWith('#')) v = '#' + v; if (ok(v)) onChange(v) }} />
+            <div className="mt-3"><EyeDropperButton onPick={(h) => onChange(h)} /></div>
             <div className="mt-3 flex items-center justify-between">
               {onReset ? <button type="button" className="text-xs text-ink-soft hover:text-ink" onClick={() => { onReset(); setOpen(false) }}>Reset</button> : <span />}
               <button type="button" className="text-xs font-medium text-twilight" onClick={() => setOpen(false)}>Done</button>

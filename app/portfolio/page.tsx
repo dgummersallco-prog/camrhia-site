@@ -2,6 +2,7 @@
 
 import { Select } from '@/app/components/Select'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import ColorInput from '@/app/components/ColorInput'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { makeVersions } from '@/lib/galleryImages'
@@ -164,20 +165,8 @@ function ColorField({ title, value, fallback, onChange, swatches }: { title: str
   const hex = /^#[0-9a-f]{6}$/i.test(value ?? '') ? (value as string) : fallback
   return (
     <div>
-      <div className="flex items-center gap-3">
-        <input type="color" value={hex} onChange={(e) => onChange(e.target.value.toUpperCase())} className="h-9 w-12 cursor-pointer rounded-lg border border-line bg-transparent p-0.5" />
-        <span className="flex-1 text-sm text-ink">{title}</span>
-        {value && <button type="button" onClick={() => onChange(null)} className="text-xs text-ink-soft underline hover:text-ink">Reset</button>}
-      </div>
-      {swatches && swatches.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-[60px]">
-          <span className="mr-1 text-[11px] text-ink-soft">Brand</span>
-          {swatches.map((c) => (
-            <button key={c} type="button" aria-label={`Use ${c}`} onClick={() => onChange(c.toUpperCase())}
-              className="h-5 w-5 rounded-full border border-line" style={{ backgroundColor: c }} />
-          ))}
-        </div>
-      )}
+      <ColorInput label={title} value={hex.toUpperCase()} onChange={(v) => onChange(v.toUpperCase())} swatches={swatches && swatches.length > 0 ? swatches : undefined} />
+      {value && <button type="button" onClick={() => onChange(null)} className="mt-1 text-xs text-ink-soft underline hover:text-ink">Reset</button>}
     </div>
   )
 }

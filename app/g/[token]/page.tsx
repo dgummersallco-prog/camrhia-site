@@ -303,6 +303,17 @@ export default function GalleryViewPage() {
     st.textContent = '.gal-root img[data-cover],.gal-root img[data-slot],.gal-root img[data-pid]{cursor:grab}'
     document.head.appendChild(st)
     const coverImg = () => document.querySelector('img[data-cover]') as HTMLImageElement | null
+    let lx = 0
+    let ly = 0
+    const zoomImgAt = (x: number, y: number) => {
+      const all = Array.from(document.querySelectorAll('img[data-cover], img[data-slot]')) as HTMLImageElement[]
+      for (let i = all.length - 1; i >= 0; i--) {
+        const r = (all[i].parentElement ?? all[i]).getBoundingClientRect()
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return all[i]
+      }
+      return null
+    }
+    let gImg: HTMLImageElement | null = null
     const imgAt = (x: number, y: number) => {
       const all = Array.from(document.querySelectorAll('img[data-cover], img[data-slot], img[data-pid]')) as HTMLImageElement[]
       for (let i = all.length - 1; i >= 0; i--) {
@@ -330,11 +341,11 @@ export default function GalleryViewPage() {
     let zl: number | null = null
     let zt = 0
     let gBase = 1
-    const sendZoom = (z: number) => {
+    const sendZoom = (z: number, img?: HTMLImageElement | null) => {
       const v = Math.round(Math.min(3, Math.max(1, z)) * 100) / 100
       zl = v
       zt = Date.now()
-      window.parent?.postMessage({ type: 'camrhia-gallery-zoom', zoom: v }, '*')
+      window.parent?.postMessage({ type: 'camrhia-gallery-zoom', zoom: v, slot: img?.dataset.slot ?? undefined }, '*')
     }
     const baseZoom = (img: HTMLImageElement) => (zl !== null && Date.now() - zt < 400 ? zl : curZoom(img))
     const MOVABLE = ['title', 'title2', 'brand', 'count', 'initials']
@@ -358,6 +369,8 @@ export default function GalleryViewPage() {
       e.preventDefault()
     }
     const move = (e: MouseEvent) => {
+      lx = e.clientX
+      ly = e.clientY
       if (tdrag) {
         const tx = e.clientX - tdrag.x
         const ty = e.clientY - tdrag.y
@@ -402,24 +415,25 @@ export default function GalleryViewPage() {
     }
     const wheel = (e: WheelEvent) => {
       if (!e.ctrlKey) return
-      const img = coverImg()
-      if (!img || !inside(img, e.clientX, e.clientY)) return
-      e.preventDefault()
-      sendZoom(baseZoom(img) * Math.exp(-e.deltaY * 0.01))
-    }
-    const gStart = (e: Event) => {
-      const img = coverImg()
+      const img = zoomImgAt(e.clientX, e.clientY)
       if (!img) return
       e.preventDefault()
+      sendZoom(baseZoom(img) * Math.exp(-e.deltaY * 0.01), img)
+    }
+    const gStart = (e: Event) => {
+      const ge = e as Event & { clientX?: number; clientY?: number }
+      const img = zoomImgAt(typeof ge.clientX === 'number' ? ge.clientX : lx, typeof ge.clientY === 'number' ? ge.clientY : ly)
+      if (!img) return
+      e.preventDefault()
+      gImg = img
       gBase = curZoom(img)
     }
     const gChange = (e: Event) => {
       const ge = e as Event & { scale?: number; clientX?: number; clientY?: number }
-      const img = coverImg()
+      const img = gImg
       if (!img || !ge.scale) return
-      if (typeof ge.clientX === 'number' && typeof ge.clientY === 'number' && !inside(img, ge.clientX, ge.clientY)) return
       e.preventDefault()
-      sendZoom(gBase * ge.scale)
+      sendZoom(gBase * ge.scale, img)
     }
     window.addEventListener('click', click, true)
     window.addEventListener('mousedown', down, true)
@@ -496,13 +510,15 @@ export default function GalleryViewPage() {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
     const SEL = '.gal-root img[data-pid]:not([data-cover]):not([data-slot])'
     const bar = document.createElement('div')
-    bar.style.cssText = 'position:fixed;z-index:2147483645;display:none;gap:4px;padding:4px;border-radius:12px;background:rgba(255,255,255,0.96);box-shadow:0 4px 14px rgba(0,0,0,0.25);font:600 12px system-ui,sans-serif'
+    bar.style.cssText = 'position:fixed;z-index:2147483645;display:none;gap:2px;padding:4px;border-radius:999px;background:rgba(251,248,244,0.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.8);box-shadow:0 10px 26px -8px rgba(60,40,20,0.45);font:600 13px system-ui,sans-serif'
     let cur: string | null = null
     const mk = (label: string, to: string) => {
       const b = document.createElement('button')
       b.type = 'button'
       b.textContent = label
-      b.style.cssText = 'border:0;border-radius:8px;padding:5px 9px;background:#8C6B3F;color:#fff;cursor:pointer;font:inherit'
+      b.style.cssText = 'border:0;border-radius:999px;min-width:34px;height:34px;padding:0 14px;background:transparent;color:#5B4426;cursor:pointer;font:inherit;transition:background .15s,color .15s'
+      b.addEventListener('mouseenter', () => { b.style.background = '#8C6B3F'; b.style.color = '#fff' })
+      b.addEventListener('mouseleave', () => { b.style.background = 'transparent'; b.style.color = '#5B4426' })
       b.addEventListener('click', (ev) => {
         ev.preventDefault()
         ev.stopPropagation()
@@ -514,9 +530,9 @@ export default function GalleryViewPage() {
       })
       bar.appendChild(b)
     }
-    mk('Top', 'top')
-    mk('◀', 'left')
-    mk('▶', 'right')
+    mk('↑ Top', 'top')
+    mk('←', 'left')
+    mk('→', 'right')
     document.body.appendChild(bar)
     let hideT: number | undefined
     const over = (e: MouseEvent) => {
@@ -528,8 +544,8 @@ export default function GalleryViewPage() {
       cur = im.getAttribute('data-pid')
       const r = im.getBoundingClientRect()
       bar.style.display = 'flex'
-      bar.style.left = Math.max(4, r.left + 6) + 'px'
-      bar.style.top = Math.max(4, r.top + 6) + 'px'
+      bar.style.left = Math.max(4, r.left + 10) + 'px'
+      bar.style.top = Math.max(4, r.top + 10) + 'px'
     }
     const onMsg = (e: MessageEvent) => {
       const m = e.data
@@ -639,16 +655,32 @@ export default function GalleryViewPage() {
       } else if (!isInit && !isSvg) {
         ls = (parseFloat(cs.letterSpacing) || 0) * (fs2 / fs)
       }
-      if (!document.getElementById('cam-edit-style')) { const st = document.createElement('style'); st.id = 'cam-edit-style'; st.textContent = '.cam-edit::selection{background:#B08D57;color:#fff}'; document.head.appendChild(st) }
+      if (!document.getElementById('cam-edit-style')) { const st = document.createElement('style'); st.id = 'cam-edit-style'; st.textContent = '.cam-edit::selection{background:rgba(176,141,87,0.35)}'; document.head.appendChild(st) }
       inp.className = 'cam-edit'
-      inp.style.cssText = 'position:fixed;z-index:2147483646;box-sizing:border-box;margin:0;padding:10px 14px;border:2px solid #B08D57;border-radius:12px;background:#FFFDF9;color:#2A1F24;caret-color:#2A1F24;outline:none;box-shadow:0 10px 30px rgba(42,31,36,0.28);font:500 16px system-ui,-apple-system,Segoe UI,sans-serif;text-align:left;text-transform:none;letter-spacing:0'
-      const bw = Math.min(360, window.innerWidth - 24)
-      inp.style.width = bw + 'px'
-      const above = r.top - 58
-      inp.style.top = (above >= 8 ? above : Math.min(r.bottom + 8, window.innerHeight - 56)) + 'px'
-      inp.style.left = Math.max(12, Math.min(window.innerWidth - bw - 12, r.left + r.width / 2 - bw / 2)) + 'px'
-      hidden = null
-      hiddenMore = []
+      const fam = cs.fontFamily
+      const cx = r.left + r.width / 2
+      const cy = r.top + r.height / 2
+      const fsz = isInit ? fs : fs2
+      const place = () => {
+        let tw = r.width
+        if (mc) {
+          mc.font = `${cs.fontStyle} ${cs.fontWeight} ${fsz}px ${fam}`
+          const t = cs.textTransform === 'uppercase' ? inp.value.toUpperCase() : inp.value
+          tw = Math.max(r.width, mc.measureText(t).width + ls * t.length)
+        }
+        const wd = Math.min(tw + 48, window.innerWidth - 8)
+        inp.style.width = wd + 'px'
+        inp.style.left = Math.max(4, Math.min(window.innerWidth - wd - 4, cx - wd / 2)) + 'px'
+      }
+      inp.style.cssText = `position:fixed;z-index:2147483646;box-sizing:border-box;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:${colr};caret-color:${colr};outline:none;box-shadow:none;font-family:${fam};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};font-size:${fsz}px;line-height:1.2;text-align:center;text-transform:${cs.textTransform};letter-spacing:${ls}px;text-shadow:none`
+      inp.style.height = Math.max(hgt, fsz * 1.35) + 'px'
+      inp.style.top = (cy - Math.max(hgt, fsz * 1.35) / 2) + 'px'
+      place()
+      inp.addEventListener('input', place)
+      peers.forEach((e) => { e.style.visibility = 'hidden' })
+      const keepHidden = [...peers]
+      hidden = keepHidden[0] ?? null
+      hiddenMore = keepHidden.slice(1)
       let finished = false
       const mid = k === 'moment' ? target.getAttribute('data-mid') : null
       const send = (t: string) => {
@@ -698,6 +730,20 @@ export default function GalleryViewPage() {
     document.addEventListener('mouseover', over, true)
     document.addEventListener('scroll', hide, true)
     document.addEventListener('click', click, true)
+    const away = (e: PointerEvent) => { if (!hit(e.target)) window.parent?.postMessage({ type: 'camrhia-gallery-dismiss' }, '*') }
+    document.addEventListener('pointerdown', away, true)
+    const repaint = new MutationObserver((ms) => {
+      const svgs = new Set<SVGElement>()
+      for (const m of ms) {
+        const n = m.target as Node
+        const el = n.nodeType === 3 ? n.parentElement : (n as Element)
+        const sv = el?.closest?.('svg') as SVGElement | null
+        if (sv) svgs.add(sv)
+      }
+      if (svgs.size === 0) return
+      requestAnimationFrame(() => svgs.forEach((sv) => { sv.style.display = 'none'; void sv.getBoundingClientRect(); sv.style.display = '' }))
+    })
+    repaint.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['textLength'] })
     const secSt = document.createElement('style')
     document.head.appendChild(secSt)
     const onCtl = (e: MessageEvent) => {
@@ -735,6 +781,8 @@ export default function GalleryViewPage() {
       document.removeEventListener('mouseover', over, true)
       document.removeEventListener('scroll', hide, true)
       document.removeEventListener('click', click, true)
+      document.removeEventListener('pointerdown', away, true)
+      repaint.disconnect()
       box.remove()
     }
   }, [])
@@ -796,7 +844,7 @@ export default function GalleryViewPage() {
   }
 
   if (!data) return null
-  const { look, cover: coverKind, pal, coverPal, focal, focals, zoom, layout, el, slots } = resolveDesign(designPreview ?? data.design ?? null)
+  const { look, cover: coverKind, pal, coverPal, focal, focals, zoom, zooms, layout, el, slots } = resolveDesign(designPreview ?? data.design ?? null)
   const elRules = elCss(el, (k) => FONT_OPTIONS[k]?.family)
   const fontHref = (() => {
     const g = Array.from(new Set(Object.values(el).map((x) => FONT_OPTIONS[x?.font ?? '']?.gf).filter(Boolean) as string[]))
@@ -812,7 +860,7 @@ export default function GalleryViewPage() {
   const slotPh = (key: string, fb: (typeof data.photos)[number] | undefined) => (slots[key] ? data.photos.find((p) => p.id === slots[key]) : undefined) ?? fb
   const slotImg = (key: string, ph: (typeof data.photos)[number] | undefined, src: string | undefined, fallbackPos?: string) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt="" data-pid={ph?.id} data-slot={key} className="h-full w-full object-cover" style={{ objectPosition: fpos('slot:' + key) || fallbackPos }} />
+    <img src={src} alt="" data-pid={ph?.id} data-slot={key} className="h-full w-full object-cover" style={{ objectPosition: fpos('slot:' + key) || fallbackPos, transform: (zooms['slot:' + key] ?? 1) > 1 ? `scale(${zooms['slot:' + key]})` : undefined, transformOrigin: fpos('slot:' + key) || fallbackPos || '50% 50%' }} />
   )
   const momentMeta: { id: string; name: string; line?: boolean }[] = liveMoments ?? (data as unknown as { moments?: { id: string; name: string; line?: boolean }[] }).moments ?? []
   const momentHead = (p: unknown, i: number) => {
@@ -911,7 +959,7 @@ export default function GalleryViewPage() {
     </Fragment>
   )
   const coverBtn = (p: (typeof list)[number]) => isPreview ? (
-    <button type="button" data-setcover={p.id} className="absolute bottom-2 left-2 z-10 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 transition hover:bg-black/80 group-hover:opacity-100">Set as cover</button>
+    <button type="button" data-setcover={p.id} className="absolute bottom-3 left-3 z-10 flex items-center gap-2 rounded-full border border-white/40 bg-[#8C6B3F] px-5 py-2.5 text-sm font-semibold tracking-wide text-white opacity-0 shadow-[0_10px_24px_-8px_rgba(60,40,20,0.6)] transition hover:bg-[#7A5C34] group-hover:opacity-100"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="1.6" /><path d="m21 16-5-5-8 8" /></svg>Set as cover</button>
   ) : null
   const heartBtn = (p: (typeof list)[number]) => (
     <button

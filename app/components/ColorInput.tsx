@@ -41,6 +41,30 @@ export function useRecentColors() {
   return { list, remember }
 }
 
+// Lets someone grab a color from anywhere on the screen (Chrome / Edge). Hidden where the browser can't do it.
+export function EyeDropperButton({ onPick }: { onPick: (hex: string) => void }) {
+  const [ok, setOk] = useState(false)
+  useEffect(() => { setOk(typeof window !== 'undefined' && 'EyeDropper' in window) }, [])
+  if (!ok) return null
+  return (
+    <button
+      type="button"
+      title="Pick a color from the page"
+      onClick={async () => {
+        try {
+          const ED = (window as unknown as { EyeDropper: new () => { open: () => Promise<{ sRGBHex: string }> } }).EyeDropper
+          const r = await new ED().open()
+          onPick(r.sRGBHex.toUpperCase())
+        } catch { /* cancelled */ }
+      }}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-2.5 py-1.5 text-xs font-medium text-ink transition hover:border-twilight"
+    >
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 22 1-1h3l9-9" /><path d="M3 21v-3l9-9" /><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" /></svg>
+      Pick from page
+    </button>
+  )
+}
+
 // A hex box you can type in. Always keeps the # and applies as soon as it is 6 digits.
 function HexBox({ value, onChange, onCommit, className }: { value: string; onChange: (v: string) => void; onCommit: (v: string) => void; className: string }) {
   const shown = (value || '').toUpperCase()
@@ -107,7 +131,10 @@ export default function ColorInput({ label, value, onChange, swatches = DEFAULT_
             <HexColorPicker color={value || '#FFFFFF'} onChange={onChange} style={{ width: '100%', height: 160 }} />
           </div>
           <HexBox value={value} onChange={onChange} onCommit={remember} className="mt-3 w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm uppercase tracking-wide text-ink outline-none focus:border-twilight" />
-          <button type="button" onClick={() => { remember(valRef.current); setOpen(false) }} className="mt-2 text-xs font-medium text-twilight">Done</button>
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <EyeDropperButton onPick={pick} />
+            <button type="button" onClick={() => { remember(valRef.current); setOpen(false) }} className="text-xs font-medium text-twilight">Done</button>
+          </div>
         </div>
       )}
     </div>

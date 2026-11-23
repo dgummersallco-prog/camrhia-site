@@ -1,6 +1,6 @@
 export type ElStyle = { align?: 'left' | 'center' | 'right'; lineColor?: string; font?: string; size?: number; color?: string; bold?: boolean; dx?: number; dy?: number; text?: string; hide?: boolean }
 export type GalleryDesign = {
-  look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; focals?: Record<string, { x: number; y: number }>; zoom?: number; slots?: Record<string, string>
+  look?: string; cover?: string; colors?: string; focal?: { x: number; y: number }; focals?: Record<string, { x: number; y: number }>; zoom?: number; zooms?: Record<string, number>; slots?: Record<string, string>
   layout?: string; bg?: string; coverBg?: string; accent?: string; gap?: number; radius?: number; el?: Record<string, ElStyle>
   watermark?: { on?: boolean; text?: string }
 }
@@ -169,7 +169,9 @@ export function resolveDesign(d?: GalleryDesign | null) {
   for (const [k, v] of Object.entries(d?.focals ?? {})) {
     if (v && Number.isFinite(v.x) && Number.isFinite(v.y)) focals[k] = { x: Math.min(100, Math.max(0, v.x)), y: Math.min(100, Math.max(0, v.y)) }
   }
+  const zooms: Record<string, number> = {}
+  for (const [k, v] of Object.entries(d?.zooms ?? {})) if (Number.isFinite(Number(v))) zooms[k] = Math.min(3, Math.max(1, Number(v)))
   const slots: Record<string, string> = {}
   for (const [k, v] of Object.entries(d?.slots ?? {})) if (typeof v === 'string' && v) slots[k] = v
-  return { look, cover, pal, coverPal, focal, focals, zoom, layout, el, slots }
+  return { look, cover, pal, coverPal, focal, focals, zoom, zooms, layout, el, slots }
 }
