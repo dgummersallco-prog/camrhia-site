@@ -195,6 +195,7 @@ export default function CamiDesigner() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [pick, setPick] = useState<Pick | null>(null)
+  const [selSec, setSelSec] = useState<string | null>(null)
   const [leftTab, setLeftTab] = useState<'design' | 'setup'>('design')
   const [slot, setSlot] = useState<{ key: string; idx: number } | null>(null)
   const [lib, setLib] = useState<{ id: string; storage_path: string }[]>([])
@@ -265,14 +266,15 @@ export default function CamiDesigner() {
     function onMsg(e: MessageEvent) {
       const d = e.data
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setSelSec(String(d.key)); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
         commitRef.current?.((n) => {
           const s = (n.site_settings = n.site_settings ?? {})
-          if (d.action === 'size') {
-            const sc: Record<string, number> = { ...(s.secScale ?? {}) }
-            sc[d.key] = Math.max(40, Math.min(130, (Number(sc[d.key]) || 100) + Number(d.delta || 0)))
-            s.secScale = sc
+          if (d.action === 'pad') {
+            const sp: Record<string, { t: number; b: number }> = { ...(s.secPad ?? {}) }
+            if (!d.t && !d.b) delete sp[d.key]; else sp[d.key] = { t: Number(d.t) || 0, b: Number(d.b) || 0 }
+            s.secPad = sp
             return
           }
           if (d.action === 'hide') {
@@ -653,6 +655,16 @@ export default function CamiDesigner() {
   }
   function chooseSlot(path: string | null) {
     if (!slot) return
+    if (slot.key === 'hero') {
+      const cur: string[] = [...(form?.site_settings?.hero?.photos ?? [])]
+      let next = cur
+      if (path === null) next = []
+      else if (cur.includes(path)) next = cur.filter((x) => x !== path)
+      else if (cur.length < 6) next = [...cur, path]
+      void commit((n) => { const s = (n.site_settings = n.site_settings ?? {}); s.hero = { ...(s.hero ?? {}), photos: next, slideshow: next.length > 1 } })
+      if (path === null) setSlot(null)
+      return
+    }
     const id = slot.key + ':' + slot.idx
     void commit((n) => { const s = (n.site_settings = n.site_settings ?? {}); const sp: Record<string, string> = { ...(s.slotPics ?? {}) }; if (path) sp[id] = path; else delete sp[id]; s.slotPics = sp })
     setSlot(null)
@@ -1030,6 +1042,25 @@ export default function CamiDesigner() {
                   <button key={k} type="button" onClick={() => setLeftTab(k)} className={'rounded-full px-4 py-1.5 text-sm transition ' + (leftTab === k ? 'bg-[#8C6B3F] font-medium text-white' : 'text-ink hover:bg-black/5')}>{t}</button>
                 ))}
               </div>
+              {leftTab === 'design' && (() => {
+                const SEC_NAME: Record<string, string> = { explore: 'Explore section', portfolio: 'Galleries', galsec: 'Galleries', about: 'About', testimonials: 'Testimonials', investment: 'Pricing', pricesec: 'Pricing', faq: 'FAQ', contact: 'Booking button', social: 'Social links', aboutcta: 'About button' }
+                if (!selSec) return <p className="mt-4 text-sm text-ink-soft">Click a section on your site to design it.</p>
+                const st = ((form?.site_settings ?? {}) as Record<string, any>).secStyle?.[selSec] ?? {}
+                const setBg = (c: string | null) => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const ss: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur = { ...(ss[selSec] ?? {}) }; if (c) cur.bg = c; else delete cur.bg; ss[selSec] = cur; x.secStyle = ss }) }
+                return (
+                  <div className="mt-4">
+                    <p className="font-fraunces text-lg font-semibold text-ink">{SEC_NAME[selSec] ?? selSec}</p>
+                    <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Background color</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {PICK_COLORS.map((c) => (
+                        <button key={c} type="button" aria-label={c} onClick={() => setBg(c)} className={'h-7 w-7 rounded-full border border-black/15 transition hover:scale-110 ' + (String(st.bg ?? '').toLowerCase() === c.toLowerCase() ? 'ring-2 ring-[#8C6B3F] ring-offset-1' : '')} style={{ background: c }} />
+                      ))}
+                      <input defaultValue={st.bg ?? ''} key={selSec + String(st.bg ?? '')} onBlur={(e) => { const v = e.target.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) setBg(v) }} placeholder="#hex" maxLength={7} className="w-20 rounded-lg border border-[#E4D3B6] bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-[#B08D57]" />
+                    </div>
+                    <button type="button" onClick={() => setBg(null)} className="mt-3 rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]">Reset color</button>
+                  </div>
+                )
+              })()}
               {leftTab === 'setup' && (() => {
                 const lab = 'mt-3 text-[11px] font-semibold uppercase tracking-wider text-ink-soft'
                 const pill = 'rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-ink transition hover:border-twilight'
@@ -1168,12 +1199,12 @@ export default function CamiDesigner() {
             <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/30 p-4" onClick={() => setSlot(null)}>
               <div onClick={(e) => e.stopPropagation()} className="max-h-[85%] w-full max-w-md overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
                 <div className="flex items-center justify-between border-b border-[#EFE4D8] pb-2">
-                  <p className="font-fraunces text-lg font-semibold text-ink">Choose a photo</p>
+                  <p className="font-fraunces text-lg font-semibold text-ink">{slot.key === 'hero' ? 'Choose your hero photos' : 'Choose a photo'}</p>
                   <button type="button" aria-label="Close" onClick={() => setSlot(null)} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {lib.map((ph) => (
-                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} className="relative aspect-[4/5] overflow-hidden rounded-lg border border-[#E4D3B6] transition hover:ring-2 hover:ring-[#B08D57]">
+                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} className={'relative aspect-[4/5] overflow-hidden rounded-lg border transition hover:ring-2 hover:ring-[#B08D57] ' + (slot.key === 'hero' && (form?.site_settings?.hero?.photos ?? []).includes(ph.storage_path) ? 'border-[#8C6B3F] ring-2 ring-[#8C6B3F]' : 'border-[#E4D3B6]')}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={BASE + ph.storage_path} alt="" className="h-full w-full object-cover" />
                     </button>
@@ -1192,7 +1223,7 @@ export default function CamiDesigner() {
             </div>
           )}
           {pick && (
-            <div className="absolute z-30 max-h-[85%] overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ left: pick.left, top: pick.top, width: 340, background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
+            <div className="absolute z-30 overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ left: pick.left, top: Math.max(8, Math.min(pick.top, (boxRef.current?.clientHeight ?? 700) - 460)), maxHeight: (boxRef.current?.clientHeight ?? 700) - Math.max(8, Math.min(pick.top, (boxRef.current?.clientHeight ?? 700) - 460)) - 8, width: 340, background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
               <div className="flex items-center justify-between border-b border-[#EFE4D8] pb-2">
                 <p className="font-fraunces text-lg font-semibold text-ink">{PICK_LABELS[pick.key] ?? 'Text'}</p>
                 <button type="button" aria-label="Close" onClick={() => { applyText(); setPick(null) }} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>

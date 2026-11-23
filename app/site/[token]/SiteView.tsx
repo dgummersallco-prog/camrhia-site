@@ -193,7 +193,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: t.headWeight ?? 500, letterSpacing: '0.01em' }
 
   // Per-section look: background, text color and fonts chosen in the designer.
-  const secScale = (((r as any).site_settings?.secScale ?? {}) as Record<string, number>)
+  const secPad = (((r as any).site_settings?.secPad ?? {}) as Record<string, { t?: number; b?: number }>)
   const slotPics = (((r as any).site_settings?.slotPics ?? {}) as Record<string, string>)
   const curSec = { k: '' }
   const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string; title?: string; titleFont?: string }>)
@@ -207,6 +207,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     if (hexOk(v.text)) rules.push('color:' + hexOk(v.text) + ' !important')
     if (famOf(v.body)) rules.push('font-family:' + famOf(v.body) + ' !important')
     let css = rules.length ? '#' + id + ' {' + rules.join(';') + '}' : ''
+    if (hexOk(v.bg) && id !== 'nav') css += '[data-secbg="' + id + '"] section {background:' + hexOk(v.bg) + ' !important}'
     if (famOf(v.titleFont)) css += '#' + id + ' .cr-sech {font-family:' + famOf(v.titleFont) + ' !important}'
     if (hexOk(v.title)) css += '#' + id + ' .cr-sech {color:' + hexOk(v.title) + ' !important}'
     if (famOf(v.head)) css += '#' + id + ' [style*="letter-spacing: 0.01em"], #' + id + ' .cr-h {font-family:' + famOf(v.head) + ' !important}'
@@ -4054,7 +4055,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
 
         {visible.map((k, i) => (
-          <React.Fragment key={k}>{((hid: boolean) => { curSec.k = k; const sc = Number(secScale[k]); const zs = sc > 0 && sc !== 100 ? ({ zoom: sc / 100 } as React.CSSProperties) : undefined; return isPreview ? (<div data-sec={k} style={hid ? { display: 'none' } : zs}>{hid ? null : renderSection(k, i % 2 === 1)}</div>) : hid ? null : zs ? (<div style={zs}>{renderSection(k, i % 2 === 1)}</div>) : renderSection(k, i % 2 === 1) })(((r as any).site_settings?.hiddenSecs ?? []).includes(k))}</React.Fragment>
+          <React.Fragment key={k}>{((hid: boolean) => { curSec.k = k; const pd = secPad[k] ?? {}; const pt = Math.min(0, Number(pd.t) || 0); const pb = Math.min(0, Number(pd.b) || 0); const bgv = hexOk(secStyles[k]?.bg); const outer: React.CSSProperties = { overflow: pt || pb ? 'hidden' : undefined, background: bgv ?? undefined }; const inner = <div style={{ marginTop: pt || undefined, marginBottom: pb || undefined }}>{renderSection(k, i % 2 === 1)}</div>; return isPreview ? (<div data-sec={k} data-secbg={k} data-pt={pt} data-pb={pb} style={hid ? { display: 'none' } : outer}>{hid ? null : inner}</div>) : hid ? null : (pt || pb || bgv) ? (<div data-secbg={k} style={outer}>{inner}</div>) : renderSection(k, i % 2 === 1) })(((r as any).site_settings?.hiddenSecs ?? []).includes(k))}</React.Fragment>
         ))}
 
         {page === 'galleries' && visible.length > 0 && (

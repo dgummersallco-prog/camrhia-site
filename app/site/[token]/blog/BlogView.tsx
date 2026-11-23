@@ -36,7 +36,11 @@ export function BlogView({ initial, token, slug }: { initial: Record<string, any
   const homeHref = base || '/'
   const logo = r.logo_path ? STORAGE_BASE + r.logo_path : null
   const ss = (r.site_settings ?? {}) as Record<string, any>
-  const posts = blogPosts(ss)
+  const realPosts = blogPosts(ss)
+  const SAMPLE_BODY = 'Share the story behind a session here. Tell people how it came together, what you loved about it, and what you hope they take away.\n\nAdd more paragraphs, tips and photos as you go.'
+  const posts = isPreview && realPosts.length === 0
+    ? ([['sample-one', 'A sample blog post', '2026-11-20'], ['sample-two', 'Another sample post', '2026-11-12'], ['sample-three', 'A third sample post', '2026-11-03']] as const).map(([slug, title, date], i) => ({ id: 'sample' + i, slug, title, date, cover: null, excerpt: 'A short preview of what this post is about goes here.', body: SAMPLE_BODY, published: true }))
+    : realPosts
   const post = slug ? posts.find((p) => p.slug === slug) : undefined
   const head: React.CSSProperties = { fontFamily: t.head, fontWeight: 500, letterSpacing: '0.01em' }
   const sty = { head, ink, soft, accent, line, bg }
