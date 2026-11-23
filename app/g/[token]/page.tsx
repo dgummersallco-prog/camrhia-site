@@ -152,6 +152,7 @@ export default function GalleryViewPage() {
     return () => { root.style.removeProperty('--color-twilight') }
   }, [brand])
 
+  useLayoutEffect(() => { document.querySelectorAll<HTMLElement>('[data-photo]').forEach((e) => e.style.removeProperty('translate')) }, [designPreview])
   const list = useMemo(() => {
     if (!data) return []
     const q = query.trim().toLowerCase()
@@ -654,8 +655,11 @@ export default function GalleryViewPage() {
         const w0 = r0.width / sc
         const s0 = parseFloat(getComputedStyle(el).fontSize) || 38
         const isPh = el.hasAttribute('data-photo')
+        const tr0 = (getComputedStyle(el).translate || '').split(' ').map((v) => parseFloat(v))
+        const tx0 = tr0[0] || 0
+        const ty0 = tr0[1] || 0
         const h0 = r0.height / sc
-        let last: { w: number; h?: number; size?: number } | null = null
+        let last: { w: number; h?: number; size?: number; sx?: number; sy?: number } | null = null
         let raf = 0
         const apply = () => {
           raf = 0
@@ -663,12 +667,24 @@ export default function GalleryViewPage() {
           if (!el.hasAttribute('data-nowidth')) el.style.width = last.w + 'px'
           if (last.size !== undefined) el.style.setProperty('font-size', last.size + 'px', 'important')
           if (last.h !== undefined) el.style.height = last.h + 'px'
+          if (last.sx !== undefined) el.style.setProperty('translate', (tx0 + last.sx) + 'px ' + (ty0 + (last.sy ?? 0)) + 'px', 'important')
         }
         const mv = (ev: PointerEvent) => {
           if (isPh) {
-            const nw = kind === 'n' || kind === 's' ? w0 : Math.min(900, Math.max(30, (2 * Math.abs(ev.clientX - cx)) / sc))
-            const nh = kind === 'w' || kind === 'e' ? h0 : Math.min(900, Math.max(30, (2 * Math.abs(ev.clientY - cy)) / sc))
-            last = { w: Math.round(nw * 10) / 10, h: Math.round(nh * 10) / 10 }
+            const L = kind.includes('w'), R = kind.includes('e'), T = kind.includes('n'), B = kind.includes('s')
+            const minS = 30 * sc
+            let wS = r0.width
+            let hS = r0.height
+            if (R) wS = Math.max(minS, ev.clientX - r0.left)
+            if (L) wS = Math.max(minS, r0.right - ev.clientX)
+            if (B) hS = Math.max(minS, ev.clientY - r0.top)
+            if (T) hS = Math.max(minS, r0.bottom - ev.clientY)
+            const nw = Math.min(900, wS / sc)
+            const nh = Math.min(900, hS / sc)
+            const sx = R ? (nw - w0) / 2 : L ? -(nw - w0) / 2 : 0
+            const sy = B ? (nh - h0) / 2 : T ? -(nh - h0) / 2 : 0
+            const r1 = (v: number) => Math.round(v * 10) / 10
+            last = { w: r1(nw), h: r1(nh), sx: r1(sx), sy: r1(sy) }
             if (!raf) raf = requestAnimationFrame(apply)
             return
           }
@@ -684,7 +700,7 @@ export default function GalleryViewPage() {
           d.removeEventListener('pointercancel', up)
           if (raf) cancelAnimationFrame(raf)
           apply()
-          if (last) window.parent?.postMessage({ type: 'camrhia-gallery-box', key: el.getAttribute('data-gk') || 'title', w: el.hasAttribute('data-nowidth') ? undefined : last.w, size: last.size, h: last.h }, '*')
+          if (last) window.parent?.postMessage({ type: 'camrhia-gallery-box', key: el.getAttribute('data-gk') || 'title', w: el.hasAttribute('data-nowidth') ? undefined : last.w, size: last.size, h: last.h, sx: last.sx, sy: last.sy }, '*')
         }
         d.addEventListener('pointermove', mv)
         d.addEventListener('pointerup', up)
@@ -1215,12 +1231,12 @@ export default function GalleryViewPage() {
     const src = ph?.web || ph?.thumb || undefined
     const shapeCss: CSSProperties = sh === 'rounded' ? { borderRadius: 26 } : sh === 'circle' ? { borderRadius: '50%' } : sh === 'arch' ? { borderRadius: `${w / 2}px ${w / 2}px 0 0` } : sh === 'heart' ? { clipPath: 'url(#camheart)' } : {}
     return (
-      <div key={k} data-gk={k} data-box="1" data-photo="1" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: w, height: h, maxWidth: '96%', zIndex: 6, overflow: 'hidden', cursor: 'grab', background: pal.line, ...shapeCss }}>
+      <div key={k} data-gk={k} data-box="1" data-photo="1" style={{ position: 'absolute', pointerEvents: 'auto', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: w, height: h, maxWidth: '96%', zIndex: 6, overflow: 'hidden', cursor: 'grab', background: pal.line, ...shapeCss }}>
         {src ? slotImg(k, ph, src) : null}
       </div>
     )
   }
-  const xBox = (k: string, i: number) => (<div key={k} data-gk={k} data-box="1" style={{ position: 'absolute', left: '50%', top: 24 + i * 56, transform: 'translateX(-50%)', zIndex: 6, fontSize: 28, lineHeight: 1.2, width: extraW(k) ?? 'max-content', whiteSpace: extraW(k) ? 'pre-wrap' : 'pre', overflowWrap: 'anywhere', textAlign: 'center', color: coverPal.ink, fontFamily: "'Playfair Display', Georgia, serif", cursor: 'grab' }}>{extraTxt(k) || 'Your text'}</div>)
+  const xBox = (k: string, i: number) => (<div key={k} data-gk={k} data-box="1" style={{ position: 'absolute', pointerEvents: 'auto', left: '50%', top: 24 + i * 56, transform: 'translateX(-50%)', zIndex: 6, fontSize: 28, lineHeight: 1.2, width: extraW(k) ?? 'max-content', whiteSpace: extraW(k) ? 'pre-wrap' : 'pre', overflowWrap: 'anywhere', textAlign: 'center', color: coverPal.ink, fontFamily: "'Playfair Display', Georgia, serif", cursor: 'grab' }}>{extraTxt(k) || 'Your text'}</div>)
   const extraTxt = (k: string) => String((el as Record<string, { text?: string }> | undefined)?.[k]?.text ?? '')
   const extraW = (k: string) => { const w = (el as Record<string, { w?: number } | undefined> | undefined)?.[k]?.w; return typeof w === 'number' && Number.isFinite(w) ? Math.min(900, Math.max(14, w)) : undefined }
   textRef.current = { ...Object.fromEntries(extraKeys.map((k) => [k, extraTxt(k)])), title: coverTitle, brand: coverSub, count: countText || `${data.photos.length} photos`, initials: String((el as Record<string, { text?: string }> | undefined)?.initials?.text ?? '') }

@@ -75,6 +75,19 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
   const [err, setErr] = useState<string | null>(null)
   const [popPos, setPopPos] = useState<{ top?: number; bottom?: number; maxHeight: number } | null>(null)
   const boxRef = useRef<HTMLDivElement>(null)
+  const [pvW, setPvW] = useState(0)
+  const PV_W = 1280
+  const pvScale = device === 'desktop' && pvW > 0 && pvW < PV_W ? pvW / PV_W : 1
+  const pvScaleRef = useRef(1)
+  pvScaleRef.current = pvScale
+  useEffect(() => {
+    const el = boxRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setPvW(el.clientWidth))
+    ro.observe(el)
+    setPvW(el.clientWidth)
+    return () => ro.disconnect()
+  }, [])
   const rootRef = useRef<HTMLDivElement>(null)
   const popBox = useRef<HTMLDivElement>(null)
   const [pick, setPick] = useState<{ key: string; name: string; size: number; color: string; bold: boolean; mid?: string | null; line?: boolean } | null>(null)
@@ -399,9 +412,11 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       }
       if (m.type === 'camrhia-gallery-dismiss') setPick(null)
       if (m.type === 'camrhia-gallery-box' && typeof m.key === 'string') {
-        const patch: { w?: number; h?: number; size?: number } = {}
+        const patch: { w?: number; h?: number; size?: number; dx?: number; dy?: number } = {}
         if (Number.isFinite(Number(m.w))) patch.w = Number(m.w)
         if (m.h !== undefined && Number.isFinite(Number(m.h))) patch.h = Number(m.h)
+        if (m.sx !== undefined && m.sx !== null && Number.isFinite(Number(m.sx))) patch.dx = Math.round((latest.current.el?.[String(m.key)]?.dx ?? 0) + Number(m.sx))
+        if (m.sy !== undefined && m.sy !== null && Number.isFinite(Number(m.sy))) patch.dy = Math.round((latest.current.el?.[String(m.key)]?.dy ?? 0) + Number(m.sy))
         if (m.size !== undefined && Number.isFinite(Number(m.size))) patch.size = Number(m.size)
         setElRef.current(String(m.key), patch)
       }
@@ -428,8 +443,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       if (m.type === 'camrhia-gallery-pick') {
         setPick({ key: String(m.key), name: String(m.name), size: Number(m.size) || 16, color: toHex(String(m.color)), bold: !!m.bold, mid: m.mid ? String(m.mid) : null, line: m.line === '1' })
         const H = boxRef.current?.clientHeight ?? 0
-        const t = Number(m.top)
-        const b = Number(m.bottom)
+        const t = Number(m.top) * pvScaleRef.current
+        const b = Number(m.bottom) * pvScaleRef.current
         if (H && Number.isFinite(t) && Number.isFinite(b)) {
           const below = H - (b + 10) - 8
           const above = t - 10 - 8
@@ -620,8 +635,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           </div>
           </div>
         </div>
-        <div ref={boxRef} className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
-          <iframe ref={frameRef} src={`/g/${token}?preview=1`} title="Gallery preview" style={{ width: device === 'phone' ? 390 : '100%', height: '100%', border: 0, background: '#fff' }} />
+        <div ref={boxRef} style={pvScale < 1 ? { justifyContent: 'flex-start' } : undefined} className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+          <iframe ref={frameRef} src={`/g/${token}?preview=1`} title="Gallery preview" style={device === 'phone' ? { width: 390, height: '100%', border: 0, background: '#fff' } : pvScale < 1 ? { width: PV_W, height: `${100 / pvScale}%`, border: 0, background: '#fff', transform: `scale(${pvScale})`, transformOrigin: '0 0', flexShrink: 0 } : { width: '100%', height: '100%', border: 0, background: '#fff' }} />
           {secPick && (
             <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full bg-[#1f1a14] px-4 py-2 text-sm text-white shadow-lg">
               <span>Click the photo where the section starts</span>
