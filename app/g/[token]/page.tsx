@@ -1,6 +1,7 @@
 'use client'
 
-import { Fragment, useLayoutEffect, type CSSProperties, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { Fragment, useLayoutEffect, type CSSProperties, type ReactElement, type ReactNode } from 'react'
 import ReviewCard from './ReviewCard'
 import { resolveDesign, type GalleryDesign, elCss } from '@/lib/galleryDesign'
 import { FONT_OPTIONS } from '@/lib/siteTheme'
@@ -39,22 +40,31 @@ function scaleOf(el: HTMLElement): number {
   return el.offsetWidth ? el.getBoundingClientRect().width / el.offsetWidth : 1
 }
 
-function CoverStage({ children }: { children: ReactNode }) {
+function CoverStage({ children, z }: { children: ReactNode; z: number }) {
+  const mark = useRef<HTMLSpanElement>(null)
   const st = useRef<HTMLDivElement>(null)
+  const [host, setHost] = useState<HTMLElement | null>(null)
+  useLayoutEffect(() => { setHost((mark.current?.closest('[data-cover-wrap]') as HTMLElement | null) ?? null) }, [])
   useLayoutEffect(() => {
     const el = st.current
-    const host = el?.parentElement
-    if (!el || !host) return
-    const fit = () => { const w = host.offsetWidth; if (w > 0) el.style.transform = 'scale(' + w / 900 + ')' }
+    const h = el?.parentElement
+    if (!el || !h) return
+    const fit = () => { const w = h.offsetWidth; if (w > 0) el.style.transform = 'scale(' + w / 900 + ')' }
     fit()
     const ro = new ResizeObserver(fit)
-    ro.observe(host)
+    ro.observe(h)
     return () => ro.disconnect()
-  }, [])
+  }, [host])
   return (
-    <div aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
-      <div ref={st} data-stage="1" style={{ position: 'absolute', left: 0, top: 0, width: 900, height: 450, transformOrigin: '0 0', pointerEvents: 'none' }}>{children}</div>
-    </div>
+    <>
+      <span ref={mark} style={{ display: 'none' }} />
+      {host ? createPortal(
+        <div aria-hidden="true" className="absolute inset-0 overflow-hidden" style={{ pointerEvents: 'none', zIndex: z }}>
+          <div ref={st} data-stage="1" style={{ position: 'absolute', left: 0, top: 0, width: 900, height: 450, transformOrigin: '0 0', pointerEvents: 'none' }}>{children}</div>
+        </div>,
+        host,
+      ) : null}
+    </>
   )
 }
 
@@ -1370,7 +1380,18 @@ export default function GalleryViewPage() {
     }
   })()
   const CAS = "'Libre Caslon Display', Georgia, serif"
-  const stg = (kids: ReactNode, kk = '') => <CoverStage key={'stg-' + coverKind + kk}>{kids}</CoverStage>
+  const zOf = (k: string) => {
+    const z = (el as Record<string, { z?: number } | undefined> | undefined)?.[k]?.z
+    return typeof z === 'number' && Number.isFinite(z) ? Math.min(99, Math.max(1, Math.round(z))) : (({ initials: 2, title: 3, brand: 4, count: 4 } as Record<string, number>)[k] ?? 3)
+  }
+  const stg = (kids: ReactNode, kk = '') => (
+    <Fragment key={'stg-' + coverKind + kk}>
+      {((Array.isArray(kids) ? kids : [kids]) as (ReactElement | null)[]).filter((c): c is ReactElement => !!c).map((c, n) => {
+        const gk = String((c.props as Record<string, unknown>)['data-gk'] ?? (c.key === 'bt-clip' ? 'title' : 'initials'))
+        return <CoverStage key={String(c.key ?? 'i' + n)} z={zOf(gk)}>{c}</CoverStage>
+      })}
+    </Fragment>
+  )
   type BxO = { x: number; y: number; fs: number; text: string; maxW: number; style?: CSSProperties; track?: number; lh?: number; rot?: number; ls?: { r: number; style?: CSSProperties }[]; mirror?: boolean }
   const bx = (k: string, o: BxO) => {
     const w = extraW(k)

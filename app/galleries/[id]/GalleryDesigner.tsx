@@ -269,10 +269,13 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
     el[key] = { ...(el[key] ?? {}), ...patch }
     change({ el })
   }
-  const layerZ = (el: Record<string, ElStyle>, k: string) => (typeof el[k]?.z === 'number' ? (el[k].z as number) : 10 + Number(k.slice(1)))
+  const BASE_Z: Record<string, number> = { initials: 2, title: 3, brand: 4, count: 4 }
+  const layerZ = (el: Record<string, ElStyle>, k: string) => (typeof el[k]?.z === 'number' ? (el[k].z as number) : (BASE_Z[k] ?? 10 + Number(k.slice(1))))
   function layerKeys(el: Record<string, ElStyle>) {
-    return Object.keys(el).filter((k) => /^x\d+$/.test(k)).sort((a, b) => layerZ(el, a) - layerZ(el, b))
+    const base = ['title', 'brand', ...(eff.cover === 'magazine' ? ['count'] : []), ...(eff.cover === 'monogram' ? ['initials'] : [])]
+    return [...base, ...Object.keys(el).filter((k) => /^x\d+$/.test(k))].sort((a, b) => layerZ(el, a) - layerZ(el, b))
   }
+  const layerLabel = (k: string) => (k === 'title' ? (eff.el?.title?.text || title) : k === 'brand' ? (eff.el?.brand?.text || 'Studio name') : k === 'count' ? 'Photo count' : k === 'initials' ? 'Cover initials' : (eff.el?.[k]?.text || 'Your text'))
   function moveLayer(key: string, dir: 1 | -1) {
     const el = { ...(latest.current.el ?? {}) }
     const ks = layerKeys(el)
@@ -528,16 +531,20 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             {!['ticket', 'stack'].includes(eff.cover) && <div className="w-36"><ColorInput lux float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
             <div className="w-36"><ColorInput lux float label="Page" value={eff.pal.bg} onChange={(v) => change({ bg: v })} /></div>
             <div className="w-36"><ColorInput lux float label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} /></div>
-            <div ref={layRef} className="relative">
-              <button type="button" onClick={() => setLayOpen((o) => !o)} className="h-[42px] rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight">Layers</button>
+            <div ref={layRef} className="relative w-36">
+              <span className={LUX}>Layers</span>
+              <button type="button" onClick={() => setLayOpen((o) => !o)} className="mt-1 flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink transition hover:border-twilight">
+                <span>{layerKeys((eff.el ?? {}) as Record<string, ElStyle>).length} text layers</span>
+                <span className="px-1 text-ink-soft">{layOpen ? <>&#9652;</> : <>&#9662;</>}</span>
+              </button>
               {layOpen && (() => {
                 const ks = layerKeys((eff.el ?? {}) as Record<string, ElStyle>)
                 return (
-                  <div className="absolute left-0 top-full z-40 mt-2 w-64 rounded-xl border border-line bg-white p-2 shadow-xl">
-                    <p className="px-2 pb-1.5 pt-1 text-sm font-medium text-ink">Text layers</p>
-                    {ks.length === 0 ? <p className="px-2 py-2 text-xs text-ink-soft">Add a text box to layer it.</p> : [...ks].reverse().map((k, i) => (
+                  <div className="absolute left-0 top-full z-40 mt-2 w-72 rounded-xl border border-line bg-white p-2 shadow-xl">
+                    <p className="px-2 pb-1.5 pt-1 text-sm font-medium text-ink">Text layers <span className="text-xs font-normal text-ink-soft">(top of list is in front)</span></p>
+                    {[...ks].reverse().map((k, i) => (
                       <div key={k} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-paper">
-                        <span className="min-w-0 flex-1 truncate text-sm text-ink">{(eff.el?.[k]?.text || 'Your text').replace(/\s+/g, ' ')}</span>
+                        <span className="min-w-0 flex-1 truncate text-sm text-ink">{String(layerLabel(k)).replace(/\s+/g, ' ')}</span>
                         <button type="button" disabled={i === 0} onClick={() => moveLayer(k, 1)} className="h-7 w-7 rounded-md border border-line text-xs text-ink disabled:opacity-30" aria-label="Bring forward">&#9650;</button>
                         <button type="button" disabled={i === ks.length - 1} onClick={() => moveLayer(k, -1)} className="h-7 w-7 rounded-md border border-line text-xs text-ink disabled:opacity-30" aria-label="Send back">&#9660;</button>
                       </div>
@@ -546,10 +553,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                 )
               })()}
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div ref={addRef} className="relative">
-              <button type="button" onClick={() => setAddOpen((o) => !o)} className="h-[42px] rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight">+ Add text</button>
+            <div ref={addRef} className="relative w-36">
+              <span className={LUX}>Text</span>
+              <button type="button" onClick={() => setAddOpen((o) => !o)} className="mt-1 flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink transition hover:border-twilight"><span>+ Add text</span><span className="px-1 text-ink-soft">{addOpen ? <>&#9652;</> : <>&#9662;</>}</span></button>
               {addOpen && (
                 <div className="absolute left-0 top-full z-40 mt-2 w-60 rounded-xl border border-line bg-white p-2 shadow-xl">
                   <p className="px-2 pb-1.5 pt-1 text-sm font-medium text-ink">What do you want to add?</p>
@@ -564,6 +570,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                 </div>
               )}
             </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={undo} disabled={histN === 0} className="inline-flex h-[42px] items-center gap-2 rounded-xl border border-line bg-card px-4 text-sm font-medium text-ink transition hover:border-twilight disabled:cursor-default disabled:opacity-40 disabled:hover:border-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>Undo</button>
           <div className="flex overflow-hidden h-[42px] rounded-xl border border-line bg-white text-sm">
             {(['desktop', 'phone'] as const).map((x) => (
