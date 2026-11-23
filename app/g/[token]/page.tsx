@@ -793,7 +793,7 @@ export default function GalleryViewPage() {
           pb.style.display = isP ? 'block' : 'none'
           const pt = pan ? 'Done' : 'Move photo inside'
           if (pb.textContent !== pt) pb.textContent = pt
-          pb.style.background = pan ? '#A8553A' : 'linear-gradient(135deg,#FFFDF9,#F3E7D3)'
+          pb.style.background = pan ? '#8C6B3F' : 'linear-gradient(135deg,#FFFDF9,#F3E7D3)'
           pb.style.color = pan ? '#fff' : '#6B4A2B'
           const flipP = rr.top + rr.height > window.innerHeight - 44
           pb.style.bottom = flipP ? 'auto' : '-36px'
