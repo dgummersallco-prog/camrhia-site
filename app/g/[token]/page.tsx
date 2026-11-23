@@ -342,6 +342,8 @@ export default function GalleryViewPage() {
     let lx = 0
     let ly = 0
     const zoomImgAt = (x: number, y: number) => {
+      const topPh = document.elementsFromPoint(x, y).find((n) => n instanceof HTMLImageElement && !!n.closest('[data-photo]')) as HTMLImageElement | undefined
+      if (topPh) return topPh
       const all = Array.from(document.querySelectorAll('img[data-cover], img[data-slot]')) as HTMLImageElement[]
       for (let i = all.length - 1; i >= 0; i--) {
         const r = (all[i].parentElement ?? all[i]).getBoundingClientRect()
@@ -351,6 +353,8 @@ export default function GalleryViewPage() {
     }
     let gImg: HTMLImageElement | null = null
     const imgAt = (x: number, y: number) => {
+      const topPh = document.elementsFromPoint(x, y).find((n) => n instanceof HTMLImageElement && !!n.closest('[data-photo]')) as HTMLImageElement | undefined
+      if (topPh) return topPh
       const all = Array.from(document.querySelectorAll('img[data-cover], img[data-slot], img[data-pid]')) as HTMLImageElement[]
       for (let i = all.length - 1; i >= 0; i--) {
         const r = (all[i].parentElement ?? all[i]).getBoundingClientRect()
@@ -390,7 +394,8 @@ export default function GalleryViewPage() {
       if (e.button !== 0) return
       const tg = (e.target as Element | null)?.closest?.('[data-gk]') as Element | null
       const gk = tg?.getAttribute('data-gk') ?? ''
-      if (tg && (MOVABLE.includes(gk) || /^(x|ph)\d+$/.test(gk))) {
+      if ((e.target as Element | null)?.closest?.('[data-pb]')) return
+      if (tg && (MOVABLE.includes(gk) || /^(x|ph)\d+$/.test(gk)) && !(/^ph\d+$/.test(gk) && (e.altKey || tg.hasAttribute('data-pan')))) {
         const svg = tg.closest('svg') as SVGSVGElement | null
         const he = tg as HTMLElement
         const k = svg ? svg.getBoundingClientRect().width / (svg.viewBox.baseVal?.width || 900) || 1 : scaleOf(he)
@@ -712,6 +717,19 @@ export default function GalleryViewPage() {
     xb.title = 'Delete this text'
     xb.style.cssText = 'position:absolute;right:-9px;top:-34px;width:24px;height:24px;border-radius:50%;background:#1f1a14;color:#fff;font:600 17px/22px system-ui,sans-serif;text-align:center;cursor:pointer;pointer-events:auto;display:none;box-shadow:0 2px 6px rgba(0,0,0,.3)'
     box.appendChild(xb)
+    const pb = document.createElement('div')
+    pb.setAttribute('data-pb', '1')
+    pb.style.cssText = 'position:absolute;left:50%;bottom:-36px;transform:translateX(-50%);padding:0 14px;height:26px;border-radius:13px;background:#1f1a14;color:#fff;font:600 12px/26px system-ui,sans-serif;white-space:nowrap;cursor:pointer;pointer-events:auto;display:none'
+    pb.textContent = 'Move photo inside'
+    box.appendChild(pb)
+    pb.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation() })
+    pb.addEventListener('pointerdown', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (!curEl) return
+      if (curEl.hasAttribute('data-pan')) curEl.removeAttribute('data-pan')
+      else curEl.setAttribute('data-pan', '1')
+    })
     xb.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation() })
     xb.addEventListener('pointerdown', (e) => {
       e.preventDefault()
@@ -767,6 +785,15 @@ export default function GalleryViewPage() {
           xb.style.display = isX ? 'block' : 'none'
           xb.style.top = rr.top < 44 ? 'auto' : '-34px'
           xb.style.bottom = rr.top < 44 ? '-34px' : 'auto'
+          const isP = curEl.hasAttribute('data-photo')
+          const pan = isP && curEl.hasAttribute('data-pan')
+          pb.style.display = isP ? 'block' : 'none'
+          const pt = pan ? 'Done' : 'Move photo inside'
+          if (pb.textContent !== pt) pb.textContent = pt
+          const flipP = rr.top + rr.height > window.innerHeight - 44
+          pb.style.bottom = flipP ? 'auto' : '-36px'
+          pb.style.top = flipP ? '-36px' : 'auto'
+          if (isP) curEl.style.cursor = pan ? 'move' : 'grab'
         }
       }
       rafId = requestAnimationFrame(follow)
