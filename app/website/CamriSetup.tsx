@@ -125,6 +125,8 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     return startStep ?? 0
   })
   const [layouts, setLayouts] = useState<string[]>(initial?.layouts ?? [])
+  const [startIdx, setStartIdx] = useState(0)
+  const si = Math.min(startIdx, Math.max(layouts.length - 1, 0))
   const [heroList, setHeroList] = useState<string[]>([])
   const [showPlanTop, setShowPlanTop] = useState(false)
   const hl = heroList.length === layouts.length && heroList.every((x) => layouts.includes(x)) ? heroList : layouts
@@ -223,12 +225,22 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         )}
 
         {step === 1 && (
+          <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
           <div>
-          <div className="mb-6 flex items-start gap-4">
+          <div className="sticky top-0 z-20 -mx-2 mb-6 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
+            <div className="flex h-16 items-center"><h3 className="font-fraunces text-5xl tracking-tight text-ink">Hero</h3></div>
+            <div className="mt-3"><Meter at={0} /></div>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button type="button" onClick={() => setStep(0)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
+              <button type="button" onClick={() => { if (si > 0) setLayouts((l) => [l[si], ...l.filter((_, j) => j !== si)]); setStartIdx(0); setStep(2) }} disabled={!canGo} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{`Next: ${DESIGN_SECTIONS[0].title} →`}</button>
+            </div>
+          </div>
+          <div className="mb-8 flex items-start gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/camri/12_open_arms.png" alt="" className="h-24 w-auto shrink-0" />
             <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-3">
-              <p className="font-fraunces text-lg leading-snug text-ink">{'Pick up to three layouts you love, then up to three designs from each part. Or I can pick for you' + (layouts[0] ? ' to match your ' + (styles.find((x) => x.key === layouts[0])?.name ?? '') + ' layout' : '') + '.'}</p>
+              <p className="font-fraunces text-lg leading-snug text-ink">We&apos;re building your site one section at a time, starting with the hero. Your hero is the first thing visitors see: your best photo and what you shoot.</p>
+              <p className="mt-1.5 text-sm text-ink-soft">Pick up to three layouts you love. Tap 1, 2, 3 under &quot;Your site so far&quot; to swap between them. Next up: Explore section. Or I can pick for you.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" onClick={camriBuild} disabled={layouts.length === 0} className="rounded-full bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">Yes, build it for me</button>
                 <button type="button" onClick={() => setShowPlanTop(!showPlanTop)} className="rounded-full border border-black/15 bg-white px-4 py-2 text-sm text-ink">How would you set it up?</button>
@@ -250,15 +262,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
               )}
             </div>
           </div>
-          <div className="sticky top-0 z-20 -mx-2 mb-6 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
-            <div className="flex h-16 items-center"><h3 className="font-fraunces text-5xl tracking-tight text-ink">Hero</h3></div>
-            <div className="mt-3"><Meter at={0} /></div>
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <button type="button" onClick={() => setStep(0)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
-              <button type="button" onClick={() => setStep(2)} disabled={!canGo} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{`Next: ${DESIGN_SECTIONS[0].title} →`}</button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-12">
             {styles.map((s) => {
               const i = layouts.indexOf(s.key)
               return (
@@ -274,6 +278,38 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
               )
             })}
           </div>
+          </div>
+          <aside className="hidden lg:block lg:pt-[84px]">
+            <div className="sticky top-6 max-h-[90vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
+              </div>
+              <div className="mt-3">
+                <div className="mx-auto w-[72%] overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm">
+                  <div className="flex items-center gap-1 border-b border-black/10 bg-[#EFE7DC] px-2 py-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" /><span className="h-1.5 w-1.5 rounded-full bg-black/25" />
+                    <span className="ml-2 text-[10px] text-ink-soft">Home</span>
+                  </div>
+                  {layouts[si] ? (
+                    <div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={'/layouts/' + layouts[si] + '.png'} alt="" className="w-full" />
+                      <p className="px-2 py-1 text-[10px] text-ink-soft">{'Layout ' + (si + 1) + ' · ' + (styles.find((x) => x.key === layouts[si])?.name ?? '')}</p>
+                    </div>
+                  ) : (
+                    <div className="h-16 bg-[#F6F1EA]" />
+                  )}
+                  {layouts.length > 1 && (
+                    <div className="flex items-center gap-1.5 px-2 pb-2">
+                      {layouts.map((k, i) => (
+                        <button key={k} type="button" onClick={() => setStartIdx(i)} className={'h-6 w-6 rounded-full text-xs transition ' + (si === i ? 'bg-twilight font-medium text-white' : 'border border-black/15 bg-white text-ink hover:bg-black/5')}>{i + 1}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </aside>
           </div>
         )}
 
@@ -336,6 +372,19 @@ const DESIGN_LABELS: Record<string, string> = {
   nav: 'Explore section', galleries: 'Galleries page', photos: 'Photo display', galleries_section: 'Galleries section', book: 'Booking page',
   testimonials: 'Testimonials', about_page: 'About page', about_section: 'About section', pricing_page: 'Pricing page', pricing_section: 'Pricing section',
   social: 'Social links', faq: 'FAQ', contact: 'Booking button', blog_list: 'Blog page', blog_post: 'Blog post',
+}
+
+const SEC_INTRO: Record<string, string> = {
+  nav: 'Three picture boxes under your hero that send visitors to Galleries, About and Booking.',
+  about: 'Tells visitors who you are. Use a full About page, a short section on your home page, or both.',
+  galleries: 'Shows off your work: a page of gallery covers, how photos look inside a gallery, and a section for your home page.',
+  testimonials: 'Shows what happy clients say about you. A section you can place on any page.',
+  pricing: 'Lets people know what to expect before they ask. A full page, a section, or both.',
+  faq: 'Answers the questions clients always ask, like how far ahead to book.',
+  blog: 'Where you share stories and tips. Pick how the list of posts and each post look.',
+  social: 'A small strip that links to your Instagram, Facebook and more.',
+  contact: 'The closing strip that sends visitors to check your dates.',
+  book: 'The page where couples check your dates and send you a message.',
 }
 
 const HELP: Record<string, string> = {
@@ -670,6 +719,14 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
               <button type="button" onClick={onDone} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90">Arrange my site →</button>
             )}
             </div>
+          </div>
+        </div>
+        <div className="mt-6 flex items-start gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/camri/12_open_arms.png" alt="" className="h-24 w-auto shrink-0" />
+          <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-3">
+            <p className="font-fraunces text-lg leading-snug text-ink">{'We are building your site one section at a time. Now: ' + sec.title + '. ' + (SEC_INTRO[sec.k] ?? '')}</p>
+            <p className="mt-1.5 text-sm text-ink-soft">{'Pick up to three designs you love. Tap 1, 2, 3 under "Your site so far" to swap between them. ' + (step < total - 1 ? 'Next up: ' + DESIGN_SECTIONS[step + 1].title + '.' : 'Next, we arrange your site.')}</p>
           </div>
         </div>
         {rowsOrdered.map((row, ri) => {
