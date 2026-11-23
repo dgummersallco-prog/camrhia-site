@@ -356,7 +356,8 @@ export default function GalleryViewPage() {
       const gk = tg?.getAttribute('data-gk') ?? ''
       if (tg && (MOVABLE.includes(gk) || /^x\d+$/.test(gk))) {
         const svg = tg.closest('svg') as SVGSVGElement | null
-        const k = svg ? svg.getBoundingClientRect().width / (svg.viewBox.baseVal?.width || 900) || 1 : 1
+        const he = tg as HTMLElement
+        const k = svg ? svg.getBoundingClientRect().width / (svg.viewBox.baseVal?.width || 900) || 1 : he.offsetWidth ? he.getBoundingClientRect().width / he.offsetWidth : 1
         tdrag = { key: gk, x: e.clientX, y: e.clientY, k, moved: false }
         e.preventDefault()
         return
@@ -458,7 +459,7 @@ export default function GalleryViewPage() {
   useEffect(() => {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
     const st = document.createElement('style')
-    st.textContent = '.gal-root [data-gk="moment"]{cursor:grab}'
+    st.textContent = '.gal-root [data-gk="moment"]{cursor:grab}.gal-root [data-gk]{-webkit-user-select:none;user-select:none}'
     document.head.appendChild(st)
     let d: { mid: string; x: number; y: number; moved: boolean } | null = null
     let swallow = false
@@ -598,8 +599,8 @@ export default function GalleryViewPage() {
         const el = curEl
         if (!el) return
         try { d.setPointerCapture(e.pointerId) } catch {}
-        const sc = (el.closest('svg') as SVGSVGElement | null)?.getScreenCTM?.()?.a || 1
         const r0 = el.getBoundingClientRect()
+        const sc = el.offsetWidth ? r0.width / el.offsetWidth : 1
         const cx = r0.left + r0.width / 2
         const w0 = r0.width / sc
         const s0 = parseFloat(getComputedStyle(el).fontSize) || 38
@@ -612,7 +613,7 @@ export default function GalleryViewPage() {
           if (last.size !== undefined) el.style.setProperty('font-size', last.size + 'px', 'important')
         }
         const mv = (ev: PointerEvent) => {
-          const nw = Math.min(el.closest('svg') ? 420 : 900, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
+          const nw = Math.min(el.getAttribute('data-gk') === 'title' ? 420 : 900, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
           const w = Math.round(nw * 10) / 10
           last = kind.length === 2 ? { w, size: Math.round(Math.min(160, Math.max(8, s0 * (nw / w0))) * 10) / 10 } : { w }
           if (!raf) raf = requestAnimationFrame(apply)
@@ -644,12 +645,26 @@ export default function GalleryViewPage() {
       return NAMES[k] ? { el, k } : null
     }
     let curEl: HTMLElement | null = null
+    const rectOf = (el: HTMLElement) => {
+      const k = el.getAttribute('data-gk')
+      let parts: HTMLElement[] = [el]
+      const grp = k === 'title' || k === 'title2' ? '[data-gk="title"],[data-gk="title2"]' : k === 'brand' ? '[data-gk="brand"]' : ''
+      if (grp && !el.hasAttribute('data-box')) parts = (Array.from(document.querySelectorAll(grp)) as HTMLElement[]).filter((e) => !e.hasAttribute('data-box'))
+      if (parts.length === 0) parts = [el]
+      let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity
+      for (const p of parts) {
+        const q = p.getBoundingClientRect()
+        l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom)
+      }
+      const pad = el.hasAttribute('data-box') ? 0 : 3
+      return { left: l - pad, top: t - pad, width: r - l + 2 * pad, height: b - t + 2 * pad }
+    }
     let rafId = 0
     const follow = () => {
       if (curEl && box.style.display === 'block') {
         if (!curEl.isConnected) { box.style.display = 'none'; curEl = null }
         else {
-          const rr = curEl.getBoundingClientRect()
+          const rr = rectOf(curEl)
           box.style.left = rr.left + 'px'
           box.style.top = rr.top + 'px'
           box.style.width = rr.width + 'px'
@@ -665,7 +680,7 @@ export default function GalleryViewPage() {
       curEl = h ? h.el : null
       if (!h) { box.style.display = 'none'; return }
       hnd.forEach((x) => { x.style.display = h.el.hasAttribute('data-box') ? 'block' : 'none' })
-      const r = h.el.getBoundingClientRect()
+      const r = rectOf(h.el)
       box.style.display = 'block'
       box.style.left = r.left + 'px'
       box.style.top = r.top + 'px'
@@ -742,8 +757,7 @@ export default function GalleryViewPage() {
       hnd.forEach((x) => { x.style.display = 'block' })
       const gkey = target.getAttribute('data-gk') || 'title'
       const topAnchor = gkey !== 'title'
-      const svg = target.closest('svg') as SVGSVGElement | null
-      const sc = svg?.getScreenCTM?.()?.a ?? 1
+      const sc = target.offsetWidth ? target.getBoundingClientRect().width / target.offsetWidth : 1
       const cs = getComputedStyle(target)
       const r = target.getBoundingClientRect()
       const fsPx = (parseFloat(cs.fontSize) || 16) * sc
@@ -1522,13 +1536,15 @@ export default function GalleryViewPage() {
             </div>
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              <foreignObject x={201} y={40} width={500} height={330} style={{ pointerEvents: 'none', overflow: 'visible' }}>
-                <div style={{ width: 500, height: 330, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                  <div data-gk="title" data-box="1" style={{ width: boxW, textAlign: 'center', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.12, fontSize: 38, fontWeight: 400, fontFamily: "'Libre Caslon Display', Georgia, serif", color: pal.ink, pointerEvents: 'auto' }}>{tLines.join('\n')}</div>
-                </div>
-              </foreignObject>
               {coverSub && <text data-gk="brand" x="450.5" y="290.9" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontWeight: 400, fontSize: 6.8, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(89, 7.42 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
             </svg>
+            <div aria-hidden="true" className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+              <div style={{ position: 'absolute', left: 0, top: 0, width: 900, height: 450, transformOrigin: '0 0', transform: 'scale(tan(atan2(100cqw, 900px)))', pointerEvents: 'none' }}>
+                <div style={{ position: 'absolute', left: 201, top: 40, width: 500, height: 330, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                  <div data-gk="title" data-box="1" style={{ width: boxW, textAlign: 'center', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.12, fontSize: 38, fontWeight: 400, fontFamily: "'Libre Caslon Display', Georgia, serif", color: pal.ink, pointerEvents: 'auto' }}>{tLines.join('\n')}</div>
+                </div>
+              </div>
+            </div>
           </div>
         )
       })() : coverKind === 'magazine' && cover?.web ? (
