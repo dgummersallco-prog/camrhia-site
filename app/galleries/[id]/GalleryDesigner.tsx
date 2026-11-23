@@ -342,6 +342,12 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         }
       }
       if (m.type === 'camrhia-gallery-dismiss') setPick(null)
+      if (m.type === 'camrhia-gallery-box' && typeof m.key === 'string') {
+        const patch: { w?: number; size?: number } = {}
+        if (Number.isFinite(Number(m.w))) patch.w = Number(m.w)
+        if (m.size !== undefined && Number.isFinite(Number(m.size))) patch.size = Number(m.size)
+        setElRef.current(String(m.key), patch)
+      }
       if (m.type === 'camrhia-gallery-slot' && typeof m.key === 'string') setSlot(String(m.key))
       if (m.type === 'camrhia-gallery-setcover' && m.id) pickRef.current(String(m.id))
       if (m.type === 'camrhia-gallery-text' && typeof m.key === 'string') setElRef.current(String(m.key), { text: String(m.text ?? '').slice(0, 60) })

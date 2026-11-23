@@ -584,6 +584,42 @@ export default function GalleryViewPage() {
     tag.style.cssText = 'position:absolute;left:-1.5px;bottom:100%;margin-bottom:3px;background:#1f1a14;color:#fff;font:600 11px/1 system-ui,sans-serif;padding:4px 7px;border-radius:4px;white-space:nowrap'
     box.appendChild(tag)
     document.body.appendChild(box)
+    const hnd: HTMLDivElement[] = []
+    const mkH = (kind: string, css: string) => {
+      const d = document.createElement('div')
+      d.dataset.h = kind
+      d.style.cssText = 'position:absolute;pointer-events:auto;display:none;background:#fff;border:1.5px solid #b08d57;box-shadow:0 2px 6px rgba(0,0,0,.25);' + css
+      box.appendChild(d)
+      hnd.push(d)
+      d.addEventListener('mousedown', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const el = curEl
+        if (!el) return
+        const sc = (el.closest('svg') as SVGSVGElement | null)?.getScreenCTM?.()?.a || 1
+        const w0 = el.getBoundingClientRect().width / sc
+        const s0 = parseFloat(getComputedStyle(el).fontSize) || 38
+        const x0 = e.clientX
+        const sign = kind.includes('w') ? -1 : 1
+        const mv = (ev: MouseEvent) => {
+          const dxu = ((ev.clientX - x0) * sign) / sc
+          const nw = Math.min(420, Math.max(14, w0 + 2 * dxu))
+          const patch: { type: string; key: string; w: number; size?: number } = { type: 'camrhia-gallery-box', key: 'title', w: Math.round(nw * 10) / 10 }
+          if (kind.length === 2) patch.size = Math.round(Math.min(160, Math.max(8, s0 * (nw / w0))) * 10) / 10
+          window.parent?.postMessage(patch, '*')
+        }
+        const up = () => { window.removeEventListener('mousemove', mv, true); window.removeEventListener('mouseup', up, true) }
+        window.addEventListener('mousemove', mv, true)
+        window.addEventListener('mouseup', up, true)
+      })
+    }
+    const corner = 'width:13px;height:13px;border-radius:50%;'
+    mkH('nw', corner + 'left:-7px;top:-7px;cursor:nwse-resize')
+    mkH('ne', corner + 'right:-7px;top:-7px;cursor:nesw-resize')
+    mkH('sw', corner + 'left:-7px;bottom:-7px;cursor:nesw-resize')
+    mkH('se', corner + 'right:-7px;bottom:-7px;cursor:nwse-resize')
+    mkH('w', 'left:-5px;top:calc(50% - 15px);width:9px;height:30px;border-radius:5px;cursor:ew-resize')
+    mkH('e', 'right:-5px;top:calc(50% - 15px);width:9px;height:30px;border-radius:5px;cursor:ew-resize')
     const hit = (t: EventTarget | null) => {
       const el = (t as HTMLElement | null)?.closest?.('[data-gk],h1') as HTMLElement | null
       if (!el) return null
@@ -607,9 +643,11 @@ export default function GalleryViewPage() {
     }
     rafId = requestAnimationFrame(follow)
     const over = (e: MouseEvent) => {
+      if (box.contains(e.target as Node)) return
       const h = hit(e.target)
       curEl = h ? h.el : null
       if (!h) { box.style.display = 'none'; return }
+      hnd.forEach((x) => { x.style.display = h.el.hasAttribute('data-box') ? 'block' : 'none' })
       const r = h.el.getBoundingClientRect()
       box.style.display = 'block'
       box.style.left = r.left + 'px'
@@ -680,7 +718,46 @@ export default function GalleryViewPage() {
       ta.focus()
       ta.select()
     }
+    const openBox = (target: HTMLElement) => {
+      closeEditor()
+      const svg = target.closest('svg') as SVGSVGElement | null
+      const sc = svg?.getScreenCTM?.()?.a ?? 1
+      const cs = getComputedStyle(target)
+      const r = target.getBoundingClientRect()
+      const fsPx = (parseFloat(cs.fontSize) || 16) * sc
+      const ta = document.createElement('textarea')
+      ta.className = 'cam-edit'
+      ta.value = target.textContent ?? ''
+      ta.maxLength = 80
+      ta.spellcheck = false
+      ta.style.cssText = `position:absolute;z-index:2147483646;box-sizing:border-box;margin:0;padding:0;border:0;background:transparent;resize:none;overflow:hidden;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:center;color:${cs.color};caret-color:${cs.color};font-family:${cs.fontFamily};font-weight:${cs.fontWeight};font-style:${cs.fontStyle};font-size:${fsPx}px;line-height:1.12;width:${r.width}px;text-shadow:none`
+      const cy = r.top + r.height / 2
+      ta.style.left = r.left + window.scrollX + 'px'
+      const fit = () => {
+        ta.style.height = '0px'
+        const h = Math.max(ta.scrollHeight, fsPx * 1.12)
+        ta.style.height = h + 'px'
+        ta.style.top = cy - h / 2 + window.scrollY + 'px'
+      }
+      document.body.appendChild(ta)
+      fit()
+      const orig = ta.value
+      const send = (t: string) => window.parent?.postMessage({ type: 'camrhia-gallery-text', key: 'title', text: t }, '*')
+      target.style.visibility = 'hidden'
+      hidden = target
+      hiddenMore = []
+      let finished = false
+      ta.addEventListener('input', () => { fit(); send(ta.value) })
+      ta.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') { ev.preventDefault(); finished = true; send(orig); closeEditor() }
+      })
+      ta.addEventListener('blur', () => { if (!finished) { finished = true; closeEditor() } })
+      editor = ta
+      ta.focus()
+      ta.setSelectionRange(ta.value.length, ta.value.length)
+    }
     const openEditor = (target: HTMLElement, k: string) => {
+      if (target.hasAttribute('data-box')) { openBox(target); return }
       if (!['title', 'title2', 'brand', 'count', 'initials', 'moment'].includes(k) && !/^x\d+$/.test(k)) return
       const key = k === 'title2' ? 'title' : k
       const orig = k === 'moment' ? (target.textContent ?? '') : textRef.current[key] ?? ''
@@ -798,7 +875,7 @@ export default function GalleryViewPage() {
     document.addEventListener('mouseover', over, true)
     document.addEventListener('scroll', hide, true)
     document.addEventListener('click', click, true)
-    const away = (e: PointerEvent) => { if (!hit(e.target)) window.parent?.postMessage({ type: 'camrhia-gallery-dismiss' }, '*') }
+    const away = (e: PointerEvent) => { if (!box.contains(e.target as Node) && !hit(e.target)) window.parent?.postMessage({ type: 'camrhia-gallery-dismiss' }, '*') }
     document.addEventListener('pointerdown', away, true)
     const repaint = new MutationObserver((ms) => {
       const svgs = new Set<SVGElement>()
@@ -1409,6 +1486,9 @@ export default function GalleryViewPage() {
         const second = slotPh('s0', data.photos.find((p) => p.id !== cover.id && p.web))
         const lines = String(coverTitle).split(/\s*(&|\band\b|\+)\s*/i).map((x) => x.trim()).filter(Boolean).map((x) => (/^(and)$/i.test(x) ? '&' : x === '+' ? '&' : x))
         const ts: CSSProperties = { ...headStyle, fontWeight: 400, textTransform: 'none', fontStyle: 'normal', letterSpacing: 0, fill: 'currentColor', color: pal.ink, pointerEvents: 'auto' }
+        const tBoxW = (el as Record<string, { w?: number } | undefined>).title?.w
+        const boxW = typeof tBoxW === 'number' && Number.isFinite(tBoxW) ? Math.min(420, Math.max(14, tBoxW)) : 100
+        const tLines = String(coverTitle).includes('\n') ? String(coverTitle).split('\n') : lines
         return (
           <div className="relative grid w-full overflow-hidden" style={{ aspectRatio: '2 / 1', containerType: 'inline-size', gridTemplateColumns: '1fr minmax(84px, 13%) 1fr', background: pal.bg }}>
             <div className="relative overflow-hidden" style={{ background: pal.line }}><div className="absolute inset-0">{imgEl}</div></div>
@@ -1418,9 +1498,11 @@ export default function GalleryViewPage() {
             </div>
             <h1 className="sr-only">{coverTitle}</h1>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 450" style={{ pointerEvents: 'none' }} aria-hidden="true">
-              {lines.map((l, i) => (
-                <text key={i} data-gk="title" x="451" y={[155.3, 206.2, 252.6][i] ?? 202 + (i - (lines.length - 1) / 2) * 51} textAnchor="middle" style={{ ...ts, fontSize: [35.1, 39.9, 39.5][i] ?? 38, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={l === '&' ? 26 : Math.min(86, 20.7 * l.length)} lengthAdjust="spacingAndGlyphs">{l}</text>
-              ))}
+              <foreignObject x={201} y={40} width={500} height={330} style={{ pointerEvents: 'none', overflow: 'visible' }}>
+                <div style={{ width: 500, height: 330, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                  <div data-gk="title" data-box="1" style={{ width: boxW, textAlign: 'center', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.12, fontSize: 38, fontWeight: 400, fontFamily: "'Libre Caslon Display', Georgia, serif", color: pal.ink, pointerEvents: 'auto' }}>{tLines.join('\n')}</div>
+                </div>
+              </foreignObject>
               {coverSub && <text data-gk="brand" x="450.5" y="290.9" textAnchor="middle" style={{ ...ts, textTransform: 'uppercase', fontWeight: 400, fontSize: 6.8, fontFamily: "'Libre Caslon Display', Georgia, serif" }} textLength={Math.min(89, 7.42 * String(coverSub).length)} lengthAdjust="spacing">{String(coverSub).toUpperCase()}</text>}
             </svg>
           </div>
