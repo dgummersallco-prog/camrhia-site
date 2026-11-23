@@ -82,7 +82,7 @@ const SUGG = ['Weddings', 'Engagements', 'Families', 'Seniors', 'Portraits', 'Ne
 
 function Row({ label, on, onClick, controls, alts, children }: { label: string; on: boolean; onClick: () => void; controls?: ReactNode; alts?: { n: number; on: boolean; click: () => void }[]; children: ReactNode }) {
   return (
-    <div className={'relative ' + (on ? 'z-10 ring-2 ring-inset ring-twilight' : '')}>
+    <div className={'relative z-[15] ' + (on ? 'ring-2 ring-inset ring-twilight' : '')}>
       <div className="absolute right-full top-4 mr-1 flex items-center">
         <button type="button" onClick={onClick} className={'whitespace-nowrap rounded-full border px-3 py-1 font-fraunces text-sm shadow-sm transition ' + (on ? 'border-twilight bg-twilight text-white' : 'border-black/15 bg-white text-ink hover:border-twilight')}>{label}</button>
         <span className="h-px w-4 bg-black/30" />
