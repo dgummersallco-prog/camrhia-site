@@ -739,6 +739,7 @@ export default function GalleryViewPage() {
       closeEditor()
       box.style.display = 'none'
       curEl = null
+      selEl = null
       window.parent?.postMessage({ type: 'camrhia-gallery-delete', key: k }, '*')
     })
     const corner = 'width:13px;height:13px;border-radius:50%;'
@@ -757,6 +758,8 @@ export default function GalleryViewPage() {
       return NAMES[k] ? { el, k } : null
     }
     let curEl: HTMLElement | null = null
+    let selEl: HTMLElement | null = null
+    let selK = ''
     const rectOf = (el: HTMLElement) => {
       const k = el.getAttribute('data-gk')
       let parts: HTMLElement[] = [el]
@@ -802,22 +805,25 @@ export default function GalleryViewPage() {
     const over = (e: MouseEvent) => {
       if (editor || box.contains(e.target as Node)) return
       const h = hit(e.target)
-      curEl = h ? h.el : null
-      if (!h) { box.style.display = 'none'; return }
-      const isPhoto = h.el.hasAttribute('data-photo')
-      hnd.forEach((x) => { const hk = x.dataset.h || ''; x.style.display = h.el.hasAttribute('data-box') && !(h.el.hasAttribute('data-nowidth') && hk.length === 1) && (isPhoto || (hk !== 'n' && hk !== 's')) ? 'block' : 'none' })
-      const r = rectOf(h.el)
+      if (!h) { if (selEl && selEl.isConnected) showBoxFor(selEl, selK); else { box.style.display = 'none'; curEl = null }; return }
+      showBoxFor(h.el, h.k)
+    }
+    const showBoxFor = (el: HTMLElement, k: string) => {
+      curEl = el
+      const isPhoto = el.hasAttribute('data-photo')
+      hnd.forEach((x) => { const hk = x.dataset.h || ''; x.style.display = el.hasAttribute('data-box') && !(el.hasAttribute('data-nowidth') && hk.length === 1) && (isPhoto || (hk !== 'n' && hk !== 's')) ? 'block' : 'none' })
+      const r = rectOf(el)
       box.style.display = 'block'
       box.style.left = r.left + 'px'
       box.style.top = r.top + 'px'
       box.style.width = r.width + 'px'
       box.style.height = r.height + 'px'
-      tag.textContent = isPhoto ? 'Photo · drag to move' : NAMES[h.k] + ' · click to edit'
+      tag.textContent = isPhoto ? 'Photo · drag to move' : NAMES[k] + ' · click to edit'
       const flip = r.top < 28
       tag.style.bottom = flip ? 'auto' : '100%'
       tag.style.top = flip ? '100%' : 'auto'
     }
-    const hide = () => { box.style.display = 'none'; curEl = null }
+    const hide = () => { if (selEl && selEl.isConnected) return; box.style.display = 'none'; curEl = null }
     let editor: HTMLInputElement | HTMLTextAreaElement | null = null
     let hidden: HTMLElement | null = null
     let hiddenMore: HTMLElement[] = []
@@ -1039,8 +1045,14 @@ export default function GalleryViewPage() {
     document.addEventListener('mouseover', over, true)
     document.addEventListener('scroll', hide, true)
     document.addEventListener('click', click, true)
-    const away = (e: PointerEvent) => { if (!box.contains(e.target as Node) && !hit(e.target)) window.parent?.postMessage({ type: 'camrhia-gallery-dismiss' }, '*') }
+    const away = (e: PointerEvent) => {
+      const ht = hit(e.target)
+      if (!box.contains(e.target as Node) && !ht) { selEl = null; box.style.display = 'none'; curEl = null; window.parent?.postMessage({ type: 'camrhia-gallery-dismiss' }, '*') }
+      else if (ht && ht.el !== selEl) selEl = null
+    }
     document.addEventListener('pointerdown', away, true)
+    const selDown = (e: MouseEvent) => { if (editor || box.contains(e.target as Node)) return; const h = hit(e.target); if (h) { selEl = h.el; selK = h.k } }
+    document.addEventListener('mousedown', selDown, true)
     const repaint = new MutationObserver((ms) => {
       const svgs = new Set<SVGElement>()
       for (const m of ms) {
@@ -1106,6 +1118,7 @@ export default function GalleryViewPage() {
       document.removeEventListener('scroll', hide, true)
       document.removeEventListener('click', click, true)
       document.removeEventListener('pointerdown', away, true)
+      document.removeEventListener('mousedown', selDown, true)
       repaint.disconnect()
       box.remove()
     }
