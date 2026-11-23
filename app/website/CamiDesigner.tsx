@@ -195,6 +195,10 @@ export default function CamiDesigner() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [pick, setPick] = useState<Pick | null>(null)
+  const [leftTab, setLeftTab] = useState<'design' | 'setup'>('design')
+  const [slot, setSlot] = useState<{ key: string; idx: number } | null>(null)
+  const [lib, setLib] = useState<{ id: string; storage_path: string }[]>([])
+  const [libBusy, setLibBusy] = useState(false)
   const [ptext, setPtext] = useState('')
   const [phex, setPhex] = useState('')
   const frameRef = useRef<HTMLIFrameElement>(null)
@@ -261,9 +265,16 @@ export default function CamiDesigner() {
     function onMsg(e: MessageEvent) {
       const d = e.data
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
         commitRef.current?.((n) => {
           const s = (n.site_settings = n.site_settings ?? {})
+          if (d.action === 'size') {
+            const sc: Record<string, number> = { ...(s.secScale ?? {}) }
+            sc[d.key] = Math.max(40, Math.min(130, (Number(sc[d.key]) || 100) + Number(d.delta || 0)))
+            s.secScale = sc
+            return
+          }
           if (d.action === 'hide') {
             const h: string[] = Array.isArray(s.hiddenSecs) ? s.hiddenSecs : []
             if (!h.includes(d.key)) s.hiddenSecs = [...h, d.key]
@@ -611,6 +622,41 @@ export default function CamiDesigner() {
     })()
   }
 
+  async function loadLib() {
+    const sb = supabase
+    if (!sb || !form) return
+    const { data } = await sb.from('website_library').select('id, storage_path').eq('photographer_id', form.id).order('created_at', { ascending: false })
+    setLib((data ?? []) as { id: string; storage_path: string }[])
+  }
+  useEffect(() => { if (slot) void loadLib() }, [slot])
+  async function addLib(files: FileList | null) {
+    const sb = supabase
+    if (!files || !form || !sb || !slot) return
+    setLibBusy(true)
+    try {
+      const section = slot.key === 'about' ? 'about' : slot.key === 'testimonials' ? 'testimonials' : 'hero'
+      let i = 0
+      for (const f of Array.from(files)) {
+        const v = await makeVersions(f)
+        const path = `${form.id}/lib_${Date.now()}_${i++}.jpg`
+        const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
+        if (up.error) throw up.error
+        const ins = await sb.from('website_library').insert({ photographer_id: form.id, storage_path: path, section })
+        if (ins.error) { await sb.storage.from('portfolio').remove([path]); throw ins.error }
+      }
+      await loadLib()
+    } catch (e) {
+      setErr((e as { message?: string })?.message ?? 'Upload failed.')
+    } finally {
+      setLibBusy(false)
+    }
+  }
+  function chooseSlot(path: string | null) {
+    if (!slot) return
+    const id = slot.key + ':' + slot.idx
+    void commit((n) => { const s = (n.site_settings = n.site_settings ?? {}); const sp: Record<string, string> = { ...(s.slotPics ?? {}) }; if (path) sp[id] = path; else delete sp[id]; s.slotPics = sp })
+    setSlot(null)
+  }
   async function addPhotos(files: FileList | null) {
     const sb = supabase
     if (!files || !form || !sb) return
@@ -979,8 +1025,12 @@ export default function CamiDesigner() {
           <button type="button" onClick={() => { setReview(true); setSetupFinished(false) }} className="mx-5 mb-2 mt-3 self-start rounded-full border border-black/15 bg-white px-4 py-1.5 text-xs font-medium text-ink transition hover:border-twilight">← Back to walkthrough</button>
           {kitNow.done && (
             <div className="min-h-0 flex-1 overflow-y-auto border-b border-black/10 bg-[#f1e9e0] px-5 py-4">
-              <p className="font-fraunces text-lg font-semibold text-ink">Your setup</p>
-              {(() => {
+              <div className="inline-flex rounded-full border border-black/10 bg-white p-1">
+                {([['design', 'Design tools'], ['setup', 'Your setup']] as const).map(([k, t]) => (
+                  <button key={k} type="button" onClick={() => setLeftTab(k)} className={'rounded-full px-4 py-1.5 text-sm transition ' + (leftTab === k ? 'bg-[#8C6B3F] font-medium text-white' : 'text-ink hover:bg-black/5')}>{t}</button>
+                ))}
+              </div>
+              {leftTab === 'setup' && (() => {
                 const lab = 'mt-3 text-[11px] font-semibold uppercase tracking-wider text-ink-soft'
                 const pill = 'rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-ink transition hover:border-twilight'
                 const x0 = ((form.site_settings ?? {}) as Record<string, any>)
@@ -988,7 +1038,7 @@ export default function CamiDesigner() {
                 const num = (i: number) => <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-twilight text-[11px] font-semibold text-white">{i + 1}</span>
                 return (
                   <>
-                    {(kitNow.layouts ?? []).length > 0 && (
+                    {curPage === 'home' && (kitNow.layouts ?? []).length > 0 && (
                       <div><p className={lab}>Layouts</p><div className="mt-1.5 flex flex-wrap gap-1.5">
                         {(kitNow.layouts as string[]).map((key, i) => <button key={key} type="button" className={numPill(Number(kitNow.layout_idx ?? 0) === i)} onClick={() => { void commit((n) => applyKitOps(n, { layout: key })) }}>{num(i)}{STYLES.find((q) => q.key === key)?.name ?? key}</button>)}
                       </div></div>
@@ -1022,11 +1072,11 @@ export default function CamiDesigner() {
                       </div>
                     )}
                     {Object.entries((kitNow.designAlts ?? {}) as Record<string, { label: string; items: { key: string; name: string }[] }>).filter(([field]) => {
-                      const PG: Record<string, string> = { galleries: 'galleries', photos: 'galleries', book: 'book', about_page: 'about', pricing_page: 'pricing', blog_list: 'blog', blog_post: 'blog' }
+                      const PG: Record<string, string> = { galleries: 'galleries', photos: 'galleries', book: 'booking', about_page: 'about', pricing_page: 'pricing', blog_list: 'blog', blog_post: 'blog' }
                       if (PG[field]) return PG[field] === curPage
                       const BK: Record<string, string> = { nav: 'explore', galleries_section: 'galsec', about_section: 'about', pricing_section: 'pricesec', testimonials: 'testimonials', faq: 'faq', social: 'social', contact: 'contact' }
                       const st: any = stNow
-                      const lst: string[] = curPage === 'home' ? st.home : curPage === 'about' ? st.about : curPage === 'galleries' ? st.galleries : curPage === 'book' ? (st.book ?? []) : ((st.extra ?? []).find((e: any) => e.id === curPage)?.sections ?? [])
+                      const lst: string[] = curPage === 'home' ? st.home : curPage === 'about' ? st.about : curPage === 'galleries' ? st.galleries : curPage === 'booking' ? (st.book ?? []) : ((st.extra ?? []).find((e: any) => e.id === curPage)?.sections ?? [])
                       if (BK[field] === 'about' && curPage !== 'home') return false
                       return (lst ?? []).includes(BK[field])
                     }).map(([field, d]) => (
@@ -1113,6 +1163,33 @@ export default function CamiDesigner() {
             </div>
           ) : (
             <p className="p-8 text-center text-sm text-ink-soft">Your website link isn&apos;t set up yet. Finish setting up your portfolio in the app first.</p>
+          )}
+          {slot && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/30 p-4" onClick={() => setSlot(null)}>
+              <div onClick={(e) => e.stopPropagation()} className="max-h-[85%] w-full max-w-md overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
+                <div className="flex items-center justify-between border-b border-[#EFE4D8] pb-2">
+                  <p className="font-fraunces text-lg font-semibold text-ink">Choose a photo</p>
+                  <button type="button" aria-label="Close" onClick={() => setSlot(null)} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {lib.map((ph) => (
+                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} className="relative aspect-[4/5] overflow-hidden rounded-lg border border-[#E4D3B6] transition hover:ring-2 hover:ring-[#B08D57]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={BASE + ph.storage_path} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                  <label className="flex aspect-[4/5] cursor-pointer items-center justify-center rounded-lg border border-dashed border-[#B08D57] bg-white/60 text-center text-xs text-[#6B4A2B] hover:bg-white">
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { void addLib(e.target.files); e.target.value = '' }} />
+                    {libBusy ? 'Uploading…' : '+ Add photos'}
+                  </label>
+                </div>
+                {lib.length === 0 && !libBusy && <p className="mt-3 text-xs text-ink-soft">No website photos yet. Add some here and they will also show up in Website photos.</p>}
+                <div className="mt-4 flex gap-2">
+                  <button type="button" className="rounded-full border border-[#B08D57] bg-transparent px-4 py-2 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]" onClick={() => chooseSlot(null)}>Use default</button>
+                  <button type="button" className="rounded-full bg-[#8C6B3F] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90" onClick={() => setSlot(null)}>Done</button>
+                </div>
+              </div>
+            </div>
           )}
           {pick && (
             <div className="absolute z-30 max-h-[85%] overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ left: pick.left, top: pick.top, width: 340, background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>

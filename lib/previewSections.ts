@@ -13,7 +13,7 @@ export function installPreviewSections(): () => void {
 
   const bar = document.createElement('div')
   bar.id = 'cam-sec-bar'
-  bar.innerHTML = '<button data-a="drag" style="cursor:grab">Drag</button><button data-a="up">Up</button><button data-a="down">Down</button><button data-a="hide">Hide</button>'
+  bar.innerHTML = '<button data-a="drag" style="cursor:grab">Drag</button><button data-a="up">Up</button><button data-a="down">Down</button><button data-a="smaller">Smaller</button><button data-a="larger">Larger</button><button data-a="hide">Hide</button>'
   document.body.appendChild(bar)
   const line = document.createElement('div')
   line.id = 'cam-sec-line'
@@ -56,6 +56,7 @@ export function installPreviewSections(): () => void {
     const a = b.dataset.a
     if (a === 'drag') return
     const key = cur.dataset.sec as string
+    if (a === 'smaller' || a === 'larger') { post({ action: 'size', key, delta: a === 'smaller' ? -10 : 10 }); return }
     const o = ord()
     const i = o.indexOf(key)
     if (a === 'hide') { post({ action: 'hide', key }); show(null); return }
@@ -108,6 +109,22 @@ export function installPreviewSections(): () => void {
     if (to !== from) post({ action: 'move', key: dragKey, order: o, to })
   }
 
+  const photoEls = (sec: HTMLElement) => Array.from(sec.querySelectorAll<HTMLElement>('img, svg[preserveAspectRatio]')).filter((x) => x.offsetWidth > 60 && x.offsetHeight > 60)
+  const onPhotoClick = (e: MouseEvent) => {
+    const t = e.target as HTMLElement | null
+    if (!t || !t.closest || bar.contains(t)) return
+    const sec = t.closest('[data-sec]') as HTMLElement | null
+    if (!sec) return
+    const isText = !!t.closest('[class^="el-"], [class*=" el-"]')
+    if (t.closest('a')) e.preventDefault()
+    if (isText) return
+    const list = photoEls(sec)
+    const hit = document.elementsFromPoint(e.clientX, e.clientY).find((x) => list.includes(x as HTMLElement))
+    if (!hit) return
+    e.preventDefault(); e.stopPropagation()
+    post({ action: 'photo', key: sec.dataset.sec as string, idx: list.indexOf(hit as HTMLElement) })
+  }
+  document.addEventListener('click', onPhotoClick, true)
   document.addEventListener('mousemove', onMove)
   document.addEventListener('mouseleave', onLeave)
   window.addEventListener('scroll', onScroll, true)
@@ -116,6 +133,7 @@ export function installPreviewSections(): () => void {
   document.addEventListener('pointermove', onDragMove)
   document.addEventListener('pointerup', onUp)
   return () => {
+    document.removeEventListener('click', onPhotoClick, true)
     document.removeEventListener('mousemove', onMove)
     document.removeEventListener('mouseleave', onLeave)
     window.removeEventListener('scroll', onScroll, true)

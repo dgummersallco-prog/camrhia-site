@@ -193,6 +193,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: t.headWeight ?? 500, letterSpacing: '0.01em' }
 
   // Per-section look: background, text color and fonts chosen in the designer.
+  const secScale = (((r as any).site_settings?.secScale ?? {}) as Record<string, number>)
+  const slotPics = (((r as any).site_settings?.slotPics ?? {}) as Record<string, string>)
+  const curSec = { k: '' }
   const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string; title?: string; titleFont?: string }>)
   const famOf = (k?: string) => (k && FONT_OPTIONS[k] ? FONT_OPTIONS[k].family : null)
   const hexOk = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
@@ -215,7 +218,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const pickPics = (n: number): string[] => {
     const a = [...galleryCovers, ...heroUrls].filter(Boolean)
     const src: string[] = a
-    return src.length === 0 ? [] : Array.from({ length: n }, (_, i) => src[i % src.length])
+    const base = src.length === 0 ? [] : Array.from({ length: n }, (_, i) => src[i % src.length])
+    const sk = curSec.k
+    if (!sk || !Object.keys(slotPics).some((x) => x.startsWith(sk + ':'))) return base
+    return Array.from({ length: n }, (_, i) => (slotPics[sk + ':' + i] ? ((photoUrl(slotPics[sk + ':' + i]) as string) || '') : (base[i] ?? '')))
   }
   const aboutText = (n: number) => (t.text.about ?? r.bio ?? '').toString().slice(0, n)
   const galleryCover = (g: any) => photoUrl((g.photos.find((x: any) => x.id === g.cover_photo_id) ?? g.photos[0])?.storage_path)
@@ -1765,6 +1771,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   }, [isPreview, galleries])
 
   const doorPic = (k: string, i: number): string | null => {
+    const ov = slotPics['explore:' + i]
+    if (ov) { const u = photoUrl(ov) as string | null; if (u) return u }
     const own = k === 'galleries' ? (galleries[0] ? galleryCover(galleries[0] as any) : null) : k === 'about' ? ((aboutPhoto as any) || null) : null
     return (own as string | null) || pickPics(3)[i] || null
   }
@@ -4046,7 +4054,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
 
         {visible.map((k, i) => (
-          <React.Fragment key={k}>{((hid: boolean) => isPreview ? (<div data-sec={k} style={hid ? { display: 'none' } : undefined}>{hid ? null : renderSection(k, i % 2 === 1)}</div>) : hid ? null : renderSection(k, i % 2 === 1))(((r as any).site_settings?.hiddenSecs ?? []).includes(k))}</React.Fragment>
+          <React.Fragment key={k}>{((hid: boolean) => { curSec.k = k; const sc = Number(secScale[k]); const zs = sc > 0 && sc !== 100 ? ({ zoom: sc / 100 } as React.CSSProperties) : undefined; return isPreview ? (<div data-sec={k} style={hid ? { display: 'none' } : zs}>{hid ? null : renderSection(k, i % 2 === 1)}</div>) : hid ? null : zs ? (<div style={zs}>{renderSection(k, i % 2 === 1)}</div>) : renderSection(k, i % 2 === 1) })(((r as any).site_settings?.hiddenSecs ?? []).includes(k))}</React.Fragment>
         ))}
 
         {page === 'galleries' && visible.length > 0 && (
