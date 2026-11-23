@@ -124,7 +124,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     try { const raw = window.localStorage.getItem('camriStep2'); if (raw !== null) { const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v <= 3) return v } } catch {}
     return startStep ?? 0
   })
-  const [layouts, setLayouts] = useState<string[]>(initial?.layouts ?? [])
+  const [layouts, setLayouts] = useState<string[]>(() => { const d = draftGet('layouts'); return Array.isArray(d) && d.length > 0 ? d : (initial?.layouts ?? []) })
   const [startIdx, setStartIdx] = useState(0)
   const si = Math.min(startIdx, Math.max(layouts.length - 1, 0))
   const [heroList, setHeroList] = useState<string[]>([])
@@ -193,7 +193,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   }
 
   usePersist(() => { try { window.localStorage.setItem('camriStep2', String(step)) } catch {} }, [step])
-  usePersist(() => { try { window.localStorage.setItem('camriDraft2', JSON.stringify({ struct, designs })) } catch {} }, [struct, designs])
+  usePersist(() => { try { window.localStorage.setItem('camriDraft2', JSON.stringify({ struct, designs, layouts })) } catch {} }, [struct, designs, layouts])
 
   return (
     <div className="mx-auto w-full max-w-[1400px] py-6">
