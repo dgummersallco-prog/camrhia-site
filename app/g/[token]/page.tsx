@@ -591,26 +591,42 @@ export default function GalleryViewPage() {
       d.style.cssText = 'position:absolute;pointer-events:auto;display:none;background:#fff;border:1.5px solid #b08d57;box-shadow:0 2px 6px rgba(0,0,0,.25);' + css
       box.appendChild(d)
       hnd.push(d)
-      d.addEventListener('mousedown', (e) => {
+      d.addEventListener('pointerdown', (e) => {
         e.preventDefault()
         e.stopPropagation()
         const el = curEl
         if (!el) return
+        try { d.setPointerCapture(e.pointerId) } catch {}
         const sc = (el.closest('svg') as SVGSVGElement | null)?.getScreenCTM?.()?.a || 1
-        const w0 = el.getBoundingClientRect().width / sc
+        const r0 = el.getBoundingClientRect()
+        const cx = r0.left + r0.width / 2
+        const w0 = r0.width / sc
         const s0 = parseFloat(getComputedStyle(el).fontSize) || 38
-        const x0 = e.clientX
-        const sign = kind.includes('w') ? -1 : 1
-        const mv = (ev: MouseEvent) => {
-          const dxu = ((ev.clientX - x0) * sign) / sc
-          const nw = Math.min(420, Math.max(14, w0 + 2 * dxu))
-          const patch: { type: string; key: string; w: number; size?: number } = { type: 'camrhia-gallery-box', key: 'title', w: Math.round(nw * 10) / 10 }
-          if (kind.length === 2) patch.size = Math.round(Math.min(160, Math.max(8, s0 * (nw / w0))) * 10) / 10
-          window.parent?.postMessage(patch, '*')
+        let last: { w: number; size?: number } | null = null
+        let raf = 0
+        const apply = () => {
+          raf = 0
+          if (!last) return
+          el.style.width = last.w + 'px'
+          if (last.size !== undefined) el.style.setProperty('font-size', last.size + 'px', 'important')
         }
-        const up = () => { window.removeEventListener('mousemove', mv, true); window.removeEventListener('mouseup', up, true) }
-        window.addEventListener('mousemove', mv, true)
-        window.addEventListener('mouseup', up, true)
+        const mv = (ev: PointerEvent) => {
+          const nw = Math.min(420, Math.max(14, (2 * Math.abs(ev.clientX - cx)) / sc))
+          const w = Math.round(nw * 10) / 10
+          last = kind.length === 2 ? { w, size: Math.round(Math.min(160, Math.max(8, s0 * (nw / w0))) * 10) / 10 } : { w }
+          if (!raf) raf = requestAnimationFrame(apply)
+        }
+        const up = () => {
+          d.removeEventListener('pointermove', mv)
+          d.removeEventListener('pointerup', up)
+          d.removeEventListener('pointercancel', up)
+          if (raf) cancelAnimationFrame(raf)
+          apply()
+          if (last) window.parent?.postMessage({ type: 'camrhia-gallery-box', key: 'title', w: last.w, size: last.size }, '*')
+        }
+        d.addEventListener('pointermove', mv)
+        d.addEventListener('pointerup', up)
+        d.addEventListener('pointercancel', up)
       })
     }
     const corner = 'width:13px;height:13px;border-radius:50%;'
@@ -643,7 +659,7 @@ export default function GalleryViewPage() {
     }
     rafId = requestAnimationFrame(follow)
     const over = (e: MouseEvent) => {
-      if (box.contains(e.target as Node)) return
+      if (editor || box.contains(e.target as Node)) return
       const h = hit(e.target)
       curEl = h ? h.el : null
       if (!h) { box.style.display = 'none'; return }
@@ -720,6 +736,7 @@ export default function GalleryViewPage() {
     }
     const openBox = (target: HTMLElement) => {
       closeEditor()
+      hide()
       const svg = target.closest('svg') as SVGSVGElement | null
       const sc = svg?.getScreenCTM?.()?.a ?? 1
       const cs = getComputedStyle(target)
@@ -1016,7 +1033,8 @@ export default function GalleryViewPage() {
     if (i > 0 && m === prev) return null
     const name = m ? (m in momentText ? momentText[m] : momentMeta.find((x) => x.id === m)?.name) : null
     if (name === null || name === undefined) return null
-    const mEl = (el as Record<string, { align?: string; lineColor?: string } | undefined>).moment
+    const elR = el as Record<string, { align?: string; lineColor?: string } | undefined>
+    const mEl: { align?: string; lineColor?: string } = { ...(elR.moment ?? {}), ...(m ? (elR['s_' + m] ?? {}) : {}) }
     const al = mEl?.align === 'center' || mEl?.align === 'right' ? mEl.align : 'left'
     const lc = mEl?.lineColor && /^#[0-9a-fA-F]{6}$/.test(mEl.lineColor) ? mEl.lineColor : null
     if (m && momentMeta.find((x) => x.id === m)?.line) {

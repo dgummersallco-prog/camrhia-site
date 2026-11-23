@@ -398,7 +398,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
 
   const ring = 'border-twilight ring-2 ring-twilight'
   const head = 'text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft'
-  const cur = pick ? d.el?.[pick.key] : undefined
+  const ek = pick ? (pick.key === 'moment' && pick.mid && /^[\w-]{1,64}$/.test(pick.mid) ? 's_' + pick.mid : pick.key) : ''
+  const cur = pick ? d.el?.[ek] : undefined
   return (
     <div ref={rootRef} className="relative flex gap-4" style={{ height: `calc(100vh - ${topOffset ?? 0}px - 16px)` }}>
       <PortalTo host={leftHost}>
@@ -565,23 +566,23 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                     </button>
                     {fontOpen && (
                       <div className="mt-1 max-h-56 overflow-y-auto rounded-lg border border-line bg-white">
-                        <button type="button" onClick={() => { setEl(pick.key, { font: undefined }); setFontOpen(false) }} className="block w-full px-2 py-1.5 text-left text-sm text-ink hover:bg-paper">Gallery default</button>
+                        <button type="button" onClick={() => { setEl(ek, { font: undefined }); setFontOpen(false) }} className="block w-full px-2 py-1.5 text-left text-sm text-ink hover:bg-paper">Gallery default</button>
                         {FONT_LIST.map((f) => (
-                          <button key={f.k} type="button" onClick={() => { setEl(pick.key, { font: f.k }); setFontOpen(false) }} className={'block w-full px-2 py-1.5 text-left text-base text-ink hover:bg-paper ' + (cur?.font === f.k ? 'bg-paper' : '')} style={{ fontFamily: f.family }}>{f.label}</button>
+                          <button key={f.k} type="button" onClick={() => { setEl(ek, { font: f.k }); setFontOpen(false) }} className={'block w-full px-2 py-1.5 text-left text-base text-ink hover:bg-paper ' + (cur?.font === f.k ? 'bg-paper' : '')} style={{ fontFamily: f.family }}>{f.label}</button>
                         ))}
                       </div>
                     )}
                   </div>
                   <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-14 shrink-0">Size {cur?.size ?? pick.size}</span>
-                    <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(pick.key, { size: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
+                    <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(ek, { size: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
                   </label>
                   {pick.key === 'title' && eff.cover === 'bigtype' && (
                     <ColorInput label="Color over the photo" value={eff.el?.titlein?.color ?? '#FFFFFF'} onChange={(v) => setEl('titlein', { color: v })} />
                   )}
                   <div className="flex items-end gap-3">
-                    <div className="min-w-0 flex-1"><ColorInput label="Color" value={cur?.color ?? pick.color} onChange={(v) => setEl(pick.key, { color: v })} /></div>
+                    <div className="min-w-0 flex-1"><ColorInput label="Color" value={cur?.color ?? pick.color} onChange={(v) => setEl(ek, { color: v })} /></div>
                     <label className="flex shrink-0 items-center gap-1.5 pb-3 text-xs text-ink-soft">
-                      <input type="checkbox" checked={cur?.bold ?? pick.bold} onChange={(e) => setEl(pick.key, { bold: e.target.checked })} />
+                      <input type="checkbox" checked={cur?.bold ?? pick.bold} onChange={(e) => setEl(ek, { bold: e.target.checked })} />
                       Bold
                     </label>
                   </div>
@@ -594,7 +595,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                       <div className="text-xs text-ink-soft">Alignment
                         <div className="mt-1 flex rounded-full bg-[#F3E9DD] p-1">
                           {(['left', 'center', 'right'] as const).map((a) => (
-                            <button key={a} type="button" onClick={() => setEl('moment', { align: a })} className={'flex-1 rounded-full px-2 py-1 text-xs capitalize ' + ((eff.el?.moment?.align ?? 'left') === a ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}>{a}</button>
+                            <button key={a} type="button" onClick={() => setEl(ek, { align: a })} className={'flex-1 rounded-full px-2 py-1 text-xs capitalize ' + ((eff.el?.[ek]?.align ?? eff.el?.moment?.align ?? 'left') === a ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}>{a}</button>
                           ))}
                         </div>
                       </div>
@@ -604,11 +605,11 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                           <span className={'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ' + (pick.line ? 'left-[18px]' : 'left-0.5')} />
                         </span>
                       </button>
-                      {pick.line && <ColorInput label="Line color" value={eff.el?.moment?.lineColor ?? eff.pal.accent} onChange={(v) => setEl('moment', { lineColor: v })} />}
+                      {pick.line && <ColorInput label="Line color" value={eff.el?.[ek]?.lineColor ?? eff.el?.moment?.lineColor ?? eff.pal.accent} onChange={(v) => setEl(ek, { lineColor: v })} />}
                     </div>
                   ) : ['title', 'title2', 'brand', 'count', 'initials'].includes(pick.key) || /^x\d+$/.test(pick.key) || pick.key === 'moment' ? null : (
                     <label className="flex items-center gap-3 text-xs text-ink-soft"><span className="w-14 shrink-0">Move {cur?.dy ?? 0}</span>
-                      <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(pick.key, { dy: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
+                      <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(ek, { dy: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
                     </label>
                   )}
                   {pick.key === 'moment' && pick.mid ? (
@@ -616,9 +617,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                   ) : pick.key === 'count' ? (
                     <button type="button" onClick={() => { setEl('count', { hide: true }); setPick(null) }} className="text-[11px] text-twilight underline">Remove this line</button>
                   ) : /^x\d+$/.test(pick.key) ? (
-                    <button type="button" onClick={() => { resetEl(pick.key); setPick(null) }} className="text-[11px] text-twilight underline">Remove this line</button>
+                    <button type="button" onClick={() => { resetEl(ek); setPick(null) }} className="text-[11px] text-twilight underline">Remove this line</button>
                   ) : (
-                    <button type="button" onClick={() => resetEl(pick.key)} className="text-[11px] text-twilight underline">Reset this line</button>
+                    <button type="button" onClick={() => resetEl(ek)} className="text-[11px] text-twilight underline">Reset this line</button>
                   )}
                 </div>
               )}

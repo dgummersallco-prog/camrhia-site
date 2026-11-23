@@ -333,3 +333,11 @@ img[src^="/camri/"] { filter: drop-shadow(0 3px 6px rgba(70, 50, 40, 0.35)); }
   0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
   30% { opacity: 1; transform: translateY(-4px); }
 }
+
+/* Gold hairline sliders, site wide */
+input[type="range"]{-webkit-appearance:none;appearance:none;height:20px;background:transparent;outline:none;cursor:pointer;margin:0}
+input[type="range"]::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:linear-gradient(90deg,#B08D57 var(--p,0%),#E4D3B6 var(--p,0%))}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;margin-top:-8px;border-radius:50%;background:#FFFDF9;border:1.5px solid #B08D57;box-shadow:0 3px 8px rgba(140,107,63,0.35)}
+input[type="range"]::-moz-range-track{height:2px;border-radius:2px;background:#E4D3B6}
+input[type="range"]::-moz-range-progress{height:2px;border-radius:2px;background:#B08D57}
+input[type="range"]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#FFFDF9;border:1.5px solid #B08D57;box-shadow:0 3px 8px rgba(140,107,63,0.35)}

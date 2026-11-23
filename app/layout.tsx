@@ -3,6 +3,7 @@ import { Instrument_Sans, JetBrains_Mono } from "next/font/google"
 import localFont from "next/font/local"
 import "./globals.css"
 import { BRAND_NAME } from "@/lib/brand"
+import RangeStyler from "./components/RangeStyler"
 
 const fraunces = localFont({
   src: [
@@ -92,6 +93,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <RangeStyler />
         {children}
       </body>
     </html>
