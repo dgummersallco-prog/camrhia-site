@@ -636,7 +636,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           </div>
         </div>
         <div ref={boxRef} style={pvScale < 1 ? { justifyContent: 'flex-start' } : undefined} className="relative flex min-h-0 flex-1 justify-center overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
-          <iframe ref={frameRef} src={`/g/${token}?preview=1`} title="Gallery preview" style={device === 'phone' ? { width: 390, height: '100%', border: 0, background: '#fff' } : pvScale < 1 ? { width: PV_W, height: `${100 / pvScale}%`, border: 0, background: '#fff', transform: `scale(${pvScale})`, transformOrigin: '0 0', flexShrink: 0 } : { width: '100%', height: '100%', border: 0, background: '#fff' }} />
+          <iframe ref={frameRef} src={`/g/${token}?preview=1`} aria-label="Gallery preview" style={device === 'phone' ? { width: 390, height: '100%', border: 0, background: '#fff' } : pvScale < 1 ? { width: PV_W, height: `${100 / pvScale}%`, border: 0, background: '#fff', transform: `scale(${pvScale})`, transformOrigin: '0 0', flexShrink: 0 } : { width: '100%', height: '100%', border: 0, background: '#fff' }} />
           {secPick && (
             <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full bg-[#1f1a14] px-4 py-2 text-sm text-white shadow-lg">
               <span>Click the photo where the section starts</span>

@@ -121,7 +121,7 @@ export default function ColorInput({ label, value, onChange, swatches = DEFAULT_
       <span className={lux ? 'block text-[11px] font-medium uppercase leading-4 tracking-[0.18em] text-[#8C6B3F]' : 'text-sm font-medium text-ink'}>{label}</span>
       <div style={lux ? LUX_PILL : undefined} className={lux ? 'mt-1 flex h-[41px] w-full items-center gap-2 rounded-xl px-3.5' : 'mt-1 flex w-full items-center gap-2 rounded-xl border border-line bg-card px-3 py-2'}>
         <button type="button" onClick={() => setOpen(!open)} aria-label="Open color picker" className={'h-5 w-5 shrink-0 rounded ' + (lux ? 'border border-[#D9C6A3]' : 'border border-line')} style={{ background: value || 'transparent' }} />
-        <HexBox value={value} onChange={onChange} onCommit={remember} className={'min-w-0 flex-1 bg-transparent text-sm uppercase tracking-wide outline-none ' + (lux ? 'font-fraunces text-[#3a2d22]' : 'text-ink')} />
+        <HexBox value={value} onChange={onChange} onCommit={remember} className={'min-w-0 flex-1 bg-transparent text-sm uppercase tracking-wide outline-none ' + (lux ? '[font-family:ui-sans-serif,system-ui,sans-serif] tabular-nums text-[#3a2d22]' : 'text-ink')} />
         <button type="button" onClick={() => setOpen(!open)} aria-label="Toggle color picker" className={'px-1 ' + (lux ? 'text-[#8C6B3F]' : 'text-ink-soft')}>{open ? '▴' : '▾'}</button>
       </div>
       {open && (

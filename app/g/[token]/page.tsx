@@ -635,7 +635,7 @@ export default function GalleryViewPage() {
     const box = document.createElement('div')
     box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:1.5px dashed #d9a21b;border-radius:3px;display:none'
     const tag = document.createElement('div')
-    tag.style.cssText = 'position:absolute;left:-1.5px;bottom:100%;margin-bottom:3px;background:#1f1a14;color:#fff;font:600 11px/1 system-ui,sans-serif;padding:4px 7px;border-radius:4px;white-space:nowrap'
+    tag.style.cssText = 'position:absolute;left:-1.5px;bottom:100%;margin-bottom:3px;background:linear-gradient(135deg,#FFFDF9,#F3E7D3);border:1px solid #B08D57;color:#6B4A2B;box-shadow:inset 0 0 0 2px #FFFDF9,inset 0 0 0 3px #E4D3B6,0 3px 10px rgba(90,60,30,.22);font:600 11px/1 Georgia,serif;letter-spacing:.04em;padding:5px 9px;border-radius:6px;white-space:nowrap'
     box.appendChild(tag)
     document.body.appendChild(box)
     const hnd: HTMLDivElement[] = []
@@ -715,11 +715,11 @@ export default function GalleryViewPage() {
     const xb = document.createElement('div')
     xb.textContent = String.fromCharCode(215)
     xb.title = 'Delete this text'
-    xb.style.cssText = 'position:absolute;right:-9px;top:-34px;width:24px;height:24px;border-radius:50%;background:#1f1a14;color:#fff;font:600 17px/22px system-ui,sans-serif;text-align:center;cursor:pointer;pointer-events:auto;display:none;box-shadow:0 2px 6px rgba(0,0,0,.3)'
+    xb.style.cssText = 'position:absolute;right:-9px;top:-34px;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#FFFDF9,#F3E7D3);border:1px solid #B08D57;color:#6B4A2B;box-shadow:inset 0 0 0 2px #FFFDF9,inset 0 0 0 3px #E4D3B6,0 3px 10px rgba(90,60,30,.22);font:600 16px/22px Georgia,serif;text-align:center;cursor:pointer;pointer-events:auto;display:none'
     box.appendChild(xb)
     const pb = document.createElement('div')
     pb.setAttribute('data-pb', '1')
-    pb.style.cssText = 'position:absolute;left:50%;bottom:-36px;transform:translateX(-50%);padding:0 14px;height:26px;border-radius:13px;background:#1f1a14;color:#fff;font:600 12px/26px system-ui,sans-serif;white-space:nowrap;cursor:pointer;pointer-events:auto;display:none'
+    pb.style.cssText = 'position:absolute;left:50%;bottom:-36px;transform:translateX(-50%);padding:0 14px;height:28px;border-radius:14px;background:linear-gradient(135deg,#FFFDF9,#F3E7D3);border:1px solid #B08D57;color:#6B4A2B;box-shadow:inset 0 0 0 2px #FFFDF9,inset 0 0 0 3px #E4D3B6,0 3px 10px rgba(90,60,30,.22);font:600 12px/26px Georgia,serif;letter-spacing:.03em;white-space:nowrap;cursor:pointer;pointer-events:auto;display:none'
     pb.textContent = 'Move photo inside'
     box.appendChild(pb)
     pb.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation() })
@@ -793,6 +793,8 @@ export default function GalleryViewPage() {
           pb.style.display = isP ? 'block' : 'none'
           const pt = pan ? 'Done' : 'Move photo inside'
           if (pb.textContent !== pt) pb.textContent = pt
+          pb.style.background = pan ? '#A8553A' : 'linear-gradient(135deg,#FFFDF9,#F3E7D3)'
+          pb.style.color = pan ? '#fff' : '#6B4A2B'
           const flipP = rr.top + rr.height > window.innerHeight - 44
           pb.style.bottom = flipP ? 'auto' : '-36px'
           pb.style.top = flipP ? '-36px' : 'auto'
