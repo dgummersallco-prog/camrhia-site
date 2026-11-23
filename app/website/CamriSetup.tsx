@@ -121,12 +121,20 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   onSkip: () => void
 }) {
   const [step, setStep] = useState<number>(() => {
-    try { const raw = window.localStorage.getItem('camriStep2'); if (raw !== null) { const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v <= 3) return v } } catch {}
-    return startStep ?? 0
+    try { const raw = window.localStorage.getItem('camriStep2'); if (raw !== null) { const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v <= 3) return Math.max(v, 1) } } catch {}
+    return Math.max(startStep ?? 1, 1)
   })
   const [layouts, setLayouts] = useState<string[]>(() => { const d = draftGet('layouts'); return Array.isArray(d) && d.length > 0 ? d : (initial?.layouts ?? []) })
   const [startIdx, setStartIdx] = useState(0)
   const si = Math.min(startIdx, Math.max(layouts.length - 1, 0))
+  const ordered = si > 0 ? [layouts[si], ...layouts.filter((_, j) => j !== si)] : layouts
+  const layoutDots = layouts.length > 1 ? (
+    <div className="flex items-center gap-1.5 px-2 pb-2">
+      {layouts.map((k, i) => (
+        <button key={k} type="button" onClick={() => setStartIdx(i)} className={'h-6 w-6 rounded-full text-xs transition ' + (si === i ? 'bg-twilight font-medium text-white' : 'border border-black/15 bg-white text-ink hover:bg-black/5')}>{i + 1}</button>
+      ))}
+    </div>
+  ) : null
   const [heroList, setHeroList] = useState<string[]>([])
   const [showPlanTop, setShowPlanTop] = useState(false)
   const hl = heroList.length === layouts.length && heroList.every((x) => layouts.includes(x)) ? heroList : layouts
@@ -157,7 +165,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
       const keys = (designs[f + '_alts'] || designs[f] || '').split(',').filter(Boolean)
       if (keys.length) designAlts[f] = { label: DESIGN_LABELS[f] ?? f, items: keys.map((k) => ({ key: k, name: nameOf[f][k] ?? k })) }
     }
-    await onFinish({ done: true, layouts, palettes: list, fonts: [], type: fp, designAlts, pages: pagesOut, extra_pages: '', themes: [] }, s2, ls, designs)
+    await onFinish({ done: true, layouts: ordered, palettes: list, fonts: [], type: fp, designAlts, pages: pagesOut, extra_pages: '', themes: [] }, s2, ls, designs)
     setBusy(false)
   }
 
@@ -182,7 +190,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   }
 
   function camriBuild() {
-    const nd = { ...designs, ...camriPick(layouts[0], styles) }
+    const nd = { ...designs, ...camriPick(ordered[0], styles) }
     const base: Struct = { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] }
     const s = withModes(base, nd)
     s.home = []
@@ -227,9 +235,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
         {step === 1 && (
           <div>
           <div className="mb-8 flex items-start gap-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/camri/12_open_arms.png" alt="" className="h-24 w-auto shrink-0" />
-            <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-3">
+            <div className="min-w-0 flex-1 rounded-2xl bg-[#EBDDCF] px-5 py-3">
               <p className="font-fraunces text-lg leading-snug text-ink">We&apos;re building your site one section at a time, starting with the hero. Your hero is the first thing visitors see: your best photo and what you shoot.</p>
               <p className="mt-1.5 text-sm text-ink-soft">Pick up to three layouts you love. Tap 1, 2, 3 under &quot;Your site so far&quot; to swap between them. Next up: Explore section. Or I can pick for you.</p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -257,10 +263,9 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
           <div>
           <div className="sticky top-0 z-20 -mx-2 mb-6 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
             <div className="flex h-16 items-center"><h3 className="font-fraunces text-5xl tracking-tight text-ink">Hero</h3></div>
-            <div className="mt-3"><Meter at={0} /></div>
+            <div className="mt-3"><Meter at={0} onGo={(n) => { if (n === 0 || !canGo) return; try { window.localStorage.setItem('camriDsStep', String(n - 1)) } catch {} setStep(2) }} /></div>
             <div className="mt-3 flex items-center justify-end gap-2">
-              <button type="button" onClick={() => setStep(0)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
-              <button type="button" onClick={() => { if (si > 0) setLayouts((l) => [l[si], ...l.filter((_, j) => j !== si)]); setStartIdx(0); setStep(2) }} disabled={!canGo} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{`Next: ${DESIGN_SECTIONS[0].title} →`}</button>
+              <button type="button" onClick={() => { setStep(2) }} disabled={!canGo} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{`Next: ${DESIGN_SECTIONS[0].title} →`}</button>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-12">
@@ -281,21 +286,15 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
           </div>
           </div>
           <SoFar designs={designs} setDesigns={setDesigns} baseKey={layouts[si]} baseName={styles.find((x) => x.key === layouts[si])?.name} baseNo={si + 1}
-            onGo={(i) => { try { window.localStorage.setItem('camriDsStep', String(i)) } catch {} if (si > 0) setLayouts((l) => [l[si], ...l.filter((_, j) => j !== si)]); setStartIdx(0); setStep(2) }}
-            homeFoot={layouts.length > 1 ? (
-              <div className="flex items-center gap-1.5 px-2 pb-2">
-                {layouts.map((k, i) => (
-                  <button key={k} type="button" onClick={() => setStartIdx(i)} className={'h-6 w-6 rounded-full text-xs transition ' + (si === i ? 'bg-twilight font-medium text-white' : 'border border-black/15 bg-white text-ink hover:bg-black/5')}>{i + 1}</button>
-                ))}
-              </div>
-            ) : null} />
+            onGo={(i) => { try { window.localStorage.setItem('camriDsStep', String(i)) } catch {} setStep(2) }}
+            homeFoot={layoutDots} />
           </div>
           </div>
         )}
 
         {step === 2 && (
           <div>
-            <DesignSteps designs={designs} setDesigns={setDesigns} onBack={() => setStep(1)} onDone={goArrange} onAuto={camriBuild} baseKey={layouts[0]} baseName={styles.find((x) => x.key === layouts[0])?.name} />
+            <DesignSteps designs={designs} setDesigns={setDesigns} onBack={() => setStep(1)} onDone={goArrange} onAuto={camriBuild} baseKey={layouts[si]} baseName={styles.find((x) => x.key === layouts[si])?.name} baseNo={si + 1} homeFoot={layoutDots} />
             {onCancel && <button type="button" onClick={onCancel} disabled={busy} className="mt-2 text-sm text-ink-soft underline">Back to my site</button>}
           </div>
         )}
@@ -305,13 +304,13 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
               <div className="flex h-16 items-center gap-3">
                 <h3 className="font-fraunces text-5xl tracking-tight text-ink">Arrange</h3>
               </div>
-              <div className="mt-3"><Meter at={DESIGN_SECTIONS.length + 1} /></div>
+              <div className="mt-3"><Meter at={DESIGN_SECTIONS.length + 1} onGo={(n) => { if (n === 0) { setStep(1); return } try { window.localStorage.setItem('camriDsStep', String(n - 1)) } catch {} setStep(2) }} /></div>
               <div className="mt-3 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
                 <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site →'}</button>
               </div>
             </div>
-            <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={layouts[0] ? '/layouts/' + layouts[0] + '.png' : undefined} heroName={styles.find((x) => x.key === layouts[0])?.name} heroList={hl.map((k) => ({ key: k, name: styles.find((x) => x.key === k)?.name ?? k }))} heroActive={layouts[0]} onHero={(k) => { setHeroList(hl); setLayouts([k, ...layouts.filter((x) => x !== k)]) }} secAlts={altsOf(designs)} designs={designs} setDesigns={setDesigns} photoDesigns={PHOTO_DESIGNS as unknown as { key: string; name: string }[]} />
+            <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={ordered[0] ? '/layouts/' + ordered[0] + '.png' : undefined} heroName={styles.find((x) => x.key === ordered[0])?.name} heroList={hl.map((k) => ({ key: k, name: styles.find((x) => x.key === k)?.name ?? k }))} heroActive={ordered[0]} onHero={(k) => { setHeroList(hl); setLayouts([k, ...layouts.filter((x) => x !== k)]); setStartIdx(0) }} secAlts={altsOf(designs)} designs={designs} setDesigns={setDesigns} photoDesigns={PHOTO_DESIGNS as unknown as { key: string; name: string }[]} />
           </div>
         )}
       </div>
@@ -540,11 +539,15 @@ function thumbsOf(designs: Record<string, string>) {
   return out
 }
 
-function Meter({ at }: { at: number }) {
+function Meter({ at, onGo }: { at: number; onGo: (n: number) => void }) {
+  const labels = ['Hero', ...DESIGN_SECTIONS.map((x) => (x.k === 'nav' ? 'Explore' : x.title))]
   return (
     <div className="flex gap-1.5">
-      {Array.from({ length: DESIGN_SECTIONS.length + 1 }).map((_, n) => (
-        <span key={n} className={'h-1.5 flex-1 rounded-full ' + (n <= at ? 'bg-twilight' : 'bg-black/10')} />
+      {labels.map((t, n) => (
+        <button key={n} type="button" onClick={() => onGo(n)} className="group min-w-0 flex-1 text-left">
+          <span className={'block h-1.5 rounded-full ' + (n <= at ? 'bg-twilight' : 'bg-black/10')} />
+          <span className={'mt-1 block truncate text-[11px] leading-4 transition ' + (n === at ? 'font-medium text-ink' : 'text-ink-soft group-hover:text-ink')}>{t}</span>
+        </button>
       ))}
     </div>
   )
@@ -608,7 +611,7 @@ function SoFar({ designs, setDesigns, baseKey, baseName, baseNo, onGo, homeFoot 
     )
   }
   return (
-      <aside className="hidden lg:block lg:pt-[84px]">
+      <aside className="hidden lg:block lg:pt-[102px]">
         <div className="sticky top-6 max-h-[90vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs uppercase tracking-wider text-ink-soft">Your site so far</p>
@@ -689,7 +692,7 @@ function SoFar({ designs, setDesigns, baseKey, baseName, baseNo, onGo, homeFoot 
   )
 }
 
-function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, baseName }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; onBack: () => void; onDone: () => void; onAuto: () => void; baseKey?: string; baseName?: string }) {
+function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, baseName, baseNo, homeFoot }: { designs: Record<string, string>; setDesigns: (d: Record<string, string>) => void; onBack: () => void; onDone: () => void; onAuto: () => void; baseKey?: string; baseName?: string; baseNo?: number; homeFoot?: React.ReactNode }) {
   type Pk = { dir: string; ar: string; field: string; items: { key: string; name: string }[] }
   const PK = PICKERS() as unknown as Record<string, Pk>
   const [step, setStep] = useState<number>(() => {
@@ -744,9 +747,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
   return (
     <div>
         <div className="mb-8 flex items-start gap-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/camri/12_open_arms.png" alt="" className="h-24 w-auto shrink-0" />
-          <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-[#EBDDCF] px-5 py-3">
+          <div className="min-w-0 flex-1 rounded-2xl bg-[#EBDDCF] px-5 py-3">
             <p className="font-fraunces text-lg leading-snug text-ink">{'We are building your site one section at a time. Now: ' + sec.title + '. ' + (SEC_INTRO[sec.k] ?? '')}</p>
             <p className="mt-1.5 text-sm text-ink-soft">{'Pick up to three designs you love. Tap 1, 2, 3 under "Your site so far" to swap between them. ' + (step < total - 1 ? 'Next up: ' + DESIGN_SECTIONS[step + 1].title + '.' : 'Next, we arrange your site.')}</p>
           </div>
@@ -775,7 +776,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
           <div className="flex h-16 items-center gap-3">
             <h3 className="font-fraunces text-5xl tracking-tight text-ink">{sec.title}</h3>
           </div>
-          <div className="mt-3"><Meter at={step + 1} /></div>
+          <div className="mt-3"><Meter at={step + 1} onGo={(n) => (n === 0 ? onBack() : go(n - 1))} /></div>
           <div className="mt-3 flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-wrap gap-2">
               {hasMode && modeOpts.map((m) => (
@@ -833,7 +834,7 @@ function DesignSteps({ designs, setDesigns, onBack, onDone, onAuto, baseKey, bas
 
       </div>
 
-      <SoFar designs={designs} setDesigns={setDesigns} baseKey={baseKey} baseName={baseName} baseNo={1} onGo={(i) => go(i)} />
+      <SoFar designs={designs} setDesigns={setDesigns} baseKey={baseKey} baseName={baseName} baseNo={baseNo ?? 1} homeFoot={homeFoot} onGo={(i) => go(i)} />
     </div>
     </div>
   )
