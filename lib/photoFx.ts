@@ -42,7 +42,16 @@ export function visualOf(el: HTMLElement): HTMLElement {
   return n && n.hasAttribute && n.hasAttribute('data-fxph') ? n : el
 }
 
-export const photoId = (key: string, idx: number) => (key === 'hero' ? 'hero' : key + ':' + idx)
+export const photoId = (key: string, idx: number) => (key === 'hero' ? (idx === 0 ? 'hero' : 'hero:' + idx) : key + ':' + idx)
+
+// A hero that is one picture (or a stacked slideshow) vs. a hero made of several separate pictures (Ivy, etc.).
+export function heroOne(root: HTMLElement): boolean {
+  if (rootKey(root) !== 'hero') return false
+  const l = Array.from(root.querySelectorAll<HTMLElement>('img, svg[preserveAspectRatio]')).filter((x) => !x.hasAttribute('data-fxph') && (x.offsetWidth || x.clientWidth || 0) >= 150 && (x.offsetHeight || x.clientHeight || 0) >= 150)
+  if (l.length < 2) return true
+  const a = l[0].getBoundingClientRect()
+  return l.every((x) => { const b = x.getBoundingClientRect(); return Math.abs(b.left - a.left) < 8 && Math.abs(b.top - a.top) < 8 })
+}
 
 const num = (v: unknown, lo: number, hi: number): number | null => {
   const n = Number(v)
@@ -143,9 +152,10 @@ export function applyPhotoFx(fx: Record<string, PhotoFx> | undefined | null, slo
     const key = rootKey(el)
     if (!key) continue
     const list = photosIn(el)
+    const one = heroOne(el)
     list.forEach((p, i) => {
-      const id = photoId(key, i)
-      const sp = key !== 'hero' && slotPics ? slotPics[id] : undefined
+      const id = photoId(key, one ? 0 : i)
+      const sp = !one && slotPics ? slotPics[key + ':' + i] : undefined
       const url = sp && resolve ? resolve(sp) : null
       let target: HTMLElement = p
       if (p.tagName.toLowerCase() === 'img') setSrc(p, url)
@@ -307,7 +317,7 @@ export function applyBoxFx(map: Record<string, BoxFx> | undefined | null) {
     const key = rootKey(root)
     if (!key) continue
     boxesIn(root).forEach((b, i) => setBox(b, m[boxId(key, i)]))
-    if (key === 'hero') continue
+    if (heroOne(root)) continue
     photosIn(root).forEach((p, i) => setBox(frameOf(visualOf(p), root), m['f:' + photoId(key, i)]))
   }
 }

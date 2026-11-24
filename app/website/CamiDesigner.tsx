@@ -121,6 +121,38 @@ const fname = (k: string) => { const o = FONT_OPTIONS[k] as unknown as Record<st
 const FONT_IDS = Object.keys(FONT_OPTIONS)
 type Pick = { key: string; text: string; left: number; top: number; color: string; size?: number; op?: number }
 const PICK_LABELS: Record<string, string> = { hero_headline: 'Headline', menu_links: 'Menu links', menu_brand: 'Your name', ex_label: 'Section label', ex_title: 'Section title', ex_sub: 'Section subtitle', con_msg: 'Contact message', con_social: 'Social links', ft_line: 'Footer line', ft_copy: 'Copyright', gal_name: 'Gallery name', gal_count: 'Gallery count', gal_link: 'Gallery link', tes_quote: 'Testimonial', tes_name: 'Testimonial name', about_text: 'About text', pr_intro: 'Package intro', pr_group: 'Package group', pr_name: 'Package name', pr_price: 'Package price', pr_list: 'Package list', pr_note: 'Package note', faq_q: 'Question', faq_a: 'Answer', feat_title: 'Featured work title', hero_btn: 'Button text', air_label: 'About label', air_more: 'Link text', ls_title: 'Stories title', rom_kicker: 'Small line', rom_story: 'Story title', rom_more: 'Link text', ea_kicker: 'Small line', ea_para: 'Paragraph', ea_follow: 'Section title', pe_tag: 'Tagline', iv_kicker: 'Small line', iv_tag: 'Tagline', wi_hi: 'About heading', ju_kicker: 'Small line', ju_para: 'Intro', ju_s1t: 'Service title', ju_s1d: 'Service text', ju_s2t: 'Service title', ju_s2d: 'Service text', ju_s3t: 'Service title', ju_s3d: 'Service text', ca_sub: 'Subtitle', ca_bar: 'Bar text', ca_w1: 'Word', ca_w2: 'Word', ca_w3: 'Word', ca_w4: 'Word', ce_p1: 'Paragraph', ce_p2: 'Paragraph', ol_kicker: 'Small line', ol_c1: 'Caption', ol_c2: 'Caption', ol_c3: 'Caption', ol_c4: 'Caption', mg_story: 'Heading', mg_text: 'Paragraph', li_kicker: 'Small line', li_para: 'Paragraph', li_meet: 'Heading', li_more: 'Link', as_kicker: 'Small line', as_para: 'Paragraph', as_kind: 'Heading', as_q1: 'Quote', as_n1: 'Name', as_q2: 'Quote', as_n2: 'Name', as_q3: 'Quote', as_n3: 'Name', sg_tag: 'Tagline', sg_recent: 'Heading', ro_script: 'Script word', ro_c1: 'Caption', ro_c2: 'Caption', ro_c3: 'Caption', hz_kicker: 'Small line', hz_para: 'Paragraph', hz_quote: 'Quote', hz_name: 'Name', sf_n1: 'Service', sf_n2: 'Service', sf_n3: 'Service', sf_n4: 'Service', sf_c1: 'Caption', sf_c2: 'Caption', sf_c3: 'Caption', cy_tag: 'Tagline', cy_s1: 'Label', cy_s2: 'Label', cy_s3: 'Label', la_vert: 'Side text', la_para: 'Paragraph', ir_l: 'Left words', ir_r: 'Right words', ir_issue: 'Heading', ir_t1: 'Label', ir_t2: 'Label', ir_t3: 'Label', pr_kicker: 'Small line', pr_c1: 'Caption', pr_c2: 'Caption', pr_c3: 'Caption', pr_c4: 'Caption', th_tag: 'Tagline', cl_p1: 'Caption', cl_p2: 'Caption', cl_p3: 'Caption', cl_p4: 'Caption', cl_p5: 'Caption', cl_sub: 'Subheading', cl_t1: 'Label', cl_t2: 'Label', cl_t3: 'Label', mi_t1: 'Label', mi_t2: 'Label', mi_t3: 'Label', mi_t4: 'Label', ya_script: 'Script line', ya_month: 'Month', ya_head: 'Heading', ya_para: 'Paragraph', ya_link: 'Link', gs_title: 'Section title', gp_title: 'Page title', tes_title: 'Section title', faq_title: 'Page title', ab_h1: 'Story heading', ab_h2: 'Belief heading', ab_h3: 'Invitation heading', ab_p3: 'Invitation text', ab_by: 'By line', ab_loves: 'Loves label', ab_hi: 'Greeting', ab_n1: 'Stat 1', ab_l1: 'Stat 1 label', ab_n2: 'Stat 2', ab_l2: 'Stat 2 label', ab_n3: 'Stat 3', ab_l3: 'Stat 3 label', ab_quote: 'Pull quote', ab_sig: 'Signature', ab_tag: 'Tagline', ab_f1t: 'Fact 1 title', ab_f1d: 'Fact 1 text', ab_f2t: 'Fact 2 title', ab_f2d: 'Fact 2 text', ab_f3t: 'Fact 3 title', ab_f3d: 'Fact 3 text', ab_f4t: 'Fact 4 title', ab_f4d: 'Fact 4 text', ab_f5t: 'Fact 5 title', ab_f5d: 'Fact 5 text', soc_title: 'Social heading', soc_handle: 'Social handle', con_title: 'Booking heading' }
+
+const TEXT_FLD = ['feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
+function writeTextKey(n: any, key: string, v: string) {
+  const s = (n.site_settings = n.site_settings ?? {})
+  if (key === 'hero_headline') n.site_headline = v
+  else if (key === 'menu_brand') s.menu = { ...(s.menu ?? {}), brand: v }
+  else { const f = key === 'about_text' ? 'about' : key === 'con_msg' ? 'contact' : key === 'ft_line' ? 'footer' : TEXT_FLD.includes(key) ? key : 'copyright'; s.text = { ...(s.text ?? {}), [f]: v } }
+}
+function writeBtnText(n: any, tx: string, v: string) {
+  const x = (n.site_settings = n.site_settings ?? {})
+  if (tx === 'contactBtn' || tx === 'aboutBtn' || tx === 'galBtn') x[tx] = { ...(x[tx] ?? {}), text: v }
+  else if (tx === 'hero_el') x.text = { ...(x.text ?? {}), hero_btn: v }
+  else if (tx === 'heroText') x.hero = { ...(x.hero ?? {}), btn_text: v }
+}
+function writeInline(n: any, d: any) {
+  const s = (n.site_settings = n.site_settings ?? {})
+  const v = String(d.text ?? '')
+  if (d.kind === 'btn') { writeBtnText(n, String(d.tx), v); return }
+  if (d.kind === 'key') { writeTextKey(n, String(d.key), v); return }
+  if (d.kind === 'nav') { s.menu = { ...(s.menu ?? {}), labels: { ...(s.menu?.labels ?? {}), [String(d.nav)]: v } }; return }
+  if (d.kind === 'exlabel') { s.explore = { ...(s.explore ?? {}), heading: v }; return }
+  if (d.kind === 'ex') { const f = d.field === 'sub' ? 'lines' : 'titles'; const ex = s.explore ?? {}; s.explore = { ...ex, [f]: { ...(ex[f] ?? {}), [String(d.door)]: v } }; return }
+  if (d.kind === 'faq') {
+    const qs: string[] = Array.isArray(d.qs) ? d.qs.map(String) : []
+    const as: string[] = Array.isArray(d.as) ? d.as.map(String) : []
+    const prev: any[] = Array.isArray(s.faq) ? s.faq : []
+    if (!qs.length) return
+    if (as.length !== qs.length && prev.length !== qs.length) return
+    s.faq = qs.map((q, i) => { const a = as.length === qs.length ? as[i] : String(prev[i]?.answer ?? prev[i]?.a ?? ''); return { id: String(prev[i]?.id ?? 'f' + (i + 1)), question: q, answer: a, q, a } })
+  }
+}
+
 const TEXT_KEYS = ['hero_headline', 'menu_brand', 'about_text', 'con_msg', 'ft_line', 'ft_copy', 'feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
 const LONG_TEXT = ['about_text', 'con_msg']
 const PICK_COLORS = [...TEXTS.slice(0, 7), ...ACCENTS.slice(0, 14), '#FFFFFF']
@@ -379,8 +411,8 @@ export default function CamiDesigner() {
   const [pick, setPick] = useState<Pick | null>(null)
   const [selSec, setSelSec] = useState<string | null>(null)
   const [leftTab, setLeftTab] = useState<'design' | 'setup'>('design')
-  const [slot, setSlot] = useState<{ key: string; idx: number } | null>(null)
-  const [selPh, setSelPh] = useState<{ key: string; idx: number } | null>(null)
+  const [slot, setSlot] = useState<{ key: string; idx: number; multi?: boolean } | null>(null)
+  const [selPh, setSelPh] = useState<{ key: string; idx: number; multi?: boolean } | null>(null)
   const [selBtn, setSelBtn] = useState<{ id: string; tx: string; text: string; cbg?: string; ccolor?: string } | null>(null)
   const [selBox, setSelBox] = useState<string | null>(null)
   const [secCur, setSecCur] = useState<string | null>(null)
@@ -455,7 +487,7 @@ export default function CamiDesigner() {
       if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelSec(String(d.key)); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); return }
       if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? ''), cbg: typeof d.cbg === 'string' ? d.cbg : '', ccolor: typeof d.ccolor === 'string' ? d.ccolor : '' }); setLeftTab('design'); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0 }); setLeftTab('design'); if (!d.again) setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); setLeftTab('design'); if (!d.again) setSlot({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
         commitRef.current?.((n) => {
           const s = (n.site_settings = n.site_settings ?? {})
@@ -490,6 +522,11 @@ export default function CamiDesigner() {
           ord.splice(Math.max(0, Math.min(ord.length, Number(d.to))), 0, d.key)
           s.order_home = ord.includes('explore') ? ord : ['explore', ...ord]
         })
+        return
+      }
+      if (d && d.type === 'camrhia-text' && e.source === frameRef.current?.contentWindow) {
+        commitRef.current?.((n) => { writeInline(n, d) })
+        if (d.kind === 'key') { setPick((p) => (p && p.key === d.key ? { ...p, text: String(d.text ?? '') } : p)); setPtext(String(d.text ?? '')) }
         return
       }
       if (!d || d.type !== 'camrhia-pick' || e.source !== frameRef.current?.contentWindow) return
@@ -606,6 +643,7 @@ export default function CamiDesigner() {
     if (x.menu) { for (const k of Object.keys(x.menu)) if (k !== 'brand') delete x.menu[k] }
     if (x.text) delete x.text.hero_btn
     if (x.hero) delete x.hero.btn_text
+    if (x.slotPics) { const sp: Record<string, string> = { ...x.slotPics }; for (const k of Object.keys(sp)) if (k.startsWith('hero:')) delete sp[k]; x.slotPics = sp }
   }
   function applyKitOps(n: Prof, kc: Record<string, any>) {
     const k = kitOf(n)
@@ -867,7 +905,7 @@ export default function CamiDesigner() {
   }
   function chooseSlot(path: string | null) {
     if (!slot) return
-    if (slot.key === 'hero') {
+    if (slot.key === 'hero' && !slot.multi) {
       const cur: string[] = [...(form?.site_settings?.hero?.photos ?? [])]
       let next = cur
       if (path === null) next = []
@@ -1083,10 +1121,7 @@ export default function CamiDesigner() {
     const key = pick.key
     setPick({ ...pick, text: v })
     commit((n) => {
-      const s = (n.site_settings = n.site_settings ?? {})
-      if (key === 'hero_headline') n.site_headline = v
-      else if (key === 'menu_brand') s.menu = { ...(s.menu ?? {}), brand: v }
-      else { const f = key === 'about_text' ? 'about' : key === 'con_msg' ? 'contact' : key === 'ft_line' ? 'footer' : ['feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title'].includes(key) ? key : 'copyright'; s.text = { ...(s.text ?? {}), [f]: v } }
+      writeTextKey(n, key, v)
     })
   }
 
@@ -1282,12 +1317,7 @@ export default function CamiDesigner() {
                   const setBtnText = (v: string) => {
                     const tx = selBtn.tx
                     if (!tx || !v.trim() || v.trim() === selBtn.text) return
-                    void commit((n) => {
-                      const x = (n.site_settings = n.site_settings ?? {})
-                      if (tx === 'contactBtn' || tx === 'aboutBtn' || tx === 'galBtn') x[tx] = { ...(x[tx] ?? {}), text: v.trim() }
-                      else if (tx === 'hero_el') x.text = { ...(x.text ?? {}), hero_btn: v.trim() }
-                      else if (tx === 'heroText') x.hero = { ...(x.hero ?? {}), btn_text: v.trim() }
-                    })
+                    void commit((n) => { writeBtnText(n, tx, v.trim()) })
                     setSelBtn({ ...selBtn, text: v.trim() })
                   }
                   return (
@@ -1332,10 +1362,10 @@ export default function CamiDesigner() {
                   )
                 }
                 if (selPh) {
-                  const id = selPh.key === 'hero' ? 'hero' : selPh.key + ':' + selPh.idx
+                  const id = selPh.key === 'hero' ? (selPh.idx === 0 ? 'hero' : 'hero:' + selPh.idx) : selPh.key + ':' + selPh.idx
                   const fx = (set.photoFx ?? {})[id] ?? {}
                   const secNm = SEC_NAME[selPh.key] ?? selPh.key
-                  const nm = selPh.key === 'hero' ? 'Hero main photo' : secNm + ' photo ' + (selPh.idx + 1)
+                  const nm = selPh.key === 'hero' ? (selPh.multi ? 'Hero photo ' + (selPh.idx + 1) : 'Hero main photo') : secNm + ' photo ' + (selPh.idx + 1)
                   const fxMut = (patch: Record<string, any>, del?: string[]) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; const cur: Record<string, any> = { ...(m[id] ?? {}), ...patch }; (del ?? []).forEach((k) => { delete cur[k] }); m[id] = cur; x.photoFx = m }
                   const setFx = (patch: Record<string, any>, del?: string[]) => { void commit(fxMut(patch, del)) }
                   const liveFx = (patch: Record<string, any>) => liveEdit(fxMut(patch))
@@ -1343,7 +1373,8 @@ export default function CamiDesigner() {
                     <div className="mt-4">
                       <p className="font-fraunces text-lg font-semibold text-ink">{nm}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onClick={() => setSlot({ key: selPh.key, idx: selPh.idx })} className={btn}>Change photo</button>
+                        <button type="button" onClick={() => setSlot({ key: selPh.key, idx: selPh.idx, multi: selPh.multi })} className={btn}>Change photo</button>
+                        {selPh.key === 'hero' && !selPh.multi && (() => { const hp: string[] = (form?.site_settings?.hero?.photos ?? []) as string[]; const on = !!form?.site_settings?.hero?.slideshow; return <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); x.hero = { ...(x.hero ?? {}), slideshow: !on } }) }} className={btn}>{on ? 'Pictures rotate: On' : hp.length > 1 ? 'Pictures rotate: Off' : 'Pictures rotate: needs 2+ photos'}</button> })()}
                         <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; delete m[id]; x.photoFx = m }) }} className={btn}>Reset photo</button>
                       </div>
                       <p className="mt-2 text-xs text-ink-soft">Drag the photo to move it inside its frame. Use the corners to resize the frame and the Move tab to place it.</p>
@@ -1441,7 +1472,7 @@ export default function CamiDesigner() {
             </div>
           )}
 
-          <div className="relative flex h-[320px] shrink-0 flex-col bg-[#faf7f3]">
+          <div className="relative flex h-[190px] shrink-0 flex-col bg-[#faf7f3]">
             <div className="flex items-center gap-2 px-5 pt-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/camri/13_face_avatar.png" alt="" className="h-9 w-9 rounded-full" />
@@ -1458,7 +1489,7 @@ export default function CamiDesigner() {
             </div>
             <div className="border-t border-black/10 px-5 pb-3 pt-3">
               <div className="flex gap-1.5 overflow-x-auto whitespace-nowrap pb-1">
-                {['Switch layout', 'Make me a Christmas theme for December', 'Make my buttons glow on hover'].map((t) => <button key={t} type="button" className={chip + ' shrink-0'} onClick={() => send(t)}>{t}</button>)}
+                {['Make me a Christmas theme for December', 'Make my buttons glow on hover'].map((t) => <button key={t} type="button" className={chip + ' shrink-0'} onClick={() => send(t)}>{t}</button>)}
               </div>
               <form onSubmit={(e) => { e.preventDefault(); send(input) }} className="mt-2 flex gap-2">
                 <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={'Tell Camri what to change on ' + pageLabel(curPage)} className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
@@ -1509,12 +1540,12 @@ export default function CamiDesigner() {
             <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/30 p-4" onClick={() => setSlot(null)}>
               <div onClick={(e) => e.stopPropagation()} className="max-h-[85%] w-full max-w-xl overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
                 <div className="flex items-center justify-between border-b border-[#EFE4D8] pb-2">
-                  <p className="font-fraunces text-lg font-semibold text-ink">{slot.key === 'hero' ? 'Choose your hero photos' : 'Choose a photo'}</p>
+                  <p className="font-fraunces text-lg font-semibold text-ink">{slot.key === 'hero' && !slot.multi ? 'Choose your hero photos' : 'Choose a photo'}</p>
                   <button type="button" aria-label="Close" onClick={() => setSlot(null)} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
                 </div>
                 <div className="mt-3 flex max-h-[min(52vh,400px)] flex-wrap content-start gap-1.5 overflow-y-auto pr-1">
                   {lib.map((ph) => (
-                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} style={{ width: 76, height: 76, flex: 'none' }} className={'relative overflow-hidden rounded-md border transition hover:ring-2 hover:ring-[#B08D57] ' + (slot.key === 'hero' && (form?.site_settings?.hero?.photos ?? []).includes(ph.storage_path) ? 'border-[#8C6B3F] ring-2 ring-[#8C6B3F]' : 'border-[#E4D3B6]')}>
+                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} style={{ width: 76, height: 76, flex: 'none' }} className={'relative overflow-hidden rounded-md border transition hover:ring-2 hover:ring-[#B08D57] ' + (slot.key === 'hero' && !slot.multi && (form?.site_settings?.hero?.photos ?? []).includes(ph.storage_path) ? 'border-[#8C6B3F] ring-2 ring-[#8C6B3F]' : 'border-[#E4D3B6]')}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={BASE + ph.storage_path} alt="" className="h-full w-full object-cover" />
                     </button>

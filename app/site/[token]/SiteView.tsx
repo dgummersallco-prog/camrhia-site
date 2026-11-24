@@ -179,7 +179,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
 
   for (const e of t.extraPages) hrefs[e.id] = `${base}/p/${e.id}${qs}`
   hrefs.blog = `${base}/blog${qs}`
-  const blogOn = blogPosts((r as any).site_settings).length > 0
+  const blogOn = blogPosts((r as any).site_settings).length > 0 || (isPreview && !!(r as any).site_settings?.structure && !t.pagesOff.includes('blog'))
   const navItems = ([...['home', 'galleries', 'about', 'book'], ...(blogOn ? ['blog'] : []), ...t.extraPages.map((e) => e.id)] as string[])
     .filter((k) => !(t.menu.hidden as string[]).includes(k) && !t.pagesOff.includes(k) && !(k === 'galleries' && galleries.length === 0))
     .map((k) => ({ key: k, href: hrefs[k], label: (t.menu.labels as Record<string, string | undefined>)[k]?.trim() || (NAV_DEFAULTS as Record<string, string>)[k] || t.extraPages.find((e) => e.id === k)?.label || k, active: k === page }))
@@ -958,7 +958,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
         })
-        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={items2} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
+        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items2, gs2)} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
       }
       case 'portfolio': {
         const rawGal = (r as any).site_settings?.galindex?.layout
@@ -970,7 +970,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
             return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
           })
-          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={items} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
+          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items, gsd)} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
         }
         const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
         const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'
@@ -1774,6 +1774,16 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     window.parent?.postMessage({ type: 'camrhia-featured', list }, '*')
   }, [isPreview, galleries])
 
+  const GAL_N: Record<string, number> = { sahara: 3, gobi: 4, mojave: 3, atacama: 4, namib: 3, sonora: 4, kalahari: 4, thar: 3 }
+  const padGal = (items: any[], design: string): any[] => {
+    const need = GAL_N[design] ?? 0
+    if (!isPreview || items.length >= need) return items
+    const names = ['Wedding', 'Engagement', 'Family', 'Portraits']
+    const out = [...items]
+    while (out.length < need) { const i = out.length; out.push({ id: 'ph-g' + i, title: names[i % names.length], line: '', u: null, href: '#', n: 0 }) }
+    return out
+  }
+
   const doorPic = (k: string, i: number): string | null => {
     const ov = slotPics['explore:' + i]
     if (ov) { const u = photoUrl(ov) as string | null; if (u) return u }
@@ -1782,8 +1792,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   }
 
   const exploreEl = doors.length > 0 && ex.show !== false ? (
-          <section data-name="Explore section" id="explore" className="px-6 py-16">
-          <div className="mx-auto max-w-6xl">
+          <section data-name="Explore section" id="explore" className={exLayout === 'rowan' ? '' : 'px-6 py-16'}>
+          <div className={exLayout === 'rowan' ? 'w-full' : 'mx-auto max-w-6xl'}>
             {ex.heading?.trim() && (
               <p className="el-ex_label mb-8 text-center text-[11px] uppercase tracking-[0.3em]" style={{ color: soft }}>{ex.heading}</p>
             )}
@@ -1982,7 +1992,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             )}
 
             {exLayout === 'rowan' && (
-              <div style={{ background: '#1d1613', padding: '2.1% 2.9%' }}>
+              <div style={{ background: hexOk(secStyles.explore?.bg) ? 'transparent' : '#1d1613', padding: 'clamp(22px, 3.4vw, 64px) 2.9%', width: '100vw', marginLeft: 'calc(50% - 50vw)' }}>
                 <div className={'grid gap-3 ' + (doors.length === 3 ? 'md:grid-cols-3 md:gap-[1.1%]' : 'sm:grid-flow-col sm:auto-cols-fr')}>
                   {doors.map((b, i) => (
                     <a key={b.href} href={b.href} className="relative block min-h-[320px] overflow-hidden md:aspect-[0.668/1]" style={{ background: tint }}>
