@@ -1,4 +1,4 @@
-import { rootOf, rootKey, photosIn, photoId } from './photoFx'
+import { rootOf, rootKey, photosIn, photoId, visualOf, BTN_SEL, buttonsIn, buttonId, boxesIn, boxId, frameOf, setBox, TXT_SEL } from './photoFx'
 
 export function installPreviewSections(): () => void {
   if (typeof window === 'undefined') return () => {}
@@ -47,10 +47,15 @@ export function installPreviewSections(): () => void {
     bar.style.top = Math.min(Math.max(8, r.top + 8), window.innerHeight - 50) + 'px'
     bar.style.right = '16px'
     const tall = r.height > 140
-    hT.style.display = tall ? 'block' : 'none'; hB.style.display = tall ? 'block' : 'none'
-    const cx = Math.round(r.left + r.width / 2 - 38)
-    hT.style.left = cx + 'px'; hT.style.top = Math.max(0, r.top + 2) + 'px'
-    hB.style.left = cx + 'px'; hB.style.top = Math.min(window.innerHeight - 18, r.bottom - 18) + 'px'
+    const vw = document.documentElement.clientWidth
+    const cx = Math.round((Math.max(r.left, 0) + Math.min(r.right, vw)) / 2 - 38)
+    const vh = window.innerHeight
+    const topIn = r.top >= -2 && r.top <= vh - 4
+    const botIn = r.bottom >= 4 && r.bottom <= vh + 2
+    hT.style.display = tall && topIn ? 'block' : 'none'
+    hB.style.display = tall && botIn ? 'block' : 'none'
+    hT.style.left = cx + 'px'; hT.style.top = Math.max(0, Math.round(r.top) - 8) + 'px'
+    hB.style.left = cx + 'px'; hB.style.top = Math.min(vh - 16, Math.round(r.bottom) - 8) + 'px'
   }
 
   const onMove = (e: MouseEvent) => {
@@ -124,16 +129,19 @@ export function installPreviewSections(): () => void {
   let selPhoto: { key: string; idx: number; el: HTMLElement } | null = null
   let pd: { el: HTMLElement; key: string; idx: number; x0: number; y0: number; px: number; py: number; moved: boolean; nx: number; ny: number } | null = null
   let swallow = false
-  const TXT = 'h1, [class^="el-"], [class*=" el-"]'
-  const clearSel = () => { if (selPhoto) selPhoto.el.classList.remove('cam-psel'); selPhoto = null }
+  const TXT = 'h1, [class^="el-"], [class*=" el-"], ' + BTN_SEL
+  const txOf = (b: HTMLElement) => b.classList.contains('el-hero_btn') ? 'hero_el' : b.classList.contains('ct-btn') ? 'contactBtn' : (b.classList.contains('ab-btn') || b.getAttribute('data-name') === 'About button') ? 'aboutBtn' : b.classList.contains('gb-btn') ? 'galBtn' : b.id === 'hero-btn' ? 'heroText' : ''
+  const clearSel = () => { if (selPhoto) { selPhoto.el.classList.remove('cam-psel'); visualOf(selPhoto.el).classList.remove('cam-psel') } selPhoto = null }
   const photoAt = (x: number, y: number): { key: string; idx: number; el: HTMLElement } | null => {
     for (const n of document.elementsFromPoint(x, y)) {
       const root = rootOf(n)
       if (!root) continue
       const key = rootKey(root)
       if (!key) continue
-      const i = photosIn(root).indexOf(n as HTMLElement)
-      if (i >= 0) return { key, idx: key === 'hero' ? 0 : i, el: n as HTMLElement }
+      let node = n as HTMLElement
+      if (node.hasAttribute && node.hasAttribute('data-fxph')) node = node.previousElementSibling as HTMLElement
+      const i = photosIn(root).indexOf(node)
+      if (i >= 0) return { key, idx: key === 'hero' ? 0 : i, el: node }
     }
     return null
   }
@@ -144,15 +152,28 @@ export function installPreviewSections(): () => void {
     const root = rootOf(t)
     if (!root) return
     if (t.closest('a')) e.preventDefault()
-    if (t.closest(TXT)) { clearSel(); return }
     const key = rootKey(root)
+    const bt = t.closest(BTN_SEL) as HTMLElement | null
+    if (bt) {
+      const bi = buttonsIn(root).indexOf(bt)
+      if (bi >= 0) {
+        e.preventDefault(); e.stopPropagation()
+        clearSel()
+        selectText(root, bt)
+        post({ action: 'button', sec: key, id: buttonId(key, bi), tx: txOf(bt), text: (bt.textContent ?? '').trim() })
+        return
+      }
+    }
+    if (t.closest(TXT)) { clearSel(); selectText(root, t); return }
     const hit = photoAt(e.clientX, e.clientY)
-    if (!hit || hit.key !== key) { clearSel(); post({ action: 'select', key }); return }
+    if (!hit || hit.key !== key) { clearSel(); setBoxSel(null, '', 'text'); post({ action: 'select', key }); return }
     e.preventDefault(); e.stopPropagation()
     const again = !!selPhoto && selPhoto.key === hit.key && selPhoto.idx === hit.idx
     clearSel()
     selPhoto = hit
-    hit.el.classList.add('cam-psel')
+    visualOf(hit.el).classList.add('cam-psel')
+    if (hit.key !== 'hero') setBoxSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, hit.idx), 'frame')
+    else setBoxSel(null, '', 'text')
     post({ action: 'photo', key: hit.key, idx: hit.idx, again })
   }
   const parsePos = (el: HTMLElement): [number, number] => {
@@ -161,7 +182,7 @@ export function installPreviewSections(): () => void {
   }
   const dragTargets = (d: { el: HTMLElement; key: string }): HTMLElement[] => {
     const root = rootOf(d.el)
-    return d.key === 'hero' && root ? photosIn(root) : [d.el]
+    return (d.key === 'hero' && root ? photosIn(root) : [d.el]).map(visualOf)
   }
   const onPDown = (e: PointerEvent) => {
     if (e.button !== 0 || !selPhoto) return
@@ -169,7 +190,7 @@ export function installPreviewSections(): () => void {
     if (!t || !t.closest || bar.contains(t) || hT.contains(t) || hB.contains(t) || t.closest(TXT)) return
     const hit = photoAt(e.clientX, e.clientY)
     if (!hit || hit.key !== selPhoto.key || hit.idx !== selPhoto.idx) return
-    const [px, py] = parsePos(hit.el)
+    const [px, py] = parsePos(visualOf(hit.el))
     pd = { el: hit.el, key: hit.key, idx: hit.idx, x0: e.clientX, y0: e.clientY, px, py, moved: false, nx: px, ny: py }
     for (const x of dragTargets(pd)) if (x.dataset.fx === undefined) { x.dataset.fx = '1'; x.dataset.fxop = x.style.objectPosition }
   }
@@ -181,7 +202,7 @@ export function installPreviewSections(): () => void {
     pd.moved = true
     e.preventDefault()
     document.body.style.userSelect = 'none'
-    const el = pd.el
+    const el = visualOf(pd.el)
     const w = el.offsetWidth
     const h = el.offsetHeight
     const nw = (el as HTMLImageElement).naturalWidth || w
@@ -205,7 +226,111 @@ export function installPreviewSections(): () => void {
     setTimeout(() => { swallow = false }, 0)
     post({ action: 'photofx', id: photoId(d.key, d.idx), x: Math.round(d.nx * 10) / 10, y: Math.round(d.ny * 10) / 10 })
   }
-  const onNativeDrag = (e: Event) => { if (selPhoto) e.preventDefault() }
+  const onNativeDrag = (e: Event) => { e.preventDefault() }
+
+  type Sel = { el: HTMLElement; id: string; kind: 'text' | 'frame' }
+  let selBox: Sel | null = null
+  const bx = document.createElement('div')
+  bx.id = 'cam-box'
+  bx.style.cssText = 'position:fixed;z-index:2147482000;display:none;border:1.5px solid #d9a21b;pointer-events:none'
+  const mkH = (c: string, cur: string, pos: string) => {
+    const h = document.createElement('div')
+    h.dataset.c = c
+    h.style.cssText = 'position:absolute;width:12px;height:12px;background:#fff;border:2px solid #d9a21b;border-radius:3px;pointer-events:auto;cursor:' + cur + ';' + pos
+    bx.appendChild(h)
+    return h
+  }
+  mkH('nw', 'nwse-resize', 'left:-8px;top:-8px')
+  mkH('ne', 'nesw-resize', 'right:-8px;top:-8px')
+  mkH('sw', 'nesw-resize', 'left:-8px;bottom:-8px')
+  mkH('se', 'nwse-resize', 'right:-8px;bottom:-8px')
+  const mv = document.createElement('div')
+  mv.dataset.c = 'move'
+  mv.textContent = 'Move'
+  mv.style.cssText = 'position:absolute;left:50%;top:-32px;transform:translateX(-50%);background:#8C6B3F;color:#fff;font:600 11px system-ui,sans-serif;padding:5px 11px;border-radius:9px;cursor:move;pointer-events:auto;box-shadow:0 2px 8px rgba(0,0,0,.3)'
+  bx.appendChild(mv)
+  document.body.appendChild(bx)
+  const layoutBox = () => {
+    if (!selBox || !document.body.contains(selBox.el)) { bx.style.display = 'none'; return }
+    const r = selBox.el.getBoundingClientRect()
+    if (r.width < 4 || r.height < 4) { bx.style.display = 'none'; return }
+    bx.style.display = 'block'
+    bx.style.left = r.left + 'px'; bx.style.top = r.top + 'px'; bx.style.width = r.width + 'px'; bx.style.height = r.height + 'px'
+    mv.style.display = selBox.kind === 'frame' ? 'block' : 'none'
+    mv.style.top = r.top < 40 ? 'auto' : '-32px'
+    mv.style.bottom = r.top < 40 ? '-32px' : 'auto'
+  }
+  const setBoxSel = (el: HTMLElement | null, id: string, kind: 'text' | 'frame') => {
+    selBox = el ? { el, id, kind } : null
+    post({ action: 'box', id: el ? id : '' })
+    layoutBox()
+  }
+  const selectText = (root: HTMLElement, t: HTMLElement) => {
+    const key = rootKey(root)
+    const list = boxesIn(root)
+    const i = list.findIndex((x) => x === t || x.contains(t))
+    if (i >= 0) setBoxSel(list[i], boxId(key, i), 'text')
+    else setBoxSel(null, '', 'text')
+  }
+  const curFx = (el: HTMLElement) => {
+    const m = /(-?[\d.]+)vw\s+(-?[\d.]+)vw/.exec(el.style.getPropertyValue('translate') || '')
+    return { x: m ? Number(m[1]) : 0, y: m ? Number(m[2]) : 0, s: Number(el.style.getPropertyValue('scale')) || 1 }
+  }
+  let g: { mode: 'rs' | 'mv'; sel: Sel; x0: number; y0: number; fx: { x: number; y: number; s: number }; cx: number; cy: number; d0: number; moved: boolean } | null = null
+  const vwPx = () => Math.max(1, document.documentElement.clientWidth) / 100
+  const onGDown = (e: PointerEvent) => {
+    if (e.button !== 0) return
+    const t = e.target as HTMLElement | null
+    if (!t || !t.closest || bar.contains(t) || hT.contains(t) || hB.contains(t)) return
+    const hd = t.closest('#cam-box [data-c]') as HTMLElement | null
+    if (hd && selBox) {
+      e.preventDefault()
+      const r = selBox.el.getBoundingClientRect()
+      const cx = r.left + r.width / 2
+      const cy = r.top + r.height / 2
+      g = { mode: hd.dataset.c === 'move' ? 'mv' : 'rs', sel: selBox, x0: e.clientX, y0: e.clientY, fx: curFx(selBox.el), cx, cy, d0: Math.max(8, Math.hypot(e.clientX - cx, e.clientY - cy)), moved: true }
+      document.body.style.userSelect = 'none'
+      return
+    }
+    if (bx.contains(t)) return
+    const tb = t.closest(TXT_SEL) as HTMLElement | null
+    const root = rootOf(t)
+    if (!tb || !root) return
+    const key = rootKey(root)
+    const list = boxesIn(root)
+    const i = list.findIndex((x) => x === tb || x.contains(tb))
+    if (i < 0) return
+    g = { mode: 'mv', sel: { el: list[i], id: boxId(key, i), kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(list[i]), cx: 0, cy: 0, d0: 1, moved: false }
+  }
+  const onGMove = (e: PointerEvent) => {
+    if (!g) return
+    const dx = e.clientX - g.x0
+    const dy = e.clientY - g.y0
+    if (!g.moved) { if (Math.hypot(dx, dy) < 5) return; g.moved = true; document.body.style.userSelect = 'none' }
+    e.preventDefault()
+    if (g.mode === 'mv') {
+      setBox(g.sel.el, { x: g.fx.x + dx / vwPx(), y: g.fx.y + dy / vwPx(), s: g.fx.s })
+    } else {
+      const d = Math.hypot(e.clientX - g.cx, e.clientY - g.cy)
+      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: Math.min(6, Math.max(0.2, g.fx.s * (d / g.d0))) })
+    }
+    layoutBox()
+  }
+  const onGUp = () => {
+    if (!g) return
+    const d = g
+    g = null
+    document.body.style.userSelect = ''
+    if (!d.moved) return
+    const f = curFx(d.sel.el)
+    selBox = d.sel
+    layoutBox()
+    const kill = (ev: Event) => { ev.stopImmediatePropagation(); ev.preventDefault() }
+    window.addEventListener('click', kill, true)
+    setTimeout(() => window.removeEventListener('click', kill, true), 60)
+    post({ action: 'box', id: d.sel.id })
+    post({ action: 'boxfx', id: d.sel.id, x: Math.round(f.x * 100) / 100, y: Math.round(f.y * 100) / 100, s: Math.round(f.s * 1000) / 1000 })
+  }
   const onHDown = (e: PointerEvent) => {
     const h = (e.target as HTMLElement).closest('.cam-h') as HTMLElement | null
     if (!h || !cur) return
@@ -234,6 +359,9 @@ export function installPreviewSections(): () => void {
     document.body.style.userSelect = ''
     post({ action: 'scale', key: el.dataset.sec as string, s: Number(el.dataset.sc || 1) })
   }
+  let rafId = 0
+  const loop = () => { if (cur && !dragging) show(cur); layoutBox(); rafId = requestAnimationFrame(loop) }
+  rafId = requestAnimationFrame(loop)
   document.addEventListener('pointerdown', onHDown)
   document.addEventListener('pointermove', onHMove)
   document.addEventListener('pointerup', onHUp)
@@ -242,6 +370,9 @@ export function installPreviewSections(): () => void {
   document.addEventListener('pointermove', onPMove, { passive: false })
   document.addEventListener('pointerup', onPUp)
   document.addEventListener('dragstart', onNativeDrag)
+  document.addEventListener('pointerdown', onGDown)
+  document.addEventListener('pointermove', onGMove, { passive: false })
+  document.addEventListener('pointerup', onGUp)
   document.addEventListener('mousemove', onMove)
   document.addEventListener('mouseleave', onLeave)
   window.addEventListener('scroll', onScroll, true)
@@ -255,6 +386,11 @@ export function installPreviewSections(): () => void {
     document.removeEventListener('pointermove', onPMove)
     document.removeEventListener('pointerup', onPUp)
     document.removeEventListener('dragstart', onNativeDrag)
+    document.removeEventListener('pointerdown', onGDown)
+    document.removeEventListener('pointermove', onGMove)
+    document.removeEventListener('pointerup', onGUp)
+    bx.remove()
+    cancelAnimationFrame(rafId)
     document.removeEventListener('pointerdown', onHDown)
     document.removeEventListener('pointermove', onHMove)
     document.removeEventListener('pointerup', onHUp)

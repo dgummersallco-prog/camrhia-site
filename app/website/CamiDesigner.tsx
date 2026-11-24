@@ -127,31 +127,140 @@ const PICK_COLORS = [...TEXTS.slice(0, 7), ...ACCENTS.slice(0, 14), '#FFFFFF']
 
 const POPUP_ON: boolean = false
 
-function ColorRow({ label, value, onSet, onReset }: { label: string; value?: string; onSet: (c: string) => void; onReset?: () => void }) {
+function hexToHsv(hex: string): [number, number, number] {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex)
+  if (!m) return [30, 0.2, 1]
+  const n = parseInt(m[1], 16)
+  const r = ((n >> 16) & 255) / 255
+  const g = ((n >> 8) & 255) / 255
+  const b = (n & 255) / 255
+  const mx = Math.max(r, g, b)
+  const mn = Math.min(r, g, b)
+  const d = mx - mn
+  let h = 0
+  if (d) {
+    if (mx === r) h = ((g - b) / d) % 6
+    else if (mx === g) h = (b - r) / d + 2
+    else h = (r - g) / d + 4
+    h *= 60
+    if (h < 0) h += 360
+  }
+  return [h, mx ? d / mx : 0, mx]
+}
+
+function hsvToHex(h: number, s: number, v: number): string {
+  const c = v * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = v - c
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]
+  const f = (t: number) => Math.round((t + m) * 255).toString(16).padStart(2, '0')
+  return ('#' + f(r) + f(g) + f(b)).toUpperCase()
+}
+
+function ColorRow({ label, value, base, onLive, onSet, onReset }: { label: string; value?: string; base: string[]; onLive?: (c: string) => void; onSet: (c: string) => void; onReset?: () => void }) {
+  const ok = /^#[0-9a-fA-F]{6}$/.test(value ?? '')
+  const [open, setOpen] = useState(false)
+  const [hsv, setHsv] = useState<[number, number, number]>(() => hexToHsv(ok ? (value as string) : (base[0] ?? '#F7EBDE')))
+  const [hexT, setHexT] = useState(ok ? (value as string).toUpperCase() : '')
+  const [recent, setRecent] = useState<string[]>([])
+  const drag = useRef(false)
+  const raf = useRef(0)
+  const last = useRef('')
+  const svRef = useRef<HTMLDivElement>(null)
+  const hueRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    try { const j = JSON.parse(localStorage.getItem('cam_recent_colors') ?? '[]'); if (Array.isArray(j)) setRecent(j.filter((x) => typeof x === 'string')) } catch { /* ignore */ }
+  }, [])
+  useEffect(() => { if (!drag.current && ok) { setHsv(hexToHsv(value as string)); setHexT((value as string).toUpperCase()) } }, [value, ok])
+  const hex = hsvToHex(hsv[0], hsv[1], hsv[2])
+  const live = (c: string) => { last.current = c; if (!raf.current) raf.current = requestAnimationFrame(() => { raf.current = 0; onLive?.(last.current) }) }
+  const finish = (c: string) => {
+    const nx = [c.toUpperCase(), ...recent.filter((x) => x.toUpperCase() !== c.toUpperCase())].slice(0, 12)
+    setRecent(nx)
+    try { localStorage.setItem('cam_recent_colors', JSON.stringify(nx)) } catch { /* ignore */ }
+    onSet(c)
+  }
+  const grab = (ref: React.RefObject<HTMLDivElement | null>, fn: (x: number, y: number) => [number, number, number]) => (e: React.PointerEvent) => {
+    const el = ref.current
+    if (!el) return
+    e.preventDefault()
+    el.setPointerCapture(e.pointerId)
+    drag.current = true
+    const move = (ev: { clientX: number; clientY: number }) => {
+      const r = el.getBoundingClientRect()
+      const x = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width))
+      const y = Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height))
+      const nx = fn(x, y)
+      setHsv(nx)
+      const c = hsvToHex(nx[0], nx[1], nx[2])
+      setHexT(c)
+      live(c)
+      return c
+    }
+    move(e)
+    const onMove = (ev: PointerEvent) => { move(ev) }
+    const onUp = (ev: PointerEvent) => {
+      const c = move(ev)
+      drag.current = false
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerup', onUp)
+      finish(c)
+    }
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerup', onUp)
+  }
+  const pal = Array.from(new Set([...recent, ...base].map((c) => c.toUpperCase()))).slice(0, 12)
   return (
     <div className="mt-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        {PICK_COLORS.map((c) => (
-          <button key={c} type="button" aria-label={c} onClick={() => onSet(c)} className={'h-7 w-7 rounded-full border border-black/15 transition hover:scale-110 ' + (String(value ?? '').toLowerCase() === c.toLowerCase() ? 'ring-2 ring-[#8C6B3F] ring-offset-1' : '')} style={{ background: c }} />
-        ))}
-        <input defaultValue={value ?? ''} key={String(value ?? '')} onBlur={(e) => { const v = e.target.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) onSet(v) }} placeholder="#hex" maxLength={7} className="w-20 rounded-lg border border-[#E4D3B6] bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-[#B08D57]" />
-      </div>
-      {onReset && <button type="button" onClick={onReset} className="mt-3 rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]">Reset color</button>}
+      <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-left text-sm text-ink">
+        <span className="flex items-center gap-2">
+          <span className="h-5 w-5 rounded-full border border-black/15" style={{ background: ok ? (value as string) : 'repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 8px 8px' }} />
+          {ok ? (value as string).toUpperCase() : 'Default'}
+        </span>
+        <span className="text-xs text-ink-soft">{open ? 'Close' : 'Change'}</span>
+      </button>
+      {open && (
+        <div className="mt-2 rounded-2xl border border-[#E4D3B6] p-3" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 3px #FFFDF9, inset 0 0 0 4px #EBDDC3' }}>
+          <div className="grid grid-cols-6 gap-2">
+            {pal.map((c) => (
+              <button key={c} type="button" aria-label={c} onClick={() => { setHsv(hexToHsv(c)); setHexT(c); onLive?.(c); finish(c) }} className={'h-8 w-8 rounded-full border border-[#DCCBA9] transition hover:scale-105 ' + (String(value ?? '').toUpperCase() === c ? 'ring-2 ring-[#8C6B3F] ring-offset-1' : '')} style={{ background: c }} />
+            ))}
+          </div>
+          <div ref={svRef} onPointerDown={grab(svRef, (x, y) => [hsv[0], x, 1 - y])} className="relative mt-3 h-36 w-full cursor-crosshair touch-none rounded-xl" style={{ background: 'linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,hsl(' + hsv[0] + ',100%,50%))' }}>
+            <div className="pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow" style={{ left: hsv[1] * 100 + '%', top: (1 - hsv[2]) * 100 + '%', background: hex }} />
+          </div>
+          <div ref={hueRef} onPointerDown={grab(hueRef, (x) => [x * 359.9, hsv[1], hsv[2]])} className="relative mt-3 h-4 w-full cursor-pointer touch-none rounded-full" style={{ background: 'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)' }}>
+            <div className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow" style={{ left: (hsv[0] / 360) * 100 + '%', background: 'hsl(' + hsv[0] + ',100%,50%)' }} />
+          </div>
+          <input value={hexT} onChange={(e) => { const v = e.target.value.trim(); setHexT(v); const w = v.startsWith('#') ? v : '#' + v; if (/^#[0-9a-fA-F]{6}$/.test(w)) { setHsv(hexToHsv(w)); live(w.toUpperCase()) } }} onBlur={() => { const w = hexT.startsWith('#') ? hexT : '#' + hexT; if (/^#[0-9a-fA-F]{6}$/.test(w)) finish(w.toUpperCase()) }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} maxLength={7} placeholder="#hex" className="mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 font-fraunces text-sm uppercase text-ink outline-none focus:border-[#B08D57]" />
+          <div className="mt-3 flex items-center justify-between">
+            <button type="button" onClick={() => setOpen(false)} className="text-xs font-semibold tracking-[0.2em] text-[#8C6B3F]">DONE</button>
+            {onReset && <button type="button" onClick={onReset} className="text-xs font-medium text-[#6B4A2B] underline">Reset</button>}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function SliderRow({ label, value, min, max, step, unit, onDone }: { label: string; value: number; min: number; max: number; step: number; unit: string; onDone: (v: number) => void }) {
+function SliderRow({ label, value, min, max, step, unit, onLive, onDone }: { label: string; value: number; min: number; max: number; step: number; unit: string; onLive?: (v: number) => void; onDone: (v: number) => void }) {
   const [v, setV] = useState(value)
-  useEffect(() => { setV(value) }, [value])
+  const raf = useRef(0)
+  const last = useRef(value)
+  useEffect(() => { setV(value); last.current = value }, [value])
+  const change = (n: number) => {
+    setV(n)
+    last.current = n
+    if (onLive && !raf.current) raf.current = requestAnimationFrame(() => { raf.current = 0; onLive(last.current) })
+  }
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
         <span className="text-xs text-ink-soft">{unit === 'x' ? v.toFixed(2) + 'x' : Math.round(v) + unit}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={v} onChange={(e) => setV(Number(e.target.value))} onPointerUp={() => onDone(v)} onKeyUp={() => onDone(v)} className="mt-2 w-full accent-[#8C6B3F]" />
+      <input type="range" min={min} max={max} step={step} value={v} onChange={(e) => change(Number(e.target.value))} onPointerUp={() => onDone(last.current)} onKeyUp={() => onDone(last.current)} className="mt-2 w-full accent-[#8C6B3F]" />
     </div>
   )
 }
@@ -230,6 +339,8 @@ export default function CamiDesigner() {
   const [leftTab, setLeftTab] = useState<'design' | 'setup'>('design')
   const [slot, setSlot] = useState<{ key: string; idx: number } | null>(null)
   const [selPh, setSelPh] = useState<{ key: string; idx: number } | null>(null)
+  const [selBtn, setSelBtn] = useState<{ id: string; tx: string; text: string } | null>(null)
+  const [selBox, setSelBox] = useState<string | null>(null)
   const [lib, setLib] = useState<{ id: string; storage_path: string }[]>([])
   const [libBusy, setLibBusy] = useState(false)
   const [ptext, setPtext] = useState('')
@@ -298,11 +409,19 @@ export default function CamiDesigner() {
     function onMsg(e: MessageEvent) {
       const d = e.data
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.key)); setLeftTab('design'); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelSec(String(d.key)); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0 }); setLeftTab('design'); if (!d.again) setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSelSec(String(d.key)); setLeftTab('design'); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? '') }); setLeftTab('design'); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0 }); setLeftTab('design'); if (!d.again) setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
         commitRef.current?.((n) => {
           const s = (n.site_settings = n.site_settings ?? {})
+          if (d.action === 'boxfx') {
+            const bf: Record<string, any> = { ...(s.boxFx ?? {}) }
+            bf[d.id] = { x: Number(d.x), y: Number(d.y), s: Number(d.s) }
+            s.boxFx = bf
+            return
+          }
           if (d.action === 'photofx') {
             const pf: Record<string, any> = { ...(s.photoFx ?? {}) }
             pf[d.id] = { ...(pf[d.id] ?? {}), x: Number(d.x), y: Number(d.y) }
@@ -336,7 +455,7 @@ export default function CamiDesigner() {
       if (!b) return
       const left = Math.max(8, Math.min(b.width - 348, f.left - b.left + d.x))
       const top = Math.max(8, Math.min(b.height - 140, f.top - b.top + d.y + d.h + 10))
-      setSelSec(null); setSelPh(null); setLeftTab('design'); setPick({ key: d.key, text: d.text ?? '', left, top, color: rgbHex(String(d.color ?? '')), size: Number(d.size) || 0, op: Number(d.op) || 1 })
+      setSelSec(null); setSelPh(null); setSelBtn(null); setLeftTab('design'); setPick({ key: d.key, text: d.text ?? '', left, top, color: rgbHex(String(d.color ?? '')), size: Number(d.size) || 0, op: Number(d.op) || 1 })
       setPtext(d.text ?? '')
       setPhex('')
     }
@@ -411,6 +530,13 @@ export default function CamiDesigner() {
   }
 
   commitRef.current = commit
+
+  function liveEdit(fn: (n: Prof) => void) {
+    if (!form) return
+    const nx = clone(form)
+    fn(nx)
+    pushPatch(nx)
+  }
 
   function kitOf(n: Prof) {
     const x = (n.site_settings = n.site_settings ?? {}) as Record<string, any>
@@ -788,7 +914,7 @@ export default function CamiDesigner() {
             nn.pinterest_url = links.pinterest_url.trim() || null
             const prev: any = x.kit ?? null
             const same = (a: any, b: any) => JSON.stringify([a?.accent, a?.bg, a?.text]) === JSON.stringify([b?.accent, b?.bg, b?.text])
-            const layoutNew = kit.layouts.length > 0
+            const layoutNew = kit.layouts.length > 0 && (!prev || (prev.layouts?.[0] ?? null) !== kit.layouts[0])
             const palNew = !prev || !same(prev.palettes?.[0], kit.palettes[0])
             const fontNew = !prev || (['title', 'subtitle', 'paragraph'] as const).some((r) => (prev.type?.[r]?.[0] ?? null) !== (kit.type[r][0] ?? null))
             if (layoutNew) {
@@ -884,8 +1010,8 @@ export default function CamiDesigner() {
     })
   }
 
-  function setElProp(key: string, patch: { font?: string; color?: string; size?: number; op?: number }) {
-    commit((n) => {
+  function setElProp(key: string, patch: { font?: string; color?: string; size?: number; op?: number }, live?: boolean) {
+    (live ? liveEdit : commit)((n) => {
       const s = (n.site_settings = n.site_settings ?? {})
       if (key === 'hero_headline') {
         if (patch.font) s.hero = { ...(s.hero ?? {}), headline_font: patch.font }
@@ -1090,9 +1216,51 @@ export default function CamiDesigner() {
               {leftTab === 'design' && (() => {
                 const SEC_NAME: Record<string, string> = { hero: 'Hero', stories: 'Love Stories', follow: 'Follow along', featured: 'Featured work', explore: 'Explore section', portfolio: 'Gallery section', galsec: 'Gallery section', about: 'About section', testimonials: 'Testimonials section', investment: 'Pricing section', pricesec: 'Pricing section', faq: 'FAQ section', contact: 'Booking section', social: 'Social links', aboutcta: 'About button' }
                 const ss: Record<string, any> = set.secStyle ?? {}
-                const setSecBg = (key: string, c: string | null) => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur = { ...(m[key] ?? {}) }; if (c) cur.bg = c; else delete cur.bg; m[key] = cur; x.secStyle = m }) }
+                const okHex = (c: any) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)
+                const base: string[] = [form?.site_accent, set.colors?.bg, set.colors?.text, ...PICK_COLORS].filter(okHex) as string[]
+                const secBgMut = (key: string, c: string | null) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur = { ...(m[key] ?? {}) }; if (c) cur.bg = c; else delete cur.bg; m[key] = cur; x.secStyle = m }
+                const setSecBg = (key: string, c: string | null) => { void commit(secBgMut(key, c)) }
+                const liveSecBg = (key: string, c: string) => liveEdit(secBgMut(key, c))
+                const boxReset = selBox && (set.boxFx ?? {})[selBox] ? <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; delete m[selBox]; x.boxFx = m }) }} className="mt-4 rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]">Reset position and size</button> : null
                 const btn = 'rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]'
                 const inp = 'mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]'
+                if (selBtn) {
+                  const bf = (set.btnFx ?? {})[selBtn.id] ?? {}
+                  const bMut = (patch: Record<string, any>, del?: string[]) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.btnFx ?? {}) }; const cur: Record<string, any> = { ...(m[selBtn.id] ?? {}), ...patch }; (del ?? []).forEach((k) => { delete cur[k] }); m[selBtn.id] = cur; x.btnFx = m }
+                  const setB = (patch: Record<string, any>, del?: string[]) => { void commit(bMut(patch, del)) }
+                  const liveB = (patch: Record<string, any>) => liveEdit(bMut(patch))
+                  const setBtnText = (v: string) => {
+                    const tx = selBtn.tx
+                    if (!tx || !v.trim() || v.trim() === selBtn.text) return
+                    void commit((n) => {
+                      const x = (n.site_settings = n.site_settings ?? {})
+                      if (tx === 'contactBtn' || tx === 'aboutBtn' || tx === 'galBtn') x[tx] = { ...(x[tx] ?? {}), text: v.trim() }
+                      else if (tx === 'hero_el') x.text = { ...(x.text ?? {}), hero_btn: v.trim() }
+                      else if (tx === 'heroText') x.hero = { ...(x.hero ?? {}), btn_text: v.trim() }
+                    })
+                    setSelBtn({ ...selBtn, text: v.trim() })
+                  }
+                  return (
+                    <div className="mt-4">
+                      <p className="font-fraunces text-lg font-semibold text-ink">Button</p>
+                      {selBtn.tx && <input key={selBtn.id + selBtn.tx} defaultValue={selBtn.text} onBlur={(e) => setBtnText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} className={inp} />}
+                      <ColorRow label="Button color" value={bf.bg} base={base} onLive={(c) => liveB({ bg: c })} onSet={(c) => setB({ bg: c })} onReset={() => setB({}, ['bg'])} />
+                      <ColorRow label="Button text color" value={bf.color} base={base} onLive={(c) => liveB({ color: c })} onSet={(c) => setB({ color: c })} onReset={() => setB({}, ['color'])} />
+                      <div className="mt-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Button shape</p>
+                        <div className="mt-2 flex gap-2">
+                          {(['square', 'rounded', 'pill'] as const).map((sh) => (
+                            <button key={sh} type="button" onClick={() => setB({ shape: sh })} className={'rounded-full border px-4 py-1.5 text-sm capitalize transition ' + (bf.shape === sh ? 'border-[#8C6B3F] bg-[#8C6B3F] text-white' : 'border-[#E4D3B6] bg-white text-ink hover:bg-[#F3E7D3]')}>{sh}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <SliderRow label="Button text size" value={Number(bf.size) || 13} min={9} max={32} step={1} unit="px" onLive={(v) => liveB({ size: v })} onDone={(v) => setB({ size: v })} />
+                      <SliderRow label="Button opacity" value={Math.round(Number(bf.op ?? 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => liveB({ op: v >= 100 ? 1 : v / 100 })} onDone={(v) => setB({ op: v >= 100 ? 1 : v / 100 })} />
+                      <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.btnFx ?? {}) }; delete m[selBtn.id]; x.btnFx = m }) }} className={btn + ' mt-4'}>Reset button</button>
+                      {boxReset}
+                    </div>
+                  )
+                }
                 if (pick) {
                   const el = set.el?.[pick.key] ?? {}
                   const nm = PICK_LABELS[pick.key] ?? 'Text'
@@ -1105,10 +1273,11 @@ export default function CamiDesigner() {
                       <div className="mt-3">
                         <FontPick label="Font" hint="Just this text" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
                       </div>
-                      <ColorRow label={nm + ' color'} value={el.color ?? pick.color} onSet={(c) => setElProp(pick.key, { color: c })} />
-                      <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={pick.key === 'hero_headline' ? 120 : 90} step={1} unit="px" onDone={(v) => setElProp(pick.key, { size: v })} />
-                      <SliderRow label={nm + ' opacity'} value={Math.round((Number(el.op) || pick.op || 1) * 100)} min={10} max={100} step={1} unit="%" onDone={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 })} />
+                      <ColorRow label={nm + ' color'} value={el.color ?? pick.color} base={base} onLive={(c) => setElProp(pick.key, { color: c }, true)} onSet={(c) => setElProp(pick.key, { color: c })} />
+                      <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={pick.key === 'hero_headline' ? 120 : 90} step={1} unit="px" onLive={(v) => setElProp(pick.key, { size: v }, true)} onDone={(v) => setElProp(pick.key, { size: v })} />
+                      <SliderRow label={nm + ' opacity'} value={Math.round((Number(el.op) || pick.op || 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 }, true)} onDone={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 })} />
                       <button type="button" onClick={() => resetEl(pick.key)} className={btn + ' mt-4'}>Reset text</button>
+                      {boxReset}
                     </div>
                   )
                 }
@@ -1117,7 +1286,9 @@ export default function CamiDesigner() {
                   const fx = (set.photoFx ?? {})[id] ?? {}
                   const secNm = SEC_NAME[selPh.key] ?? selPh.key
                   const nm = selPh.key === 'hero' ? 'Hero main photo' : secNm + ' photo ' + (selPh.idx + 1)
-                  const setFx = (patch: Record<string, any>, del?: string[]) => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; const cur: Record<string, any> = { ...(m[id] ?? {}), ...patch }; (del ?? []).forEach((k) => { delete cur[k] }); m[id] = cur; x.photoFx = m }) }
+                  const fxMut = (patch: Record<string, any>, del?: string[]) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; const cur: Record<string, any> = { ...(m[id] ?? {}), ...patch }; (del ?? []).forEach((k) => { delete cur[k] }); m[id] = cur; x.photoFx = m }
+                  const setFx = (patch: Record<string, any>, del?: string[]) => { void commit(fxMut(patch, del)) }
+                  const liveFx = (patch: Record<string, any>) => liveEdit(fxMut(patch))
                   return (
                     <div className="mt-4">
                       <p className="font-fraunces text-lg font-semibold text-ink">{nm}</p>
@@ -1125,14 +1296,15 @@ export default function CamiDesigner() {
                         <button type="button" onClick={() => setSlot({ key: selPh.key, idx: selPh.idx })} className={btn}>Change photo</button>
                         <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; delete m[id]; x.photoFx = m }) }} className={btn}>Reset photo</button>
                       </div>
-                      <p className="mt-2 text-xs text-ink-soft">Drag the photo in the preview to move it.</p>
-                      <SliderRow label={nm + ' zoom'} value={Number(fx.z ?? 1)} min={1} max={3} step={0.05} unit="x" onDone={(v) => setFx({ z: v })} />
-                      <SliderRow label={nm + ' opacity'} value={Math.round(Number(fx.o ?? 1) * 100)} min={10} max={100} step={1} unit="%" onDone={(v) => setFx({ o: v >= 100 ? 1 : v / 100 })} />
+                      <p className="mt-2 text-xs text-ink-soft">Drag the photo to move it inside its frame. Use the corners to resize the frame and the Move tab to place it.</p>
+                      {boxReset}
+                      <SliderRow label={nm + ' zoom'} value={Number(fx.z ?? 1)} min={1} max={3} step={0.02} unit="x" onLive={(v) => liveFx({ z: v })} onDone={(v) => setFx({ z: v })} />
+                      <SliderRow label={nm + ' opacity'} value={Math.round(Number(fx.o ?? 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => liveFx({ o: v >= 100 ? 1 : v / 100 })} onDone={(v) => setFx({ o: v >= 100 ? 1 : v / 100 })} />
                       {selPh.key === 'hero'
-                        ? <ColorRow label="Hero background color" value={ss.top?.bg} onSet={(c) => setSecBg('top', c)} onReset={() => setSecBg('top', null)} />
+                        ? <ColorRow label="Hero background color" value={ss.top?.bg} base={base} onLive={(c) => liveSecBg('top', c)} onSet={(c) => setSecBg('top', c)} onReset={() => setSecBg('top', null)} />
                         : <>
-                            <ColorRow label={nm + ' background color'} value={fx.bg} onSet={(c) => setFx({ bg: c })} onReset={() => setFx({}, ['bg'])} />
-                            <ColorRow label={secNm + ' background color'} value={ss[selPh.key]?.bg} onSet={(c) => setSecBg(selPh.key, c)} onReset={() => setSecBg(selPh.key, null)} />
+                            <ColorRow label={nm + ' background color'} value={fx.bg} base={base} onLive={(c) => liveFx({ bg: c })} onSet={(c) => setFx({ bg: c })} onReset={() => setFx({}, ['bg'])} />
+                            <ColorRow label={secNm + ' background color'} value={ss[selPh.key]?.bg} base={base} onLive={(c) => liveSecBg(selPh.key, c)} onSet={(c) => setSecBg(selPh.key, c)} onReset={() => setSecBg(selPh.key, null)} />
                           </>}
                     </div>
                   )
@@ -1143,7 +1315,7 @@ export default function CamiDesigner() {
                 return (
                   <div className="mt-4">
                     <p className="font-fraunces text-lg font-semibold text-ink">{secNm}</p>
-                    <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
+                    <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} base={base} onLive={(c) => liveSecBg(bgKey, c)} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
                   </div>
                 )
               })()}
@@ -1283,19 +1455,19 @@ export default function CamiDesigner() {
           )}
           {slot && (
             <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/30 p-4" onClick={() => setSlot(null)}>
-              <div onClick={(e) => e.stopPropagation()} className="max-h-[85%] w-full max-w-md overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
+              <div onClick={(e) => e.stopPropagation()} className="max-h-[85%] w-full max-w-xl overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
                 <div className="flex items-center justify-between border-b border-[#EFE4D8] pb-2">
                   <p className="font-fraunces text-lg font-semibold text-ink">{slot.key === 'hero' ? 'Choose your hero photos' : 'Choose a photo'}</p>
                   <button type="button" aria-label="Close" onClick={() => setSlot(null)} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="mt-3 grid max-h-[min(52vh,400px)] grid-cols-6 gap-1.5 overflow-y-auto pr-1">
                   {lib.map((ph) => (
-                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} className={'relative aspect-[4/5] overflow-hidden rounded-lg border transition hover:ring-2 hover:ring-[#B08D57] ' + (slot.key === 'hero' && (form?.site_settings?.hero?.photos ?? []).includes(ph.storage_path) ? 'border-[#8C6B3F] ring-2 ring-[#8C6B3F]' : 'border-[#E4D3B6]')}>
+                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} className={'relative aspect-square overflow-hidden rounded-md border transition hover:ring-2 hover:ring-[#B08D57] ' + (slot.key === 'hero' && (form?.site_settings?.hero?.photos ?? []).includes(ph.storage_path) ? 'border-[#8C6B3F] ring-2 ring-[#8C6B3F]' : 'border-[#E4D3B6]')}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={BASE + ph.storage_path} alt="" className="h-full w-full object-cover" />
                     </button>
                   ))}
-                  <label className="flex aspect-[4/5] cursor-pointer items-center justify-center rounded-lg border border-dashed border-[#B08D57] bg-white/60 text-center text-xs text-[#6B4A2B] hover:bg-white">
+                  <label className="flex aspect-square cursor-pointer items-center justify-center rounded-md border border-dashed border-[#B08D57] bg-white/60 text-center text-[10px] text-[#6B4A2B] hover:bg-white">
                     <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { void addLib(e.target.files); e.target.value = '' }} />
                     {libBusy ? 'Uploading…' : '+ Add photos'}
                   </label>
