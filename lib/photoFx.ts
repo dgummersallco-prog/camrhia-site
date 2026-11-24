@@ -230,6 +230,18 @@ export const boxId = (key: string, idx: number) => 't:' + key + ':' + idx
 const lay = (x: HTMLElement) => ({ w: x.offsetWidth || x.clientWidth || 0, h: x.offsetHeight || x.clientHeight || 0 })
 
 export function frameOf(el: HTMLElement, root: HTMLElement): HTMLElement {
+  const vs = photosIn(root).map((q) => visualOf(q))
+  if (vs.length > 1) {
+    let a: HTMLElement | null = el
+    while (a && a !== root) {
+      const cur: HTMLElement = a
+      const par: HTMLElement | null = cur.parentElement
+      const cnt = vs.filter((v) => cur.contains(v)).length
+      const pc = par ? vs.filter((v) => par.contains(v)).length : 0
+      if (cnt === 1 && pc >= 2) return cur
+      a = par
+    }
+  }
   let f = el
   while (f.parentElement && f.parentElement !== root) {
     const a = lay(f)
@@ -297,5 +309,56 @@ export function applyBoxFx(map: Record<string, BoxFx> | undefined | null) {
     boxesIn(root).forEach((b, i) => setBox(b, m[boxId(key, i)]))
     if (key === 'hero') continue
     photosIn(root).forEach((p, i) => setBox(frameOf(visualOf(p), root), m['f:' + photoId(key, i)]))
+  }
+}
+
+const AXP: [string, string][] = [['backgroundColor', 'background-color'], ['color', 'color'], ['borderTopColor', 'border-top-color'], ['borderRightColor', 'border-right-color'], ['borderBottomColor', 'border-bottom-color'], ['borderLeftColor', 'border-left-color'], ['fill', 'fill'], ['stroke', 'stroke']]
+
+const rgbStr = (hex: string) => {
+  const m = /^#([0-9a-fA-F]{6})$/.exec(hex)
+  if (!m) return ''
+  const n = parseInt(m[1], 16)
+  return 'rgb(' + (n >> 16) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ')'
+}
+
+export function applySecAccent(map: Record<string, { accent?: string }> | undefined | null, siteAccent: string | undefined | null) {
+  if (typeof document === 'undefined') return
+  const m: Record<string, any> = map ?? {}
+  const has = Object.values(m).some((v: any) => /^#[0-9a-fA-F]{6}$/.test(String(v?.accent ?? '')))
+  if (!has && document.querySelectorAll('[data-axp]').length === 0) return
+  const base = rgbStr(String(siteAccent ?? ''))
+  for (const root of roots()) {
+    const k0 = rootKey(root)
+    if (!k0) continue
+    const nc = String(m[k0 === 'hero' ? 'top' : k0]?.accent ?? '')
+    const c = /^#[0-9a-fA-F]{6}$/.test(nc) ? nc : ''
+    root.querySelectorAll<HTMLElement>('*').forEach((el) => {
+      const st = el.style
+      if (!st) return
+      const raw = el.dataset ? el.dataset.axp : undefined
+      if (raw) {
+        let rec: Record<string, string> = {}
+        try { rec = JSON.parse(raw) } catch { rec = {} }
+        for (const [css, orig] of Object.entries(rec)) {
+          if (c) st.setProperty(css, c, 'important')
+          else if (orig) st.setProperty(css, orig)
+          else st.removeProperty(css)
+        }
+        if (!c) delete el.dataset.axp
+        return
+      }
+      if (!c || !base) return
+      const cs = getComputedStyle(el) as any
+      const rec: Record<string, string> = {}
+      for (const [jp, css] of AXP) {
+        if (cs[jp] !== base) continue
+        if (jp.startsWith('border') && !(parseFloat(cs[jp.replace('Color', 'Width')]) > 0)) continue
+        rec[css] = st.getPropertyValue(css)
+      }
+      const keys = Object.keys(rec)
+      if (!keys.length) return
+      el.dataset.axp = JSON.stringify(rec)
+      keys.forEach((css) => st.setProperty(css, c, 'important'))
+    })
   }
 }

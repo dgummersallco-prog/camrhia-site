@@ -317,6 +317,47 @@ function FontPick({ label, hint, value, onPick }: { label: string; hint: string;
 
 const HOME_SECS: [string, string][] = [['explore', 'Explore'], ['portfolio', 'Portfolio'], ['testimonials', 'Testimonials'], ['contact', 'Contact']]
 
+const DESIGN_SECS: [(s: any) => any, string[]][] = [
+  [(s) => s.explore?.layout, ['explore']],
+  [(s) => s.galSection, ['galsec']],
+  [(s) => [s.galindex?.layout, s.galpage?.layout], ['portfolio']],
+  [(s) => s.socialDesign, ['social']],
+  [(s) => s.faqDesign, ['faq']],
+  [(s) => s.contactDesign, ['contact']],
+  [(s) => s.testiDesign, ['testimonials']],
+  [(s) => s.pricing?.sectionDesign, ['pricesec']],
+  [(s) => s.pricing?.pageDesign, ['investment']],
+  [(s) => [s.about?.sectionDesign, s.about?.pageDesign], ['about', 'aboutcta']],
+  [(s) => s.bookDesign, ['book']],
+]
+
+function resetChangedSecs(a: any, b: any) {
+  const x = b?.site_settings
+  if (!x) return
+  const ks = new Set<string>()
+  for (const [get, keys] of DESIGN_SECS) {
+    const o = JSON.stringify(get(a?.site_settings ?? {}) ?? null)
+    const n = JSON.stringify(get(x) ?? null)
+    if (o !== n) keys.forEach((k) => ks.add(k))
+  }
+  if (!ks.size) return
+  for (const mk of ['boxFx', 'photoFx', 'btnFx']) {
+    if (!x[mk]) continue
+    const c: Record<string, any> = { ...x[mk] }
+    for (const id of Object.keys(c)) {
+      const body = id.replace(/^[tf]:/, '')
+      if (Array.from(ks).some((k) => body.startsWith(k + ':'))) delete c[id]
+    }
+    x[mk] = c
+  }
+  for (const mk of ['secStyle', 'secZoom']) {
+    if (!x[mk]) continue
+    const c: Record<string, any> = { ...x[mk] }
+    ks.forEach((k) => { delete c[k] })
+    x[mk] = c
+  }
+}
+
 export default function CamiDesigner() {
   const ent = useEntitlements()
   const router = useRouter()
@@ -526,6 +567,7 @@ export default function CamiDesigner() {
     if (!form) return
     const next = clone(form)
     fn(next)
+    resetChangedSecs(form, next)
     setHistory((h) => [...h, form])
     setForm(next)
     await save(next)
@@ -1225,6 +1267,9 @@ export default function CamiDesigner() {
                 const base: string[] = [form?.site_accent, set.colors?.bg, set.colors?.text, ...PICK_COLORS].filter(okHex) as string[]
                 const secBgMut = (key: string, c: string | null) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur = { ...(m[key] ?? {}) }; if (c) cur.bg = c; else delete cur.bg; m[key] = cur; x.secStyle = m }
                 const setSecBg = (key: string, c: string | null) => { void commit(secBgMut(key, c)) }
+                const secAccMut = (key: string, c: string | null) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur = { ...(m[key] ?? {}) }; if (c) cur.accent = c; else delete cur.accent; m[key] = cur; x.secStyle = m }
+                const setSecAcc = (key: string, c: string | null) => { void commit(secAccMut(key, c)) }
+                const liveSecAcc = (key: string, c: string) => liveEdit(secAccMut(key, c))
                 const liveSecBg = (key: string, c: string) => liveEdit(secBgMut(key, c))
                 const boxReset = selBox && (set.boxFx ?? {})[selBox] ? <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; delete m[selBox]; x.boxFx = m }) }} className="mt-4 rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]">Reset position and size</button> : null
                 const btn = 'rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]'
@@ -1310,6 +1355,7 @@ export default function CamiDesigner() {
                         : <>
                             <ColorRow label={nm + ' background color'} value={fx.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveFx({ bg: c })} onSet={(c) => setFx({ bg: c })} onReset={() => setFx({}, ['bg'])} />
                             <ColorRow label={secNm + ' background color'} value={ss[selPh.key]?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg(selPh.key, c)} onSet={(c) => setSecBg(selPh.key, c)} onReset={() => setSecBg(selPh.key, null)} />
+                            <ColorRow label={secNm + ' accent color'} value={ss[selPh.key]?.accent} cur={accent} base={base} onLive={(c) => liveSecAcc(selPh.key, c)} onSet={(c) => setSecAcc(selPh.key, c)} onReset={() => setSecAcc(selPh.key, null)} />
                           </>}
                     </div>
                   )
@@ -1321,6 +1367,7 @@ export default function CamiDesigner() {
                   <div className="mt-4">
                     <p className="font-fraunces text-lg font-semibold text-ink">{secNm}</p>
                     <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg(bgKey, c)} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
+                    <ColorRow label={secNm + ' accent color'} value={ss[bgKey]?.accent} cur={accent} base={base} onLive={(c) => liveSecAcc(bgKey, c)} onSet={(c) => setSecAcc(bgKey, c)} onReset={() => setSecAcc(bgKey, null)} />
                   </div>
                 )
               })()}

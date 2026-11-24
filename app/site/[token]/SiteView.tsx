@@ -18,7 +18,7 @@ import { PricingDesign, PR_SEC, PR_PAGE } from './PricingDesigns'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { blogPosts } from '@/lib/blog'
-import { applyPhotoFx, applyBtnFx, applyBoxFx } from '@/lib/photoFx'
+import { applyPhotoFx, applyBtnFx, applyBoxFx, applySecAccent } from '@/lib/photoFx'
 import { GalleriesSection, GALSEC, GALOWN, GalleryGarnet } from './GalleriesSections'
 import { SiteNav } from './SiteNav'
 
@@ -83,7 +83,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   useEffect(() => installPreviewGlow(), [])
   useEffect(() => installPreviewPick(), [])
   useEffect(() => installPreviewSections(), [])
-  useEffect(() => { applyPhotoFx((r as any).site_settings?.photoFx, (r as any).site_settings?.slotPics, photoUrl); applyBtnFx((r as any).site_settings?.btnFx); applyBoxFx((r as any).site_settings?.boxFx) })
+  useEffect(() => { applyPhotoFx((r as any).site_settings?.photoFx, (r as any).site_settings?.slotPics, photoUrl); applyBtnFx((r as any).site_settings?.btnFx); applyBoxFx((r as any).site_settings?.boxFx); applySecAccent((r as any).site_settings?.secStyle, accent) })
 
   const t = resolveTheme(r)
   const { tpl, accent, ink, soft, line, bg, tint } = t
