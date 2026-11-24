@@ -18,6 +18,7 @@ import { PricingDesign, PR_SEC, PR_PAGE } from './PricingDesigns'
 import { PortfolioLightbox } from '../../p/[token]/PortfolioLightbox'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { blogPosts } from '@/lib/blog'
+import { applyPhotoFx } from '@/lib/photoFx'
 import { GalleriesSection, GALSEC, GALOWN, GalleryGarnet } from './GalleriesSections'
 import { SiteNav } from './SiteNav'
 
@@ -82,6 +83,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   useEffect(() => installPreviewGlow(), [])
   useEffect(() => installPreviewPick(), [])
   useEffect(() => installPreviewSections(), [])
+  useEffect(() => { applyPhotoFx((r as any).site_settings?.photoFx) })
 
   const t = resolveTheme(r)
   const { tpl, accent, ink, soft, line, bg, tint } = t
@@ -193,9 +195,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const headStyle: React.CSSProperties = { fontFamily: t.head, fontWeight: t.headWeight ?? 500, letterSpacing: '0.01em' }
 
   // Per-section look: background, text color and fonts chosen in the designer.
-  const secPad = (((r as any).site_settings?.secPad ?? {}) as Record<string, { t?: number; b?: number }>)
+  const secZoom = (((r as any).site_settings?.secZoom ?? {}) as Record<string, number>)
   const slotPics = (((r as any).site_settings?.slotPics ?? {}) as Record<string, string>)
   const curSec = { k: '' }
+  const spo = (id: string, k: number, d: any): any => (slotPics[id + ':' + k] ? photoUrl(slotPics[id + ':' + k]) : null) || d
   const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string; title?: string; titleFont?: string }>)
   const famOf = (k?: string) => (k && FONT_OPTIONS[k] ? FONT_OPTIONS[k].family : null)
   const hexOk = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
@@ -949,7 +952,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           ), tinted)
       }
       case 'galsec': {
-        const gs0 = String((r as any).site_settings?.galSection ?? '')
+        const gs0 = String((r as any).site_settings?.galSection || (r as any).site_settings?.kit?.designAlts?.galleries_section?.items?.[0]?.key || '')
         const gs2 = GALSEC.includes(gs0) ? gs0 : 'sahara'
         const items2 = galleries.slice(0, 6).map((g: any) => {
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
@@ -961,7 +964,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         const rawGal = (r as any).site_settings?.galindex?.layout
         const L: string = page === 'galleries' ? (['checker', 'rows', 'custom', 'jade', 'jasper', 'amber', 'pearl', 'ruby', 'topaz', 'garnet', 'agate', 'quartz', 'moonstone'].includes(rawGal) ? rawGal : t.galindex.layout) : t.portfolio.layout
         const list = page === 'home' ? galleries.slice(0, 6) : galleries
-        const gsd = String((r as any).site_settings?.galSection ?? '')
+        const gsd = String((r as any).site_settings?.galSection || (r as any).site_settings?.kit?.designAlts?.galleries_section?.items?.[0]?.key || '')
         if (page === 'home' && GALSEC.includes(gsd) && list.length > 0) {
           const items = list.map((g: any) => {
             const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
@@ -2283,7 +2286,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   <div className="mt-6 grid grid-cols-2 md:grid-cols-4" style={{ gap: 'clamp(10px, 2.3vw, 32px)' }}>
                     {[0, 1, 2, 3].map((k) => (
                       <div key={k} data-name={'Follow photo ' + (k + 1)} className="relative overflow-hidden" style={{ aspectRatio: '1.17 / 1', background: '#e6dfd5' }}>
-                        {pics[k] ? <img src={pics[k]} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#e6dfd5', '#c9bfb1')}
+                        {spo('follow', k, pics[k]) ? <img src={spo('follow', k, pics[k])} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#e6dfd5', '#c9bfb1')}
                       </div>
                     ))}
                   </div>
@@ -2339,7 +2342,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   <div className="grid grid-cols-3" style={{ gap: 'clamp(8px, 1.3vw, 18px)' }}>
                     {[0, 1, 2].map((k) => (
                       <div key={k} data-name={'Story photo ' + (k + 1)} className="relative overflow-hidden" style={{ aspectRatio: '1.9 / 1', background: '#e6dfd5' }}>
-                        {pics[k] ? <img src={pics[k]} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#e6dfd5', '#c9bfb1')}
+                        {spo('stories', k, pics[k]) ? <img src={spo('stories', k, pics[k])} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#e6dfd5', '#c9bfb1')}
                       </div>
                     ))}
                   </div>
@@ -2403,7 +2406,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   <div className="mt-6 grid grid-cols-2 md:grid-cols-4" style={{ gap: 'clamp(10px, 2vw, 28px)' }}>
                     {[0, 1, 2, 3].map((k) => (
                       <div key={k} data-name={'Follow photo ' + (k + 1)} className="relative overflow-hidden" style={{ aspectRatio: '1.16 / 1', background: '#e6dfd5' }}>
-                        {pics[k] ? <img src={pics[k]} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#e6dfd5', '#c9bfb1')}
+                        {spo('follow', k, pics[k]) ? <img src={spo('follow', k, pics[k])} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#e6dfd5', '#c9bfb1')}
                       </div>
                     ))}
                   </div>
@@ -2569,7 +2572,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   <div className="grid grid-cols-3 gap-1">
                     {[0, 1, 2].map((k) => (
                       <div key={k} data-name={'Featured photo ' + (k + 1)} className="relative overflow-hidden" style={{ aspectRatio: '1.85 / 1', background: '#222' }}>
-                        {pics[k] ? <img src={pics[k]} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#2b2b2b', '#4a4a4a')}
+                        {spo('featured', k, pics[k]) ? <img src={spo('featured', k, pics[k])} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#2b2b2b', '#4a4a4a')}
                       </div>
                     ))}
                   </div>
@@ -2598,7 +2601,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const pics = Array.from(new Set([...covers, ...rest])).slice(0, 3)
           const tile = (k: number, st: React.CSSProperties) => (
             <div key={k} data-name={'Photo ' + (k + 1)} className="relative overflow-hidden" style={{ background: '#ead9d0', ...st }}>
-              {pics[k] ? <img src={pics[k]} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#ead9d0', '#cdb3a8')}
+              {spo('featured', k, pics[k]) ? <img src={spo('featured', k, pics[k])} alt="" className="absolute inset-0 h-full w-full object-cover" /> : mtn('#ead9d0', '#cdb3a8')}
             </div>
           )
           return (
@@ -4055,7 +4058,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
         )}
 
         {visible.map((k, i) => (
-          <React.Fragment key={k}>{((hid: boolean) => { curSec.k = k; const pd = secPad[k] ?? {}; const pt = Math.min(0, Number(pd.t) || 0); const pb = Math.min(0, Number(pd.b) || 0); const bgv = hexOk(secStyles[k]?.bg); const outer: React.CSSProperties = { overflow: pt || pb ? 'hidden' : undefined, background: bgv ?? undefined }; const inner = <div style={{ marginTop: pt || undefined, marginBottom: pb || undefined }}>{renderSection(k, i % 2 === 1)}</div>; return isPreview ? (<div data-sec={k} data-secbg={k} data-pt={pt} data-pb={pb} style={hid ? { display: 'none' } : outer}>{hid ? null : inner}</div>) : hid ? null : (pt || pb || bgv) ? (<div data-secbg={k} style={outer}>{inner}</div>) : renderSection(k, i % 2 === 1) })(((r as any).site_settings?.hiddenSecs ?? []).includes(k))}</React.Fragment>
+          <React.Fragment key={k}>{((hid: boolean) => { curSec.k = k; const zv = Number(secZoom[k]); const zk = zv > 0.39 && zv < 0.995 ? zv : 1; const bgv = hexOk(secStyles[k]?.bg); const outer: React.CSSProperties = { background: bgv ?? undefined }; const inner = <div style={zk < 1 ? ({ zoom: zk } as React.CSSProperties) : undefined}>{renderSection(k, i % 2 === 1)}</div>; return isPreview ? (<div data-sec={k} data-secbg={k} data-sc={zk} style={hid ? { display: 'none' } : outer}>{hid ? null : inner}</div>) : hid ? null : (zk < 1 || bgv) ? (<div data-secbg={k} style={outer}>{inner}</div>) : renderSection(k, i % 2 === 1) })(((r as any).site_settings?.hiddenSecs ?? []).includes(k))}</React.Fragment>
         ))}
 
         {page === 'galleries' && visible.length > 0 && (

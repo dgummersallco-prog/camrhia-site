@@ -119,11 +119,42 @@ function setPath(x: Record<string, any>, p: string[], v: string) {
 }
 const fname = (k: string) => { const o = FONT_OPTIONS[k] as unknown as Record<string, string> | undefined; return o?.label ?? o?.name ?? k }
 const FONT_IDS = Object.keys(FONT_OPTIONS)
-type Pick = { key: string; text: string; left: number; top: number; color: string }
+type Pick = { key: string; text: string; left: number; top: number; color: string; size?: number; op?: number }
 const PICK_LABELS: Record<string, string> = { hero_headline: 'Headline', menu_links: 'Menu links', menu_brand: 'Your name', ex_label: 'Section label', ex_title: 'Section title', ex_sub: 'Section subtitle', con_msg: 'Contact message', con_social: 'Social links', ft_line: 'Footer line', ft_copy: 'Copyright', gal_name: 'Gallery name', gal_count: 'Gallery count', gal_link: 'Gallery link', tes_quote: 'Testimonial', tes_name: 'Testimonial name', about_text: 'About text', pr_intro: 'Package intro', pr_group: 'Package group', pr_name: 'Package name', pr_price: 'Package price', pr_list: 'Package list', pr_note: 'Package note', faq_q: 'Question', faq_a: 'Answer', feat_title: 'Featured work title', hero_btn: 'Button text', air_label: 'About label', air_more: 'Link text', ls_title: 'Stories title', rom_kicker: 'Small line', rom_story: 'Story title', rom_more: 'Link text', ea_kicker: 'Small line', ea_para: 'Paragraph', ea_follow: 'Section title', pe_tag: 'Tagline', iv_kicker: 'Small line', iv_tag: 'Tagline', wi_hi: 'About heading', ju_kicker: 'Small line', ju_para: 'Intro', ju_s1t: 'Service title', ju_s1d: 'Service text', ju_s2t: 'Service title', ju_s2d: 'Service text', ju_s3t: 'Service title', ju_s3d: 'Service text', ca_sub: 'Subtitle', ca_bar: 'Bar text', ca_w1: 'Word', ca_w2: 'Word', ca_w3: 'Word', ca_w4: 'Word', ce_p1: 'Paragraph', ce_p2: 'Paragraph', ol_kicker: 'Small line', ol_c1: 'Caption', ol_c2: 'Caption', ol_c3: 'Caption', ol_c4: 'Caption', mg_story: 'Heading', mg_text: 'Paragraph', li_kicker: 'Small line', li_para: 'Paragraph', li_meet: 'Heading', li_more: 'Link', as_kicker: 'Small line', as_para: 'Paragraph', as_kind: 'Heading', as_q1: 'Quote', as_n1: 'Name', as_q2: 'Quote', as_n2: 'Name', as_q3: 'Quote', as_n3: 'Name', sg_tag: 'Tagline', sg_recent: 'Heading', ro_script: 'Script word', ro_c1: 'Caption', ro_c2: 'Caption', ro_c3: 'Caption', hz_kicker: 'Small line', hz_para: 'Paragraph', hz_quote: 'Quote', hz_name: 'Name', sf_n1: 'Service', sf_n2: 'Service', sf_n3: 'Service', sf_n4: 'Service', sf_c1: 'Caption', sf_c2: 'Caption', sf_c3: 'Caption', cy_tag: 'Tagline', cy_s1: 'Label', cy_s2: 'Label', cy_s3: 'Label', la_vert: 'Side text', la_para: 'Paragraph', ir_l: 'Left words', ir_r: 'Right words', ir_issue: 'Heading', ir_t1: 'Label', ir_t2: 'Label', ir_t3: 'Label', pr_kicker: 'Small line', pr_c1: 'Caption', pr_c2: 'Caption', pr_c3: 'Caption', pr_c4: 'Caption', th_tag: 'Tagline', cl_p1: 'Caption', cl_p2: 'Caption', cl_p3: 'Caption', cl_p4: 'Caption', cl_p5: 'Caption', cl_sub: 'Subheading', cl_t1: 'Label', cl_t2: 'Label', cl_t3: 'Label', mi_t1: 'Label', mi_t2: 'Label', mi_t3: 'Label', mi_t4: 'Label', ya_script: 'Script line', ya_month: 'Month', ya_head: 'Heading', ya_para: 'Paragraph', ya_link: 'Link', gs_title: 'Section title', gp_title: 'Page title', tes_title: 'Section title', faq_title: 'Page title', ab_h1: 'Story heading', ab_h2: 'Belief heading', ab_h3: 'Invitation heading', ab_p3: 'Invitation text', ab_by: 'By line', ab_loves: 'Loves label', ab_hi: 'Greeting', ab_n1: 'Stat 1', ab_l1: 'Stat 1 label', ab_n2: 'Stat 2', ab_l2: 'Stat 2 label', ab_n3: 'Stat 3', ab_l3: 'Stat 3 label', ab_quote: 'Pull quote', ab_sig: 'Signature', ab_tag: 'Tagline', ab_f1t: 'Fact 1 title', ab_f1d: 'Fact 1 text', ab_f2t: 'Fact 2 title', ab_f2d: 'Fact 2 text', ab_f3t: 'Fact 3 title', ab_f3d: 'Fact 3 text', ab_f4t: 'Fact 4 title', ab_f4d: 'Fact 4 text', ab_f5t: 'Fact 5 title', ab_f5d: 'Fact 5 text', soc_title: 'Social heading', soc_handle: 'Social handle', con_title: 'Booking heading' }
 const TEXT_KEYS = ['hero_headline', 'menu_brand', 'about_text', 'con_msg', 'ft_line', 'ft_copy', 'feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
 const LONG_TEXT = ['about_text', 'con_msg']
 const PICK_COLORS = [...TEXTS.slice(0, 7), ...ACCENTS.slice(0, 14), '#FFFFFF']
+
+const POPUP_ON: boolean = false
+
+function ColorRow({ label, value, onSet, onReset }: { label: string; value?: string; onSet: (c: string) => void; onReset?: () => void }) {
+  return (
+    <div className="mt-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {PICK_COLORS.map((c) => (
+          <button key={c} type="button" aria-label={c} onClick={() => onSet(c)} className={'h-7 w-7 rounded-full border border-black/15 transition hover:scale-110 ' + (String(value ?? '').toLowerCase() === c.toLowerCase() ? 'ring-2 ring-[#8C6B3F] ring-offset-1' : '')} style={{ background: c }} />
+        ))}
+        <input defaultValue={value ?? ''} key={String(value ?? '')} onBlur={(e) => { const v = e.target.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) onSet(v) }} placeholder="#hex" maxLength={7} className="w-20 rounded-lg border border-[#E4D3B6] bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-[#B08D57]" />
+      </div>
+      {onReset && <button type="button" onClick={onReset} className="mt-3 rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]">Reset color</button>}
+    </div>
+  )
+}
+
+function SliderRow({ label, value, min, max, step, unit, onDone }: { label: string; value: number; min: number; max: number; step: number; unit: string; onDone: (v: number) => void }) {
+  const [v, setV] = useState(value)
+  useEffect(() => { setV(value) }, [value])
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
+        <span className="text-xs text-ink-soft">{unit === 'x' ? v.toFixed(2) + 'x' : Math.round(v) + unit}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={v} onChange={(e) => setV(Number(e.target.value))} onPointerUp={() => onDone(v)} onKeyUp={() => onDone(v)} className="mt-2 w-full accent-[#8C6B3F]" />
+    </div>
+  )
+}
 const rgbHex = (c: string) => { const m = c.match(/\d+/g); if (!m || m.length < 3) return '#2A1F24'; return '#' + m.slice(0, 3).map((x) => Number(x).toString(16).padStart(2, '0')).join('').toUpperCase() }
 
 function Mock({ k, bg, tx }: { k: string; bg: string; tx: string }) {
@@ -198,6 +229,7 @@ export default function CamiDesigner() {
   const [selSec, setSelSec] = useState<string | null>(null)
   const [leftTab, setLeftTab] = useState<'design' | 'setup'>('design')
   const [slot, setSlot] = useState<{ key: string; idx: number } | null>(null)
+  const [selPh, setSelPh] = useState<{ key: string; idx: number } | null>(null)
   const [lib, setLib] = useState<{ id: string; storage_path: string }[]>([])
   const [libBusy, setLibBusy] = useState(false)
   const [ptext, setPtext] = useState('')
@@ -266,15 +298,22 @@ export default function CamiDesigner() {
     function onMsg(e: MessageEvent) {
       const d = e.data
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setSelSec(String(d.key)); setLeftTab('design'); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.key)); setLeftTab('design'); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelSec(String(d.key)); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0 }); setLeftTab('design'); if (!d.again) setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
         commitRef.current?.((n) => {
           const s = (n.site_settings = n.site_settings ?? {})
-          if (d.action === 'pad') {
-            const sp: Record<string, { t: number; b: number }> = { ...(s.secPad ?? {}) }
-            if (!d.t && !d.b) delete sp[d.key]; else sp[d.key] = { t: Number(d.t) || 0, b: Number(d.b) || 0 }
-            s.secPad = sp
+          if (d.action === 'photofx') {
+            const pf: Record<string, any> = { ...(s.photoFx ?? {}) }
+            pf[d.id] = { ...(pf[d.id] ?? {}), x: Number(d.x), y: Number(d.y) }
+            s.photoFx = pf
+            return
+          }
+          if (d.action === 'scale') {
+            const sz: Record<string, number> = { ...(s.secZoom ?? {}) }
+            const v = Number(d.s)
+            if (!(v > 0.39) || v >= 0.995) delete sz[d.key]; else sz[d.key] = Math.round(v * 1000) / 1000
+            s.secZoom = sz
             return
           }
           if (d.action === 'hide') {
@@ -297,7 +336,7 @@ export default function CamiDesigner() {
       if (!b) return
       const left = Math.max(8, Math.min(b.width - 348, f.left - b.left + d.x))
       const top = Math.max(8, Math.min(b.height - 140, f.top - b.top + d.y + d.h + 10))
-      setPick({ key: d.key, text: d.text ?? '', left, top, color: rgbHex(String(d.color ?? '')) })
+      setSelSec(null); setSelPh(null); setLeftTab('design'); setPick({ key: d.key, text: d.text ?? '', left, top, color: rgbHex(String(d.color ?? '')), size: Number(d.size) || 0, op: Number(d.op) || 1 })
       setPtext(d.text ?? '')
       setPhex('')
     }
@@ -845,18 +884,24 @@ export default function CamiDesigner() {
     })
   }
 
-  function setElProp(key: string, patch: { font?: string; color?: string }) {
+  function setElProp(key: string, patch: { font?: string; color?: string; size?: number; op?: number }) {
     commit((n) => {
       const s = (n.site_settings = n.site_settings ?? {})
-      if (key === 'hero_headline') { if (patch.font) s.hero = { ...(s.hero ?? {}), headline_font: patch.font }; return }
+      if (key === 'hero_headline') {
+        if (patch.font) s.hero = { ...(s.hero ?? {}), headline_font: patch.font }
+        const rest: Record<string, any> = { ...patch }
+        delete rest.font
+        if (Object.keys(rest).length) s.el = { ...(s.el ?? {}), hero_headline: { ...(s.el?.hero_headline ?? {}), ...rest } }
+        return
+      }
       s.el = { ...(s.el ?? {}), [key]: { ...(s.el?.[key] ?? {}), ...patch } }
     })
   }
   function resetEl(key: string) {
     commit((n) => {
       const s = (n.site_settings = n.site_settings ?? {})
-      if (key === 'hero_headline') { if (s.hero) delete s.hero.headline_font; return }
-      if (s.el?.[key]) { delete s.el[key].font; delete s.el[key].color }
+      if (key === 'hero_headline') { if (s.hero) delete s.hero.headline_font; if (s.el?.hero_headline) delete s.el.hero_headline; return }
+      if (s.el?.[key]) { delete s.el[key].font; delete s.el[key].color; delete s.el[key].size; delete s.el[key].op }
     })
   }
   function applyText() {
@@ -1043,21 +1088,62 @@ export default function CamiDesigner() {
                 ))}
               </div>
               {leftTab === 'design' && (() => {
-                const SEC_NAME: Record<string, string> = { explore: 'Explore section', portfolio: 'Galleries', galsec: 'Galleries', about: 'About', testimonials: 'Testimonials', investment: 'Pricing', pricesec: 'Pricing', faq: 'FAQ', contact: 'Booking button', social: 'Social links', aboutcta: 'About button' }
-                if (!selSec) return <p className="mt-4 text-sm text-ink-soft">Click a section on your site to design it.</p>
-                const st = ((form?.site_settings ?? {}) as Record<string, any>).secStyle?.[selSec] ?? {}
-                const setBg = (c: string | null) => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const ss: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur = { ...(ss[selSec] ?? {}) }; if (c) cur.bg = c; else delete cur.bg; ss[selSec] = cur; x.secStyle = ss }) }
+                const SEC_NAME: Record<string, string> = { hero: 'Hero', stories: 'Love Stories', follow: 'Follow along', featured: 'Featured work', explore: 'Explore section', portfolio: 'Gallery section', galsec: 'Gallery section', about: 'About section', testimonials: 'Testimonials section', investment: 'Pricing section', pricesec: 'Pricing section', faq: 'FAQ section', contact: 'Booking section', social: 'Social links', aboutcta: 'About button' }
+                const ss: Record<string, any> = set.secStyle ?? {}
+                const setSecBg = (key: string, c: string | null) => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur = { ...(m[key] ?? {}) }; if (c) cur.bg = c; else delete cur.bg; m[key] = cur; x.secStyle = m }) }
+                const btn = 'rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]'
+                const inp = 'mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]'
+                if (pick) {
+                  const el = set.el?.[pick.key] ?? {}
+                  const nm = PICK_LABELS[pick.key] ?? 'Text'
+                  return (
+                    <div className="mt-4">
+                      <p className="font-fraunces text-lg font-semibold text-ink">{nm}</p>
+                      {TEXT_KEYS.includes(pick.key) && (LONG_TEXT.includes(pick.key)
+                        ? <textarea value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} rows={4} className={inp} />
+                        : <input value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} className={inp} />)}
+                      <div className="mt-3">
+                        <FontPick label="Font" hint="Just this text" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
+                      </div>
+                      <ColorRow label={nm + ' color'} value={el.color ?? pick.color} onSet={(c) => setElProp(pick.key, { color: c })} />
+                      <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={pick.key === 'hero_headline' ? 120 : 90} step={1} unit="px" onDone={(v) => setElProp(pick.key, { size: v })} />
+                      <SliderRow label={nm + ' opacity'} value={Math.round((Number(el.op) || pick.op || 1) * 100)} min={10} max={100} step={1} unit="%" onDone={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 })} />
+                      <button type="button" onClick={() => resetEl(pick.key)} className={btn + ' mt-4'}>Reset text</button>
+                    </div>
+                  )
+                }
+                if (selPh) {
+                  const id = selPh.key === 'hero' ? 'hero' : selPh.key + ':' + selPh.idx
+                  const fx = (set.photoFx ?? {})[id] ?? {}
+                  const secNm = SEC_NAME[selPh.key] ?? selPh.key
+                  const nm = selPh.key === 'hero' ? 'Hero main photo' : secNm + ' photo ' + (selPh.idx + 1)
+                  const setFx = (patch: Record<string, any>, del?: string[]) => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; const cur: Record<string, any> = { ...(m[id] ?? {}), ...patch }; (del ?? []).forEach((k) => { delete cur[k] }); m[id] = cur; x.photoFx = m }) }
+                  return (
+                    <div className="mt-4">
+                      <p className="font-fraunces text-lg font-semibold text-ink">{nm}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button type="button" onClick={() => setSlot({ key: selPh.key, idx: selPh.idx })} className={btn}>Change photo</button>
+                        <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; delete m[id]; x.photoFx = m }) }} className={btn}>Reset photo</button>
+                      </div>
+                      <p className="mt-2 text-xs text-ink-soft">Drag the photo in the preview to move it.</p>
+                      <SliderRow label={nm + ' zoom'} value={Number(fx.z ?? 1)} min={1} max={3} step={0.05} unit="x" onDone={(v) => setFx({ z: v })} />
+                      <SliderRow label={nm + ' opacity'} value={Math.round(Number(fx.o ?? 1) * 100)} min={10} max={100} step={1} unit="%" onDone={(v) => setFx({ o: v >= 100 ? 1 : v / 100 })} />
+                      {selPh.key === 'hero'
+                        ? <ColorRow label="Hero background color" value={ss.top?.bg} onSet={(c) => setSecBg('top', c)} onReset={() => setSecBg('top', null)} />
+                        : <>
+                            <ColorRow label={nm + ' background color'} value={fx.bg} onSet={(c) => setFx({ bg: c })} onReset={() => setFx({}, ['bg'])} />
+                            <ColorRow label={secNm + ' background color'} value={ss[selPh.key]?.bg} onSet={(c) => setSecBg(selPh.key, c)} onReset={() => setSecBg(selPh.key, null)} />
+                          </>}
+                    </div>
+                  )
+                }
+                if (!selSec) return <p className="mt-4 text-sm text-ink-soft">Click a section, photo or text on your site to design it.</p>
+                const bgKey = selSec === 'hero' ? 'top' : selSec
+                const secNm = SEC_NAME[selSec] ?? selSec
                 return (
                   <div className="mt-4">
-                    <p className="font-fraunces text-lg font-semibold text-ink">{SEC_NAME[selSec] ?? selSec}</p>
-                    <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Background color</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {PICK_COLORS.map((c) => (
-                        <button key={c} type="button" aria-label={c} onClick={() => setBg(c)} className={'h-7 w-7 rounded-full border border-black/15 transition hover:scale-110 ' + (String(st.bg ?? '').toLowerCase() === c.toLowerCase() ? 'ring-2 ring-[#8C6B3F] ring-offset-1' : '')} style={{ background: c }} />
-                      ))}
-                      <input defaultValue={st.bg ?? ''} key={selSec + String(st.bg ?? '')} onBlur={(e) => { const v = e.target.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) setBg(v) }} placeholder="#hex" maxLength={7} className="w-20 rounded-lg border border-[#E4D3B6] bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-[#B08D57]" />
-                    </div>
-                    <button type="button" onClick={() => setBg(null)} className="mt-3 rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]">Reset color</button>
+                    <p className="font-fraunces text-lg font-semibold text-ink">{secNm}</p>
+                    <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
                   </div>
                 )
               })()}
@@ -1222,7 +1308,7 @@ export default function CamiDesigner() {
               </div>
             </div>
           )}
-          {pick && (
+          {POPUP_ON && pick && (
             <div className="absolute z-30 overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ left: pick.left, top: Math.max(8, Math.min(pick.top, (boxRef.current?.clientHeight ?? 700) - 460)), maxHeight: (boxRef.current?.clientHeight ?? 700) - Math.max(8, Math.min(pick.top, (boxRef.current?.clientHeight ?? 700) - 460)) - 8, width: 340, background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
               <div className="flex items-center justify-between border-b border-[#EFE4D8] pb-2">
                 <p className="font-fraunces text-lg font-semibold text-ink">{PICK_LABELS[pick.key] ?? 'Text'}</p>

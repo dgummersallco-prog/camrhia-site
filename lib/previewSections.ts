@@ -1,3 +1,5 @@
+import { rootOf, rootKey, photosIn, photoId } from './photoFx'
+
 export function installPreviewSections(): () => void {
   if (typeof window === 'undefined') return () => {}
   if (new URLSearchParams(window.location.search).get('preview') !== '1') return () => {}
@@ -11,6 +13,7 @@ export function installPreviewSections(): () => void {
     '.cam-h{position:fixed;z-index:2147483000;display:none;width:76px;height:16px;border-radius:8px;background:#8C6B3F;cursor:ns-resize;box-shadow:0 2px 8px rgba(0,0,0,.3)}' +
     '.cam-h:after{content:"";position:absolute;left:26px;right:26px;top:7px;height:2px;border-radius:1px;background:#fff}' +
     '#cam-sec-line{position:fixed;z-index:2147483000;height:3px;background:#d9a21b;border-radius:2px;display:none;left:0;right:0;pointer-events:none}'
+  css.textContent += '.cam-psel{outline:2px solid #d9a21b !important;outline-offset:-2px}'
   document.head.appendChild(css)
 
   const bar = document.createElement('div')
@@ -28,7 +31,7 @@ export function installPreviewSections(): () => void {
   const seen = (x: HTMLElement) => x.offsetHeight > 30
   let cur: HTMLElement | null = null
   let dragging = false
-  let padDrag: { side: string; y0: number; t0: number; b0: number; el: HTMLElement; inner: HTMLElement } | null = null
+  let padDrag: { side: string; y0: number; h0: number; nat: number; el: HTMLElement; inner: HTMLElement } | null = null
   let dragKey = ''
   let before = -1
 
@@ -118,50 +121,110 @@ export function installPreviewSections(): () => void {
     if (to !== from) post({ action: 'move', key: dragKey, order: o, to })
   }
 
-  const photoEls = (sec: HTMLElement) => Array.from(sec.querySelectorAll<HTMLElement>('img, svg[preserveAspectRatio]')).filter((x) => x.offsetWidth > 60 && x.offsetHeight > 60)
+  let selPhoto: { key: string; idx: number; el: HTMLElement } | null = null
+  let pd: { el: HTMLElement; key: string; idx: number; x0: number; y0: number; px: number; py: number; moved: boolean; nx: number; ny: number } | null = null
+  let swallow = false
+  const TXT = 'h1, [class^="el-"], [class*=" el-"]'
+  const clearSel = () => { if (selPhoto) selPhoto.el.classList.remove('cam-psel'); selPhoto = null }
+  const photoAt = (x: number, y: number): { key: string; idx: number; el: HTMLElement } | null => {
+    for (const n of document.elementsFromPoint(x, y)) {
+      const root = rootOf(n)
+      if (!root) continue
+      const key = rootKey(root)
+      if (!key) continue
+      const i = photosIn(root).indexOf(n as HTMLElement)
+      if (i >= 0) return { key, idx: key === 'hero' ? 0 : i, el: n as HTMLElement }
+    }
+    return null
+  }
   const onPhotoClick = (e: MouseEvent) => {
+    if (swallow) { swallow = false; e.preventDefault(); e.stopPropagation(); return }
     const t = e.target as HTMLElement | null
     if (!t || !t.closest || bar.contains(t)) return
-    const sec = t.closest('[data-sec]') as HTMLElement | null
-    const isText = !!t.closest('[class^="el-"], [class*=" el-"]')
-    if (!sec) {
-      const hero = t.closest('#top')
-      if (!hero) return
-      if (t.closest('a')) e.preventDefault()
-      if (isText) return
-      e.preventDefault(); e.stopPropagation()
-      post({ action: 'photo', key: 'hero', idx: 0 })
-      return
-    }
+    const root = rootOf(t)
+    if (!root) return
     if (t.closest('a')) e.preventDefault()
-    if (isText) return
-    const list = photoEls(sec)
-    const hit = document.elementsFromPoint(e.clientX, e.clientY).find((x) => list.includes(x as HTMLElement))
-    if (!hit) { post({ action: 'select', key: sec.dataset.sec as string }); return }
+    if (t.closest(TXT)) { clearSel(); return }
+    const key = rootKey(root)
+    const hit = photoAt(e.clientX, e.clientY)
+    if (!hit || hit.key !== key) { clearSel(); post({ action: 'select', key }); return }
     e.preventDefault(); e.stopPropagation()
-    post({ action: 'photo', key: sec.dataset.sec as string, idx: list.indexOf(hit as HTMLElement) })
+    const again = !!selPhoto && selPhoto.key === hit.key && selPhoto.idx === hit.idx
+    clearSel()
+    selPhoto = hit
+    hit.el.classList.add('cam-psel')
+    post({ action: 'photo', key: hit.key, idx: hit.idx, again })
   }
+  const parsePos = (el: HTMLElement): [number, number] => {
+    const m = /(-?[\d.]+)%\s+(-?[\d.]+)%/.exec(el.style.objectPosition || '')
+    return m ? [Number(m[1]), Number(m[2])] : [50, 50]
+  }
+  const dragTargets = (d: { el: HTMLElement; key: string }): HTMLElement[] => {
+    const root = rootOf(d.el)
+    return d.key === 'hero' && root ? photosIn(root) : [d.el]
+  }
+  const onPDown = (e: PointerEvent) => {
+    if (e.button !== 0 || !selPhoto) return
+    const t = e.target as HTMLElement | null
+    if (!t || !t.closest || bar.contains(t) || hT.contains(t) || hB.contains(t) || t.closest(TXT)) return
+    const hit = photoAt(e.clientX, e.clientY)
+    if (!hit || hit.key !== selPhoto.key || hit.idx !== selPhoto.idx) return
+    const [px, py] = parsePos(hit.el)
+    pd = { el: hit.el, key: hit.key, idx: hit.idx, x0: e.clientX, y0: e.clientY, px, py, moved: false, nx: px, ny: py }
+    for (const x of dragTargets(pd)) if (x.dataset.fx === undefined) { x.dataset.fx = '1'; x.dataset.fxop = x.style.objectPosition }
+  }
+  const onPMove = (e: PointerEvent) => {
+    if (!pd) return
+    const dx = e.clientX - pd.x0
+    const dy = e.clientY - pd.y0
+    if (!pd.moved && Math.hypot(dx, dy) < 5) return
+    pd.moved = true
+    e.preventDefault()
+    document.body.style.userSelect = 'none'
+    const el = pd.el
+    const w = el.offsetWidth
+    const h = el.offsetHeight
+    const nw = (el as HTMLImageElement).naturalWidth || w
+    const nh = (el as HTMLImageElement).naturalHeight || h
+    const sc = Math.max(w / nw, h / nh)
+    const z = Number((el.style.transform.match(/scale\(([\d.]+)\)/) ?? [])[1]) || 1
+    const rx = Math.max(nw * sc - w + w * (z - 1), w * 0.3)
+    const ry = Math.max(nh * sc - h + h * (z - 1), h * 0.3)
+    pd.nx = Math.min(100, Math.max(0, pd.px - (dx * 100) / rx))
+    pd.ny = Math.min(100, Math.max(0, pd.py - (dy * 100) / ry))
+    const pos = pd.nx + '% ' + pd.ny + '%'
+    for (const x of dragTargets(pd)) { x.style.objectPosition = pos; x.style.transformOrigin = pos }
+  }
+  const onPUp = () => {
+    if (!pd) return
+    const d = pd
+    pd = null
+    document.body.style.userSelect = ''
+    if (!d.moved) return
+    swallow = true
+    setTimeout(() => { swallow = false }, 0)
+    post({ action: 'photofx', id: photoId(d.key, d.idx), x: Math.round(d.nx * 10) / 10, y: Math.round(d.ny * 10) / 10 })
+  }
+  const onNativeDrag = (e: Event) => { if (selPhoto) e.preventDefault() }
   const onHDown = (e: PointerEvent) => {
     const h = (e.target as HTMLElement).closest('.cam-h') as HTMLElement | null
     if (!h || !cur) return
     e.preventDefault()
     const inner = cur.firstElementChild as HTMLElement | null
     if (!inner) return
-    padDrag = { side: h.dataset.side as string, y0: e.clientY, t0: Number(cur.dataset.pt || 0), b0: Number(cur.dataset.pb || 0), el: cur, inner }
+    const sc0 = Number(cur.dataset.sc || 1) || 1
+    const h0 = cur.getBoundingClientRect().height
+    padDrag = { side: h.dataset.side as string, y0: e.clientY, h0, nat: h0 / sc0, el: cur, inner }
     document.body.style.userSelect = 'none'
   }
   const onHMove = (e: PointerEvent) => {
     if (!padDrag) return
-    const { side, y0, t0, b0, el, inner } = padDrag
-    const dy = e.clientY - y0
-    const h = inner.offsetHeight
-    let t = t0, b = b0
-    if (side === 't') t = Math.min(0, Math.max(90 - h - b0, t0 - dy))
-    else b = Math.min(0, Math.max(90 - h - t0, b0 + dy))
-    el.style.overflow = 'hidden'
-    inner.style.marginTop = t ? t + 'px' : ''
-    inner.style.marginBottom = b ? b + 'px' : ''
-    el.dataset.pt = String(Math.round(t)); el.dataset.pb = String(Math.round(b))
+    const { side, y0, h0, nat, el, inner } = padDrag
+    const dy = side === 't' ? e.clientY - y0 : y0 - e.clientY
+    const nh = Math.min(nat, Math.max(nat * 0.4, h0 - dy))
+    const sc = nh / nat
+    inner.style.zoom = sc < 0.995 ? String(sc) : ''
+    el.dataset.sc = String(sc)
     show(el)
   }
   const onHUp = () => {
@@ -169,12 +232,16 @@ export function installPreviewSections(): () => void {
     const { el } = padDrag
     padDrag = null
     document.body.style.userSelect = ''
-    post({ action: 'pad', key: el.dataset.sec as string, t: Number(el.dataset.pt || 0), b: Number(el.dataset.pb || 0) })
+    post({ action: 'scale', key: el.dataset.sec as string, s: Number(el.dataset.sc || 1) })
   }
   document.addEventListener('pointerdown', onHDown)
   document.addEventListener('pointermove', onHMove)
   document.addEventListener('pointerup', onHUp)
   document.addEventListener('click', onPhotoClick, true)
+  document.addEventListener('pointerdown', onPDown)
+  document.addEventListener('pointermove', onPMove, { passive: false })
+  document.addEventListener('pointerup', onPUp)
+  document.addEventListener('dragstart', onNativeDrag)
   document.addEventListener('mousemove', onMove)
   document.addEventListener('mouseleave', onLeave)
   window.addEventListener('scroll', onScroll, true)
@@ -184,6 +251,10 @@ export function installPreviewSections(): () => void {
   document.addEventListener('pointerup', onUp)
   return () => {
     document.removeEventListener('click', onPhotoClick, true)
+    document.removeEventListener('pointerdown', onPDown)
+    document.removeEventListener('pointermove', onPMove)
+    document.removeEventListener('pointerup', onPUp)
+    document.removeEventListener('dragstart', onNativeDrag)
     document.removeEventListener('pointerdown', onHDown)
     document.removeEventListener('pointermove', onHMove)
     document.removeEventListener('pointerup', onHUp)

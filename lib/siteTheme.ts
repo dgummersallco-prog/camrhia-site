@@ -473,6 +473,7 @@ export function resolveTheme(r: Record<string, any>) {
     const e: any = (s.el as any)?.[k] ?? {}
     const r: string[] = []
     if (k !== 'menu_links' && typeof e.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(e.color)) r.push(`color:${e.color}!important`)
+    if (Number(e.op) >= 0.05 && Number(e.op) < 1) r.push(`opacity:${Number(e.op)}!important`)
     if (typeof e.font === 'string' && FONT_OPTIONS[e.font]) r.push(`font-family:${FONT_OPTIONS[e.font].family}!important`)
     let out = r.length ? `.el-${k}{${r.join(';')}}` : ''
     if (typeof e.font === 'string' && FONT_OPTIONS[e.font]) out += `:is(#nav,#top,#explore,#about,#portfolio,#investment,#words,#faq,#contact) .el-${k}.el-${k}{font-family:${FONT_OPTIONS[e.font].family}!important}`
@@ -480,8 +481,19 @@ export function resolveTheme(r: Record<string, any>) {
       const z = sizes.el[k]
       out += `.el-${k}{font-size:${z.phone}px!important}@media (min-width:768px){.el-${k}{font-size:${z.desktop}px!important}}`
     }
+    const fz = Number(e.size)
+    if (fz >= 8 && fz <= 160) out += `.el-${k}{font-size:${Math.max(8, Math.round(fz * 0.72))}px!important}@media (min-width:768px){.el-${k}{font-size:${fz}px!important}}`
     return out
-  }).join('')
+  }).join('') + (() => {
+    const h: any = (s.el as any)?.hero_headline ?? {}
+    const q: string[] = []
+    if (typeof h.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(h.color)) q.push(`color:${h.color}!important`)
+    if (Number(h.op) >= 0.05 && Number(h.op) < 1) q.push(`opacity:${Number(h.op)}!important`)
+    let o = q.length ? `h1{${q.join(';')}}` : ''
+    const fz = Number(h.size)
+    if (fz >= 14 && fz <= 200) o += `h1{font-size:${Math.max(14, Math.round(fz * 0.62))}px!important}@media (min-width:768px){h1{font-size:${fz}px!important}}`
+    return o
+  })()
   const portfolioBtnCss = (() => {
     const cb: any = s.portfolioBtn ?? {}
     const okHex = (v: any) => (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null)

@@ -56,7 +56,7 @@ export function installPreviewPick(): () => void {
     e.preventDefault()
     e.stopPropagation()
     const r = el.getBoundingClientRect()
-    window.parent?.postMessage({ type: 'camrhia-pick', key, text: (el.textContent ?? '').trim(), x: r.left, y: r.top, w: r.width, h: r.height, color: getComputedStyle(el).color }, '*')
+    window.parent?.postMessage({ type: 'camrhia-pick', key, text: (el.textContent ?? '').trim(), x: r.left, y: r.top, w: r.width, h: r.height, color: getComputedStyle(el).color, size: parseFloat(getComputedStyle(el).fontSize) || 0, op: Number(getComputedStyle(el).opacity) }, '*')
   }
 
   document.addEventListener('mouseover', onOver, true)
