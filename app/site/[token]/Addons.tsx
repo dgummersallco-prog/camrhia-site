@@ -9,7 +9,10 @@ const PH = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://w
 
 const okUrl = (u?: string) => (u && /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(u.trim()) ? u.trim() : '#')
 
-export function Addons({ list, accent }: { list: unknown; accent: string }) {
+const BASE = process.env.NEXT_PUBLIC_SUPABASE_URL ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/` : ''
+const picUrl = (p?: string) => (p ? (/^(data:|https?:)/.test(p) ? p : p.startsWith('/') ? p : BASE + p) : '')
+
+export function Addons({ list, accent, pics }: { list: unknown; accent: string; pics?: Record<string, string> | null }) {
   const [mounted, setMounted] = useState(false)
   const [, setTick] = useState(0)
   const arr: Addon[] = (Array.isArray(list) ? list : []).filter((a: any) => a && typeof a.id === 'string' && typeof a.sec === 'string' && (a.t === 'text' || a.t === 'photo' || a.t === 'button'))
@@ -33,7 +36,8 @@ export function Addons({ list, accent }: { list: unknown; accent: string }) {
         const top = 'calc(28% + ' + (i % 6) * 30 + 'px)'
         let node: React.ReactNode
         if (a.t === 'photo') {
-          node = <img data-addon={a.id} src={PH} alt="" style={{ position: 'absolute', left: 'calc(50% - 130px)', top, width: 260, height: 190, objectFit: 'cover', borderRadius: 12, zIndex: 6 }} />
+          const pu = picUrl(pics?.['addon-' + a.id + ':0'])
+          node = <div data-addon={a.id} data-addp={a.id} className="el-axp" role="img" aria-label="" style={{ position: 'absolute', left: 'calc(50% - 130px)', top, width: 260, height: 190, borderRadius: 12, zIndex: 6, backgroundImage: pu ? 'url("' + pu.replace(/"/g, '%22') + '")' : 'url("' + PH + '")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
         } else if (a.t === 'button') {
           const u = okUrl(a.url)
           node = <a data-addon={a.id} className={a.k ? 'el-' + a.k : undefined} href={u} {...(/^https?:/i.test(u) ? { target: '_blank', rel: 'noopener noreferrer' } : {})} style={{ position: 'absolute', left: 'calc(50% - 70px)', top, display: 'inline-block', padding: '14px 30px', borderRadius: 999, background: accent, color: '#fff', fontSize: 15, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', textAlign: 'center', zIndex: 6 }}>{String(a.text ?? 'Button').slice(0, 200)}</a>

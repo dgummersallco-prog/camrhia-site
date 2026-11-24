@@ -337,11 +337,12 @@ export function setBox(el: HTMLElement, f: BoxFx | undefined) {
   }
   if (el.dataset.bxh !== undefined) { st.display = el.dataset.bxh; delete el.dataset.bxh }
   const hasW = !!f && Number(f.w) > 0.5
-  if (!hasW && el.dataset.bxw !== undefined) { st.width = el.dataset.bxw; st.maxWidth = el.dataset.bxmw ?? ''; delete el.dataset.bxw; delete el.dataset.bxmw }
+  if (!hasW && el.dataset.bxw !== undefined) { st.width = el.dataset.bxw; st.maxWidth = el.dataset.bxmw ?? ''; st.overflowWrap = ''; delete el.dataset.bxw; delete el.dataset.bxmw }
   if (hasW) {
     if (el.dataset.bxw === undefined) { el.dataset.bxw = st.width; el.dataset.bxmw = st.maxWidth }
     st.width = Number(f!.w) + 'vw'
     st.maxWidth = 'none'
+    st.overflowWrap = 'anywhere'
   }
   const hasV = !!f && Number(f.v) > 0.5
   if (!hasV && el.dataset.bxv !== undefined) {
@@ -395,8 +396,12 @@ export function applyBoxFx(map: Record<string, BoxFx> | undefined | null) {
     if (!key) continue
     boxesIn(root).forEach((b, i) => setBox(b, m[boxId(key, i)]))
     rulesIn(root).forEach((b, i) => setBox(b, m[ruleId(key, i)]))
-    if (heroOne(root)) continue
-    photosIn(root).forEach((p, i) => setBox(frameOf(visualOf(p), root), m['f:' + photoId(key, i)]))
+    const one = heroOne(root)
+    photosIn(root).forEach((p, i) => {
+      const fr = frameOf(visualOf(p), root)
+      setBox(fr, m['f:' + photoId(key, one ? 0 : i)])
+      if (one && fr.dataset.bxfx !== undefined) fr.style.zIndex = fr.dataset.bxz ?? ''
+    })
   }
 }
 

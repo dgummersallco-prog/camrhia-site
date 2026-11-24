@@ -279,7 +279,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
       <div id={photoBack ? 'book-photo' : undefined} style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : pageBg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <CustomJs code={String((r as any).site_settings?.custom_js ?? '')} />
         {(() => { const cc = sanitizeCss((r as any).site_settings?.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
-        <Addons list={(r as any).site_settings?.addons} accent={t.accent} />
+        <Addons list={(r as any).site_settings?.addons} accent={t.accent} pics={(r as any).site_settings?.slotPics} />
         <SiteNav t={t} logo={logo} name={studio} homeHref={`${homeHref}${qs}`} headStyle={head} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`], ...(blogPosts((r as any).site_settings).length ? [['blog', `${base}/blog${qs}`]] : []), ...t.extraPages.map((e) => [e.id, `${base}/p/${e.id}${qs}`] as [string, string])] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k) && !(t.pagesOff as string[]).includes(k)).map(([k, h]) => ({ key: k, href: h, label: (t.menu.labels as Record<string, string | undefined>)[k]?.trim() || (NAV_DEFAULTS as Record<string, string>)[k] || t.extraPages.find((e) => e.id === k)?.label || k, active: k === 'book' }))} />
 
         {photoAbove && (

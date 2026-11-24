@@ -539,13 +539,15 @@ function thumbsOf(designs: Record<string, string>) {
   return out
 }
 
+let METER_REACHED = 0
 function Meter({ at, onGo }: { at: number; onGo: (n: number) => void }) {
+  METER_REACHED = Math.max(METER_REACHED, at)
   const labels = ['Hero', ...DESIGN_SECTIONS.map((x) => (x.k === 'nav' ? 'Explore' : x.k === 'contact' ? 'Button' : x.title))]
   return (
     <div className="flex gap-1.5">
       {labels.map((t, n) => {
         const cur = n === at
-        const done = n < at
+        const done = n < Math.max(at, METER_REACHED)
         return (
           <button key={n} type="button" onClick={() => onGo(n)} title={t} className={'flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-2 py-1.5 text-xs transition ' + (cur ? 'border-twilight bg-white font-medium text-ink shadow-sm' : done ? 'border-transparent bg-twilight/10 text-ink hover:bg-twilight/20' : 'border-black/10 bg-white/50 text-ink-soft hover:border-twilight hover:bg-white hover:text-ink')}>
             <span className={'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ' + (cur || done ? 'bg-twilight text-white' : 'bg-black/10 text-ink-soft')}>{done ? String.fromCharCode(10003) : n + 1}</span>

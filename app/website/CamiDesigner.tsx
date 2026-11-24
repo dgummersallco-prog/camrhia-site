@@ -434,6 +434,13 @@ export default function CamiDesigner() {
   const [selPh, setSelPh] = useState<{ key: string; idx: number; multi?: boolean } | null>(null)
   const [selBtn, setSelBtn] = useState<{ id: string; tx: string; text: string; cbg?: string; ccolor?: string } | null>(null)
   const [selBox, setSelBox] = useState<string | null>(null)
+  const [selAp, setSelAp] = useState<string | null>(null)
+  useEffect(() => {
+    if (!selAp) return
+    const sp = ((form?.site_settings as any)?.slotPics ?? {}) as Record<string, string>
+    if (!sp['addon-' + selAp + ':0']) setSlot({ key: 'addon-' + selAp, idx: 0, multi: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selAp])
   const [secCur, setSecCur] = useState<string | null>(null)
   const [lib, setLib] = useState<{ id: string; storage_path: string }[]>([])
   const [libBusy, setLibBusy] = useState(false)
@@ -504,7 +511,7 @@ export default function CamiDesigner() {
       const d = e.data
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
       if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelSec(String(d.key)); setLeftTab('design'); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); setSelAp(d.ap ? String(d.ap) : null); return }
       if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? ''), cbg: typeof d.cbg === 'string' ? d.cbg : '', ccolor: typeof d.ccolor === 'string' ? d.ccolor : '' }); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); setLeftTab('design'); if (d.open) setSlot({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
@@ -1384,7 +1391,8 @@ export default function CamiDesigner() {
                       </div>
                       <ColorRow label={nm + ' color'} value={el.color ?? pick.color} base={base} onLive={(c) => setElProp(pick.key, { color: c }, true)} onSet={(c) => setElProp(pick.key, { color: c })} />
                       {pick.key === 'gs_title' && <ColorRow label="Behind the title and lines" value={ss.portfolio?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg('portfolio', c)} onSet={(c) => setSecBg('portfolio', c)} onReset={() => setSecBg('portfolio', null)} />}
-                      <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={pick.key === 'hero_headline' ? 120 : 90} step={1} unit="px" onLive={(v) => setElProp(pick.key, { size: v }, true)} onDone={(v) => setElProp(pick.key, { size: v })} />
+                      <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={pick.key === 'hero_headline' ? 400 : 90} step={1} unit="px" onLive={(v) => setElProp(pick.key, { size: v }, true)} onDone={(v) => setElProp(pick.key, { size: v })} />
+                      {Number(el.size) > 0 && <button type="button" onClick={() => setElProp(pick.key, { size: undefined })} className="mt-1 text-xs font-medium text-[#6B4A2B] underline">Back to original size</button>}
                       <SliderRow label={nm + ' opacity'} value={Math.round((Number(el.op) || pick.op || 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 }, true)} onDone={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 })} />
                       <SliderRow label={nm + ' shadow'} value={Math.round(Number(el.shb) || 0)} min={0} max={40} step={1} unit="px" onLive={(v) => setElProp(pick.key, { shb: v }, true)} onDone={(v) => setElProp(pick.key, { shb: v })} />
                       {(() => {
@@ -1419,7 +1427,10 @@ export default function CamiDesigner() {
                         {selPh.key === 'hero' && !selPh.multi && (() => { const hp: string[] = (form?.site_settings?.hero?.photos ?? []) as string[]; const on = !!form?.site_settings?.hero?.slideshow; return <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); x.hero = { ...(x.hero ?? {}), slideshow: !on } }) }} className={btn}>{on ? 'Pictures rotate: On' : hp.length > 1 ? 'Pictures rotate: Off' : 'Pictures rotate: needs 2+ photos'}</button> })()}
                         <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; delete m[id]; x.photoFx = m }) }} className={btn}>Reset photo</button>
                       </div>
-                      <p className="mt-2 text-xs text-ink-soft">Drag the photo to move it inside its frame. Use the corners to resize the frame and the Move tab to place it.</p>
+                      <details className="group mt-2">
+                        <summary className="flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-full border border-[#B08D57] text-xs font-semibold italic text-[#8C6B3F] [&::-webkit-details-marker]:hidden" title="Tips">i</summary>
+                        <p className="mt-2 text-xs text-ink-soft">Drag the photo to move it inside its frame. Use the side handles to stretch it, the corners to scale it, and the round arrow to rotate it.</p>
+                      </details>
                       {boxReset}
                       <SliderRow label={nm + ' zoom'} value={Number(fx.z ?? 1)} min={1} max={3} step={0.02} unit="x" onLive={(v) => liveFx({ z: v })} onDone={(v) => setFx({ z: v })} />
                       <SliderRow label={nm + ' opacity'} value={Math.round(Number(fx.o ?? 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => liveFx({ o: v >= 100 ? 1 : v / 100 })} onDone={(v) => setFx({ o: v >= 100 ? 1 : v / 100 })} />
@@ -1451,8 +1462,9 @@ export default function CamiDesigner() {
                       <button type="button" className={btn + ' mt-3'} onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; for (const k of Object.keys(m)) if (m[k]?.h && (k.startsWith('t:' + selSec + ':') || k.startsWith('r:' + selSec + ':') || k.startsWith('f:' + selSec + ':') || k === 'f:' + selSec)) delete m[k]; x.boxFx = m }) }}>Bring back removed items</button>
                     )}
                     <p className="mt-5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Add to this section</p>
+                    {selAp && <button type="button" className={btn + ' mt-3'} onClick={() => setSlot({ key: 'addon-' + selAp, idx: 0, multi: true })}>Change photo</button>}
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {([['text', 'Text box'], ['button', 'Button'], ['photo', 'Photo']] as const).filter(([t]) => !(t === 'photo' && selSec === 'hero')).map(([t, lb]) => (
+                      {([['text', 'Text box'], ['button', 'Button'], ['photo', 'Photo']] as const).map(([t, lb]) => (
                         <button key={t} type="button" className={btn} onClick={() => addAddon(t)}>+ {lb}</button>
                       ))}
                     </div>

@@ -74,7 +74,7 @@ export function BlogView({ initial, token, slug }: { initial: Record<string, any
       <div style={{ background: pageBg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <CustomJs code={String(ss.custom_js ?? '')} />
         {(() => { const cc = sanitizeCss(ss.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
-        <Addons list={(r as any).site_settings?.addons} accent={t.accent} />
+        <Addons list={(r as any).site_settings?.addons} accent={t.accent} pics={(r as any).site_settings?.slotPics} />
         <SiteNav t={t} logo={logo} name={studio} homeHref={`${homeHref}${qs}`} headStyle={head} items={items} />
         <section id="blog">
         {slug ? (

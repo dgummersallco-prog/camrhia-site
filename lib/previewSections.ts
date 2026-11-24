@@ -183,13 +183,12 @@ export function installPreviewSections(): () => void {
     const hit = photoAt(e.clientX, e.clientY)
     if (!hit || hit.key !== key) { clearSel(); setBoxSel(null, '', 'text'); post({ action: 'select', key, bg: effBg(root) }); return }
     e.preventDefault(); e.stopPropagation()
-    if (e.shiftKey && !heroOne(root)) { addSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, hit.idx), 'frame'); return }
+    if (e.shiftKey) { addSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, heroOne(root) ? 0 : hit.idx), 'frame'); return }
     const again = !!selPhoto && selPhoto.key === hit.key && selPhoto.idx === hit.idx
     clearSel()
     selPhoto = hit
     visualOf(hit.el).classList.add('cam-psel')
-    if (!heroOne(root)) setBoxSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, hit.idx), 'frame')
-    else setBoxSel(null, '', 'text')
+    setBoxSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, heroOne(root) ? 0 : hit.idx), 'frame')
     post({ action: 'photo', key: hit.key, idx: hit.idx, again, bg: effBg(root), multi: !heroOne(root) })
   }
   const onDbl = (e: MouseEvent) => {
@@ -398,7 +397,7 @@ export function installPreviewSections(): () => void {
       for (let i = 0; i < bl.length; i++) if (boxId(key, i) === id) return { el: bl[i], id, kind: 'text' }
       const rl = rulesIn(root)
       for (let i = 0; i < rl.length; i++) if (ruleId(key, i) === id) return { el: rl[i], id, kind: 'text' }
-      if (!heroOne(root)) { const ps = photosIn(root); for (let i = 0; i < ps.length; i++) if ('f:' + photoId(key, i) === id) return { el: frameOf(visualOf(ps[i]), root), id, kind: 'frame' } }
+      { const ps = photosIn(root); for (let i = 0; i < ps.length; i++) if ('f:' + photoId(key, i) === id) return { el: frameOf(visualOf(ps[i]), root), id, kind: 'frame' } }
     }
     return null
   }
@@ -427,7 +426,7 @@ export function installPreviewSections(): () => void {
     mv.style.display = selBox.kind === 'frame' ? 'flex' : 'none'
     cornerH.forEach((h) => { h.style.display = !multi ? 'block' : 'none' })
     sideH.forEach((h) => { h.style.display = !multi ? 'block' : 'none' })
-    vertH.forEach((h) => { h.style.display = !multi && selBox!.kind === 'frame' ? 'block' : 'none' })
+    vertH.forEach((h) => { h.style.display = !multi && (selBox!.kind === 'frame' || !!selBox!.el.dataset.addp) ? 'block' : 'none' })
     gb.style.display = multi ? 'flex' : 'none'
     if (multi) gb.textContent = isGroupSel() ? 'Ungroup' : 'Group'
     while (xbs.length < extras.length) { const d = document.createElement('div'); d.style.cssText = 'position:fixed;z-index:2147482000;border:1.5px solid #d9a21b;pointer-events:none'; document.body.appendChild(d); xbs.push(d) }
@@ -465,7 +464,7 @@ export function installPreviewSections(): () => void {
   const setBoxSel = (el: HTMLElement | null, id: string, kind: 'text' | 'frame') => {
     selBox = el ? { el, id, kind } : null
     extras = el ? groupMates(id) : []
-    post({ action: 'box', id: el ? id : '' })
+    post({ action: 'box', id: el ? id : '', ap: el ? el.dataset.addp ?? '' : '' })
     layoutBox()
   }
   const addSel = (el: HTMLElement, id: string, kind: 'text' | 'frame') => {
@@ -475,7 +474,7 @@ export function installPreviewSections(): () => void {
       const rest = cur.filter((q) => q.id !== id)
       selBox = rest[0] ?? null
       extras = rest.slice(1)
-      post({ action: 'box', id: selBox ? selBox.id : '' })
+      post({ action: 'box', id: selBox ? selBox.id : '', ap: selBox ? selBox.el.dataset.addp ?? '' : '' })
     } else {
       extras = [...extras, { el, id, kind }, ...groupMates(id).filter((m) => !cur.some((q) => q.id === m.id))]
     }
@@ -584,20 +583,27 @@ export function installPreviewSections(): () => void {
       const sn = Math.round(nr / 15) * 15
       if (Math.abs(nr - sn) < 4) nr = sn
       setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: g.fx.w, v: g.fx.v, r: nr })
-    } else if (g.mode === 'rw') {
-      const vv = g.sel.kind === 'frame' ? g.h0 : g.fx.v
-      const nw = Math.max(4, g.w0 + (g.side === 'e' ? 1 : -1) * dx / vwPx())
-      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: nw, v: vv, r: g.fx.r })
-      const rr = g.sel.el.getBoundingClientRect()
-      const corr = g.side === 'e' ? g.l0 - rr.left : g.r0 - rr.right
-      setBox(g.sel.el, { x: g.fx.x + corr / vwPx(), y: g.fx.y, s: g.fx.s, w: nw, v: vv, r: g.fx.r })
-    } else if (g.mode === 'rh') {
-      const nh = Math.max(4, g.h0 + (g.side === 's' ? 1 : -1) * dy / vwPx())
-      const ww = g.sel.kind === 'frame' ? g.w0 : g.fx.w
-      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: ww, v: nh, r: g.fx.r })
-      const rr = g.sel.el.getBoundingClientRect()
-      const corr = g.side === 's' ? g.t0 - rr.top : g.b0 - rr.bottom
-      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y + corr / vwPx(), s: g.fx.s, w: ww, v: nh, r: g.fx.r })
+    } else if (g.mode === 'rw' || g.mode === 'rh') {
+      const el = g.sel.el
+      const pic = g.sel.kind === 'frame' || !!el.dataset.addp
+      const sc = g.fx.s || 1
+      const th = g.fx.r * Math.PI / 180
+      const horiz = g.mode === 'rw'
+      const ax = horiz ? Math.cos(th) : -Math.sin(th)
+      const ay = horiz ? Math.sin(th) : Math.cos(th)
+      const sg = g.side === 'e' || g.side === 's' ? 1 : -1
+      const dl = (dx * ax + dy * ay) / sc / vwPx()
+      const n0 = horiz ? g.w0 : g.h0
+      const nn = Math.max(horiz ? 0.6 : 4, n0 + sg * dl)
+      const ww = horiz ? nn : pic ? g.w0 : g.fx.w
+      const vv = horiz ? (pic ? g.h0 : g.fx.v) : nn
+      setBox(el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: ww, v: vv, r: g.fx.r })
+      const rr = el.getBoundingClientRect()
+      const half0 = n0 * vwPx() * sc / 2
+      const half1 = nn * vwPx() * sc / 2
+      const tx = g.cx - sg * ax * half0 + sg * ax * half1
+      const ty = g.cy - sg * ay * half0 + sg * ay * half1
+      setBox(el, { x: g.fx.x + (tx - (rr.left + rr.width / 2)) / vwPx(), y: g.fx.y + (ty - (rr.top + rr.height / 2)) / vwPx(), s: g.fx.s, w: ww, v: vv, r: g.fx.r })
     } else {
       const d = Math.hypot(e.clientX - g.cx, e.clientY - g.cy)
       setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: Math.min(6, Math.max(0.2, g.fx.s * (d / g.d0))), w: g.fx.w, v: g.fx.v, r: g.fx.r })
@@ -617,7 +623,7 @@ export function installPreviewSections(): () => void {
     const kill = (ev: Event) => { ev.stopImmediatePropagation(); ev.preventDefault() }
     window.addEventListener('click', kill, true)
     setTimeout(() => window.removeEventListener('click', kill, true), 60)
-    post({ action: 'box', id: d.sel.id })
+    post({ action: 'box', id: d.sel.id, ap: d.sel.el.dataset.addp ?? '' })
     const rec = (id: string, q: { x: number; y: number; s: number; w: number; v: number; r: number }) => ({ id, x: Math.round(q.x * 100) / 100, y: Math.round(q.y * 100) / 100, s: Math.round(q.s * 1000) / 1000, w: Math.round(q.w * 100) / 100, v: Math.round(q.v * 100) / 100, r: Math.round(q.r * 10) / 10 })
     if (d.others.length > 0) post({ action: 'boxfxs', list: [rec(d.sel.id, f), ...d.others.map((o) => rec(o.sel.id, curFx(o.sel.el)))] })
     else post({ action: 'boxfx', ...rec(d.sel.id, f) })
