@@ -442,6 +442,7 @@ export default function CamiDesigner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selAp])
   const [secCur, setSecCur] = useState<string | null>(null)
+  const [secPad, setSecPad] = useState<{ pt: number; pb: number }>({ pt: 0, pb: 0 })
   const [lib, setLib] = useState<{ id: string; storage_path: string }[]>([])
   const [libBusy, setLibBusy] = useState(false)
   const [ptext, setPtext] = useState('')
@@ -510,8 +511,9 @@ export default function CamiDesigner() {
     function onMsg(e: MessageEvent) {
       const d = e.data
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
+      if (d && d.type === 'camrhia-section' && typeof d.pt === 'number' && e.source === frameRef.current?.contentWindow) setSecPad({ pt: Number(d.pt) || 0, pb: Number(d.pb) || 0 })
       if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelSec(String(d.key)); setLeftTab('design'); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); setSelAp(d.ap ? String(d.ap) : null); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); setSelAp(d.ap ? String(d.ap) : null); if (d.ap) { setPick(null); setSelBtn(null); setSelPh(null) } return }
       if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? ''), cbg: typeof d.cbg === 'string' ? d.cbg : '', ccolor: typeof d.ccolor === 'string' ? d.ccolor : '' }); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); setLeftTab('design'); if (d.open) setSlot({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
@@ -1340,11 +1342,29 @@ export default function CamiDesigner() {
                 const setSecBg = (key: string, c: string | null) => { void commit(secBgMut(key, c)) }
                 const secAccMut = (key: string, c: string | null) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur = { ...(m[key] ?? {}) }; if (c) cur.accent = c; else delete cur.accent; m[key] = cur; x.secStyle = m }
                 const setSecAcc = (key: string, c: string | null) => { void commit(secAccMut(key, c)) }
+                const secPadMut = (key: string, f: 'pt' | 'pb', v: number | null) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur: Record<string, any> = { ...(m[key] ?? {}) }; if (v === null) delete cur[f]; else cur[f] = Math.round(v); m[key] = cur; x.secStyle = m }
                 const liveSecAcc = (key: string, c: string) => liveEdit(secAccMut(key, c))
                 const liveSecBg = (key: string, c: string) => liveEdit(secBgMut(key, c))
                 const boxReset = selBox && (set.boxFx ?? {})[selBox] ? <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; delete m[selBox]; x.boxFx = m }) }} className="mt-4 rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]">Reset position and size</button> : null
                 const btn = 'rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]'
                 const inp = 'mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]'
+                if (selAp) {
+                  const ad = ((((form.site_settings ?? {}) as any).addons ?? []) as any[]).find((a) => a && a.id === selAp)
+                  if (ad) {
+                    const apMut = (patch: Record<string, any>) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); x.addons = (Array.isArray(x.addons) ? x.addons : []).map((a: any) => (a && a.id === selAp ? { ...a, ...patch } : a)) }
+                    return (
+                      <div className="mt-4">
+                        <p className="font-fraunces text-lg font-semibold text-ink">Your photo</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button type="button" onClick={() => setSlot({ key: 'addon-' + selAp, idx: 0, multi: true })} className={btn}>Change photo</button>
+                          <button type="button" onClick={() => { void commit((n) => { apMut({ z: undefined, o: undefined })(n); const x = (n.site_settings = n.site_settings ?? {}); const sp: Record<string, string> = { ...(x.slotPics ?? {}) }; delete sp['addon-' + selAp + ':0']; x.slotPics = sp }) }} className={btn}>Reset photo</button>
+                        </div>
+                        <SliderRow label="Photo zoom" value={Number(ad.z ?? 1)} min={1} max={3} step={0.02} unit="x" onLive={(v) => liveEdit(apMut({ z: v }))} onDone={(v) => { void commit(apMut({ z: v })) }} />
+                        <SliderRow label="Photo opacity" value={Math.round(Number(ad.o ?? 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => liveEdit(apMut({ o: v >= 100 ? 1 : v / 100 }))} onDone={(v) => { void commit(apMut({ o: v >= 100 ? 1 : v / 100 })) }} />
+                      </div>
+                    )
+                  }
+                }
                 if (selBtn) {
                   const bf = (set.btnFx ?? {})[selBtn.id] ?? {}
                   const bMut = (patch: Record<string, any>, del?: string[]) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.btnFx ?? {}) }; const cur: Record<string, any> = { ...(m[selBtn.id] ?? {}), ...patch }; (del ?? []).forEach((k) => { delete cur[k] }); m[selBtn.id] = cur; x.btnFx = m }
@@ -1457,6 +1477,9 @@ export default function CamiDesigner() {
                     <p className="font-fraunces text-lg font-semibold text-ink">{secNm}</p>
                     <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg(bgKey, c)} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
                     <ColorRow label={secNm + ' accent color'} value={ss[bgKey]?.accent} cur={accent} base={base} onLive={(c) => liveSecAcc(bgKey, c)} onSet={(c) => setSecAcc(bgKey, c)} onReset={() => setSecAcc(bgKey, null)} />
+                    <SliderRow key={bgKey + 'pt'} label={secNm + ' top padding'} value={Math.round(Number(ss[bgKey]?.pt ?? secPad.pt) || 0)} min={0} max={400} step={1} unit="px" onLive={(v) => liveEdit(secPadMut(bgKey, 'pt', v))} onDone={(v) => { void commit(secPadMut(bgKey, 'pt', v)) }} />
+                    <SliderRow key={bgKey + 'pb'} label={secNm + ' bottom padding'} value={Math.round(Number(ss[bgKey]?.pb ?? secPad.pb) || 0)} min={0} max={400} step={1} unit="px" onLive={(v) => liveEdit(secPadMut(bgKey, 'pb', v))} onDone={(v) => { void commit(secPadMut(bgKey, 'pb', v)) }} />
+                    {(ss[bgKey]?.pt !== undefined || ss[bgKey]?.pb !== undefined) && <button type="button" onClick={() => { void commit((n) => { secPadMut(bgKey, 'pt', null)(n); secPadMut(bgKey, 'pb', null)(n) }) }} className="mt-1 text-xs font-medium text-[#6B4A2B] underline">Reset padding</button>}
                     {Object.entries((set.boxFx ?? {}) as Record<string, any>).some(([k, v]) => v?.h && (k.startsWith('t:' + selSec + ':') || k.startsWith('r:' + selSec + ':') || k.startsWith('f:' + selSec + ':') || k === 'f:' + selSec)) && (
                       <button type="button" className={btn + ' mt-3'} onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; for (const k of Object.keys(m)) if (m[k]?.h && (k.startsWith('t:' + selSec + ':') || k.startsWith('r:' + selSec + ':') || k.startsWith('f:' + selSec + ':') || k === 'f:' + selSec)) delete m[k]; x.boxFx = m }) }}>Bring back removed items</button>
                     )}

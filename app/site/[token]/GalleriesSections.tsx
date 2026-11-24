@@ -118,9 +118,9 @@ function Sonora(p: P) {
   return (
     <div style={{ position: 'relative', ...bleed }}>
       <div className="grid sm:grid-cols-2" style={{ gap: 3, background: p.bg || '#fbf8f3', padding: '3px 0' }}>
-        {p.items.slice(0, 4).map((g) => tile(g, <><Ph u={g.u} ratio="2.025/1" /><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 50%, rgba(24,18,12,.7))' }} /><div style={{ position: 'absolute', left: '2.9%', bottom: '9%', color: '#fff' }}><p data-name="Gallery name" className="el-gal_name" style={{ ...p.nameStyle, letterSpacing: '0.06em', fontSize: 'clamp(1.2rem,2.8vw,3rem)', lineHeight: 1.1, margin: 0 }}>{g.title}</p></div></>))}
+        {p.items.slice(0, 4).map((g) => tile(g, <><Ph u={g.u} ratio="2.025/1" /><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 50%, rgba(24,18,12,.7))' }} /><div style={{ position: 'absolute', left: '2.9%', bottom: '13%', color: '#fff' }}><p data-name="Gallery name" className="el-gal_name" style={{ ...p.nameStyle, letterSpacing: '0.06em', fontSize: 'clamp(1.2rem,2.8vw,3rem)', lineHeight: 1.1, margin: 0 }}>{g.title}</p></div></>))}
       </div>
-      <div className="hidden sm:block" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', background: p.bg || '#fbf8f3', color: p.ink, width: '29%', padding: 'clamp(14px,2.4vw,42px) 0', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,.2)' }}>
+      <div className="hidden sm:block" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', background: p.bg || '#fbf8f3', color: p.ink, width: '29%', padding: 'clamp(10px,1.4vw,26px) 0', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,.2)' }}>
         <h2 data-name="Section title" className="el-gs_title" style={{ ...h2(p, 'clamp(1.2rem,2.9vw,3rem)', p.ink), letterSpacing: '0.4em', paddingLeft: '0.4em' }}>{p.title}</h2>
       </div>
     </div>
@@ -137,7 +137,7 @@ function Kalahari(p: P) {
   return (
     <div className="grid items-center gap-8 md:grid-cols-[37.2%_50%]">
       <div style={{ paddingLeft: '3.7%' }}>
-        <h2 data-name="Section title" className="el-gs_title" style={{ ...h2(p, 'clamp(3rem,12vw,12rem)'), lineHeight: 0.95 }}>{p.title}</h2>
+        <h2 data-name="Section title" className="el-gs_title" style={{ ...h2(p, 'clamp(2.4rem,8.4vw,8.4rem)'), lineHeight: 0.95 }}>{p.title}</h2>
       </div>
       <div className="grid grid-cols-2 items-start" style={{ columnGap: '9.1%' }}>
         {col([0, 2], false)}

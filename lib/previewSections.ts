@@ -32,6 +32,7 @@ export function installPreviewSections(): () => void {
   const seen = (x: HTMLElement) => x.offsetHeight > 30
   let cur: HTMLElement | null = null
   let dragging = false
+  let padHold = 0
   let padDrag: { side: string; y0: number; h0: number; nat: number; el: HTMLElement; inner: HTMLElement } | null = null
   let dragKey = ''
   let before = -1
@@ -63,6 +64,13 @@ export function installPreviewSections(): () => void {
     if (dragging || padDrag) return
     const t = e.target as HTMLElement | null
     if (!t || !t.closest || bar.contains(t) || hT.contains(t) || hB.contains(t)) return
+    if (cur && performance.now() < padHold) return
+    for (const hh of [hT, hB]) {
+      if (cur && hh.style.display === 'block') {
+        const q = hh.getBoundingClientRect()
+        if (Math.abs(e.clientY - (q.top + q.height / 2)) < 36 && e.clientX > q.left - 90 && e.clientX < q.right + 90) return
+      }
+    }
     const el = t.closest('[data-sec]') as HTMLElement | null
     show(el && seen(el) ? el : null)
   }
@@ -177,11 +185,11 @@ export function installPreviewSections(): () => void {
       e.preventDefault(); e.stopPropagation()
       clearSel()
       setBoxSel(ru.el, ru.id, 'text')
-      post({ action: 'select', key, bg: effBg(root) })
+      post({ action: 'select', key, bg: effBg(root), pt: padPx(root, 'Top'), pb: padPx(root, 'Bottom') })
       return
     }
     const hit = photoAt(e.clientX, e.clientY)
-    if (!hit || hit.key !== key) { clearSel(); setBoxSel(null, '', 'text'); post({ action: 'select', key, bg: effBg(root) }); return }
+    if (!hit || hit.key !== key) { clearSel(); setBoxSel(null, '', 'text'); post({ action: 'select', key, bg: effBg(root), pt: padPx(root, 'Top'), pb: padPx(root, 'Bottom') }); return }
     e.preventDefault(); e.stopPropagation()
     if (e.shiftKey) { addSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, heroOne(root) ? 0 : hit.idx), 'frame'); return }
     const again = !!selPhoto && selPhoto.key === hit.key && selPhoto.idx === hit.idx
@@ -189,7 +197,7 @@ export function installPreviewSections(): () => void {
     selPhoto = hit
     visualOf(hit.el).classList.add('cam-psel')
     setBoxSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, heroOne(root) ? 0 : hit.idx), 'frame')
-    post({ action: 'photo', key: hit.key, idx: hit.idx, again, bg: effBg(root), multi: !heroOne(root) })
+    post({ action: 'photo', key: hit.key, idx: hit.idx, again, bg: effBg(root), pt: padPx(root, 'Top'), pb: padPx(root, 'Bottom'), multi: !heroOne(root) })
   }
   const onDbl = (e: MouseEvent) => {
     const t = e.target as HTMLElement | null
@@ -199,7 +207,7 @@ export function installPreviewSections(): () => void {
     const hit = photoAt(e.clientX, e.clientY)
     if (!hit || hit.key !== rootKey(root)) return
     e.preventDefault()
-    post({ action: 'photo', key: hit.key, idx: hit.idx, again: true, open: true, bg: effBg(root), multi: !heroOne(root) })
+    post({ action: 'photo', key: hit.key, idx: hit.idx, again: true, open: true, bg: effBg(root), pt: padPx(root, 'Top'), pb: padPx(root, 'Bottom'), multi: !heroOne(root) })
   }
   const parsePos = (el: HTMLElement): [number, number] => {
     const m = /(-?[\d.]+)%\s+(-?[\d.]+)%/.exec(el.style.objectPosition || '')
@@ -268,6 +276,7 @@ export function installPreviewSections(): () => void {
       return '#' + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase()
     } catch { return '' }
   }
+  const padPx = (root: HTMLElement | null, side: 'Top' | 'Bottom'): number => (root ? Math.round(parseFloat((getComputedStyle(root) as any)['padding' + side]) || 0) : 0)
   const effBg = (root: HTMLElement | null): string => {
     try {
       const cv = document.createElement('canvas')
@@ -637,6 +646,7 @@ export function installPreviewSections(): () => void {
     const sc0 = Number(cur.dataset.sc || 1) || 1
     const h0 = cur.getBoundingClientRect().height
     padDrag = { side: h.dataset.side as string, y0: e.clientY, h0, nat: h0 / sc0, el: cur, inner }
+    try { h.setPointerCapture(e.pointerId) } catch { /* ignore */ }
     document.body.style.userSelect = 'none'
   }
   const onHMove = (e: PointerEvent) => {
@@ -653,6 +663,11 @@ export function installPreviewSections(): () => void {
     if (!padDrag) return
     const { el } = padDrag
     padDrag = null
+    padHold = performance.now() + 1200
+    show(el)
+    const kill = (ev: Event) => { ev.stopImmediatePropagation(); ev.preventDefault() }
+    window.addEventListener('click', kill, true)
+    setTimeout(() => window.removeEventListener('click', kill, true), 80)
     document.body.style.userSelect = ''
     post({ action: 'scale', key: el.dataset.sec as string, s: Number(el.dataset.sc || 1) })
   }

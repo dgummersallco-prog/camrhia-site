@@ -200,7 +200,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const slotPics = (((r as any).site_settings?.slotPics ?? {}) as Record<string, string>)
   const curSec = { k: '' }
   const spo = (id: string, k: number, d: any): any => (slotPics[id + ':' + k] ? photoUrl(slotPics[id + ':' + k]) : null) || d
-  const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; accent?: string; text?: string; head?: string; body?: string; title?: string; titleFont?: string }>)
+  const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; accent?: string; text?: string; head?: string; body?: string; title?: string; titleFont?: string; pt?: number; pb?: number }>)
   const famOf = (k?: string) => (k && FONT_OPTIONS[k] ? FONT_OPTIONS[k].family : null)
   const hexOk = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
   const pageBg = page === 'galleries' ? hexOk(secStyles.portfolio?.bg) : page === 'about' ? hexOk(secStyles.about?.bg) : null
@@ -210,6 +210,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
     if (hexOk(v.bg) && id !== 'nav') rules.push('background:' + hexOk(v.bg) + ' !important')
     if (hexOk(v.text)) rules.push('color:' + hexOk(v.text) + ' !important')
     if (famOf(v.body)) rules.push('font-family:' + famOf(v.body) + ' !important')
+    const pad = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 800 ? Math.round(n) : null)
+    if (pad(v.pt) !== null) rules.push('padding-top:' + pad(v.pt) + 'px !important')
+    if (pad(v.pb) !== null) rules.push('padding-bottom:' + pad(v.pb) + 'px !important')
     let css = rules.length ? '#' + id + ' {' + rules.join(';') + '}' : ''
     if (hexOk(v.bg) && id !== 'nav') css += '[data-secbg="' + id + '"] section {background:' + hexOk(v.bg) + ' !important}'
     if (famOf(v.titleFont)) css += '#' + id + ' .cr-sech {font-family:' + famOf(v.titleFont) + ' !important}'
@@ -324,7 +327,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const fsp = (v: string, px: number) => `calc(${px}px * var(--${v}, 1))`
 
   const sec = (id: string, title: string | null, children: React.ReactNode, tinted: boolean, flush = false, base?: string) => (
-    <section id={id} className={'scroll-mt-16' + (title === null && page === 'home' ? ' px-4 md:px-0' : ' px-6')} style={{ background: tinted ? tint : base, paddingTop: flush ? 0 : title === null && page === 'home' ? 'calc(var(--space) / 2)' : 'var(--space)', paddingBottom: flush ? 0 : title === null && page === 'home' ? 'calc(var(--space) / 2)' : 'var(--space)' }}>
+    <section id={id} className={'scroll-mt-16' + (title === null && page === 'home' ? ' px-4 md:px-6' : ' px-6')} style={{ background: tinted ? tint : base, paddingTop: flush ? 0 : title === null && page === 'home' ? 'calc(var(--space) / 2)' : 'var(--space)', paddingBottom: flush ? 0 : title === null && page === 'home' ? 'calc(var(--space) / 2)' : 'var(--space)' }}>
       <div className="mx-auto max-w-6xl">
         {title && <h2 className="cr-sech mb-12 text-center" style={{ ...headStyle, fontSize: 'var(--sec-h)', lineHeight: 1.15 }}>{title}</h2>}
         {children}
@@ -1712,7 +1715,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                   <a href={resolveLink((r as any).site_settings?.contactBtn?.link, availHref)} className="cr-btn ct-btn inline-block uppercase" id="closing-btn" style={{ ...btnStyle, background: '#fff', color: '#2B1D14', borderRadius: 4, fontSize: 'clamp(11px, 1.9vw, 30px)', fontWeight: 500, letterSpacing: '0.2em', padding: 'clamp(14px, 2vw, 34px) clamp(24px, 3.4vw, 60px)' }}>{t.text.contactBtn}</a>
                 </div>
               </div>
-            </div>, tinted)
+            </div>, tinted, true)
         }
         if (cd === 'duo') {
           const pp = pickPics(2)
