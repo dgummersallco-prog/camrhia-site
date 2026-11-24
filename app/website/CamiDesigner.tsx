@@ -157,11 +157,12 @@ function hsvToHex(h: number, s: number, v: number): string {
   return ('#' + f(r) + f(g) + f(b)).toUpperCase()
 }
 
-function ColorRow({ label, value, base, onLive, onSet, onReset }: { label: string; value?: string; base: string[]; onLive?: (c: string) => void; onSet: (c: string) => void; onReset?: () => void }) {
+function ColorRow({ label, value, base, cur, onLive, onSet, onReset }: { label: string; value?: string; base: string[]; cur?: string; onLive?: (c: string) => void; onSet: (c: string) => void; onReset?: () => void }) {
   const ok = /^#[0-9a-fA-F]{6}$/.test(value ?? '')
+  const shown: string | undefined = ok ? (value as string) : (/^#[0-9a-fA-F]{6}$/.test(cur ?? '') ? (cur as string) : undefined)
   const [open, setOpen] = useState(false)
-  const [hsv, setHsv] = useState<[number, number, number]>(() => hexToHsv(ok ? (value as string) : (base[0] ?? '#F7EBDE')))
-  const [hexT, setHexT] = useState(ok ? (value as string).toUpperCase() : '')
+  const [hsv, setHsv] = useState<[number, number, number]>(() => hexToHsv(shown ?? (base[0] ?? '#F7EBDE')))
+  const [hexT, setHexT] = useState(shown ? shown.toUpperCase() : '')
   const [recent, setRecent] = useState<string[]>([])
   const drag = useRef(false)
   const raf = useRef(0)
@@ -171,11 +172,11 @@ function ColorRow({ label, value, base, onLive, onSet, onReset }: { label: strin
   useEffect(() => {
     try { const j = JSON.parse(localStorage.getItem('cam_recent_colors') ?? '[]'); if (Array.isArray(j)) setRecent(j.filter((x) => typeof x === 'string')) } catch { /* ignore */ }
   }, [])
-  useEffect(() => { if (!drag.current && ok) { setHsv(hexToHsv(value as string)); setHexT((value as string).toUpperCase()) } }, [value, ok])
+  useEffect(() => { if (!drag.current && shown) { setHsv(hexToHsv(shown)); setHexT(shown.toUpperCase()) } }, [shown])
   const hex = hsvToHex(hsv[0], hsv[1], hsv[2])
   const live = (c: string) => { last.current = c; if (!raf.current) raf.current = requestAnimationFrame(() => { raf.current = 0; onLive?.(last.current) }) }
   const finish = (c: string) => {
-    const nx = [c.toUpperCase(), ...recent.filter((x) => x.toUpperCase() !== c.toUpperCase())].slice(0, 12)
+    const nx = [c.toUpperCase(), ...recent.filter((x) => x.toUpperCase() !== c.toUpperCase())].slice(0, 16)
     setRecent(nx)
     try { localStorage.setItem('cam_recent_colors', JSON.stringify(nx)) } catch { /* ignore */ }
     onSet(c)
@@ -209,22 +210,22 @@ function ColorRow({ label, value, base, onLive, onSet, onReset }: { label: strin
     el.addEventListener('pointermove', onMove)
     el.addEventListener('pointerup', onUp)
   }
-  const pal = Array.from(new Set([...recent, ...base].map((c) => c.toUpperCase()))).slice(0, 12)
+  const pal = Array.from(new Set(recent.map((c) => c.toUpperCase()))).slice(0, 16)
   return (
     <div className="mt-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
       <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-left text-sm text-ink">
         <span className="flex items-center gap-2">
-          <span className="h-5 w-5 rounded-full border border-black/15" style={{ background: ok ? (value as string) : 'repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 8px 8px' }} />
-          {ok ? (value as string).toUpperCase() : 'Default'}
+          <span className="h-5 w-5 rounded-full border border-black/15" style={{ background: shown ?? 'repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 8px 8px' }} />
+          {ok ? (value as string).toUpperCase() : shown ? 'Default ' + shown.toUpperCase() : 'Default'}
         </span>
         <span className="text-xs text-ink-soft">{open ? 'Close' : 'Change'}</span>
       </button>
       {open && (
         <div className="mt-2 rounded-2xl border border-[#E4D3B6] p-3" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 3px #FFFDF9, inset 0 0 0 4px #EBDDC3' }}>
-          <div className="grid grid-cols-6 gap-2">
+          <div className="flex flex-wrap gap-2" style={{ display: pal.length ? undefined : 'none' }}>
             {pal.map((c) => (
-              <button key={c} type="button" aria-label={c} onClick={() => { setHsv(hexToHsv(c)); setHexT(c); onLive?.(c); finish(c) }} className={'h-8 w-8 rounded-full border border-[#DCCBA9] transition hover:scale-105 ' + (String(value ?? '').toUpperCase() === c ? 'ring-2 ring-[#8C6B3F] ring-offset-1' : '')} style={{ background: c }} />
+              <button key={c} type="button" aria-label={c} onClick={() => { setHsv(hexToHsv(c)); setHexT(c); onLive?.(c); finish(c) }} className={'rounded-full border border-[#DCCBA9] transition hover:scale-105 ' + (String(value ?? '').toUpperCase() === c ? 'ring-2 ring-[#8C6B3F] ring-offset-1' : '')} style={{ background: c, width: 26, height: 26, flex: 'none' }} />
             ))}
           </div>
           <div ref={svRef} onPointerDown={grab(svRef, (x, y) => [hsv[0], x, 1 - y])} className="relative mt-3 h-36 w-full cursor-crosshair touch-none rounded-xl" style={{ background: 'linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,hsl(' + hsv[0] + ',100%,50%))' }}>
@@ -341,6 +342,7 @@ export default function CamiDesigner() {
   const [selPh, setSelPh] = useState<{ key: string; idx: number } | null>(null)
   const [selBtn, setSelBtn] = useState<{ id: string; tx: string; text: string } | null>(null)
   const [selBox, setSelBox] = useState<string | null>(null)
+  const [secCur, setSecCur] = useState<string | null>(null)
   const [lib, setLib] = useState<{ id: string; storage_path: string }[]>([])
   const [libBusy, setLibBusy] = useState(false)
   const [ptext, setPtext] = useState('')
@@ -409,10 +411,10 @@ export default function CamiDesigner() {
     function onMsg(e: MessageEvent) {
       const d = e.data
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSelSec(String(d.key)); setLeftTab('design'); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelSec(String(d.key)); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); return }
       if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? '') }); setLeftTab('design'); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0 }); setLeftTab('design'); if (!d.again) setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0 }); setLeftTab('design'); if (!d.again) setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
         commitRef.current?.((n) => {
           const s = (n.site_settings = n.site_settings ?? {})
@@ -879,7 +881,7 @@ export default function CamiDesigner() {
         fontList={FONT_IDS.map((id) => ({ id, label: fname(id), family: fam(id), gf: String((FONT_OPTIONS[id] as any)?.gf ?? ''), cat: String((FONT_OPTIONS[id] as any)?.cat ?? (FONT_OPTIONS[id] as any)?.category ?? (FONT_OPTIONS[id] as any)?.kind ?? (FONT_OPTIONS[id] as any)?.group ?? '') }))}
         startStep={review ? 3 : 0}
         onCancel={review ? () => { setReview(false); setSetupFinished(true) } : undefined}
-        initial={review ? (() => { const k0: any = (form.site_settings as any)?.kit ?? {}; return { layouts: (k0.layouts ?? []) as string[], palettes: ((k0.palettes ?? []) as any[]).map((q) => ({ name: String(q.name), accent: String(q.accent), bg: String(q.bg), text: String(q.text) })), fonts: (k0.fonts ?? []) as string[], type: k0.type ?? undefined } })() : undefined}
+        initial={review ? (() => { const k0: any = (form.site_settings as any)?.kit ?? {}; const w0: any = form.site_settings ?? {}; const d0: Record<string, string> = {}; const put = (k: string, v: any) => { if (typeof v === 'string' && v) d0[k] = v }; put('nav', w0.explore?.layout); put('galleries', w0.galindex?.layout); put('photos', w0.galpage?.layout); if (Array.isArray(w0.galpage?.cards) && w0.galpage.cards.length) d0.galcards = JSON.stringify(w0.galpage.cards); put('social', w0.socialDesign); put('faq', w0.faqDesign); put('contact', w0.contactDesign); put('testimonials', w0.testiDesign); put('pricing_page', w0.pricing?.pageDesign); put('pricing_section', w0.pricing?.sectionDesign); put('book', w0.bookDesign); put('galleries_section', w0.galSection); put('blog_list', w0.blog?.listDesign); put('blog_post', w0.blog?.postDesign); put('about_page', w0.about?.pageDesign); put('about_section', w0.about?.sectionDesign); const da: any = k0.designAlts ?? {}; Object.keys(da).forEach((f) => { const ks = ((da[f]?.items ?? []) as any[]).map((i) => String(i?.key ?? '')).filter(Boolean); if (ks.length) d0[f + '_alts'] = ks.join(',') }); return { designs: d0, layouts: (k0.layouts ?? []) as string[], palettes: ((k0.palettes ?? []) as any[]).map((q) => ({ name: String(q.name), accent: String(q.accent), bg: String(q.bg), text: String(q.text) })), fonts: (k0.fonts ?? []) as string[], type: k0.type ?? undefined } })() : undefined}
         onSkip={() => setSetupSkipped(true)}
         onFinish={async (kit, struct, links, designs) => {
           await commit((n) => {
@@ -1301,10 +1303,10 @@ export default function CamiDesigner() {
                       <SliderRow label={nm + ' zoom'} value={Number(fx.z ?? 1)} min={1} max={3} step={0.02} unit="x" onLive={(v) => liveFx({ z: v })} onDone={(v) => setFx({ z: v })} />
                       <SliderRow label={nm + ' opacity'} value={Math.round(Number(fx.o ?? 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => liveFx({ o: v >= 100 ? 1 : v / 100 })} onDone={(v) => setFx({ o: v >= 100 ? 1 : v / 100 })} />
                       {selPh.key === 'hero'
-                        ? <ColorRow label="Hero background color" value={ss.top?.bg} base={base} onLive={(c) => liveSecBg('top', c)} onSet={(c) => setSecBg('top', c)} onReset={() => setSecBg('top', null)} />
+                        ? <ColorRow label="Hero background color" value={ss.top?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg('top', c)} onSet={(c) => setSecBg('top', c)} onReset={() => setSecBg('top', null)} />
                         : <>
                             <ColorRow label={nm + ' background color'} value={fx.bg} base={base} onLive={(c) => liveFx({ bg: c })} onSet={(c) => setFx({ bg: c })} onReset={() => setFx({}, ['bg'])} />
-                            <ColorRow label={secNm + ' background color'} value={ss[selPh.key]?.bg} base={base} onLive={(c) => liveSecBg(selPh.key, c)} onSet={(c) => setSecBg(selPh.key, c)} onReset={() => setSecBg(selPh.key, null)} />
+                            <ColorRow label={secNm + ' background color'} value={ss[selPh.key]?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg(selPh.key, c)} onSet={(c) => setSecBg(selPh.key, c)} onReset={() => setSecBg(selPh.key, null)} />
                           </>}
                     </div>
                   )
@@ -1315,7 +1317,7 @@ export default function CamiDesigner() {
                 return (
                   <div className="mt-4">
                     <p className="font-fraunces text-lg font-semibold text-ink">{secNm}</p>
-                    <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} base={base} onLive={(c) => liveSecBg(bgKey, c)} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
+                    <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg(bgKey, c)} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
                   </div>
                 )
               })()}
@@ -1460,14 +1462,14 @@ export default function CamiDesigner() {
                   <p className="font-fraunces text-lg font-semibold text-ink">{slot.key === 'hero' ? 'Choose your hero photos' : 'Choose a photo'}</p>
                   <button type="button" aria-label="Close" onClick={() => setSlot(null)} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
                 </div>
-                <div className="mt-3 grid max-h-[min(52vh,400px)] grid-cols-6 gap-1.5 overflow-y-auto pr-1">
+                <div className="mt-3 flex max-h-[min(52vh,400px)] flex-wrap content-start gap-1.5 overflow-y-auto pr-1">
                   {lib.map((ph) => (
-                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} className={'relative aspect-square overflow-hidden rounded-md border transition hover:ring-2 hover:ring-[#B08D57] ' + (slot.key === 'hero' && (form?.site_settings?.hero?.photos ?? []).includes(ph.storage_path) ? 'border-[#8C6B3F] ring-2 ring-[#8C6B3F]' : 'border-[#E4D3B6]')}>
+                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} style={{ width: 76, height: 76, flex: 'none' }} className={'relative overflow-hidden rounded-md border transition hover:ring-2 hover:ring-[#B08D57] ' + (slot.key === 'hero' && (form?.site_settings?.hero?.photos ?? []).includes(ph.storage_path) ? 'border-[#8C6B3F] ring-2 ring-[#8C6B3F]' : 'border-[#E4D3B6]')}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={BASE + ph.storage_path} alt="" className="h-full w-full object-cover" />
                     </button>
                   ))}
-                  <label className="flex aspect-square cursor-pointer items-center justify-center rounded-md border border-dashed border-[#B08D57] bg-white/60 text-center text-[10px] text-[#6B4A2B] hover:bg-white">
+                  <label style={{ width: 76, height: 76, flex: 'none' }} className="flex cursor-pointer items-center justify-center rounded-md border border-dashed border-[#B08D57] bg-white/60 text-center text-[10px] text-[#6B4A2B] hover:bg-white">
                     <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { void addLib(e.target.files); e.target.value = '' }} />
                     {libBusy ? 'Uploading…' : '+ Add photos'}
                   </label>

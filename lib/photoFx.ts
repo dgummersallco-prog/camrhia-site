@@ -240,6 +240,27 @@ export function frameOf(el: HTMLElement, root: HTMLElement): HTMLElement {
   return f
 }
 
+const ROOT_SEL = '[data-sec], header#top, section[id]'
+
+function ovOpen(el: HTMLElement) {
+  let a = el.parentElement
+  while (a && a !== document.body && !a.matches(ROOT_SEL)) {
+    if (a.dataset.bxo === undefined) {
+      const cs = getComputedStyle(a)
+      if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') { a.dataset.bxo = a.style.overflow; a.style.overflow = 'visible' }
+    }
+    a = a.parentElement
+  }
+}
+
+function ovClose(el: HTMLElement) {
+  let a = el.parentElement
+  while (a && a !== document.body) {
+    if (a.dataset.bxo !== undefined && !a.querySelector('[data-bxfx]')) { a.style.overflow = a.dataset.bxo; delete a.dataset.bxo }
+    a = a.parentElement
+  }
+}
+
 export function setBox(el: HTMLElement, f: BoxFx | undefined) {
   const st = el.style
   const has = !!f && (Math.abs(Number(f.x) || 0) > 0.001 || Math.abs(Number(f.y) || 0) > 0.001 || Math.abs((Number(f.s) || 1) - 1) > 0.001)
@@ -252,6 +273,7 @@ export function setBox(el: HTMLElement, f: BoxFx | undefined) {
       delete el.dataset.bxfx
       delete el.dataset.bxz
       delete el.dataset.bxpos
+      ovClose(el)
     }
     return
   }
@@ -263,6 +285,7 @@ export function setBox(el: HTMLElement, f: BoxFx | undefined) {
   st.setProperty('translate', (Number(f!.x) || 0) + 'vw ' + (Number(f!.y) || 0) + 'vw')
   st.setProperty('scale', String(Number(f!.s) || 1))
   st.zIndex = '20'
+  ovOpen(el)
 }
 
 export function applyBoxFx(map: Record<string, BoxFx> | undefined | null) {

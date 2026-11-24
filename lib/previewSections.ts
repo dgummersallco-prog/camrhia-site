@@ -166,7 +166,7 @@ export function installPreviewSections(): () => void {
     }
     if (t.closest(TXT)) { clearSel(); selectText(root, t); return }
     const hit = photoAt(e.clientX, e.clientY)
-    if (!hit || hit.key !== key) { clearSel(); setBoxSel(null, '', 'text'); post({ action: 'select', key }); return }
+    if (!hit || hit.key !== key) { clearSel(); setBoxSel(null, '', 'text'); post({ action: 'select', key, bg: effBg(root) }); return }
     e.preventDefault(); e.stopPropagation()
     const again = !!selPhoto && selPhoto.key === hit.key && selPhoto.idx === hit.idx
     clearSel()
@@ -174,7 +174,7 @@ export function installPreviewSections(): () => void {
     visualOf(hit.el).classList.add('cam-psel')
     if (hit.key !== 'hero') setBoxSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, hit.idx), 'frame')
     else setBoxSel(null, '', 'text')
-    post({ action: 'photo', key: hit.key, idx: hit.idx, again })
+    post({ action: 'photo', key: hit.key, idx: hit.idx, again, bg: effBg(root) })
   }
   const parsePos = (el: HTMLElement): [number, number] => {
     const m = /(-?[\d.]+)%\s+(-?[\d.]+)%/.exec(el.style.objectPosition || '')
@@ -228,7 +228,69 @@ export function installPreviewSections(): () => void {
   }
   const onNativeDrag = (e: Event) => { e.preventDefault() }
 
+  const effBg = (root: HTMLElement | null): string => {
+    try {
+      const cv = document.createElement('canvas')
+      cv.width = 1; cv.height = 1
+      const cx = cv.getContext('2d', { willReadFrequently: true })
+      let e: HTMLElement | null = root
+      while (e && cx) {
+        const c = getComputedStyle(e).backgroundColor
+        if (c && c !== 'transparent') {
+          cx.clearRect(0, 0, 1, 1)
+          cx.fillStyle = '#000'
+          cx.fillStyle = c
+          cx.fillRect(0, 0, 1, 1)
+          const d = cx.getImageData(0, 0, 1, 1).data
+          if (d[3] > 200) return '#' + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase()
+        }
+        e = e.parentElement
+      }
+    } catch { /* ignore */ }
+    return '#FFFFFF'
+  }
+
+  const gx = document.createElement('div')
+  gx.style.cssText = 'position:fixed;z-index:2147481999;display:none;width:1px;background:#ff2d8a;pointer-events:none'
+  const gy = document.createElement('div')
+  gy.style.cssText = 'position:fixed;z-index:2147481999;display:none;height:1px;background:#ff2d8a;pointer-events:none'
+  document.body.appendChild(gx)
+  document.body.appendChild(gy)
+  const hideGuides = () => { gx.style.display = 'none'; gy.style.display = 'none' }
+
   type Sel = { el: HTMLElement; id: string; kind: 'text' | 'frame' }
+  type Tg = { xs: number[]; ys: number[] }
+  const targetsFor = (sel: Sel, root: HTMLElement): Tg => {
+    const xs: number[] = []
+    const ys: number[] = []
+    const add = (r: DOMRect) => { xs.push(r.left, r.left + r.width / 2, r.right); ys.push(r.top, r.top + r.height / 2, r.bottom) }
+    add(root.getBoundingClientRect())
+    const others: HTMLElement[] = [...boxesIn(root)]
+    if (rootKey(root) !== 'hero') photosIn(root).forEach((ph) => others.push(frameOf(visualOf(ph), root)))
+    others.forEach((o) => {
+      if (o === sel.el || o.contains(sel.el) || sel.el.contains(o)) return
+      const r = o.getBoundingClientRect()
+      if (r.width > 2 && r.height > 2) add(r)
+    })
+    return { xs, ys }
+  }
+  const snapOf = (el: HTMLElement, tg: Tg) => {
+    const r = el.getBoundingClientRect()
+    const mx = [r.left, r.left + r.width / 2, r.right]
+    const my = [r.top, r.top + r.height / 2, r.bottom]
+    let dx: number | null = null
+    let tx = 0
+    let dy: number | null = null
+    let ty = 0
+    for (const m of mx) for (const t of tg.xs) { const d = t - m; if (Math.abs(d) <= 6 && (dx === null || Math.abs(d) < Math.abs(dx))) { dx = d; tx = t } }
+    for (const m of my) for (const t of tg.ys) { const d = t - m; if (Math.abs(d) <= 6 && (dy === null || Math.abs(d) < Math.abs(dy))) { dy = d; ty = t } }
+    return { dx, tx, dy, ty }
+  }
+  const drawGuides = (sn: { dx: number | null; tx: number; dy: number | null; ty: number }, root: HTMLElement) => {
+    const rr = root.getBoundingClientRect()
+    if (sn.dx !== null) { gx.style.display = 'block'; gx.style.left = sn.tx + 'px'; gx.style.top = Math.max(0, rr.top) + 'px'; gx.style.height = Math.max(0, Math.min(rr.bottom, window.innerHeight) - Math.max(0, rr.top)) + 'px' } else gx.style.display = 'none'
+    if (sn.dy !== null) { gy.style.display = 'block'; gy.style.top = sn.ty + 'px'; gy.style.left = Math.max(0, rr.left) + 'px'; gy.style.width = Math.max(0, Math.min(rr.right, window.innerWidth) - Math.max(0, rr.left)) + 'px' } else gy.style.display = 'none'
+  }
   let selBox: Sel | null = null
   const bx = document.createElement('div')
   bx.id = 'cam-box'
@@ -276,7 +338,7 @@ export function installPreviewSections(): () => void {
     const m = /(-?[\d.]+)vw\s+(-?[\d.]+)vw/.exec(el.style.getPropertyValue('translate') || '')
     return { x: m ? Number(m[1]) : 0, y: m ? Number(m[2]) : 0, s: Number(el.style.getPropertyValue('scale')) || 1 }
   }
-  let g: { mode: 'rs' | 'mv'; sel: Sel; x0: number; y0: number; fx: { x: number; y: number; s: number }; cx: number; cy: number; d0: number; moved: boolean } | null = null
+  let g: { mode: 'rs' | 'mv'; sel: Sel; x0: number; y0: number; fx: { x: number; y: number; s: number }; cx: number; cy: number; d0: number; moved: boolean; root: HTMLElement | null; tg: Tg | null } | null = null
   const vwPx = () => Math.max(1, document.documentElement.clientWidth) / 100
   const onGDown = (e: PointerEvent) => {
     if (e.button !== 0) return
@@ -288,7 +350,7 @@ export function installPreviewSections(): () => void {
       const r = selBox.el.getBoundingClientRect()
       const cx = r.left + r.width / 2
       const cy = r.top + r.height / 2
-      g = { mode: hd.dataset.c === 'move' ? 'mv' : 'rs', sel: selBox, x0: e.clientX, y0: e.clientY, fx: curFx(selBox.el), cx, cy, d0: Math.max(8, Math.hypot(e.clientX - cx, e.clientY - cy)), moved: true }
+      g = { mode: hd.dataset.c === 'move' ? 'mv' : 'rs', sel: selBox, x0: e.clientX, y0: e.clientY, fx: curFx(selBox.el), cx, cy, d0: Math.max(8, Math.hypot(e.clientX - cx, e.clientY - cy)), moved: true, root: rootOf(selBox.el), tg: null }
       document.body.style.userSelect = 'none'
       return
     }
@@ -300,7 +362,7 @@ export function installPreviewSections(): () => void {
     const list = boxesIn(root)
     const i = list.findIndex((x) => x === tb || x.contains(tb))
     if (i < 0) return
-    g = { mode: 'mv', sel: { el: list[i], id: boxId(key, i), kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(list[i]), cx: 0, cy: 0, d0: 1, moved: false }
+    g = { mode: 'mv', sel: { el: list[i], id: boxId(key, i), kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(list[i]), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null }
   }
   const onGMove = (e: PointerEvent) => {
     if (!g) return
@@ -309,7 +371,19 @@ export function installPreviewSections(): () => void {
     if (!g.moved) { if (Math.hypot(dx, dy) < 5) return; g.moved = true; document.body.style.userSelect = 'none' }
     e.preventDefault()
     if (g.mode === 'mv') {
-      setBox(g.sel.el, { x: g.fx.x + dx / vwPx(), y: g.fx.y + dy / vwPx(), s: g.fx.s })
+      let nx = g.fx.x + dx / vwPx()
+      let ny = g.fx.y + dy / vwPx()
+      setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s })
+      if (g.root) {
+        if (!g.tg) g.tg = targetsFor(g.sel, g.root)
+        const sn = snapOf(g.sel.el, g.tg)
+        if (sn.dx !== null || sn.dy !== null) {
+          nx += (sn.dx ?? 0) / vwPx()
+          ny += (sn.dy ?? 0) / vwPx()
+          setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s })
+        }
+        drawGuides(sn, g.root)
+      }
     } else {
       const d = Math.hypot(e.clientX - g.cx, e.clientY - g.cy)
       setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: Math.min(6, Math.max(0.2, g.fx.s * (d / g.d0))) })
@@ -321,6 +395,7 @@ export function installPreviewSections(): () => void {
     const d = g
     g = null
     document.body.style.userSelect = ''
+    hideGuides()
     if (!d.moved) return
     const f = curFx(d.sel.el)
     selBox = d.sel
@@ -390,6 +465,8 @@ export function installPreviewSections(): () => void {
     document.removeEventListener('pointermove', onGMove)
     document.removeEventListener('pointerup', onGUp)
     bx.remove()
+    gx.remove()
+    gy.remove()
     cancelAnimationFrame(rafId)
     document.removeEventListener('pointerdown', onHDown)
     document.removeEventListener('pointermove', onHMove)

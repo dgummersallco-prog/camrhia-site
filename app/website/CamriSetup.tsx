@@ -119,7 +119,7 @@ function withModes(s: Struct, d: Record<string, string>): Struct {
 }
 
 function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, links: linksIn, fontList, initial, startStep, onCancel, onFinish, onSkip }: {
-  styles: Style[]; palettes: Pal[]; typeSets: TypeSet[]; pages: PageDef[]; structure: Struct; links: Links; fontList: FontItem[]; initial?: { layouts: string[]; palettes: Pal[]; fonts: string[]; type?: FontPick }; startStep?: number; onCancel?: () => void
+  styles: Style[]; palettes: Pal[]; typeSets: TypeSet[]; pages: PageDef[]; structure: Struct; links: Links; fontList: FontItem[]; initial?: { layouts: string[]; palettes: Pal[]; fonts: string[]; type?: FontPick; designs?: Record<string, string> }; startStep?: number; onCancel?: () => void
   fam: (k: string) => string
   onFinish: (kit: Kit, structure: Struct, links: Links, designs: Record<string, string>) => Promise<void>
   onSkip: () => void
@@ -146,9 +146,9 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   const [picked, setPicked] = useState<Pal[]>(initial?.palettes ?? [])
   
   const [fp, setFp] = useState<FontPick>(initial?.type ?? { title: [], subtitle: [], paragraph: [] })
-  const [struct, setStruct] = useState<Struct>(() => draftGet('struct') ?? { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] })
+  const [struct, setStruct] = useState<Struct>(() => draftGet('struct') ?? ((initial && (structure.home.length > 0 || structure.about.length > 0 || structure.galleries.length > 0 || structure.extra.length > 0)) ? structure : { v: 1, home: [], about: [], galleries: [], extra: [], off: ['galleries', 'about'] }))
   const [ls, setLs] = useState<Links>(linksIn)
-  const [designs, setDesigns] = useState<Record<string, string>>(() => draftGet('designs') ?? ({}))
+  const [designs, setDesigns] = useState<Record<string, string>>(() => draftGet('designs') ?? initial?.designs ?? ({}))
   const [busy, setBusy] = useState(false)
 
   
