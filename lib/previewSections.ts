@@ -160,7 +160,7 @@ export function installPreviewSections(): () => void {
         e.preventDefault(); e.stopPropagation()
         clearSel()
         selectText(root, bt)
-        post({ action: 'button', sec: key, id: buttonId(key, bi), tx: txOf(bt), text: (bt.textContent ?? '').trim() })
+        post({ action: 'button', sec: key, id: buttonId(key, bi), tx: txOf(bt), text: (bt.textContent ?? '').trim(), cbg: hexOf(getComputedStyle(bt).backgroundColor), ccolor: hexOf(getComputedStyle(bt).color) })
         return
       }
     }
@@ -228,6 +228,21 @@ export function installPreviewSections(): () => void {
   }
   const onNativeDrag = (e: Event) => { e.preventDefault() }
 
+  const hexOf = (css: string): string => {
+    try {
+      const cv = document.createElement('canvas')
+      cv.width = 1; cv.height = 1
+      const cx = cv.getContext('2d', { willReadFrequently: true })
+      if (!cx || !css) return ''
+      cx.clearRect(0, 0, 1, 1)
+      cx.fillStyle = '#000'
+      cx.fillStyle = css
+      cx.fillRect(0, 0, 1, 1)
+      const d = cx.getImageData(0, 0, 1, 1).data
+      if (d[3] < 40) return ''
+      return '#' + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase()
+    } catch { return '' }
+  }
   const effBg = (root: HTMLElement | null): string => {
     try {
       const cv = document.createElement('canvas')

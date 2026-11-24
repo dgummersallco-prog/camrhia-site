@@ -340,7 +340,7 @@ export default function CamiDesigner() {
   const [leftTab, setLeftTab] = useState<'design' | 'setup'>('design')
   const [slot, setSlot] = useState<{ key: string; idx: number } | null>(null)
   const [selPh, setSelPh] = useState<{ key: string; idx: number } | null>(null)
-  const [selBtn, setSelBtn] = useState<{ id: string; tx: string; text: string } | null>(null)
+  const [selBtn, setSelBtn] = useState<{ id: string; tx: string; text: string; cbg?: string; ccolor?: string } | null>(null)
   const [selBox, setSelBox] = useState<string | null>(null)
   const [secCur, setSecCur] = useState<string | null>(null)
   const [lib, setLib] = useState<{ id: string; storage_path: string }[]>([])
@@ -413,7 +413,7 @@ export default function CamiDesigner() {
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
       if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelSec(String(d.key)); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? '') }); setLeftTab('design'); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? ''), cbg: typeof d.cbg === 'string' ? d.cbg : '', ccolor: typeof d.ccolor === 'string' ? d.ccolor : '' }); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0 }); setLeftTab('design'); if (!d.again) setSlot({ key: String(d.key), idx: Number(d.idx) || 0 }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
         commitRef.current?.((n) => {
@@ -1246,8 +1246,8 @@ export default function CamiDesigner() {
                     <div className="mt-4">
                       <p className="font-fraunces text-lg font-semibold text-ink">Button</p>
                       {selBtn.tx && <input key={selBtn.id + selBtn.tx} defaultValue={selBtn.text} onBlur={(e) => setBtnText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} className={inp} />}
-                      <ColorRow label="Button color" value={bf.bg} base={base} onLive={(c) => liveB({ bg: c })} onSet={(c) => setB({ bg: c })} onReset={() => setB({}, ['bg'])} />
-                      <ColorRow label="Button text color" value={bf.color} base={base} onLive={(c) => liveB({ color: c })} onSet={(c) => setB({ color: c })} onReset={() => setB({}, ['color'])} />
+                      <ColorRow label="Button color" value={bf.bg} cur={selBtn.cbg || undefined} base={base} onLive={(c) => liveB({ bg: c })} onSet={(c) => setB({ bg: c })} onReset={() => setB({}, ['bg'])} />
+                      <ColorRow label="Button text color" value={bf.color} cur={selBtn.ccolor || undefined} base={base} onLive={(c) => liveB({ color: c })} onSet={(c) => setB({ color: c })} onReset={() => setB({}, ['color'])} />
                       <div className="mt-4">
                         <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Button shape</p>
                         <div className="mt-2 flex gap-2">
@@ -1305,7 +1305,7 @@ export default function CamiDesigner() {
                       {selPh.key === 'hero'
                         ? <ColorRow label="Hero background color" value={ss.top?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg('top', c)} onSet={(c) => setSecBg('top', c)} onReset={() => setSecBg('top', null)} />
                         : <>
-                            <ColorRow label={nm + ' background color'} value={fx.bg} base={base} onLive={(c) => liveFx({ bg: c })} onSet={(c) => setFx({ bg: c })} onReset={() => setFx({}, ['bg'])} />
+                            <ColorRow label={nm + ' background color'} value={fx.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveFx({ bg: c })} onSet={(c) => setFx({ bg: c })} onReset={() => setFx({}, ['bg'])} />
                             <ColorRow label={secNm + ' background color'} value={ss[selPh.key]?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg(selPh.key, c)} onSet={(c) => setSecBg(selPh.key, c)} onReset={() => setSecBg(selPh.key, null)} />
                           </>}
                     </div>
