@@ -559,8 +559,11 @@ export default function CamiDesigner() {
   }
   const resetLook = (x: Record<string, any>) => {
     delete x.custom_css; delete x.custom_js; delete x.calendar; delete x.fonts; delete x.colors; delete x.button
+    delete x.el; delete x.btnFx; delete x.boxFx; delete x.photoFx; delete x.secStyle; delete x.secZoom; delete x.sizes
     if (x.hero) { for (const k of Object.keys(x.hero)) if (/font|align|overlay|size|color|height|canvas|shape|weight|style|opacity/i.test(k)) delete x.hero[k] }
-    if (x.menu) { for (const k of ['logoPos', 'bg', 'solid', 'none', 'icon']) delete x.menu[k] }
+    if (x.menu) { for (const k of Object.keys(x.menu)) if (k !== 'brand') delete x.menu[k] }
+    if (x.text) delete x.text.hero_btn
+    if (x.hero) delete x.hero.btn_text
   }
   function applyKitOps(n: Prof, kc: Record<string, any>) {
     const k = kitOf(n)
