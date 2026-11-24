@@ -1494,28 +1494,25 @@ export default function CamiDesigner() {
                 )
               })()}
               {leftTab === 'setup' && (() => {
-                const lab = 'mt-3 text-[11px] font-semibold uppercase tracking-wider text-ink-soft'
-                const pill = 'rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-ink transition hover:border-twilight'
+                const lab = 'mt-4 text-[11px] font-medium uppercase tracking-wider text-ink-soft'
                 const x0 = ((form.site_settings ?? {}) as Record<string, any>)
-                const numPill = (on: boolean) => pill + ' inline-flex items-center gap-1.5' + (on ? ' !border-twilight !bg-[#f6ece3]' : '')
-                const num = (i: number) => <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-twilight text-[11px] font-semibold text-white">{i + 1}</span>
+                type Opt = { k: string; on: boolean; node: React.ReactNode; font?: string; click: () => void }
+                const opts = (items: Opt[]) => items.length <= 3 ? (
+                  <div className="mt-1.5 flex w-full gap-0.5 rounded-full border border-black/10 bg-white p-0.5">
+                    {items.map((o) => <button key={o.k} type="button" style={o.font ? { fontFamily: o.font } : undefined} className={'flex min-w-0 flex-1 items-center justify-center gap-1.5 truncate rounded-full px-2 py-1.5 text-xs transition ' + (o.on ? 'bg-twilight font-medium text-white shadow-sm' : 'text-ink hover:bg-black/5')} onClick={o.click}>{o.node}</button>)}
+                  </div>
+                ) : (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {items.map((o) => <button key={o.k} type="button" style={o.font ? { fontFamily: o.font } : undefined} className={'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition ' + (o.on ? 'border-twilight bg-twilight font-medium text-white' : 'border-black/10 bg-white text-ink hover:border-twilight')} onClick={o.click}>{o.node}</button>)}
+                  </div>
+                )
                 return (
                   <>
                     {curPage === 'home' && (kitNow.layouts ?? []).length > 0 && (
-                      <div><p className={lab}>Layouts</p><div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {(kitNow.layouts as string[]).map((key, i) => <button key={key} type="button" className={numPill(Number(kitNow.layout_idx ?? 0) === i)} onClick={() => { void commit((n) => applyKitOps(n, { layout: key })) }}>{num(i)}{STYLES.find((q) => q.key === key)?.name ?? key}</button>)}
-                      </div></div>
+                      <div><p className={lab}>Layouts</p>{opts((kitNow.layouts as string[]).map((key, i) => ({ k: key, on: Number(kitNow.layout_idx ?? 0) === i, node: STYLES.find((q) => q.key === key)?.name ?? key, click: () => { void commit((n) => applyKitOps(n, { layout: key })) } })))}</div>
                     )}
                     {(kitNow.palettes ?? []).length > 0 && (
-                      <div><p className={lab}>Colors</p><div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {(kitNow.palettes as any[]).map((p, i) => (
-                          <button key={String(p.name) + i} type="button" className={numPill(form.site_accent === p.accent && x0.colors?.bg === p.bg)} onClick={() => { void commit((n) => applyKitOps(n, { palette: p.name })) }}>
-                            {num(i)}
-                            <span className="flex overflow-hidden rounded-full border border-black/10"><span className="h-4 w-4" style={{ background: p.accent }} /><span className="h-4 w-4" style={{ background: p.bg }} /><span className="h-4 w-4" style={{ background: p.text }} /></span>
-                            {p.name}
-                          </button>
-                        ))}
-                      </div></div>
+                      <div><p className={lab}>Colors</p>{opts((kitNow.palettes as any[]).map((p, i) => ({ k: String(p.name) + i, on: form.site_accent === p.accent && x0.colors?.bg === p.bg, node: <><span className="flex shrink-0 overflow-hidden rounded-full border border-black/10"><span className="h-3.5 w-3.5" style={{ background: p.accent }} /><span className="h-3.5 w-3.5" style={{ background: p.bg }} /><span className="h-3.5 w-3.5" style={{ background: p.text }} /></span>{p.name}</>, click: () => { void commit((n) => applyKitOps(n, { palette: p.name })) } })))}</div>
                     )}
                     {(['title', 'subtitle', 'paragraph'] as const).some((r) => (kitNow.type?.[r] ?? []).length > 0) && (
                       <div><p className={lab}>Fonts</p>
@@ -1526,9 +1523,7 @@ export default function CamiDesigner() {
                           return (
                             <div key={role} className="mt-1.5">
                               <p className="text-[11px] capitalize text-ink-soft">{role}</p>
-                              <div className="mt-1 flex flex-wrap gap-1.5">
-                                {list.map((id, i) => <button key={id} type="button" className={numPill(cur === id)} style={{ fontFamily: fam(id) }} onClick={() => { void commit((n) => applyKitOps(n, { role_font: { role, font: id } })) }}>{num(i)}{fname(id)}</button>)}
-                              </div>
+                              {opts(list.map((id) => ({ k: id, on: cur === id, font: fam(id), node: fname(id), click: () => { void commit((n) => applyKitOps(n, { role_font: { role, font: id } })) } })))}
                             </div>
                           )
                         })}
@@ -1543,9 +1538,7 @@ export default function CamiDesigner() {
                       if (BK[field] === 'about' && curPage !== 'home') return false
                       return (lst ?? []).includes(BK[field])
                     }).map(([field, d]) => (
-                      <div key={field}><p className={lab}>{d.label}</p><div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {d.items.map((it, i) => <button key={it.key} type="button" className={numPill(DESIGN_PATHS[field] ? getPath(x0, DESIGN_PATHS[field]) === it.key : false)} onClick={() => { void commit((n) => applyKitOps(n, { design: { field, key: it.key } })) }}>{num(i)}{it.name}</button>)}
-                      </div></div>
+                      <div key={field}><p className={lab}>{d.label}</p>{opts(d.items.map((it) => ({ k: it.key, on: DESIGN_PATHS[field] ? getPath(x0, DESIGN_PATHS[field]) === it.key : false, node: it.name, click: () => { void commit((n) => applyKitOps(n, { design: { field, key: it.key } })) } })))}</div>
                     ))}
                     {(kitNow.themes ?? []).length > 0 && (
                       <div><p className={lab}>Saved themes</p><div className="mt-1.5 flex flex-wrap gap-1.5">

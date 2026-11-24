@@ -130,18 +130,18 @@ function Kalahari(p: P) {
   const R = ['398/393', '405/350', '400/336', '405/320']
   const it = p.items.slice(0, 4)
   const col = (idx: number[], offset: boolean) => (
-    <div className="flex flex-col" style={{ gap: 'clamp(14px,1.7vw,30px)', marginTop: offset ? '9.3%' : 0 }}>
+    <div className="flex flex-col md:col-start-auto" style={{ gap: 'clamp(10px,1.3vw,22px)', marginTop: offset ? '20%' : 0 }}>
       {idx.map((n) => it[n] && tile(it[n], <><Ph u={it[n].u} ratio={R[n]} /><p data-name="Gallery name" className="el-gal_name" style={{ ...p.nameStyle, color: '#5a5753', fontWeight: 700, letterSpacing: '0.4em', fontSize: 'clamp(9px,1.1vw,19px)', lineHeight: 1.2, margin: 0, paddingTop: 'clamp(8px,1.1vw,20px)' }}>{it[n].title}</p></>))}
     </div>
   )
   return (
-    <div className="grid items-center gap-8 md:grid-cols-[37.2%_50%]">
-      <div style={{ paddingLeft: '3.7%' }}>
+    <div className="grid items-center gap-y-8 md:[grid-template-columns:37.1%_22.4%_4.4%_22.7%_1fr]" style={{ ...bleed, padding: 'clamp(8px,1.4vw,24px) 0 clamp(14px,2.6vw,44px)' }}>
+      <div style={{ paddingLeft: '10%' }}>
         <h2 data-name="Section title" className="el-gs_title" style={{ ...h2(p, 'clamp(2.4rem,8.4vw,8.4rem)'), lineHeight: 0.95 }}>{p.title}</h2>
       </div>
-      <div className="grid grid-cols-2 items-start" style={{ columnGap: '9.1%' }}>
-        {col([0, 2], false)}
-        {col([1, 3], true)}
+      <div className="grid grid-cols-2 items-start gap-4 px-4 md:contents">
+        <div className="md:col-start-2 md:row-start-1">{col([0, 2], false)}</div>
+        <div className="md:col-start-4 md:row-start-1">{col([1, 3], true)}</div>
       </div>
     </div>
   )

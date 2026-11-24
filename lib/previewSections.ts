@@ -415,17 +415,28 @@ export function installPreviewSections(): () => void {
     if (!g) return []
     return g.filter((q) => q !== id).map(byId).filter((q): q is Sel => !!q)
   }
+  const angOf = (el: HTMLElement): number => {
+    let a = 0
+    for (let n: HTMLElement | null = el; n && n !== document.body; n = n.parentElement) {
+      const cs = getComputedStyle(n)
+      if (cs.transform && cs.transform !== 'none') { try { const m = new DOMMatrix(cs.transform); a += Math.atan2(m.b, m.a) } catch { /* ignore */ } }
+      const rv = (cs as any).rotate as string | undefined
+      if (rv && rv !== 'none') { const q = parseFloat(rv); if (Number.isFinite(q)) a += rv.endsWith('rad') ? q : q * Math.PI / 180 }
+    }
+    return a * 180 / Math.PI
+  }
   const layoutBox = () => {
     if (!selBox || !document.body.contains(selBox.el)) { bx.style.display = 'none'; return }
     const r = selBox.el.getBoundingClientRect()
     if (r.width < 4 || r.height < 4) { bx.style.display = 'none'; return }
     bx.style.display = 'block'
     const f0 = curFx(selBox.el)
-    if (f0.r) {
+    const ang = angOf(selBox.el)
+    if (Math.abs(ang) > 0.05) {
       const bw = selBox.el.offsetWidth * (f0.s || 1)
       const bh = selBox.el.offsetHeight * (f0.s || 1)
       bx.style.left = (r.left + r.width / 2 - bw / 2) + 'px'; bx.style.top = (r.top + r.height / 2 - bh / 2) + 'px'; bx.style.width = bw + 'px'; bx.style.height = bh + 'px'
-      bx.style.transform = 'rotate(' + f0.r + 'deg)'
+      bx.style.transform = 'rotate(' + ang + 'deg)'
     } else {
       bx.style.left = r.left + 'px'; bx.style.top = r.top + 'px'; bx.style.width = r.width + 'px'; bx.style.height = r.height + 'px'
       bx.style.transform = ''
@@ -596,7 +607,7 @@ export function installPreviewSections(): () => void {
       const el = g.sel.el
       const pic = g.sel.kind === 'frame' || !!el.dataset.addp
       const sc = g.fx.s || 1
-      const th = g.fx.r * Math.PI / 180
+      const th = angOf(el) * Math.PI / 180
       const horiz = g.mode === 'rw'
       const ax = horiz ? Math.cos(th) : -Math.sin(th)
       const ay = horiz ? Math.sin(th) : Math.cos(th)

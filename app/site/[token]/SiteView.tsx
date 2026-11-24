@@ -569,6 +569,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const P = (list: string[], color: string = soft) => list.map((x, i) => <p key={i} className="el-about_text leading-[1.85]" style={{ color, fontSize: fsp('fs-about', 16) }}>{x}</p>)
           const dark = '#2b1f17'
           const out = (node: React.ReactNode) => sec('about', null, node, tinted, false, ad === 'saffron' ? '#ece8e4' : ad === 'cumin' ? '#ebe6e0' : undefined)
+          const outF = (node: React.ReactNode) => sec('about', null, node, tinted, true)
           const loves: string[] = Array.isArray(aboutSet?.loves) ? aboutSet.loves.filter(Boolean).slice(0, 5) : []
           const facts: { q: string; a: string }[] = Array.isArray(aboutSet?.facts) ? aboutSet.facts.filter((f: any) => f?.q).slice(0, 8) : []
           const stats: { n: string; l: string }[] = Array.isArray(aboutSet?.stats) ? aboutSet.stats.filter((f: any) => f?.n).slice(0, 4) : []
@@ -867,8 +868,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 <a data-name="About button" href={btnHref} className="inline-flex items-center self-start" style={{ ...headStyle, background: accent, color: '#f6ecd9', fontSize: 'clamp(14px, 1.7vw, 22px)', padding: 'clamp(10px, 1.4vw, 18px) clamp(22px, 3vw, 42px)', gap: 'clamp(10px, 1.4vw, 18px)', marginTop: 'clamp(18px, 3vw, 44px)' }}>{btnText}<span aria-hidden="true">&rarr;</span></a>
               </div>
             </div>)
-          if (ad === 'anise') return out(
-            <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-[35.5%_1fr] md:aspect-[2/1]" style={{ background: '#2a1510', padding: 'clamp(18px, 5.6%, 56px) 6%', color: '#f3ead8' }}>
+          if (ad === 'anise') return outF(
+            <div className="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-[35.5%_1fr] md:aspect-[2/1]" style={{ background: '#2a1510', padding: 'clamp(18px, 5.6%, 56px) 6%', color: '#f3ead8', boxShadow: '0 0 0 100vmax #2a1510', clipPath: 'inset(0 -100vmax)' }}>
               <div className="relative w-full overflow-hidden" style={{ aspectRatio: '0.8 / 1', borderRadius: '9999px 9999px 0 0', background: '#4a3329' }}>
                 {main ? img() : (
                   <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="200" fill="#6b5546" /><circle cx="300" cy="58" r="16" fill="#8d7766" opacity="0.55" /><path d="M0 200 L105 82 L165 142 L238 62 L400 200 Z" fill="#8d7766" opacity="0.8" /></svg>
@@ -880,9 +881,9 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 <a data-name="About button" href={btnHref} className="inline-block" style={{ ...headStyle, border: '1.5px solid #f3ead8', color: '#f3ead8', fontSize: 'clamp(14px, 1.7vw, 22px)', padding: 'clamp(8px, 1.1vw, 14px) clamp(26px, 4.2vw, 58px)', marginTop: 'clamp(18px, 3vw, 42px)' }}>{btnText}</a>
               </div>
             </div>)
-          if (ad === 'fennel') return out(
-            <div className="relative mx-auto max-w-6xl overflow-hidden px-5 py-8 md:aspect-[2/1] md:px-0 md:py-0" style={{ background: '#f6f2ee', color: dark }}>
-              <div className="relative mx-auto w-[78%] max-w-[340px] md:absolute md:w-[35.5%] md:max-w-none md:[left:6.4%] md:[top:7.6%]" style={{ transform: 'rotate(-5deg)', background: '#f3f0ec', padding: '5% 5% 0', boxShadow: '0 10px 28px rgba(60,45,30,0.22)', aspectRatio: '0.915 / 1' }}>
+          if (ad === 'fennel') return outF(
+            <div className="relative mx-auto max-w-6xl overflow-hidden px-5 py-8 md:aspect-[2/1] md:px-0 md:py-0" style={{ background: '#f6f2ee', color: dark, boxShadow: '0 0 0 100vmax #f6f2ee', clipPath: 'inset(0 -100vmax)' }}>
+              <div data-pframe="1" className="relative mx-auto w-[78%] max-w-[340px] md:absolute md:w-[35.5%] md:max-w-none md:[left:6.4%] md:[top:7.6%]" style={{ transform: 'rotate(-5deg)', background: '#f3f0ec', padding: '5% 5% 0', boxShadow: '0 10px 28px rgba(60,45,30,0.22)', aspectRatio: '0.915 / 1' }}>
                 <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1 / 1', background: '#d8d0c6' }}>
                   {main ? img() : (
                     <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="200" height="200" fill="#d8d0c6" /><circle cx="140" cy="62" r="14" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L58 92 L98 146 L136 84 L200 200 Z" fill="#b8aa98" opacity="0.8" /></svg>
@@ -962,7 +963,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
         })
-        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items2, gs2)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gs2 === 'sonora' || gs2 === 'namib')
+        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items2, gs2)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gs2 === 'sonora' || gs2 === 'namib' || gs2 === 'thar' || gs2 === 'kalahari')
       }
       case 'portfolio': {
         const rawGal = (r as any).site_settings?.galindex?.layout
@@ -974,7 +975,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
             return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
           })
-          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items, gsd)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gsd === 'sonora' || gsd === 'namib')
+          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items, gsd)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gsd === 'sonora' || gsd === 'namib' || gsd === 'thar' || gsd === 'kalahari')
         }
         const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
         const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'
@@ -1592,7 +1593,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       }
       case 'faq': {
         const fd = String((r as any).site_settings?.faqDesign ?? '')
-        const qa = faq as any[]
+        const qa = (fd === 'dill' && isPreview && faq.length < 4 ? [...faq, ...['first', 'second', 'third', 'fourth'].slice(faq.length).map((n, j) => ({ id: 'phd' + j, question: 'Your ' + n + ' question', answer: 'Your answer goes here.' }))] : faq) as any[]
         const qst: any = { fontFamily: t.head, fontSize: fsp('fs-faqq', 20), color: ink }
         const ast: any = { fontFamily: t.body, fontSize: fsp('fs-faqa', 15), color: soft, lineHeight: 1.7 }
         if (fd === 'basil') return sec('faq', null,

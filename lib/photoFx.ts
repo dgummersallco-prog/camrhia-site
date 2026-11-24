@@ -258,6 +258,8 @@ export function rulesIn(root: HTMLElement): HTMLElement[] {
 const lay = (x: HTMLElement) => ({ w: x.offsetWidth || x.clientWidth || 0, h: x.offsetHeight || x.clientHeight || 0 })
 
 export function frameOf(el: HTMLElement, root: HTMLElement): HTMLElement {
+  const pf = el.closest('[data-pframe]') as HTMLElement | null
+  if (pf && root.contains(pf)) return pf
   const vs = photosIn(root).map((q) => visualOf(q))
   if (vs.length > 1) {
     let a: HTMLElement | null = el
@@ -311,6 +313,7 @@ function fitInner(el: HTMLElement, on: boolean) {
     })
     return
   }
+  if (el.hasAttribute('data-pframe')) return
   const seen = new Set<HTMLElement>()
   el.querySelectorAll<HTMLElement>('img').forEach((img) => {
     let n: HTMLElement | null = img
