@@ -203,8 +203,8 @@ function setBtn(el: HTMLElement, f: BtnFx | undefined) {
   const rad = f.shape === 'pill' ? 999 : f.shape === 'rounded' ? 10 : f.shape === 'square' ? 0 : null
   if (rad !== null) st.setProperty('border-radius', rad + 'px', 'important')
   const n = Number(f.size)
-  if (n >= 8 && n <= 60) {
-    const k = 'max(9px, min(' + n + 'px, 3.6vw))'
+  if (n >= 8 && n <= 300) {
+    const k = 'max(9px, min(' + n + 'px, ' + Math.max(3.6, n / 6) + 'vw))'
     st.setProperty('font-size', k, 'important')
     st.setProperty('padding', 'calc(' + k + ' * 1.15) calc(' + k + ' * 2.7)', 'important')
   }

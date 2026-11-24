@@ -26,7 +26,7 @@ const HEADINGS: Record<Tab, [string, string]> = {
   pages: ['Which pages do you want?', 'Home and Booking are always on.'],
   colors: ['Pick your three colors', 'Start from a palette or choose your own.'],
   type: ['Fonts and buttons', 'Pick a pairing, or choose every font yourself.'],
-  photos: ['Hero photos', 'The big photos that open your site. Up to 6, strongest first. More than one becomes a slideshow.'],
+  photos: ['Hero photos', 'The big photo that opens your site.'],
   social: ['Where can people find you?', 'All optional. These show on your site.'],
 }
 const BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/portfolio/`
@@ -945,9 +945,9 @@ export default function CamiDesigner() {
       const cur: string[] = [...(form?.site_settings?.hero?.photos ?? [])]
       let next = cur
       if (path === null) next = []
-      else if (cur.includes(path)) next = cur.filter((x) => x !== path)
-      else if (cur.length < 6) next = [...cur, path]
-      void commit((n) => { const s = (n.site_settings = n.site_settings ?? {}); s.hero = { ...(s.hero ?? {}), photos: next, slideshow: next.length > 1 } })
+      else if (cur.length === 1 && cur[0] === path) next = []
+      else next = [path]
+      void commit((n) => { const s = (n.site_settings = n.site_settings ?? {}); s.hero = { ...(s.hero ?? {}), photos: next, slideshow: false } })
       if (path === null) setSlot(null)
       return
     }
@@ -962,14 +962,14 @@ export default function CamiDesigner() {
     try {
       const cur: string[] = [...(form.site_settings?.hero?.photos ?? [])]
       for (const f of Array.from(files)) {
-        if (cur.length >= 6) break
+        cur.length = 0
         const v = await makeVersions(f)
         const path = `${form.id}/hero_${Date.now()}_${cur.length}.jpg`
         const up = await sb.storage.from('portfolio').upload(path, v.web.blob, { contentType: 'image/jpeg', upsert: true })
         if (up.error) throw up.error
         cur.push(path)
       }
-      await commit((n) => { const s = (n.site_settings = n.site_settings ?? {}); s.hero = { ...(s.hero ?? {}), photos: cur, slideshow: cur.length > 1 } })
+      await commit((n) => { const s = (n.site_settings = n.site_settings ?? {}); s.hero = { ...(s.hero ?? {}), photos: cur, slideshow: false } })
     } catch (e) {
       setErr((e as { message?: string })?.message ?? 'Upload failed.')
     } finally {
@@ -1370,7 +1370,7 @@ export default function CamiDesigner() {
                           ))}
                         </div>
                       </div>
-                      <SliderRow label="Button text size" value={Number(bf.size) || 13} min={9} max={32} step={1} unit="px" onLive={(v) => liveB({ size: v })} onDone={(v) => setB({ size: v })} />
+                      <SliderRow label="Button text size" value={Number(bf.size) || 13} min={9} max={300} step={1} unit="px" onLive={(v) => liveB({ size: v })} onDone={(v) => setB({ size: v })} />
                       <SliderRow label="Button opacity" value={Math.round(Number(bf.op ?? 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => liveB({ op: v >= 100 ? 1 : v / 100 })} onDone={(v) => setB({ op: v >= 100 ? 1 : v / 100 })} />
                       <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.btnFx ?? {}) }; delete m[selBtn.id]; x.btnFx = m }) }} className={btn + ' mt-4'}>Reset button</button>
                       {boxReset}
@@ -1391,7 +1391,7 @@ export default function CamiDesigner() {
                       </div>
                       <ColorRow label={nm + ' color'} value={el.color ?? pick.color} base={base} onLive={(c) => setElProp(pick.key, { color: c }, true)} onSet={(c) => setElProp(pick.key, { color: c })} />
                       {pick.key === 'gs_title' && <ColorRow label="Behind the title and lines" value={ss.portfolio?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg('portfolio', c)} onSet={(c) => setSecBg('portfolio', c)} onReset={() => setSecBg('portfolio', null)} />}
-                      <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={pick.key === 'hero_headline' ? 400 : 90} step={1} unit="px" onLive={(v) => setElProp(pick.key, { size: v }, true)} onDone={(v) => setElProp(pick.key, { size: v })} />
+                      <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={800} step={1} unit="px" onLive={(v) => setElProp(pick.key, { size: v }, true)} onDone={(v) => setElProp(pick.key, { size: v })} />
                       {Number(el.size) > 0 && <button type="button" onClick={() => setElProp(pick.key, { size: undefined })} className="mt-1 text-xs font-medium text-[#6B4A2B] underline">Back to original size</button>}
                       <SliderRow label={nm + ' opacity'} value={Math.round((Number(el.op) || pick.op || 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 }, true)} onDone={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 })} />
                       <SliderRow label={nm + ' shadow'} value={Math.round(Number(el.shb) || 0)} min={0} max={40} step={1} unit="px" onLive={(v) => setElProp(pick.key, { shb: v }, true)} onDone={(v) => setElProp(pick.key, { shb: v })} />
@@ -1424,7 +1424,6 @@ export default function CamiDesigner() {
                       <p className="font-fraunces text-lg font-semibold text-ink">{nm}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button type="button" onClick={() => setSlot({ key: selPh.key, idx: selPh.idx, multi: selPh.multi })} className={btn}>Change photo</button>
-                        {selPh.key === 'hero' && !selPh.multi && (() => { const hp: string[] = (form?.site_settings?.hero?.photos ?? []) as string[]; const on = !!form?.site_settings?.hero?.slideshow; return <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); x.hero = { ...(x.hero ?? {}), slideshow: !on } }) }} className={btn}>{on ? 'Pictures rotate: On' : hp.length > 1 ? 'Pictures rotate: Off' : 'Pictures rotate: needs 2+ photos'}</button> })()}
                         <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; delete m[id]; x.photoFx = m }) }} className={btn}>Reset photo</button>
                       </div>
                       <details className="group mt-2">

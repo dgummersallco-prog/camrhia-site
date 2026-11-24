@@ -487,7 +487,7 @@ export function resolveTheme(r: Record<string, any>) {
       out += `.el-${k}{font-size:${z.phone}px!important}@media (min-width:768px){.el-${k}{font-size:${z.desktop}px!important}}`
     }
     const fz = Number(e.size)
-    if (fz >= 8 && fz <= 160) out += `.el-${k}{font-size:${Math.max(8, Math.round(fz * 0.72))}px!important}@media (min-width:768px){.el-${k}{font-size:${fz}px!important}}`
+    if (fz >= 8 && fz <= 800) out += `.el-${k}{font-size:${Math.max(8, Math.round(fz * 0.72))}px!important}@media (min-width:768px){.el-${k}{font-size:${fz}px!important}}`
     return out
   }).join('') + (() => {
     const h: any = (s.el as any)?.hero_headline ?? {}
@@ -497,7 +497,7 @@ export function resolveTheme(r: Record<string, any>) {
     if (Number(h.shb) > 0) q.push(`text-shadow:${tsh(Number(h.shb), h.shc)}!important`)
     let o = q.length ? `h1{${q.join(';')}}` : ''
     const fz = Number(h.size)
-    if (fz >= 14 && fz <= 400) o += `h1{font-size:${Math.max(14, Math.round(fz * 0.62))}px!important}@media (min-width:768px){h1{font-size:${fz}px!important}}`
+    if (fz >= 14 && fz <= 800) o += `h1{font-size:${Math.max(14, Math.round(fz * 0.62))}px!important}@media (min-width:768px){h1{font-size:${fz}px!important}}`
     return o
   })()
   const portfolioBtnCss = (() => {

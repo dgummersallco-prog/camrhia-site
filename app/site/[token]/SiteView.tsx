@@ -118,7 +118,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const heroPaths: string[] = t.hero.photos
   const heroUrlsReal = heroPaths.map((p) => photoUrl(p)).filter(Boolean) as string[]
   const heroUrls = heroUrlsReal
-  const shownHero = t.hero.slideshow ? heroUrls : heroUrls.slice(0, 1)
+  const shownHero = heroUrls.slice(0, 1)
   const heroFocus: Record<string, { x: number; y: number }> = (r.site_settings?.hero?.focus ?? {}) as Record<string, { x: number; y: number }>
 
   useEffect(() => {
