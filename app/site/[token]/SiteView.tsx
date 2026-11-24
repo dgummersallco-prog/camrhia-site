@@ -323,7 +323,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const fsp = (v: string, px: number) => `calc(${px}px * var(--${v}, 1))`
 
   const sec = (id: string, title: string | null, children: React.ReactNode, tinted: boolean, flush = false, base?: string) => (
-    <section id={id} className={'scroll-mt-16' + (title === null && page === 'home' ? '' : ' px-6')} style={{ background: tinted ? tint : base, paddingTop: flush || (title === null && page === 'home') ? 0 : 'var(--space)', paddingBottom: flush || (title === null && page === 'home') ? 0 : 'var(--space)' }}>
+    <section id={id} className={'scroll-mt-16' + (title === null && page === 'home' ? ' px-4 md:px-0' : ' px-6')} style={{ background: tinted ? tint : base, paddingTop: flush ? 0 : title === null && page === 'home' ? 'calc(var(--space) / 2)' : 'var(--space)', paddingBottom: flush ? 0 : title === null && page === 'home' ? 'calc(var(--space) / 2)' : 'var(--space)' }}>
       <div className="mx-auto max-w-6xl">
         {title && <h2 className="cr-sech mb-12 text-center" style={{ ...headStyle, fontSize: 'var(--sec-h)', lineHeight: 1.15 }}>{title}</h2>}
         {children}

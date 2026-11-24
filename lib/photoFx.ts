@@ -222,7 +222,7 @@ export function applyBtnFx(map: Record<string, BtnFx> | undefined | null) {
   }
 }
 
-export type BoxFx = { x?: number; y?: number; s?: number; h?: number; w?: number }
+export type BoxFx = { x?: number; y?: number; s?: number; h?: number; w?: number; r?: number }
 
 export const TXT_SEL = 'h1, [class^="el-"], [class*=" el-"], ' + BTN_SEL
 
@@ -316,11 +316,13 @@ export function setBox(el: HTMLElement, f: BoxFx | undefined) {
     st.width = Number(f!.w) + 'vw'
     st.maxWidth = 'none'
   }
-  const has = hasW || !!f && (Math.abs(Number(f.x) || 0) > 0.001 || Math.abs(Number(f.y) || 0) > 0.001 || Math.abs((Number(f.s) || 1) - 1) > 0.001)
+  const hasR = !!f && Math.abs(Number(f.r) || 0) > 0.05
+  const has = hasW || hasR || !!f && (Math.abs(Number(f.x) || 0) > 0.001 || Math.abs(Number(f.y) || 0) > 0.001 || Math.abs((Number(f.s) || 1) - 1) > 0.001)
   if (!has) {
     if (el.dataset.bxfx !== undefined) {
       st.removeProperty('translate')
       st.removeProperty('scale')
+      st.removeProperty('rotate')
       st.zIndex = el.dataset.bxz ?? ''
       if (el.dataset.bxpos) st.position = ''
       delete el.dataset.bxfx
@@ -337,6 +339,7 @@ export function setBox(el: HTMLElement, f: BoxFx | undefined) {
   }
   st.setProperty('translate', (Number(f!.x) || 0) + 'vw ' + (Number(f!.y) || 0) + 'vw')
   st.setProperty('scale', String(Number(f!.s) || 1))
+  if (hasR) st.setProperty('rotate', Number(f!.r) + 'deg'); else st.removeProperty('rotate')
   st.zIndex = '20'
   ovOpen(el)
 }

@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from 'react'
 import { useSiteBase } from '@/app/site/useSiteBase'
 import { installPreviewGlow } from '@/lib/previewGlow'
+import { installPreviewPick } from '@/lib/previewPick'
+import { installPreviewSections } from '@/lib/previewSections'
+import { applyPhotoFx, applyBtnFx, applyBoxFx, applySecAccent } from '@/lib/photoFx'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
 import { blogPosts } from '@/lib/blog'
 import { SiteNav } from '../SiteNav'
@@ -27,9 +30,23 @@ export function BlogView({ initial, token, slug }: { initial: Record<string, any
     return () => window.removeEventListener('message', onMsg)
   }, [])
   useEffect(() => installPreviewGlow(), [])
+  useEffect(() => installPreviewPick(), [])
+  useEffect(() => installPreviewSections(), [])
 
   const t = resolveTheme(r)
   const { accent, ink, soft, line, bg } = t
+  useEffect(() => {
+    const st = (r as any).site_settings
+    applyPhotoFx(st?.photoFx, st?.slotPics, (pp: string) => (pp ? (/^https?:/.test(pp) ? pp : STORAGE_BASE + pp) : null))
+    applyBtnFx(st?.btnFx)
+    applyBoxFx(st?.boxFx)
+    document.body.dataset.camGroups = JSON.stringify(st?.boxGroups ?? [])
+    applySecAccent(st?.secStyle, accent)
+  })
+  const blSt = (((r as any).site_settings?.secStyle?.blog) ?? {}) as { bg?: string; text?: string }
+  const okHex = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
+  const pageBg = okHex(blSt.bg) ?? bg
+  const blogCss = (okHex(blSt.bg) ? `#blog{background:${okHex(blSt.bg)} !important}` : '') + (okHex(blSt.text) ? `#blog{color:${okHex(blSt.text)} !important}` : '')
   const studio: string = r.studio_name ?? r.display_name ?? 'Studio'
   const qs = isPreview ? '?preview=1' : ''
   const base = useSiteBase(token)
@@ -52,11 +69,12 @@ export function BlogView({ initial, token, slug }: { initial: Record<string, any
   return (
     <>
       <link rel="stylesheet" href={t.fontsHref} />
-      <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}body{overflow-x:clip}`}</style>
-      <div style={{ background: bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
+      <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${pageBg}}body{overflow-x:clip}${blogCss}`}</style>
+      <div style={{ background: pageBg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <CustomJs code={String(ss.custom_js ?? '')} />
         {(() => { const cc = sanitizeCss(ss.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
         <SiteNav t={t} logo={logo} name={studio} homeHref={`${homeHref}${qs}`} headStyle={head} items={items} />
+        <section id="blog">
         {slug ? (
           post
             ? <BlogPost design={String(ss.blog?.postDesign ?? '')} post={post} backHref={`${base}/blog${qs}`} sty={sty} />
@@ -64,6 +82,7 @@ export function BlogView({ initial, token, slug }: { initial: Record<string, any
         ) : (
           <BlogList design={String(ss.blog?.listDesign ?? '')} title={String(ss.blog?.title ?? '').trim() || 'Journal'} intro={String(ss.blog?.intro ?? '')} posts={posts} hrefFor={(s) => `${base}/blog/${s}${qs}`} sty={sty} />
         )}
+        </section>
       </div>
     </>
   )

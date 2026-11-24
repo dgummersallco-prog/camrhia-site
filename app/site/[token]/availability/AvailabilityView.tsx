@@ -3,6 +3,9 @@
 import { Select } from '@/app/components/Select'
 import { useSiteBase } from '@/app/site/useSiteBase'
 import { installPreviewGlow } from '@/lib/previewGlow'
+import { installPreviewPick } from '@/lib/previewPick'
+import { installPreviewSections } from '@/lib/previewSections'
+import { applyPhotoFx, applyBtnFx, applyBoxFx, applySecAccent } from '@/lib/photoFx'
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DateCheckWidget } from '../../../p/[token]/DateCheckWidget'
@@ -90,6 +93,20 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   const pics = ((t.hero.photos?.length ? t.hero.photos : Array.isArray(r.cover_paths) ? r.cover_paths : []) as string[]).filter(Boolean).slice(0, 4).map((p) => STORAGE_BASE + p)
 
   useEffect(() => installPreviewGlow(), [])
+  useEffect(() => installPreviewPick(), [])
+  useEffect(() => installPreviewSections(), [])
+  useEffect(() => {
+    const ss = (r as any).site_settings
+    applyPhotoFx(ss?.photoFx, ss?.slotPics, (pp: string) => (pp ? (/^https?:/.test(pp) ? pp : STORAGE_BASE + pp) : null))
+    applyBtnFx(ss?.btnFx)
+    applyBoxFx(ss?.boxFx)
+    document.body.dataset.camGroups = JSON.stringify(ss?.boxGroups ?? [])
+    applySecAccent(ss?.secStyle, accent)
+  })
+  const bkSt = ((r as any).site_settings?.secStyle?.booking ?? {}) as { bg?: string; text?: string }
+  const okHex = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
+  const pageBg = okHex(bkSt.bg) ?? bg
+  const bookCss = (okHex(bkSt.bg) ? `#booking{background:${okHex(bkSt.bg)} !important}` : '') + (okHex(bkSt.text) ? `#booking{color:${okHex(bkSt.text)} !important}` : '')
 
   useEffect(() => {
     if (!sent || isClient || isPreview || !t.availability.redirect) return
@@ -170,8 +187,8 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const headerBlock = (
     <div id="book-head">
-      <h1 className="text-center" style={{ ...head, fontFamily: t.availability.family, fontSize: 'var(--book-h)', lineHeight: 1.1 }}>{t.availability.title}</h1>
-      <p className="mx-auto mt-4 max-w-md whitespace-pre-line text-center text-[15px] leading-relaxed" style={{ color: soft }}>{t.availability.intro}</p>
+      <h1 className="el-book_title text-center" style={{ ...head, fontFamily: t.availability.family, fontSize: 'var(--book-h)', lineHeight: 1.1 }}>{t.availability.title}</h1>
+      <p className="el-book_intro mx-auto mt-4 max-w-md whitespace-pre-line text-center text-[15px] leading-relaxed" style={{ color: soft }}>{t.availability.intro}</p>
     </div>
   )
 
@@ -203,7 +220,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const calBlock = t.calendar.show ? (
     <section id="book-cal" style={{ zoom: 'var(--cal, 100%)' }}>
-      <p style={stepLabel}>{between ? 2 : 1} · Pick a date</p>
+      <p className="el-book_step" style={stepLabel}>{between ? 2 : 1} · Pick a date</p>
       <DateCheckWidget photographerId={r.photographer_id} accent={accent} fontFamily={t.head} {...cal} onPick={(d) => setDate(d)} />
     </section>
   ) : null
@@ -214,7 +231,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 
   const formBlock = (
     <form id="book-form" onSubmit={submit} className="grid gap-4">
-      <p style={stepLabel}>{calOn && !between ? 2 : 1} · Tell me about your day</p>
+      <p className="el-book_step" style={stepLabel}>{calOn && !between ? 2 : 1} · Tell me about your day</p>
       <div><label style={label}>Your name *</label>
         <input style={input} value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} autoComplete="name" /></div>
       <div><label style={label}>Email *</label>
@@ -249,7 +266,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
   return (
     <>
       <link rel="stylesheet" href={t.fontsHref} />
-      <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${bg}}
+      <style>{`${t.cssVars}html{font-size:var(--text)}html,body{background:${pageBg}}${bookCss}
 #book-form{gap:1.9rem 2.25rem !important}
 #book-form label{display:block !important;font-size:10.5px !important;letter-spacing:.2em !important;text-transform:uppercase !important;opacity:.62 !important;margin:0 0 2px !important;font-weight:500 !important}
 #book-form input:not([aria-hidden]),#book-form select,#book-form textarea{background:transparent !important;border:0 !important;border-bottom:1px solid ${line} !important;border-radius:0 !important;box-shadow:none !important;padding:11px 2px !important;font-size:16px !important;width:100% !important;outline:none !important;transition:border-color .2s}
@@ -258,7 +275,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
 #book-form ::placeholder{opacity:.4}
 #book-form .bk-btn,#book-btn{width:100% !important;border-radius:0 !important;padding:18px 28px !important;font-size:12px !important;letter-spacing:.24em !important;text-transform:uppercase !important;margin-top:.5rem}
 `}</style>
-      <div id={photoBack ? 'book-photo' : undefined} style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : bg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
+      <div id={photoBack ? 'book-photo' : undefined} style={{ background: photoBack ? `linear-gradient(color-mix(in srgb, ${bg} 82%, transparent), color-mix(in srgb, ${bg} 82%, transparent)), url("${photo}") center / cover fixed` : pageBg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <CustomJs code={String((r as any).site_settings?.custom_js ?? '')} />
         {(() => { const cc = sanitizeCss((r as any).site_settings?.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
         <SiteNav t={t} logo={logo} name={studio} homeHref={`${homeHref}${qs}`} headStyle={head} items={([['home', `${homeHref}${qs}`], ['galleries', `${base}/galleries${qs}`], ['about', `${base}/about${qs}`], ['book', `${base}/availability${qs}`], ...(blogPosts((r as any).site_settings).length ? [['blog', `${base}/blog${qs}`]] : []), ...t.extraPages.map((e) => [e.id, `${base}/p/${e.id}${qs}`] as [string, string])] as [string, string][]).filter(([k]) => !t.menu.hidden.includes(k) && !(t.pagesOff as string[]).includes(k)).map(([k, h]) => ({ key: k, href: h, label: (t.menu.labels as Record<string, string | undefined>)[k]?.trim() || (NAV_DEFAULTS as Record<string, string>)[k] || t.extraPages.find((e) => e.id === k)?.label || k, active: k === 'book' }))} />
@@ -270,6 +287,7 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
           </div>
         )}
 
+        <section id="booking">
         {designed ? (
           <BookingDesign design={bookDesign} sent={sent} title={t.availability.title} intro={t.availability.intro} h1Style={{ ...head, fontFamily: t.availability.family, fontSize: 'var(--book-h)', lineHeight: 1.1 }} calBlock={calBlock} formBlock={formBlock} sentBlock={sentBlock} pics={pics} ink={ink} soft={soft} line={line} bg={bg} />
         ) : (
@@ -294,9 +312,10 @@ export function AvailabilityView({ initial, token }: { initial: Record<string, a
         </main>
         </div>
         )}
+        </section>
         {!sent && t.orderBook.includes('faq') && bookFaq.length > 0 && (
-          <section className="mx-auto max-w-2xl px-6 pb-24">
-            <h2 className="mb-6 text-center" style={{ ...head, fontSize: 28, color: ink }}>{t.titles.faq}</h2>
+          <section id="book-faq-sec" className="mx-auto max-w-2xl px-6 pb-24">
+            <h2 className="el-book_faq mb-6 text-center" style={{ ...head, fontSize: 28, color: ink }}>{t.titles.faq}</h2>
             <FaqAccordion items={bookFaq} questionClassName="el-faq_q" answerClassName="el-faq_a" questionStyle={{ fontFamily: t.head, fontSize: 20, color: ink }} answerStyle={{ fontFamily: t.body, fontSize: 15, color: soft, lineHeight: 1.7 }} />
           </section>
         )}

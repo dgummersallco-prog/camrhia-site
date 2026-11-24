@@ -8,8 +8,11 @@ export type EditMeta =
   | { kind: 'ex'; field: 'title' | 'sub'; door: string }
   | { kind: 'exlabel' }
   | { kind: 'faq' }
+  | { kind: 'avail'; field: 'title' | 'intro' | 'button' }
+  | { kind: 'blog'; field: 'title' | 'intro' }
+  | { kind: 'blogpost'; pid: string; field: 'title' | 'excerpt' }
 
-const DENY = ['gal_name', 'gal_count', 'gal_link', 'tes_quote', 'tes_name', 'pr_intro', 'pr_group', 'pr_name', 'pr_price', 'pr_list', 'pr_note', 'con_social', 'hero_btn']
+const DENY = ['gal_name', 'gal_count', 'gal_link', 'tes_quote', 'tes_name', 'pr_intro', 'pr_group', 'pr_name', 'pr_price', 'pr_list', 'pr_note', 'con_social', 'hero_btn', 'book_step', 'book_faq', 'blog_date', 'blog_body']
 
 export const editing = (t: EventTarget | null): boolean => {
   const el = t as HTMLElement | null
@@ -42,6 +45,11 @@ const navOf = (a: HTMLAnchorElement | null): string | null => {
 export function metaFor(el: HTMLElement, key: string): EditMeta | null {
   if (DENY.includes(key)) return null
   if (key === 'faq_q' || key === 'faq_a') return { kind: 'faq' }
+  if (key === 'blog_title') return { kind: 'blog', field: 'title' }
+  if (key === 'blog_intro') return { kind: 'blog', field: 'intro' }
+  if (key === 'blog_ptitle' || key === 'blog_excerpt') { const pid = el.getAttribute('data-pid'); return pid ? { kind: 'blogpost', pid, field: key === 'blog_ptitle' ? 'title' : 'excerpt' } : null }
+  if (key === 'book_title') return { kind: 'avail', field: 'title' }
+  if (key === 'book_intro') return { kind: 'avail', field: 'intro' }
   if (key === 'menu_links') { const n = navOf(el.closest('a')); return n ? { kind: 'nav', nav: n } : null }
   if (key === 'ex_title' || key === 'ex_sub') { const d = doorOf(el.closest('a')); return d ? { kind: 'ex', field: key === 'ex_title' ? 'title' : 'sub', door: d } : null }
   if (key === 'ex_label') return { kind: 'exlabel' }

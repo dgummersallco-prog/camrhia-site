@@ -27,8 +27,8 @@ export function BookingDesign(P: Props) {
     const al = o.align ?? 'center'
     return (
       <div id="book-head" style={{ textAlign: al }}>
-        <h1 style={{ ...h1Style, ...(o.color ? { color: o.color } : {}) }}>{title}</h1>
-        <p className={'mt-4 max-w-3xl whitespace-pre-line text-[15px] leading-relaxed ' + (al === 'center' ? 'mx-auto' : '')} style={{ color: o.color ?? soft, opacity: o.color ? 0.88 : 1, ...(o.w ? { maxWidth: o.w } : {}) }}>{intro}</p>
+        <h1 className="el-book_title" style={{ ...h1Style, ...(o.color ? { color: o.color } : {}) }}>{title}</h1>
+        <p className={'el-book_intro mt-4 max-w-3xl whitespace-pre-line text-[15px] leading-relaxed ' + (al === 'center' ? 'mx-auto' : '')} style={{ color: o.color ?? soft, opacity: o.color ? 0.88 : 1, ...(o.w ? { maxWidth: o.w } : {}) }}>{intro}</p>
       </div>
     )
   }
