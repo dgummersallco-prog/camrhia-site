@@ -222,7 +222,7 @@ export function applyBtnFx(map: Record<string, BtnFx> | undefined | null) {
   }
 }
 
-export type BoxFx = { x?: number; y?: number; s?: number; h?: number; w?: number; r?: number }
+export type BoxFx = { x?: number; y?: number; s?: number; h?: number; w?: number; r?: number; v?: number }
 
 export const TXT_SEL = 'h1, [class^="el-"], [class*=" el-"], ' + BTN_SEL
 
@@ -301,6 +301,33 @@ function ovClose(el: HTMLElement) {
   }
 }
 
+function fitInner(el: HTMLElement, on: boolean) {
+  if (!on) {
+    el.querySelectorAll<HTMLElement>('[data-bxfit]').forEach((n) => {
+      let a: string[] = []
+      try { a = JSON.parse(n.dataset.bxfit || '[]') } catch { a = [] }
+      n.style.height = a[0] ?? ''; n.style.width = a[1] ?? ''; n.style.aspectRatio = a[2] ?? ''; n.style.objectFit = a[3] ?? ''; n.style.maxHeight = a[4] ?? ''
+      delete n.dataset.bxfit
+    })
+    return
+  }
+  const seen = new Set<HTMLElement>()
+  el.querySelectorAll<HTMLElement>('img').forEach((img) => {
+    let n: HTMLElement | null = img
+    while (n && n !== el) {
+      if (!seen.has(n)) {
+        seen.add(n)
+        if (n.dataset.bxfit === undefined) {
+          n.dataset.bxfit = JSON.stringify([n.style.height, n.style.width, n.style.aspectRatio, n.style.objectFit, n.style.maxHeight])
+          n.style.height = '100%'; n.style.width = '100%'; n.style.aspectRatio = 'auto'; n.style.maxHeight = 'none'
+          if (n === img) n.style.objectFit = 'cover'
+        }
+      }
+      n = n.parentElement
+    }
+  })
+}
+
 export function setBox(el: HTMLElement, f: BoxFx | undefined) {
   const st = el.style
   if (f && f.h) {
@@ -316,8 +343,24 @@ export function setBox(el: HTMLElement, f: BoxFx | undefined) {
     st.width = Number(f!.w) + 'vw'
     st.maxWidth = 'none'
   }
+  const hasV = !!f && Number(f.v) > 0.5
+  if (!hasV && el.dataset.bxv !== undefined) {
+    let a: string[] = []
+    try { a = JSON.parse(el.dataset.bxv) } catch { a = [] }
+    st.height = a[0] ?? ''; st.maxHeight = a[1] ?? ''; st.minHeight = a[2] ?? ''; st.aspectRatio = a[3] ?? ''; st.objectFit = a[4] ?? ''
+    delete el.dataset.bxv
+  }
+  if (hasV) {
+    if (el.dataset.bxv === undefined) el.dataset.bxv = JSON.stringify([st.height, st.maxHeight, st.minHeight, st.aspectRatio, st.objectFit])
+    st.height = Number(f!.v) + 'vw'
+    st.maxHeight = 'none'
+    st.minHeight = '0'
+    st.aspectRatio = 'auto'
+    if (el.tagName === 'IMG') st.objectFit = 'cover'
+  }
+  fitInner(el, hasV)
   const hasR = !!f && Math.abs(Number(f.r) || 0) > 0.05
-  const has = hasW || hasR || !!f && (Math.abs(Number(f.x) || 0) > 0.001 || Math.abs(Number(f.y) || 0) > 0.001 || Math.abs((Number(f.s) || 1) - 1) > 0.001)
+  const has = hasW || hasV || hasR || !!f && (Math.abs(Number(f.x) || 0) > 0.001 || Math.abs(Number(f.y) || 0) > 0.001 || Math.abs((Number(f.s) || 1) - 1) > 0.001)
   if (!has) {
     if (el.dataset.bxfx !== undefined) {
       st.removeProperty('translate')

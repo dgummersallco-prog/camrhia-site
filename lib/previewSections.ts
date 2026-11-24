@@ -353,6 +353,10 @@ export function installPreviewSections(): () => void {
     mkH('w', 'ew-resize', 'left:-8px;top:calc(50% - 7px)'),
     mkH('e', 'ew-resize', 'right:-8px;top:calc(50% - 7px)'),
   ]
+  const vertH = [
+    mkH('n', 'ns-resize', 'top:-8px;left:calc(50% - 7px)'),
+    mkH('s', 'ns-resize', 'bottom:-8px;left:calc(50% - 7px)'),
+  ]
   const rotH = document.createElement('div')
   rotH.dataset.c = 'rot'
   rotH.title = 'Rotate'
@@ -422,7 +426,8 @@ export function installPreviewSections(): () => void {
     rotH.style.display = multi ? 'none' : 'flex'
     mv.style.display = selBox.kind === 'frame' ? 'flex' : 'none'
     cornerH.forEach((h) => { h.style.display = !multi ? 'block' : 'none' })
-    sideH.forEach((h) => { h.style.display = !multi && selBox!.kind === 'text' ? 'block' : 'none' })
+    sideH.forEach((h) => { h.style.display = !multi ? 'block' : 'none' })
+    vertH.forEach((h) => { h.style.display = !multi && selBox!.kind === 'frame' ? 'block' : 'none' })
     gb.style.display = multi ? 'flex' : 'none'
     if (multi) gb.textContent = isGroupSel() ? 'Ungroup' : 'Group'
     while (xbs.length < extras.length) { const d = document.createElement('div'); d.style.cssText = 'position:fixed;z-index:2147482000;border:1.5px solid #d9a21b;pointer-events:none'; document.body.appendChild(d); xbs.push(d) }
@@ -442,7 +447,7 @@ export function installPreviewSections(): () => void {
     if (!selBox) return
     const sl = selBox
     if (extras.length > 0) {
-      const list = allSel().map((q) => { const f0 = curFx(q.el); setBox(q.el, { ...f0, h: 1 }); return { id: q.id, x: f0.x, y: f0.y, s: f0.s, w: f0.w, r: f0.r, h: 1 } })
+      const list = allSel().map((q) => { const f0 = curFx(q.el); setBox(q.el, { ...f0, h: 1 }); return { id: q.id, x: f0.x, y: f0.y, s: f0.s, w: f0.w, v: f0.v, r: f0.r, h: 1 } })
       post({ action: 'boxfxs', list })
       selBox = null
       extras = []
@@ -452,7 +457,7 @@ export function installPreviewSections(): () => void {
     }
     const f = curFx(sl.el)
     setBox(sl.el, { ...f, h: 1 })
-    post({ action: 'boxfx', id: sl.id, x: f.x, y: f.y, s: f.s, w: f.w, r: f.r, h: 1 })
+    post({ action: 'boxfx', id: sl.id, x: f.x, y: f.y, s: f.s, w: f.w, v: f.v, r: f.r, h: 1 })
     selBox = null
     post({ action: 'box', id: '' })
     layoutBox()
@@ -506,10 +511,11 @@ export function installPreviewSections(): () => void {
   const curFx = (el: HTMLElement) => {
     const m = /(-?[\d.]+)vw\s+(-?[\d.]+)vw/.exec(el.style.getPropertyValue('translate') || '')
     const mw = el.dataset.bxw !== undefined ? /(-?[\d.]+)vw/.exec(el.style.width || '') : null
-    return { x: m ? Number(m[1]) : 0, y: m ? Number(m[2]) : 0, s: Number(el.style.getPropertyValue('scale')) || 1, w: mw ? Number(mw[1]) : 0, r: Number((/(-?[\d.]+)deg/.exec(el.style.getPropertyValue('rotate') || '') ?? [])[1]) || 0 }
+    const mv = el.dataset.bxv !== undefined ? /(-?[\d.]+)vw/.exec(el.style.height || '') : null
+    return { x: m ? Number(m[1]) : 0, y: m ? Number(m[2]) : 0, s: Number(el.style.getPropertyValue('scale')) || 1, w: mw ? Number(mw[1]) : 0, v: mv ? Number(mv[1]) : 0, r: Number((/(-?[\d.]+)deg/.exec(el.style.getPropertyValue('rotate') || '') ?? [])[1]) || 0 }
   }
-  type Fx = { x: number; y: number; s: number; w: number; r: number }
-  let g: { mode: 'rs' | 'mv' | 'rw' | 'rot'; sel: Sel; x0: number; y0: number; fx: Fx; cx: number; cy: number; d0: number; moved: boolean; root: HTMLElement | null; tg: Tg | null; others: { sel: Sel; fx: Fx }[]; side: string; l0: number; r0: number; w0: number; a0?: number } | null = null
+  type Fx = { x: number; y: number; s: number; w: number; v: number; r: number }
+  let g: { mode: 'rs' | 'mv' | 'rw' | 'rh' | 'rot'; h0: number; t0: number; b0: number; sel: Sel; x0: number; y0: number; fx: Fx; cx: number; cy: number; d0: number; moved: boolean; root: HTMLElement | null; tg: Tg | null; others: { sel: Sel; fx: Fx }[]; side: string; l0: number; r0: number; w0: number; a0?: number } | null = null
   const othersFor = (sel: Sel): { sel: Sel; fx: Fx }[] => {
     const cur = allSel()
     const mates = cur.some((q) => q.id === sel.id) ? cur.filter((q) => q.id !== sel.id) : groupMates(sel.id)
@@ -530,7 +536,7 @@ export function installPreviewSections(): () => void {
       const cx = r.left + r.width / 2
       const cy = r.top + r.height / 2
       const c = hd.dataset.c as string
-      g = { mode: c === 'move' ? 'mv' : c === 'rot' ? 'rot' : c === 'w' || c === 'e' ? 'rw' : 'rs', a0: Math.atan2(e.clientY - cy, e.clientX - cx), sel: selBox, x0: e.clientX, y0: e.clientY, fx: curFx(selBox.el), cx, cy, d0: Math.max(8, Math.hypot(e.clientX - cx, e.clientY - cy)), moved: true, root: rootOf(selBox.el), tg: null, others: c === 'move' ? othersFor(selBox) : [], side: c, l0: r.left, r0: r.right, w0: selBox.el.offsetWidth / vwPx() }
+      g = { mode: c === 'move' ? 'mv' : c === 'rot' ? 'rot' : c === 'w' || c === 'e' ? 'rw' : c === 'n' || c === 's' ? 'rh' : 'rs', a0: Math.atan2(e.clientY - cy, e.clientX - cx), sel: selBox, x0: e.clientX, y0: e.clientY, fx: curFx(selBox.el), cx, cy, d0: Math.max(8, Math.hypot(e.clientX - cx, e.clientY - cy)), moved: true, root: rootOf(selBox.el), tg: null, others: c === 'move' ? othersFor(selBox) : [], side: c, l0: r.left, r0: r.right, w0: selBox.el.offsetWidth / vwPx(), h0: selBox.el.offsetHeight / vwPx(), t0: r.top, b0: r.bottom }
       document.body.style.userSelect = 'none'
       return
     }
@@ -540,7 +546,7 @@ export function installPreviewSections(): () => void {
     if (root && !tb) {
       const ru = ruleAt(root, e.clientX, e.clientY)
       if (ru) {
-        g = { mode: 'mv', sel: { el: ru.el, id: ru.id, kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(ru.el), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null, others: othersFor({ el: ru.el, id: ru.id, kind: 'text' }), side: '', l0: 0, r0: 0, w0: 0 }
+        g = { mode: 'mv', sel: { el: ru.el, id: ru.id, kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(ru.el), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null, others: othersFor({ el: ru.el, id: ru.id, kind: 'text' }), side: '', l0: 0, r0: 0, w0: 0, h0: 0, t0: 0, b0: 0 }
         return
       }
     }
@@ -549,7 +555,7 @@ export function installPreviewSections(): () => void {
     const list = boxesIn(root)
     const i = list.findIndex((x) => x === tb || x.contains(tb))
     if (i < 0) return
-    g = { mode: 'mv', sel: { el: list[i], id: boxId(key, i), kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(list[i]), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null, others: othersFor({ el: list[i], id: boxId(key, i), kind: 'text' }), side: '', l0: 0, r0: 0, w0: 0 }
+    g = { mode: 'mv', sel: { el: list[i], id: boxId(key, i), kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(list[i]), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null, others: othersFor({ el: list[i], id: boxId(key, i), kind: 'text' }), side: '', l0: 0, r0: 0, w0: 0, h0: 0, t0: 0, b0: 0 }
   }
   const onGMove = (e: PointerEvent) => {
     if (!g) return
@@ -560,33 +566,41 @@ export function installPreviewSections(): () => void {
     if (g.mode === 'mv') {
       let nx = g.fx.x + dx / vwPx()
       let ny = g.fx.y + dy / vwPx()
-      setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s, w: g.fx.w, r: g.fx.r })
+      setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s, w: g.fx.w, v: g.fx.v, r: g.fx.r })
       if (g.root) {
         if (!g.tg) g.tg = targetsFor(g.sel, g.root)
         const sn = snapOf(g.sel.el, g.tg)
         if (sn.dx !== null || sn.dy !== null) {
           nx += (sn.dx ?? 0) / vwPx()
           ny += (sn.dy ?? 0) / vwPx()
-          setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s, w: g.fx.w, r: g.fx.r })
+          setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s, w: g.fx.w, v: g.fx.v, r: g.fx.r })
         }
         drawGuides(sn, g.root)
       }
-      for (const o of g.others) setBox(o.sel.el, { x: o.fx.x + (nx - g.fx.x), y: o.fx.y + (ny - g.fx.y), s: o.fx.s, w: o.fx.w, r: o.fx.r })
+      for (const o of g.others) setBox(o.sel.el, { x: o.fx.x + (nx - g.fx.x), y: o.fx.y + (ny - g.fx.y), s: o.fx.s, w: o.fx.w, v: o.fx.v, r: o.fx.r })
     } else if (g.mode === 'rot') {
       let nr = g.fx.r + (Math.atan2(e.clientY - g.cy, e.clientX - g.cx) - (g.a0 ?? 0)) * 180 / Math.PI
       nr = ((nr + 540) % 360) - 180
       const sn = Math.round(nr / 15) * 15
       if (Math.abs(nr - sn) < 4) nr = sn
-      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: g.fx.w, r: nr })
+      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: g.fx.w, v: g.fx.v, r: nr })
     } else if (g.mode === 'rw') {
+      const vv = g.sel.kind === 'frame' ? g.h0 : g.fx.v
       const nw = Math.max(4, g.w0 + (g.side === 'e' ? 1 : -1) * dx / vwPx())
-      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: nw, r: g.fx.r })
+      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: nw, v: vv, r: g.fx.r })
       const rr = g.sel.el.getBoundingClientRect()
       const corr = g.side === 'e' ? g.l0 - rr.left : g.r0 - rr.right
-      setBox(g.sel.el, { x: g.fx.x + corr / vwPx(), y: g.fx.y, s: g.fx.s, w: nw, r: g.fx.r })
+      setBox(g.sel.el, { x: g.fx.x + corr / vwPx(), y: g.fx.y, s: g.fx.s, w: nw, v: vv, r: g.fx.r })
+    } else if (g.mode === 'rh') {
+      const nh = Math.max(4, g.h0 + (g.side === 's' ? 1 : -1) * dy / vwPx())
+      const ww = g.sel.kind === 'frame' ? g.w0 : g.fx.w
+      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: ww, v: nh, r: g.fx.r })
+      const rr = g.sel.el.getBoundingClientRect()
+      const corr = g.side === 's' ? g.t0 - rr.top : g.b0 - rr.bottom
+      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y + corr / vwPx(), s: g.fx.s, w: ww, v: nh, r: g.fx.r })
     } else {
       const d = Math.hypot(e.clientX - g.cx, e.clientY - g.cy)
-      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: Math.min(6, Math.max(0.2, g.fx.s * (d / g.d0))), w: g.fx.w, r: g.fx.r })
+      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: Math.min(6, Math.max(0.2, g.fx.s * (d / g.d0))), w: g.fx.w, v: g.fx.v, r: g.fx.r })
     }
     layoutBox()
   }
@@ -604,7 +618,7 @@ export function installPreviewSections(): () => void {
     window.addEventListener('click', kill, true)
     setTimeout(() => window.removeEventListener('click', kill, true), 60)
     post({ action: 'box', id: d.sel.id })
-    const rec = (id: string, q: { x: number; y: number; s: number; w: number; r: number }) => ({ id, x: Math.round(q.x * 100) / 100, y: Math.round(q.y * 100) / 100, s: Math.round(q.s * 1000) / 1000, w: Math.round(q.w * 100) / 100, r: Math.round(q.r * 10) / 10 })
+    const rec = (id: string, q: { x: number; y: number; s: number; w: number; v: number; r: number }) => ({ id, x: Math.round(q.x * 100) / 100, y: Math.round(q.y * 100) / 100, s: Math.round(q.s * 1000) / 1000, w: Math.round(q.w * 100) / 100, v: Math.round(q.v * 100) / 100, r: Math.round(q.r * 10) / 10 })
     if (d.others.length > 0) post({ action: 'boxfxs', list: [rec(d.sel.id, f), ...d.others.map((o) => rec(o.sel.id, curFx(o.sel.el)))] })
     else post({ action: 'boxfx', ...rec(d.sel.id, f) })
   }

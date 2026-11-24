@@ -21,6 +21,7 @@ import { blogPosts } from '@/lib/blog'
 import { applyPhotoFx, applyBtnFx, applyBoxFx, applySecAccent } from '@/lib/photoFx'
 import { GalleriesSection, GALSEC, GALOWN, GalleryGarnet } from './GalleriesSections'
 import { SiteNav } from './SiteNav'
+import { Addons } from './Addons'
 
 const STORAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/`
@@ -2176,6 +2177,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       {extraFontsHref && <link rel="stylesheet" href={extraFontsHref} />}
       {secCss && <style dangerouslySetInnerHTML={{ __html: secCss }} />}
       {(() => { const cc = sanitizeCss((r as any).site_settings?.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
+      <Addons list={(r as any).site_settings?.addons} accent={t.accent} />
       <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${pageBg ?? bg}}body{overflow-x:clip}`}</style>
       <PortfolioLightbox />
       <div style={{ background: pageBg ?? bg, color: ink, fontFamily: t.body }}>

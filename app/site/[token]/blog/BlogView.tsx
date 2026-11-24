@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useSiteBase } from '@/app/site/useSiteBase'
 import { installPreviewGlow } from '@/lib/previewGlow'
 import { installPreviewPick } from '@/lib/previewPick'
+import { Addons } from '../Addons'
 import { installPreviewSections } from '@/lib/previewSections'
 import { applyPhotoFx, applyBtnFx, applyBoxFx, applySecAccent } from '@/lib/photoFx'
 import { resolveTheme, NAV_DEFAULTS } from '@/lib/siteTheme'
@@ -73,6 +74,7 @@ export function BlogView({ initial, token, slug }: { initial: Record<string, any
       <div style={{ background: pageBg, color: ink, fontFamily: t.body, minHeight: '100vh' }}>
         <CustomJs code={String(ss.custom_js ?? '')} />
         {(() => { const cc = sanitizeCss(ss.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
+        <Addons list={(r as any).site_settings?.addons} accent={t.accent} />
         <SiteNav t={t} logo={logo} name={studio} homeHref={`${homeHref}${qs}`} headStyle={head} items={items} />
         <section id="blog">
         {slug ? (

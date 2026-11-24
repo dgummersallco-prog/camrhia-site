@@ -120,11 +120,12 @@ function setPath(x: Record<string, any>, p: string[], v: string) {
 const fname = (k: string) => { const o = FONT_OPTIONS[k] as unknown as Record<string, string> | undefined; return o?.label ?? o?.name ?? k }
 const FONT_IDS = Object.keys(FONT_OPTIONS)
 type Pick = { key: string; text: string; left: number; top: number; color: string; size?: number; op?: number }
-const PICK_LABELS: Record<string, string> = { blog_title: 'Blog title', blog_intro: 'Blog intro', blog_ptitle: 'Post title', blog_excerpt: 'Post excerpt', blog_date: 'Post date', blog_body: 'Post text', book_title: 'Booking title', book_intro: 'Booking intro', book_step: 'Step label', book_faq: 'FAQ heading', hero_headline: 'Headline', menu_links: 'Menu links', menu_brand: 'Your name', ex_label: 'Section label', ex_title: 'Section title', ex_sub: 'Section subtitle', con_msg: 'Contact message', con_social: 'Social links', ft_line: 'Footer line', ft_copy: 'Copyright', gal_name: 'Gallery name', gal_count: 'Gallery count', gal_link: 'Gallery link', tes_quote: 'Testimonial', tes_name: 'Testimonial name', about_text: 'About text', pr_intro: 'Package intro', pr_group: 'Package group', pr_name: 'Package name', pr_price: 'Package price', pr_list: 'Package list', pr_note: 'Package note', faq_q: 'Question', faq_a: 'Answer', feat_title: 'Featured work title', hero_btn: 'Button text', air_label: 'About label', air_more: 'Link text', ls_title: 'Stories title', rom_kicker: 'Small line', rom_story: 'Story title', rom_more: 'Link text', ea_kicker: 'Small line', ea_para: 'Paragraph', ea_follow: 'Section title', pe_tag: 'Tagline', iv_kicker: 'Small line', iv_tag: 'Tagline', wi_hi: 'About heading', ju_kicker: 'Small line', ju_para: 'Intro', ju_s1t: 'Service title', ju_s1d: 'Service text', ju_s2t: 'Service title', ju_s2d: 'Service text', ju_s3t: 'Service title', ju_s3d: 'Service text', ca_sub: 'Subtitle', ca_bar: 'Bar text', ca_w1: 'Word', ca_w2: 'Word', ca_w3: 'Word', ca_w4: 'Word', ce_p1: 'Paragraph', ce_p2: 'Paragraph', ol_kicker: 'Small line', ol_c1: 'Caption', ol_c2: 'Caption', ol_c3: 'Caption', ol_c4: 'Caption', mg_story: 'Heading', mg_text: 'Paragraph', li_kicker: 'Small line', li_para: 'Paragraph', li_meet: 'Heading', li_more: 'Link', as_kicker: 'Small line', as_para: 'Paragraph', as_kind: 'Heading', as_q1: 'Quote', as_n1: 'Name', as_q2: 'Quote', as_n2: 'Name', as_q3: 'Quote', as_n3: 'Name', sg_tag: 'Tagline', sg_recent: 'Heading', ro_script: 'Script word', ro_c1: 'Caption', ro_c2: 'Caption', ro_c3: 'Caption', hz_kicker: 'Small line', hz_para: 'Paragraph', hz_quote: 'Quote', hz_name: 'Name', sf_n1: 'Service', sf_n2: 'Service', sf_n3: 'Service', sf_n4: 'Service', sf_c1: 'Caption', sf_c2: 'Caption', sf_c3: 'Caption', cy_tag: 'Tagline', cy_s1: 'Label', cy_s2: 'Label', cy_s3: 'Label', la_vert: 'Side text', la_para: 'Paragraph', ir_l: 'Left words', ir_r: 'Right words', ir_issue: 'Heading', ir_t1: 'Label', ir_t2: 'Label', ir_t3: 'Label', pr_kicker: 'Small line', pr_c1: 'Caption', pr_c2: 'Caption', pr_c3: 'Caption', pr_c4: 'Caption', th_tag: 'Tagline', cl_p1: 'Caption', cl_p2: 'Caption', cl_p3: 'Caption', cl_p4: 'Caption', cl_p5: 'Caption', cl_sub: 'Subheading', cl_t1: 'Label', cl_t2: 'Label', cl_t3: 'Label', mi_t1: 'Label', mi_t2: 'Label', mi_t3: 'Label', mi_t4: 'Label', ya_script: 'Script line', ya_month: 'Month', ya_head: 'Heading', ya_para: 'Paragraph', ya_link: 'Link', gs_title: 'Section title', gp_title: 'Page title', tes_title: 'Section title', faq_title: 'Page title', ab_h1: 'Story heading', ab_h2: 'Belief heading', ab_h3: 'Invitation heading', ab_p3: 'Invitation text', ab_by: 'By line', ab_loves: 'Loves label', ab_hi: 'Greeting', ab_n1: 'Stat 1', ab_l1: 'Stat 1 label', ab_n2: 'Stat 2', ab_l2: 'Stat 2 label', ab_n3: 'Stat 3', ab_l3: 'Stat 3 label', ab_quote: 'Pull quote', ab_sig: 'Signature', ab_tag: 'Tagline', ab_f1t: 'Fact 1 title', ab_f1d: 'Fact 1 text', ab_f2t: 'Fact 2 title', ab_f2d: 'Fact 2 text', ab_f3t: 'Fact 3 title', ab_f3d: 'Fact 3 text', ab_f4t: 'Fact 4 title', ab_f4d: 'Fact 4 text', ab_f5t: 'Fact 5 title', ab_f5d: 'Fact 5 text', soc_title: 'Social heading', soc_handle: 'Social handle', con_title: 'Booking heading' }
+const PICK_LABELS: Record<string, string> = { ax1: 'Your text', ax2: 'Your text', ax3: 'Your text', ax4: 'Your text', ax5: 'Your text', ax6: 'Your text', ax7: 'Your text', ax8: 'Your text', ax9: 'Your text', ax10: 'Your text', ax11: 'Your text', ax12: 'Your text', ax13: 'Your text', ax14: 'Your text', ax15: 'Your text', ax16: 'Your text', blog_title: 'Blog title', blog_intro: 'Blog intro', blog_ptitle: 'Post title', blog_excerpt: 'Post excerpt', blog_date: 'Post date', blog_body: 'Post text', book_title: 'Booking title', book_intro: 'Booking intro', book_step: 'Step label', book_faq: 'FAQ heading', hero_headline: 'Headline', menu_links: 'Menu links', menu_brand: 'Your name', ex_label: 'Section label', ex_title: 'Section title', ex_sub: 'Section subtitle', con_msg: 'Contact message', con_social: 'Social links', ft_line: 'Footer line', ft_copy: 'Copyright', gal_name: 'Gallery name', gal_count: 'Gallery count', gal_link: 'Gallery link', tes_quote: 'Testimonial', tes_name: 'Testimonial name', about_text: 'About text', pr_intro: 'Package intro', pr_group: 'Package group', pr_name: 'Package name', pr_price: 'Package price', pr_list: 'Package list', pr_note: 'Package note', faq_q: 'Question', faq_a: 'Answer', feat_title: 'Featured work title', hero_btn: 'Button text', air_label: 'About label', air_more: 'Link text', ls_title: 'Stories title', rom_kicker: 'Small line', rom_story: 'Story title', rom_more: 'Link text', ea_kicker: 'Small line', ea_para: 'Paragraph', ea_follow: 'Section title', pe_tag: 'Tagline', iv_kicker: 'Small line', iv_tag: 'Tagline', wi_hi: 'About heading', ju_kicker: 'Small line', ju_para: 'Intro', ju_s1t: 'Service title', ju_s1d: 'Service text', ju_s2t: 'Service title', ju_s2d: 'Service text', ju_s3t: 'Service title', ju_s3d: 'Service text', ca_sub: 'Subtitle', ca_bar: 'Bar text', ca_w1: 'Word', ca_w2: 'Word', ca_w3: 'Word', ca_w4: 'Word', ce_p1: 'Paragraph', ce_p2: 'Paragraph', ol_kicker: 'Small line', ol_c1: 'Caption', ol_c2: 'Caption', ol_c3: 'Caption', ol_c4: 'Caption', mg_story: 'Heading', mg_text: 'Paragraph', li_kicker: 'Small line', li_para: 'Paragraph', li_meet: 'Heading', li_more: 'Link', as_kicker: 'Small line', as_para: 'Paragraph', as_kind: 'Heading', as_q1: 'Quote', as_n1: 'Name', as_q2: 'Quote', as_n2: 'Name', as_q3: 'Quote', as_n3: 'Name', sg_tag: 'Tagline', sg_recent: 'Heading', ro_script: 'Script word', ro_c1: 'Caption', ro_c2: 'Caption', ro_c3: 'Caption', hz_kicker: 'Small line', hz_para: 'Paragraph', hz_quote: 'Quote', hz_name: 'Name', sf_n1: 'Service', sf_n2: 'Service', sf_n3: 'Service', sf_n4: 'Service', sf_c1: 'Caption', sf_c2: 'Caption', sf_c3: 'Caption', cy_tag: 'Tagline', cy_s1: 'Label', cy_s2: 'Label', cy_s3: 'Label', la_vert: 'Side text', la_para: 'Paragraph', ir_l: 'Left words', ir_r: 'Right words', ir_issue: 'Heading', ir_t1: 'Label', ir_t2: 'Label', ir_t3: 'Label', pr_kicker: 'Small line', pr_c1: 'Caption', pr_c2: 'Caption', pr_c3: 'Caption', pr_c4: 'Caption', th_tag: 'Tagline', cl_p1: 'Caption', cl_p2: 'Caption', cl_p3: 'Caption', cl_p4: 'Caption', cl_p5: 'Caption', cl_sub: 'Subheading', cl_t1: 'Label', cl_t2: 'Label', cl_t3: 'Label', mi_t1: 'Label', mi_t2: 'Label', mi_t3: 'Label', mi_t4: 'Label', ya_script: 'Script line', ya_month: 'Month', ya_head: 'Heading', ya_para: 'Paragraph', ya_link: 'Link', gs_title: 'Section title', gp_title: 'Page title', tes_title: 'Section title', faq_title: 'Page title', ab_h1: 'Story heading', ab_h2: 'Belief heading', ab_h3: 'Invitation heading', ab_p3: 'Invitation text', ab_by: 'By line', ab_loves: 'Loves label', ab_hi: 'Greeting', ab_n1: 'Stat 1', ab_l1: 'Stat 1 label', ab_n2: 'Stat 2', ab_l2: 'Stat 2 label', ab_n3: 'Stat 3', ab_l3: 'Stat 3 label', ab_quote: 'Pull quote', ab_sig: 'Signature', ab_tag: 'Tagline', ab_f1t: 'Fact 1 title', ab_f1d: 'Fact 1 text', ab_f2t: 'Fact 2 title', ab_f2d: 'Fact 2 text', ab_f3t: 'Fact 3 title', ab_f3d: 'Fact 3 text', ab_f4t: 'Fact 4 title', ab_f4d: 'Fact 4 text', ab_f5t: 'Fact 5 title', ab_f5d: 'Fact 5 text', soc_title: 'Social heading', soc_handle: 'Social handle', con_title: 'Booking heading' }
 
 const TEXT_FLD = ['feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
 function writeTextKey(n: any, key: string, v: string) {
   const s = (n.site_settings = n.site_settings ?? {})
+  if (/^ax\d+$/.test(key)) { s.addons = (Array.isArray(s.addons) ? s.addons : []).map((a: any) => (a && a.k === key ? { ...a, text: v } : a)); return }
   if (key === 'hero_headline') n.site_headline = v
   else if (key === 'menu_brand') s.menu = { ...(s.menu ?? {}), brand: v }
   else { const f = key === 'about_text' ? 'about' : key === 'con_msg' ? 'contact' : key === 'ft_line' ? 'footer' : TEXT_FLD.includes(key) ? key : 'copyright'; s.text = { ...(s.text ?? {}), [f]: v } }
@@ -162,7 +163,7 @@ function writeInline(n: any, d: any) {
   }
 }
 
-const TEXT_KEYS = ['hero_headline', 'menu_brand', 'about_text', 'con_msg', 'ft_line', 'ft_copy', 'feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
+const TEXT_KEYS = ['ax1', 'ax2', 'ax3', 'ax4', 'ax5', 'ax6', 'ax7', 'ax8', 'ax9', 'ax10', 'ax11', 'ax12', 'ax13', 'ax14', 'ax15', 'ax16', 'hero_headline', 'menu_brand', 'about_text', 'con_msg', 'ft_line', 'ft_copy', 'feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
 const LONG_TEXT = ['about_text', 'con_msg']
 const PICK_COLORS = [...TEXTS.slice(0, 7), ...ACCENTS.slice(0, 14), '#FFFFFF']
 
@@ -210,6 +211,15 @@ function ColorRow({ label, value, base, cur, onLive, onSet, onReset }: { label: 
   const last = useRef('')
   const svRef = useRef<HTMLDivElement>(null)
   const hueRef = useRef<HTMLDivElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const away = () => { const a = document.activeElement as HTMLElement | null; if (a && rootRef.current?.contains(a)) a.blur(); setOpen(false) }
+    const down = (e: PointerEvent) => { if (rootRef.current && !rootRef.current.contains(e.target as Node)) away() }
+    document.addEventListener('pointerdown', down, true)
+    window.addEventListener('blur', away)
+    return () => { document.removeEventListener('pointerdown', down, true); window.removeEventListener('blur', away) }
+  }, [open])
   useEffect(() => {
     try { const j = JSON.parse(localStorage.getItem('cam_recent_colors') ?? '[]'); if (Array.isArray(j)) setRecent(j.filter((x) => typeof x === 'string')) } catch { /* ignore */ }
   }, [])
@@ -253,7 +263,7 @@ function ColorRow({ label, value, base, cur, onLive, onSet, onReset }: { label: 
   }
   const pal = Array.from(new Set(recent.map((c) => c.toUpperCase()))).slice(0, 16)
   return (
-    <div className="mt-4">
+    <div className="mt-4" ref={rootRef}>
       <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
       <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-left text-sm text-ink">
         <span className="flex items-center gap-2">
@@ -502,13 +512,13 @@ export default function CamiDesigner() {
           const s = (n.site_settings = n.site_settings ?? {})
           if (d.action === 'boxfx') {
             const bf: Record<string, any> = { ...(s.boxFx ?? {}) }
-            bf[d.id] = { x: Number(d.x), y: Number(d.y), s: Number(d.s), ...(Number(d.w) > 0 ? { w: Number(d.w) } : {}), ...(Math.abs(Number(d.r)) > 0.05 ? { r: Number(d.r) } : {}), ...(d.h ? { h: 1 } : {}) }
+            bf[d.id] = { x: Number(d.x), y: Number(d.y), s: Number(d.s), ...(Number(d.w) > 0 ? { w: Number(d.w) } : {}), ...(Number(d.v) > 0 ? { v: Number(d.v) } : {}), ...(Math.abs(Number(d.r)) > 0.05 ? { r: Number(d.r) } : {}), ...(d.h ? { h: 1 } : {}) }
             s.boxFx = bf
             return
           }
           if (d.action === 'boxfxs' && Array.isArray(d.list)) {
             const bf: Record<string, any> = { ...(s.boxFx ?? {}) }
-            for (const q of d.list as any[]) bf[String(q.id)] = { x: Number(q.x), y: Number(q.y), s: Number(q.s), ...(Number(q.w) > 0 ? { w: Number(q.w) } : {}), ...(Math.abs(Number(q.r)) > 0.05 ? { r: Number(q.r) } : {}), ...(q.h ? { h: 1 } : {}) }
+            for (const q of d.list as any[]) bf[String(q.id)] = { x: Number(q.x), y: Number(q.y), s: Number(q.s), ...(Number(q.w) > 0 ? { w: Number(q.w) } : {}), ...(Number(q.v) > 0 ? { v: Number(q.v) } : {}), ...(Math.abs(Number(q.r)) > 0.05 ? { r: Number(q.r) } : {}), ...(q.h ? { h: 1 } : {}) }
             s.boxFx = bf
             return
           }
@@ -657,7 +667,7 @@ export default function CamiDesigner() {
   }
   const resetLook = (x: Record<string, any>) => {
     delete x.custom_css; delete x.custom_js; delete x.calendar; delete x.fonts; delete x.colors; delete x.button
-    delete x.el; delete x.btnFx; delete x.boxFx; delete x.boxGroups; delete x.photoFx; delete x.secStyle; delete x.secZoom; delete x.sizes
+    delete x.el; delete x.btnFx; delete x.boxFx; delete x.boxGroups; delete x.addons; delete x.photoFx; delete x.secStyle; delete x.secZoom; delete x.sizes
     if (x.hero) { for (const k of Object.keys(x.hero)) if (/font|align|overlay|size|color|height|canvas|shape|weight|style|opacity/i.test(k)) delete x.hero[k] }
     if (x.menu) { for (const k of Object.keys(x.menu)) if (k !== 'brand') delete x.menu[k] }
     if (x.text) delete x.text.hero_btn
@@ -1377,6 +1387,16 @@ export default function CamiDesigner() {
                       <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={pick.key === 'hero_headline' ? 120 : 90} step={1} unit="px" onLive={(v) => setElProp(pick.key, { size: v }, true)} onDone={(v) => setElProp(pick.key, { size: v })} />
                       <SliderRow label={nm + ' opacity'} value={Math.round((Number(el.op) || pick.op || 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 }, true)} onDone={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 })} />
                       <SliderRow label={nm + ' shadow'} value={Math.round(Number(el.shb) || 0)} min={0} max={40} step={1} unit="px" onLive={(v) => setElProp(pick.key, { shb: v }, true)} onDone={(v) => setElProp(pick.key, { shb: v })} />
+                      {(() => {
+                        const ad = ((((form.site_settings ?? {}) as any).addons ?? []) as any[]).find((a) => a && a.k === pick.key && a.t === 'button')
+                        if (!ad) return null
+                        return (
+                          <div className="mt-4">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Button link</p>
+                            <input key={ad.id} defaultValue={ad.url ?? ''} placeholder="https://" onBlur={(e) => { const v = e.target.value.trim(); void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); x.addons = (Array.isArray(x.addons) ? x.addons : []).map((a: any) => (a && a.id === ad.id ? { ...a, url: v } : a)) }) }} className="mt-2 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]" />
+                          </div>
+                        )
+                      })()}
                       {Number(el.shb) > 0 && <ColorRow label={nm + ' shadow color'} value={el.shc} cur="#000000" base={base} onLive={(c) => setElProp(pick.key, { shc: c }, true)} onSet={(c) => setElProp(pick.key, { shc: c })} />}
                       <button type="button" onClick={() => resetEl(pick.key)} className={btn + ' mt-4'}>Reset text</button>
                       {boxReset}
@@ -1414,6 +1434,14 @@ export default function CamiDesigner() {
                 if (!selSec) return <p className="mt-4 text-sm text-ink-soft">Click a section, photo or text on your site to design it.</p>
                 const bgKey = selSec === 'hero' ? 'top' : selSec
                 const secNm = SEC_NAME[selSec] ?? selSec
+                const addAddon = (t: 'text' | 'photo' | 'button') => void commit((n) => {
+                  const x = (n.site_settings = n.site_settings ?? {})
+                  const arr: any[] = Array.isArray(x.addons) ? [...x.addons] : []
+                  let k: string | undefined
+                  if (t !== 'photo') { const used = new Set(arr.map((a) => a?.k)); for (let i = 1; i <= 16; i++) if (!used.has('ax' + i)) { k = 'ax' + i; break }; if (!k) return }
+                  arr.push({ id: 'a' + Date.now().toString(36), sec: selSec, t, ...(k ? { k } : {}), ...(t === 'text' ? { text: 'Your text here' } : t === 'button' ? { text: 'Button', url: '' } : {}) })
+                  x.addons = arr
+                })
                 return (
                   <div className="mt-4">
                     <p className="font-fraunces text-lg font-semibold text-ink">{secNm}</p>
@@ -1422,6 +1450,12 @@ export default function CamiDesigner() {
                     {Object.entries((set.boxFx ?? {}) as Record<string, any>).some(([k, v]) => v?.h && (k.startsWith('t:' + selSec + ':') || k.startsWith('r:' + selSec + ':') || k.startsWith('f:' + selSec + ':') || k === 'f:' + selSec)) && (
                       <button type="button" className={btn + ' mt-3'} onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; for (const k of Object.keys(m)) if (m[k]?.h && (k.startsWith('t:' + selSec + ':') || k.startsWith('r:' + selSec + ':') || k.startsWith('f:' + selSec + ':') || k === 'f:' + selSec)) delete m[k]; x.boxFx = m }) }}>Bring back removed items</button>
                     )}
+                    <p className="mt-5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Add to this section</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {([['text', 'Text box'], ['button', 'Button'], ['photo', 'Photo']] as const).filter(([t]) => !(t === 'photo' && selSec === 'hero')).map(([t, lb]) => (
+                        <button key={t} type="button" className={btn} onClick={() => addAddon(t)}>+ {lb}</button>
+                      ))}
+                    </div>
                   </div>
                 )
               })()}
