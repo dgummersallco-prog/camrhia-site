@@ -94,11 +94,12 @@ function Namib(p: P) {
   const cur = p.items[i] ?? p.items[0]
   const rows = p.items.slice(0, 3)
   return (
-    <div className="grid md:grid-cols-[44.4%_1fr] md:aspect-[2/1]" style={{ ...bleed }}>
+    <div style={{ ...bleed, background: '#ebe7e1', padding: '4px 0' }}>
+    <div className="grid md:grid-cols-[44.4%_1fr] md:aspect-[2/1]">
       <a href={cur?.href} className="group relative block min-h-[360px]" style={{ textDecoration: 'none' }}>
         <Ph u={cur?.u ?? null} ratio="787/887" style={{ position: 'absolute', inset: 0, height: '100%', aspectRatio: 'auto' }} />
       </a>
-      <div className="flex flex-col" style={{ padding: 'clamp(16px,2.4vw,42px) clamp(16px,3.3vw,58px) clamp(16px,3vw,48px) clamp(16px,4vw,71px)' }}>
+      <div className="flex flex-col" style={{ background: p.bg || '#f8f4ee', padding: 'clamp(16px,2.4vw,42px) clamp(16px,3.3vw,58px) clamp(16px,3vw,48px) clamp(16px,4vw,71px)' }}>
         <p data-name="Section title" className="el-gs_title" style={{ ...p.headStyle, color: p.accent, fontSize: 'clamp(0.8rem,2vw,2rem)', letterSpacing: '0.5em', textTransform: 'uppercase', textAlign: 'right', margin: 0, fontWeight: 400 }}>{p.title}</p>
         <div className="flex flex-1 flex-col" style={{ marginTop: 'clamp(8px,1.2vw,22px)' }}>
           {rows.map((g, k) => (
@@ -109,6 +110,7 @@ function Namib(p: P) {
           ))}
         </div>
       </div>
+    </div>
     </div>
   )
 }

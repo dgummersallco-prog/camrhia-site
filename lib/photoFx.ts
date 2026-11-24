@@ -222,7 +222,7 @@ export function applyBtnFx(map: Record<string, BtnFx> | undefined | null) {
   }
 }
 
-export type BoxFx = { x?: number; y?: number; s?: number; h?: number }
+export type BoxFx = { x?: number; y?: number; s?: number; h?: number; w?: number }
 
 export const TXT_SEL = 'h1, [class^="el-"], [class*=" el-"], ' + BTN_SEL
 
@@ -309,7 +309,14 @@ export function setBox(el: HTMLElement, f: BoxFx | undefined) {
     return
   }
   if (el.dataset.bxh !== undefined) { st.display = el.dataset.bxh; delete el.dataset.bxh }
-  const has = !!f && (Math.abs(Number(f.x) || 0) > 0.001 || Math.abs(Number(f.y) || 0) > 0.001 || Math.abs((Number(f.s) || 1) - 1) > 0.001)
+  const hasW = !!f && Number(f.w) > 0.5
+  if (!hasW && el.dataset.bxw !== undefined) { st.width = el.dataset.bxw; st.maxWidth = el.dataset.bxmw ?? ''; delete el.dataset.bxw; delete el.dataset.bxmw }
+  if (hasW) {
+    if (el.dataset.bxw === undefined) { el.dataset.bxw = st.width; el.dataset.bxmw = st.maxWidth }
+    st.width = Number(f!.w) + 'vw'
+    st.maxWidth = 'none'
+  }
+  const has = hasW || !!f && (Math.abs(Number(f.x) || 0) > 0.001 || Math.abs(Number(f.y) || 0) > 0.001 || Math.abs((Number(f.s) || 1) - 1) > 0.001)
   if (!has) {
     if (el.dataset.bxfx !== undefined) {
       st.removeProperty('translate')

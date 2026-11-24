@@ -30,6 +30,7 @@ export function installPreviewPick(): () => void {
   }
 
   const onOver = (e: MouseEvent) => {
+    if (e.buttons) { box.style.display = 'none'; return }
     const t = e.target as HTMLElement | null
     const hit = t ? nameOf(t) : null
     if (!hit) { box.style.display = 'none'; return }
@@ -45,11 +46,13 @@ export function installPreviewPick(): () => void {
     tag.style.marginTop = r.top < 28 ? '3px' : '0'
   }
   const hide = () => { box.style.display = 'none' }
+  document.addEventListener('pointerdown', hide, true)
 
   const onClick = (e: MouseEvent) => {
     const t = e.target as HTMLElement | null
     if (!t || !t.closest) return
     if (editing(t)) { e.preventDefault(); return }
+    if (e.shiftKey) return
     const hit = nameOf(t)
     if (!hit || !hit.editable) return
     if (hit.el.closest(BTN_SEL)) return
@@ -71,6 +74,7 @@ export function installPreviewPick(): () => void {
   return () => {
     document.removeEventListener('mouseover', onOver, true)
     document.removeEventListener('scroll', hide, true)
+    document.removeEventListener('pointerdown', hide, true)
     document.removeEventListener('click', onClick, true)
     css.remove()
     box.remove()

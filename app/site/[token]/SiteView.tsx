@@ -83,7 +83,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   useEffect(() => installPreviewGlow(), [])
   useEffect(() => installPreviewPick(), [])
   useEffect(() => installPreviewSections(), [])
-  useEffect(() => { applyPhotoFx((r as any).site_settings?.photoFx, (r as any).site_settings?.slotPics, photoUrl); applyBtnFx((r as any).site_settings?.btnFx); applyBoxFx((r as any).site_settings?.boxFx); applySecAccent((r as any).site_settings?.secStyle, accent) })
+  useEffect(() => { applyPhotoFx((r as any).site_settings?.photoFx, (r as any).site_settings?.slotPics, photoUrl); applyBtnFx((r as any).site_settings?.btnFx); applyBoxFx((r as any).site_settings?.boxFx); document.body.dataset.camGroups = JSON.stringify((r as any).site_settings?.boxGroups ?? []); applySecAccent((r as any).site_settings?.secStyle, accent) })
 
   const t = resolveTheme(r)
   const { tpl, accent, ink, soft, line, bg, tint } = t
@@ -322,8 +322,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const fsr = (v: string, rem: number) => `calc(${rem}rem * var(--${v}, 1))`
   const fsp = (v: string, px: number) => `calc(${px}px * var(--${v}, 1))`
 
-  const sec = (id: string, title: string | null, children: React.ReactNode, tinted: boolean, flush = false) => (
-    <section id={id} className="scroll-mt-16 px-6" style={{ background: tinted ? tint : undefined, paddingTop: flush ? 0 : 'var(--space)', paddingBottom: flush ? 0 : 'var(--space)' }}>
+  const sec = (id: string, title: string | null, children: React.ReactNode, tinted: boolean, flush = false, base?: string) => (
+    <section id={id} className={'scroll-mt-16' + (title === null && page === 'home' ? '' : ' px-6')} style={{ background: tinted ? tint : base, paddingTop: flush || (title === null && page === 'home') ? 0 : 'var(--space)', paddingBottom: flush || (title === null && page === 'home') ? 0 : 'var(--space)' }}>
       <div className="mx-auto max-w-6xl">
         {title && <h2 className="cr-sech mb-12 text-center" style={{ ...headStyle, fontSize: 'var(--sec-h)', lineHeight: 1.15 }}>{title}</h2>}
         {children}
@@ -564,7 +564,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const H = (st: any = {}) => <h2 className="el-about_title" style={{ ...headStyle, fontSize: 'clamp(1.9rem, 3.8vw, 3rem)', lineHeight: 1.08, ...st }}>{heading}</h2>
           const P = (list: string[], color: string = soft) => list.map((x, i) => <p key={i} className="el-about_text leading-[1.85]" style={{ color, fontSize: fsp('fs-about', 16) }}>{x}</p>)
           const dark = '#2b1f17'
-          const out = (node: React.ReactNode) => sec('about', null, node, tinted)
+          const out = (node: React.ReactNode) => sec('about', null, node, tinted, false, ad === 'saffron' ? '#ece8e4' : ad === 'cumin' ? '#ebe6e0' : undefined)
           const loves: string[] = Array.isArray(aboutSet?.loves) ? aboutSet.loves.filter(Boolean).slice(0, 5) : []
           const facts: { q: string; a: string }[] = Array.isArray(aboutSet?.facts) ? aboutSet.facts.filter((f: any) => f?.q).slice(0, 8) : []
           const stats: { n: string; l: string }[] = Array.isArray(aboutSet?.stats) ? aboutSet.stats.filter((f: any) => f?.n).slice(0, 4) : []
@@ -821,7 +821,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>)
           }
           if (ad === 'saffron') return out(
-            <div className="relative mx-auto grid max-w-6xl items-center overflow-hidden md:aspect-[2/1] md:block" style={{ background: '#ece8e4', color: dark }}>
+            <div className="relative mx-auto grid max-w-6xl items-center overflow-hidden md:aspect-[2/1] md:block" style={{ color: dark }}>
               <div className="relative min-h-[320px] overflow-hidden md:absolute md:[left:0] md:[top:0] md:[bottom:0] md:[width:47.5%] md:[-webkit-mask-image:linear-gradient(to_right,#000_86%,transparent)] md:[mask-image:linear-gradient(to_right,#000_86%,transparent)]" style={{ background: 'transparent' }}>
                 {main ? img() : (
                   <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="400" height="300" fill="#d8d0c6" /><circle cx="290" cy="80" r="20" fill="#b8aa98" opacity="0.55" /><path d="M0 300 L110 120 L180 210 L260 100 L400 300 Z" fill="#b8aa98" opacity="0.8" /></svg>
@@ -837,7 +837,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
               </div>
             </div>)
           if (ad === 'cumin') return out(
-            <div className="mx-auto flex max-w-6xl flex-col items-center justify-center text-center md:aspect-[2/1]" style={{ background: '#ebe6e0', color: dark, padding: 'clamp(24px, 3.2vw, 48px) 16px clamp(24px, 3vw, 44px)' }}>
+            <div className="mx-auto flex max-w-6xl flex-col items-center justify-center text-center md:aspect-[2/1]" style={{ color: dark, padding: 'clamp(24px, 3.2vw, 48px) 16px clamp(24px, 3vw, 44px)' }}>
               <div className="relative shrink-0 overflow-hidden" style={{ width: 'clamp(150px, 21.2vw, 376px)', aspectRatio: '1 / 1', borderRadius: '9999px', background: '#d8d0c6' }}>
                 {main ? img() : (
                   <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="200" height="200" fill="#d8d0c6" /><circle cx="140" cy="62" r="14" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L58 92 L98 146 L136 84 L200 200 Z" fill="#b8aa98" opacity="0.8" /></svg>
@@ -958,7 +958,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
         })
-        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items2, gs2)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gs2 === 'sonora')
+        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items2, gs2)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gs2 === 'sonora' || gs2 === 'namib')
       }
       case 'portfolio': {
         const rawGal = (r as any).site_settings?.galindex?.layout
@@ -970,7 +970,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
             return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
           })
-          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items, gsd)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gsd === 'sonora')
+          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items, gsd)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gsd === 'sonora' || gsd === 'namib')
         }
         const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
         const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'

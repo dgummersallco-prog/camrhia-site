@@ -493,8 +493,18 @@ export default function CamiDesigner() {
           const s = (n.site_settings = n.site_settings ?? {})
           if (d.action === 'boxfx') {
             const bf: Record<string, any> = { ...(s.boxFx ?? {}) }
-            bf[d.id] = { x: Number(d.x), y: Number(d.y), s: Number(d.s), ...(d.h ? { h: 1 } : {}) }
+            bf[d.id] = { x: Number(d.x), y: Number(d.y), s: Number(d.s), ...(Number(d.w) > 0 ? { w: Number(d.w) } : {}), ...(d.h ? { h: 1 } : {}) }
             s.boxFx = bf
+            return
+          }
+          if (d.action === 'boxfxs' && Array.isArray(d.list)) {
+            const bf: Record<string, any> = { ...(s.boxFx ?? {}) }
+            for (const q of d.list as any[]) bf[String(q.id)] = { x: Number(q.x), y: Number(q.y), s: Number(q.s), ...(Number(q.w) > 0 ? { w: Number(q.w) } : {}), ...(q.h ? { h: 1 } : {}) }
+            s.boxFx = bf
+            return
+          }
+          if (d.action === 'groups') {
+            s.boxGroups = Array.isArray(d.list) ? d.list : []
             return
           }
           if (d.action === 'photofx') {
@@ -638,7 +648,7 @@ export default function CamiDesigner() {
   }
   const resetLook = (x: Record<string, any>) => {
     delete x.custom_css; delete x.custom_js; delete x.calendar; delete x.fonts; delete x.colors; delete x.button
-    delete x.el; delete x.btnFx; delete x.boxFx; delete x.photoFx; delete x.secStyle; delete x.secZoom; delete x.sizes
+    delete x.el; delete x.btnFx; delete x.boxFx; delete x.boxGroups; delete x.photoFx; delete x.secStyle; delete x.secZoom; delete x.sizes
     if (x.hero) { for (const k of Object.keys(x.hero)) if (/font|align|overlay|size|color|height|canvas|shape|weight|style|opacity/i.test(k)) delete x.hero[k] }
     if (x.menu) { for (const k of Object.keys(x.menu)) if (k !== 'brand') delete x.menu[k] }
     if (x.text) delete x.text.hero_btn
@@ -1354,6 +1364,7 @@ export default function CamiDesigner() {
                         <FontPick label="Font" hint="Just this text" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
                       </div>
                       <ColorRow label={nm + ' color'} value={el.color ?? pick.color} base={base} onLive={(c) => setElProp(pick.key, { color: c }, true)} onSet={(c) => setElProp(pick.key, { color: c })} />
+                      {pick.key === 'gs_title' && <ColorRow label="Behind the title and lines" value={ss.portfolio?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg('portfolio', c)} onSet={(c) => setSecBg('portfolio', c)} onReset={() => setSecBg('portfolio', null)} />}
                       <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={pick.key === 'hero_headline' ? 120 : 90} step={1} unit="px" onLive={(v) => setElProp(pick.key, { size: v }, true)} onDone={(v) => setElProp(pick.key, { size: v })} />
                       <SliderRow label={nm + ' opacity'} value={Math.round((Number(el.op) || pick.op || 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 }, true)} onDone={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 })} />
                       <button type="button" onClick={() => resetEl(pick.key)} className={btn + ' mt-4'}>Reset text</button>

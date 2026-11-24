@@ -1,5 +1,5 @@
 import { editing, startEdit } from './previewEdit'
-import { rootOf, rootKey, photosIn, photoId, heroOne, visualOf, BTN_SEL, buttonsIn, buttonId, boxesIn, boxId, rulesIn, ruleId, frameOf, setBox, TXT_SEL } from './photoFx'
+import { rootOf, rootKey, photosIn, photoId, heroOne, visualOf, BTN_SEL, buttonsIn, buttonId, boxesIn, boxId, rulesIn, ruleId, frameOf, setBox, TXT_SEL, roots } from './photoFx'
 
 export function installPreviewSections(): () => void {
   if (typeof window === 'undefined') return () => {}
@@ -160,6 +160,7 @@ export function installPreviewSections(): () => void {
       const bi = buttonsIn(root).indexOf(bt)
       if (bi >= 0) {
         e.preventDefault(); e.stopPropagation()
+        if (e.shiftKey) { const bl = boxesIn(root); const k = bl.findIndex((x) => x === bt || x.contains(bt)); if (k >= 0) addSel(bl[k], boxId(key, k), 'text'); return }
         clearSel()
         selectText(root, bt)
         { const tx0 = txOf(bt); if (tx0) startEdit(bt, { kind: 'btn', tx: tx0 }, e.clientX, e.clientY) }
@@ -167,7 +168,10 @@ export function installPreviewSections(): () => void {
         return
       }
     }
-    if (t.closest(TXT)) { clearSel(); selectText(root, t); return }
+    if (t.closest(TXT)) {
+      if (e.shiftKey) { e.preventDefault(); e.stopPropagation(); const bl = boxesIn(root); const k = bl.findIndex((x) => x === t || x.contains(t)); if (k >= 0) addSel(bl[k], boxId(key, k), 'text'); return }
+      clearSel(); selectText(root, t); return
+    }
     const ru = ruleAt(root, e.clientX, e.clientY)
     if (ru) {
       e.preventDefault(); e.stopPropagation()
@@ -179,6 +183,7 @@ export function installPreviewSections(): () => void {
     const hit = photoAt(e.clientX, e.clientY)
     if (!hit || hit.key !== key) { clearSel(); setBoxSel(null, '', 'text'); post({ action: 'select', key, bg: effBg(root) }); return }
     e.preventDefault(); e.stopPropagation()
+    if (e.shiftKey && !heroOne(root)) { addSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, hit.idx), 'frame'); return }
     const again = !!selPhoto && selPhoto.key === hit.key && selPhoto.idx === hit.idx
     clearSel()
     selPhoto = hit
@@ -338,46 +343,131 @@ export function installPreviewSections(): () => void {
     bx.appendChild(h)
     return h
   }
-  mkH('nw', 'nwse-resize', 'left:-8px;top:-8px')
-  mkH('ne', 'nesw-resize', 'right:-8px;top:-8px')
-  mkH('sw', 'nesw-resize', 'left:-8px;bottom:-8px')
-  mkH('se', 'nwse-resize', 'right:-8px;bottom:-8px')
-  const mv = document.createElement('div')
-  mv.dataset.c = 'move'
-  mv.textContent = 'Move'
-  mv.style.cssText = 'position:absolute;left:50%;top:-32px;transform:translateX(-50%);background:#8C6B3F;color:#fff;font:600 11px system-ui,sans-serif;padding:5px 11px;border-radius:9px;cursor:move;pointer-events:auto;box-shadow:0 2px 8px rgba(0,0,0,.3)'
-  bx.appendChild(mv)
-  const xb = document.createElement('div')
-  xb.dataset.c = 'del'
-  xb.textContent = '\u00d7'
-  xb.style.cssText = 'position:absolute;right:-8px;top:-32px;width:24px;height:24px;line-height:22px;text-align:center;background:#fff;color:#b3261e;font:700 17px system-ui,sans-serif;border:2px solid #d9a21b;border-radius:50%;cursor:pointer;pointer-events:auto;box-shadow:0 2px 8px rgba(0,0,0,.25)'
-  bx.appendChild(xb)
+  const cornerH = [
+    mkH('nw', 'nwse-resize', 'left:-8px;top:-8px'),
+    mkH('ne', 'nesw-resize', 'right:-8px;top:-8px'),
+    mkH('sw', 'nesw-resize', 'left:-8px;bottom:-8px'),
+    mkH('se', 'nwse-resize', 'right:-8px;bottom:-8px'),
+  ]
+  const sideH = [
+    mkH('w', 'ew-resize', 'left:-8px;top:calc(50% - 7px)'),
+    mkH('e', 'ew-resize', 'right:-8px;top:calc(50% - 7px)'),
+  ]
+  const tb = document.createElement('div')
+  tb.style.cssText = 'position:absolute;right:-1.5px;top:-26px;height:26px;display:flex;align-items:stretch;background:#1f1a14;border-radius:7px 7px 0 0;overflow:hidden;pointer-events:auto'
+  const tbBtn = (c: string, title: string, d: string) => {
+    const b = document.createElement('div')
+    b.dataset.c = c
+    b.title = title
+    b.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="' + d + '"/></svg>'
+    b.style.cssText = 'width:30px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:' + (c === 'move' ? 'move' : 'pointer')
+    tb.appendChild(b)
+    return b
+  }
+  const gb = document.createElement('div')
+  gb.dataset.c = 'grp'
+  gb.style.cssText = 'display:none;align-items:center;padding:0 11px;color:#fff;font:600 11px system-ui,sans-serif;cursor:pointer;border-right:1px solid rgba(255,255,255,.22);white-space:nowrap'
+  tb.appendChild(gb)
+  const mv = tbBtn('move', 'Move', 'M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20')
+  const xb = tbBtn('del', 'Remove', 'M6 6l12 12M18 6L6 18')
+  bx.appendChild(tb)
   document.body.appendChild(bx)
+  let extras: Sel[] = []
+  const xbs: HTMLElement[] = []
+  const allSel = (): Sel[] => (selBox ? [selBox, ...extras] : [])
+  const groupsNow = (): string[][] => { try { const v = JSON.parse(document.body.dataset.camGroups || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } }
+  const isGroupSel = () => {
+    const ids = allSel().map((q) => q.id)
+    return groupsNow().some((g) => g.length === ids.length && ids.every((i) => g.includes(i)))
+  }
+  const byId = (id: string): Sel | null => {
+    for (const root of roots()) {
+      const key = rootKey(root)
+      if (!key) continue
+      const bl = boxesIn(root)
+      for (let i = 0; i < bl.length; i++) if (boxId(key, i) === id) return { el: bl[i], id, kind: 'text' }
+      const rl = rulesIn(root)
+      for (let i = 0; i < rl.length; i++) if (ruleId(key, i) === id) return { el: rl[i], id, kind: 'text' }
+      if (!heroOne(root)) { const ps = photosIn(root); for (let i = 0; i < ps.length; i++) if ('f:' + photoId(key, i) === id) return { el: frameOf(visualOf(ps[i]), root), id, kind: 'frame' } }
+    }
+    return null
+  }
+  const groupMates = (id: string): Sel[] => {
+    const g = groupsNow().find((q) => q.includes(id))
+    if (!g) return []
+    return g.filter((q) => q !== id).map(byId).filter((q): q is Sel => !!q)
+  }
   const layoutBox = () => {
     if (!selBox || !document.body.contains(selBox.el)) { bx.style.display = 'none'; return }
     const r = selBox.el.getBoundingClientRect()
     if (r.width < 4 || r.height < 4) { bx.style.display = 'none'; return }
     bx.style.display = 'block'
     bx.style.left = r.left + 'px'; bx.style.top = r.top + 'px'; bx.style.width = r.width + 'px'; bx.style.height = r.height + 'px'
-    mv.style.display = selBox.kind === 'frame' ? 'block' : 'none'
-    mv.style.top = r.top < 40 ? 'auto' : '-32px'
-    mv.style.bottom = r.top < 40 ? '-32px' : 'auto'
-    xb.style.top = r.top < 40 ? 'auto' : '-32px'
-    xb.style.bottom = r.top < 40 ? '-32px' : 'auto'
+    const multi = extras.length > 0
+    mv.style.display = selBox.kind === 'frame' ? 'flex' : 'none'
+    cornerH.forEach((h) => { h.style.display = !multi && selBox!.kind === 'frame' ? 'block' : 'none' })
+    sideH.forEach((h) => { h.style.display = !multi && selBox!.kind === 'text' ? 'block' : 'none' })
+    gb.style.display = multi ? 'flex' : 'none'
+    if (multi) gb.textContent = isGroupSel() ? 'Ungroup' : 'Group'
+    while (xbs.length < extras.length) { const d = document.createElement('div'); d.style.cssText = 'position:fixed;z-index:2147482000;border:1.5px solid #d9a21b;pointer-events:none'; document.body.appendChild(d); xbs.push(d) }
+    xbs.forEach((d, i) => {
+      const x = extras[i]
+      if (!x || !document.body.contains(x.el)) { d.style.display = 'none'; return }
+      const q = x.el.getBoundingClientRect()
+      d.style.display = 'block'
+      d.style.left = q.left + 'px'; d.style.top = q.top + 'px'; d.style.width = q.width + 'px'; d.style.height = q.height + 'px'
+    })
+    const lo = r.top < 40
+    tb.style.top = lo ? 'auto' : '-26px'
+    tb.style.bottom = lo ? '-26px' : 'auto'
+    tb.style.borderRadius = lo ? '0 0 7px 7px' : '7px 7px 0 0'
   }
   const hideSelected = () => {
     if (!selBox) return
     const sl = selBox
+    if (extras.length > 0) {
+      const list = allSel().map((q) => { const f0 = curFx(q.el); setBox(q.el, { ...f0, h: 1 }); return { id: q.id, x: f0.x, y: f0.y, s: f0.s, w: f0.w, h: 1 } })
+      post({ action: 'boxfxs', list })
+      selBox = null
+      extras = []
+      post({ action: 'box', id: '' })
+      layoutBox()
+      return
+    }
     const f = curFx(sl.el)
     setBox(sl.el, { ...f, h: 1 })
-    post({ action: 'boxfx', id: sl.id, x: f.x, y: f.y, s: f.s, h: 1 })
+    post({ action: 'boxfx', id: sl.id, x: f.x, y: f.y, s: f.s, w: f.w, h: 1 })
     selBox = null
     post({ action: 'box', id: '' })
     layoutBox()
   }
   const setBoxSel = (el: HTMLElement | null, id: string, kind: 'text' | 'frame') => {
     selBox = el ? { el, id, kind } : null
+    extras = el ? groupMates(id) : []
     post({ action: 'box', id: el ? id : '' })
+    layoutBox()
+  }
+  const addSel = (el: HTMLElement, id: string, kind: 'text' | 'frame') => {
+    if (!selBox) { setBoxSel(el, id, kind); return }
+    const cur = allSel()
+    if (cur.some((q) => q.id === id)) {
+      const rest = cur.filter((q) => q.id !== id)
+      selBox = rest[0] ?? null
+      extras = rest.slice(1)
+      post({ action: 'box', id: selBox ? selBox.id : '' })
+    } else {
+      extras = [...extras, { el, id, kind }, ...groupMates(id).filter((m) => !cur.some((q) => q.id === m.id))]
+    }
+    layoutBox()
+  }
+  const toggleGroup = () => {
+    const ids = allSel().map((q) => q.id)
+    let gs = groupsNow()
+    const same = gs.findIndex((g) => g.length === ids.length && ids.every((i) => g.includes(i)))
+    if (same >= 0) gs = gs.filter((_, i) => i !== same)
+    else gs = [...gs.map((g) => g.filter((i) => !ids.includes(i))).filter((g) => g.length > 1), ids]
+    document.body.dataset.camGroups = JSON.stringify(gs)
+    post({ action: 'groups', list: gs })
     layoutBox()
   }
   const ruleAt = (root: HTMLElement, x: number, y: number): { el: HTMLElement; id: string } | null => {
@@ -399,9 +489,16 @@ export function installPreviewSections(): () => void {
   }
   const curFx = (el: HTMLElement) => {
     const m = /(-?[\d.]+)vw\s+(-?[\d.]+)vw/.exec(el.style.getPropertyValue('translate') || '')
-    return { x: m ? Number(m[1]) : 0, y: m ? Number(m[2]) : 0, s: Number(el.style.getPropertyValue('scale')) || 1 }
+    const mw = el.dataset.bxw !== undefined ? /(-?[\d.]+)vw/.exec(el.style.width || '') : null
+    return { x: m ? Number(m[1]) : 0, y: m ? Number(m[2]) : 0, s: Number(el.style.getPropertyValue('scale')) || 1, w: mw ? Number(mw[1]) : 0 }
   }
-  let g: { mode: 'rs' | 'mv'; sel: Sel; x0: number; y0: number; fx: { x: number; y: number; s: number }; cx: number; cy: number; d0: number; moved: boolean; root: HTMLElement | null; tg: Tg | null } | null = null
+  type Fx = { x: number; y: number; s: number; w: number }
+  let g: { mode: 'rs' | 'mv' | 'rw'; sel: Sel; x0: number; y0: number; fx: Fx; cx: number; cy: number; d0: number; moved: boolean; root: HTMLElement | null; tg: Tg | null; others: { sel: Sel; fx: Fx }[]; side: string; l0: number; r0: number; w0: number } | null = null
+  const othersFor = (sel: Sel): { sel: Sel; fx: Fx }[] => {
+    const cur = allSel()
+    const mates = cur.some((q) => q.id === sel.id) ? cur.filter((q) => q.id !== sel.id) : groupMates(sel.id)
+    return mates.map((q) => ({ sel: q, fx: curFx(q.el) }))
+  }
   const vwPx = () => Math.max(1, document.documentElement.clientWidth) / 100
   const onGDown = (e: PointerEvent) => {
     if (e.button !== 0) return
@@ -410,12 +507,14 @@ export function installPreviewSections(): () => void {
     if (editing(t)) return
     const hd = t.closest('#cam-box [data-c]') as HTMLElement | null
     if (hd && hd.dataset.c === 'del') { e.preventDefault(); hideSelected(); return }
+    if (hd && hd.dataset.c === 'grp') { e.preventDefault(); toggleGroup(); return }
     if (hd && selBox) {
       e.preventDefault()
       const r = selBox.el.getBoundingClientRect()
       const cx = r.left + r.width / 2
       const cy = r.top + r.height / 2
-      g = { mode: hd.dataset.c === 'move' ? 'mv' : 'rs', sel: selBox, x0: e.clientX, y0: e.clientY, fx: curFx(selBox.el), cx, cy, d0: Math.max(8, Math.hypot(e.clientX - cx, e.clientY - cy)), moved: true, root: rootOf(selBox.el), tg: null }
+      const c = hd.dataset.c as string
+      g = { mode: c === 'move' ? 'mv' : c === 'w' || c === 'e' ? 'rw' : 'rs', sel: selBox, x0: e.clientX, y0: e.clientY, fx: curFx(selBox.el), cx, cy, d0: Math.max(8, Math.hypot(e.clientX - cx, e.clientY - cy)), moved: true, root: rootOf(selBox.el), tg: null, others: c === 'move' ? othersFor(selBox) : [], side: c, l0: r.left, r0: r.right, w0: selBox.el.offsetWidth / vwPx() }
       document.body.style.userSelect = 'none'
       return
     }
@@ -425,7 +524,7 @@ export function installPreviewSections(): () => void {
     if (root && !tb) {
       const ru = ruleAt(root, e.clientX, e.clientY)
       if (ru) {
-        g = { mode: 'mv', sel: { el: ru.el, id: ru.id, kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(ru.el), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null }
+        g = { mode: 'mv', sel: { el: ru.el, id: ru.id, kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(ru.el), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null, others: othersFor({ el: ru.el, id: ru.id, kind: 'text' }), side: '', l0: 0, r0: 0, w0: 0 }
         return
       }
     }
@@ -434,7 +533,7 @@ export function installPreviewSections(): () => void {
     const list = boxesIn(root)
     const i = list.findIndex((x) => x === tb || x.contains(tb))
     if (i < 0) return
-    g = { mode: 'mv', sel: { el: list[i], id: boxId(key, i), kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(list[i]), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null }
+    g = { mode: 'mv', sel: { el: list[i], id: boxId(key, i), kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(list[i]), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null, others: othersFor({ el: list[i], id: boxId(key, i), kind: 'text' }), side: '', l0: 0, r0: 0, w0: 0 }
   }
   const onGMove = (e: PointerEvent) => {
     if (!g) return
@@ -445,20 +544,27 @@ export function installPreviewSections(): () => void {
     if (g.mode === 'mv') {
       let nx = g.fx.x + dx / vwPx()
       let ny = g.fx.y + dy / vwPx()
-      setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s })
+      setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s, w: g.fx.w })
       if (g.root) {
         if (!g.tg) g.tg = targetsFor(g.sel, g.root)
         const sn = snapOf(g.sel.el, g.tg)
         if (sn.dx !== null || sn.dy !== null) {
           nx += (sn.dx ?? 0) / vwPx()
           ny += (sn.dy ?? 0) / vwPx()
-          setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s })
+          setBox(g.sel.el, { x: nx, y: ny, s: g.fx.s, w: g.fx.w })
         }
         drawGuides(sn, g.root)
       }
+      for (const o of g.others) setBox(o.sel.el, { x: o.fx.x + (nx - g.fx.x), y: o.fx.y + (ny - g.fx.y), s: o.fx.s, w: o.fx.w })
+    } else if (g.mode === 'rw') {
+      const nw = Math.max(4, g.w0 + (g.side === 'e' ? 1 : -1) * dx / vwPx())
+      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: g.fx.s, w: nw })
+      const rr = g.sel.el.getBoundingClientRect()
+      const corr = g.side === 'e' ? g.l0 - rr.left : g.r0 - rr.right
+      setBox(g.sel.el, { x: g.fx.x + corr / vwPx(), y: g.fx.y, s: g.fx.s, w: nw })
     } else {
       const d = Math.hypot(e.clientX - g.cx, e.clientY - g.cy)
-      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: Math.min(6, Math.max(0.2, g.fx.s * (d / g.d0))) })
+      setBox(g.sel.el, { x: g.fx.x, y: g.fx.y, s: Math.min(6, Math.max(0.2, g.fx.s * (d / g.d0))), w: g.fx.w })
     }
     layoutBox()
   }
@@ -476,7 +582,9 @@ export function installPreviewSections(): () => void {
     window.addEventListener('click', kill, true)
     setTimeout(() => window.removeEventListener('click', kill, true), 60)
     post({ action: 'box', id: d.sel.id })
-    post({ action: 'boxfx', id: d.sel.id, x: Math.round(f.x * 100) / 100, y: Math.round(f.y * 100) / 100, s: Math.round(f.s * 1000) / 1000 })
+    const rec = (id: string, q: { x: number; y: number; s: number; w: number }) => ({ id, x: Math.round(q.x * 100) / 100, y: Math.round(q.y * 100) / 100, s: Math.round(q.s * 1000) / 1000, w: Math.round(q.w * 100) / 100 })
+    if (d.others.length > 0) post({ action: 'boxfxs', list: [rec(d.sel.id, f), ...d.others.map((o) => rec(o.sel.id, curFx(o.sel.el)))] })
+    else post({ action: 'boxfx', ...rec(d.sel.id, f) })
   }
   const onHDown = (e: PointerEvent) => {
     const h = (e.target as HTMLElement).closest('.cam-h') as HTMLElement | null
