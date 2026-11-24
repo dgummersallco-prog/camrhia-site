@@ -199,7 +199,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const slotPics = (((r as any).site_settings?.slotPics ?? {}) as Record<string, string>)
   const curSec = { k: '' }
   const spo = (id: string, k: number, d: any): any => (slotPics[id + ':' + k] ? photoUrl(slotPics[id + ':' + k]) : null) || d
-  const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; text?: string; head?: string; body?: string; title?: string; titleFont?: string }>)
+  const secStyles = (((r as any).site_settings?.secStyle ?? {}) as Record<string, { bg?: string; accent?: string; text?: string; head?: string; body?: string; title?: string; titleFont?: string }>)
   const famOf = (k?: string) => (k && FONT_OPTIONS[k] ? FONT_OPTIONS[k].family : null)
   const hexOk = (v?: string) => (v && /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : null)
   const pageBg = page === 'galleries' ? hexOk(secStyles.portfolio?.bg) : page === 'about' ? hexOk(secStyles.about?.bg) : null
@@ -322,8 +322,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
   const fsr = (v: string, rem: number) => `calc(${rem}rem * var(--${v}, 1))`
   const fsp = (v: string, px: number) => `calc(${px}px * var(--${v}, 1))`
 
-  const sec = (id: string, title: string | null, children: React.ReactNode, tinted: boolean) => (
-    <section id={id} className="scroll-mt-16 px-6" style={{ background: tinted ? tint : undefined, paddingTop: 'var(--space)', paddingBottom: 'var(--space)' }}>
+  const sec = (id: string, title: string | null, children: React.ReactNode, tinted: boolean, flush = false) => (
+    <section id={id} className="scroll-mt-16 px-6" style={{ background: tinted ? tint : undefined, paddingTop: flush ? 0 : 'var(--space)', paddingBottom: flush ? 0 : 'var(--space)' }}>
       <div className="mx-auto max-w-6xl">
         {title && <h2 className="cr-sech mb-12 text-center" style={{ ...headStyle, fontSize: 'var(--sec-h)', lineHeight: 1.15 }}>{title}</h2>}
         {children}
@@ -958,7 +958,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
           const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
           return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
         })
-        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items2, gs2)} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
+        return sec('portfolio', GALOWN.includes(gs2) ? null : t.titles.portfolio, <GalleriesSection design={gs2} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items2, gs2)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gs2 === 'sonora')
       }
       case 'portfolio': {
         const rawGal = (r as any).site_settings?.galindex?.layout
@@ -970,7 +970,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             const cover = g.photos.find((p: any) => p.id === g.cover_photo_id) ?? g.photos[0]
             return { id: String(g.id), title: String(g.title ?? ''), line: String(g.line ?? ''), u: (photoUrl(cover?.storage_path) as string | null) ?? null, href: `${base}/g/${g.id}${qs}`, n: (g.photos ?? []).length }
           })
-          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items, gsd)} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false)
+          return sec('portfolio', GALOWN.includes(gsd) ? null : t.titles.portfolio, <GalleriesSection design={gsd} title={String((r as any).site_settings?.text?.gs_title ?? 'Galleries')} items={padGal(items, gsd)} bg={hexOk(secStyles.portfolio?.bg) ?? undefined} viewHref={hrefs.galleries} viewText="View all galleries" headStyle={headStyle} ink={ink} soft={soft} accent={accent} line={line} />, false, gsd === 'sonora')
         }
         const rad = t.portfolio.radius === 'round' ? 28 : t.portfolio.radius === 'soft' ? 14 : 0
         const gapX = t.portfolio.spacing === 'tight' ? '6px' : t.portfolio.spacing === 'airy' ? 'calc(var(--gap) + 36px)' : 'calc(var(--gap) + 8px)'
@@ -2002,8 +2002,8 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                       <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(18,12,10,0.82), rgba(18,12,10,0) 40%)' }} />
                       <div className="absolute" style={{ left: '8%', right: '6%', bottom: '5.5%' }}>
                         <div className="flex items-center" style={{ gap: 'clamp(8px, 1.4vw, 18px)' }}>
-                          <span style={{ ...headStyle, color: '#c9a35a', fontSize: 'clamp(1.2rem, 2.6vw, 2.2rem)', lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</span>
-                          <span style={{ display: 'block', height: 2, width: 'clamp(40px, 6.2vw, 80px)', background: '#c9a35a' }} />
+                          <span style={{ ...headStyle, color: hexOk(secStyles.explore?.accent) || '#c9a35a', fontSize: 'clamp(1.2rem, 2.6vw, 2.2rem)', lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</span>
+                          <span style={{ display: 'block', height: 2, width: 'clamp(40px, 6.2vw, 80px)', background: hexOk(secStyles.explore?.accent) || '#c9a35a' }} />
                         </div>
                         <p className="ex-t el-ex_title" style={{ ...headStyle, color: '#f2e8d8', fontSize: 'clamp(2rem, 4.8vw, 3.8rem)', lineHeight: 1.05, marginTop: 'clamp(2px, 0.5vw, 8px)' }}>{b.t}</p>
                       </div>

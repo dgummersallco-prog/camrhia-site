@@ -249,7 +249,7 @@ function ColorRow({ label, value, base, cur, onLive, onSet, onReset }: { label: 
       <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-left text-sm text-ink">
         <span className="flex items-center gap-2">
           <span className="h-5 w-5 rounded-full border border-black/15" style={{ background: shown ?? 'repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 8px 8px' }} />
-          {ok ? (value as string).toUpperCase() : shown ? 'Default ' + shown.toUpperCase() : 'Default'}
+          {ok ? (value as string).toUpperCase() : shown ? shown.toUpperCase() : ''}
         </span>
         <span className="text-xs text-ink-soft">{open ? 'Close' : 'Change'}</span>
       </button>
@@ -487,13 +487,13 @@ export default function CamiDesigner() {
       if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelSec(String(d.key)); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); return }
       if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? ''), cbg: typeof d.cbg === 'string' ? d.cbg : '', ccolor: typeof d.ccolor === 'string' ? d.ccolor : '' }); setLeftTab('design'); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); setLeftTab('design'); if (!d.again) setSlot({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); return }
+      if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); setLeftTab('design'); if (d.open) setSlot({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
         commitRef.current?.((n) => {
           const s = (n.site_settings = n.site_settings ?? {})
           if (d.action === 'boxfx') {
             const bf: Record<string, any> = { ...(s.boxFx ?? {}) }
-            bf[d.id] = { x: Number(d.x), y: Number(d.y), s: Number(d.s) }
+            bf[d.id] = { x: Number(d.x), y: Number(d.y), s: Number(d.s), ...(d.h ? { h: 1 } : {}) }
             s.boxFx = bf
             return
           }
@@ -1272,7 +1272,7 @@ export default function CamiDesigner() {
 
   return (
     <div className="bld fixed inset-0 z-[60] flex bg-[#efeae4] text-ink">
-      <aside className={(full ? 'hidden' : 'flex') + ' w-[400px] shrink-0 flex-col border-r border-black/10 bg-white'}>
+      <aside className={(full ? 'hidden' : 'flex') + ' w-[320px] shrink-0 flex-col border-r border-black/10 bg-white'}>
         <div className="flex items-center justify-between px-5 pb-2 pt-5">
           <div className="flex items-center gap-2">
             <button type="button" aria-label="Back to dashboard" onClick={() => router.push('/dashboard')} className="flex h-9 items-center gap-1 rounded-full px-3 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink">← Dashboard</button>
@@ -1399,6 +1399,9 @@ export default function CamiDesigner() {
                     <p className="font-fraunces text-lg font-semibold text-ink">{secNm}</p>
                     <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg(bgKey, c)} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
                     <ColorRow label={secNm + ' accent color'} value={ss[bgKey]?.accent} cur={accent} base={base} onLive={(c) => liveSecAcc(bgKey, c)} onSet={(c) => setSecAcc(bgKey, c)} onReset={() => setSecAcc(bgKey, null)} />
+                    {Object.entries((set.boxFx ?? {}) as Record<string, any>).some(([k, v]) => v?.h && (k.startsWith('t:' + selSec + ':') || k.startsWith('r:' + selSec + ':') || k.startsWith('f:' + selSec + ':') || k === 'f:' + selSec)) && (
+                      <button type="button" className={btn + ' mt-3'} onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; for (const k of Object.keys(m)) if (m[k]?.h && (k.startsWith('t:' + selSec + ':') || k.startsWith('r:' + selSec + ':') || k.startsWith('f:' + selSec + ':') || k === 'f:' + selSec)) delete m[k]; x.boxFx = m }) }}>Bring back removed items</button>
+                    )}
                   </div>
                 )
               })()}
@@ -1472,30 +1475,18 @@ export default function CamiDesigner() {
             </div>
           )}
 
-          <div className="relative flex h-[190px] shrink-0 flex-col bg-[#faf7f3]">
-            <div className="flex items-center gap-2 px-5 pt-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/13_face_avatar.png" alt="" className="h-9 w-9 rounded-full" />
-              <p className="font-fraunces text-xl font-semibold text-ink">Camri</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[43px] right-6 z-10 h-14 w-auto" />
-            </div>
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-3">
-              {msgs.map((m, i) => (
-                <div key={i} className={'max-w-[88%] rounded-2xl px-4 py-2.5 text-sm ' + (m.from === 'you' ? 'ml-auto ' + ACC + ' text-white' : 'bg-white text-ink shadow-sm')}>{m.text}</div>
-              ))}
-              {camBusy && <CamriTyping />}
-              <div ref={chatEnd} />
-            </div>
-            <div className="border-t border-black/10 px-5 pb-3 pt-3">
-              <div className="flex gap-1.5 overflow-x-auto whitespace-nowrap pb-1">
-                {['Make me a Christmas theme for December', 'Make my buttons glow on hover'].map((t) => <button key={t} type="button" className={chip + ' shrink-0'} onClick={() => send(t)}>{t}</button>)}
+          <div className="relative shrink-0 border-t border-black/10 bg-[#faf7f3] px-4 pb-3 pt-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/camri/02_sitting_waving.png" alt="" className="pointer-events-none absolute -top-[47px] right-4 z-10 h-12 w-auto" />
+            {(camBusy || msgs.length > 1) && (
+              <div className="mb-2 max-h-20 overflow-y-auto rounded-xl bg-white px-3 py-2 text-sm text-ink shadow-sm">
+                {camBusy ? <CamriTyping /> : msgs[msgs.length - 1].text}
               </div>
-              <form onSubmit={(e) => { e.preventDefault(); send(input) }} className="mt-2 flex gap-2">
-                <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={'Tell Camri what to change on ' + pageLabel(curPage)} className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-twilight" />
-                <button type="submit" className={accentBtn + ' !px-4 !py-2'}>Send</button>
-              </form>
-            </div>
+            )}
+            <form onSubmit={(e) => { e.preventDefault(); send(input) }} className="flex gap-2">
+              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={'Tell Camri what to change on ' + pageLabel(curPage)} className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />
+              <button type="submit" className={accentBtn + ' !px-4 !py-2'}>Send</button>
+            </form>
           </div>
         </div>
 

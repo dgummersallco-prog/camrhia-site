@@ -31,6 +31,7 @@ export function photosIn(root: HTMLElement): HTMLElement[] {
     if (x.hasAttribute('data-fxph')) return false
     const isImg = x.tagName.toLowerCase() === 'img'
     const min = hero ? 150 : isImg ? 40 : 60
+    if (x.closest('[data-bxh]')) return true
     const w = x.offsetWidth || x.clientWidth || 0
     const h = x.offsetHeight || x.clientHeight || 0
     return w >= min && h >= min
@@ -221,12 +222,12 @@ export function applyBtnFx(map: Record<string, BtnFx> | undefined | null) {
   }
 }
 
-export type BoxFx = { x?: number; y?: number; s?: number }
+export type BoxFx = { x?: number; y?: number; s?: number; h?: number }
 
 export const TXT_SEL = 'h1, [class^="el-"], [class*=" el-"], ' + BTN_SEL
 
 export function boxesIn(root: HTMLElement): HTMLElement[] {
-  const all = Array.from(root.querySelectorAll<HTMLElement>(TXT_SEL)).filter((x) => x.offsetWidth > 20 && x.offsetHeight > 14)
+  const all = Array.from(root.querySelectorAll<HTMLElement>(TXT_SEL)).filter((x) => x.dataset.bxh !== undefined || (x.offsetWidth > 20 && x.offsetHeight > 14))
   const set = new Set(all)
   return all.filter((x) => {
     let p = x.parentElement
@@ -236,6 +237,23 @@ export function boxesIn(root: HTMLElement): HTMLElement[] {
 }
 
 export const boxId = (key: string, idx: number) => 't:' + key + ':' + idx
+
+// Thin decorative lines (rules) are selectable too.
+export const ruleId = (key: string, idx: number) => 'r:' + key + ':' + idx
+export function rulesIn(root: HTMLElement): HTMLElement[] {
+  root.querySelectorAll<HTMLElement>('span, div, hr, i').forEach((x) => {
+    if (x.hasAttribute('data-cam-rule') || x.children.length > 0 || (x.textContent ?? '').trim() || x.id === 'cam-box' || x.closest('#cam-box') || x.closest(BTN_SEL) || x.hasAttribute('data-fxph')) return
+    const r = x.getBoundingClientRect()
+    const horiz = r.width >= 24 && r.height <= 6
+    const vert = r.height >= 24 && r.width <= 6
+    if (!horiz && !vert) return
+    const cs = getComputedStyle(x)
+    const paint = (cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent') || parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderBottomWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0
+    if (!paint) return
+    x.setAttribute('data-cam-rule', '1')
+  })
+  return Array.from(root.querySelectorAll<HTMLElement>('[data-cam-rule]'))
+}
 
 const lay = (x: HTMLElement) => ({ w: x.offsetWidth || x.clientWidth || 0, h: x.offsetHeight || x.clientHeight || 0 })
 
@@ -285,6 +303,12 @@ function ovClose(el: HTMLElement) {
 
 export function setBox(el: HTMLElement, f: BoxFx | undefined) {
   const st = el.style
+  if (f && f.h) {
+    if (el.dataset.bxh === undefined) el.dataset.bxh = st.display
+    st.display = 'none'
+    return
+  }
+  if (el.dataset.bxh !== undefined) { st.display = el.dataset.bxh; delete el.dataset.bxh }
   const has = !!f && (Math.abs(Number(f.x) || 0) > 0.001 || Math.abs(Number(f.y) || 0) > 0.001 || Math.abs((Number(f.s) || 1) - 1) > 0.001)
   if (!has) {
     if (el.dataset.bxfx !== undefined) {
@@ -317,6 +341,7 @@ export function applyBoxFx(map: Record<string, BoxFx> | undefined | null) {
     const key = rootKey(root)
     if (!key) continue
     boxesIn(root).forEach((b, i) => setBox(b, m[boxId(key, i)]))
+    rulesIn(root).forEach((b, i) => setBox(b, m[ruleId(key, i)]))
     if (heroOne(root)) continue
     photosIn(root).forEach((p, i) => setBox(frameOf(visualOf(p), root), m['f:' + photoId(key, i)]))
   }

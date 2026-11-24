@@ -1,5 +1,5 @@
 import { editing, startEdit } from './previewEdit'
-import { rootOf, rootKey, photosIn, photoId, heroOne, visualOf, BTN_SEL, buttonsIn, buttonId, boxesIn, boxId, frameOf, setBox, TXT_SEL } from './photoFx'
+import { rootOf, rootKey, photosIn, photoId, heroOne, visualOf, BTN_SEL, buttonsIn, buttonId, boxesIn, boxId, rulesIn, ruleId, frameOf, setBox, TXT_SEL } from './photoFx'
 
 export function installPreviewSections(): () => void {
   if (typeof window === 'undefined') return () => {}
@@ -168,6 +168,14 @@ export function installPreviewSections(): () => void {
       }
     }
     if (t.closest(TXT)) { clearSel(); selectText(root, t); return }
+    const ru = ruleAt(root, e.clientX, e.clientY)
+    if (ru) {
+      e.preventDefault(); e.stopPropagation()
+      clearSel()
+      setBoxSel(ru.el, ru.id, 'text')
+      post({ action: 'select', key, bg: effBg(root) })
+      return
+    }
     const hit = photoAt(e.clientX, e.clientY)
     if (!hit || hit.key !== key) { clearSel(); setBoxSel(null, '', 'text'); post({ action: 'select', key, bg: effBg(root) }); return }
     e.preventDefault(); e.stopPropagation()
@@ -178,6 +186,16 @@ export function installPreviewSections(): () => void {
     if (!heroOne(root)) setBoxSel(frameOf(visualOf(hit.el), root), 'f:' + photoId(hit.key, hit.idx), 'frame')
     else setBoxSel(null, '', 'text')
     post({ action: 'photo', key: hit.key, idx: hit.idx, again, bg: effBg(root), multi: !heroOne(root) })
+  }
+  const onDbl = (e: MouseEvent) => {
+    const t = e.target as HTMLElement | null
+    if (!t || !t.closest || bar.contains(t) || t.closest(TXT) || editing(t) || t.closest('#cam-box')) return
+    const root = rootOf(t)
+    if (!root) return
+    const hit = photoAt(e.clientX, e.clientY)
+    if (!hit || hit.key !== rootKey(root)) return
+    e.preventDefault()
+    post({ action: 'photo', key: hit.key, idx: hit.idx, again: true, open: true, bg: effBg(root), multi: !heroOne(root) })
   }
   const parsePos = (el: HTMLElement): [number, number] => {
     const m = /(-?[\d.]+)%\s+(-?[\d.]+)%/.exec(el.style.objectPosition || '')
@@ -329,6 +347,11 @@ export function installPreviewSections(): () => void {
   mv.textContent = 'Move'
   mv.style.cssText = 'position:absolute;left:50%;top:-32px;transform:translateX(-50%);background:#8C6B3F;color:#fff;font:600 11px system-ui,sans-serif;padding:5px 11px;border-radius:9px;cursor:move;pointer-events:auto;box-shadow:0 2px 8px rgba(0,0,0,.3)'
   bx.appendChild(mv)
+  const xb = document.createElement('div')
+  xb.dataset.c = 'del'
+  xb.textContent = '\u00d7'
+  xb.style.cssText = 'position:absolute;right:-8px;top:-32px;width:24px;height:24px;line-height:22px;text-align:center;background:#fff;color:#b3261e;font:700 17px system-ui,sans-serif;border:2px solid #d9a21b;border-radius:50%;cursor:pointer;pointer-events:auto;box-shadow:0 2px 8px rgba(0,0,0,.25)'
+  bx.appendChild(xb)
   document.body.appendChild(bx)
   const layoutBox = () => {
     if (!selBox || !document.body.contains(selBox.el)) { bx.style.display = 'none'; return }
@@ -339,11 +362,33 @@ export function installPreviewSections(): () => void {
     mv.style.display = selBox.kind === 'frame' ? 'block' : 'none'
     mv.style.top = r.top < 40 ? 'auto' : '-32px'
     mv.style.bottom = r.top < 40 ? '-32px' : 'auto'
+    xb.style.top = r.top < 40 ? 'auto' : '-32px'
+    xb.style.bottom = r.top < 40 ? '-32px' : 'auto'
+  }
+  const hideSelected = () => {
+    if (!selBox) return
+    const sl = selBox
+    const f = curFx(sl.el)
+    setBox(sl.el, { ...f, h: 1 })
+    post({ action: 'boxfx', id: sl.id, x: f.x, y: f.y, s: f.s, h: 1 })
+    selBox = null
+    post({ action: 'box', id: '' })
+    layoutBox()
   }
   const setBoxSel = (el: HTMLElement | null, id: string, kind: 'text' | 'frame') => {
     selBox = el ? { el, id, kind } : null
     post({ action: 'box', id: el ? id : '' })
     layoutBox()
+  }
+  const ruleAt = (root: HTMLElement, x: number, y: number): { el: HTMLElement; id: string } | null => {
+    const key = rootKey(root)
+    const list = rulesIn(root)
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i].getBoundingClientRect()
+      if (r.width < 2 && r.height < 2) continue
+      if (x >= r.left - 8 && x <= r.right + 8 && y >= r.top - 8 && y <= r.bottom + 8) return { el: list[i], id: ruleId(key, i) }
+    }
+    return null
   }
   const selectText = (root: HTMLElement, t: HTMLElement) => {
     const key = rootKey(root)
@@ -364,6 +409,7 @@ export function installPreviewSections(): () => void {
     if (!t || !t.closest || bar.contains(t) || hT.contains(t) || hB.contains(t)) return
     if (editing(t)) return
     const hd = t.closest('#cam-box [data-c]') as HTMLElement | null
+    if (hd && hd.dataset.c === 'del') { e.preventDefault(); hideSelected(); return }
     if (hd && selBox) {
       e.preventDefault()
       const r = selBox.el.getBoundingClientRect()
@@ -376,6 +422,13 @@ export function installPreviewSections(): () => void {
     if (bx.contains(t)) return
     const tb = t.closest(TXT_SEL) as HTMLElement | null
     const root = rootOf(t)
+    if (root && !tb) {
+      const ru = ruleAt(root, e.clientX, e.clientY)
+      if (ru) {
+        g = { mode: 'mv', sel: { el: ru.el, id: ru.id, kind: 'text' }, x0: e.clientX, y0: e.clientY, fx: curFx(ru.el), cx: 0, cy: 0, d0: 1, moved: false, root, tg: null }
+        return
+      }
+    }
     if (!tb || !root) return
     const key = rootKey(root)
     const list = boxesIn(root)
@@ -460,6 +513,7 @@ export function installPreviewSections(): () => void {
   document.addEventListener('pointermove', onHMove)
   document.addEventListener('pointerup', onHUp)
   document.addEventListener('click', onPhotoClick, true)
+  document.addEventListener('dblclick', onDbl, true)
   document.addEventListener('pointerdown', onPDown)
   document.addEventListener('pointermove', onPMove, { passive: false })
   document.addEventListener('pointerup', onPUp)

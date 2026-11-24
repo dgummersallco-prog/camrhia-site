@@ -5,7 +5,7 @@ import React, { useState } from 'react'
 export const GALSEC = ['sahara', 'gobi', 'mojave', 'atacama', 'namib', 'sonora', 'kalahari', 'thar']
 export const GALOWN = ['sahara', 'gobi', 'mojave', 'atacama', 'namib', 'sonora', 'kalahari', 'thar']
 export type GalItem = { id: string; title: string; line: string; u: string | null; href: string; n?: number }
-type P = { title: string; items: GalItem[]; viewHref: string; viewText: string; headStyle: React.CSSProperties; nameStyle: React.CSSProperties; ink: string; soft: string; accent: string; line: string }
+type P = { bg?: string; title: string; items: GalItem[]; viewHref: string; viewText: string; headStyle: React.CSSProperties; nameStyle: React.CSSProperties; ink: string; soft: string; accent: string; line: string }
 
 const bleed: React.CSSProperties = { width: '100vw', marginLeft: 'calc(50% - 50vw)' }
 const small: React.CSSProperties = { fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase' }
@@ -115,10 +115,10 @@ function Namib(p: P) {
 function Sonora(p: P) {
   return (
     <div style={{ position: 'relative', ...bleed }}>
-      <div className="grid sm:grid-cols-2" style={{ gap: 3, background: '#fbf8f3', padding: '3px 0' }}>
+      <div className="grid sm:grid-cols-2" style={{ gap: 3, background: p.bg || '#fbf8f3', padding: '3px 0' }}>
         {p.items.slice(0, 4).map((g) => tile(g, <><Ph u={g.u} ratio="2.025/1" /><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 50%, rgba(24,18,12,.7))' }} /><div style={{ position: 'absolute', left: '2.9%', bottom: '9%', color: '#fff' }}><p data-name="Gallery name" className="el-gal_name" style={{ ...p.nameStyle, letterSpacing: '0.06em', fontSize: 'clamp(1.2rem,2.8vw,3rem)', lineHeight: 1.1, margin: 0 }}>{g.title}</p></div></>))}
       </div>
-      <div className="hidden sm:block" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', background: '#fbf8f3', color: p.ink, width: '29%', padding: 'clamp(14px,2.4vw,42px) 0', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,.2)' }}>
+      <div className="hidden sm:block" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', background: p.bg || '#fbf8f3', color: p.ink, width: '29%', padding: 'clamp(14px,2.4vw,42px) 0', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,.2)' }}>
         <h2 data-name="Section title" className="el-gs_title" style={{ ...h2(p, 'clamp(1.2rem,2.9vw,3rem)', p.ink), letterSpacing: '0.4em', paddingLeft: '0.4em' }}>{p.title}</h2>
       </div>
     </div>
