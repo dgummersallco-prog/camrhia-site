@@ -167,7 +167,7 @@ export function Nav() {
 
           <a
             href={APP_STORE_URL}
-            className="inline-flex items-center rounded-full bg-twilight px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-twilight/90"
+            className="inline-flex items-center rounded-full bg-[#9CC4E4] px-5 py-2.5 text-sm font-semibold text-[#3B2418] transition-colors hover:bg-[#9CC4E4]/90"
           >
             Start free
           </a>

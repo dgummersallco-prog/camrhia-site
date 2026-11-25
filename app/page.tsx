@@ -20,7 +20,7 @@ const PHONE =
 const SHOT =
   "w-full rounded-2xl ring-1 ring-black/10 shadow-[0_24px_50px_-22px_rgba(30,40,70,0.4)]"
 const BTN =
-  "inline-flex items-center justify-center rounded-full bg-twilight px-7 py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
+  "inline-flex items-center justify-center rounded-full bg-[#9CC4E4] px-7 py-3.5 text-sm font-semibold text-[#3B2418] transition hover:opacity-90"
 
 const FAQ = [
   ["Do I need a credit card to try it?", "No. Start your 14 days with just your name and email. Everything is on. When the 14 days are up, you choose what to keep and only pay for that."],
