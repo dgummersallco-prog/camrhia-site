@@ -349,14 +349,14 @@ function Mock({ k, bg, tx }: { k: string; bg: string; tx: string }) {
 function FontPick({ label, hint, value, onPick }: { label: string; hint: string; value: string; onPick: (k: string) => void }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="rounded-xl border border-white/80 bg-white/60 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
-      <p className="text-xs text-ink-soft">{hint}</p>
-      <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-lg bg-white px-3 py-2 text-left text-lg text-ink" style={{ fontFamily: fam(value) }}>
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
+      {hint ? <p className="text-xs text-ink-soft">{hint}</p> : null}
+      <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-left text-base text-ink" style={{ fontFamily: fam(value) }}>
         <span>{fname(value)}</span><span className="text-xs text-ink-soft">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
-        <div className="mt-2 max-h-52 overflow-y-auto rounded-lg border border-white/80 bg-white">
+        <div className="mt-2 max-h-52 overflow-y-auto rounded-xl border border-[#E4D3B6] bg-white">
           {FONT_IDS.map((k) => (
             <button key={k} type="button" onClick={() => { onPick(k); setOpen(false) }} className={'block w-full px-3 py-2 text-left text-base text-ink hover:bg-paper ' + (k === value ? 'bg-paper' : '')} style={{ fontFamily: fam(k) }}>{fname(k)}</button>
           ))}
@@ -558,6 +558,15 @@ export default function CamiDesigner() {
           if (from < 0) return
           ord.splice(from, 1)
           ord.splice(Math.max(0, Math.min(ord.length, Number(d.to))), 0, d.key)
+          const st: any = s.structure
+          if (st && st.v === 1) {
+            const re = (L: unknown) => { if (!Array.isArray(L) || !L.includes(d.key)) return null; const nm = ord.filter((k) => L.includes(k)); return [...nm, ...L.filter((k: string) => !nm.includes(k))] }
+            const nst: any = { ...st }
+            let hit = false
+            for (const pg of ['home', 'about', 'galleries', 'book']) { const r2 = re(st[pg]); if (r2) { nst[pg] = r2; hit = true } }
+            if (Array.isArray(st.extra)) nst.extra = st.extra.map((e: any) => { const r2 = re(e?.sections); if (r2) { hit = true; return { ...e, sections: r2 } } return e })
+            if (hit) { s.structure = nst; return }
+          }
           s.order_home = ord.includes('explore') ? ord : ['explore', ...ord]
         })
         return
@@ -1415,7 +1424,7 @@ export default function CamiDesigner() {
                         ? <textarea value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} rows={4} className={inp} />
                         : <input value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} className={inp} />)}
                       <div className="mt-3">
-                        <FontPick label="Font" hint="Just this text" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
+                        <FontPick label="Font" hint="" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
                       </div>
                       <ColorRow label={nm + ' color'} value={el.color ?? pick.color} base={base} onLive={(c) => setElProp(pick.key, { color: c }, true)} onSet={(c) => setElProp(pick.key, { color: c })} />
                       {pick.key === 'gs_title' && <ColorRow label="Behind the title and lines" value={ss.portfolio?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg('portfolio', c)} onSet={(c) => setSecBg('portfolio', c)} onReset={() => setSecBg('portfolio', null)} />}
@@ -1489,6 +1498,11 @@ export default function CamiDesigner() {
                 return (
                   <div className="mt-4">
                     <p className="font-fraunces text-lg font-semibold text-ink">{secNm}</p>
+                    <div className="mt-3 flex gap-2">
+                      {(['up', 'down'] as const).map((dr) => (
+                        <button key={dr} type="button" onClick={() => { try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-secmove', key: selSec, dir: dr }, '*') } catch { /* ignore */ } }} className={btn}>{dr === 'up' ? 'Move up' : 'Move down'}</button>
+                      ))}
+                    </div>
                     <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg(bgKey, c)} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
                     <ColorRow label={secNm + ' accent color'} value={ss[bgKey]?.accent} cur={accent} base={base} onLive={(c) => liveSecAcc(bgKey, c)} onSet={(c) => setSecAcc(bgKey, c)} onReset={() => setSecAcc(bgKey, null)} />
                     <SliderRow key={bgKey + 'pt'} label={secNm + ' top padding'} value={Math.round(Number(ss[bgKey]?.pt ?? secPad.pt) || 0)} min={0} max={400} step={1} unit="px" onLive={(v) => liveEdit(secPadMut(bgKey, 'pt', v))} onDone={(v) => { void commit(secPadMut(bgKey, 'pt', v)) }} />
@@ -1663,7 +1677,7 @@ export default function CamiDesigner() {
                 ? <textarea value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} rows={4} className="mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]" />
                 : <input value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} className="mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]" />)}
               <div className="mt-3">
-                <FontPick label="Font" hint="Just this text" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
+                <FontPick label="Font" hint="" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
               </div>
               {pick.key !== 'hero_headline' && (
                 <div className="mt-3">

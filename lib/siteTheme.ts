@@ -495,9 +495,9 @@ export function resolveTheme(r: Record<string, any>) {
     if (typeof h.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(h.color)) q.push(`color:${h.color}!important`)
     if (Number(h.op) >= 0.05 && Number(h.op) < 1) q.push(`opacity:${Number(h.op)}!important`)
     if (Number(h.shb) > 0) q.push(`text-shadow:${tsh(Number(h.shb), h.shc)}!important`)
-    let o = q.length ? `h1{${q.join(';')}}` : ''
+    let o = q.length ? `#top h1{${q.join(';')}}` : ''
     const fz = Number(h.size)
-    if (fz >= 14 && fz <= 800) o += `h1{font-size:${Math.max(14, Math.round(fz * 0.62))}px!important}@media (min-width:768px){h1{font-size:${fz}px!important}}`
+    if (fz >= 14 && fz <= 800) o += `#top h1{font-size:${Math.max(14, Math.round(fz * 0.62))}px!important}@media (min-width:768px){#top h1{font-size:${fz}px!important}}`
     return o
   })()
   const portfolioBtnCss = (() => {

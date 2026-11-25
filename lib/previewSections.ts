@@ -19,7 +19,7 @@ export function installPreviewSections(): () => void {
 
   const bar = document.createElement('div')
   bar.id = 'cam-sec-bar'
-  bar.innerHTML = '<button data-a="hide">Hide</button>'
+  bar.innerHTML = '<button data-a="up">Up</button><button data-a="down">Down</button><button data-a="hide">Hide</button>'
   document.body.appendChild(bar)
   const hT = document.createElement('div'); hT.className = 'cam-h'; hT.dataset.side = 't'; document.body.appendChild(hT)
   const hB = document.createElement('div'); hB.className = 'cam-h'; hB.dataset.side = 'b'; document.body.appendChild(hB)
@@ -714,6 +714,18 @@ export function installPreviewSections(): () => void {
   document.addEventListener('mousemove', onMove)
   document.addEventListener('mouseleave', onLeave)
   window.addEventListener('scroll', onScroll, true)
+  const onCmd = (e: MessageEvent) => {
+    const d = e.data
+    if (!d || d.type !== 'camrhia-secmove') return
+    const key = String(d.key ?? '')
+    const o = ord()
+    const i = o.indexOf(key)
+    if (i < 0) return
+    const vis = secs().filter(seen).map((x) => o.indexOf(x.dataset.sec as string))
+    const j = d.dir === 'up' ? [...vis].reverse().find((v) => v < i) : vis.find((v) => v > i)
+    if (j !== undefined) post({ action: 'move', key, order: o, to: j })
+  }
+  window.addEventListener('message', onCmd)
   bar.addEventListener('click', onBarClick)
   bar.addEventListener('pointerdown', onDown)
   document.addEventListener('pointermove', onDragMove)
@@ -738,6 +750,7 @@ export function installPreviewSections(): () => void {
     document.removeEventListener('mouseleave', onLeave)
     window.removeEventListener('scroll', onScroll, true)
     bar.removeEventListener('click', onBarClick)
+    window.removeEventListener('message', onCmd)
     bar.removeEventListener('pointerdown', onDown)
     document.removeEventListener('pointermove', onDragMove)
     document.removeEventListener('pointerup', onUp)
