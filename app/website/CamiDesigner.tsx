@@ -434,6 +434,7 @@ export default function CamiDesigner() {
   const [selPh, setSelPh] = useState<{ key: string; idx: number; multi?: boolean } | null>(null)
   const [selBtn, setSelBtn] = useState<{ id: string; tx: string; text: string; cbg?: string; ccolor?: string } | null>(null)
   const [selBox, setSelBox] = useState<string | null>(null)
+  const [selLn, setSelLn] = useState('')
   const [selAp, setSelAp] = useState<string | null>(null)
   useEffect(() => {
     if (!selAp) return
@@ -513,21 +514,22 @@ export default function CamiDesigner() {
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
       if (d && d.type === 'camrhia-section' && typeof d.pt === 'number' && e.source === frameRef.current?.contentWindow) setSecPad({ pt: Number(d.pt) || 0, pb: Number(d.pb) || 0 })
       if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelSec(String(d.key)); setLeftTab('design'); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); setSelAp(d.ap ? String(d.ap) : null); if (d.ap) { setPick(null); setSelBtn(null); setSelPh(null) } return }
+      if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); setSelLn(d.ln ? String(d.ln) : ''); setSelAp(d.ap ? String(d.ap) : null); if (d.ap) { setPick(null); setSelBtn(null); setSelPh(null) } return }
       if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? ''), cbg: typeof d.cbg === 'string' ? d.cbg : '', ccolor: typeof d.ccolor === 'string' ? d.ccolor : '' }); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); setLeftTab('design'); if (d.open) setSlot({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
         commitRef.current?.((n) => {
           const s = (n.site_settings = n.site_settings ?? {})
+          if (d.action === 'deladdon') { s.addons = (Array.isArray(s.addons) ? s.addons : []).filter((a: any) => a && a.id !== d.id); return }
           if (d.action === 'boxfx') {
             const bf: Record<string, any> = { ...(s.boxFx ?? {}) }
-            bf[d.id] = { x: Number(d.x), y: Number(d.y), s: Number(d.s), ...(Number(d.w) > 0 ? { w: Number(d.w) } : {}), ...(Number(d.v) > 0 ? { v: Number(d.v) } : {}), ...(Math.abs(Number(d.r)) > 0.05 ? { r: Number(d.r) } : {}), ...(d.h ? { h: 1 } : {}) }
+            bf[d.id] = { ...(bf[d.id]?.c ? { c: bf[d.id].c } : {}), ...(bf[d.id]?.th ? { th: bf[d.id].th } : {}), x: Number(d.x), y: Number(d.y), s: Number(d.s), ...(Number(d.w) > 0 ? { w: Number(d.w) } : {}), ...(Number(d.v) > 0 ? { v: Number(d.v) } : {}), ...(Math.abs(Number(d.r)) > 0.05 ? { r: Number(d.r) } : {}), ...(d.h ? { h: 1 } : {}) }
             s.boxFx = bf
             return
           }
           if (d.action === 'boxfxs' && Array.isArray(d.list)) {
             const bf: Record<string, any> = { ...(s.boxFx ?? {}) }
-            for (const q of d.list as any[]) bf[String(q.id)] = { x: Number(q.x), y: Number(q.y), s: Number(q.s), ...(Number(q.w) > 0 ? { w: Number(q.w) } : {}), ...(Number(q.v) > 0 ? { v: Number(q.v) } : {}), ...(Math.abs(Number(q.r)) > 0.05 ? { r: Number(q.r) } : {}), ...(q.h ? { h: 1 } : {}) }
+            for (const q of d.list as any[]) bf[String(q.id)] = { ...(bf[String(q.id)]?.c ? { c: bf[String(q.id)].c } : {}), ...(bf[String(q.id)]?.th ? { th: bf[String(q.id)].th } : {}), x: Number(q.x), y: Number(q.y), s: Number(q.s), ...(Number(q.w) > 0 ? { w: Number(q.w) } : {}), ...(Number(q.v) > 0 ? { v: Number(q.v) } : {}), ...(Math.abs(Number(q.r)) > 0.05 ? { r: Number(q.r) } : {}), ...(q.h ? { h: 1 } : {}) }
             s.boxFx = bf
             return
           }
@@ -1324,10 +1326,6 @@ export default function CamiDesigner() {
           <div className="flex items-center gap-2">
             <button type="button" aria-label="Back to dashboard" onClick={() => router.push('/dashboard')} className="flex h-9 items-center gap-1 rounded-full px-3 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink">← Dashboard</button>
           </div>
-          <div className="flex items-center gap-2">
-            {siteUrl && <button type="button" onClick={() => { try { void navigator.clipboard.writeText('https://' + siteUrl) } catch { /* ignore */ } setPubMsg('Link copied.'); setTimeout(() => setPubMsg(''), 2000) }} className="rounded-lg px-3 py-1.5 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink">Copy link</button>}
-            <button type="button" onClick={() => { void undo() }} disabled={history.length === 0} className="rounded-lg px-3 py-1.5 text-sm text-ink-soft transition hover:bg-black/5 hover:text-ink disabled:opacity-40">Undo</button>
-          </div>
         </div>
 
         <p className="px-5 pb-2 font-fraunces text-2xl font-semibold text-ink">Design your website</p>
@@ -1484,14 +1482,32 @@ export default function CamiDesigner() {
                     </div>
                   )
                 }
+                if (selBox && selBox.startsWith('r:')) {
+                  const fxL: any = (set.boxFx ?? {})[selBox] ?? {}
+                  const lnMut = (patch: Record<string, any>) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; m[selBox] = { ...(m[selBox] ?? {}), ...patch }; x.boxFx = m }
+                  const lk = selLn === 'v' ? 'v' : 'w'
+                  return (
+                    <div className="mt-4">
+                      <p className="font-fraunces text-lg font-semibold text-ink">Line</p>
+                      <ColorRow label="Line color" value={fxL.c} cur={fxL.c ?? accent} base={base} onLive={(c) => liveEdit(lnMut({ c }))} onSet={(c) => { void commit(lnMut({ c })) }} onReset={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; if (m[selBox]) { const q = { ...m[selBox] }; delete q.c; m[selBox] = q }; x.boxFx = m }) }} />
+                      <SliderRow key={selBox + 'th'} label="Thickness" value={Math.round(Number(fxL.th ?? 2))} min={1} max={40} step={1} unit="px" onLive={(v) => liveEdit(lnMut({ th: v }))} onDone={(v) => { void commit(lnMut({ th: v })) }} />
+                      <SliderRow key={selBox + lk} label="Length" value={Math.round(Number(fxL[lk] ?? 30))} min={2} max={100} step={1} unit="%" onLive={(v) => liveEdit(lnMut({ [lk]: v }))} onDone={(v) => { void commit(lnMut({ [lk]: v })) }} />
+                      <SliderRow key={selBox + 'r'} label="Rotate" value={Math.round(Number(fxL.r ?? 0))} min={-180} max={180} step={1} unit="°" onLive={(v) => liveEdit(lnMut({ r: v }))} onDone={(v) => { void commit(lnMut({ r: v })) }} />
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {boxReset}
+                        <button type="button" className={btn + ' mt-4'} onClick={() => { void commit(lnMut({ h: 1 })) }}>Remove line</button>
+                      </div>
+                    </div>
+                  )
+                }
                 if (!selSec) return <p className="mt-4 text-sm text-ink-soft">Click a section, photo or text on your site to design it.</p>
                 const bgKey = selSec === 'hero' ? 'top' : selSec
                 const secNm = SEC_NAME[selSec] ?? selSec
-                const addAddon = (t: 'text' | 'photo' | 'button') => void commit((n) => {
+                const addAddon = (t: 'text' | 'photo' | 'button' | 'line') => void commit((n) => {
                   const x = (n.site_settings = n.site_settings ?? {})
                   const arr: any[] = Array.isArray(x.addons) ? [...x.addons] : []
                   let k: string | undefined
-                  if (t !== 'photo') { const used = new Set(arr.map((a) => a?.k)); for (let i = 1; i <= 16; i++) if (!used.has('ax' + i)) { k = 'ax' + i; break }; if (!k) return }
+                  if (t === 'text' || t === 'button') { const used = new Set(arr.map((a) => a?.k)); for (let i = 1; i <= 16; i++) if (!used.has('ax' + i)) { k = 'ax' + i; break }; if (!k) return }
                   arr.push({ id: 'a' + Date.now().toString(36), sec: selSec, t, ...(k ? { k } : {}), ...(t === 'text' ? { text: 'Your text here' } : t === 'button' ? { text: 'Button', url: '' } : {}) })
                   x.addons = arr
                 })
@@ -1514,7 +1530,7 @@ export default function CamiDesigner() {
                     <p className="mt-5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Add to this section</p>
                     {selAp && <button type="button" className={btn + ' mt-3'} onClick={() => setSlot({ key: 'addon-' + selAp, idx: 0, multi: true })}>Change photo</button>}
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {([['text', 'Text box'], ['button', 'Button'], ['photo', 'Photo']] as const).map(([t, lb]) => (
+                      {([['text', 'Text box'], ['button', 'Button'], ['photo', 'Photo'], ['line', 'Line']] as const).map(([t, lb]) => (
                         <button key={t} type="button" className={btn} onClick={() => addAddon(t)}>+ {lb}</button>
                       ))}
                     </div>
@@ -1619,19 +1635,23 @@ export default function CamiDesigner() {
             {full && <button type="button" onClick={() => setFull(false)} className={'rounded-lg px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 ' + ACC}>← Back to editing</button>}
             <p className="text-xs text-ink-soft">{full ? 'Previewing your draft.' : 'Click any text on the page to change its words, font and color.'}</p>
           </div>
-          <div className="flex overflow-hidden rounded-xl border border-black/10 bg-white text-sm">
-            {(['desktop', 'phone'] as const).map((d) => (
-              <button key={d} type="button" onClick={() => setDevice(d)} className={'px-4 py-2 font-medium transition ' + (device === d ? ACC + ' text-white' : 'text-ink-soft hover:text-ink')}>{d === 'desktop' ? 'Desktop' : 'Phone'}</button>
-            ))}
-          </div>
         </div>
-        {!full && (
-          <div className="mb-3 flex flex-wrap gap-2">
-            {chosenPages.map((k) => (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {!full && chosenPages.map((k) => (
               <button key={k} type="button" onClick={() => setCurPage(k)} className={'rounded-full px-4 py-1.5 text-sm font-medium transition ' + (curPage === k ? ACC + ' text-white' : 'bg-white text-ink-soft hover:text-ink')}>{pageLabel(k)}</button>
             ))}
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            {!full && siteUrl && <button type="button" onClick={() => { try { void navigator.clipboard.writeText('https://' + siteUrl) } catch { /* ignore */ } setPubMsg('Link copied.'); setTimeout(() => setPubMsg(''), 2000) }} className="rounded-full bg-white px-4 py-1.5 text-sm font-medium text-ink-soft transition hover:text-ink">Copy link</button>}
+            {!full && <button type="button" onClick={() => { void undo() }} disabled={history.length === 0} className="rounded-full bg-white px-4 py-1.5 text-sm font-medium text-ink-soft transition hover:text-ink disabled:opacity-40">Undo</button>}
+            <div className="flex rounded-full bg-white p-0.5 text-sm">
+              {(['desktop', 'phone'] as const).map((d) => (
+                <button key={d} type="button" onClick={() => setDevice(d)} className={'rounded-full px-4 py-1 font-medium transition ' + (device === d ? ACC + ' text-white' : 'text-ink-soft hover:text-ink')}>{d === 'desktop' ? 'Desktop' : 'Phone'}</button>
+              ))}
+            </div>
+          </div>
+        </div>
         <div ref={boxRef} className="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-black/10 bg-[#e6e1da] shadow-sm">
           {form.public_token ? (
             <div className="flex h-full justify-center">

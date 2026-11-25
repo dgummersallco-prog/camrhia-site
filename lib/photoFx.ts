@@ -227,7 +227,7 @@ export function applyBtnFx(map: Record<string, BtnFx> | undefined | null) {
   }
 }
 
-export type BoxFx = { x?: number; y?: number; s?: number; h?: number; w?: number; r?: number; v?: number }
+export type BoxFx = { x?: number; y?: number; s?: number; h?: number; w?: number; r?: number; v?: number; c?: string; th?: number }
 
 export const TXT_SEL = 'h1, [class^="el-"], [class*=" el-"], ' + BTN_SEL
 
@@ -375,6 +375,45 @@ function fitInner(el: HTMLElement, on: boolean) {
   })
 }
 
+const LN_P = ['background-color', 'border-color', 'height', 'width', 'border-top-width', 'border-bottom-width', 'border-left-width', 'border-right-width']
+export function lineDir(el: HTMLElement): string {
+  if (!el.hasAttribute('data-cam-rule')) return ''
+  const v = el.dataset.lnv !== undefined ? el.dataset.lnv === '1' : el.offsetHeight > el.offsetWidth
+  return v ? 'v' : 'h'
+}
+function lineFx(el: HTMLElement, f: BoxFx | undefined) {
+  const st = el.style
+  const c = f && typeof f.c === 'string' && /^#[0-9a-fA-F]{6}$/.test(f.c) ? f.c : ''
+  const th = f && Number(f.th) > 0 ? Math.min(60, Number(f.th)) : 0
+  if (!c && !th) {
+    if (el.dataset.lnx !== undefined) {
+      let a: string[] = []
+      try { a = JSON.parse(el.dataset.lnx) } catch { a = [] }
+      LN_P.forEach((p, i) => { if (a[i]) st.setProperty(p, a[i]); else st.removeProperty(p) })
+      delete el.dataset.lnx; delete el.dataset.lnv; delete el.dataset.lnb; delete el.dataset.lnw
+    }
+    return
+  }
+  if (el.dataset.lnx === undefined) {
+    const cs = getComputedStyle(el)
+    el.dataset.lnx = JSON.stringify(LN_P.map((p) => st.getPropertyValue(p)))
+    el.dataset.lnv = el.offsetHeight > el.offsetWidth ? '1' : '0'
+    el.dataset.lnb = cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent' ? '1' : ''
+    el.dataset.lnw = JSON.stringify([cs.borderTopWidth, cs.borderBottomWidth, cs.borderLeftWidth, cs.borderRightWidth].map((q) => parseFloat(q) || 0))
+  }
+  const hasBg = el.dataset.lnb === '1'
+  if (c) {
+    if (hasBg) st.setProperty('background-color', c, 'important')
+    st.setProperty('border-color', c, 'important')
+  }
+  if (th) {
+    if (hasBg) st.setProperty(el.dataset.lnv === '1' ? 'width' : 'height', th + 'px', 'important')
+    let bw: number[] = []
+    try { bw = JSON.parse(el.dataset.lnw || '[]') } catch { bw = [] }
+    ;['border-top-width', 'border-bottom-width', 'border-left-width', 'border-right-width'].forEach((p, i) => { if (bw[i] > 0) st.setProperty(p, th + 'px', 'important') })
+  }
+}
+
 export function setBox(el: HTMLElement, f: BoxFx | undefined) {
   const st = el.style
   if (f && f.h) {
@@ -382,6 +421,7 @@ export function setBox(el: HTMLElement, f: BoxFx | undefined) {
     st.display = 'none'
     return
   }
+  if (el.hasAttribute('data-cam-rule')) lineFx(el, f)
   if (el.dataset.bxh !== undefined) { st.display = el.dataset.bxh; delete el.dataset.bxh }
   const hasW = !!f && Number(f.w) > 0.5
   if (!hasW && el.dataset.bxw !== undefined) { st.width = el.dataset.bxw; st.maxWidth = el.dataset.bxmw ?? ''; st.overflowWrap = ''; delete el.dataset.bxw; delete el.dataset.bxmw }

@@ -1,5 +1,5 @@
 import { editing, startEdit } from './previewEdit'
-import { textAtPoint, rootOf, rootKey, photosIn, photoId, heroOne, visualOf, BTN_SEL, buttonsIn, buttonId, boxesIn, boxId, rulesIn, ruleId, frameOf, setBox, TXT_SEL, roots } from './photoFx'
+import { textAtPoint, rootOf, rootKey, photosIn, photoId, heroOne, visualOf, BTN_SEL, buttonsIn, buttonId, boxesIn, boxId, rulesIn, ruleId, frameOf, setBox, TXT_SEL, roots, lineDir } from './photoFx'
 
 export function installPreviewSections(): () => void {
   if (typeof window === 'undefined') return () => {}
@@ -479,6 +479,7 @@ export function installPreviewSections(): () => void {
     if (!selBox) return
     const sl = selBox
     if (extras.length > 0) {
+      allSel().forEach((q) => { const ad = q.el.dataset.addon; if (ad) post({ action: 'deladdon', id: ad }) })
       const list = allSel().map((q) => { const f0 = curFx(q.el); setBox(q.el, { ...f0, h: 1 }); return { id: q.id, x: f0.x, y: f0.y, s: f0.s, w: f0.w, v: f0.v, r: f0.r, h: 1 } })
       post({ action: 'boxfxs', list })
       selBox = null
@@ -488,6 +489,7 @@ export function installPreviewSections(): () => void {
       return
     }
     const f = curFx(sl.el)
+    if (sl.el.dataset.addon) post({ action: 'deladdon', id: sl.el.dataset.addon })
     setBox(sl.el, { ...f, h: 1 })
     post({ action: 'boxfx', id: sl.id, x: f.x, y: f.y, s: f.s, w: f.w, v: f.v, r: f.r, h: 1 })
     selBox = null
@@ -497,7 +499,7 @@ export function installPreviewSections(): () => void {
   const setBoxSel = (el: HTMLElement | null, id: string, kind: 'text' | 'frame') => {
     selBox = el ? { el, id, kind } : null
     extras = el ? groupMates(id) : []
-    post({ action: 'box', id: el ? id : '', ap: el ? el.dataset.addp ?? '' : '' })
+    post({ action: 'box', id: el ? id : '', ap: el ? el.dataset.addp ?? '' : '', ln: el ? lineDir(el) : '' })
     layoutBox()
   }
   const addSel = (el: HTMLElement, id: string, kind: 'text' | 'frame') => {
@@ -507,7 +509,7 @@ export function installPreviewSections(): () => void {
       const rest = cur.filter((q) => q.id !== id)
       selBox = rest[0] ?? null
       extras = rest.slice(1)
-      post({ action: 'box', id: selBox ? selBox.id : '', ap: selBox ? selBox.el.dataset.addp ?? '' : '' })
+      post({ action: 'box', id: selBox ? selBox.id : '', ap: selBox ? selBox.el.dataset.addp ?? '' : '', ln: selBox ? lineDir(selBox.el) : '' })
     } else {
       extras = [...extras, { el, id, kind }, ...groupMates(id).filter((m) => !cur.some((q) => q.id === m.id))]
     }
@@ -657,7 +659,7 @@ export function installPreviewSections(): () => void {
     const kill = (ev: Event) => { ev.stopImmediatePropagation(); ev.preventDefault() }
     window.addEventListener('click', kill, true)
     setTimeout(() => window.removeEventListener('click', kill, true), 60)
-    post({ action: 'box', id: d.sel.id, ap: d.sel.el.dataset.addp ?? '' })
+    post({ action: 'box', id: d.sel.id, ap: d.sel.el.dataset.addp ?? '', ln: lineDir(d.sel.el) })
     const rec = (id: string, q: { x: number; y: number; s: number; w: number; v: number; r: number }) => ({ id, x: Math.round(q.x * 100) / 100, y: Math.round(q.y * 100) / 100, s: Math.round(q.s * 1000) / 1000, w: Math.round(q.w * 100) / 100, v: Math.round(q.v * 100) / 100, r: Math.round(q.r * 10) / 10 })
     if (d.others.length > 0) post({ action: 'boxfxs', list: [rec(d.sel.id, f), ...d.others.map((o) => rec(o.sel.id, curFx(o.sel.el)))] })
     else post({ action: 'boxfx', ...rec(d.sel.id, f) })
