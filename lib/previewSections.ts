@@ -1,5 +1,5 @@
 import { editing, startEdit } from './previewEdit'
-import { rootOf, rootKey, photosIn, photoId, heroOne, visualOf, BTN_SEL, buttonsIn, buttonId, boxesIn, boxId, rulesIn, ruleId, frameOf, setBox, TXT_SEL, roots } from './photoFx'
+import { textAtPoint, rootOf, rootKey, photosIn, photoId, heroOne, visualOf, BTN_SEL, buttonsIn, buttonId, boxesIn, boxId, rulesIn, ruleId, frameOf, setBox, TXT_SEL, roots } from './photoFx'
 
 export function installPreviewSections(): () => void {
   if (typeof window === 'undefined') return () => {}
@@ -157,9 +157,10 @@ export function installPreviewSections(): () => void {
   }
   const onPhotoClick = (e: MouseEvent) => {
     if (swallow) { swallow = false; e.preventDefault(); e.stopPropagation(); return }
-    const t = e.target as HTMLElement | null
+    let t = e.target as HTMLElement | null
     if (!t || !t.closest || bar.contains(t)) return
     if (editing(t)) { e.preventDefault(); return }
+    if (!t.closest(TXT_SEL + ', #cam-box, a, button, input, textarea, select')) { const up = document.elementsFromPoint(e.clientX, e.clientY).find((n) => n instanceof HTMLElement && n.matches(TXT_SEL) && !n.closest('#cam-box')) as HTMLElement | undefined; const up2 = up ?? textAtPoint(e.clientX, e.clientY); if (up2) t = up2 }
     const root = rootOf(t)
     if (!root) return
     if (t.closest('a')) e.preventDefault()

@@ -1380,6 +1380,14 @@ export default function CamiDesigner() {
                     <div className="mt-4">
                       <p className="font-fraunces text-lg font-semibold text-ink">Button</p>
                       {selBtn.tx && <input key={selBtn.id + selBtn.tx} defaultValue={selBtn.text} onBlur={(e) => setBtnText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} className={inp} />}
+                      <div className="mt-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Style</p>
+                        <div className="mt-2 flex w-full gap-0.5 rounded-full border border-black/10 bg-white p-0.5">
+                          {(['Button', 'Link'] as const).map((tt) => (
+                            <button key={tt} type="button" className={'flex-1 rounded-full px-2 py-1.5 text-xs transition ' + ((tt === 'Link') === !!bf.ls ? 'bg-twilight font-medium text-white shadow-sm' : 'text-ink hover:bg-black/5')} onClick={() => { if (tt === 'Link') setB({ ls: 1 }); else setB({}, ['ls']) }}>{tt}</button>
+                          ))}
+                        </div>
+                      </div>
                       <ColorRow label="Button color" value={bf.bg} cur={selBtn.cbg || undefined} base={base} onLive={(c) => liveB({ bg: c })} onSet={(c) => setB({ bg: c })} onReset={() => setB({}, ['bg'])} />
                       <ColorRow label="Button text color" value={bf.color} cur={selBtn.ccolor || undefined} base={base} onLive={(c) => liveB({ color: c })} onSet={(c) => setB({ color: c })} onReset={() => setB({}, ['color'])} />
                       <div className="mt-4">

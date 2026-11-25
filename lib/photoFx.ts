@@ -166,7 +166,7 @@ export function applyPhotoFx(fx: Record<string, PhotoFx> | undefined | null, slo
   }
 }
 
-export type BtnFx = { bg?: string; color?: string; shape?: 'square' | 'rounded' | 'pill'; size?: number; op?: number }
+export type BtnFx = { bg?: string; color?: string; shape?: 'square' | 'rounded' | 'pill'; size?: number; op?: number; ls?: number }
 
 export const BTN_SEL = 'a.cr-btn, button.cr-btn, #hero-btn, .el-hero_btn, [data-name="Button"], [data-name="About button"], [data-name="View button"]'
 
@@ -179,7 +179,7 @@ export function buttonsIn(root: HTMLElement): HTMLElement[] {
 
 export const buttonId = (key: string, idx: number) => key + ':b' + idx
 
-const BPROPS = ['background-color', 'background-image', 'color', 'border-color', 'border-radius', 'font-size', 'padding', 'opacity']
+const BPROPS = ['background-color', 'background-image', 'color', 'border-color', 'border-radius', 'font-size', 'padding', 'opacity', 'border-width', 'box-shadow', 'text-decoration', 'text-underline-offset']
 
 function setBtn(el: HTMLElement, f: BtnFx | undefined) {
   const st = el.style
@@ -210,6 +210,11 @@ function setBtn(el: HTMLElement, f: BtnFx | undefined) {
   }
   const o2 = Number(f.op)
   if (o2 >= 0.05 && o2 < 1) st.setProperty('opacity', String(o2), 'important')
+  if (f.ls) {
+    st.setProperty('background-color', 'transparent', 'important'); st.setProperty('background-image', 'none', 'important')
+    st.setProperty('border-width', '0', 'important'); st.setProperty('box-shadow', 'none', 'important'); st.setProperty('border-radius', '0', 'important')
+    st.setProperty('text-decoration', 'underline', 'important'); st.setProperty('text-underline-offset', '0.2em', 'important')
+  }
 }
 
 export function applyBtnFx(map: Record<string, BtnFx> | undefined | null) {
@@ -242,6 +247,19 @@ function autoText(root: HTMLElement): HTMLElement[] {
     out.push(x)
   })
   return out
+}
+
+export function textAtPoint(x: number, y: number): HTMLElement | null {
+  let best: HTMLElement | null = null
+  let ba = Infinity
+  document.querySelectorAll<HTMLElement>(TXT_SEL).forEach((el) => {
+    if (el.closest('#cam-box, #cam-sec-bar, [data-cam-ed]')) return
+    const r = el.getBoundingClientRect()
+    if (r.width < 8 || r.height < 8 || x < r.left || x > r.right || y < r.top || y > r.bottom) return
+    const a = r.width * r.height
+    if (a < ba) { ba = a; best = el }
+  })
+  return best
 }
 
 export function boxesIn(root: HTMLElement): HTMLElement[] {
