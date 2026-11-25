@@ -1496,6 +1496,10 @@ export default function CamiDesigner() {
               {leftTab === 'setup' && (() => {
                 const lab = 'mt-4 text-[11px] font-medium uppercase tracking-wider text-ink-soft'
                 const x0 = ((form.site_settings ?? {}) as Record<string, any>)
+                const stS: any = stNow
+                const lstS: string[] = (curPage === 'home' ? stS.home : curPage === 'about' ? stS.about : curPage === 'galleries' ? stS.galleries : curPage === 'booking' ? (stS.book ?? []) : ((stS.extra ?? []).find((e: any) => e.id === curPage)?.sections ?? [])) ?? []
+                const BKS: Record<string, string> = { nav: 'explore', galleries_section: 'galsec', about_section: 'about', pricing_section: 'pricesec', testimonials: 'testimonials', faq: 'faq', social: 'social', contact: 'contact' }
+                const ordS = (f: string) => { const i = lstS.indexOf(BKS[f]); return i < 0 ? 999 : i }
                 type Opt = { k: string; on: boolean; node: React.ReactNode; font?: string; click: () => void }
                 const opts = (items: Opt[]) => items.length <= 3 ? (
                   <div className="mt-1.5 flex w-full gap-0.5 rounded-full border border-black/10 bg-white p-0.5">
@@ -1509,7 +1513,7 @@ export default function CamiDesigner() {
                 return (
                   <>
                     {curPage === 'home' && (kitNow.layouts ?? []).length > 0 && (
-                      <div><p className={lab}>Layouts</p>{opts((kitNow.layouts as string[]).map((key, i) => ({ k: key, on: Number(kitNow.layout_idx ?? 0) === i, node: STYLES.find((q) => q.key === key)?.name ?? key, click: () => { void commit((n) => applyKitOps(n, { layout: key })) } })))}</div>
+                      <div><p className={lab}>Hero</p>{opts((kitNow.layouts as string[]).map((key, i) => ({ k: key, on: Number(kitNow.layout_idx ?? 0) === i, node: STYLES.find((q) => q.key === key)?.name ?? key, click: () => { void commit((n) => applyKitOps(n, { layout: key })) } })))}</div>
                     )}
                     {(kitNow.palettes ?? []).length > 0 && (
                       <div><p className={lab}>Colors</p>{opts((kitNow.palettes as any[]).map((p, i) => ({ k: String(p.name) + i, on: form.site_accent === p.accent && x0.colors?.bg === p.bg, node: <><span className="flex shrink-0 overflow-hidden rounded-full border border-black/10"><span className="h-3.5 w-3.5" style={{ background: p.accent }} /><span className="h-3.5 w-3.5" style={{ background: p.bg }} /><span className="h-3.5 w-3.5" style={{ background: p.text }} /></span>{p.name}</>, click: () => { void commit((n) => applyKitOps(n, { palette: p.name })) } })))}</div>
@@ -1537,7 +1541,7 @@ export default function CamiDesigner() {
                       const lst: string[] = curPage === 'home' ? st.home : curPage === 'about' ? st.about : curPage === 'galleries' ? st.galleries : curPage === 'booking' ? (st.book ?? []) : ((st.extra ?? []).find((e: any) => e.id === curPage)?.sections ?? [])
                       if (BK[field] === 'about' && curPage !== 'home') return false
                       return (lst ?? []).includes(BK[field])
-                    }).map(([field, d]) => (
+                    }).sort(([a], [b]) => ordS(a) - ordS(b)).map(([field, d]) => (
                       <div key={field}><p className={lab}>{d.label}</p>{opts(d.items.map((it) => ({ k: it.key, on: DESIGN_PATHS[field] ? getPath(x0, DESIGN_PATHS[field]) === it.key : false, node: it.name, click: () => { void commit((n) => applyKitOps(n, { design: { field, key: it.key } })) } })))}</div>
                     ))}
                     {(kitNow.themes ?? []).length > 0 && (

@@ -88,8 +88,9 @@ export function BookingDesign(P: Props) {
     </div>)
 
   if (d === 'annecy') return (
-    <div style={{ background: hasPic ? `linear-gradient(rgba(0,0,0,.18), rgba(0,0,0,.18)), url("${pics[0]}") center / cover fixed` : wash, padding: 'clamp(150px, 29vw, 380px) 4.5% 5%' }}>
-      <div className="mx-auto" style={{ ...card, maxWidth: 1144, background: '#fdfcfa', border: 'none', borderRadius: 'clamp(16px, 2.2vw, 28px)', padding: 'clamp(20px, 3.6vw, 48px) clamp(18px, 4.4vw, 50px) clamp(24px, 4vw, 56px)' }}>
+    <div style={{ position: 'relative', background: wash, padding: 'clamp(150px, 29vw, 380px) 4.5% 5%' }}>
+      {hasPic && <div aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 'calc(clamp(150px, 29vw, 380px) + 28px)', background: `linear-gradient(rgba(0,0,0,.18), rgba(0,0,0,.18)), url("${pics[0]}") center 30% / cover` }} />}
+      <div className="mx-auto" style={{ position: 'relative', ...card, maxWidth: 1144, background: '#fdfcfa', border: 'none', borderRadius: 'clamp(16px, 2.2vw, 28px)', padding: 'clamp(20px, 3.6vw, 48px) clamp(18px, 4.4vw, 50px) clamp(24px, 4vw, 56px)' }}>
         {hdr()}
         <div className={'mt-10 grid gap-10 ' + (!sent && calBlock ? 'lg:grid-cols-[40%_55%] lg:justify-between' : 'mx-auto max-w-xl')}>{cal}{form}</div>
       </div>
@@ -106,7 +107,7 @@ export function BookingDesign(P: Props) {
 
   /* ---------- WITHOUT THE CALENDAR ---------- */
   if (d === 'louise') return (
-    <div style={{ background: hasPic ? `linear-gradient(rgba(0,0,0,.22), rgba(0,0,0,.22)), url("${pics[0]}") center / cover fixed` : wash, padding: 'clamp(110px, 19vw, 240px) 5% 3.7%' }}>
+    <div style={{ background: hasPic ? `linear-gradient(rgba(0,0,0,.22), rgba(0,0,0,.22)), url("${pics[0]}") center / cover` : wash, padding: 'clamp(110px, 19vw, 240px) 5% 3.7%' }}>
       <div style={{ marginBottom: 'clamp(28px, 6vw, 80px)' }}>{hasPic ? hdr({ color: '#fff' }) : hdr()}</div>
       <div className="bk2 mx-auto" style={{ ...card, maxWidth: 1130, background: '#fff', border: 'none', borderRadius: 'clamp(16px, 2.2vw, 28px)', padding: 'clamp(20px, 3vw, 40px) clamp(18px, 4.8vw, 58px) clamp(24px, 3.6vw, 48px)' }}>{two}{form}</div>
     </div>)
