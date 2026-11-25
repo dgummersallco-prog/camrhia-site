@@ -441,7 +441,10 @@ export function installPreviewSections(): () => void {
     if (nowEl !== lastSelEl) { if (lastSelEl) lastSelEl.removeAttribute('data-cam-bsel'); if (nowEl) nowEl.setAttribute('data-cam-bsel', '1'); lastSelEl = nowEl }
     if (!selBox || !document.body.contains(selBox.el)) { bx.style.display = 'none'; return }
     const r = selBox.el.getBoundingClientRect()
-    if (r.width < 4 || r.height < 4) { bx.style.display = 'none'; return }
+    const isRule = selBox.el.hasAttribute('data-cam-rule')
+    if (isRule ? (r.width < 2 && r.height < 2) : (r.width < 4 || r.height < 4)) { bx.style.display = 'none'; return }
+    const thin = isRule && (r.width <= 8 || r.height <= 8)
+    const ldir = lineDir(selBox.el)
     bx.style.display = 'block'
     const f0 = curFx(selBox.el)
     const ang = angOf(selBox.el)
@@ -457,9 +460,11 @@ export function installPreviewSections(): () => void {
     const multi = extras.length > 0
     rotH.style.display = multi ? 'none' : 'flex'
     mv.style.display = selBox.kind === 'frame' ? 'flex' : 'none'
-    cornerH.forEach((h) => { h.style.display = !multi ? 'block' : 'none' })
-    sideH.forEach((h) => { h.style.display = !multi ? 'block' : 'none' })
-    vertH.forEach((h) => { h.style.display = !multi && (selBox!.kind === 'frame' || !!selBox!.el.dataset.addp) ? 'block' : 'none' })
+    cornerH.forEach((h) => { h.style.display = !multi && !thin ? 'block' : 'none' })
+    sideH.forEach((h) => { h.style.display = !multi && (!thin || ldir === 'h') ? 'block' : 'none' })
+    vertH.forEach((h) => { h.style.display = !multi && (thin ? ldir === 'v' : (selBox!.kind === 'frame' || !!selBox!.el.dataset.addp)) ? 'block' : 'none' })
+    ;[...cornerH, ...sideH, ...vertH].forEach((h) => { h.style.borderRadius = thin ? '50%' : '3px'; h.style.width = h.style.height = thin ? '16px' : '12px' })
+    rotH.style.bottom = thin && ldir === 'v' ? 'auto' : '-36px'
     gb.style.display = multi ? 'flex' : 'none'
     if (multi) gb.textContent = isGroupSel() ? 'Ungroup' : 'Group'
     while (xbs.length < extras.length) { const d = document.createElement('div'); d.style.cssText = 'position:fixed;z-index:2147482000;border:1.5px solid #d9a21b;pointer-events:none'; document.body.appendChild(d); xbs.push(d) }

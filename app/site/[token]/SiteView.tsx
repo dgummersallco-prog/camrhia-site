@@ -4052,9 +4052,10 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                         <span key={d} className="uppercase" style={{ fontFamily: SF, fontWeight: 600, fontSize: 'clamp(8px, 0.95vw, 13px)', letterSpacing: '0.12em', paddingBottom: 4 }}>{d}</span>
                       ))}
                       {days.map((d) => (
-                        <span key={d} className="relative inline-flex items-center justify-center mx-auto" style={{ fontFamily: SF, fontWeight: 500, fontSize: 'clamp(12px, 1.5vw, 21px)', width: 'clamp(26px, 3.4vw, 48px)', height: 'clamp(26px, 3.2vw, 46px)', border: circled.includes(d) ? '2px solid ' + GOLD : '2px solid transparent', borderRadius: '50%' }}>
+                        <span key={d} className="relative inline-flex items-center justify-center mx-auto" style={{ fontFamily: SF, fontWeight: 500, fontSize: 'clamp(12px, 1.5vw, 21px)', width: 'clamp(26px, 3.4vw, 48px)', height: 'clamp(26px, 3.2vw, 46px)', border: '2px solid transparent', borderRadius: '50%' }}>
                           {d}
-                          {crossed.includes(d) ? <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center" style={{ color: '#8a8a8a', fontSize: 'clamp(16px, 2.2vw, 30px)', fontWeight: 300 }}>{'\u2715'}</span> : null}
+                          {circled.includes(d) ? <span aria-hidden="true" data-cam-rule="1" data-cam-mark="circle" className="absolute" style={{ inset: -2, border: '2px solid ' + GOLD, borderRadius: '50%' }} /> : null}
+                          {crossed.includes(d) ? <span aria-hidden="true" data-cam-rule="1" data-cam-mark="x" className="absolute inset-0 flex items-center justify-center" style={{ color: '#8a8a8a', fontSize: 'clamp(16px, 2.2vw, 30px)', fontWeight: 300 }}>{'\u2715'}</span> : null}
                         </span>
                       ))}
                     </div>

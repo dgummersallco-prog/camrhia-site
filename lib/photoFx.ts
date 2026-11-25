@@ -375,7 +375,7 @@ function fitInner(el: HTMLElement, on: boolean) {
   })
 }
 
-const LN_P = ['background-color', 'border-color', 'height', 'width', 'border-top-width', 'border-bottom-width', 'border-left-width', 'border-right-width']
+const LN_P = ['background-color', 'border-color', 'height', 'width', 'border-top-width', 'border-bottom-width', 'border-left-width', 'border-right-width', 'color']
 export function lineDir(el: HTMLElement): string {
   if (!el.hasAttribute('data-cam-rule')) return ''
   const v = el.dataset.lnv !== undefined ? el.dataset.lnv === '1' : el.offsetHeight > el.offsetWidth
@@ -383,14 +383,18 @@ export function lineDir(el: HTMLElement): string {
 }
 function lineFx(el: HTMLElement, f: BoxFx | undefined) {
   const st = el.style
+  if (f && f.c === undefined && f.th === undefined && el.dataset.lnx !== undefined) return
   const c = f && typeof f.c === 'string' && /^#[0-9a-fA-F]{6}$/.test(f.c) ? f.c : ''
   const th = f && Number(f.th) > 0 ? Math.min(60, Number(f.th)) : 0
+  const restore = () => {
+    let a: string[] = []
+    try { a = JSON.parse(el.dataset.lnx || '[]') } catch { a = [] }
+    LN_P.forEach((p, i) => { if (a[i]) st.setProperty(p, a[i]); else st.removeProperty(p) })
+  }
   if (!c && !th) {
     if (el.dataset.lnx !== undefined) {
-      let a: string[] = []
-      try { a = JSON.parse(el.dataset.lnx) } catch { a = [] }
-      LN_P.forEach((p, i) => { if (a[i]) st.setProperty(p, a[i]); else st.removeProperty(p) })
-      delete el.dataset.lnx; delete el.dataset.lnv; delete el.dataset.lnb; delete el.dataset.lnw
+      restore()
+      delete el.dataset.lnx; delete el.dataset.lnv; delete el.dataset.lnb; delete el.dataset.lnw; delete el.dataset.lnt
     }
     return
   }
@@ -399,11 +403,13 @@ function lineFx(el: HTMLElement, f: BoxFx | undefined) {
     el.dataset.lnx = JSON.stringify(LN_P.map((p) => st.getPropertyValue(p)))
     el.dataset.lnv = el.offsetHeight > el.offsetWidth ? '1' : '0'
     el.dataset.lnb = cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent' ? '1' : ''
+    el.dataset.lnt = (el.textContent ?? '').trim() ? '1' : ''
     el.dataset.lnw = JSON.stringify([cs.borderTopWidth, cs.borderBottomWidth, cs.borderLeftWidth, cs.borderRightWidth].map((q) => parseFloat(q) || 0))
-  }
+  } else restore()
   const hasBg = el.dataset.lnb === '1'
   if (c) {
     if (hasBg) st.setProperty('background-color', c, 'important')
+    if (el.dataset.lnt === '1') st.setProperty('color', c, 'important')
     st.setProperty('border-color', c, 'important')
   }
   if (th) {

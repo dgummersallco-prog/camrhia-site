@@ -20,6 +20,7 @@ const GROUPS = [
   { label: 'Overview', items: [
     { href: '/admin/dashboard', label: 'Dashboard', icon: I.home },
     { href: '/admin/metrics', label: 'Metrics', icon: I.chart },
+    { href: '/admin/scoreboard', label: 'Scoreboard', icon: I.star },
   ] },
   { label: 'Marketing', items: [
     { href: '/admin/ads', label: 'Ads', icon: I.spark },

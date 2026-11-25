@@ -210,7 +210,7 @@ export default function AdminMetricsPage() {
   // MRR = paid subscribers only; comped accounts contribute $0.
   // Annual subscribers contribute 590/12 per month (their true monthly-equivalent value).
   const activeSubscribers = metrics.monthlySubscribers + metrics.annualSubscribers
-  const mrr = Math.round(metrics.monthlySubscribers * 8.99 + metrics.annualSubscribers * (89.99 / 12))
+  const mrr = Math.round(activeSubscribers * 55)
 
   // Conversion rate excludes comped from both numerator and denominator
   const conversionRate =
@@ -236,7 +236,7 @@ export default function AdminMetricsPage() {
           <StatCard
             label="MRR"
             value={`$${mrr.toLocaleString()}`}
-            sub={`${metrics.monthlySubscribers} monthly × $8.99 + ${metrics.annualSubscribers} annual × $7.50`}
+            sub={`${activeSubscribers} paying × $55 / month`}
             accent="text-twilight"
           />
           <StatCard

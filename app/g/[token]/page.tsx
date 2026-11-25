@@ -552,25 +552,25 @@ export default function GalleryViewPage() {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
     const SEL = '.gal-root img[data-pid]:not([data-cover]):not([data-slot])'
     const bar = document.createElement('div')
-    bar.style.cssText = 'position:fixed;z-index:2147483645;display:none;align-items:center;padding:3px;border-radius:999px;background:rgba(42,31,36,0.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(217,190,143,0.55);box-shadow:0 14px 30px -10px rgba(20,12,8,0.7);font:500 11px/1 system-ui,sans-serif;letter-spacing:0.16em;text-transform:uppercase'
+    bar.style.cssText = 'position:fixed;z-index:2147483645;display:none;align-items:center;padding:3px;border-radius:999px;background:rgba(255,255,255,0.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #EADFD6;box-shadow:0 6px 20px -8px rgba(42,31,36,0.25);font:500 11px/1 system-ui,sans-serif;letter-spacing:0.16em;text-transform:uppercase'
     let cur: string | null = null
     const ICON: Record<string, string> = {
-      top: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#D9BE8F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
-      left: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D9BE8F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
-      right: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D9BE8F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+      top: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#B59882" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+      left: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#B59882" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+      right: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#B59882" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
     }
     const mk = (label: string, to: string) => {
       if (bar.children.length > 0) {
         const dv = document.createElement('span')
-        dv.style.cssText = 'width:1px;height:16px;background:rgba(217,190,143,0.4)'
+        dv.style.cssText = 'width:1px;height:16px;background:#EADFD6'
         bar.appendChild(dv)
       }
       const b = document.createElement('button')
       b.type = 'button'
       b.innerHTML = ICON[to] + (label ? '<span>' + label + '</span>' : '')
-      b.style.cssText = 'border:0;background:transparent;color:#F3E6CC;cursor:pointer;height:34px;min-width:36px;padding:0 14px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font:inherit;letter-spacing:inherit;text-transform:inherit;transition:background .18s,color .18s'
-      b.addEventListener('mouseenter', () => { b.style.background = 'rgba(217,190,143,0.24)'; b.style.color = '#fff' })
-      b.addEventListener('mouseleave', () => { b.style.background = 'transparent'; b.style.color = '#F3E6CC' })
+      b.style.cssText = 'border:0;background:transparent;color:#2A1F24;cursor:pointer;height:34px;min-width:36px;padding:0 14px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font:inherit;letter-spacing:inherit;text-transform:inherit;transition:background .18s,color .18s'
+      b.addEventListener('mouseenter', () => { b.style.background = 'rgba(181,152,130,0.18)'; b.style.color = '#2A1F24' })
+      b.addEventListener('mouseleave', () => { b.style.background = 'transparent'; b.style.color = '#2A1F24' })
       b.addEventListener('click', (ev) => {
         ev.preventDefault()
         ev.stopPropagation()
@@ -633,16 +633,16 @@ export default function GalleryViewPage() {
     if (typeof window === 'undefined' || new URLSearchParams(window.location.search).get('preview') !== '1') return
     const NAMES: Record<string, string> = { title: 'Gallery title', brand: 'Studio name', count: 'Photo count', download: 'Download button', all: 'All button', favs: 'Favorites button', moment: 'Section heading', footer: 'Footer line', photos: 'Photos', initials: 'Cover initials', title2: 'Gallery title line 2', ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => ['x' + (i + 1), 'Text'])), ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => ['ph' + (i + 1), 'Photo'])) }
     const box = document.createElement('div')
-    box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:1.5px dashed #d9a21b;border-radius:3px;display:none'
+    box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:1.5px dashed #B59882;border-radius:3px;display:none'
     const tag = document.createElement('div')
-    tag.style.cssText = 'position:absolute;left:-1.5px;bottom:100%;margin-bottom:3px;background:linear-gradient(135deg,#FFFDF9,#F3E7D3);border:1px solid #B08D57;color:#6B4A2B;box-shadow:inset 0 0 0 2px #FFFDF9,inset 0 0 0 3px #E4D3B6,0 3px 10px rgba(90,60,30,.22);font:600 11px/1 Georgia,serif;letter-spacing:.04em;padding:5px 9px;border-radius:6px;white-space:nowrap'
+    tag.style.cssText = 'position:absolute;left:-1.5px;bottom:100%;margin-bottom:3px;background:#fff;border:1px solid #EADFD6;color:#2A1F24;box-shadow:0 2px 8px rgba(42,31,36,.12);font:600 11px/1 system-ui,sans-serif;letter-spacing:.04em;padding:5px 9px;border-radius:6px;white-space:nowrap'
     box.appendChild(tag)
     document.body.appendChild(box)
     const hnd: HTMLDivElement[] = []
     const mkH = (kind: string, css: string) => {
       const d = document.createElement('div')
       d.dataset.h = kind
-      d.style.cssText = 'position:absolute;pointer-events:auto;display:none;background:#fff;border:1.5px solid #b08d57;box-shadow:0 2px 6px rgba(0,0,0,.25);' + css
+      d.style.cssText = 'position:absolute;pointer-events:auto;display:none;background:#fff;border:1.5px solid #B59882;box-shadow:0 2px 6px rgba(0,0,0,.25);' + css
       box.appendChild(d)
       hnd.push(d)
       d.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation() })
@@ -715,11 +715,11 @@ export default function GalleryViewPage() {
     const xb = document.createElement('div')
     xb.textContent = String.fromCharCode(215)
     xb.title = 'Delete this text'
-    xb.style.cssText = 'position:absolute;right:-9px;top:-34px;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#FFFDF9,#F3E7D3);border:1px solid #B08D57;color:#6B4A2B;box-shadow:inset 0 0 0 2px #FFFDF9,inset 0 0 0 3px #E4D3B6,0 3px 10px rgba(90,60,30,.22);font:600 16px/22px Georgia,serif;text-align:center;cursor:pointer;pointer-events:auto;display:none'
+    xb.style.cssText = 'position:absolute;right:-9px;top:-34px;width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid #EADFD6;color:#2A1F24;box-shadow:0 2px 8px rgba(42,31,36,.12);font:600 16px/22px system-ui,sans-serif;text-align:center;cursor:pointer;pointer-events:auto;display:none'
     box.appendChild(xb)
     const pb = document.createElement('div')
     pb.setAttribute('data-pb', '1')
-    pb.style.cssText = 'position:absolute;left:50%;bottom:-36px;transform:translateX(-50%);padding:0 14px;height:28px;border-radius:14px;background:linear-gradient(135deg,#FFFDF9,#F3E7D3);border:1px solid #B08D57;color:#6B4A2B;box-shadow:inset 0 0 0 2px #FFFDF9,inset 0 0 0 3px #E4D3B6,0 3px 10px rgba(90,60,30,.22);font:600 12px/26px Georgia,serif;letter-spacing:.03em;white-space:nowrap;cursor:pointer;pointer-events:auto;display:none'
+    pb.style.cssText = 'position:absolute;left:50%;bottom:-36px;transform:translateX(-50%);padding:0 14px;height:28px;border-radius:14px;background:#fff;border:1px solid #EADFD6;color:#2A1F24;box-shadow:0 2px 8px rgba(42,31,36,.12);font:600 12px/26px system-ui,sans-serif;letter-spacing:.03em;white-space:nowrap;cursor:pointer;pointer-events:auto;display:none'
     pb.textContent = 'Move photo inside'
     box.appendChild(pb)
     pb.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation() })
@@ -793,8 +793,8 @@ export default function GalleryViewPage() {
           pb.style.display = isP ? 'block' : 'none'
           const pt = pan ? 'Done' : 'Move photo inside'
           if (pb.textContent !== pt) pb.textContent = pt
-          pb.style.background = pan ? '#8C6B3F' : 'linear-gradient(135deg,#FFFDF9,#F3E7D3)'
-          pb.style.color = pan ? '#fff' : '#6B4A2B'
+          pb.style.background = pan ? '#B59882' : '#fff'
+          pb.style.color = pan ? '#fff' : '#2A1F24'
           const flipP = rr.top + rr.height > window.innerHeight - 44
           pb.style.bottom = flipP ? 'auto' : '-36px'
           pb.style.top = flipP ? '-36px' : 'auto'
@@ -1316,7 +1316,7 @@ export default function GalleryViewPage() {
     </Fragment>
   )
   const coverBtn = (p: (typeof list)[number]) => isPreview ? (
-    <button type="button" data-setcover={p.id} className="absolute bottom-3 left-3 z-10 flex items-center gap-2.5 rounded-full border border-[#D9BE8F]/55 bg-[#2A1F24]/80 px-6 py-3 text-xs font-medium uppercase tracking-[0.16em] text-[#F3E6CC] opacity-0 shadow-[0_14px_30px_-10px_rgba(20,12,8,0.7)] backdrop-blur-md transition hover:bg-[#8C6B3F] hover:text-white group-hover:opacity-100"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#D9BE8F]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="1.6" /><path d="m21 16-5-5-8 8" /></svg>Set as cover</button>
+    <button type="button" data-setcover={p.id} className="absolute bottom-3 left-3 z-10 flex items-center gap-2.5 rounded-full border border-[#EADFD6] bg-white px-6 py-3 text-xs font-medium uppercase tracking-[0.16em] text-[#2A1F24] opacity-0 shadow-[0_6px_20px_-8px_rgba(42,31,36,0.3)] transition hover:bg-[#B59882] hover:text-white group-hover:opacity-100"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#B59882]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="1.6" /><path d="m21 16-5-5-8 8" /></svg>Set as cover</button>
   ) : null
   const heartBtn = (p: (typeof list)[number]) => (
     <button
