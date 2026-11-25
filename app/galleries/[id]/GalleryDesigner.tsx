@@ -50,10 +50,10 @@ function coverPatch(k: string, el?: GalleryDesign['el']): Partial<GalleryDesign>
 }
 
 type SecM = { id: string; name: string; startId: string; line?: boolean }
-const LUX = 'text-[11px] font-medium uppercase tracking-[0.18em] text-[#8C6B3F]'
-const TB_PILL = { background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', border: '1px solid #E4D3B6', boxShadow: 'inset 0 0 0 3px #FFFDF9, inset 0 0 0 4px #EBDDC3' } as const
-const TB_CARD = { background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', border: '1px solid #E4D3B6', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 8px 28px rgba(60,40,20,0.10)' } as const
-const TB_POP = { background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', border: '1px solid #E4D3B6', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' } as const
+const LUX = 'text-sm font-medium text-ink'
+const TB_PILL = { background: '#fff', border: '1px solid #EADFD6' } as const
+const TB_CARD = { background: '#fff', border: '1px solid #EADFD6', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' } as const
+const TB_POP = { background: '#fff', border: '1px solid #EADFD6', boxShadow: '0 18px 50px rgba(42,31,36,0.18)' } as const
 const PHOTO_SHAPES: { k: string; label: string; svg: ReactNode }[] = [
   { k: 'rect', label: 'Rectangle', svg: <rect x="3" y="5" width="18" height="14" /> },
   { k: 'rounded', label: 'Rounded', svg: <rect x="3" y="5" width="18" height="14" rx="5" /> },
@@ -488,9 +488,9 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         {photoChoices && photoChoices.length > 0 && onPickCover && (
           <>
             <p className={head + ' mt-2'}>Cover photo</p>
-            <div className="mt-2 flex items-start gap-3.5 rounded-2xl border border-[#E4D3B6] px-5 py-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 12px 26px -18px rgba(140,107,63,0.5)' }}>
-              <svg viewBox="0 0 24 24" className="mt-1 h-5 w-5 shrink-0 text-[#B08D57]" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4z" /></svg>
-              <p className="font-fraunces text-[15px] leading-relaxed text-ink">Pick a cover below, then <span className="font-semibold text-[#8C6B3F]">hover a photo in the gallery</span> and press <span className="font-semibold text-[#8C6B3F]">Set as cover</span>.</p>
+            <div className="mt-2 flex items-start gap-3.5 rounded-2xl border border-line bg-white px-5 py-4">
+              <svg viewBox="0 0 24 24" className="mt-1 h-5 w-5 shrink-0 text-twilight" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4z" /></svg>
+              <p className="text-sm leading-relaxed text-ink">Pick a cover below, then <span className="font-semibold text-ink">hover a photo in the gallery</span> and press <span className="font-semibold text-ink">Set as cover</span>.</p>
             </div>
             <div className="mt-3 grid grid-cols-5 gap-2">
               {[...(slotKeys.length > 0 ? slotKeys : ['main']), ...phKeys].map((k) => {
@@ -515,14 +515,13 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
           const zv = (slotKeys.length > 0 || phKeys.includes(curSlot)) && curSlot !== 'main' ? eff.zooms['slot:' + curSlot] ?? 1 : eff.zoom
           const setZ = (v: number) => { if ((slotKeys.length > 0 || phKeys.includes(curSlot)) && curSlot !== 'main') change({ zooms: { ...(latest.current.zooms ?? {}), ['slot:' + curSlot]: v } }); else change({ zoom: v }) }
           return (
-          <div className="mt-5 rounded-2xl border border-[#E4D3B6] px-5 py-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 12px 26px -18px rgba(140,107,63,0.5)' }}>
-            <style>{`.lux-range{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;outline:none;cursor:pointer}.lux-range::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:linear-gradient(90deg,#B08D57 var(--p,0%),#E4D3B6 var(--p,0%))}.lux-range::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-8px;border-radius:50%;background:#FFFDF9;border:1.5px solid #B08D57;box-shadow:0 3px 8px rgba(140,107,63,0.35)}.lux-range::-moz-range-track{height:2px;background:#E4D3B6}.lux-range::-moz-range-progress{height:2px;background:#B08D57}.lux-range::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#FFFDF9;border:1.5px solid #B08D57}`}</style>
+          <div className="mt-5 rounded-2xl border border-line bg-white px-5 py-4">
             <div className="flex items-baseline justify-between">
-              <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#8C6B3F]">Zoom</span>
-              <span className="font-fraunces text-sm text-ink">{zv.toFixed(1)}×</span>
+              <span className="text-sm font-medium text-ink">Zoom</span>
+              <span className="text-sm text-ink-soft">{zv.toFixed(1)}×</span>
             </div>
-            <input type="range" min={1} max={3} step={0.05} value={zv} onChange={(e) => setZ(Number(e.target.value))} className="lux-range mt-2" style={{ ['--p' as string]: ((zv - 1) / 2) * 100 + '%' } as React.CSSProperties} />
-            <p className="mt-3 font-fraunces text-[13px] italic leading-snug text-ink-soft">Zoom and drag apply to the photo you picked above. Drag it in the preview to move it.</p>
+            <input type="range" min={1} max={3} step={0.05} value={zv} onChange={(e) => setZ(Number(e.target.value))} className="mt-2 w-full accent-twilight" />
+            <p className="mt-3 text-xs leading-snug text-ink-soft">Zoom and drag apply to the photo you picked above. Drag it in the preview to move it.</p>
           </div>
           )
         })()}
@@ -532,7 +531,7 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
         <div className="mt-3 grid grid-cols-3 gap-2">
           {COVERS.map((c) => (
             <button key={c.k} type="button" onClick={() => change(coverPatch(c.k, eff.el))} onMouseEnter={(e) => c.k !== 'blank' && setZoom({ src: '/gallery-cover/' + c.k + '.png', name: c.name, top: e.currentTarget.getBoundingClientRect().top })} onMouseLeave={() => setZoom(null)} className={'rounded-lg border bg-white p-1.5 text-center transition hover:bg-paper ' + (eff.cover === c.k ? ring : 'border-line')}>
-              {c.k === 'blank' ? <div className="flex aspect-[2/1] items-center justify-center rounded border border-dashed border-[#D9C6A3] bg-[#FBF7F0] text-lg text-[#B08D57]">+</div> : <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>}
+              {c.k === 'blank' ? <div className="flex aspect-[2/1] items-center justify-center rounded border border-dashed border-line bg-paper text-lg text-ink-soft">+</div> : <div className="overflow-hidden rounded border border-black/5">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={"/gallery-cover/" + c.k + ".png"} alt="" className="block w-full" /></div>}
               <span className="mt-1 block text-[11px] text-ink">{c.name}</span>
             </button>
           ))}
@@ -572,25 +571,25 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
       <div className="flex min-w-0 flex-1 flex-col pb-1">
         <div style={TB_CARD} className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 rounded-2xl px-5 py-4">
           <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-            {!['ticket', 'stack'].includes(eff.cover) && <div className="w-36"><ColorInput lux float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
-            <div className="w-36"><ColorInput lux float label="Page" value={eff.pal.bg} onChange={(v) => change({ bg: v })} /></div>
-            <div className="w-36"><ColorInput lux float label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} /></div>
+            {!['ticket', 'stack'].includes(eff.cover) && <div className="w-36"><ColorInput float label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} /></div>}
+            <div className="w-36"><ColorInput float label="Page" value={eff.pal.bg} onChange={(v) => change({ bg: v })} /></div>
+            <div className="w-36"><ColorInput float label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} /></div>
             <div ref={layRef} className="relative w-36">
               <span className={LUX + ' block leading-4'}>Layers</span>
-              <button type="button" onClick={() => setLayOpen((o) => !o)} style={TB_PILL} className={'mt-1 flex h-[41px] w-full items-center justify-between gap-2 rounded-xl px-3.5 font-fraunces text-sm text-[#3a2d22] transition hover:brightness-[0.98]'}>
+              <button type="button" onClick={() => setLayOpen((o) => !o)} style={TB_PILL} className={'mt-1 flex h-[41px] w-full items-center justify-between gap-2 rounded-xl px-3.5 text-sm text-ink transition hover:brightness-[0.98]'}>
                 <span>{layerKeys((eff.el ?? {}) as Record<string, ElStyle>).length} text layers</span>
-                <span className="px-1 text-[#8C6B3F]">{layOpen ? <>&#9652;</> : <>&#9662;</>}</span>
+                <span className="px-1 text-ink-soft">{layOpen ? <>&#9652;</> : <>&#9662;</>}</span>
               </button>
               {layOpen && (() => {
                 const ks = layerKeys((eff.el ?? {}) as Record<string, ElStyle>)
                 return (
                   <div style={TB_POP} className="absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl p-3">
-                    <p className="px-2 pb-2 pt-1"><span className={LUX}>Text layers</span><span className="mt-0.5 block font-fraunces text-xs text-[#8a7a68]">Top of the list is in front</span></p>
+                    <p className="px-2 pb-2 pt-1"><span className={LUX}>Text layers</span><span className="mt-0.5 block text-xs text-ink-soft">Top of the list is in front</span></p>
                     {[...ks].reverse().map((k, i) => (
-                      <div key={k} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[#F6EBD9]">
-                        <button type="button" onClick={() => { setLayOpen(false); postSelect(k) }} title="Select this text on the page" className="min-w-0 flex-1 cursor-pointer truncate text-left font-fraunces text-sm text-[#3a2d22]">{String(layerLabel(k)).replace(/\s+/g, ' ')}</button>
-                        <button type="button" disabled={i === 0} onClick={() => moveLayer(k, 1)} className="h-7 w-7 rounded-md border border-[#E4D3B6] bg-[#FFFDF9] text-xs text-[#8C6B3F] transition hover:border-[#B08D57] disabled:opacity-30" aria-label="Bring forward">&#9650;</button>
-                        <button type="button" disabled={i === ks.length - 1} onClick={() => moveLayer(k, -1)} className="h-7 w-7 rounded-md border border-[#E4D3B6] bg-[#FFFDF9] text-xs text-[#8C6B3F] transition hover:border-[#B08D57] disabled:opacity-30" aria-label="Send back">&#9660;</button>
+                      <div key={k} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-black/5">
+                        <button type="button" onClick={() => { setLayOpen(false); postSelect(k) }} title="Select this text on the page" className="min-w-0 flex-1 cursor-pointer truncate text-left text-sm text-ink">{String(layerLabel(k)).replace(/\s+/g, ' ')}</button>
+                        <button type="button" disabled={i === 0} onClick={() => moveLayer(k, 1)} className="h-7 w-7 rounded-md border border-line bg-white text-xs text-ink-soft transition hover:border-twilight disabled:opacity-30" aria-label="Bring forward">&#9650;</button>
+                        <button type="button" disabled={i === ks.length - 1} onClick={() => moveLayer(k, -1)} className="h-7 w-7 rounded-md border border-line bg-white text-xs text-ink-soft transition hover:border-twilight disabled:opacity-30" aria-label="Send back">&#9660;</button>
                       </div>
                     ))}
                   </div>
@@ -599,24 +598,24 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             </div>
             <div ref={addRef} className="relative w-36">
               <span className={LUX + ' block leading-4'}>Add</span>
-              <button type="button" onClick={() => setAddOpen((o) => !o)} style={TB_PILL} className={'mt-1 flex h-[41px] w-full items-center justify-between gap-2 rounded-xl px-3.5 font-fraunces text-sm text-[#3a2d22] transition hover:brightness-[0.98]'}><span>+ Add</span><span className="px-1 text-[#8C6B3F]">{addOpen ? <>&#9652;</> : <>&#9662;</>}</span></button>
+              <button type="button" onClick={() => setAddOpen((o) => !o)} style={TB_PILL} className={'mt-1 flex h-[41px] w-full items-center justify-between gap-2 rounded-xl px-3.5 text-sm text-ink transition hover:brightness-[0.98]'}><span>+ Add</span><span className="px-1 text-ink-soft">{addOpen ? <>&#9652;</> : <>&#9662;</>}</span></button>
               {addOpen && (
                 <div style={TB_POP} className="absolute left-0 top-full z-40 mt-2 w-72 rounded-2xl p-3">
                   <p className="px-2 pb-2 pt-1"><span className={LUX}>What do you want to add?</span></p>
-                  <button type="button" onClick={addCoverText} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-[#F6EBD9]">
-                    <span className="block font-fraunces text-sm text-[#3a2d22]">Cover text box</span>
-                    <span className="block text-xs text-[#8a7a68]">A line on the cover photo</span>
+                  <button type="button" onClick={addCoverText} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-black/5">
+                    <span className="block text-sm text-ink">Cover text box</span>
+                    <span className="block text-xs text-ink-soft">A line on the cover photo</span>
                   </button>
-                  <button type="button" onClick={() => { setAddOpen(false); void addSectionRef.current() }} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-[#F6EBD9]">
-                    <span className="block font-fraunces text-sm text-[#3a2d22]">Section text box</span>
-                    <span className="block text-xs text-[#8a7a68]">Splits your photos into parts</span>
+                  <button type="button" onClick={() => { setAddOpen(false); void addSectionRef.current() }} className="block w-full rounded-lg px-2 py-2 text-left hover:bg-black/5">
+                    <span className="block text-sm text-ink">Section text box</span>
+                    <span className="block text-xs text-ink-soft">Splits your photos into parts</span>
                   </button>
-                  <div className="mt-1 border-t border-[#EBDDC3] px-2 pb-1 pt-3">
-                    <span className="block font-fraunces text-sm text-[#3a2d22]">Photo</span>
-                    <span className="block text-xs text-[#8a7a68]">Pick a shape, then drag its edges to stretch it</span>
+                  <div className="mt-1 border-t border-line px-2 pb-1 pt-3">
+                    <span className="block text-sm text-ink">Photo</span>
+                    <span className="block text-xs text-ink-soft">Pick a shape, then drag its edges to stretch it</span>
                     <div className="mt-2 grid grid-cols-5 gap-1.5">
                       {PHOTO_SHAPES.map((sp) => (
-                        <button key={sp.k} type="button" title={sp.label} aria-label={sp.label} onClick={() => addCoverPhoto(sp.k)} className="flex h-11 items-center justify-center rounded-lg border border-[#E4D3B6] bg-[#FFFDF9] text-[#8C6B3F] transition hover:border-[#B08D57] hover:bg-[#F6EBD9]">
+                        <button key={sp.k} type="button" title={sp.label} aria-label={sp.label} onClick={() => addCoverPhoto(sp.k)} className="flex h-11 items-center justify-center rounded-lg border border-line bg-white text-ink-soft transition hover:border-twilight hover:bg-black/5">
                           <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">{sp.svg}</svg>
                         </button>
                       ))}
@@ -627,10 +626,10 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={undo} disabled={histN === 0} style={TB_PILL} className="inline-flex h-[41px] items-center gap-2 rounded-xl px-4 font-fraunces text-sm text-[#3a2d22] transition hover:brightness-[0.98] disabled:cursor-default disabled:opacity-40"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>Undo</button>
-          <div style={TB_PILL} className="flex h-[41px] overflow-hidden rounded-xl p-[4px] font-fraunces text-sm">
+            <button type="button" onClick={undo} disabled={histN === 0} style={TB_PILL} className="inline-flex h-[41px] items-center gap-2 rounded-xl px-4 text-sm text-ink transition hover:brightness-[0.98] disabled:cursor-default disabled:opacity-40"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>Undo</button>
+          <div style={TB_PILL} className="flex h-[41px] overflow-hidden rounded-xl p-[4px] text-sm">
             {(['desktop', 'phone'] as const).map((x) => (
-              <button key={x} type="button" onClick={() => setDevice(x)} style={device === x ? { background: 'linear-gradient(135deg,#B08D57,#8C6B3F)' } : undefined} className={'rounded-lg px-4 transition ' + (device === x ? 'text-white' : 'text-[#8C6B3F] hover:text-[#5c4528]')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
+              <button key={x} type="button" onClick={() => setDevice(x)} className={'rounded-lg px-4 transition ' + (device === x ? 'bg-twilight text-white' : 'text-ink-soft hover:text-ink')}>{x === 'desktop' ? 'Desktop' : 'Phone'}</button>
             ))}
           </div>
           </div>
@@ -644,16 +643,16 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
             </div>
           )}
           {pick && (
-            <div ref={popBox} className="absolute right-3 z-20 w-64 overflow-y-auto rounded-2xl border border-[#E8DDD0] bg-[#FFFDF9] p-4 shadow-[0_18px_50px_rgba(42,31,36,0.18)]" style={{ ...(popPos ?? { top: 12, maxHeight: '92%' }), background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(42,31,36,0.18)' }}>
+            <div ref={popBox} className="absolute right-3 z-20 w-64 overflow-y-auto rounded-2xl border border-line bg-white p-4 shadow-[0_18px_50px_rgba(42,31,36,0.18)]" style={{ ...(popPos ?? { top: 12, maxHeight: '92%' }) }}>
               <div className="mb-3 flex items-center justify-between border-b border-[#EFE4D8] pb-2">
                 <p className="font-fraunces text-lg font-semibold text-ink">{pick.name}</p>
                 <button type="button" onClick={() => setPick(null)} className="text-ink-soft hover:text-ink">✕</button>
               </div>
               {pick.key === 'bg' ? (
                 <div className="space-y-2">
-                  {!['ticket', 'stack'].includes(eff.cover) && <ColorInput lux label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} />}
-                  <ColorInput lux label="Page background" value={eff.pal.bg} onChange={(v) => change({ bg: v })} />
-                  <ColorInput lux label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} />
+                  {!['ticket', 'stack'].includes(eff.cover) && <ColorInput label="Cover" value={eff.coverPal.bg} onChange={(v) => change({ coverBg: v })} />}
+                  <ColorInput label="Page background" value={eff.pal.bg} onChange={(v) => change({ bg: v })} />
+                  <ColorInput label="Accent" value={eff.pal.accent} onChange={(v) => change({ accent: v })} />
                 </div>
               ) : pick.key === 'photos' ? (
                 <div className="space-y-3">
@@ -680,14 +679,14 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                       </div>
                     )}
                   </div>
-                  <label className="flex items-center gap-3 text-xs text-ink-soft"><span className={'w-16 shrink-0 ' + LUX}>Size <span className="font-fraunces text-sm normal-case tracking-normal text-ink">{cur?.size ?? pick.size}</span></span>
+                  <label className="flex items-center gap-3 text-xs text-ink-soft"><span className={'w-16 shrink-0 ' + LUX}>Size <span className="text-sm normal-case tracking-normal text-ink-soft">{cur?.size ?? pick.size}</span></span>
                     <input type="range" min={8} max={120} value={cur?.size ?? pick.size} onChange={(e) => setEl(ek, { size: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
                   </label>
                   {pick.key === 'title' && eff.cover === 'bigtype' && (
-                    <ColorInput lux label="Color over the photo" value={eff.el?.titlein?.color ?? '#FFFFFF'} onChange={(v) => setEl('titlein', { color: v })} />
+                    <ColorInput label="Color over the photo" value={eff.el?.titlein?.color ?? '#FFFFFF'} onChange={(v) => setEl('titlein', { color: v })} />
                   )}
                   <div className="flex items-end gap-3">
-                    <div className="min-w-0 flex-1"><ColorInput lux label="Color" value={cur?.color ?? pick.color} onChange={(v) => setEl(ek, { color: v })} /></div>
+                    <div className="min-w-0 flex-1"><ColorInput label="Color" value={cur?.color ?? pick.color} onChange={(v) => setEl(ek, { color: v })} /></div>
                     <label className="flex shrink-0 items-center gap-1.5 pb-3 text-xs text-ink-soft">
                       <input type="checkbox" checked={cur?.bold ?? pick.bold} onChange={(e) => setEl(ek, { bold: e.target.checked })} />
                       <span className={LUX}>Bold</span>
@@ -696,8 +695,8 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                   {pick.key === 'moment' && pick.mid ? (
                     <div className="space-y-3 border-t border-[#EFE4D8] pt-3">
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => rowMove(-1)} className="flex-1 rounded-full border border-[#E8DDD0] bg-white px-2 py-1.5 font-fraunces text-[13px] text-ink hover:border-twilight">↑ Up a row</button>
-                        <button type="button" onClick={() => rowMove(1)} className="flex-1 rounded-full border border-[#E8DDD0] bg-white px-2 py-1.5 font-fraunces text-[13px] text-ink hover:border-twilight">↓ Down a row</button>
+                        <button type="button" onClick={() => rowMove(-1)} className="flex-1 rounded-full border border-line bg-white px-2 py-1.5 text-xs text-ink hover:border-twilight">↑ Up a row</button>
+                        <button type="button" onClick={() => rowMove(1)} className="flex-1 rounded-full border border-line bg-white px-2 py-1.5 text-xs text-ink hover:border-twilight">↓ Down a row</button>
                       </div>
                       <div className="text-xs text-ink-soft"><span className={LUX}>Alignment</span>
                         <div className="mt-1 flex rounded-full bg-[#F3E9DD] p-1">
@@ -712,21 +711,21 @@ export default function GalleryDesigner({ galleryId, token, title, initial, cove
                           <span className={'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ' + (pick.line ? 'left-[18px]' : 'left-0.5')} />
                         </span>
                       </button>
-                      {pick.line && <ColorInput lux label="Line color" value={eff.el?.[ek]?.lineColor ?? eff.el?.moment?.lineColor ?? eff.pal.accent} onChange={(v) => setEl(ek, { lineColor: v })} />}
+                      {pick.line && <ColorInput label="Line color" value={eff.el?.[ek]?.lineColor ?? eff.el?.moment?.lineColor ?? eff.pal.accent} onChange={(v) => setEl(ek, { lineColor: v })} />}
                     </div>
                   ) : ['title', 'title2', 'brand', 'count', 'initials'].includes(pick.key) || /^x\d+$/.test(pick.key) || pick.key === 'moment' ? null : (
-                    <label className="flex items-center gap-3 text-xs text-ink-soft"><span className={'w-16 shrink-0 ' + LUX}>Move <span className="font-fraunces text-sm normal-case tracking-normal text-ink">{cur?.dy ?? 0}</span></span>
+                    <label className="flex items-center gap-3 text-xs text-ink-soft"><span className={'w-16 shrink-0 ' + LUX}>Move <span className="text-sm normal-case tracking-normal text-ink-soft">{cur?.dy ?? 0}</span></span>
                       <input type="range" min={-200} max={200} value={cur?.dy ?? 0} onChange={(e) => setEl(ek, { dy: Number(e.target.value) })} className="accent-[var(--color-twilight)] min-w-0 flex-1" />
                     </label>
                   )}
                   {pick.key === 'moment' && pick.mid ? (
-                    <button type="button" onClick={() => void removeSection()} className="font-fraunces text-[13px] italic text-[#8C6B3F] underline">Remove this line</button>
+                    <button type="button" onClick={() => void removeSection()} className="text-xs text-ink-soft underline">Remove this line</button>
                   ) : pick.key === 'count' ? (
-                    <button type="button" onClick={() => { setEl('count', { hide: true }); setPick(null) }} className="font-fraunces text-[13px] italic text-[#8C6B3F] underline">Remove this line</button>
+                    <button type="button" onClick={() => { setEl('count', { hide: true }); setPick(null) }} className="text-xs text-ink-soft underline">Remove this line</button>
                   ) : /^x\d+$/.test(pick.key) ? (
-                    <button type="button" onClick={() => { resetEl(ek); setPick(null) }} className="font-fraunces text-[13px] italic text-[#8C6B3F] underline">Remove this line</button>
+                    <button type="button" onClick={() => { resetEl(ek); setPick(null) }} className="text-xs text-ink-soft underline">Remove this line</button>
                   ) : (
-                    <button type="button" onClick={() => resetEl(ek)} className="font-fraunces text-[13px] italic text-[#8C6B3F] underline">Reset this line</button>
+                    <button type="button" onClick={() => resetEl(ek)} className="text-xs text-ink-soft underline">Reset this line</button>
                   )}
                 </div>
               )}

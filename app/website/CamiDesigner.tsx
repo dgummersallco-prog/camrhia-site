@@ -265,7 +265,7 @@ function ColorRow({ label, value, base, cur, onLive, onSet, onReset }: { label: 
   return (
     <div className="mt-4" ref={rootRef}>
       <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
-      <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-left text-sm text-ink">
+      <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-line bg-white px-3 py-2 text-left text-sm text-ink">
         <span className="flex items-center gap-2">
           <span className="h-5 w-5 rounded-full border border-black/15" style={{ background: shown ?? 'repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 8px 8px' }} />
           {ok ? (value as string).toUpperCase() : shown ? shown.toUpperCase() : ''}
@@ -273,10 +273,10 @@ function ColorRow({ label, value, base, cur, onLive, onSet, onReset }: { label: 
         <span className="text-xs text-ink-soft">{open ? 'Close' : 'Change'}</span>
       </button>
       {open && (
-        <div className="mt-2 rounded-2xl border border-[#E4D3B6] p-3" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 3px #FFFDF9, inset 0 0 0 4px #EBDDC3' }}>
+        <div className="mt-2 rounded-2xl border border-line bg-white p-3">
           <div className="flex flex-wrap gap-2" style={{ display: pal.length ? undefined : 'none' }}>
             {pal.map((c) => (
-              <button key={c} type="button" aria-label={c} onClick={() => { setHsv(hexToHsv(c)); setHexT(c); onLive?.(c); finish(c) }} className={'rounded-full border border-[#DCCBA9] transition hover:scale-105 ' + (String(value ?? '').toUpperCase() === c ? 'ring-2 ring-[#8C6B3F] ring-offset-1' : '')} style={{ background: c, width: 26, height: 26, flex: 'none' }} />
+              <button key={c} type="button" aria-label={c} onClick={() => { setHsv(hexToHsv(c)); setHexT(c); onLive?.(c); finish(c) }} className={'rounded-full border border-line transition hover:scale-105 ' + (String(value ?? '').toUpperCase() === c ? 'ring-2 ring-twilight ring-offset-1' : '')} style={{ background: c, width: 26, height: 26, flex: 'none' }} />
             ))}
           </div>
           <div ref={svRef} onPointerDown={grab(svRef, (x, y) => [hsv[0], x, 1 - y])} className="relative mt-3 h-36 w-full cursor-crosshair touch-none rounded-xl" style={{ background: 'linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,hsl(' + hsv[0] + ',100%,50%))' }}>
@@ -285,10 +285,10 @@ function ColorRow({ label, value, base, cur, onLive, onSet, onReset }: { label: 
           <div ref={hueRef} onPointerDown={grab(hueRef, (x) => [x * 359.9, hsv[1], hsv[2]])} className="relative mt-3 h-4 w-full cursor-pointer touch-none rounded-full" style={{ background: 'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)' }}>
             <div className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow" style={{ left: (hsv[0] / 360) * 100 + '%', background: 'hsl(' + hsv[0] + ',100%,50%)' }} />
           </div>
-          <input value={hexT} onChange={(e) => { const v = e.target.value.trim(); setHexT(v); const w = v.startsWith('#') ? v : '#' + v; if (/^#[0-9a-fA-F]{6}$/.test(w)) { setHsv(hexToHsv(w)); live(w.toUpperCase()) } }} onBlur={() => { const w = hexT.startsWith('#') ? hexT : '#' + hexT; if (/^#[0-9a-fA-F]{6}$/.test(w)) finish(w.toUpperCase()) }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} maxLength={7} placeholder="#hex" className="mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 font-fraunces text-sm uppercase text-ink outline-none focus:border-[#B08D57]" />
+          <input value={hexT} onChange={(e) => { const v = e.target.value.trim(); setHexT(v); const w = v.startsWith('#') ? v : '#' + v; if (/^#[0-9a-fA-F]{6}$/.test(w)) { setHsv(hexToHsv(w)); live(w.toUpperCase()) } }} onBlur={() => { const w = hexT.startsWith('#') ? hexT : '#' + hexT; if (/^#[0-9a-fA-F]{6}$/.test(w)) finish(w.toUpperCase()) }} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} maxLength={7} placeholder="#hex" className="mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 font-fraunces text-sm uppercase text-ink outline-none focus:border-twilight" />
           <div className="mt-3 flex items-center justify-between">
-            <button type="button" onClick={() => setOpen(false)} className="text-xs font-semibold tracking-[0.2em] text-[#8C6B3F]">DONE</button>
-            {onReset && <button type="button" onClick={onReset} className="text-xs font-medium text-[#6B4A2B] underline">Reset</button>}
+            <button type="button" onClick={() => setOpen(false)} className="text-xs font-semibold tracking-[0.2em] text-twilight">DONE</button>
+            {onReset && <button type="button" onClick={onReset} className="text-xs font-medium text-ink underline">Reset</button>}
           </div>
         </div>
       )}
@@ -312,7 +312,7 @@ function SliderRow({ label, value, min, max, step, unit, onLive, onDone }: { lab
         <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
         <span className="text-xs text-ink-soft">{unit === 'x' ? v.toFixed(2) + 'x' : Math.round(v) + unit}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={v} onChange={(e) => change(Number(e.target.value))} onPointerUp={() => onDone(last.current)} onKeyUp={() => onDone(last.current)} className="mt-2 w-full accent-[#8C6B3F]" />
+      <input type="range" min={min} max={max} step={step} value={v} onChange={(e) => change(Number(e.target.value))} onPointerUp={() => onDone(last.current)} onKeyUp={() => onDone(last.current)} className="mt-2 w-full accent-twilight" />
     </div>
   )
 }
@@ -352,11 +352,11 @@ function FontPick({ label, hint, value, onPick }: { label: string; hint: string;
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</p>
       {hint ? <p className="text-xs text-ink-soft">{hint}</p> : null}
-      <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-left text-base text-ink" style={{ fontFamily: fam(value) }}>
+      <button type="button" onClick={() => setOpen(!open)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-line bg-white px-3 py-2 text-left text-base text-ink" style={{ fontFamily: fam(value) }}>
         <span>{fname(value)}</span><span className="text-xs text-ink-soft">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
-        <div className="mt-2 max-h-52 overflow-y-auto rounded-xl border border-[#E4D3B6] bg-white">
+        <div className="mt-2 max-h-52 overflow-y-auto rounded-xl border border-line bg-white">
           {FONT_IDS.map((k) => (
             <button key={k} type="button" onClick={() => { onPick(k); setOpen(false) }} className={'block w-full px-3 py-2 text-left text-base text-ink hover:bg-paper ' + (k === value ? 'bg-paper' : '')} style={{ fontFamily: fam(k) }}>{fname(k)}</button>
           ))}
@@ -1337,7 +1337,7 @@ export default function CamiDesigner() {
             <div className="min-h-0 flex-1 overflow-y-auto border-b border-black/10 bg-[#f1e9e0] px-5 py-4">
               <div className="inline-flex rounded-full border border-black/10 bg-white p-1">
                 {([['design', 'Design tools'], ['setup', 'Your setup']] as const).map(([k, t]) => (
-                  <button key={k} type="button" onClick={() => setLeftTab(k)} className={'rounded-full px-4 py-1.5 text-sm transition ' + (leftTab === k ? 'bg-[#8C6B3F] font-medium text-white' : 'text-ink hover:bg-black/5')}>{t}</button>
+                  <button key={k} type="button" onClick={() => setLeftTab(k)} className={'rounded-full px-4 py-1.5 text-sm transition ' + (leftTab === k ? 'bg-twilight font-medium text-white' : 'text-ink hover:bg-black/5')}>{t}</button>
                 ))}
               </div>
               {leftTab === 'design' && (() => {
@@ -1352,9 +1352,9 @@ export default function CamiDesigner() {
                 const secPadMut = (key: string, f: 'pt' | 'pb', v: number | null) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.secStyle ?? {}) }; const cur: Record<string, any> = { ...(m[key] ?? {}) }; if (v === null) delete cur[f]; else cur[f] = Math.round(v); m[key] = cur; x.secStyle = m }
                 const liveSecAcc = (key: string, c: string) => liveEdit(secAccMut(key, c))
                 const liveSecBg = (key: string, c: string) => liveEdit(secBgMut(key, c))
-                const boxReset = selBox && (set.boxFx ?? {})[selBox] ? <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; delete m[selBox]; x.boxFx = m }) }} className="mt-4 rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]">Reset position and size</button> : null
-                const btn = 'rounded-full border border-[#B08D57] bg-transparent px-4 py-1.5 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]'
-                const inp = 'mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]'
+                const boxReset = selBox && (set.boxFx ?? {})[selBox] ? <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; delete m[selBox]; x.boxFx = m }) }} className="mt-4 rounded-full border border-twilight bg-transparent px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-black/5">Reset position and size</button> : null
+                const btn = 'rounded-full border border-twilight bg-transparent px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-black/5'
+                const inp = 'mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight'
                 if (selAp) {
                   const ad = ((((form.site_settings ?? {}) as any).addons ?? []) as any[]).find((a) => a && a.id === selAp)
                   if (ad) {
@@ -1401,7 +1401,7 @@ export default function CamiDesigner() {
                         <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Button shape</p>
                         <div className="mt-2 flex gap-2">
                           {(['square', 'rounded', 'pill'] as const).map((sh) => (
-                            <button key={sh} type="button" onClick={() => setB({ shape: sh })} className={'rounded-full border px-4 py-1.5 text-sm capitalize transition ' + (bf.shape === sh ? 'border-[#8C6B3F] bg-[#8C6B3F] text-white' : 'border-[#E4D3B6] bg-white text-ink hover:bg-[#F3E7D3]')}>{sh}</button>
+                            <button key={sh} type="button" onClick={() => setB({ shape: sh })} className={'rounded-full border px-4 py-1.5 text-sm capitalize transition ' + (bf.shape === sh ? 'border-twilight bg-twilight text-white' : 'border-line bg-white text-ink hover:bg-black/5')}>{sh}</button>
                           ))}
                         </div>
                       </div>
@@ -1427,7 +1427,7 @@ export default function CamiDesigner() {
                       <ColorRow label={nm + ' color'} value={el.color ?? pick.color} base={base} onLive={(c) => setElProp(pick.key, { color: c }, true)} onSet={(c) => setElProp(pick.key, { color: c })} />
                       {pick.key === 'gs_title' && <ColorRow label="Behind the title and lines" value={ss.portfolio?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg('portfolio', c)} onSet={(c) => setSecBg('portfolio', c)} onReset={() => setSecBg('portfolio', null)} />}
                       <SliderRow label={nm + ' size'} value={Math.round(Number(el.size) || pick.size || 16)} min={8} max={800} step={1} unit="px" onLive={(v) => setElProp(pick.key, { size: v }, true)} onDone={(v) => setElProp(pick.key, { size: v })} />
-                      {Number(el.size) > 0 && <button type="button" onClick={() => setElProp(pick.key, { size: undefined })} className="mt-1 text-xs font-medium text-[#6B4A2B] underline">Back to original size</button>}
+                      {Number(el.size) > 0 && <button type="button" onClick={() => setElProp(pick.key, { size: undefined })} className="mt-1 text-xs font-medium text-ink underline">Back to original size</button>}
                       <SliderRow label={nm + ' opacity'} value={Math.round((Number(el.op) || pick.op || 1) * 100)} min={10} max={100} step={1} unit="%" onLive={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 }, true)} onDone={(v) => setElProp(pick.key, { op: v >= 100 ? 1 : v / 100 })} />
                       <SliderRow label={nm + ' shadow'} value={Math.round(Number(el.shb) || 0)} min={0} max={40} step={1} unit="px" onLive={(v) => setElProp(pick.key, { shb: v }, true)} onDone={(v) => setElProp(pick.key, { shb: v })} />
                       {(() => {
@@ -1442,7 +1442,7 @@ export default function CamiDesigner() {
                               ))}
                             </div>
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Button link</p>
-                            <input key={ad.id} defaultValue={ad.url ?? ''} placeholder="https://" onBlur={(e) => { const v = e.target.value.trim(); void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); x.addons = (Array.isArray(x.addons) ? x.addons : []).map((a: any) => (a && a.id === ad.id ? { ...a, url: v } : a)) }) }} className="mt-2 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]" />
+                            <input key={ad.id} defaultValue={ad.url ?? ''} placeholder="https://" onBlur={(e) => { const v = e.target.value.trim(); void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); x.addons = (Array.isArray(x.addons) ? x.addons : []).map((a: any) => (a && a.id === ad.id ? { ...a, url: v } : a)) }) }} className="mt-2 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />
                           </div>
                         )
                       })()}
@@ -1468,7 +1468,7 @@ export default function CamiDesigner() {
                         <button type="button" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.photoFx ?? {}) }; delete m[id]; x.photoFx = m }) }} className={btn}>Reset photo</button>
                       </div>
                       <details className="group mt-2">
-                        <summary className="flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-full border border-[#B08D57] text-xs font-semibold italic text-[#8C6B3F] [&::-webkit-details-marker]:hidden" title="Tips">i</summary>
+                        <summary className="flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-full border border-twilight text-xs font-semibold italic text-twilight [&::-webkit-details-marker]:hidden" title="Tips">i</summary>
                         <p className="mt-2 text-xs text-ink-soft">Drag the photo to move it inside its frame. Use the side handles to stretch it, the corners to scale it, and the round arrow to rotate it.</p>
                       </details>
                       {boxReset}
@@ -1523,7 +1523,7 @@ export default function CamiDesigner() {
                     <ColorRow label={secNm + ' accent color'} value={ss[bgKey]?.accent} cur={accent} base={base} onLive={(c) => liveSecAcc(bgKey, c)} onSet={(c) => setSecAcc(bgKey, c)} onReset={() => setSecAcc(bgKey, null)} />
                     <SliderRow key={bgKey + 'pt'} label={secNm + ' top padding'} value={Math.round(Number(ss[bgKey]?.pt ?? secPad.pt) || 0)} min={0} max={400} step={1} unit="px" onLive={(v) => liveEdit(secPadMut(bgKey, 'pt', v))} onDone={(v) => { void commit(secPadMut(bgKey, 'pt', v)) }} />
                     <SliderRow key={bgKey + 'pb'} label={secNm + ' bottom padding'} value={Math.round(Number(ss[bgKey]?.pb ?? secPad.pb) || 0)} min={0} max={400} step={1} unit="px" onLive={(v) => liveEdit(secPadMut(bgKey, 'pb', v))} onDone={(v) => { void commit(secPadMut(bgKey, 'pb', v)) }} />
-                    {(ss[bgKey]?.pt !== undefined || ss[bgKey]?.pb !== undefined) && <button type="button" onClick={() => { void commit((n) => { secPadMut(bgKey, 'pt', null)(n); secPadMut(bgKey, 'pb', null)(n) }) }} className="mt-1 text-xs font-medium text-[#6B4A2B] underline">Reset padding</button>}
+                    {(ss[bgKey]?.pt !== undefined || ss[bgKey]?.pb !== undefined) && <button type="button" onClick={() => { void commit((n) => { secPadMut(bgKey, 'pt', null)(n); secPadMut(bgKey, 'pb', null)(n) }) }} className="mt-1 text-xs font-medium text-ink underline">Reset padding</button>}
                     {Object.entries((set.boxFx ?? {}) as Record<string, any>).some(([k, v]) => v?.h && (k.startsWith('t:' + selSec + ':') || k.startsWith('r:' + selSec + ':') || k.startsWith('f:' + selSec + ':') || k === 'f:' + selSec)) && (
                       <button type="button" className={btn + ' mt-3'} onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; for (const k of Object.keys(m)) if (m[k]?.h && (k.startsWith('t:' + selSec + ':') || k.startsWith('r:' + selSec + ':') || k.startsWith('f:' + selSec + ':') || k === 'f:' + selSec)) delete m[k]; x.boxFx = m }) }}>Bring back removed items</button>
                     )}
@@ -1662,40 +1662,40 @@ export default function CamiDesigner() {
           )}
           {slot && (
             <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/30 p-4" onClick={() => setSlot(null)}>
-              <div onClick={(e) => e.stopPropagation()} className="max-h-[85%] w-full max-w-xl overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
+              <div onClick={(e) => e.stopPropagation()} className="max-h-[85%] w-full max-w-xl overflow-y-auto rounded-2xl border border-line bg-white p-4">
                 <div className="flex items-center justify-between border-b border-[#EFE4D8] pb-2">
                   <p className="font-fraunces text-lg font-semibold text-ink">{slot.key === 'hero' && !slot.multi ? 'Choose your hero photos' : 'Choose a photo'}</p>
                   <button type="button" aria-label="Close" onClick={() => setSlot(null)} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
                 </div>
                 <div className="mt-3 flex max-h-[min(52vh,400px)] flex-wrap content-start gap-1.5 overflow-y-auto pr-1">
                   {lib.map((ph) => (
-                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} style={{ width: 76, height: 76, flex: 'none' }} className={'relative overflow-hidden rounded-md border transition hover:ring-2 hover:ring-[#B08D57] ' + (slot.key === 'hero' && !slot.multi && (form?.site_settings?.hero?.photos ?? []).includes(ph.storage_path) ? 'border-[#8C6B3F] ring-2 ring-[#8C6B3F]' : 'border-[#E4D3B6]')}>
+                    <button key={ph.id} type="button" onClick={() => chooseSlot(ph.storage_path)} style={{ width: 76, height: 76, flex: 'none' }} className={'relative overflow-hidden rounded-md border transition hover:ring-2 hover:ring-twilight ' + (slot.key === 'hero' && !slot.multi && (form?.site_settings?.hero?.photos ?? []).includes(ph.storage_path) ? 'border-twilight ring-2 ring-twilight' : 'border-line')}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={BASE + ph.storage_path} alt="" className="h-full w-full object-cover" />
                     </button>
                   ))}
-                  <label style={{ width: 76, height: 76, flex: 'none' }} className="flex cursor-pointer items-center justify-center rounded-md border border-dashed border-[#B08D57] bg-white/60 text-center text-[10px] text-[#6B4A2B] hover:bg-white">
+                  <label style={{ width: 76, height: 76, flex: 'none' }} className="flex cursor-pointer items-center justify-center rounded-md border border-dashed border-twilight bg-white/60 text-center text-[10px] text-ink hover:bg-white">
                     <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { void addLib(e.target.files); e.target.value = '' }} />
                     {libBusy ? 'Uploading…' : '+ Add photos'}
                   </label>
                 </div>
                 {lib.length === 0 && !libBusy && <p className="mt-3 text-xs text-ink-soft">No website photos yet. Add some here and they will also show up in Website photos.</p>}
                 <div className="mt-4 flex gap-2">
-                  <button type="button" className="rounded-full border border-[#B08D57] bg-transparent px-4 py-2 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]" onClick={() => chooseSlot(null)}>Use default</button>
-                  <button type="button" className="rounded-full bg-[#8C6B3F] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90" onClick={() => setSlot(null)}>Done</button>
+                  <button type="button" className="rounded-full border border-twilight bg-transparent px-4 py-2 text-sm font-medium text-ink transition hover:bg-black/5" onClick={() => chooseSlot(null)}>Use default</button>
+                  <button type="button" className="rounded-full bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90" onClick={() => setSlot(null)}>Done</button>
                 </div>
               </div>
             </div>
           )}
           {POPUP_ON && pick && (
-            <div className="absolute z-30 overflow-y-auto rounded-2xl border border-[#E4D3B6] p-4" style={{ left: pick.left, top: Math.max(8, Math.min(pick.top, (boxRef.current?.clientHeight ?? 700) - 460)), maxHeight: (boxRef.current?.clientHeight ?? 700) - Math.max(8, Math.min(pick.top, (boxRef.current?.clientHeight ?? 700) - 460)) - 8, width: 340, background: 'linear-gradient(135deg,#FFFDF9 0%,#F8F0E3 100%)', boxShadow: 'inset 0 0 0 4px #FFFDF9, inset 0 0 0 5px #EBDDC3, 0 18px 50px rgba(60,40,20,0.22)' }}>
+            <div className="absolute z-30 overflow-y-auto rounded-2xl border border-line bg-white p-4" style={{ left: pick.left, top: Math.max(8, Math.min(pick.top, (boxRef.current?.clientHeight ?? 700) - 460)), maxHeight: (boxRef.current?.clientHeight ?? 700) - Math.max(8, Math.min(pick.top, (boxRef.current?.clientHeight ?? 700) - 460)) - 8, width: 340, background: '#fff', boxShadow: '0 18px 50px rgba(42,31,36,0.18)' }}>
               <div className="flex items-center justify-between border-b border-[#EFE4D8] pb-2">
                 <p className="font-fraunces text-lg font-semibold text-ink">{PICK_LABELS[pick.key] ?? 'Text'}</p>
                 <button type="button" aria-label="Close" onClick={() => { applyText(); setPick(null) }} className="rounded-lg px-2 text-lg text-ink-soft hover:text-ink">×</button>
               </div>
               {TEXT_KEYS.includes(pick.key) && (LONG_TEXT.includes(pick.key)
-                ? <textarea value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} rows={4} className="mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]" />
-                : <input value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} className="mt-3 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]" />)}
+                ? <textarea value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} rows={4} className="mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />
+                : <input value={ptext} onChange={(e) => setPtext(e.target.value)} onBlur={applyText} className="mt-3 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-twilight" />)}
               <div className="mt-3">
                 <FontPick label="Font" hint="" value={set.el?.[pick.key]?.font ?? (pick.key === 'hero_headline' ? (set.hero?.headline_font ?? curHead) : curBody)} onPick={(fk) => setElProp(pick.key, { font: fk })} />
               </div>
@@ -1711,8 +1711,8 @@ export default function CamiDesigner() {
                 </div>
               )}
               <div className="mt-4 flex gap-2">
-                <button type="button" className="rounded-full border border-[#B08D57] bg-transparent px-4 py-2 text-sm font-medium text-[#6B4A2B] transition hover:bg-[#F3E7D3]" onClick={() => resetEl(pick.key)}>Reset</button>
-                <button type="button" className="rounded-full bg-[#8C6B3F] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90" onClick={() => { applyText(); setPick(null) }}>Done</button>
+                <button type="button" className="rounded-full border border-twilight bg-transparent px-4 py-2 text-sm font-medium text-ink transition hover:bg-black/5" onClick={() => resetEl(pick.key)}>Reset</button>
+                <button type="button" className="rounded-full bg-twilight px-5 py-2 text-sm font-medium text-white transition hover:opacity-90" onClick={() => { applyText(); setPick(null) }}>Done</button>
               </div>
             </div>
           )}
