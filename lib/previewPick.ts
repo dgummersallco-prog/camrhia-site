@@ -40,7 +40,7 @@ export function installPreviewPick(): () => void {
     box.style.top = r.top + 'px'
     box.style.width = r.width + 'px'
     box.style.height = r.height + 'px'
-    tag.textContent = hit.name + (hit.editable ? ' · click to edit' : '')
+    tag.textContent = hit.name + (hit.editable ? (hit.el.hasAttribute('data-cam-bsel') ? ' · click to edit' : ' · click to select') : '')
     tag.style.bottom = r.top < 28 ? 'auto' : '100%'
     tag.style.top = r.top < 28 ? '100%' : 'auto'
     tag.style.marginTop = r.top < 28 ? '3px' : '0'
@@ -65,7 +65,7 @@ export function installPreviewPick(): () => void {
     const r = el.getBoundingClientRect()
     window.parent?.postMessage({ type: 'camrhia-pick', key, text: (el.textContent ?? '').trim(), x: r.left, y: r.top, w: r.width, h: r.height, color: getComputedStyle(el).color, size: parseFloat(getComputedStyle(el).fontSize) || 0, op: Number(getComputedStyle(el).opacity) }, '*')
     const mt = metaFor(el, key)
-    if (mt) startEdit(el, mt, e.clientX, e.clientY)
+    if (mt && el.hasAttribute('data-cam-bsel')) startEdit(el, mt, e.clientX, e.clientY)
   }
 
   document.addEventListener('mouseover', onOver, true)

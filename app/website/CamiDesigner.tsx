@@ -1420,6 +1420,12 @@ export default function CamiDesigner() {
                         if (!ad) return null
                         return (
                           <div className="mt-4">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Style</p>
+                            <div className="mt-2 mb-4 flex w-full gap-0.5 rounded-full border border-black/10 bg-white p-0.5">
+                              {(['Button', 'Link'] as const).map((tt) => (
+                                <button key={tt} type="button" className={'flex-1 rounded-full px-2 py-1.5 text-xs transition ' + ((tt === 'Link') === !!ad.ls ? 'bg-twilight font-medium text-white shadow-sm' : 'text-ink hover:bg-black/5')} onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); x.addons = (Array.isArray(x.addons) ? x.addons : []).map((a: any) => (a && a.id === ad.id ? { ...a, ls: tt === 'Link' ? 1 : 0 } : a)) }) }}>{tt}</button>
+                              ))}
+                            </div>
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Button link</p>
                             <input key={ad.id} defaultValue={ad.url ?? ''} placeholder="https://" onBlur={(e) => { const v = e.target.value.trim(); void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); x.addons = (Array.isArray(x.addons) ? x.addons : []).map((a: any) => (a && a.id === ad.id ? { ...a, url: v } : a)) }) }} className="mt-2 w-full rounded-xl border border-[#E4D3B6] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#B08D57]" />
                           </div>
@@ -1542,7 +1548,7 @@ export default function CamiDesigner() {
                       if (BK[field] === 'about' && curPage !== 'home') return false
                       return (lst ?? []).includes(BK[field])
                     }).sort(([a], [b]) => ordS(a) - ordS(b)).map(([field, d]) => (
-                      <div key={field}><p className={lab}>{d.label}</p>{opts(d.items.map((it) => ({ k: it.key, on: DESIGN_PATHS[field] ? getPath(x0, DESIGN_PATHS[field]) === it.key : false, node: it.name, click: () => { void commit((n) => applyKitOps(n, { design: { field, key: it.key } })) } })))}</div>
+                      <div key={field}><p className={lab}>{d.label}</p>{opts(d.items.map((it) => ({ k: it.key, on: DESIGN_PATHS[field] ? getPath(x0, DESIGN_PATHS[field]) === it.key : false, node: it.name, click: () => { void commit((n) => { applyKitOps(n, { design: { field, key: it.key } }); if (field === 'galleries' || field === 'photos') { const st: any = (n.site_settings as any)?.structure; if (st && Array.isArray(st.off)) st.off = st.off.filter((q: string) => q !== 'galleries') } }) } })))}</div>
                     ))}
                     {(kitNow.themes ?? []).length > 0 && (
                       <div><p className={lab}>Saved themes</p><div className="mt-1.5 flex flex-wrap gap-1.5">

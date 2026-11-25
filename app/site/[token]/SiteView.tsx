@@ -883,7 +883,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
             </div>)
           if (ad === 'fennel') return outF(
             <div className="relative mx-auto max-w-6xl overflow-hidden px-5 py-8 md:aspect-[2/1] md:px-0 md:py-0" style={{ background: '#f6f2ee', color: dark, boxShadow: '0 0 0 100vmax #f6f2ee', clipPath: 'inset(0 -100vmax)' }}>
-              <div data-pframe="1" className="relative mx-auto w-[78%] max-w-[340px] md:absolute md:w-[35.5%] md:max-w-none md:[left:6.4%] md:[top:7.6%]" style={{ transform: 'rotate(-5deg)', background: '#f3f0ec', padding: '5% 5% 0', boxShadow: '0 10px 28px rgba(60,45,30,0.22)', aspectRatio: '0.915 / 1' }}>
+              <div data-pframe="1" className="relative mx-auto w-[78%] max-w-[340px] md:absolute md:w-[35.5%] md:max-w-none md:[left:6.4%] md:[top:7.6%]" style={{ userSelect: 'none', transform: 'rotate(-5deg)', background: '#f3f0ec', padding: '5% 5% 0', boxShadow: '0 10px 28px rgba(60,45,30,0.22)', aspectRatio: '0.915 / 1' }}>
                 <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1 / 1', background: '#d8d0c6' }}>
                   {main ? img() : (
                     <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full"><rect width="200" height="200" fill="#d8d0c6" /><circle cx="140" cy="62" r="14" fill="#b8aa98" opacity="0.55" /><path d="M0 200 L58 92 L98 146 L136 84 L200 200 Z" fill="#b8aa98" opacity="0.8" /></svg>

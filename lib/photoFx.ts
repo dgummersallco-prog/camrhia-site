@@ -226,14 +226,40 @@ export type BoxFx = { x?: number; y?: number; s?: number; h?: number; w?: number
 
 export const TXT_SEL = 'h1, [class^="el-"], [class*=" el-"], ' + BTN_SEL
 
+const AUTO_TAGS = 'p,h1,h2,h3,h4,h5,h6,span,a,li,blockquote,figcaption,small,strong,em,time,div,dt,dd'
+function autoText(root: HTMLElement): HTMLElement[] {
+  const out: HTMLElement[] = []
+  root.querySelectorAll<HTMLElement>(AUTO_TAGS).forEach((x) => {
+    if (x.matches(TXT_SEL)) return
+    if (x.closest('#cam-box, [data-cam-ed], form, svg, select, textarea, [aria-hidden="true"], [data-addon], [data-fxph]')) return
+    let own = ''
+    x.childNodes.forEach((n) => { if (n.nodeType === 3) own += n.nodeValue ?? '' })
+    own = own.trim()
+    if (own.length < 3 || /^[\d\s.,:/-]+$/.test(own)) return
+    const par = x.parentElement
+    if (par && par.children.length >= 6 && Array.from(par.children).filter((c) => c.tagName === x.tagName).length >= 6) return
+    if (x.dataset.bxh === undefined && !(x.offsetWidth > 20 && x.offsetHeight > 14)) return
+    out.push(x)
+  })
+  return out
+}
+
 export function boxesIn(root: HTMLElement): HTMLElement[] {
   const all = Array.from(root.querySelectorAll<HTMLElement>(TXT_SEL)).filter((x) => x.dataset.bxh !== undefined || (x.offsetWidth > 20 && x.offsetHeight > 14))
   const set = new Set(all)
-  return all.filter((x) => {
+  const base = all.filter((x) => {
     let p = x.parentElement
     while (p && p !== root) { if (set.has(p)) return false; p = p.parentElement }
     return true
   })
+  const au = autoText(root).filter((x) => !base.some((b) => b.contains(x) || x.contains(b)))
+  const aset = new Set(au)
+  const au2 = au.filter((x) => {
+    let p = x.parentElement
+    while (p && p !== root) { if (aset.has(p)) return false; p = p.parentElement }
+    return true
+  })
+  return [...base, ...au2]
 }
 
 export const boxId = (key: string, idx: number) => 't:' + key + ':' + idx

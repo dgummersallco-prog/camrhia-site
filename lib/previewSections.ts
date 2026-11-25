@@ -19,7 +19,7 @@ export function installPreviewSections(): () => void {
 
   const bar = document.createElement('div')
   bar.id = 'cam-sec-bar'
-  bar.innerHTML = '<button data-a="drag" style="cursor:grab">Drag</button><button data-a="up">Up</button><button data-a="down">Down</button><button data-a="hide">Hide</button>'
+  bar.innerHTML = '<button data-a="hide">Hide</button>'
   document.body.appendChild(bar)
   const hT = document.createElement('div'); hT.className = 'cam-h'; hT.dataset.side = 't'; document.body.appendChild(hT)
   const hB = document.createElement('div'); hB.className = 'cam-h'; hB.dataset.side = 'b'; document.body.appendChild(hB)
@@ -149,7 +149,8 @@ export function installPreviewSections(): () => void {
       if (!key) continue
       let node = n as HTMLElement
       if (node.hasAttribute && node.hasAttribute('data-fxph')) node = node.previousElementSibling as HTMLElement
-      const i = photosIn(root).indexOf(node)
+      let i = photosIn(root).indexOf(node)
+      if (i < 0 && node.closest) { const pf = node.closest('[data-pframe]'); if (pf) { const ph = photosIn(root).find((q) => pf.contains(q)); if (ph) { node = ph; i = photosIn(root).indexOf(ph) } } }
       if (i >= 0) return { key, idx: heroOne(root) ? 0 : i, el: node }
     }
     return null
@@ -170,8 +171,9 @@ export function installPreviewSections(): () => void {
         e.preventDefault(); e.stopPropagation()
         if (e.shiftKey) { const bl = boxesIn(root); const k = bl.findIndex((x) => x === bt || x.contains(bt)); if (k >= 0) addSel(bl[k], boxId(key, k), 'text'); return }
         clearSel()
+        const wasSel = bt.hasAttribute('data-cam-bsel')
         selectText(root, bt)
-        { const tx0 = txOf(bt); if (tx0) startEdit(bt, { kind: 'btn', tx: tx0 }, e.clientX, e.clientY) }
+        { const tx0 = txOf(bt); if (tx0 && wasSel) startEdit(bt, { kind: 'btn', tx: tx0 }, e.clientX, e.clientY) }
         post({ action: 'button', sec: key, id: buttonId(key, bi), tx: txOf(bt), text: (bt.textContent ?? '').trim(), cbg: hexOf(getComputedStyle(bt).backgroundColor), ccolor: hexOf(getComputedStyle(bt).color) })
         return
       }
@@ -179,6 +181,12 @@ export function installPreviewSections(): () => void {
     if (t.closest(TXT)) {
       if (e.shiftKey) { e.preventDefault(); e.stopPropagation(); const bl = boxesIn(root); const k = bl.findIndex((x) => x === t || x.contains(t)); if (k >= 0) addSel(bl[k], boxId(key, k), 'text'); return }
       clearSel(); selectText(root, t); return
+    }
+    const au = boxesIn(root).find((x) => (x === t || x.contains(t)) && !x.matches(TXT_SEL))
+    if (au) {
+      e.preventDefault(); e.stopPropagation()
+      if (e.shiftKey) { const bl = boxesIn(root); const k = bl.indexOf(au); if (k >= 0) addSel(au, boxId(key, k), 'text'); return }
+      clearSel(); selectText(root, au); return
     }
     const ru = ruleAt(root, e.clientX, e.clientY)
     if (ru) {
@@ -221,6 +229,7 @@ export function installPreviewSections(): () => void {
     if (e.button !== 0 || !selPhoto) return
     const t = e.target as HTMLElement | null
     if (!t || !t.closest || bar.contains(t) || hT.contains(t) || hB.contains(t) || t.closest(TXT) || editing(t)) return
+    if (t.hasAttribute('data-pframe')) return
     const hit = photoAt(e.clientX, e.clientY)
     if (!hit || hit.key !== selPhoto.key || hit.idx !== selPhoto.idx) return
     const [px, py] = parsePos(visualOf(hit.el))
@@ -415,6 +424,7 @@ export function installPreviewSections(): () => void {
     if (!g) return []
     return g.filter((q) => q !== id).map(byId).filter((q): q is Sel => !!q)
   }
+  let lastSelEl: HTMLElement | null = null
   const angOf = (el: HTMLElement): number => {
     let a = 0
     for (let n: HTMLElement | null = el; n && n !== document.body; n = n.parentElement) {
@@ -426,6 +436,8 @@ export function installPreviewSections(): () => void {
     return a * 180 / Math.PI
   }
   const layoutBox = () => {
+    const nowEl = selBox && document.body.contains(selBox.el) ? selBox.el : null
+    if (nowEl !== lastSelEl) { if (lastSelEl) lastSelEl.removeAttribute('data-cam-bsel'); if (nowEl) nowEl.setAttribute('data-cam-bsel', '1'); lastSelEl = nowEl }
     if (!selBox || !document.body.contains(selBox.el)) { bx.style.display = 'none'; return }
     const r = selBox.el.getBoundingClientRect()
     if (r.width < 4 || r.height < 4) { bx.style.display = 'none'; return }
@@ -560,8 +572,9 @@ export function installPreviewSections(): () => void {
       return
     }
     if (bx.contains(t)) return
-    const tb = t.closest(TXT_SEL) as HTMLElement | null
+    let tb = t.closest(TXT_SEL) as HTMLElement | null
     const root = rootOf(t)
+    if (!tb && root) tb = boxesIn(root).find((x) => x === t || x.contains(t)) ?? null
     if (root && !tb) {
       const ru = ruleAt(root, e.clientX, e.clientY)
       if (ru) {
