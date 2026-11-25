@@ -44,7 +44,15 @@ const ens = (S: Record<string, any>, k: string) => (S[k] = S[k] ?? {})
 export function applyPalette(n: SiteState, accent: string, bg: string, text: string) {
   const s = (n.site_settings = n.site_settings ?? {})
   n.site_accent = accent
-  s.colors = { ...(s.colors ?? {}), bg, text, tint: mixHex(bg, text, 0.06) }
+  const drop = (o: any, ks: string[]) => { if (o && typeof o === 'object') for (const k of ks) delete o[k] }
+  if (s.secStyle) for (const id of Object.keys(s.secStyle)) drop(s.secStyle[id], ['bg', 'accent', 'text', 'title'])
+  if (s.el) for (const k of Object.keys(s.el)) drop(s.el[k], ['color'])
+  if (s.btnFx) for (const k of Object.keys(s.btnFx)) drop(s.btnFx[k], ['bg', 'color'])
+  if (s.boxFx) for (const k of Object.keys(s.boxFx)) drop(s.boxFx[k], ['c'])
+  if (s.hero) for (const k of Object.keys(s.hero)) if (/color/i.test(k)) delete s.hero[k]
+  if (s.menu) for (const k of Object.keys(s.menu)) if (/color|^bg$/i.test(k)) delete s.menu[k]
+  drop(s.button, ['bg', 'color'])
+  s.colors = { ...(s.colors ?? {}), bg, text, tint: mixHex(bg, text, isLight(bg) ? 0.16 : 0.12) }
   s.button = { ...(s.button ?? {}), text: isLight(accent) ? '#2A1F24' : '#FFFFFF' }
 }
 

@@ -1056,7 +1056,7 @@ export default function CamiDesigner() {
               if (sty) { n.site_template = sty.tpl; n.site_font_pair = sty.pair; clearFontOverrides((n.site_settings = n.site_settings ?? {})); resetLook(n.site_settings); applyPalette(n, (sty as any).acc ?? n.site_accent ?? '#C98A8D', sty.bg, sty.text); const sx = (n.site_settings = n.site_settings ?? {}); sx.button = { ...(sx.button ?? {}), shape: (sty as any).shape ?? 'square' } }
             }
             const pal = kit.palettes[0]
-            if (pal && (layoutNew || palNew)) applyPalette(n, pal.accent, pal.bg, pal.text)
+            if (pal) applyPalette(n, pal.accent, pal.bg, pal.text)
             if (fontNew) {
               clearFontOverrides(x)
               const tt = kit.type.title[0]
