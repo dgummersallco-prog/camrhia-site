@@ -6,7 +6,10 @@ import Link from 'next/link'
 import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin'
 import { BRAND_NAME } from '@/lib/brand'
 
-type Recent = { email: string; name: string; createdAt: string; status: string | null; trialEndsAt: string | null }
+type Recent = { email: string; name: string; createdAt: string; status: string | null; trialEndsAt: string | null; state: string; detail: string }
+
+const STATE_LABEL: Record<string, string> = { paying: 'Paying', comped: 'Comped', trial: 'In trial', trial_ended: 'Trial ended', canceled: 'Canceled', payment_issue: 'Payment issue' }
+const STATE_STYLE: Record<string, string> = { paying: 'bg-sage/15 text-sage', comped: 'bg-twilight/10 text-twilight', trial: 'bg-brass/15 text-brass', trial_ended: 'bg-ink-soft/10 text-ink-soft', canceled: 'bg-red-100 text-red-700', payment_issue: 'bg-amber-100 text-amber-800' }
 
 type UserResult = {
   userId: string
@@ -134,10 +137,9 @@ export default function AdminUsersPage() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-ink">{r.name || r.email}</p>
                       <p className="truncate text-xs text-ink-soft">{r.name ? r.email + ' - ' : ''}{new Date(r.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+                      <p className="truncate text-xs text-ink-soft">{r.detail}</p>
                     </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[r.status ?? ''] ?? (r.trialEndsAt && new Date(r.trialEndsAt) > new Date() ? STATUS_STYLES.trial : 'bg-ink-soft/10 text-ink-soft')}`}>
-                      {r.status ?? (r.trialEndsAt && new Date(r.trialEndsAt) > new Date() ? 'trial' : 'no plan')}
-                    </span>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATE_STYLE[r.state] ?? 'bg-ink-soft/10 text-ink-soft'}`}>{STATE_LABEL[r.state] ?? r.state}</span>
                   </div>
                 ))}
               </div>
