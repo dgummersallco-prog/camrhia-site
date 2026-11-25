@@ -296,6 +296,13 @@ export function rulesIn(root: HTMLElement): HTMLElement[] {
     if (!paint) return
     x.setAttribute('data-cam-rule', '1')
   })
+  root.querySelectorAll('svg').forEach((sv) => {
+    const x = sv as unknown as HTMLElement
+    if (x.hasAttribute('data-cam-rule') || x.closest('#cam-box') || x.closest(BTN_SEL) || x.closest('[data-cam-ed]') || (sv.textContent ?? '').trim() || sv.querySelector('text, image, foreignObject')) return
+    const r = sv.getBoundingClientRect()
+    if (r.width < 24 || r.height < 2 || r.height > 60 || r.width / Math.max(r.height, 1) < 2.2) return
+    x.setAttribute('data-cam-rule', '1')
+  })
   return Array.from(root.querySelectorAll<HTMLElement>('[data-cam-rule]'))
 }
 
@@ -375,7 +382,7 @@ function fitInner(el: HTMLElement, on: boolean) {
   })
 }
 
-const LN_P = ['background-color', 'border-color', 'height', 'width', 'border-top-width', 'border-bottom-width', 'border-left-width', 'border-right-width', 'color']
+const LN_P = ['background-color', 'border-color', 'height', 'width', 'border-top-width', 'border-bottom-width', 'border-left-width', 'border-right-width', 'color', 'stroke', 'stroke-width']
 export function lineDir(el: HTMLElement): string {
   if (!el.hasAttribute('data-cam-rule')) return ''
   const v = el.dataset.lnv !== undefined ? el.dataset.lnv === '1' : el.offsetHeight > el.offsetWidth
@@ -407,12 +414,19 @@ function lineFx(el: HTMLElement, f: BoxFx | undefined) {
     el.dataset.lnw = JSON.stringify([cs.borderTopWidth, cs.borderBottomWidth, cs.borderLeftWidth, cs.borderRightWidth].map((q) => parseFloat(q) || 0))
   } else restore()
   const hasBg = el.dataset.lnb === '1'
+  const isSvg = el.tagName.toLowerCase() === 'svg'
   if (c) {
+    if (isSvg) st.setProperty('stroke', c, 'important')
     if (hasBg) st.setProperty('background-color', c, 'important')
     if (el.dataset.lnt === '1') st.setProperty('color', c, 'important')
     st.setProperty('border-color', c, 'important')
   }
   if (th) {
+    if (isSvg) {
+      const vb = (el as unknown as SVGSVGElement).viewBox?.baseVal?.width || 140
+      const sc = (el.getBoundingClientRect().width || 1) / vb
+      st.setProperty('stroke-width', String(Math.round((th / sc) * 100) / 100), 'important')
+    }
     if (hasBg) st.setProperty(el.dataset.lnv === '1' ? 'width' : 'height', th + 'px', 'important')
     let bw: number[] = []
     try { bw = JSON.parse(el.dataset.lnw || '[]') } catch { bw = [] }

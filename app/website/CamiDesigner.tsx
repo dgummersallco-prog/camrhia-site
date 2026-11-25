@@ -1503,22 +1503,17 @@ export default function CamiDesigner() {
                 if (!selSec) return <p className="mt-4 text-sm text-ink-soft">Click a section, photo or text on your site to design it.</p>
                 const bgKey = selSec === 'hero' ? 'top' : selSec
                 const secNm = SEC_NAME[selSec] ?? selSec
-                const addAddon = (t: 'text' | 'photo' | 'button' | 'line') => void commit((n) => {
+                const addAddon = (t: string) => void commit((n) => {
                   const x = (n.site_settings = n.site_settings ?? {})
                   const arr: any[] = Array.isArray(x.addons) ? [...x.addons] : []
                   let k: string | undefined
-                  if (t === 'text' || t === 'button') { const used = new Set(arr.map((a) => a?.k)); for (let i = 1; i <= 16; i++) if (!used.has('ax' + i)) { k = 'ax' + i; break }; if (!k) return }
-                  arr.push({ id: 'a' + Date.now().toString(36), sec: selSec, t, ...(k ? { k } : {}), ...(t === 'text' ? { text: 'Your text here' } : t === 'button' ? { text: 'Button', url: '' } : {}) })
+                  if (t === 'text' || t === 'button' || t === 'badge' || t === 'quote') { const used = new Set(arr.map((a) => a?.k)); for (let i = 1; i <= 16; i++) if (!used.has('ax' + i)) { k = 'ax' + i; break }; if (!k) return }
+                  arr.push({ id: 'a' + Date.now().toString(36), sec: selSec, t, ...(k ? { k } : {}), ...(t === 'text' ? { text: 'Your text here' } : t === 'button' ? { text: 'Button', url: '' } : t === 'badge' ? { text: 'Now booking' } : t === 'quote' ? { text: '\u201CLoved every moment of our session.\u201D\n\u2014 Client name' } : {}) })
                   x.addons = arr
                 })
                 return (
                   <div className="mt-4">
                     <p className="font-fraunces text-lg font-semibold text-ink">{secNm}</p>
-                    <div className="mt-3 flex gap-2">
-                      {(['up', 'down'] as const).map((dr) => (
-                        <button key={dr} type="button" onClick={() => { try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-secmove', key: selSec, dir: dr }, '*') } catch { /* ignore */ } }} className={btn}>{dr === 'up' ? 'Move up' : 'Move down'}</button>
-                      ))}
-                    </div>
                     <ColorRow label={secNm + ' background color'} value={ss[bgKey]?.bg} cur={secCur ?? undefined} base={base} onLive={(c) => liveSecBg(bgKey, c)} onSet={(c) => setSecBg(bgKey, c)} onReset={() => setSecBg(bgKey, null)} />
                     <ColorRow label={secNm + ' accent color'} value={ss[bgKey]?.accent} cur={accent} base={base} onLive={(c) => liveSecAcc(bgKey, c)} onSet={(c) => setSecAcc(bgKey, c)} onReset={() => setSecAcc(bgKey, null)} />
                     <SliderRow key={bgKey + 'pt'} label={secNm + ' top padding'} value={Math.round(Number(ss[bgKey]?.pt ?? secPad.pt) || 0)} min={0} max={400} step={1} unit="px" onLive={(v) => liveEdit(secPadMut(bgKey, 'pt', v))} onDone={(v) => { void commit(secPadMut(bgKey, 'pt', v)) }} />
@@ -1529,11 +1524,39 @@ export default function CamiDesigner() {
                     )}
                     <p className="mt-5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Add to this section</p>
                     {selAp && <button type="button" className={btn + ' mt-3'} onClick={() => setSlot({ key: 'addon-' + selAp, idx: 0, multi: true })}>Change photo</button>}
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {([['text', 'Text box'], ['button', 'Button'], ['photo', 'Photo'], ['line', 'Line']] as const).map(([t, lb]) => (
-                        <button key={t} type="button" className={btn} onClick={() => addAddon(t)}>+ {lb}</button>
+                    <details className="mt-3">
+                      <summary className="flex w-full cursor-pointer list-none items-center justify-center rounded-xl bg-twilight px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:opacity-90">+ Add element</summary>
+                      {([['Shapes and marks', [['line', 'Line'], ['circle', 'Circle'], ['x', 'X mark'], ['arrow', 'Arrow'], ['rect', 'Rectangle'], ['star', 'Star'], ['heart', 'Heart']]], ['Content', [['text', 'Text'], ['button', 'Button'], ['photo', 'Photo'], ['badge', 'Badge'], ['quote', 'Quote'], ['social', 'Social']]]] as const).map(([grp, items]) => (
+                        <div key={grp} className="mt-4">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{grp}</p>
+                          <div className="mt-2 grid grid-cols-3 gap-2">
+                            {items.map(([t, lb]) => {
+                              const ic: Record<string, React.ReactNode> = {
+                                line: <path d="M4 12h16" />,
+                                circle: <circle cx="12" cy="12" r="8" />,
+                                x: <path d="M6 6l12 12M18 6L6 18" />,
+                                arrow: <path d="M4 12h15M14 7l5 5-5 5" />,
+                                rect: <rect x="4" y="6" width="16" height="12" rx="2" />,
+                                star: <path d="M12 4l2.4 5 5.4.7-4 3.8 1 5.4-4.8-2.6-4.8 2.6 1-5.4-4-3.8 5.4-.7z" />,
+                                heart: <path d="M12 19s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 1.5C19 14.6 12 19 12 19z" />,
+                                text: <path d="M5 6h14M12 6v13" />,
+                                button: <><rect x="3" y="8" width="18" height="8" rx="4" /><path d="M9 12h6" /></>,
+                                photo: <><rect x="4" y="5" width="16" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="M5 17l5-4 4 3 3-2 3 2" /></>,
+                                badge: <><rect x="3" y="8" width="18" height="8" rx="4" /><circle cx="8" cy="12" r="1" /></>,
+                                quote: <path d="M9 8c-2 .5-3 2-3 4v3h4v-4H8M17 8c-2 .5-3 2-3 4v3h4v-4h-2" />,
+                                social: <><rect x="4" y="4" width="16" height="16" rx="5" /><circle cx="12" cy="12" r="3.6" /><circle cx="16.6" cy="7.4" r=".8" /></>,
+                              }
+                              return (
+                                <button key={t} type="button" className="flex flex-col items-center gap-1.5 rounded-xl border border-line bg-white px-1 py-3 text-xs font-medium text-ink transition hover:border-twilight hover:bg-white/60" onClick={(e) => { (e.currentTarget.closest('details') as HTMLDetailsElement | null)?.removeAttribute('open'); addAddon(t) }}>
+                                  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ic[t]}</svg>
+                                  {lb}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
                       ))}
-                    </div>
+                    </details>
                   </div>
                 )
               })()}

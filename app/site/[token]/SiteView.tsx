@@ -2181,7 +2181,7 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
       {extraFontsHref && <link rel="stylesheet" href={extraFontsHref} />}
       {secCss && <style dangerouslySetInnerHTML={{ __html: secCss }} />}
       {(() => { const cc = sanitizeCss((r as any).site_settings?.custom_css); return cc ? <style dangerouslySetInnerHTML={{ __html: cc }} /> : null })()}
-      <Addons list={(r as any).site_settings?.addons} accent={t.accent} pics={(r as any).site_settings?.slotPics} />
+      <Addons list={(r as any).site_settings?.addons} accent={t.accent} pics={(r as any).site_settings?.slotPics} links={{ instagram: (r as any).instagram_url, facebook: (r as any).facebook_url, tiktok: (r as any).tiktok_url, pinterest: (r as any).pinterest_url }} />
       <style>{`${t.cssVars}html{scroll-behavior:smooth;font-size:var(--text)}.cr-sub{font-size:var(--sub)!important}html,body{background:${pageBg ?? bg}}body{overflow-x:clip}`}</style>
       <PortfolioLightbox />
       <div style={{ background: pageBg ?? bg, color: ink, fontFamily: t.body }}>
