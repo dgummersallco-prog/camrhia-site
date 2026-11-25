@@ -162,6 +162,8 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
     
     
     const s2 = cleanStruct(struct)
+    if (designs.galleries && designs.galleries_mode !== 'none' && designs.galleries_mode !== 'section') s2.off = s2.off.filter((x) => x !== 'galleries')
+    if (designs.about_page && designs.about_mode !== 'none' && designs.about_mode !== 'section') s2.off = s2.off.filter((x) => x !== 'about')
     if (!s2.off.includes('galleries') && !s2.galleries.includes('portfolio')) s2.galleries.unshift('portfolio')
     if (!s2.off.includes('about') && !s2.about.includes('about')) s2.about.unshift('about')
     s2.extra.forEach((e) => { if (e.id === 'pricing' && !e.sections.includes('investment')) e.sections.unshift('investment') })

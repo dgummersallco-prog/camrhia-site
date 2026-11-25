@@ -113,13 +113,13 @@ export function BookingDesign(P: Props) {
     </div>)
 
   if (d === 'placid') return (
-    <div className={'mx-auto grid gap-10 pb-16 pt-8 ' + (hasPic ? 'lg:grid-cols-[46%_46.4%] lg:justify-between' : '')} style={{ maxWidth: 1400, padding: '32px 1.3% 64px 3.2%' }}>
+    <div className={'mx-auto grid gap-10 pb-16 pt-8 ' + (hasPic ? 'lg:grid-cols-[46%_46.4%] lg:justify-between' : '')} style={{ maxWidth: 1400, padding: 'clamp(72px, 8vw, 104px) 1.3% 64px 3.2%' }}>
       <div className={hasPic ? '' : 'mx-auto w-full max-w-xl'} style={{ paddingTop: 'clamp(0px, 3vw, 40px)' }}>{hdr({ align: 'left', w: '34rem' })}<div className="mt-8">{form}</div></div>
       {hasPic && <div className="lg:sticky lg:top-6 lg:self-start">{img(0, '0.51/1')}</div>}
     </div>)
 
   if (d === 'lucerne') return (
-    <div style={bleed(DARK)} className="mb-16 px-6 pb-16 pt-6">
+    <div className="mb-16 px-6 pb-16" style={{ ...bleed(DARK), paddingTop: 'clamp(64px, 6vw, 84px)' }}>
       {hasPic && <div className="mx-auto grid grid-cols-3" style={{ width: '104%', maxWidth: 1240, gap: '0.6%', marginBottom: 'clamp(16px, 3vw, 36px)' }}>{[0, 1, 2].map((i) => <div key={i}>{img(i, '1.43/1')}</div>)}</div>}
       <div className="mx-auto mb-10" style={{ maxWidth: 900 }}>{hdr({ color: CREAM })}</div>
       <div className="bk2 mx-auto" style={{ ...card, maxWidth: 1100, background: '#fff', border: 'none', borderRadius: 24, padding: 'clamp(18px, 3vw, 40px) clamp(18px, 4.2vw, 52px) clamp(22px, 3.6vw, 48px)' }}>{two}{form}</div>
