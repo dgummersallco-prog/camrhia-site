@@ -24,6 +24,16 @@ export type Kit = {
 }
 type Style = { key: string; name: string; blurb: string; bg: string; text: string }
 type Pal = { name: string; accent: string; bg: string; text: string }
+const COLOR_PALS: Pal[] = [
+  { name: 'Cocoa & Sky', bg: '#F2E8DA', text: '#3B2418', accent: '#9CC4E4' },
+  { name: 'Linen & Rose', bg: '#F4EDE6', text: '#214669', accent: '#F275A6' },
+  { name: 'Ivory & Gold', bg: '#FBF8F1', text: '#2A1F24', accent: '#B08D57' },
+  { name: 'Sage & Terracotta', bg: '#F4F1E8', text: '#2F3A2E', accent: '#C8643C' },
+  { name: 'Navy & Coral', bg: '#F6F1E7', text: '#1F2D4A', accent: '#E8704F' },
+  { name: 'Blush & Plum', bg: '#FBF3F0', text: '#4A2638', accent: '#C0507A' },
+  { name: 'Noir & Champagne', bg: '#17141A', text: '#F4EEE8', accent: '#E6D3B3' },
+]
+
 type TypeSet = { key: string; name: string; head: string; body: string }
 type PageDef = { k: string; label: string; blurb: string; locked?: boolean; soon?: boolean }
 
@@ -125,7 +135,7 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
   onSkip: () => void
 }) {
   const [step, setStep] = useState<number>(() => {
-    try { const raw = window.localStorage.getItem('camriStep2'); if (raw !== null) { const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v <= 3) return Math.max(v, 1) } } catch {}
+    try { const raw = window.localStorage.getItem('camriStep2'); if (raw !== null) { const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v <= 4) return Math.max(v, 1) } } catch {}
     return Math.max(startStep ?? 1, 1)
   })
   const [layouts, setLayouts] = useState<string[]>(() => { const d = draftGet('layouts'); return Array.isArray(d) && d.length > 0 ? d : (initial?.layouts ?? []) })
@@ -309,10 +319,52 @@ function CamriSetupInner({ styles, palettes, typeSets, pages, fam, structure, li
           <div>
             <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
               <div className="flex h-16 items-center justify-between gap-3"><h3 className="font-fraunces text-5xl tracking-tight text-ink">Arrange</h3><div className="flex shrink-0 items-center gap-2">                <button type="button" onClick={() => setStep(2)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
-                <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site →'}</button></div></div>
+                <button type="button" onClick={() => { setStep(4); if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' }) }} disabled={busy} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">Next: Colors →</button></div></div>
               <div className="mt-3"><Meter at={DESIGN_SECTIONS.length + 1} onGo={(n) => { if (n === 0) { setStep(1); return } try { window.localStorage.setItem('camriDsStep', String(n - 1)) } catch {} setStep(2) }} /></div>
             </div>
             <ArrangeStep struct={struct} setStruct={setStruct} links={ls} setLinks={setLs} thumbs={thumbsOf(designs)} heroSrc={ordered[0] ? '/layouts/' + ordered[0] + '.png' : undefined} heroName={styles.find((x) => x.key === ordered[0])?.name} heroList={hl.map((k) => ({ key: k, name: styles.find((x) => x.key === k)?.name ?? k }))} heroActive={ordered[0]} onHero={(k) => { setHeroList(hl); setLayouts([k, ...layouts.filter((x) => x !== k)]); setStartIdx(0) }} secAlts={altsOf(designs)} designs={designs} setDesigns={setDesigns} photoDesigns={PHOTO_DESIGNS as unknown as { key: string; name: string }[]} />
+          </div>
+        )}
+        {step === 4 && (
+          <div>
+            <div className="sticky top-0 z-20 -mx-2 bg-[#F6F1EA]/95 px-2 pb-3 pt-2 backdrop-blur">
+              <div className="flex h-16 items-center justify-between gap-3"><h3 className="font-fraunces text-5xl tracking-tight text-ink">Colors</h3><div className="flex shrink-0 items-center gap-2">
+                <button type="button" onClick={() => setStep(3)} disabled={busy} className="rounded-full border border-black/15 bg-white px-4 py-1.5 text-sm text-ink disabled:opacity-50">← Back</button>
+                <button type="button" onClick={finish} disabled={busy} className="rounded-full bg-twilight px-5 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40">{busy ? 'Building your site…' : 'Build my site →'}</button></div></div>
+              <p className="mt-1 text-sm text-ink-soft">Great sites use three colors: a calm main color (most of the page), a deeper second color (text and structure), and one loud accent used sparingly for buttons and highlights.</p>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {COLOR_PALS.map((p) => {
+                const on = picked.length > 0 && picked[0].accent === p.accent && picked[0].bg === p.bg && picked[0].text === p.text
+                return (
+                  <button key={p.name} type="button" onClick={() => setPicked([p])} className={'overflow-hidden rounded-2xl border-2 bg-white text-left transition ' + (on ? ring : 'border-black/10 hover:border-black/30')}>
+                    <div className="flex h-28 w-full">
+                      <div className="h-full" style={{ background: p.bg, width: '60%' }} />
+                      <div className="h-full" style={{ background: p.text, width: '30%' }} />
+                      <div className="h-full" style={{ background: p.accent, width: '10%' }} />
+                    </div>
+                    <div className="px-3 py-2.5">
+                      <p className="text-sm font-medium text-ink">{p.name}</p>
+                      <p className="mt-0.5 text-[11px] text-ink-soft">60% main · 30% second · 10% loud</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            <div className="mt-6 rounded-2xl border border-black/10 bg-white p-4">
+              <p className="text-sm font-medium text-ink">Make my own</p>
+              <div className="mt-3 flex flex-wrap gap-5">
+                {([['bg', 'Main (60%)'], ['text', 'Second (30%)'], ['accent', 'Loud (10%)']] as const).map(([f, lb]) => {
+                  const cur: Pal = picked[0] ?? COLOR_PALS[0]
+                  return (
+                    <label key={f} className="flex items-center gap-2 text-sm text-ink">
+                      <input type="color" value={cur[f]} onChange={(e) => setPicked([{ ...cur, name: 'My colors', [f]: e.target.value }])} className="h-9 w-12 cursor-pointer rounded border border-black/10 bg-transparent p-0" />
+                      {lb}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>
