@@ -4047,13 +4047,13 @@ export function SiteView({ initial, token, page = 'home' }: { initial: Record<st
                 <div className="grid grid-cols-1 md:grid-cols-2" style={{ padding: 'clamp(14px, 2.2vw, 30px) 0 clamp(24px, 3.4vw, 50px)' }}>
                   <div style={{ padding: '0 8% 0 8.9%' }}>
                     <p data-name="Month" className="el-ya_month uppercase" style={{ fontFamily: SF, fontWeight: 600, fontSize: 'clamp(1.1rem, 2.1vw, 2rem)', letterSpacing: '0.26em', marginBottom: 'clamp(6px, 1vw, 14px)' }}>{month}</p>
-                    <div className="grid grid-cols-7 text-center" style={{ color: '#2A1F24', maxWidth: 520, color: '#2A1F24', rowGap: 'clamp(4px, 0.8vw, 12px)' }}>
+                    <div className="grid grid-cols-7 text-center" style={{ color: '#2A1F24', maxWidth: 520, rowGap: 'clamp(4px, 0.8vw, 12px)' }}>
                       {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                        <span key={d} data-name="Weekdays" data-name="Weekdays" className="el-ya_calday el-ya_calday uppercase" style={{ fontFamily: SF, fontWeight: 600, fontSize: 'clamp(8px, 0.95vw, 13px)', letterSpacing: '0.12em', paddingBottom: 4 }}>{d}</span>
+                        <span key={d} data-name="Weekdays" className="el-ya_calday uppercase" style={{ fontFamily: SF, fontWeight: 600, fontSize: 'clamp(8px, 0.95vw, 13px)', letterSpacing: '0.12em', paddingBottom: 4 }}>{d}</span>
                       ))}
                       {days.map((d) => (
                         <span key={d} data-name="Dates" className="el-ya_caldate relative inline-flex items-center justify-center mx-auto" style={{ fontFamily: SF, fontWeight: 500, fontSize: 'clamp(12px, 1.5vw, 21px)', width: 'clamp(26px, 3.4vw, 48px)', height: 'clamp(26px, 3.2vw, 46px)', border: '2px solid transparent', borderRadius: '50%' }}>
-                          <span data-name="Dates" className="el-ya_caldate">{d}</span>
+                          {d}
                           {circled.includes(d) ? <span aria-hidden="true" data-cam-rule="1" data-cam-mark="circle" className="absolute" style={{ inset: -2, border: '2px solid ' + GOLD, borderRadius: '50%' }} /> : null}
                           {crossed.includes(d) ? <span aria-hidden="true" data-cam-rule="1" data-cam-mark="x" className="absolute inset-0 flex items-center justify-center" style={{ color: '#8a8a8a', fontSize: 'clamp(16px, 2.2vw, 30px)', fontWeight: 300 }}>{'\u2715'}</span> : null}
                         </span>
