@@ -120,9 +120,9 @@ function setPath(x: Record<string, any>, p: string[], v: string) {
 const fname = (k: string) => { const o = FONT_OPTIONS[k] as unknown as Record<string, string> | undefined; return o?.label ?? o?.name ?? k }
 const FONT_IDS = Object.keys(FONT_OPTIONS)
 type Pick = { key: string; text: string; left: number; top: number; color: string; size?: number; op?: number }
-const PICK_LABELS: Record<string, string> = { ax1: 'Your text', ax2: 'Your text', ax3: 'Your text', ax4: 'Your text', ax5: 'Your text', ax6: 'Your text', ax7: 'Your text', ax8: 'Your text', ax9: 'Your text', ax10: 'Your text', ax11: 'Your text', ax12: 'Your text', ax13: 'Your text', ax14: 'Your text', ax15: 'Your text', ax16: 'Your text', blog_title: 'Blog title', blog_intro: 'Blog intro', blog_ptitle: 'Post title', blog_excerpt: 'Post excerpt', blog_date: 'Post date', blog_body: 'Post text', book_title: 'Booking title', book_intro: 'Booking intro', book_step: 'Step label', book_faq: 'FAQ heading', hero_headline: 'Headline', menu_links: 'Menu links', menu_brand: 'Your name', ex_label: 'Section label', ex_title: 'Section title', ex_sub: 'Section subtitle', con_msg: 'Contact message', con_social: 'Social links', ft_line: 'Footer line', ft_copy: 'Copyright', gal_name: 'Gallery name', gal_count: 'Gallery count', gal_link: 'Gallery link', tes_quote: 'Testimonial', tes_name: 'Testimonial name', about_text: 'About text', pr_intro: 'Package intro', pr_group: 'Package group', pr_name: 'Package name', pr_price: 'Package price', pr_list: 'Package list', pr_note: 'Package note', faq_q: 'Question', faq_a: 'Answer', feat_title: 'Featured work title', hero_btn: 'Button text', air_label: 'About label', air_more: 'Link text', ls_title: 'Stories title', rom_kicker: 'Small line', rom_story: 'Story title', rom_more: 'Link text', ea_kicker: 'Small line', ea_para: 'Paragraph', ea_follow: 'Section title', pe_tag: 'Tagline', iv_kicker: 'Small line', iv_tag: 'Tagline', wi_hi: 'About heading', ju_kicker: 'Small line', ju_para: 'Intro', ju_s1t: 'Service title', ju_s1d: 'Service text', ju_s2t: 'Service title', ju_s2d: 'Service text', ju_s3t: 'Service title', ju_s3d: 'Service text', ca_sub: 'Subtitle', ca_bar: 'Bar text', ca_w1: 'Word', ca_w2: 'Word', ca_w3: 'Word', ca_w4: 'Word', ce_p1: 'Paragraph', ce_p2: 'Paragraph', ol_kicker: 'Small line', ol_c1: 'Caption', ol_c2: 'Caption', ol_c3: 'Caption', ol_c4: 'Caption', mg_story: 'Heading', mg_text: 'Paragraph', li_kicker: 'Small line', li_para: 'Paragraph', li_meet: 'Heading', li_more: 'Link', as_kicker: 'Small line', as_para: 'Paragraph', as_kind: 'Heading', as_q1: 'Quote', as_n1: 'Name', as_q2: 'Quote', as_n2: 'Name', as_q3: 'Quote', as_n3: 'Name', sg_tag: 'Tagline', sg_recent: 'Heading', ro_script: 'Script word', ro_c1: 'Caption', ro_c2: 'Caption', ro_c3: 'Caption', hz_kicker: 'Small line', hz_para: 'Paragraph', hz_quote: 'Quote', hz_name: 'Name', sf_n1: 'Service', sf_n2: 'Service', sf_n3: 'Service', sf_n4: 'Service', sf_c1: 'Caption', sf_c2: 'Caption', sf_c3: 'Caption', cy_tag: 'Tagline', cy_s1: 'Label', cy_s2: 'Label', cy_s3: 'Label', la_vert: 'Side text', la_para: 'Paragraph', ir_l: 'Left words', ir_r: 'Right words', ir_issue: 'Heading', ir_t1: 'Label', ir_t2: 'Label', ir_t3: 'Label', pr_kicker: 'Small line', pr_c1: 'Caption', pr_c2: 'Caption', pr_c3: 'Caption', pr_c4: 'Caption', th_tag: 'Tagline', cl_p1: 'Caption', cl_p2: 'Caption', cl_p3: 'Caption', cl_p4: 'Caption', cl_p5: 'Caption', cl_sub: 'Subheading', cl_t1: 'Label', cl_t2: 'Label', cl_t3: 'Label', mi_t1: 'Label', mi_t2: 'Label', mi_t3: 'Label', mi_t4: 'Label', ya_script: 'Script line', ya_month: 'Month', ya_head: 'Heading', ya_para: 'Paragraph', ya_link: 'Link', gs_title: 'Section title', gp_title: 'Page title', tes_title: 'Section title', faq_title: 'Page title', ab_h1: 'Story heading', ab_h2: 'Belief heading', ab_h3: 'Invitation heading', ab_p3: 'Invitation text', ab_by: 'By line', ab_loves: 'Loves label', ab_hi: 'Greeting', ab_n1: 'Stat 1', ab_l1: 'Stat 1 label', ab_n2: 'Stat 2', ab_l2: 'Stat 2 label', ab_n3: 'Stat 3', ab_l3: 'Stat 3 label', ab_quote: 'Pull quote', ab_sig: 'Signature', ab_tag: 'Tagline', ab_f1t: 'Fact 1 title', ab_f1d: 'Fact 1 text', ab_f2t: 'Fact 2 title', ab_f2d: 'Fact 2 text', ab_f3t: 'Fact 3 title', ab_f3d: 'Fact 3 text', ab_f4t: 'Fact 4 title', ab_f4d: 'Fact 4 text', ab_f5t: 'Fact 5 title', ab_f5d: 'Fact 5 text', soc_title: 'Social heading', soc_handle: 'Social handle', con_title: 'Booking heading' }
+const PICK_LABELS: Record<string, string> = { ax1: 'Your text', ax2: 'Your text', ax3: 'Your text', ax4: 'Your text', ax5: 'Your text', ax6: 'Your text', ax7: 'Your text', ax8: 'Your text', ax9: 'Your text', ax10: 'Your text', ax11: 'Your text', ax12: 'Your text', ax13: 'Your text', ax14: 'Your text', ax15: 'Your text', ax16: 'Your text', blog_title: 'Blog title', blog_intro: 'Blog intro', blog_ptitle: 'Post title', blog_excerpt: 'Post excerpt', blog_date: 'Post date', blog_body: 'Post text', book_title: 'Booking title', book_intro: 'Booking intro', book_step: 'Step label', book_faq: 'FAQ heading', hero_headline: 'Headline', menu_links: 'Menu links', menu_brand: 'Your name', ex_label: 'Section label', ex_title: 'Section title', ex_sub: 'Section subtitle', con_msg: 'Contact message', con_social: 'Social links', ft_line: 'Footer line', ft_copy: 'Copyright', gal_name: 'Gallery name', gal_count: 'Gallery count', gal_link: 'Gallery link', tes_quote: 'Testimonial', tes_name: 'Testimonial name', about_text: 'About text', pr_intro: 'Package intro', pr_group: 'Package group', pr_name: 'Package name', pr_price: 'Package price', pr_list: 'Package list', pr_note: 'Package note', faq_q: 'Question', faq_a: 'Answer', feat_title: 'Featured work title', hero_btn: 'Button text', air_label: 'About label', air_more: 'Link text', ls_title: 'Stories title', rom_kicker: 'Small line', rom_story: 'Story title', rom_more: 'Link text', ea_kicker: 'Small line', ea_para: 'Paragraph', ea_follow: 'Section title', pe_tag: 'Tagline', iv_kicker: 'Small line', iv_tag: 'Tagline', wi_hi: 'About heading', ju_kicker: 'Small line', ju_para: 'Intro', ju_s1t: 'Service title', ju_s1d: 'Service text', ju_s2t: 'Service title', ju_s2d: 'Service text', ju_s3t: 'Service title', ju_s3d: 'Service text', ca_sub: 'Subtitle', ca_bar: 'Bar text', ca_w1: 'Word', ca_w2: 'Word', ca_w3: 'Word', ca_w4: 'Word', ce_p1: 'Paragraph', ce_p2: 'Paragraph', ol_kicker: 'Small line', ol_c1: 'Caption', ol_c2: 'Caption', ol_c3: 'Caption', ol_c4: 'Caption', mg_story: 'Heading', mg_text: 'Paragraph', li_kicker: 'Small line', li_para: 'Paragraph', li_meet: 'Heading', li_more: 'Link', as_kicker: 'Small line', as_para: 'Paragraph', as_kind: 'Heading', as_q1: 'Quote', as_n1: 'Name', as_q2: 'Quote', as_n2: 'Name', as_q3: 'Quote', as_n3: 'Name', sg_tag: 'Tagline', sg_recent: 'Heading', ro_script: 'Script word', ro_c1: 'Caption', ro_c2: 'Caption', ro_c3: 'Caption', hz_kicker: 'Small line', hz_para: 'Paragraph', hz_quote: 'Quote', hz_name: 'Name', sf_n1: 'Service', sf_n2: 'Service', sf_n3: 'Service', sf_n4: 'Service', sf_c1: 'Caption', sf_c2: 'Caption', sf_c3: 'Caption', cy_tag: 'Tagline', cy_s1: 'Label', cy_s2: 'Label', cy_s3: 'Label', la_vert: 'Side text', la_para: 'Paragraph', ir_l: 'Left words', ir_r: 'Right words', ir_issue: 'Heading', ir_t1: 'Label', ir_t2: 'Label', ir_t3: 'Label', pr_kicker: 'Small line', pr_c1: 'Caption', pr_c2: 'Caption', pr_c3: 'Caption', pr_c4: 'Caption', th_tag: 'Tagline', cl_p1: 'Caption', cl_p2: 'Caption', cl_p3: 'Caption', cl_p4: 'Caption', cl_p5: 'Caption', cl_sub: 'Subheading', cl_t1: 'Label', cl_t2: 'Label', cl_t3: 'Label', mi_t1: 'Label', mi_t2: 'Label', mi_t3: 'Label', mi_t4: 'Label', ya_script: 'Script line', ya_month: 'Month', ya_calday: 'Weekdays', ya_caldate: 'Dates', ya_calday: 'Weekdays', ya_caldate: 'Dates', ya_head: 'Heading', ya_para: 'Paragraph', ya_link: 'Link', gs_title: 'Section title', gp_title: 'Page title', tes_title: 'Section title', faq_title: 'Page title', ab_h1: 'Story heading', ab_h2: 'Belief heading', ab_h3: 'Invitation heading', ab_p3: 'Invitation text', ab_by: 'By line', ab_loves: 'Loves label', ab_hi: 'Greeting', ab_n1: 'Stat 1', ab_l1: 'Stat 1 label', ab_n2: 'Stat 2', ab_l2: 'Stat 2 label', ab_n3: 'Stat 3', ab_l3: 'Stat 3 label', ab_quote: 'Pull quote', ab_sig: 'Signature', ab_tag: 'Tagline', ab_f1t: 'Fact 1 title', ab_f1d: 'Fact 1 text', ab_f2t: 'Fact 2 title', ab_f2d: 'Fact 2 text', ab_f3t: 'Fact 3 title', ab_f3d: 'Fact 3 text', ab_f4t: 'Fact 4 title', ab_f4d: 'Fact 4 text', ab_f5t: 'Fact 5 title', ab_f5d: 'Fact 5 text', soc_title: 'Social heading', soc_handle: 'Social handle', con_title: 'Booking heading' }
 
-const TEXT_FLD = ['feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
+const TEXT_FLD = ['feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_calday', 'ya_caldate', 'ya_calday', 'ya_caldate', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
 function writeTextKey(n: any, key: string, v: string) {
   const s = (n.site_settings = n.site_settings ?? {})
   if (/^ax\d+$/.test(key)) { s.addons = (Array.isArray(s.addons) ? s.addons : []).map((a: any) => (a && a.k === key ? { ...a, text: v } : a)); return }
@@ -163,7 +163,7 @@ function writeInline(n: any, d: any) {
   }
 }
 
-const TEXT_KEYS = ['ax1', 'ax2', 'ax3', 'ax4', 'ax5', 'ax6', 'ax7', 'ax8', 'ax9', 'ax10', 'ax11', 'ax12', 'ax13', 'ax14', 'ax15', 'ax16', 'hero_headline', 'menu_brand', 'about_text', 'con_msg', 'ft_line', 'ft_copy', 'feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
+const TEXT_KEYS = ['ax1', 'ax2', 'ax3', 'ax4', 'ax5', 'ax6', 'ax7', 'ax8', 'ax9', 'ax10', 'ax11', 'ax12', 'ax13', 'ax14', 'ax15', 'ax16', 'hero_headline', 'menu_brand', 'about_text', 'con_msg', 'ft_line', 'ft_copy', 'feat_title', 'hero_btn', 'air_label', 'air_more', 'ls_title', 'rom_kicker', 'rom_story', 'rom_more', 'ea_kicker', 'ea_para', 'ea_follow', 'pe_tag', 'iv_kicker', 'iv_tag', 'wi_hi', 'ju_kicker', 'ju_para', 'ju_s1t', 'ju_s1d', 'ju_s2t', 'ju_s2d', 'ju_s3t', 'ju_s3d', 'ca_sub', 'ca_bar', 'ca_w1', 'ca_w2', 'ca_w3', 'ca_w4', 'ce_p1', 'ce_p2', 'ol_kicker', 'ol_c1', 'ol_c2', 'ol_c3', 'ol_c4', 'mg_story', 'mg_text', 'li_kicker', 'li_para', 'li_meet', 'li_more', 'as_kicker', 'as_para', 'as_kind', 'as_q1', 'as_n1', 'as_q2', 'as_n2', 'as_q3', 'as_n3', 'sg_tag', 'sg_recent', 'ro_script', 'ro_c1', 'ro_c2', 'ro_c3', 'hz_kicker', 'hz_para', 'hz_quote', 'hz_name', 'sf_n1', 'sf_n2', 'sf_n3', 'sf_n4', 'sf_c1', 'sf_c2', 'sf_c3', 'cy_tag', 'cy_s1', 'cy_s2', 'cy_s3', 'la_vert', 'la_para', 'ir_l', 'ir_r', 'ir_issue', 'ir_t1', 'ir_t2', 'ir_t3', 'pr_kicker', 'pr_c1', 'pr_c2', 'pr_c3', 'pr_c4', 'th_tag', 'cl_p1', 'cl_p2', 'cl_p3', 'cl_p4', 'cl_p5', 'cl_sub', 'cl_t1', 'cl_t2', 'cl_t3', 'mi_t1', 'mi_t2', 'mi_t3', 'mi_t4', 'ya_script', 'ya_month', 'ya_calday', 'ya_caldate', 'ya_calday', 'ya_caldate', 'ya_head', 'ya_para', 'ya_link', 'gs_title', 'gp_title', 'tes_title', 'faq_title', 'ab_h1', 'ab_h2', 'ab_h3', 'ab_p3', 'ab_by', 'ab_loves', 'ab_hi', 'ab_n1', 'ab_l1', 'ab_n2', 'ab_l2', 'ab_n3', 'ab_l3', 'ab_quote', 'ab_sig', 'ab_tag', 'ab_f1t', 'ab_f1d', 'ab_f2t', 'ab_f2d', 'ab_f3t', 'ab_f3d', 'ab_f4t', 'ab_f4d', 'ab_f5t', 'ab_f5d', 'soc_title', 'soc_handle', 'con_title']
 const LONG_TEXT = ['about_text', 'con_msg']
 const PICK_COLORS = [...TEXTS.slice(0, 7), ...ACCENTS.slice(0, 14), '#FFFFFF']
 
@@ -435,7 +435,11 @@ export default function CamiDesigner() {
   const [selBtn, setSelBtn] = useState<{ id: string; tx: string; text: string; cbg?: string; ccolor?: string } | null>(null)
   const [selBox, setSelBox] = useState<string | null>(null)
   const [selLn, setSelLn] = useState('')
+  const [selAr, setSelAr] = useState<string | null>(null)
+  const [selKd, setSelKd] = useState('')
   const [selAp, setSelAp] = useState<string | null>(null)
+  const [addTab, setAddTab] = useState<'' | 'layers' | 'elements' | 'content'>('')
+  const [layers, setLayers] = useState<{ id: string; kind: string; label: string; hidden: boolean; ad: string }[]>([])
   useEffect(() => {
     if (!selAp) return
     const sp = ((form?.site_settings as any)?.slotPics ?? {}) as Record<string, string>
@@ -509,12 +513,21 @@ export default function CamiDesigner() {
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, tab])
 
   useEffect(() => {
+    if (addTab !== 'layers' || !selSec) return
+    const ask = () => { try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-layers-req', key: selSec }, '*') } catch { /* ignore */ } }
+    ask()
+    const t = setInterval(ask, 1500)
+    return () => clearInterval(t)
+  }, [addTab, selSec])
+
+  useEffect(() => {
     function onMsg(e: MessageEvent) {
       const d = e.data
+      if (d && d.type === 'camrhia-layers' && e.source === frameRef.current?.contentWindow) { setLayers(Array.isArray(d.list) ? d.list : []); return }
       if (d && d.type === 'camrhia-preview-ready' && e.source === frameRef.current?.contentWindow) { if (latest.current) pushPatch(latest.current); return }
       if (d && d.type === 'camrhia-section' && typeof d.pt === 'number' && e.source === frameRef.current?.contentWindow) setSecPad({ pt: Number(d.pt) || 0, pb: Number(d.pb) || 0 })
       if (d && d.type === 'camrhia-section' && d.action === 'select' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelBtn(null); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelSec(String(d.key)); setLeftTab('design'); return }
-      if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); setSelLn(d.ln ? String(d.ln) : ''); setSelAp(d.ap ? String(d.ap) : null); if (d.ap) { setPick(null); setSelBtn(null); setSelPh(null) } return }
+      if (d && d.type === 'camrhia-section' && d.action === 'box' && e.source === frameRef.current?.contentWindow) { setSelBox(d.id ? String(d.id) : null); setSelLn(d.ln ? String(d.ln) : ''); setSelAr(d.ar ? String(d.ar) : null); setSelKd(d.kd ? String(d.kd) : ''); setSelAp(d.ap ? String(d.ap) : null); if (d.ap) { setPick(null); setSelBtn(null); setSelPh(null) } return }
       if (d && d.type === 'camrhia-section' && d.action === 'button' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelPh(null); setSelSec(String(d.sec)); setSelBtn({ id: String(d.id), tx: String(d.tx ?? ''), text: String(d.text ?? ''), cbg: typeof d.cbg === 'string' ? d.cbg : '', ccolor: typeof d.ccolor === 'string' ? d.ccolor : '' }); setLeftTab('design'); return }
       if (d && d.type === 'camrhia-section' && d.action === 'photo' && e.source === frameRef.current?.contentWindow) { setPick(null); setSelBtn(null); setSelSec(String(d.key)); setSecCur(typeof d.bg === 'string' ? d.bg : null); setSelPh({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); setLeftTab('design'); if (d.open) setSlot({ key: String(d.key), idx: Number(d.idx) || 0, multi: !!d.multi }); return }
       if (d && d.type === 'camrhia-section' && e.source === frameRef.current?.contentWindow) {
@@ -1488,9 +1501,14 @@ export default function CamiDesigner() {
                   const lk = selLn === 'v' ? 'v' : 'w'
                   return (
                     <div className="mt-4">
-                      <p className="font-fraunces text-lg font-semibold text-ink">Line</p>
-                      <ColorRow label="Line color" value={fxL.c} cur={fxL.c ?? accent} base={base} onLive={(c) => liveEdit(lnMut({ c }))} onSet={(c) => { void commit(lnMut({ c })) }} onReset={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; if (m[selBox]) { const q = { ...m[selBox] }; q.c = ''; m[selBox] = q }; x.boxFx = m }) }} />
+                      <p className="font-fraunces text-lg font-semibold text-ink">{selAr ? 'Arrow' : ({ circle: 'Circle', x: 'X mark', rect: 'Rectangle', star: 'Star', heart: 'Heart', arrow: 'Arrow' } as Record<string, string>)[selKd] ?? 'Line'}</p>
+                      <ColorRow label="Color" value={fxL.c} cur={fxL.c ?? accent} base={base} onLive={(c) => liveEdit(lnMut({ c }))} onSet={(c) => { void commit(lnMut({ c })) }} onReset={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; if (m[selBox]) { const q = { ...m[selBox] }; q.c = ''; m[selBox] = q }; x.boxFx = m }) }} />
                       <SliderRow key={selBox + 'th'} label="Thickness" value={Math.round(Number(fxL.th ?? 2))} min={1} max={40} step={1} unit="px" onLive={(v) => liveEdit(lnMut({ th: v }))} onDone={(v) => { void commit(lnMut({ th: v })) }} />
+                      {selAr && (() => {
+                        const adB: any = ((((form.site_settings ?? {}) as any).addons ?? []) as any[]).find((q) => q && q.id === selAr)
+                        const bendMut = (v: number) => (n: Prof) => { const x = (n.site_settings = n.site_settings ?? {}); x.addons = (Array.isArray(x.addons) ? x.addons : []).map((q: any) => (q && q.id === selAr ? { ...q, bend: v } : q)) }
+                        return <SliderRow key={selAr + 'bend'} label="Bend" value={Math.round(Number(adB?.bend ?? 0))} min={-100} max={100} step={1} unit="" onLive={(v) => liveEdit(bendMut(v))} onDone={(v) => { void commit(bendMut(v)) }} />
+                      })()}
                       <SliderRow key={selBox + lk} label="Length" value={Math.round(Number(fxL[lk] ?? 30))} min={2} max={100} step={1} unit="%" onLive={(v) => liveEdit(lnMut({ [lk]: v }))} onDone={(v) => { void commit(lnMut({ [lk]: v })) }} />
                       <SliderRow key={selBox + 'r'} label="Rotate" value={Math.round(Number(fxL.r ?? 0))} min={-180} max={180} step={1} unit="°" onLive={(v) => liveEdit(lnMut({ r: v }))} onDone={(v) => { void commit(lnMut({ r: v })) }} />
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -1524,39 +1542,56 @@ export default function CamiDesigner() {
                     )}
                     <p className="mt-5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Add to this section</p>
                     {selAp && <button type="button" className={btn + ' mt-3'} onClick={() => setSlot({ key: 'addon-' + selAp, idx: 0, multi: true })}>Change photo</button>}
-                    <details className="mt-3">
-                      <summary className="flex w-full cursor-pointer list-none items-center justify-center rounded-xl bg-twilight px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:opacity-90">+ Add element</summary>
-                      {([['Shapes and marks', [['line', 'Line'], ['circle', 'Circle'], ['x', 'X mark'], ['arrow', 'Arrow'], ['rect', 'Rectangle'], ['star', 'Star'], ['heart', 'Heart']]], ['Content', [['text', 'Text'], ['button', 'Button'], ['photo', 'Photo'], ['badge', 'Badge'], ['quote', 'Quote'], ['social', 'Social']]]] as const).map(([grp, items]) => (
-                        <div key={grp} className="mt-4">
-                          <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{grp}</p>
-                          <div className="mt-2 grid grid-cols-3 gap-2">
-                            {items.map(([t, lb]) => {
-                              const ic: Record<string, React.ReactNode> = {
-                                line: <path d="M4 12h16" />,
-                                circle: <circle cx="12" cy="12" r="8" />,
-                                x: <path d="M6 6l12 12M18 6L6 18" />,
-                                arrow: <path d="M4 12h15M14 7l5 5-5 5" />,
-                                rect: <rect x="4" y="6" width="16" height="12" rx="2" />,
-                                star: <path d="M12 4l2.4 5 5.4.7-4 3.8 1 5.4-4.8-2.6-4.8 2.6 1-5.4-4-3.8 5.4-.7z" />,
-                                heart: <path d="M12 19s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 1.5C19 14.6 12 19 12 19z" />,
-                                text: <path d="M5 6h14M12 6v13" />,
-                                button: <><rect x="3" y="8" width="18" height="8" rx="4" /><path d="M9 12h6" /></>,
-                                photo: <><rect x="4" y="5" width="16" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="M5 17l5-4 4 3 3-2 3 2" /></>,
-                                badge: <><rect x="3" y="8" width="18" height="8" rx="4" /><circle cx="8" cy="12" r="1" /></>,
-                                quote: <path d="M9 8c-2 .5-3 2-3 4v3h4v-4H8M17 8c-2 .5-3 2-3 4v3h4v-4h-2" />,
-                                social: <><rect x="4" y="4" width="16" height="16" rx="5" /><circle cx="12" cy="12" r="3.6" /><circle cx="16.6" cy="7.4" r=".8" /></>,
-                              }
-                              return (
-                                <button key={t} type="button" className="flex flex-col items-center gap-1.5 rounded-xl border border-line bg-white px-1 py-3 text-xs font-medium text-ink transition hover:border-twilight hover:bg-white/60" onClick={(e) => { (e.currentTarget.closest('details') as HTMLDetailsElement | null)?.removeAttribute('open'); addAddon(t) }}>
-                                  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ic[t]}</svg>
-                                  {lb}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {([['layers', 'Layers'], ['elements', 'Elements'], ['content', 'Content']] as const).map(([k, lb]) => (
+                        <button key={k} type="button" onClick={() => setAddTab(addTab === k ? '' : k)} className={'rounded-xl px-2 py-2.5 text-sm font-medium transition ' + (addTab === k ? 'bg-twilight text-white shadow-sm' : 'border border-line bg-white text-ink hover:border-[#9CC4E4] hover:bg-[#EEF5FB]')}>{lb}</button>
                       ))}
-                    </details>
+                    </div>
+                    {addTab === 'layers' && (
+                      <div className="mt-3 space-y-1.5">
+                        {layers.length === 0 && <p className="text-xs text-ink-soft">Nothing in this section yet.</p>}
+                        {layers.map((l) => (
+                          <div key={l.id + l.ad} className={'flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ' + (selBox === l.id ? 'border-[#9CC4E4] bg-[#EEF5FB]' : 'border-line bg-white') + (l.hidden ? ' opacity-50' : '')}>
+                            <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left text-ink" onClick={() => { try { frameRef.current?.contentWindow?.postMessage({ type: 'camrhia-pick', key: selSec, id: l.id }, '*') } catch { /* ignore */ } }}>
+                              <span className="w-4 shrink-0 text-center text-twilight">{l.kind === 'text' ? 'T' : l.kind === 'photo' ? '\u25A3' : '\u2014'}</span>
+                              <span className="truncate">{l.label}</span>
+                            </button>
+                            {l.ad ? (
+                              <button type="button" className="text-xs font-medium text-ink-soft hover:text-ink" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); x.addons = (Array.isArray(x.addons) ? x.addons : []).filter((q: any) => q && q.id !== l.ad) }) }}>Delete</button>
+                            ) : (
+                              <button type="button" className="text-xs font-medium text-ink-soft hover:text-ink" onClick={() => { void commit((n) => { const x = (n.site_settings = n.site_settings ?? {}); const m: Record<string, any> = { ...(x.boxFx ?? {}) }; const q: Record<string, any> = { ...(m[l.id] ?? {}) }; if (l.hidden) delete q.h; else { q.h = 1; if (q.x === undefined) q.x = 0; if (q.y === undefined) q.y = 0; if (q.s === undefined) q.s = 1 } if (l.hidden && Object.keys(q).every((k2) => ['x', 'y', 's'].includes(k2) && (k2 === 's' ? q[k2] === 1 : q[k2] === 0))) delete m[l.id]; else m[l.id] = q; x.boxFx = m }) }}>{l.hidden ? 'Show' : 'Hide'}</button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {(addTab === 'elements' || addTab === 'content') && (
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        {(addTab === 'elements' ? [['line', 'Line'], ['circle', 'Circle'], ['x', 'X mark'], ['arrow', 'Arrow'], ['rect', 'Rectangle'], ['star', 'Star'], ['heart', 'Heart']] : [['text', 'Text'], ['button', 'Button'], ['photo', 'Photo'], ['badge', 'Badge'], ['quote', 'Quote'], ['social', 'Social']]).map(([t, lb]) => {
+                          const ic: Record<string, React.ReactNode> = {
+                            line: <path d="M4 12h16" />,
+                            circle: <circle cx="12" cy="12" r="8" />,
+                            x: <path d="M6 6l12 12M18 6L6 18" />,
+                            arrow: <path d="M4 12h15M14 7l5 5-5 5" />,
+                            rect: <rect x="4" y="6" width="16" height="12" rx="2" />,
+                            star: <path d="M12 4l2.4 5 5.4.7-4 3.8 1 5.4-4.8-2.6-4.8 2.6 1-5.4-4-3.8 5.4-.7z" />,
+                            heart: <path d="M12 19s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 1.5C19 14.6 12 19 12 19z" />,
+                            text: <path d="M5 6h14M12 6v13" />,
+                            button: <><rect x="3" y="8" width="18" height="8" rx="4" /><path d="M9 12h6" /></>,
+                            photo: <><rect x="4" y="5" width="16" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="M5 17l5-4 4 3 3-2 3 2" /></>,
+                            badge: <><rect x="3" y="8" width="18" height="8" rx="4" /><circle cx="8" cy="12" r="1" /></>,
+                            quote: <path d="M9 8c-2 .5-3 2-3 4v3h4v-4H8M17 8c-2 .5-3 2-3 4v3h4v-4h-2" />,
+                            social: <><rect x="4" y="4" width="16" height="16" rx="5" /><circle cx="12" cy="12" r="3.6" /><circle cx="16.6" cy="7.4" r=".8" /></>,
+                          }
+                          return (
+                            <button key={t} type="button" className="flex flex-col items-center gap-1.5 rounded-xl border border-line bg-white px-1 py-3 text-xs font-medium text-ink transition hover:border-[#9CC4E4] hover:bg-[#EEF5FB]" onClick={() => { addAddon(t); setAddTab('') }}>
+                              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-twilight">{ic[t]}</svg>
+                              {lb}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )
               })()}

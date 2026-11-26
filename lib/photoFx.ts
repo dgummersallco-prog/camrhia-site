@@ -424,7 +424,7 @@ function lineFx(el: HTMLElement, f: BoxFx | undefined) {
   if (th) {
     if (isSvg) {
       const vb = (el as unknown as SVGSVGElement).viewBox?.baseVal?.width || 140
-      const sc = (el.getBoundingClientRect().width || 1) / vb
+      const sc = (el.clientWidth || el.getBoundingClientRect().width || 1) / vb
       st.setProperty('stroke-width', String(Math.round((th / sc) * 100) / 100), 'important')
     }
     if (hasBg) st.setProperty(el.dataset.lnv === '1' ? 'width' : 'height', th + 'px', 'important')

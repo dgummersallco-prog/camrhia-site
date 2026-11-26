@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { roots, rootKey } from '@/lib/photoFx'
 
@@ -7,7 +7,7 @@ type Kind = 'text' | 'photo' | 'button' | 'line' | 'circle' | 'x' | 'arrow' | 'r
 const KINDS: Kind[] = ['text', 'photo', 'button', 'line', 'circle', 'x', 'arrow', 'rect', 'star', 'heart', 'badge', 'quote', 'social']
 const GLYPH: Record<string, string> = { x: '\u2715', arrow: '\u2192', star: '\u2605', heart: '\u2665' }
 type Links = { instagram?: string | null; facebook?: string | null; tiktok?: string | null; pinterest?: string | null }
-type Addon = { id: string; sec: string; t: Kind; k?: string; text?: string; url?: string; z?: number; o?: number; ls?: number }
+type Addon = { id: string; sec: string; t: Kind; bend?: number; k?: string; text?: string; url?: string; z?: number; o?: number; ls?: number }
 
 const PH = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="260" height="190" viewBox="0 0 260 190"><rect width="260" height="190" fill="#E9E2D6"/><g fill="none" stroke="#9C8F7A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="95" y="68" width="70" height="52" rx="8"/><circle cx="130" cy="94" r="14"/></g><text x="130" y="152" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#9C8F7A">Click to add your photo</text></svg>')
 
@@ -15,6 +15,41 @@ const okUrl = (u?: string) => (u && /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(u.t
 
 const BASE = process.env.NEXT_PUBLIC_SUPABASE_URL ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/` : ''
 const picUrl = (p?: string) => (p ? (/^(data:|https?:)/.test(p) ? p : p.startsWith('/') ? p : BASE + p) : '')
+
+function ArrowShape({ id, accent, bend, top }: { id: string; accent: string; bend: number; top: string }) {
+  const ref = useRef<SVGSVGElement>(null)
+  const [dm, setDm] = useState({ w: 220, h: 80, sw: 3 })
+  useEffect(() => {
+    const read = () => {
+      const el = ref.current
+      if (!el) return
+      const w = el.clientWidth || 220
+      const h = el.clientHeight || 80
+      const sw = parseFloat(getComputedStyle(el).strokeWidth) || 3
+      setDm((p) => (Math.abs(p.w - w) > 0.5 || Math.abs(p.h - h) > 0.5 || Math.abs(p.sw - sw) > 0.05 ? { w, h, sw } : p))
+    }
+    read()
+    const t = setInterval(read, 250)
+    return () => clearInterval(t)
+  }, [])
+  const { w, h, sw } = dm
+  const head = Math.max(12, sw * 4)
+  const pad = head * 0.6 + sw
+  const x0 = pad
+  const x1 = Math.max(x0 + 10, w - pad)
+  const my = h / 2
+  const amp = Math.max(0, h / 2 - pad)
+  const cy = my + (Math.max(-100, Math.min(100, bend)) / 100) * 2 * amp
+  const cx = (x0 + x1) / 2
+  const ang = Math.atan2(my - cy, x1 - cx)
+  const pt = (a: number) => (x1 - head * Math.cos(a)).toFixed(1) + ' ' + (my - head * Math.sin(a)).toFixed(1)
+  const dd = 'M' + x0.toFixed(1) + ' ' + my.toFixed(1) + ' Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + x1.toFixed(1) + ' ' + my.toFixed(1) + ' M' + pt(ang + 0.5) + ' L' + x1.toFixed(1) + ' ' + my.toFixed(1) + ' L' + pt(ang - 0.5)
+  return (
+    <svg ref={ref} data-addon={id} data-cam-rule="1" data-arrow={id} aria-hidden="true" viewBox={'0 0 ' + w + ' ' + h} fill="none" stroke={accent} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: 'calc(50% - 110px)', top, width: 220, height: 80, overflow: 'visible', zIndex: 6 }}>
+      <path d={dd} />
+    </svg>
+  )
+}
 
 export function Addons({ list, accent, pics, links }: { list: unknown; accent: string; pics?: Record<string, string> | null; links?: Links }) {
   const [mounted, setMounted] = useState(false)
@@ -45,13 +80,15 @@ export function Addons({ list, accent, pics, links }: { list: unknown; accent: s
           const oo = Number(a.o) >= 0.1 && Number(a.o) < 1 ? Number(a.o) : 1
           node = <div data-addon={a.id} data-addp={a.id} className="el-axp" role="img" aria-label="" style={{ position: 'absolute', left: 'calc(50% - 130px)', top, width: 260, height: 190, borderRadius: 12, zIndex: 6, overflow: 'hidden', opacity: oo }}><div style={{ position: 'absolute', inset: 0, backgroundImage: pu ? 'url("' + pu.replace(/"/g, '%22') + '")' : 'url("' + PH + '")', backgroundSize: 'cover', backgroundPosition: 'center', transform: zz > 1 ? 'scale(' + zz + ')' : undefined }} /></div>
         } else if (a.t === 'line') {
-          node = <div data-addon={a.id} data-cam-rule="1" style={{ position: 'absolute', left: 'calc(50% - 100px)', top, width: 200, height: 2, background: accent, zIndex: 6 }} />
+          node = <div data-addon={a.id} data-cam-rule="1" data-kind={a.t} style={{ position: 'absolute', left: 'calc(50% - 100px)', top, width: 200, height: 2, background: accent, zIndex: 6 }} />
         } else if (a.t === 'circle') {
-          node = <div data-addon={a.id} data-cam-rule="1" aria-hidden="true" style={{ position: 'absolute', left: 'calc(50% - 60px)', top, width: 120, height: 120, border: '3px solid ' + accent, borderRadius: '50%', boxSizing: 'border-box', zIndex: 6 }} />
+          node = <div data-addon={a.id} data-cam-rule="1" data-kind={a.t} aria-hidden="true" style={{ position: 'absolute', left: 'calc(50% - 60px)', top, width: 120, height: 120, border: '3px solid ' + accent, borderRadius: '50%', boxSizing: 'border-box', zIndex: 6 }} />
         } else if (a.t === 'rect') {
-          node = <div data-addon={a.id} data-cam-rule="1" aria-hidden="true" style={{ position: 'absolute', left: 'calc(50% - 110px)', top, width: 220, height: 120, border: '2px solid ' + accent, borderRadius: 12, boxSizing: 'border-box', zIndex: 6 }} />
-        } else if (a.t === 'x' || a.t === 'arrow' || a.t === 'star' || a.t === 'heart') {
-          node = <div data-addon={a.id} data-cam-rule="1" aria-hidden="true" style={{ position: 'absolute', left: 'calc(50% - 40px)', top, width: 80, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, fontSize: 52, fontWeight: 300, lineHeight: 1, zIndex: 6 }}>{GLYPH[a.t]}</div>
+          node = <div data-addon={a.id} data-cam-rule="1" data-kind={a.t} aria-hidden="true" style={{ position: 'absolute', left: 'calc(50% - 110px)', top, width: 220, height: 120, border: '2px solid ' + accent, borderRadius: 12, boxSizing: 'border-box', zIndex: 6 }} />
+        } else if (a.t === 'arrow') {
+          node = <ArrowShape id={a.id} accent={accent} bend={Number(a.bend) || 0} top={top} />
+        } else if (a.t === 'x' || a.t === 'star' || a.t === 'heart') {
+          node = <div data-addon={a.id} data-cam-rule="1" data-kind={a.t} aria-hidden="true" style={{ position: 'absolute', left: 'calc(50% - 40px)', top, width: 80, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, fontSize: 52, fontWeight: 300, lineHeight: 1, zIndex: 6 }}>{GLYPH[a.t]}</div>
         } else if (a.t === 'badge') {
           node = <p data-addon={a.id} className={a.k ? 'el-' + a.k : undefined} style={{ position: 'absolute', left: 'calc(50% - 70px)', top, margin: 0, padding: '8px 18px', borderRadius: 999, background: accent, color: '#fff', fontSize: 12, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', textAlign: 'center', zIndex: 6 }}>{String(a.text ?? 'Now booking').slice(0, 80)}</p>
         } else if (a.t === 'quote') {
